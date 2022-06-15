@@ -1,5 +1,7 @@
 # A Simple Simulation of First Generation Quantum Repeater Chain
 
+A limited public demo of a fraction of some internal research code. Full code to be release shortly.
+
 For detailed description of the code consult the `QuantumSavory.jl`
 [example page in the documentation](https://krastanov.github.io/QuantumSavory.jl/dev/howto-firstgenrepeater/)
 

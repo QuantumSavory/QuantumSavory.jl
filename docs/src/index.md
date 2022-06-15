@@ -6,6 +6,8 @@ DocTestSetup = quote
 end
 ```
 
+A limited public demo of a fraction of some internal research code. Full code to be release shortly.
+
 !!! danger
     
     This is software is still in a fairly unstable alpha state! The documentation is extremely barebones and current users are expected to read the source code.

@@ -23,7 +23,7 @@ We will build a simplistic simulator for such a network.
     - And entanglement purification to increase the quality of the links.
 
 For organizing the simulation and simplifying the digital and analog quantum dynamics,
-we will use the start of `QuantumSavory.jl`, namely the [`Register`](@ref) data structure.
+we will use the star of `QuantumSavory.jl`, namely the [`Register`](@ref) data structure.
 
 Moreover, we will use:
 
@@ -565,5 +565,5 @@ The entirety of the code necessary for reproducing these results is in the
 
 - The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available.
 - Calibrating when to perform a purification versus a swap would be important for the performance of the network.
-- Balancing what types of entanglement purification is performed, depending on the type of noise experience, can drastically lower resource requirements.
+- Balancing what types of entanglement purification is performed, depending on the type of noise experienced, can drastically lower resource requirements.
 - Implementing more sophisticated purification schemes can greatly improve the quality of entanglement.
