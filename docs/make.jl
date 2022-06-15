@@ -14,9 +14,7 @@ function main()
     clean = true,
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
-        assets = [
-            asset("https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js")
-        ]
+        assets=["assets/init.js"]
     ),
     modules = [QuantumSavory],
     authors = "Stefan Krastanov",

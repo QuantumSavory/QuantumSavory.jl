@@ -6,12 +6,6 @@ DocTestSetup = quote
 end
 ```
 
-```@raw html
-<script>
-    mermaid.initialize({ startOnLoad: true });
-</script>
-```
-
 There is a convenient classification of quantum repeaters by their logical capabilities[^1].
 The first, simplest, generation of quantum repeaters involves the generation of physical (unencoded) entangled qubits between neighboring nodes,
 followed by entanglement swap and entanglement purification operation.
