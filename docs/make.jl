@@ -22,6 +22,7 @@ function main()
     "QuantumSavory.jl" => "index.md",
     "HowTos" => [
         "1st-gen Repeater" => "howto-firstgenrepeater.md"
+        "1st-gen Repeater (Clifford formalism)" => "howto-firstgenrepeater-clifford.md"
     ],
     #"Manual" => "manual.md",
     "References" => [

@@ -68,24 +68,25 @@ end
 
 # Using QuantumOptics.jl to create a noisy Bell pair object,
 # in density matrix representation.
-b = SpinBasis(1//2)
-l = spindown(b)
-h = spinup(b)
-perfect_pair = (l⊗l + h⊗h)/sqrt(2)
-const perfect_pair_dm = dm(perfect_pair)
-const mixed = identityoperator(basis(perfect_pair))/4
-function noisy_pair(F)
-    F*perfect_pair_dm + (1-F)*mixed
+b = QuantumOptics.SpinBasis(1//2)
+l = QuantumOptics.spindown(b)
+h = QuantumOptics.spinup(b)
+qo_perfect_pair = (QuantumOptics.tensor(l,l) + QuantumOptics.tensor(h,h))/sqrt(2)
+const qo_perfect_pair_dm = QuantumOptics.dm(qo_perfect_pair)
+const qo_mixed = QuantumOptics.identityoperator(QuantumOptics.basis(qo_perfect_pair))/4
+function qo_noisy_pair(F)
+    F*qo_perfect_pair_dm + (1-F)*qo_mixed
 end
-const XX = sigmax(b)⊗sigmax(b)
-const ZZ = sigmaz(b)⊗sigmaz(b)
-const YY = sigmay(b)⊗sigmay(b)
+const qo_XX = QuantumOptics.tensor(QuantumOptics.sigmax(b)⊗QuantumOptics.sigmax(b))
+const qo_ZZ = QuantumOptics.tensor(QuantumOptics.sigmaz(b)⊗QuantumOptics.sigmaz(b))
+const qo_YY = QuantumOptics.tensor(QuantumOptics.sigmay(b)⊗QuantumOptics.sigmay(b))
+
 
 @resumable function entangler(
     sim::Environment,   # The scheduler for all simulation events
     mgraph,             # The graph of qubit nodes
     nodea, nodeb,       # The two nodes which we will be entangling
-    F,                  # The raw entanglement fidelity
+    noisy_pair,         # A function that generates a raw entangled pair
     entangler_wait_time,# The wait time in case all qubits are "busy"
     entangler_busy_time # How long it takes to establish entanglement
     )
@@ -102,7 +103,7 @@ const YY = sigmay(b)⊗sigmay(b)
         registera = get_prop(mgraph,nodea,:register)
         registerb = get_prop(mgraph,nodeb,:register)
         @yield timeout(sim, entangler_busy_time)
-        initialize!([registera,registerb],[ia,ib],noisy_pair(F); time=now(sim))
+        initialize!([registera,registerb],[ia,ib],noisy_pair(); time=now(sim))
         get_prop(mgraph,nodea,:enttrackers)[ia] = (node=nodeb,slot=ib)
         get_prop(mgraph,nodeb,:enttrackers)[ib] = (node=nodea,slot=ia)
         @simlog sim "entangled node $(nodea):$(ia) and node $(nodeb):$(ib)"
@@ -141,25 +142,29 @@ end
         @yield mapreduce(request, &, locks)
         reg = get_prop(mgraph, node, :register)
         @yield timeout(sim, swapper_busy_time)
-        apply!([reg,reg], [q1,q2], Gates.CNOT; time=now(sim))
-        xmeas = project_traceout!(reg, q1, [States.X₀, States.X₁])
-        zmeas = project_traceout!(reg, q2, [States.Z₀, States.Z₁])
         node1 = get_prop(mgraph,node,:enttrackers)[q1]
         reg1 = get_prop(mgraph,node1.node,:register)
-        if xmeas==2
-            apply!([reg1], [node1.slot], Gates.Z)
-        end
         node2 = get_prop(mgraph,node,:enttrackers)[q2]
         reg2 = get_prop(mgraph,node2.node,:register)
-        if zmeas==2
-            apply!([reg2], [node2.slot], Gates.X)
-        end
+        swapcircuit(reg, q1, q2, reg1, node1.slot, reg2, node2.slot; time=now(sim))
         get_prop(mgraph,node1.node,:enttrackers)[node1.slot] = node2
         get_prop(mgraph,node2.node,:enttrackers)[node2.slot] = node1
         get_prop(mgraph,node,:enttrackers)[q1] = nothing
         get_prop(mgraph,node,:enttrackers)[q2] = nothing
         @simlog sim "swap at $(node):$(q1)&$(q2) connecting $(node1) and $(node2)"
         release.(locks)
+    end
+end
+
+function swapcircuit(localreg, localslot1, localslot2, remreg1, remslot1, remreg2, remslot2; time=nothing)
+    apply!([localreg,localreg], [localslot1, localslot2], Gates.CNOT; time=time)
+    xmeas = project_traceout!(localreg, localslot1, States.XBasis)
+    zmeas = project_traceout!(localreg, localslot2, States.ZBasis)
+    if xmeas==2
+        apply!([remreg1], [remslot1], Gates.Z)
+    end
+    if zmeas==2
+        apply!([remreg2], [remslot2], Gates.X)
     end
 end
 
@@ -203,13 +208,11 @@ end
         @yield timeout(sim, purifier_busy_time)
         rega = get_prop(mgraph,nodea,:register)
         regb = get_prop(mgraph,nodeb,:register)
-        println((nodea,nodeb),(pair1qa, pair1qb, pair2qa, pair2qb))
         gate = (Gates.CNOT, Gates.CPHASE)[round%2+1]
         apply!([rega,rega],[pair2qa,pair1qa],gate)
         apply!([regb,regb],[pair2qb,pair1qb],gate)
-        measbasis = [States.X₀, States.X₁]
-        measa = project_traceout!(rega, pair2qa, measbasis)
-        measb = project_traceout!(regb, pair2qb, measbasis)
+        measa = project_traceout!(rega, pair2qa, States.XBasis)
+        measb = project_traceout!(regb, pair2qb, States.XBasis)
         if measa!=measb
             traceout!(rega, pair1qa)
             traceout!(regb, pair1qb)

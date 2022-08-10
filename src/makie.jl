@@ -54,7 +54,9 @@ function Makie.plot!(rg::RegistersGraph{<:Tuple{AbstractVector{Register}}})
         end
         states = unique(vcat([[s for s in r.staterefs if !isnothing(s)] for r in registers]...))
         for s in states
+            juststarted = true
             for (si,(r,i)) in enumerate(zip(s.registers,s.registerindices))
+                isnothing(r) && continue
                 whichreg = findfirst(==(r),registers)
                 #isnothing(whichreg) && continue
                 push!(state_coords[], Makie.Point2f0(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
@@ -63,8 +65,10 @@ function Makie.plot!(rg::RegistersGraph{<:Tuple{AbstractVector{Register}}})
                     break
                 end
                 push!(state_links[], Makie.Point2f0(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
-                if 1<si<nsubsystems(s)
+                if !juststarted && si<nsubsystems(s)
                     push!(state_links[], state_links[][end])
+                else
+                    juststarted = false
                 end
             end
         end

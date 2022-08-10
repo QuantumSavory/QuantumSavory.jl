@@ -60,14 +60,17 @@ subsystemcompose(op::Operator, k::Ket) = tensor(op,dm(k)) # TODO this should be 
 traceout!(s::StateVector, i) = ptrace(s,i)
 traceout!(s::Operator, i) = ptrace(s,i)
 
+ispadded(::StateVector) = false
+ispadded(::Operator) = false
+
 function observable(state::QuantumOptics.Ket, indices, operation) # TODO union with QO.Operator
-    e = isa(state,CompositeBasis) # TODO make this more elegant with multiple dispatch
+    e = basis(state)==basis(operation)
     op = e ? operation : embed(basis(state), indices, operation)
     expect(op, state)
 end
 
 function observable(state::QuantumOptics.Operator, indices, operation)
-    e = isa(state,CompositeBasis) # TODO make this more elegant with multiple dispatch
+    e = basis(state)==basis(operation)
     op = e ? operation : embed(basis(state), indices, operation)
     expect(op, state)
 end
@@ -84,8 +87,12 @@ function apply!(state::QuantumOptics.Operator, indices, operation)
     state
 end
 
-function uptotime!(state, idx::Int, background, Δt)
+function uptotime!(state::QuantumOptics.StateVector, idx::Int, background, Δt)
     state = isa(state, QuantumOptics.StateVector) ? dm(state) : state # AAA make more elegant with multiple dispatch
+    uptotime!(state, idx, background, Δt)
+end
+
+function uptotime!(state::QuantumOptics.Operator, idx::Int, background, Δt)
     nstate = zero(state)
     tmpl = zero(state)
     tmpr = zero(state)
@@ -99,6 +106,27 @@ function uptotime!(state, idx::Int, background, Δt)
     end
     @assert abs(tr(nstate)) ≈ 1. # TODO remove
     nstate
+end
+
+function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,basis::Type{<:States.AbstractBasis})
+    project_traceout!(state::QuantumOptics.Operator,stateindex,basisvectors(basis))
+end
+
+function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,psis::Vector{<:States.AbstractBasis})
+    if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of overlap vs _project_and_drop
+        overlaps = [overlap(psi,state) for psi in psis]
+        branch_probs = cumsum(overlaps)
+        @assert branch_probs[end] ≈ 1.0
+        j = findfirst(>=(rand()), branch_probs) # TODO what if there is numerical imprecision and sum<1
+        j, nothing
+    else
+        results = [_project_and_drop(state,psi,stateindex) for psi in psis]
+        probs = [_branch_prob(r) for r in results]
+        branch_probs = cumsum(probs)
+        @assert branch_probs[end] ≈ 1.0
+        j = findfirst(>=(rand()), branch_probs) # TODO what if there is numerical imprecision and sum<1
+        j, normalize(results[j])
+    end
 end
 
 ##
@@ -122,11 +150,11 @@ const _cphase = _ll⊗_Id + _hh⊗_z
 apply!(state::QuantumOptics.Ket,      indices, operation::Gates.AbstractUGate) = apply!(state, indices, express_qo(operation))
 apply!(state::QuantumOptics.Operator, indices, operation::Gates.AbstractUGate) = apply!(state, indices, express_qo(operation))
 
-overlap(l::States.AbstractState, r::QuantumOptics.Ket) = overlap(express_qo(l), r)
-overlap(l::States.AbstractState, r::QuantumOptics.Operator) = overlap(express_qo(l), r)
+overlap(l::States.AbstractBasis, r::QuantumOptics.Ket) = overlap(express_qo(l), r)
+overlap(l::States.AbstractBasis, r::QuantumOptics.Operator) = overlap(express_qo(l), r)
 
-_project_and_drop(state::QuantumOptics.Ket, project_on::States.AbstractState, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
-_project_and_drop(state::QuantumOptics.Operator, project_on::States.AbstractState, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
+_project_and_drop(state::QuantumOptics.Ket, project_on::States.AbstractBasis, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
+_project_and_drop(state::QuantumOptics.Operator, project_on::States.AbstractBasis, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
 
 express_qo(::Gates.HGate) = _hadamard
 express_qo(::Gates.XGate) = _x
@@ -135,8 +163,8 @@ express_qo(::Gates.ZGate) = _z
 express_qo(::Gates.CPHASEGate) = _cphase
 express_qo(::Gates.CNOTGate) = _cnot
 
-express_qo(s::States.XState) = (_s₊,_s₋)[s.subspace+1]
-express_qo(s::States.ZState) = (_l,_h)[s.subspace+1]
+express_qo(s::States.XBasis) = (_s₊,_s₋)[s.subspace+1]
+express_qo(s::States.ZBasis) = (_l,_h)[s.subspace+1]
 
 apply!(state::QuantumOptics.Ket, indices, dep::Gates.Depolarize) = apply!(dm(state), indices, dep)
 function apply!(state::QuantumOptics.Operator{B,B,D}, indices, dep::Gates.Depolarize) where {B<:CompositeBasis, D}

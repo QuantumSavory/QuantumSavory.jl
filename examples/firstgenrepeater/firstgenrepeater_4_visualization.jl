@@ -16,7 +16,7 @@ purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 sim, mgraph = simulation_setup(sizes, T2)
 
 for (;src, dst) in edges(mgraph)
-    @process entangler(sim, mgraph, src, dst, F, entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, mgraph, src, dst, ()->qo_noisy_pair(F), entangler_wait_time, entangler_busy_time)
 end
 for node in vertices(mgraph)
     @process swapper(sim, mgraph, node, swapper_wait_time, swapper_busy_time)
@@ -51,8 +51,8 @@ step_ts = range(0, 100, step=0.1)
 record(fig, "firstgenrepeater-07.observable.mp4", step_ts, framerate=10) do t
     run(sim, t)
 
-    fXX = real(observable(registers[[1,5]], [2,2], XX, 0.0; time=t))
-    fZZ = real(observable(registers[[1,5]], [2,2], ZZ, 0.0; time=t))
+    fXX = real(observable(registers[[1,5]], [2,2], qo_XX, 0.0; time=t))
+    fZZ = real(observable(registers[[1,5]], [2,2], qo_ZZ, 0.0; time=t))
     push!(fidXX[],fXX)
     push!(fidZZ[],fZZ)
     push!(ts[],t)

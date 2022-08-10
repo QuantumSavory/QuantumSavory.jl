@@ -48,22 +48,30 @@ end
 
 module States
 
-abstract type AbstractState end
-struct XState <: AbstractState
+abstract type AbstractBasis end
+struct XBasis <: AbstractBasis
     subspace::Int
 end
-struct YState <: AbstractState
+struct YBasis <: AbstractBasis
     subspace::Int
 end
-struct ZState <: AbstractState
+struct ZBasis <: AbstractBasis
     subspace::Int
 end
 
-const X₀ = XState(0)
-const X₁ = XState(1)
-const Y₀ = YState(0)
-const Y₁ = YState(1)
-const Z₀ = ZState(0)
-const Z₁ = ZState(1)
+const X₀ = XBasis(0) # TODO why are you indexing from zero?
+const X₁ = XBasis(1)
+const Y₀ = YBasis(0)
+const Y₁ = YBasis(1)
+const Z₀ = ZBasis(0)
+const Z₁ = ZBasis(1)
 
 end
+
+function basisvectors(basis::Type{<:States.AbstractBasis})
+    [basis(i) for i in indexspan(basis)]
+end
+
+indexspan(::Type{States.XBasis}) = (0,1)
+indexspan(::Type{States.YBasis}) = (0,1)
+indexspan(::Type{States.ZBasis}) = (0,1)

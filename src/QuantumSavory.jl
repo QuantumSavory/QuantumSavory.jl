@@ -19,6 +19,8 @@ using IterTools
 using LinearAlgebra
 #using Infiltrator
 
+include("gates_and_states.jl")
+
 abstract type QuantumStateTrait end
 """Specifies that a given register slot contains qubits."""
 struct QubitTrait <: QuantumStateTrait end
@@ -38,12 +40,12 @@ Layout(traits) = Layout(traits, nothing)
 # TODO am I overusing Ref
 struct StateRef
     state::Base.RefValue{Any} # TODO it would be nice if this was not abstract but `uptotime!` converts between types... maybe make StateRef{T} state::RefValue{T} and a new function that swaps away the backpointers in the appropriate registers
-    registers::Vector
+    registers::Vector{Any} # TODO Should be Vector{Register}, but right now we occasionally set it to nothing to deal with padded storage
     registerindices::Vector{Int}
     StateRef(state::Base.RefValue{S}, registers, registerindices) where {S} = new(state, registers, registerindices)
 end
 
-StateRef(state, registers, registerindices) = StateRef(Ref{Any}(state), registers, registerindices) # TODO same as above, this should not be forced to Any
+StateRef(state, registers, registerindices) = StateRef(Ref{Any}(copy(state)), registers, registerindices) # TODO same as above, this should not be forced to Any
 
 """
 The main data structure in `QuantumSavory`, used to represent a quantum register in an arbitrary formalism.
@@ -69,7 +71,11 @@ function Base.show(io::IO, s::StateRef)
     print(io, "State containing $(nsubsystems(s.state[])) subsystems in $(typeof(s.state[]).name.module) implementation")
     print(io, "\n  In registers:")
     for (i,r) in zip(s.registerindices, s.registers)
-        print(io, "\n    $(i)@$(r.name)")
+        if isnothing(r)
+            print(io, "\n    not used")
+        else
+            print(io, "\n    $(i)@$(r.name)")
+        end
     end
 end
 
@@ -90,7 +96,7 @@ end
 Base.:(==)(r1::Register, r2::Register) = r1.name == r2.name
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
-    ~isnothing(r.staterefs[i]) # TODO does this .staterefs need to be an interface
+    r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent
 end
 
 function initialize!(reg::Register,i::Int; time=nothing)
@@ -119,21 +125,29 @@ e.g., kets or density matrices from `QuantumOptics.jl`
 or tableaux from `QuantumClifford.jl`.
 """
 function initialize!(regs,indices,state; time=nothing)
-    for (r,i) in zip(regs,indices)
-        initialize!(r,i; time=time) # TODO expensive and not completely needed given next step
+    stateref = StateRef(state, regs, indices)
+    for (si,(reg,ri)) in enumerate(zip(regs,indices))
+        reg.staterefs[ri] = stateref
+        reg.stateindices[ri] = si
+        !isnothing(time) && (reg.accesstimes[ri] = time)
     end
-    subsystemcompose(regs,indices) # TODO expensive and not completely needed given next step
-    regs[1].staterefs[indices[1]].state[] = copy(state)
+    stateref
 end
 
-nsubsystems(s::StateRef) = nsubsystems(s.state[])
+nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
+nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
 nsubsystems(r::Register) = length(r.staterefs)
 
-subsystemcompose(s...) = reduce(subsystemcompose, s)
+#subsystemcompose(s...) = reduce(subsystemcompose, s)
 
-function subsystemcompose(regs, indices)
+
+# TODO use a trait system to select the type of composition
+# - do they need to be collapsed
+# - do they have unused slots that can be refilled
+# - are they just naively composed together
+function subsystemcompose(regs::Vector{Register}, indices) # TODO add a type constraint on regs
     # Get all references to states that matter, removing duplicates
-    staterefs = unique([r.staterefs[i] for (r,i) in zip(regs,indices)]) # TODO do not use == checks like in `unique`, use ===
+    staterefs = unique(objectid, [r.staterefs[i] for (r,i) in zip(regs,indices)]) # TODO do not use == checks like in `unique`, use ===
     # Prepare the larger state object
     newstate = subsystemcompose([s.state[] for s in staterefs]...)
     # Prepare the new state reference
@@ -141,8 +155,9 @@ function subsystemcompose(regs, indices)
     newregisterindices = vcat([s.registerindices for s in staterefs]...)
     newref = StateRef(newstate, newregisters, newregisterindices)
     # Update all registers to point to the new state reference
-    offsets = [0,cumsum(nsubsystems.(staterefs))...]
+    offsets = [0,cumsum(nsubsystems_padded.(staterefs))...]
     for (r,i) in zip(newregisters,newregisterindices)
+        isnothing(r) && continue
         oldref = r.staterefs[i]
         r.staterefs[i] = newref
         offset = offsets[findfirst(ref->ref===oldref, staterefs)]
@@ -152,16 +167,23 @@ function subsystemcompose(regs, indices)
 end
 
 function removebackref!(s::StateRef, i) # To be used only with something that updates s.state[]
+    padded = ispadded(s.state[])
     for (r,ri) in zip(s.registers, s.registerindices)
+        isnothing(r) && continue
         if r.stateindices[ri] == i
             r.staterefs[ri] = nothing
             r.stateindices[ri] = 0
-        elseif r.stateindices[ri] > i
+        elseif !padded && r.stateindices[ri] > i
             r.stateindices[ri] -= 1
         end
     end
-    deleteat!(s.registerindices, i)
-    deleteat!(s.registers, i)
+    if padded
+        s.registerindices[i] = 0
+        s.registers[i] = nothing
+    else
+        deleteat!(s.registerindices, i)
+        deleteat!(s.registers, i)
+    end
     s
 end
 function traceout!(s::StateRef, i::Int)
@@ -198,34 +220,25 @@ Perform a projective measurement on the given slot of the given register.
 projecting on either `stateA` or `stateB`, returning the index of the subspace
 on which the projection happened. It assumes the list of possible states forms a basis
 for the Hilbert space. The Hilbert space of the register is automatically shrinked.
+
+A basis object can be specified on its own as well, e.g.
+`project_traceout!(reg, slot, basis)`.
 """
+function project_traceout! end
+
 function project_traceout!(reg::Register, i::Int, psis; time=nothing)
     project_traceout!(identity, reg, i, psis; time=time)
 end
 
-# AAA abstract away the psis
 function project_traceout!(f, reg::Register, i::Int, psis; time=nothing)
     !isnothing(time) && uptotime!([reg], [i], time)
     stateref = reg.staterefs[i]
-    if isnothing(stateref)
+    stateindex = reg.stateindices[i]
+    if isnothing(stateref) # TODO maybe use isassigned
         throw("error") # make it more descriptive
     end
-    if nsubsystems(stateref) == 1 # TODO is there a way to do this in a single function, instead of overlap vs _project_and_drop
-        overlaps = [overlap(psi,stateref.state[]) for psi in psis]
-        branch_probs = cumsum(overlaps)
-        j = findfirst(>=(rand()), branch_probs) # TODO what if there is numerical imprecision and sum<1
-        reg.staterefs[i] = nothing
-        reg.stateindices[i] = 0
-    else
-        stateindex = reg.stateindices[i]
-        results = [_project_and_drop(stateref.state[],psi,stateindex) for psi in psis]
-        probs = [_branch_prob(r) for r in results]
-        branch_probs = cumsum(probs)
-        j = findfirst(>=(rand()), branch_probs) # TODO what if there is numerical imprecision and sum<1
-        stateref.state[] = normalize(results[j])
-        removebackref!(stateref, stateindex)
-    end
-    @assert branch_probs[end] ≈ 1.0
+    j, stateref.state[] = project_traceout!(stateref.state[],stateindex,psis)
+    removebackref!(stateref, stateindex)
     f(j)
 end
 
@@ -273,7 +286,7 @@ The appropriate representatin of the gate is used,
 depending on the formalism under which a quantum state is stored in the given registers.
 The Hilbert spaces of the registers are automatically joined if necessary.
 """
-function apply!(regs, indices, operation; time=nothing)
+function apply!(regs, indices, operation; time=nothing) # TODO add a type constraint on regs
     !isnothing(time) && uptotime!(regs, indices, time)
     subsystemcompose(regs,indices)
     state = regs[1].staterefs[indices[1]].state[]
@@ -333,7 +346,6 @@ struct T2Dephasing
     t2
 end
 
-include("gates_and_states.jl")
 include("qo_extras.jl")
 include("qc_extras.jl")
 include("sj_extras.jl")
@@ -348,6 +360,5 @@ function newstate(::QubitTrait)
     b = SpinBasis(1//2)
     spinup(b) # logical 0
 end
-
 
 end # module

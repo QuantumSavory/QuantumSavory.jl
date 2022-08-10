@@ -15,7 +15,7 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 sim, mgraph = simulation_setup(sizes, T2)
 
 for (;src, dst) in edges(mgraph)
-    @process entangler(sim, mgraph, src, dst, F, entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, mgraph, src, dst, ()->qo_noisy_pair(F), entangler_wait_time, entangler_busy_time)
 end
 for node in vertices(mgraph)
     @process swapper(sim, mgraph, node, swapper_wait_time, swapper_busy_time)
