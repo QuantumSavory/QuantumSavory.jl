@@ -103,7 +103,7 @@ const qo_YY = QuantumOptics.tensor(QuantumOptics.sigmay(b)⊗QuantumOptics.sigma
         registera = get_prop(mgraph,nodea,:register)
         registerb = get_prop(mgraph,nodeb,:register)
         @yield timeout(sim, entangler_busy_time)
-        initialize!([registera,registerb],[ia,ib],noisy_pair(); time=now(sim))
+        initialize!((registera[ia],registerb[ib]),noisy_pair(); time=now(sim))
         get_prop(mgraph,nodea,:enttrackers)[ia] = (node=nodeb,slot=ib)
         get_prop(mgraph,nodeb,:enttrackers)[ib] = (node=nodea,slot=ia)
         @simlog sim "entangled node $(nodea):$(ia) and node $(nodeb):$(ib)"
@@ -146,7 +146,7 @@ end
         reg1 = get_prop(mgraph,node1.node,:register)
         node2 = get_prop(mgraph,node,:enttrackers)[q2]
         reg2 = get_prop(mgraph,node2.node,:register)
-        swapcircuit(reg, q1, q2, reg1, node1.slot, reg2, node2.slot; time=now(sim))
+        swapcircuit(reg[q1], reg[q2], reg1[node1.slot], reg2[node2.slot]; time=now(sim))
         get_prop(mgraph,node1.node,:enttrackers)[node1.slot] = node2
         get_prop(mgraph,node2.node,:enttrackers)[node2.slot] = node1
         get_prop(mgraph,node,:enttrackers)[q1] = nothing
@@ -156,15 +156,15 @@ end
     end
 end
 
-function swapcircuit(localreg, localslot1, localslot2, remreg1, remslot1, remreg2, remslot2; time=nothing)
-    apply!([localreg,localreg], [localslot1, localslot2], CNOT; time=time)
-    xmeas = project_traceout!(localreg, localslot1, X)
-    zmeas = project_traceout!(localreg, localslot2, Z)
+function swapcircuit(localslot1, localslot2, remslot1, remslot2; time=nothing)
+    apply!((localslot1, localslot2), CNOT; time=time)
+    xmeas = project_traceout!(localslot1, X)
+    zmeas = project_traceout!(localslot2, Z)
     if xmeas==2
-        apply!([remreg1], [remslot1], Z)
+        apply!(remslot1, Z)
     end
     if zmeas==2
-        apply!([remreg2], [remslot2], X)
+        apply!(remslot2, X)
     end
 end
 
@@ -209,13 +209,13 @@ end
         rega = get_prop(mgraph,nodea,:register)
         regb = get_prop(mgraph,nodeb,:register)
         gate = (CNOT, CPHASE)[round%2+1]
-        apply!([rega,rega],[pair2qa,pair1qa],gate)
-        apply!([regb,regb],[pair2qb,pair1qb],gate)
-        measa = project_traceout!(rega, pair2qa, X)
-        measb = project_traceout!(regb, pair2qb, X)
+        apply!((rega[pair2qa],rega[pair1qa]),gate)
+        apply!((regb[pair2qb],regb[pair1qb]),gate)
+        measa = project_traceout!(rega[pair2qa], X)
+        measb = project_traceout!(regb[pair2qb], X)
         if measa!=measb
-            traceout!(rega, pair1qa)
-            traceout!(regb, pair1qb)
+            traceout!(rega[pair1qa])
+            traceout!(regb[pair1qb])
             get_prop(mgraph,nodea,:enttrackers)[pair1qa] = nothing
             get_prop(mgraph,nodeb,:enttrackers)[pair1qb] = nothing
             @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa) and $(nodeb):$(pair1qb)&$(pair2qb)"

@@ -67,6 +67,11 @@ Register(l,bg,s::Symbol) = Register(l,fill(nothing,length(l.traits)),fill(0,leng
 Register(l,s::Symbol) = Register(l,fill(nothing,length(l.traits)),s) # TODO traits should be an interface
 Register(l) = Register(l,gensym())
 
+struct RegRef
+    reg::Register
+    idx::Int
+end
+
 function Base.show(io::IO, s::StateRef)
     print(io, "State containing $(nsubsystems(s.state[])) subsystems in $(typeof(s.state[]).name.module) implementation")
     print(io, "\n  In registers:")
@@ -93,16 +98,31 @@ function Base.show(io::IO, r::Register)
     end
 end
 
+function Base.show(io::IO, r::RegRef)
+    print(io, "Slot $(r.idx)/$(length(r.layout.traits)) of Register $(r.reg.name)") # TODO make this length call prettier
+    print(io, "\nContent:")
+    i,s = r.reg.stateindices[r.idx], r.reg.staterefs[r.idx]
+    if isnothing(s)
+        print(io, "\n    nothing")
+    else
+        print(io, "\n    $(i) @ $(typeof(s.state[]).name.module).$(typeof(s.state[]).name.name) $(objectid(s.state[]))")
+    end
+end
+
+Base.getindex(r::Register, i::Int) = RegRef(r,i)
+
 Base.:(==)(r1::Register, r2::Register) = r1.name == r2.name
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
     r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent
 end
+Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
 
 function initialize!(reg::Register,i::Int; time=nothing)
     s = newstate(reg.layout.traits[i]) # TODO this should be an interface
     initialize!(reg,i,s; time=time)
 end
+initialize!(r::RegRef; time=nothing) = initialize!(r.reg, r.idx; time)
 
 function initialize!(reg::Register,i::Int,state; time=nothing)
     if isassigned(reg,i) # TODO decide if this is an error or a warning or nothing
@@ -114,6 +134,7 @@ function initialize!(reg::Register,i::Int,state; time=nothing)
     !isnothing(time) && overwritetime!([reg], [i], time)
     ref
 end
+initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
 
 """
 Set the state of a given set of registers.
@@ -125,7 +146,7 @@ e.g., kets or density matrices from `QuantumOptics.jl`
 or tableaux from `QuantumClifford.jl`.
 """
 function initialize!(regs,indices,state; time=nothing)
-    stateref = StateRef(state, regs, indices)
+    stateref = StateRef(state, collect(regs), collect(indices))
     for (si,(reg,ri)) in enumerate(zip(regs,indices))
         reg.staterefs[ri] = stateref
         reg.stateindices[ri] = si
@@ -133,10 +154,13 @@ function initialize!(regs,indices,state; time=nothing)
     end
     stateref
 end
+initialize!(refs::Vector{RegRef}, state; time=nothing) = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time)
+initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time) # TODO temporary array allocated here
 
 nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
 nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
 nsubsystems(r::Register) = length(r.staterefs)
+nsubsystems(r::RegRef) = 1
 
 #subsystemcompose(s...) = reduce(subsystemcompose, s)
 
@@ -165,6 +189,7 @@ function subsystemcompose(regs::Vector{Register}, indices) # TODO add a type con
     end
     newref
 end
+subsystemcompose(refs::RegRef...) = subsystemcompose([r.reg for r in refs], [r.idx for r in refs]) # TODO temporary arrays are allocated here
 
 function removebackref!(s::StateRef, i) # To be used only with something that updates s.state[]
     padded = ispadded(s.state[])
@@ -212,6 +237,7 @@ function traceout!(r::Register, i::Int)
     end
     r
 end
+traceout!(r::RegRef) = traceout!(r.reg, r.idx)
 
 """
 Perform a projective measurement on the given slot of the given register.
@@ -229,6 +255,7 @@ function project_traceout! end
 function project_traceout!(reg::Register, i::Int, psis; time=nothing)
     project_traceout!(identity, reg, i, psis; time=time)
 end
+project_traceout!(r::RegRef, psis; time=nothing) = project_traceout!(r.reg, r.idx, psis; time=nothing)
 
 function project_traceout!(f, reg::Register, i::Int, psis; time=nothing)
     !isnothing(time) && uptotime!([reg], [i], time)
@@ -241,6 +268,7 @@ function project_traceout!(f, reg::Register, i::Int, psis; time=nothing)
     removebackref!(stateref, stateindex)
     f(j)
 end
+project_traceout!(f, r::RegRef, psis; time=nothing) = project_traceout!(f, r.reg, r.idx, psis; time=nothing)
 
 function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
     if reg1===reg2 && i1==i2
@@ -259,6 +287,7 @@ function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
         state2.registerindices[stateind2] = i1
     end
 end
+swap!(r1::RegRef, r2::RegRef) = swap!(r1.reg, r2.reg, r1.idx, r2.idx)
 
 """
 Calculate the expectation value of a quantum observable on the given register and slot.
@@ -276,6 +305,8 @@ function observable(regs, indices, obs, something=nothing; time=nothing)
     state_indices = [r.stateindices[i] for (r,i) in zip(regs, indices)]
     observable(state, state_indices, obs)
 end
+observable(refs::Vector{RegRef}, obs, something=nothing; time=nothing) = observable([r.reg for r in refs], [r.idx for r in refs], obs, something; time)
+observable(refs::NTuple{N,RegRef}, obs, something=nothing; time=nothing) where {N} = observable((r.reg for r in refs), (r.idx for r in refs), obs, something; time)
 
 """
 Apply a given operation on the given set of register slots.
@@ -295,6 +326,9 @@ function apply!(regs, indices, operation; time=nothing) # TODO add a type constr
     regs[1].staterefs[indices[1]].state[] = state
     regs
 end
+apply!(refs::Vector{RegRef}, operation; time=nothing) = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time=nothing)
+apply!(refs::NTuple{N,RegRef}, operation; time=nothing) where {N} = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time=nothing) # TODO temporary array allocated here
+apply!(ref::RegRef, operation; time=nothing) = apply!([ref.reg], [ref.idx], operation; time=nothing)
 
 function uptotime!(stateref::StateRef, idx::Int, background, Δt) # TODO this should be just for
     stateref.state[] = uptotime!(stateref.state[], idx, background, Δt)
@@ -327,12 +361,14 @@ function uptotime!(registers, indices, now)
         r.accesstimes[i] = now
     end
 end
+uptotime!(refs::Vector{RegRef}, now) = uptotime!([r.reg for r in refs], [r.idx for r in refs], now)
 
 function overwritetime!(registers, indices, now)
     for (i,r) in zip(indices, registers)
         r.accesstimes[i] = now
     end
 end
+overwritetime!(refs::Vector{RegRef}, now) = overwritetime!([r.reg for r in refs], [r.idx for r in refs], now)
 
 # TODO make a library of backgrounds, traits about whether they are unitary or not, etc, and helper interfaces
 
