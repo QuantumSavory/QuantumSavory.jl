@@ -9,7 +9,7 @@ export QubitTrait, QumodeTrait, Layout, Connectivity,
     observable,
     registersgraph, RGHandler, registersgraph_axis, resourceplot_axis,
     @simlog, isfree, nongreedymultilock, spinlock,
-    Gates, States
+    X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
@@ -19,7 +19,7 @@ using IterTools
 using LinearAlgebra
 #using Infiltrator
 
-include("gates_and_states.jl")
+include("symbolics.jl")
 
 abstract type QuantumStateTrait end
 """Specifies that a given register slot contains qubits."""

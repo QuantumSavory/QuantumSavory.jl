@@ -12,6 +12,8 @@ The other files run the simulation and generate visuals in a number of different
 
 All of the above examples simulate the entire wave function of each qubit through a Schroedinger/Lindblad type of dynamics.
 
+## Clifford Simulations
+
 The `*_clifford_setup.jl` file implements the few additional steps necessary for a tableau-based simulation, which can be much more efficient. Then `firstgenrepater_clifford_full_example.jl` simply re-runs the same code as the wavefunction-based examples from above.
 
 Lastly, `firstgenrepeater_compare_formalisms.jl` runs repeated trajectory using either representation and compares their average results.

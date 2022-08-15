@@ -157,14 +157,14 @@ end
 end
 
 function swapcircuit(localreg, localslot1, localslot2, remreg1, remslot1, remreg2, remslot2; time=nothing)
-    apply!([localreg,localreg], [localslot1, localslot2], Gates.CNOT; time=time)
-    xmeas = project_traceout!(localreg, localslot1, States.XBasis)
-    zmeas = project_traceout!(localreg, localslot2, States.ZBasis)
+    apply!([localreg,localreg], [localslot1, localslot2], CNOT; time=time)
+    xmeas = project_traceout!(localreg, localslot1, X)
+    zmeas = project_traceout!(localreg, localslot2, Z)
     if xmeas==2
-        apply!([remreg1], [remslot1], Gates.Z)
+        apply!([remreg1], [remslot1], Z)
     end
     if zmeas==2
-        apply!([remreg2], [remslot2], Gates.X)
+        apply!([remreg2], [remslot2], X)
     end
 end
 
@@ -208,11 +208,11 @@ end
         @yield timeout(sim, purifier_busy_time)
         rega = get_prop(mgraph,nodea,:register)
         regb = get_prop(mgraph,nodeb,:register)
-        gate = (Gates.CNOT, Gates.CPHASE)[round%2+1]
+        gate = (CNOT, CPHASE)[round%2+1]
         apply!([rega,rega],[pair2qa,pair1qa],gate)
         apply!([regb,regb],[pair2qb,pair1qb],gate)
-        measa = project_traceout!(rega, pair2qa, States.XBasis)
-        measb = project_traceout!(regb, pair2qb, States.XBasis)
+        measa = project_traceout!(rega, pair2qa, X)
+        measb = project_traceout!(regb, pair2qb, X)
         if measa!=measb
             traceout!(rega, pair1qa)
             traceout!(regb, pair1qb)

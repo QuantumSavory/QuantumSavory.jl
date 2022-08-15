@@ -108,11 +108,11 @@ function uptotime!(state::QuantumOptics.Operator, idx::Int, background, Δt)
     nstate
 end
 
-function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,basis::Type{<:States.AbstractBasis})
-    project_traceout!(state::QuantumOptics.Operator,stateindex,basisvectors(basis))
+function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,basis::Symbolic{Operator})
+    project_traceout!(state::QuantumOptics.Operator,stateindex,eigvecs(basis))
 end
 
-function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,psis::Vector{<:States.AbstractBasis})
+function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,psis::Vector{<:Symbolic{Ket}})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of overlap vs _project_and_drop
         overlaps = [overlap(psi,state) for psi in psis]
         branch_probs = cumsum(overlaps)
@@ -147,25 +147,26 @@ const _hadamard = (sigmaz(_b2)+sigmax(_b2))/√2
 const _cnot = _ll⊗_Id + _hh⊗_x
 const _cphase = _ll⊗_Id + _hh⊗_z
 
-apply!(state::QuantumOptics.Ket,      indices, operation::Gates.AbstractUGate) = apply!(state, indices, express_qo(operation))
-apply!(state::QuantumOptics.Operator, indices, operation::Gates.AbstractUGate) = apply!(state, indices, express_qo(operation))
+apply!(state::QuantumOptics.Ket,      indices, operation::Symbolic{Operator}) = apply!(state, indices, express_qo(operation))
+apply!(state::QuantumOptics.Operator, indices, operation::Symbolic{Operator}) = apply!(state, indices, express_qo(operation))
 
-overlap(l::States.AbstractBasis, r::QuantumOptics.Ket) = overlap(express_qo(l), r)
-overlap(l::States.AbstractBasis, r::QuantumOptics.Operator) = overlap(express_qo(l), r)
+overlap(l::Symbolic{Ket}, r::QuantumOptics.Ket) = overlap(express_qo(l), r)
+overlap(l::Symbolic{Ket}, r::QuantumOptics.Operator) = overlap(express_qo(l), r)
 
-_project_and_drop(state::QuantumOptics.Ket, project_on::States.AbstractBasis, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
-_project_and_drop(state::QuantumOptics.Operator, project_on::States.AbstractBasis, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
+_project_and_drop(state::QuantumOptics.Ket, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
+_project_and_drop(state::QuantumOptics.Operator, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
 
-express_qo(::Gates.HGate) = _hadamard
-express_qo(::Gates.XGate) = _x
-express_qo(::Gates.YGate) = _y
-express_qo(::Gates.ZGate) = _z
-express_qo(::Gates.CPHASEGate) = _cphase
-express_qo(::Gates.CNOTGate) = _cnot
+express_qo(::HGate) = _hadamard
+express_qo(::XGate) = _x
+express_qo(::YGate) = _y
+express_qo(::ZGate) = _z
+express_qo(::CPHASEGate) = _cphase
+express_qo(::CNOTGate) = _cnot
 
-express_qo(s::States.XBasis) = (_s₊,_s₋)[s.subspace+1]
-express_qo(s::States.ZBasis) = (_l,_h)[s.subspace+1]
+express_qo(s::XBasisState) = (_s₊,_s₋)[s.idx]
+express_qo(s::ZBasisState) = (_l,_h)[s.idx]
 
+#= TODO implement superoperators
 apply!(state::QuantumOptics.Ket, indices, dep::Gates.Depolarize) = apply!(dm(state), indices, dep)
 function apply!(state::QuantumOptics.Operator{B,B,D}, indices, dep::Gates.Depolarize) where {B<:CompositeBasis, D}
     filler_indices = [i for i in 1:nsubsystems(state) if i∉indices]
@@ -177,6 +178,7 @@ function apply!(state::QuantumOptics.Operator, indices, dep::Gates.Depolarize) #
     state.data .= dep.p .* state.data .+ (1-dep.p) ./ size(state.data,1) .* I(size(state.data,1))
     state
 end
+=#
 
 ## backgrounds
 function krausops(T1::T1Decay, Δt)
