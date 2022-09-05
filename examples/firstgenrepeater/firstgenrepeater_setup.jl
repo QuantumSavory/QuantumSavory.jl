@@ -178,7 +178,7 @@ end
 
 @resumable function purifier(
     sim::Environment,  # The scheduler for all simulation events
-    mgraph,            # The graph of qubit nodes
+    network,           # The graph of quantum nodes
     nodea,             # One of the nodes on which the pairs to be purified rest
     nodeb,             # The other such node
     purifier_wait_time,# The wait time in case there are no pairs available for purification
@@ -186,7 +186,7 @@ end
     )
     round = 0
     while true
-        pairs_of_bellpairs = findqubitstopurify(mgraph,nodea,nodeb)
+        pairs_of_bellpairs = findqubitstopurify(network,nodea,nodeb)
         if isnothing(pairs_of_bellpairs)
             @yield timeout(sim, purifier_wait_time)
             continue
@@ -219,7 +219,7 @@ end
     end
 end
 
-function findqubitstopurify(mgraph,nodea,nodeb)
+function findqubitstopurify(network,nodea,nodeb)
     enttrackers = network[nodea,:enttrackers]
     locksa = network[nodea,:locks]
     locksb = network[nodeb,:locks]
