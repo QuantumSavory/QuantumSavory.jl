@@ -9,7 +9,7 @@ export QubitTrait, QumodeTrait, Layout, Connectivity,
     observable,
     registersgraph, RGHandler, registersgraph_axis, resourceplot_axis,
     @simlog, isfree, nongreedymultilock, spinlock,
-    X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2
+    X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2,SProjector,MixedState
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
@@ -24,6 +24,7 @@ include("symbolics.jl")
 abstract type QuantumStateTrait end
 """Specifies that a given register slot contains qubits."""
 struct QubitTrait <: QuantumStateTrait end
+"""Specifies that a given register slot contains qumodes."""
 struct QumodeTrait <: QuantumStateTrait end
 
 abstract type AbstractLayout end
@@ -124,18 +125,6 @@ function initialize!(reg::Register,i::Int; time=nothing)
 end
 initialize!(r::RegRef; time=nothing) = initialize!(r.reg, r.idx; time)
 
-function initialize!(reg::Register,i::Int,state; time=nothing)
-    if isassigned(reg,i) # TODO decide if this is an error or a warning or nothing
-        throw("error") # TODO be more descriptive
-    end
-    ref = StateRef(state,[reg],[i])
-    reg.staterefs[i] = ref
-    reg.stateindices[i] = 1
-    !isnothing(time) && overwritetime!([reg], [i], time)
-    ref
-end
-initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
-
 """
 Set the state of a given set of registers.
 
@@ -145,9 +134,12 @@ set the state of the given slots in the given registers to `state`.
 e.g., kets or density matrices from `QuantumOptics.jl`
 or tableaux from `QuantumClifford.jl`.
 """
-function initialize!(regs,indices,state; time=nothing)
+function initialize!(regs::Vector{Register},indices::Vector{Int},state; time=nothing)
     stateref = StateRef(state, collect(regs), collect(indices))
     for (si,(reg,ri)) in enumerate(zip(regs,indices))
+        if isassigned(reg,ri) # TODO decide if this is an error or a warning or nothing
+            throw("error") # TODO be more descriptive
+        end
         reg.staterefs[ri] = stateref
         reg.stateindices[ri] = si
         !isnothing(time) && (reg.accesstimes[ri] = time)
@@ -156,6 +148,10 @@ function initialize!(regs,indices,state; time=nothing)
 end
 initialize!(refs::Vector{RegRef}, state; time=nothing) = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time)
 initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time) # TODO temporary array allocated here
+initialize!(reg::Register,i::Int,state; time=nothing) = initialize!([reg],[i],state; time)
+initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
+initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(r,i,state); time)
+
 
 nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
 nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
@@ -296,7 +292,7 @@ Calculate the expectation value of a quantum observable on the given register an
 of the `obs` observable (using the appropriate formalism, depending on the state
 representation in the given registers).
 """
-function observable(regs, indices, obs, something=nothing; time=nothing)
+function observable(regs::Vector{Register}, indices::Vector{Int}, obs, something=nothing; time=nothing) # TODO weird split between positional and keyword arguments
     staterefs = [r.staterefs[i] for (r,i) in zip(regs, indices)]
     # TODO it should still work even if they are not represented in the same state
     (any(isnothing, staterefs) || !all(s->s===staterefs[1], staterefs)) && return something
@@ -307,6 +303,8 @@ function observable(regs, indices, obs, something=nothing; time=nothing)
 end
 observable(refs::Vector{RegRef}, obs, something=nothing; time=nothing) = observable([r.reg for r in refs], [r.idx for r in refs], obs, something; time)
 observable(refs::NTuple{N,RegRef}, obs, something=nothing; time=nothing) where {N} = observable((r.reg for r in refs), (r.idx for r in refs), obs, something; time)
+observable(r::Vector{Register},i::Vector{Int},obs::Symbolic, something=nothing; time=nothing) = observable(r,i,express(r,i,obs), something; time)
+
 
 """
 Apply a given operation on the given set of register slots.

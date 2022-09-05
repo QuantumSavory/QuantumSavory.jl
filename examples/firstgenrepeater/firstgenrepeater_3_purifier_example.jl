@@ -16,7 +16,7 @@ purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 sim, mgraph = simulation_setup(sizes, T2)
 
 for (;src, dst) in edges(mgraph)
-    @process entangler(sim, mgraph, src, dst, ()->qo_noisy_pair(F), entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, mgraph, src, dst, ()->noisy_pair(F), entangler_wait_time, entangler_busy_time)
 end
 for node in vertices(mgraph)
     @process swapper(sim, mgraph, node, swapper_wait_time, swapper_busy_time)

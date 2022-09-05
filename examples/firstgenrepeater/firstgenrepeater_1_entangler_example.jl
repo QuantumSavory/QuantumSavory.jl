@@ -13,7 +13,7 @@ entangler_busy_time = 1.0  # How long it takes to establish a newly entangled pa
 sim, mgraph = simulation_setup(sizes, T2)
 
 for (;src, dst) in edges(mgraph)
-    @process entangler(sim, mgraph, src, dst, ()->qo_noisy_pair(F), entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, mgraph, src, dst, ()->noisy_pair(F), entangler_wait_time, entangler_busy_time)
 end
 
 # set up a plot

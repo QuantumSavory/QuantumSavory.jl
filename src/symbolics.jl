@@ -9,7 +9,7 @@ using LinearAlgebra
 import LinearAlgebra: eigvecs
 
 using QuantumOpticsBase
-import QuantumOpticsBase: tensor, ⊗
+import QuantumOpticsBase: tensor, ⊗, basis # TODO make QuantumInterface
 
 function countmap(samples) # A simpler version of StatsBase.countmap, because StatsBase is slow to import
     counts = Dict{Any,Any}()
@@ -52,27 +52,30 @@ end
 
 struct SKet <: Symbolic{Ket}
     name::Symbol
-    basis::Basis # From QuantumOpticsBase
+    basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
 end
 istree(::SKet) = false
 metadata(::SKet) = nothing
 Base.print(io::IO, x::SKet) = print(io, "|$(x.name)⟩")
+basis(x::SKet) = x.basis
 
 struct SBra <: Symbolic{Bra}
     name::Symbol
-    space::Basis
+    basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
 end
 istree(::SBra) = false
 metadata(::SBra) = nothing
 Base.print(io::IO, x::SBra) = print(io, "⟨$(x.name)|")
+basis(x::SBra) = x.basis
 
 struct SOperator <: Symbolic{Operator}
     name::Symbol
-    space::Basis
+    basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
 end
 istree(::SOperator) = false
 metadata(::SOperator) = nothing
 Base.print(io::IO, x::SOperator) = print(io, "$(x.name)")
+basis(x::SOperator) = x.basis
 
 struct SScaledKet <: Symbolic{Ket}
     coeff
@@ -85,6 +88,7 @@ metadata(::SScaledKet) = nothing
 operation(x::SScaledKet) = *
 Base.:(*)(c, x::Symbolic{Ket}) = SScaledKet(c,x)
 Base.:(*)(x::Symbolic{Ket}, c) = SScaledKet(c,x)
+Base.:(/)(x::Symbolic{Ket}, c) = SScaledKet(1/c,x)
 function Base.print(io::IO, x::SScaledKet)
     if x.coeff isa Number
         print(io, "$(x.coeff)$(x.ket)")
@@ -92,6 +96,7 @@ function Base.print(io::IO, x::SScaledKet)
         print(io, "($(x.coeff))$(x.ket)")
     end
 end
+basis(x::SScaledKet) = basis(x.ket)
 
 struct SScaledBra <: Symbolic{Bra}
     coeff
@@ -104,6 +109,7 @@ metadata(::SScaledBra) = nothing
 operation(x::SScaledBra) = *
 Base.:(*)(c, x::Symbolic{Bra}) = SScaledBra(c,x)
 Base.:(*)(x::Symbolic{Bra}, c) = SScaledBra(c,x)
+Base.:(/)(x::Symbolic{Bra}, c) = SScaledBra(1/c,x)
 function Base.print(io::IO, x::SScaledBra)
     if x.coeff isa Number
         print(io, "$(x.coeff)$(x.bra)")
@@ -111,6 +117,7 @@ function Base.print(io::IO, x::SScaledBra)
         print(io, "($(x.coeff))$(x.bra)")
     end
 end
+basis(x::SScaledBra) = basis(x.bra)
 
 struct SScaledOperator <: Symbolic{Operator}
     coeff
@@ -123,13 +130,15 @@ metadata(::SScaledOperator) = nothing
 operation(x::SScaledOperator) = *
 Base.:(*)(c, x::Symbolic{Operator}) = SScaledOperator(c,x)
 Base.:(*)(x::Symbolic{Operator},c) = SScaledOperator(c,x)
+Base.:(/)(x::Symbolic{Operator}, c) = SScaledOperator(1/c,x)
 function Base.print(io::IO, x::SScaledOperator)
     if x.coeff isa Number
-        print(io, "$(x.coeff)$(x.Operator)")
+        print(io, "$(x.coeff)$(x.operator)")
     else
-        print(io, "($(x.coeff))$(x.Operator)")
+        print(io, "($(x.coeff))$(x.operator)")
     end
 end
+basis(x::SScaledOperator) = basis(x.operator)
 
 struct SAddKet <: Symbolic{Ket}
     dict
@@ -141,6 +150,7 @@ metadata(::SAddKet) = nothing
 operation(x::SAddKet) = +
 Base.:(+)(xs::Symbolic{Ket}...) = SAddKet(countmap_flatten(xs, SScaledKet))
 Base.print(io::IO, x::SAddKet) = print(io, join(map(string, arguments(x)),"+"))
+basis(x::SAddKet) = basis(first(x.dict).first)
 
 struct SAddBra <: Symbolic{Bra}
     dict
@@ -151,6 +161,8 @@ arguments(x::SAddBra) = [SScaledBra(v,k) for (k,v) in pairs(x.dict)]
 metadata(::SAddBra) = nothing
 operation(x::SAddBra) = +
 Base.:(+)(xs::Symbolic{Bra}...) = SAddBra(countmap_flatten(xs, SScaledBra))
+Base.print(io::IO, x::SAddBra) = print(io, join(map(string, arguments(x)),"+"))
+basis(x::SAddBra) = basis(first(x.dict).first)
 
 struct SAddOperator <: Symbolic{Operator}
     dict
@@ -161,6 +173,8 @@ arguments(x::SAddOperator) = [SScaledOperator(v,k) for (k,v) in pairs(x.dict)]
 metadata(::SAddOperator) = nothing
 operation(x::SAddOperator) = +
 Base.:(+)(xs::Symbolic{Operator}...) = SAddOperator(countmap_flatten(xs, SScaledOperator))
+Base.print(io::IO, x::SAddOperator) = print(io, join(map(string, arguments(x)),"+"))
+basis(x::SAddOperator) = basis(first(x.dict).first)
 
 struct STensorKet <: Symbolic{Ket}
     terms
@@ -175,6 +189,7 @@ metadata(::STensorKet) = nothing
 operation(x::STensorKet) = ⊗
 ⊗(xs::Symbolic{Ket}...) = STensorKet(collect(xs))
 Base.print(io::IO, x::STensorKet) = print(io, join(map(string, arguments(x)),""))
+basis(x::STensorKet) = tensor(basis.(x.terms)...)
 
 struct STensorBra <: Symbolic{Bra}
     terms
@@ -189,6 +204,7 @@ metadata(::STensorBra) = nothing
 operation(x::STensorBra) = ⊗
 ⊗(xs::Symbolic{Bra}...) = STensorBra(collect(xs))
 Base.print(io::IO, x::STensorBra) = print(io, join(map(string, arguments(x)),""))
+basis(x::STensorBra) = tensor(basis.(x.terms)...)
 
 struct STensorOperator <: Symbolic{Operator}
     terms
@@ -203,6 +219,7 @@ metadata(::STensorOperator) = nothing
 operation(x::STensorOperator) = ⊗
 ⊗(xs::Symbolic{Operator}...) = STensorOperator(collect(xs))
 Base.print(io::IO, x::STensorOperator) = print(io, join(map(string, arguments(x)),"⊗"))
+basis(x::STensorOperator) = tensor(basis.(x.terms)...)
 
 struct SApplyKet <: Symbolic{Ket}
     op
@@ -214,6 +231,7 @@ metadata(::SApplyKet) = nothing
 operation(x::SApplyKet) = *
 Base.:(*)(op::Symbolic{Operator}, k::Symbolic{Ket}) = SApplyKet(op,k)
 Base.print(io::IO, x::SApplyKet) = begin print(io, x.op); print(io, x.ket) end
+basis(x::SApplyKet) = basis(x.ket)
 
 struct SApplyBra <: Symbolic{Bra}
     bra
@@ -225,6 +243,7 @@ metadata(::SApplyBra) = nothing
 operation(x::SApplyBra) = *
 Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}) = SApplyBra(b,op)
 Base.print(io::IO, x::SApplyBra) = begin print(io, x.bra); print(io, x.op) end
+basis(x::SApplyBra) = basis(x.bra)
 
 struct SBraKet <: Symbolic{Complex}
     bra
@@ -248,7 +267,8 @@ function Base.print(io::IO, x::SBraKet)
 end
 
 Base.show(io::IO, x::Symbolic{Ket}) = print(io,x)
-
+Base.show(io::IO, x::Symbolic{Bra}) = print(io,x)
+Base.show(io::IO, x::Symbolic{Operator}) = print(io,x)
 
 function hasscalings(xs)
     any(xs) do x
@@ -301,6 +321,7 @@ tensor_simplify = Fixpoint(Chain(FLATTEN_RULES))
 
 abstract type SpecialKet <: Symbolic{Ket} end
 istree(::SpecialKet) = false
+basis(x::SpecialKet) = x.basis
 
 struct XBasisState <: SpecialKet
     idx::Int
@@ -364,6 +385,8 @@ abstract type AbstractSingleQubitGate <: Symbolic{Operator} end
 abstract type AbstractTwoQubitGate <: Symbolic{Operator} end
 istree(::AbstractSingleQubitGate) = false
 istree(::AbstractTwoQubitGate) = false
+basis(::AbstractSingleQubitGate) = SpinBasis(1//2)
+basis(::AbstractTwoQubitGate) = SpinBasis(1//2)⊗SpinBasis(1//2)
 
 struct OperatorEmbedding <: Symbolic{Operator}
     gate::Symbolic{Operator} # TODO parameterize
@@ -394,3 +417,28 @@ const Z = ZGate()
 const H = HGate()
 const CNOT = CNOTGate()
 const CPHASE = CPHASEGate()
+
+##
+
+struct SProjector <: Symbolic{Operator}
+    ket::Symbolic{Ket} # TODO parameterize
+end
+istree(::SProjector) = true
+arguments(x::SProjector) = [x.ket]
+metadata(::SProjector) = nothing
+operation(x::SProjector) = SProjector
+basis(x::SProjector) = basis(x.ket)
+function Base.print(io::IO, x::SProjector)
+    print(io,"𝐏[")
+    print(io,x.ket)
+    print(io,"]")
+end
+
+struct MixedState <: Symbolic{Operator}
+    basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
+end
+MixedState(x::Symbolic{Ket}) = MixedState(basis(x))
+MixedState(x::Symbolic{Operator}) = MixedState(basis(x))
+istree(::MixedState) = false
+basis(x::MixedState) = x.basis
+Base.print(io::IO, x::MixedState) = print(io, "𝕄")

@@ -68,7 +68,7 @@ sampled_times = 0.:0.2:25.
     [monte_carlo_trajectory(qc_XX, qc_ZZ, qc_noisy_pair; sampled_times) for i in 1:replicates]
 end;
 @time qo_res = with_logger(nologging) do
-    [monte_carlo_trajectory(qo_XX, qo_ZZ, qo_noisy_pair; sampled_times) for i in 1:replicates]
+    [monte_carlo_trajectory(XX, ZZ, noisy_pair; sampled_times) for i in 1:replicates]
 end;
 
 # Plot the mean of the observables average over all trajectories

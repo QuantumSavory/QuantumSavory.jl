@@ -166,6 +166,23 @@ express_qo(::CNOTGate) = _cnot
 express_qo(s::XBasisState) = (_s₊,_s₋)[s.idx]
 express_qo(s::ZBasisState) = (_l,_h)[s.idx]
 
+express_qo(x::MixedState) = identityoperator(basis(x))/length(basis(x)) # TODO there is probably a more efficient way to represent it
+
+operation_qo(x) = operation(x)
+operation_qo(x::SProjector) = dm # TODO make QuantumInterface
+# TODO should this be `dm` or `projector`
+
+function express_qo(s::Symbolic{T}) where {T<:Union{Ket,Bra,Operator}}
+    if istree(s)
+        operation_qo(s)(express_qo.(arguments(s))...)
+    else
+        error("Encountered an object $(s) of type $(typeof(s)) that can not be converted to QuantumOptics representation") # TODO make a nice error type
+    end
+end
+express_qo(s::Number) = s
+
+express(r,i,state) = express_qo(state) # TODO implement other formats
+
 #= TODO implement superoperators
 apply!(state::QuantumOptics.Ket, indices, dep::Gates.Depolarize) = apply!(dm(state), indices, dep)
 function apply!(state::QuantumOptics.Operator{B,B,D}, indices, dep::Gates.Depolarize) where {B<:CompositeBasis, D}

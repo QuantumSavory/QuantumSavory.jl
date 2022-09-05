@@ -49,7 +49,7 @@ function simulation_setup(
         set_prop!(mgraph, v,
             :register,
             Register(lay,bg,Symbol(v)))
-        # Create an array specifying wheater a qubit is entangled with another qubit
+        # Create an array specifying whether a qubit is entangled with another qubit
         set_prop!(mgraph, v,
             :enttrackers,
             Any[nothing for i in 1:sizes[v]])
@@ -66,21 +66,13 @@ end
 # The Entangler
 ##
 
-# Using QuantumOptics.jl to create a noisy Bell pair object,
-# in density matrix representation.
-b = QuantumOptics.SpinBasis(1//2)
-l = QuantumOptics.spindown(b)
-h = QuantumOptics.spinup(b)
-qo_perfect_pair = (QuantumOptics.tensor(l,l) + QuantumOptics.tensor(h,h))/sqrt(2)
-const qo_perfect_pair_dm = QuantumOptics.dm(qo_perfect_pair)
-const qo_mixed = QuantumOptics.identityoperator(QuantumOptics.basis(qo_perfect_pair))/4
-function qo_noisy_pair(F)
-    F*qo_perfect_pair_dm + (1-F)*qo_mixed
-end
-const qo_XX = QuantumOptics.tensor(QuantumOptics.sigmax(b)⊗QuantumOptics.sigmax(b))
-const qo_ZZ = QuantumOptics.tensor(QuantumOptics.sigmaz(b)⊗QuantumOptics.sigmaz(b))
-const qo_YY = QuantumOptics.tensor(QuantumOptics.sigmay(b)⊗QuantumOptics.sigmay(b))
-
+const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+const perfect_pair_dm = SProjector(perfect_pair)
+const mixed_dm = MixedState(perfect_pair_dm)
+noisy_pair(F) = F*perfect_pair_dm + (1-F)*mixed_dm
+const XX = X⊗X
+const ZZ = Z⊗Z
+const YY = Y⊗Y
 
 @resumable function entangler(
     sim::Environment,   # The scheduler for all simulation events
