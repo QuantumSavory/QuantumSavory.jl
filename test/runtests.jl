@@ -27,4 +27,8 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 VERSION == v"1.7" && @doset "doctests"
 
 using Aqua
-doset("aqua") && Aqua.test_all(QuantumSavory)
+using QuantumClifford, QuantumOptics, Graphs
+doset("aqua") && begin
+    Aqua.test_all(QuantumSavory, ambiguities=false)
+    #Aqua.test_ambiguities([QuantumSavory,QuantumClifford,QuantumOptics,Graphs,Core]) # otherwise Base causes false positives
+end

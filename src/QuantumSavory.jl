@@ -1,6 +1,6 @@
 module QuantumSavory
 
-export QubitTrait, QumodeTrait, Layout, Connectivity,
+export QubitTrait, QumodeTrait, Layout,
     StateRef, Register, newstate, initialize!,
     RegisterNet,
     nsubsystems,
