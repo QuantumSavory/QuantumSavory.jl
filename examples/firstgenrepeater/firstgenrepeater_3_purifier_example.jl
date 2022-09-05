@@ -31,15 +31,13 @@ end
 
 # set up a plot
 fig = Figure(resolution=(400,400))
-registers = [network[node] for node in vertices(network)]
-registersobs = Observable(registers)
-subfig_rg, ax_rg, p_rg = registersgraph_axis(fig[1,1],registersobs;graph=network) # TODO simplify
+subfig_rg, ax_rg, p_rn = registernetplot_axis(fig[1,1],network)
 display(fig)
 
 # record the simulation progress
 step_ts = range(0, 30, step=0.1)
 record(fig, "firstgenrepeater-05.purifier.mp4", step_ts, framerate=10) do t
     run(sim, t)
-    notify(registersobs)
+    notify(p_rn[1])
     ax_rg.title = "t=$(t)"
 end
