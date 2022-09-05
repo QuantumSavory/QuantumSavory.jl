@@ -34,32 +34,30 @@ function simulation_setup(
     # A scheduler datastructure for the discrete event simulation
     sim = Simulation()
 
+    # All of the quantum register we will be simulating
+    registers = Register[]
+    for s in sizes
+        lay = Layout([QubitTrait() for i in 1:s])
+        bg = [T2Dephasing(T2) for i in 1:s]
+        push!(registers, Register(lay,bg))
+    end
+
     # A graph structure defining the connectivity among registers
     # It is not necessary to use such a structure, however, it is a convenient way to
     # store data about the simulation (and we have created helper plotting functions
     # expecting such a structure).
-    _graph = grid([R])
-    mgraph = MetaGraph(_graph) # Meta graphs can contain extra meta information
+    graph = grid([R])
+    network = RegisterNet(graph, registers) # A graphs with extra "meta data"
 
     # Add a register datastructures and event locks to each node.
-    for v in vertices(mgraph)
-        # Create and store a qubit register at each node
-        lay = Layout([QubitTrait() for i in 1:sizes[v]])
-        bg = [T2Dephasing(T2) for i in 1:sizes[v]]
-        set_prop!(mgraph, v,
-            :register,
-            Register(lay,bg,Symbol(v)))
+    for v in vertices(network)
         # Create an array specifying whether a qubit is entangled with another qubit
-        set_prop!(mgraph, v,
-            :enttrackers,
-            Any[nothing for i in 1:sizes[v]])
+        network[v,:enttrackers] = Any[nothing for i in 1:sizes[v]]
         # Create an array of locks, telling us whether a qubit is undergoing an operation
-        set_prop!(mgraph, v,
-            :locks,
-            [Resource(sim,1) for i in 1:sizes[v]])
+        network[v,:locks] = [Resource(sim,1) for i in 1:sizes[v]]
     end
 
-    sim, mgraph
+    sim, network
 end
 
 ##
@@ -76,28 +74,28 @@ const YY = Y⊗Y
 
 @resumable function entangler(
     sim::Environment,   # The scheduler for all simulation events
-    mgraph,             # The graph of qubit nodes
+    network,            # The graph of quantum nodes
     nodea, nodeb,       # The two nodes which we will be entangling
     noisy_pair,         # A function that generates a raw entangled pair
     entangler_wait_time,# The wait time in case all qubits are "busy"
     entangler_busy_time # How long it takes to establish entanglement
     )
     while true
-        ia = findfreequbit(mgraph, nodea)
-        ib = findfreequbit(mgraph, nodeb)
+        ia = findfreequbit(network, nodea)
+        ib = findfreequbit(network, nodeb)
         if isnothing(ia) || isnothing(ib)
             @yield timeout(sim, entangler_wait_time)
             continue
         end
-        locka = get_prop(mgraph,nodea,:locks)[ia]
-        lockb = get_prop(mgraph,nodeb,:locks)[ib]
+        locka = network[nodea,:locks][ia]
+        lockb = network[nodeb,:locks][ib]
         @yield request(locka) & request(lockb)
-        registera = get_prop(mgraph,nodea,:register)
-        registerb = get_prop(mgraph,nodeb,:register)
+        registera = network[nodea]
+        registerb = network[nodeb]
         @yield timeout(sim, entangler_busy_time)
         initialize!((registera[ia],registerb[ib]),noisy_pair(); time=now(sim))
-        get_prop(mgraph,nodea,:enttrackers)[ia] = (node=nodeb,slot=ib)
-        get_prop(mgraph,nodeb,:enttrackers)[ib] = (node=nodea,slot=ia)
+        network[nodea,:enttrackers][ia] = (node=nodeb,slot=ib)
+        network[nodeb,:enttrackers][ib] = (node=nodea,slot=ia)
         @simlog sim "entangled node $(nodea):$(ia) and node $(nodeb):$(ib)"
         release(locka)
         release(lockb)
@@ -105,9 +103,9 @@ const YY = Y⊗Y
 end
 
 """Find an uninitialized unlocked qubit on a given node"""
-function findfreequbit(mgraph, node)
-    register = get_prop(mgraph,node,:register)
-    locks = get_prop(mgraph,node,:locks)
+function findfreequbit(network, node)
+    register = network[node]
+    locks = network[node,:locks]
     regsize = nsubsystems(register)
     findfirst(i->!isassigned(register,i) & isfree(locks[i]), 1:regsize)
 end
@@ -118,31 +116,31 @@ end
 
 @resumable function swapper(
     sim::Environment, # The scheduler for all simulation events
-    mgraph,           # The graph of qubit nodes
+    network,          # The graph of quantum nodes
     node,             # The node on which the swapper works
     swapper_wait_time,# The wait time in case there are no available qubits for swapping
     swapper_busy_time # How long it takes to perform the swap
     )
     while true
-        qubit_pair = findswapablequbits(mgraph,node)
+        qubit_pair = findswapablequbits(network,node)
         if isnothing(qubit_pair)
             @yield timeout(sim, swapper_wait_time)
             continue
         end
         q1, q2 = qubit_pair
-        locks = get_prop(mgraph, node, :locks)[[q1,q2]]
+        locks = network[node, :locks][[q1,q2]]
         @yield mapreduce(request, &, locks)
-        reg = get_prop(mgraph, node, :register)
+        reg = network[node]
         @yield timeout(sim, swapper_busy_time)
-        node1 = get_prop(mgraph,node,:enttrackers)[q1]
-        reg1 = get_prop(mgraph,node1.node,:register)
-        node2 = get_prop(mgraph,node,:enttrackers)[q2]
-        reg2 = get_prop(mgraph,node2.node,:register)
+        node1 = network[node,:enttrackers][q1]
+        reg1 = network[node1.node]
+        node2 = network[node,:enttrackers][q2]
+        reg2 = network[node2.node]
         swapcircuit(reg[q1], reg[q2], reg1[node1.slot], reg2[node2.slot]; time=now(sim))
-        get_prop(mgraph,node1.node,:enttrackers)[node1.slot] = node2
-        get_prop(mgraph,node2.node,:enttrackers)[node2.slot] = node1
-        get_prop(mgraph,node,:enttrackers)[q1] = nothing
-        get_prop(mgraph,node,:enttrackers)[q2] = nothing
+        network[node1.node,:enttrackers][node1.slot] = node2
+        network[node2.node,:enttrackers][node2.slot] = node1
+        network[node,:enttrackers][q1] = nothing
+        network[node,:enttrackers][q2] = nothing
         @simlog sim "swap at $(node):$(q1)&$(q2) connecting $(node1) and $(node2)"
         release.(locks)
     end
@@ -160,9 +158,9 @@ function swapcircuit(localslot1, localslot2, remslot1, remslot2; time=nothing)
     end
 end
 
-function findswapablequbits(mgraph,node)
-    enttrackers = get_prop(mgraph,node,:enttrackers)
-    locks = get_prop(mgraph,node,:locks)
+function findswapablequbits(network,node)
+    enttrackers = network[node,:enttrackers]
+    locks = network[node,:locks]
     left_nodes  = [(i=i,n...) for (i,n) in enumerate(enttrackers)
                    if !isnothing(n) && n.node<node && isfree(locks[i])]
     isempty(left_nodes)  && return nothing
@@ -194,12 +192,12 @@ end
             continue
         end
         pair1qa, pair1qb, pair2qa, pair2qb = pairs_of_bellpairs
-        locks = [get_prop(mgraph,nodea,:locks)[[pair1qa,pair2qa]];
-                 get_prop(mgraph,nodeb,:locks)[[pair1qb,pair2qb]]]
+        locks = [network[nodea,:locks][[pair1qa,pair2qa]];
+                 network[nodeb,:locks][[pair1qb,pair2qb]]]
         @yield mapreduce(request, &, locks)
         @yield timeout(sim, purifier_busy_time)
-        rega = get_prop(mgraph,nodea,:register)
-        regb = get_prop(mgraph,nodeb,:register)
+        rega = network[nodea]
+        regb = network[nodeb]
         gate = (CNOT, CPHASE)[round%2+1]
         apply!((rega[pair2qa],rega[pair1qa]),gate)
         apply!((regb[pair2qb],regb[pair1qb]),gate)
@@ -208,23 +206,23 @@ end
         if measa!=measb
             traceout!(rega[pair1qa])
             traceout!(regb[pair1qb])
-            get_prop(mgraph,nodea,:enttrackers)[pair1qa] = nothing
-            get_prop(mgraph,nodeb,:enttrackers)[pair1qb] = nothing
+            network[nodea,:enttrackers][pair1qa] = nothing
+            network[nodeb,:enttrackers][pair1qb] = nothing
             @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa) and $(nodeb):$(pair1qb)&$(pair2qb)"
         else
             round += 1
             @simlog sim "purification at $(nodea):$(pair1qa) $(nodeb):$(pair1qb) by sacrifice of $(nodea):$(pair1qa) $(nodeb):$(pair1qb)"
         end
-        get_prop(mgraph,nodea,:enttrackers)[pair2qa] = nothing
-        get_prop(mgraph,nodeb,:enttrackers)[pair2qb] = nothing
+        network[nodea,:enttrackers][pair2qa] = nothing
+        network[nodeb,:enttrackers][pair2qb] = nothing
         release.(locks)
     end
 end
 
 function findqubitstopurify(mgraph,nodea,nodeb)
-    enttrackers = get_prop(mgraph,nodea,:enttrackers)
-    locksa = get_prop(mgraph,nodea,:locks)
-    locksb = get_prop(mgraph,nodeb,:locks)
+    enttrackers = network[nodea,:enttrackers]
+    locksa = network[nodea,:locks]
+    locksb = network[nodeb,:locks]
     enttrackers = [(i=i,n...) for (i,n) in enumerate(enttrackers)
                    if !isnothing(n) && n.node==nodeb && isfree(locksa[i]) && isfree(locksb[n.slot])]
     if length(enttrackers)>=2

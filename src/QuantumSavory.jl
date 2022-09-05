@@ -2,6 +2,7 @@ module QuantumSavory
 
 export QubitTrait, QumodeTrait, Layout, Connectivity,
     StateRef, Register, newstate, initialize!,
+    RegisterNet,
     nsubsystems,
     subsystemcompose, traceout!, project_traceout!,
     uptotime!, overwritetime!, T1Decay, T2Dephasing, krausops,
@@ -17,6 +18,7 @@ export QubitTrait, QumodeTrait, Layout, Connectivity,
 using Distributions
 using IterTools
 using LinearAlgebra
+using Graphs
 #using Infiltrator
 
 include("symbolics.jl")
@@ -57,21 +59,50 @@ struct Register # TODO better type description
     stateindices::Vector{Int}
     accesstimes::Vector{Float64} # TODO do not hardcode the type
     backgrounds::Vector{Any}
-    name::Symbol
 end
-Register(l,sr,si,bg) = Register(l,sr,si,fill(0.0,length(l.traits)),bg,gensym())
+Register(l,sr,si,bg) = Register(l,sr,si,fill(0.0,length(l.traits)),bg)
 Register(l,sr,si) = Register(l,sr,si,fill(nothing,length(l.traits)))
-
-Register(l,sr,si,bg,s::Symbol) = Register(l,sr,si,fill(0.0,length(l.traits)),bg,s)
-Register(l,sr,si,s::Symbol) = Register(l,sr,si,fill(nothing,length(l.traits)),s)
-Register(l,bg,s::Symbol) = Register(l,fill(nothing,length(l.traits)),fill(0,length(l.traits)),fill(0.0,length(l.traits)),bg,s)
-Register(l,s::Symbol) = Register(l,fill(nothing,length(l.traits)),s) # TODO traits should be an interface
-Register(l) = Register(l,gensym())
+Register(l,bg) = Register(l,fill(nothing,length(l.traits)),fill(0,length(l.traits)),fill(0.0,length(l.traits)),bg)
+Register(l) = Register(l,fill(nothing,length(l.traits))) # TODO traits should be an interface
 
 struct RegRef
     reg::Register
     idx::Int
 end
+
+##
+
+struct RegisterNet
+    graph::SimpleGraph{Int64}
+    registers::Vector{Register}
+    metadata::Vector{Dict{Symbol,Any}} # Maybe Dict of Vector would be a better idea
+end
+function RegisterNet(graph::SimpleGraph, registers::Vector{Register})
+    @assert size(graph, 1) == length(registers)
+    RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers])
+end
+function RegisterNet(graph::SimpleGraph, register_factory::F) where F<:Function
+    l = length(graph)
+    RegisterNet(graph, [register_factory() for _ in 1:l], [Dict{Symbol,Any}() for _ in 1:l])
+end
+
+function add_register!(net::RegisterNet, r::Register)
+    add_vertex!(net.graph)
+    push!(registers, r)
+    return length(Graph())
+end
+
+Graphs.add_vertex!(net::RegisterNet, a, b) = add_vertex!(net.graph, a, b)
+Graphs.vertices(net::RegisterNet) = vertices(net.graph)
+Graphs.edges(net::RegisterNet) = edges(net.graph)
+Graphs.adjacency_matrix(net::RegisterNet) = adjacency_matrix(net.graph)
+
+Base.getindex(net::RegisterNet, i::Int) = net.registers[i]
+Base.getindex(net::RegisterNet, i::Int, j::Int) = net.registers[i][j]
+Base.getindex(net::RegisterNet, i::Int, k::Symbol) = net.metadata[i][k]
+Base.setindex!(net::RegisterNet, val, i::Int, k::Symbol) = begin net.metadata[i][k] = val end
+
+##
 
 function Base.show(io::IO, s::StateRef)
     print(io, "State containing $(nsubsystems(s.state[])) subsystems in $(typeof(s.state[]).name.module) implementation")
@@ -86,7 +117,7 @@ function Base.show(io::IO, s::StateRef)
 end
 
 function Base.show(io::IO, r::Register)
-    print(io, "Register $(r.name) of $(length(r.layout.traits)) slots") # TODO make this length call prettier
+    print(io, "Register with $(length(r.layout.traits)) slots") # TODO make this length call prettier
     print(io, "\n  ")
     show(io, r.layout)
     print(io, "\n  Slots:")

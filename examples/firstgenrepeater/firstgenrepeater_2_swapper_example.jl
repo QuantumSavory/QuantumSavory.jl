@@ -12,20 +12,20 @@ entangler_busy_time = 1.0  # How long it takes to establish a newly entangled pa
 swapper_wait_time = 0.1    # How long to wait if all qubits are unavailable for swapping
 swapper_busy_time = 0.15   # How long it takes to swap two qubits
 
-sim, mgraph = simulation_setup(sizes, T2)
+sim, network = simulation_setup(sizes, T2)
 
-for (;src, dst) in edges(mgraph)
-    @process entangler(sim, mgraph, src, dst, ()->noisy_pair(F), entangler_wait_time, entangler_busy_time)
+for (;src, dst) in edges(network)
+    @process entangler(sim, network, src, dst, ()->noisy_pair(F), entangler_wait_time, entangler_busy_time)
 end
-for node in vertices(mgraph)
-    @process swapper(sim, mgraph, node, swapper_wait_time, swapper_busy_time)
+for node in vertices(network)
+    @process swapper(sim, network, node, swapper_wait_time, swapper_busy_time)
 end
 
 # set up a plot
 fig = Figure(resolution=(400,400))
-registers = [get_prop(mgraph, node, :register) for node in vertices(mgraph)]
+registers = [network[node] for node in vertices(network)]
 registersobs = Observable(registers)
-subfig_rg, ax_rg, p_rg = registersgraph_axis(fig[1,1],registersobs;graph=mgraph)
+subfig_rg, ax_rg, p_rg = registersgraph_axis(fig[1,1],registersobs;graph=network) # TODO simplify
 display(fig)
 
 # record the simulation progress
