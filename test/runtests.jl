@@ -1,4 +1,5 @@
-using Test, Random
+using SafeTestsets
+using QuantumSavory
 
 function doset(descr)
     if length(ARGS) == 0
@@ -12,9 +13,18 @@ function doset(descr)
     return false
 end
 
+macro doset(descr)
+    quote
+        if doset($descr)
+            @safetestset $descr begin include("test_"*$descr*".jl") end
+        end
+    end
+end
+
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
-doset("doctests")           && VERSION == v"1.7" && include("doctests.jl")
+@doset "plotting"
+VERSION == v"1.7" && @doset "doctests"
 
 using Aqua
 doset("aqua") && Aqua.test_all(QuantumSavory)

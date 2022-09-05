@@ -8,7 +8,7 @@ export QubitTrait, QumodeTrait, Layout, Connectivity,
     uptotime!, overwritetime!, T1Decay, T2Dephasing, krausops,
     removebackref!, swap!, apply!,
     observable,
-    registersgraph, RGHandler, registersgraph_axis, resourceplot_axis,
+    registernetplot, registernetplot_axis, resourceplot_axis,
     @simlog, isfree, nongreedymultilock, spinlock,
     X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2,SProjector,MixedState
 
@@ -81,9 +81,13 @@ function RegisterNet(graph::SimpleGraph, registers::Vector{Register})
     @assert size(graph, 1) == length(registers)
     RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers])
 end
+function RegisterNet(registers::Vector{Register})
+    graph = grid([length(registers)])
+    RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers])
+end
 function RegisterNet(graph::SimpleGraph, register_factory::F) where F<:Function
-    l = length(graph)
-    RegisterNet(graph, [register_factory() for _ in 1:l], [Dict{Symbol,Any}() for _ in 1:l])
+    verts = vertices(graph)
+    RegisterNet(graph, [register_factory(v) for v in vertices], [Dict{Symbol,Any}() for _ in 1:l])
 end
 
 function add_register!(net::RegisterNet, r::Register)
@@ -111,7 +115,7 @@ function Base.show(io::IO, s::StateRef)
         if isnothing(r)
             print(io, "\n    not used")
         else
-            print(io, "\n    $(i)@$(r.name)")
+            print(io, "\n    $(i)@$(objectid(r))")
         end
     end
 end
@@ -143,7 +147,7 @@ end
 
 Base.getindex(r::Register, i::Int) = RegRef(r,i)
 
-Base.:(==)(r1::Register, r2::Register) = r1.name == r2.name
+#Base.:(==)(r1::Register, r2::Register) =
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
     r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent

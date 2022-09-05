@@ -1,9 +1,8 @@
 using Graphs
-using MetaGraphs
 using NetworkLayout
 using Makie
 
-@recipe(RegistersGraph) do scene
+@recipe(RegisterNetPlot) do scene
     Theme(
     Axis = (
         backgroundcolor = :gray90,
@@ -17,27 +16,27 @@ using Makie
     )
 end
 
-function Makie.plot!(rg::RegistersGraph{<:Tuple{AbstractVector{Register}}})
-    registers = rg[1]
-    register_rectangles = Observable(Makie.Rect2D{Float64}[])
-    register_slots_coords = Observable(Makie.Point2f0[])
+function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
+    networkobs = rn[1]
+    registers = networkobs[].registers
+    register_rectangles = Observable(Makie.Rect2{Float64}[])
+    register_slots_coords = Observable(Makie.Point2f[])
     register_slots_coords_backref = Observable([])
-    state_coords = Observable(Makie.Point2f0[])
+    state_coords = Observable(Makie.Point2f[])
     state_coords_backref = Observable([])
-    state_links = Observable(Makie.Point2f0[])
-    if haskey(rg, :registercoords) && !isnothing(rg[:registercoords][])
-        registercoords = rg[:registercoords][]
-    elseif haskey(rg, :graph) && !isnothing(rg[:graph][])
-        adj_matrix = adjacency_matrix(rg[:graph][])
-        registercoords = spring(adj_matrix, iterations=40, C=1.5*maximum(nsubsystems.(registers[])))
+    state_links = Observable(Makie.Point2f[])
+    if haskey(rn, :registercoords) && !isnothing(rn[:registercoords][])
+        registercoords = rn[:registercoords][]
     else
-        registercoords = [(i,0) for i in 1:length(registers[])]
+        adj_matrix = adjacency_matrix(networkobs[].graph)
+        registercoords = spring(adj_matrix, iterations=40, C=1.5*maximum(nsubsystems.(registers)))
     end
-    rg[:registercoords] = registercoords # TODO make sure it is an observable
-    processes_coords = Observable(Makie.Point2f0[])
-    processes = get(rg, :processes, Observable([]))
-    rg[:processes] = processes
-    function update_plot(registers)
+    rn[:registercoords] = registercoords # TODO make sure it is an observable
+    processes_coords = Observable(Makie.Point2f[])
+    processes = get(rn, :processes, Observable([]))
+    rn[:processes] = processes
+    function update_plot(network)
+        registers = network.registers
         all_nodes = [ # TODO it is rather wasteful to replot everything... do it smarter
             register_rectangles, register_slots_coords, register_slots_coords_backref,
             state_coords, state_coords_backref, state_links,
@@ -46,9 +45,9 @@ function Makie.plot!(rg::RegistersGraph{<:Tuple{AbstractVector{Register}}})
             empty!(a[])
         end
         for (i,r) in enumerate(registers) # TODO this should use the layout/connectivity system
-            push!(register_rectangles[], Makie.Rect2D(registercoords[i][1]-0.3,registercoords[i][2]+0.7-1,0.6,nsubsystems(r)-0.4))
+            push!(register_rectangles[], Makie.Rect2(registercoords[i][1]-0.3,registercoords[i][2]+0.7-1,0.6,nsubsystems(r)-0.4))
             for j in 1:nsubsystems(r)
-                push!(register_slots_coords[], Makie.Point2f0(registercoords[i][1],registercoords[i][2]+j-1))
+                push!(register_slots_coords[], Makie.Point2f(registercoords[i][1],registercoords[i][2]+j-1))
                 push!(register_slots_coords_backref[], (r,j))
             end
         end
@@ -57,14 +56,14 @@ function Makie.plot!(rg::RegistersGraph{<:Tuple{AbstractVector{Register}}})
             juststarted = true
             for (si,(r,i)) in enumerate(zip(s.registers,s.registerindices))
                 isnothing(r) && continue
-                whichreg = findfirst(==(r),registers)
+                whichreg = findfirst(o->===(r,o),registers)
                 #isnothing(whichreg) && continue
-                push!(state_coords[], Makie.Point2f0(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                push!(state_coords[], Makie.Point2f(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
                 push!(state_coords_backref[],(s,si))
                 if nsubsystems(s)==1
                     break
                 end
-                push!(state_links[], Makie.Point2f0(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                push!(state_links[], Makie.Point2f(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
                 if !juststarted && si<nsubsystems(s)
                     push!(state_links[], state_links[][end])
                 else
@@ -73,11 +72,11 @@ function Makie.plot!(rg::RegistersGraph{<:Tuple{AbstractVector{Register}}})
             end
         end
         for p in processes[]
-            edgecoords = Makie.Point2f0[]
+            edgecoords = Makie.Point2f[]
             for (r,i) in p
                 whichreg = findfirst(==(r),registers)
                 if !isnothing(whichreg)
-                    push!(edgecoords, Makie.Point2f0(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                    push!(edgecoords, Makie.Point2f(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
                 end
             end
             center = sum(edgecoords)/length(edgecoords)
@@ -90,39 +89,39 @@ function Makie.plot!(rg::RegistersGraph{<:Tuple{AbstractVector{Register}}})
             notify(a)
         end
     end
-    Makie.Observables.onany(update_plot, registers)
+    Makie.Observables.onany(update_plot, networkobs)
     Makie.Observables.onany(update_plot, processes)
-    update_plot(registers[])
-    register_polyplot = poly!(rg,register_rectangles,color=:gray90)
+    update_plot(rn[1][])
+    register_polyplot = poly!(rn,register_rectangles,color=:gray90)
     register_polyplot.inspectable[] = false
-    register_slots_scatterplot = scatter!(rg,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=Makie.SceneSpace)
-    process_lineplot = linesegments!(rg,processes_coords,color=:pink,linewidth=20,markerspace=Makie.SceneSpace)
-    state_scatterplot = scatter!(rg,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=Makie.SceneSpace)
-    state_lineplot = linesegments!(rg,state_links,color=:gray90)
-    rg[:register_polyplot] = register_polyplot
-    rg[:register_slots_scatterplot] = register_slots_scatterplot
-    rg[:register_slots_coords_backref] = register_slots_coords_backref
-    rg[:state_scatterplot] = state_scatterplot
-    rg[:state_coords_backref] = state_coords_backref
-    rg[:state_lineplot] = state_lineplot
-    rg[:process_lineplot] = process_lineplot
-    rg
+    register_slots_scatterplot = scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=Makie.SceneSpace)
+    process_lineplot = linesegments!(rn,processes_coords,color=:pink,linewidth=20,markerspace=Makie.SceneSpace)
+    state_scatterplot = scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=Makie.SceneSpace)
+    state_lineplot = linesegments!(rn,state_links,color=:gray90)
+    rn[:register_polyplot] = register_polyplot
+    rn[:register_slots_scatterplot] = register_slots_scatterplot
+    rn[:register_slots_coords_backref] = register_slots_coords_backref
+    rn[:state_scatterplot] = state_scatterplot
+    rn[:state_coords_backref] = state_coords_backref
+    rn[:state_lineplot] = state_lineplot
+    rn[:process_lineplot] = process_lineplot
+    rn
 end
 
-abstract type RegistersGraphHandler end
-struct RGHandler <: RegistersGraphHandler
-    rg
+abstract type RegisterNetGraphHandler end
+struct RNHandler <: RegisterNetGraphHandler
+    rn
 end
 
-function Makie.MakieLayout.process_interaction(handler::RGHandler, event::MouseEvent, axis)
+function Makie.MakieLayout.process_interaction(handler::RNHandler, event::MouseEvent, axis)
     plot, index = mouse_selection(axis.scene)
-    rg = handler.rg
-    if plot===rg[:register_slots_scatterplot][]
-        register, slot = rg[:register_slots_coords_backref][][index]
+    rn = handler.rn
+    if plot===rn[:register_slots_scatterplot][]
+        register, slot = rn[:register_slots_coords_backref][][index]
         run(`clear`)
         println("Slot $(slot) of $(register)")
-    elseif plot===rg[:state_scatterplot][]
-        state, subsystem = rg[:state_coords_backref][][index]
+    elseif plot===rn[:state_scatterplot][]
+        state, subsystem = rn[:state_coords_backref][][index]
         run(`clear`)
         println("Subsystem $(subsystem) of $(state)")
     end
@@ -132,18 +131,17 @@ end
 ##
 
 """Draw the given registers on a given Makie axis."""
-function registersgraph_axis(subfig, registersobservable; graph=nothing, registercoords=nothing)
+function registernetplot_axis(subfig, registersobservable; registercoords=nothing)
     ax = Axis(subfig[1,1])
-    p = registersgraph!(ax, registersobservable,
+    p = registernetplot!(ax, registersobservable,
         registercoords=registercoords,
-        graph=graph,
         )
     ax.aspect = DataAspect()
     hidedecorations!(ax)
     hidespines!(ax)
     deregister_interaction!(ax, :rectanglezoom)
-    rgh = RGHandler(p)
-    register_interaction!(ax, :registergraph, rgh)
+    rnh = RNHandler(p)
+    register_interaction!(ax, :registernet, rnh)
     subfig, ax, p
 end
 
