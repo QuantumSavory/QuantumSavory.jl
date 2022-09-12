@@ -1,44 +1,43 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>1st-gen Repeater · QuantumSavory.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><script src="../assets/init.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="QuantumSavory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">QuantumSavory.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">QuantumSavory.jl</a></li><li><span class="tocitem">HowTos</span><ul><li class="is-active"><a class="tocitem" href>1st-gen Repeater</a><ul class="internal"><li><a class="tocitem" href="#The-Underlying-Data-Structures"><span>The Underlying Data Structures</span></a></li><li><a class="tocitem" href="#Entangler"><span>Entangler</span></a></li><li><a class="tocitem" href="#Swapper"><span>Swapper</span></a></li><li><a class="tocitem" href="#Purifier"><span>Purifier</span></a></li><li><a class="tocitem" href="#Running-the-simulations"><span>Running the simulations</span></a></li><li><a class="tocitem" href="#Figures-of-Merit-and-Visualizations"><span>Figures of Merit and Visualizations</span></a></li><li><a class="tocitem" href="#Summary-of-QuantumSavory-tools-employed-in-the-simulation"><span>Summary of <code>QuantumSavory</code> tools employed in the simulation</span></a></li><li><a class="tocitem" href="#Full-Code"><span>Full Code</span></a></li><li><a class="tocitem" href="#Suggested-Improvements"><span>Suggested Improvements</span></a></li></ul></li><li><a class="tocitem" href="../howto-firstgenrepeater-clifford/">1st-gen Repeater (Clifford formalism)</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../propbackgrounds/">Properties and Backgrounds</a></li><li><a class="tocitem" href="../visualizations/">Visualizations</a></li><li><a class="tocitem" href="../API/">API</a></li><li><a class="tocitem" href="../bibliography/">Bibliography</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">HowTos</a></li><li class="is-active"><a href>1st-gen Repeater</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>1st-gen Repeater</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/Krastanov/QuantumSavory.jl/blob/master/docs/src/howto-firstgenrepeater.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="First-Generation-Quantum-Repeater"><a class="docs-heading-anchor" href="#First-Generation-Quantum-Repeater">First Generation Quantum Repeater</a><a id="First-Generation-Quantum-Repeater-1"></a><a class="docs-heading-anchor-permalink" href="#First-Generation-Quantum-Repeater" title="Permalink"></a></h1><p>There is a convenient classification of quantum repeaters by their logical capabilities<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup>. The first, simplest, generation of quantum repeaters involves the generation of physical (unencoded) entangled qubits between neighboring nodes, followed by entanglement swap and entanglement purification operation. No error correcting codes are employed and establishing of a link is a probabilistic process.</p><p>We will build a simplistic simulator for such a network.</p><ul><li>We will employ Schroedinger representation (Schroedinger, Lindblad, and other master equation will be used behind the scenes, but we will not need to work at that low level);</li><li>We will consider a chain of quantum repeater nodes of various sizes (number of qubits);</li><li>The goal would be to entangle the extreme ends of the chain:<ul><li>By directly entangling nearest neighbors;</li><li>Followed by entanglement swaps to extend the links;</li><li>And entanglement purification to increase the quality of the links.</li></ul></li></ul><p>For organizing the simulation and simplifying the digital and analog quantum dynamics, we will use the star of <code>QuantumSavory.jl</code>, namely the <a href="../API/#QuantumSavory.Register"><code>Register</code></a> data structure.</p><p>Moreover, we will use:</p><ul><li><code>SimJulia.jl</code> for discrete event scheduling and simulation;</li><li><code>Makie.jl</code> together with our custom plotting recipes for visualizations;</li><li><code>MetaGraphs.jl</code> for a convenient data structure to track per-node metadata in a graph;</li><li><code>QuantumOptics.jl</code> for low-level quantum states.</li></ul><p>The full simulation script is available at the bottom.</p><h2 id="The-Underlying-Data-Structures"><a class="docs-heading-anchor" href="#The-Underlying-Data-Structures">The Underlying Data Structures</a><a id="The-Underlying-Data-Structures-1"></a><a class="docs-heading-anchor-permalink" href="#The-Underlying-Data-Structures" title="Permalink"></a></h2><p>While the quantum dynamics would be encapsulated in a <a href="../API/#QuantumSavory.Register"><code>Register</code></a> data structure, it is convenient to also set up structures that track the overall topology and events on the network. Our preferred way to do that is to use the meta-graph data structures from <code>MetaGraphs.jl</code>, which lets you construct a graph and attach arbitrary meta-data to each edge and vertex. While this is not required for using <code>QuantumSavory.jl</code>, it is convenient, and we provide a lot of debugging tools that assume the use of meta-graphs.</p><p>Given an array of register sizes, e.g. <code>sizes = [2,3,4,3,2]</code>, we will create a linear graph, where each node has the prescribed number of qubits, e.g.: </p><p><img src="../firstgenrepeater-01.graph.png" alt="An image of 5 quantum registers"/></p><!--
-sim, mgraph = simulation_setup([2,3,4,3,2], 10.); f=Figure(resolution=(400,400)); registersgraph_axis(f,[get_prop(mgraph,n,:register) for n in vertices(mgraph)]; graph=mgraph)[2].title="Five Registers"; save("fisrtgenrepeater-01.graph.png",f)
---><p>The meta-graph would contain, on each node:</p><ul><li>a <a href="../API/#QuantumSavory.Register"><code>Register</code></a> of the appropriate size (as the <code>:register</code> property);</li><li>an array of tuples keeping track of whom each qubit in the register is entangled to (as the <code>:enttracker</code> property);</li><li>an array of locks (from <code>SimJulia.jl</code>) keeping track of whether a process is happening on the given qubit (as the <code>:locks</code> property).</li></ul><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>To see how to visualize these data structures as the simulation is proceeding, consult the <a href="../visualizations/#Visualizations">Visualizations</a> page.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>To see how to define imperfections, noise processes, and background events, consult the <a href="../propbackgrounds/#Properties-and-Backgrounds">Sub-system Properties</a> page.</p></div></div><details><summary>Click to expand and see code used to set up the meta-graph and registers</summary><pre><code class="language-julia hljs">&quot;&quot;&quot;Creates the datastructures representing the simulated network&quot;&quot;&quot;
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>1st-gen Repeater · QuantumSavory.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><script src="../assets/init.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="QuantumSavory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">QuantumSavory.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">QuantumSavory.jl</a></li><li><span class="tocitem">HowTos</span><ul><li class="is-active"><a class="tocitem" href>1st-gen Repeater</a><ul class="internal"><li><a class="tocitem" href="#The-Underlying-Data-Structures"><span>The Underlying Data Structures</span></a></li><li><a class="tocitem" href="#Entangler"><span>Entangler</span></a></li><li><a class="tocitem" href="#Swapper"><span>Swapper</span></a></li><li><a class="tocitem" href="#Purifier"><span>Purifier</span></a></li><li><a class="tocitem" href="#Running-the-simulations"><span>Running the simulations</span></a></li><li><a class="tocitem" href="#Figures-of-Merit-and-Visualizations"><span>Figures of Merit and Visualizations</span></a></li><li><a class="tocitem" href="#Summary-of-QuantumSavory-tools-employed-in-the-simulation"><span>Summary of <code>QuantumSavory</code> tools employed in the simulation</span></a></li><li><a class="tocitem" href="#Full-Code"><span>Full Code</span></a></li><li><a class="tocitem" href="#Suggested-Improvements"><span>Suggested Improvements</span></a></li></ul></li><li><a class="tocitem" href="../howto-firstgenrepeater-clifford/">1st-gen Repeater (Clifford formalism)</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../propbackgrounds/">Properties and Backgrounds</a></li><li><a class="tocitem" href="../visualizations/">Visualizations</a></li><li><a class="tocitem" href="../API/">API</a></li><li><input class="collapse-toggle" id="menuitem-3-4" type="checkbox"/><label class="tocitem" for="menuitem-3-4"><span class="docs-label">Dev Documentation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../register_interface/">Register Interface</a></li></ul></li><li><a class="tocitem" href="../bibliography/">Bibliography</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">HowTos</a></li><li class="is-active"><a href>1st-gen Repeater</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>1st-gen Repeater</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/Krastanov/QuantumSavory.jl/blob/master/docs/src/howto-firstgenrepeater.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="First-Generation-Quantum-Repeater"><a class="docs-heading-anchor" href="#First-Generation-Quantum-Repeater">First Generation Quantum Repeater</a><a id="First-Generation-Quantum-Repeater-1"></a><a class="docs-heading-anchor-permalink" href="#First-Generation-Quantum-Repeater" title="Permalink"></a></h1><p>There is a convenient classification of quantum repeaters by their logical capabilities<sup class="footnote-reference"><a id="citeref-1" href="#footnote-1">[1]</a></sup>. The first, simplest, generation of quantum repeaters involves the generation of physical (unencoded) entangled qubits between neighboring nodes, followed by entanglement swap and entanglement purification operation. No error correcting codes are employed and establishing of a link is a probabilistic process.</p><p>We will build a simplistic simulator for such a network.</p><ul><li>We will employ Schroedinger representation (Schroedinger, Lindblad, and other master equation will be used behind the scenes, but we will not need to work at that low level);</li><li>We will consider a chain of quantum repeater nodes of various sizes (number of qubits);</li><li>The goal would be to entangle the extreme ends of the chain:<ul><li>By directly entangling nearest neighbors;</li><li>Followed by entanglement swaps to extend the links;</li><li>And entanglement purification to increase the quality of the links.</li></ul></li></ul><p>For organizing the simulation and simplifying the digital and analog quantum dynamics, we will use the star of <code>QuantumSavory.jl</code>, namely the <a href="../API/#QuantumSavory.Register"><code>Register</code></a> data structure. For a convenient data structure to track per-node metadata in a graph (network) we will use the <a href="@ref"><code>RegisterNet</code></a> structure.</p><p>Moreover, behind the scenes <code>QuantumSavory.jl</code> will use:</p><ul><li><code>SimJulia.jl</code> for discrete event scheduling and simulation;</li><li><code>Makie.jl</code> together with our custom plotting recipes for visualizations;</li><li><code>QuantumOptics.jl</code> for low-level quantum states.</li></ul><p>The user does not need to know much about these libraries, but if they wish, it is easy for them to peek behind the scenes and customize their use.</p><p>The full simulation script is available at the bottom.</p><h2 id="The-Underlying-Data-Structures"><a class="docs-heading-anchor" href="#The-Underlying-Data-Structures">The Underlying Data Structures</a><a id="The-Underlying-Data-Structures-1"></a><a class="docs-heading-anchor-permalink" href="#The-Underlying-Data-Structures" title="Permalink"></a></h2><p>While the quantum dynamics would be encapsulated in a <a href="../API/#QuantumSavory.Register"><code>Register</code></a> data structure, it is convenient to also set up structures that track the overall topology and events on the network. Our preferred way to do that is to use the <a href="@ref"><code>RegisterNet</code></a> structure, which lets you construct a graph and attach arbitrary meta-data to each edge and vertex. While this is not required for using <code>QuantumSavory.jl</code>, it is convenient, and we provide a lot of debugging tools that assume the use of this structure.</p><p>Given an array of register sizes, e.g. <code>sizes = [2,3,4,3,2]</code>, we will create a linear graph, where each node has the prescribed number of qubits, e.g.: </p><p><img src="../firstgenrepeater-01.graph.png" alt="An image of 5 quantum registers"/></p><p>The <code>RegisterNet</code> would contain, on each node:</p><ul><li>a <a href="../API/#QuantumSavory.Register"><code>Register</code></a> of the appropriate size;</li><li>an array of tuples keeping track of whom each qubit in the register is entangled to (as the <code>:enttracker</code> property);</li><li>an array of locks (from <code>SimJulia.jl</code>) keeping track of whether a process is happening on the given qubit (as the <code>:locks</code> property).</li></ul><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>To see how to visualize these data structures as the simulation is proceeding, consult the <a href="../visualizations/#Visualizations">Visualizations</a> page.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>To see how to define imperfections, noise processes, and background events, consult the <a href="../propbackgrounds/#Properties-and-Backgrounds">Sub-system Properties</a> page.</p></div></div><details><summary>Click to expand and see code used to set up the meta-graph and registers</summary><pre><code class="language-julia hljs">&quot;&quot;&quot;Creates the datastructures representing the simulated network&quot;&quot;&quot;
 function simulation_setup(
     sizes, # Array giving the number of qubits in each node
     T2 # T2 dephasing times for the qubits
+    ;
+    representation = QuantumOpticsRepresentation # Representation to use for the qubits
     )
     R = length(sizes) # Number of registers
 
     # A scheduler datastructure for the discrete event simulation
     sim = Simulation()
 
+    # All of the quantum register we will be simulating
+    registers = Register[]
+    for s in sizes
+        traits = [Qubit() for _ in 1:s]
+        repr = [representation() for _ in 1:s]
+        bg = [T2Dephasing(T2) for _ in 1:s]
+        push!(registers, Register(traits,repr,bg))
+    end
+
     # A graph structure defining the connectivity among registers
     # It is not necessary to use such a structure, however, it is a convenient way to
     # store data about the simulation (and we have created helper plotting functions
     # expecting such a structure).
-    _graph = grid([R])
-    mgraph = MetaGraph(_graph) # Meta graphs can contain extra meta information
+    graph = grid([R])
+    network = RegisterNet(graph, registers) # A graphs with extra &quot;meta data&quot;
 
     # Add a register datastructures and event locks to each node.
-    for v in vertices(mgraph)
-        # Create and store a qubit register at each node
-        lay = Layout([QubitTrait() for i in 1:sizes[v]])
-        bg = [T2Dephasing(T2) for i in 1:sizes[v]]
-        set_prop!(mgraph, v,
-            :register,
-            Register(lay,bg,Symbol(v)))
-        # Create an array specifying wheater a qubit is entangled with another qubit
-        set_prop!(mgraph, v,
-            :enttrackers,
-            Any[nothing for i in 1:sizes[v]])
+    for v in vertices(network)
+        # Create an array specifying whether a qubit is entangled with another qubit
+        network[v,:enttrackers] = Any[nothing for i in 1:sizes[v]]
         # Create an array of locks, telling us whether a qubit is undergoing an operation
-        set_prop!(mgraph, v,
-            :locks,
-            [Resource(sim,1) for i in 1:sizes[v]])
+        network[v,:locks] = [Resource(sim,1) for i in 1:sizes[v]]
     end
 
-    sim, mgraph
-end</code></pre></details><h2 id="Entangler"><a class="docs-heading-anchor" href="#Entangler">Entangler</a><a id="Entangler-1"></a><a class="docs-heading-anchor-permalink" href="#Entangler" title="Permalink"></a></h2><p>The first set of processes we need is the &quot;entanglers&quot; that enable nearest-neighbor entanglement generation:</p><video src="../firstgenrepeater-02.entangler.mp4" autoplay loop muted></video><p>They run in parallel on each edge of the graph, set up by an invocation similar to the following:</p><pre><code class="language-julia hljs">for (;src, dst) in edges(mgraph)
-    @process entangler(sim, mgraph, src, dst, ...)
+    sim, network
+end</code></pre></details><h2 id="Entangler"><a class="docs-heading-anchor" href="#Entangler">Entangler</a><a id="Entangler-1"></a><a class="docs-heading-anchor-permalink" href="#Entangler" title="Permalink"></a></h2><p>The first set of processes we need is the &quot;entanglers&quot; that enable nearest-neighbor entanglement generation:</p><video src="../firstgenrepeater-02.entangler.mp4" autoplay loop muted></video><p>They run in parallel on each edge of the graph, set up by an invocation similar to the following:</p><pre><code class="language-julia hljs">for (;src, dst) in edges(network)
+    @process entangler(sim, network, src, dst, ...)
 end</code></pre><p>As seen in the following flow chart, the entangler repeatedly checks for available pairs of unused qubit slots and attempts to entangle them.</p><div class="mermaid">
 graph LR
     A[Entangler starts<br>on node A and B]
@@ -53,28 +52,28 @@ graph LR
     G --> B
 </div><details><summary>Click to see the implementation of the Entangler process</summary><pre><code class="language-julia hljs">@resumable function entangler(
     sim::Environment,   # The scheduler for all simulation events
-    mgraph,             # The graph of qubit nodes
+    network,            # The graph of quantum nodes
     nodea, nodeb,       # The two nodes which we will be entangling
-    F,                  # The raw entanglement fidelity
+    noisy_pair,         # A raw entangled pair
     entangler_wait_time,# The wait time in case all qubits are &quot;busy&quot;
     entangler_busy_time # How long it takes to establish entanglement
     )
     while true
-        ia = findfreequbit(mgraph, nodea)
-        ib = findfreequbit(mgraph, nodeb)
+        ia = findfreequbit(network, nodea)
+        ib = findfreequbit(network, nodeb)
         if isnothing(ia) || isnothing(ib)
             @yield timeout(sim, entangler_wait_time)
             continue
         end
-        locka = get_prop(mgraph,nodea,:locks)[ia]
-        lockb = get_prop(mgraph,nodeb,:locks)[ib]
+        locka = network[nodea,:locks][ia]
+        lockb = network[nodeb,:locks][ib]
         @yield request(locka) &amp; request(lockb)
-        registera = get_prop(mgraph,nodea,:register)
-        registerb = get_prop(mgraph,nodeb,:register)
+        registera = network[nodea]
+        registerb = network[nodeb]
         @yield timeout(sim, entangler_busy_time)
-        initialize!([registera,registerb],[ia,ib],noisy_pair(F); time=now(sim))
-        get_prop(mgraph,nodea,:enttrackers)[ia] = (node=nodeb,slot=ib)
-        get_prop(mgraph,nodeb,:enttrackers)[ib] = (node=nodea,slot=ia)
+        initialize!((registera[ia],registerb[ib]),noisy_pair; time=now(sim))
+        network[nodea,:enttrackers][ia] = (node=nodeb,slot=ib)
+        network[nodeb,:enttrackers][ib] = (node=nodea,slot=ia)
         @simlog sim &quot;entangled node $(nodea):$(ia) and node $(nodeb):$(ib)&quot;
         release(locka)
         release(lockb)
@@ -82,13 +81,16 @@ graph LR
 end
 
 &quot;&quot;&quot;Find an uninitialized unlocked qubit on a given node&quot;&quot;&quot;
-function findfreequbit(mgraph, node)
-    register = get_prop(mgraph,node,:register)
-    locks = get_prop(mgraph,node,:locks)
+function findfreequbit(network, node)
+    register = network[node]
+    locks = network[node,:locks]
     regsize = nsubsystems(register)
     findfirst(i-&gt;!isassigned(register,i) &amp; isfree(locks[i]), 1:regsize)
-end</code></pre></details><h2 id="Swapper"><a class="docs-heading-anchor" href="#Swapper">Swapper</a><a id="Swapper-1"></a><a class="docs-heading-anchor-permalink" href="#Swapper" title="Permalink"></a></h2><p>Once we have the raw nearest-neighbor entanglement, we can proceed with swap operations that link two Bell pairs that share one common node into a longer Bell pair:</p><video src="../firstgenrepeater-03.swapper.mp4" autoplay loop muted></video><p>They run in parallel on each vertex of the graph, set up by an invocation similar to the following:</p><pre><code class="language-julia hljs">for node in vertices(mgraph)
-    @process swapper(sim, mgraph, node, ...)
+end</code></pre></details><p>Notice that the entangler uses the <a href="../API/#QuantumSavory.initialize!-Tuple{Vector{Register}, Vector{Int64}, Any}"><code>initialize!</code></a> function to set the state of certain registers, but we never need to explicitly construct the numerical representation of these kets. Rather, we use the <a href="@ref Symbolics">symbolic algebra system</a> of <code>QuantumClifford.jl</code>, and let the simulator automatically convert the symbolic expression into numerical density matrices. This conversion was governed by the choice of <code>representation = QuantumOpticsRepresentation</code>. Here is one possible symbolic definition of a <code>noisy_pair</code>:</p><pre><code class="language-julia hljs">const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+const perfect_pair_dm = SProjector(perfect_pair)
+const mixed_dm = MixedState(perfect_pair_dm)
+noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm</code></pre><p>The symbolic-expression-to-density-matrix conversion is cached inside of the symbolic expression, so that it does not need to be recomputed each time.</p><h2 id="Swapper"><a class="docs-heading-anchor" href="#Swapper">Swapper</a><a id="Swapper-1"></a><a class="docs-heading-anchor-permalink" href="#Swapper" title="Permalink"></a></h2><p>Once we have the raw nearest-neighbor entanglement, we can proceed with swap operations that link two Bell pairs that share one common node into a longer Bell pair:</p><video src="../firstgenrepeater-03.swapper.mp4" autoplay loop muted></video><p>They run in parallel on each vertex of the graph, set up by an invocation similar to the following:</p><pre><code class="language-julia hljs">for node in vertices(network)
+    @process swapper(sim, network, node, ...)
 end</code></pre><p>The Swapper working on a given node simply checks whether there are any qubits on that node that are entangled with other nodes, both on the left and right of the current node. If such qubits are found, the entanglement swap operation is performed on them, as seen in this flowchart.</p><div class="mermaid">
 graph LR
     A[Swapper starts<br>on node A]
@@ -110,57 +112,61 @@ graph LR
  ClassicalDecision("Z", 1, 1),
  Measurement("Z", 3, 2),
  ClassicalDecision("X", 4, 2)]
- --><p>The code implementing such a circuit looks like the following (where <code>reg</code> is the register on which swapping happens, and <code>regL</code>/<code>regR</code> are the remote registers on the left and right):</p><pre><code class="language-julia hljs">apply!([reg,reg], [qubit1,qqubit2], Gates.CNOT; time=now(sim))
-xmeas = project_traceout!(reg, qubit1, [States.X₀, States.X₁])
-zmeas = project_traceout!(reg, qubit2, [States.Z₀, States.Z₁])
+ --><p>The code implementing such a circuit looks like the following (where <code>localslot</code> denotes register slots on which swapping happens, and <code>remslot</code> denotes remote registers on the left and right):</p><pre><code class="language-julia hljs">apply!((localslot1, localslot2), CNOT; time=time)
+xmeas = project_traceout!(localslot1, X)
+zmeas = project_traceout!(localslot2, Z)
 if xmeas==2
-    apply!([regL], [qubitL], Gates.Z)
+    apply!(remslot1, Z)
 end
 if zmeas==2
-    apply!([regR], [qubitR], Gates.X)
+    apply!(remslot2, X)
 end</code></pre><details><summary>Click to see the implementation of the Swapper process</summary><pre><code class="language-julia hljs">@resumable function swapper(
     sim::Environment, # The scheduler for all simulation events
-    mgraph,           # The graph of qubit nodes
+    network,          # The graph of quantum nodes
     node,             # The node on which the swapper works
     swapper_wait_time,# The wait time in case there are no available qubits for swapping
     swapper_busy_time # How long it takes to perform the swap
     )
     while true
-        qubit_pair = findswapablequbits(mgraph,node)
+        qubit_pair = findswapablequbits(network,node)
         if isnothing(qubit_pair)
             @yield timeout(sim, swapper_wait_time)
             continue
         end
         q1, q2 = qubit_pair
-        locks = get_prop(mgraph, node, :locks)[[q1,q2]]
+        locks = network[node, :locks][[q1,q2]]
         @yield mapreduce(request, &amp;, locks)
-        reg = get_prop(mgraph, node, :register)
+        reg = network[node]
         @yield timeout(sim, swapper_busy_time)
-        apply!([reg,reg], [q1,q2], Gates.CNOT; time=now(sim))
-        xmeas = project_traceout!(reg, q1, [States.X₀, States.X₁])
-        zmeas = project_traceout!(reg, q2, [States.Z₀, States.Z₁])
-        node1 = get_prop(mgraph,node,:enttrackers)[q1]
-        reg1 = get_prop(mgraph,node1.node,:register)
-        if xmeas==2
-            apply!([reg1], [node1.slot], Gates.Z)
-        end
-        node2 = get_prop(mgraph,node,:enttrackers)[q2]
-        reg2 = get_prop(mgraph,node2.node,:register)
-        if zmeas==2
-            apply!([reg2], [node2.slot], Gates.X)
-        end
-        get_prop(mgraph,node1.node,:enttrackers)[node1.slot] = node2
-        get_prop(mgraph,node2.node,:enttrackers)[node2.slot] = node1
-        get_prop(mgraph,node,:enttrackers)[q1] = nothing
-        get_prop(mgraph,node,:enttrackers)[q2] = nothing
+        node1 = network[node,:enttrackers][q1]
+        reg1 = network[node1.node]
+        node2 = network[node,:enttrackers][q2]
+        reg2 = network[node2.node]
+        swapcircuit(reg[q1], reg[q2], reg1[node1.slot], reg2[node2.slot]; time=now(sim))
+        network[node1.node,:enttrackers][node1.slot] = node2
+        network[node2.node,:enttrackers][node2.slot] = node1
+        network[node,:enttrackers][q1] = nothing
+        network[node,:enttrackers][q2] = nothing
         @simlog sim &quot;swap at $(node):$(q1)&amp;$(q2) connecting $(node1) and $(node2)&quot;
         release.(locks)
     end
 end
 
-function findswapablequbits(mgraph,node)
-    enttrackers = get_prop(mgraph,node,:enttrackers)
-    locks = get_prop(mgraph,node,:locks)
+function swapcircuit(localslot1, localslot2, remslot1, remslot2; time=nothing)
+    apply!((localslot1, localslot2), CNOT; time=time)
+    xmeas = project_traceout!(localslot1, X)
+    zmeas = project_traceout!(localslot2, Z)
+    if xmeas==2
+        apply!(remslot1, Z)
+    end
+    if zmeas==2
+        apply!(remslot2, X)
+    end
+end
+
+function findswapablequbits(network,node)
+    enttrackers = network[node,:enttrackers]
+    locks = network[node,:locks]
     left_nodes  = [(i=i,n...) for (i,n) in enumerate(enttrackers)
                    if !isnothing(n) &amp;&amp; n.node&lt;node &amp;&amp; isfree(locks[i])]
     isempty(left_nodes)  &amp;&amp; return nothing
@@ -170,7 +176,7 @@ function findswapablequbits(mgraph,node)
     _, farthest_left  = findmin(n-&gt;n.node, left_nodes)
     _, farthest_right = findmax(n-&gt;n.node, right_nodes)
     return left_nodes[farthest_left].i, right_nodes[farthest_right].i
-end</code></pre></details><h2 id="Purifier"><a class="docs-heading-anchor" href="#Purifier">Purifier</a><a id="Purifier-1"></a><a class="docs-heading-anchor-permalink" href="#Purifier" title="Permalink"></a></h2><p>Last but not least, there is the Purifier that searches for pairs of nodes that share more than one Bell pair. On such nodes a purification procedure can be performed:</p><video src="../firstgenrepeater-05.purifier.mp4" autoplay loop muted></video><p>As you can see, not all purification attempts succeed. On some occasions there is a failure and both pairs get discarded as faulty. Each Purifier is running two purification circuits, one after the other, as a single round of purification is uncapable of detecting all types of errors. The two circuits being employed are the following:</p><img alt="Entanglement purification circuit" src="../firstgenrepeater-06.purcircuit1.png" style="max-width:40%">
+end</code></pre></details><h2 id="Purifier"><a class="docs-heading-anchor" href="#Purifier">Purifier</a><a id="Purifier-1"></a><a class="docs-heading-anchor-permalink" href="#Purifier" title="Permalink"></a></h2><p>Last but not least, there is the Purifier that searches for pairs of nodes that share more than one Bell pair. On such nodes a purification procedure can be performed:</p><video src="../firstgenrepeater-05.purifier.mp4" autoplay loop muted></video><p>As you can see, not all purification attempts succeed. On some occasions there is a failure and both pairs get discarded as faulty. Each Purifier is running two purification circuits, one after the other, as a single round of purification is incapable of detecting all types of errors. The two circuits being employed are the following:</p><img alt="Entanglement purification circuit" src="../firstgenrepeater-06.purcircuit1.png" style="max-width:40%">
 <img alt="Entanglement purification circuit" src="../firstgenrepeater-06.purcircuit2.png" style="max-width:40%">
 <!--
 [Initialize("pair 1", [1, 2]),
@@ -186,14 +192,13 @@ end</code></pre></details><h2 id="Purifier"><a class="docs-heading-anchor" href=
  Measurement("X", 1),
  Measurement("X", 2)]
 --><p>If the coincidence measurements fail, all qubits are reset. If the coincidence measurements are correct, the purified pair would have higher fidelity than what it started with. To implement one of these circuits one can write something akin to the following, where <code>regA</code> and <code>regB</code> are the two registers who share two entangled pairs, and <code>pairXqubitX</code> specifies the slot for each of the qubits of each of the pairs:</p><pre><code class="language-julia hljs">gate = Gates.CNOT # or Gates.CPHASE
-apply!([regA,regA],[pair2qubit1,pair1qubit1],gate)
-apply!([regB,regB],[pair2qubit2,pair1qubit2],gate)
-measbasis = [States.X₀, States.X₁]
-measa = project_traceout!(regA, pair2qubit1, measbasis)
-measb = project_traceout!(regB, pair2qubit2, measbasis)
+apply!((rega[pair2qa],rega[pair1qa]),gate)
+apply!((regb[pair2qb],regb[pair1qb]),gate)
+measa = project_traceout!(rega[pair2qa], X)
+measb = project_traceout!(regb[pair2qb], X)
 if measa!=measb
-    traceout!(regA, pair1qubit1)
-    traceout!(regB, pair1qubit2)
+    traceout!(rega[pair1qa])
+    traceout!(regb[pair1qb])
 end</code></pre><p>The overall structure of this process is similar to the Entangler and Swapper: repeatedly trying to lock four qubits belonging to two pairs shared by the same nodes, followed by performing the purification procedure.</p><div class="mermaid">
 graph LR
     A[Purifier starts<br>on nodes A and B]
@@ -209,15 +214,15 @@ graph LR
     F1 --> G([Unlock<br>the qubits])
     F2 --> G([Unlock<br>the qubits])
     G --> B
-</div><p>Purification processes are started on all pairs of nodes with an invocation like:</p><pre><code class="language-julia hljs">for nodea in vertices(mgraph)
-    for nodeb in vertices(mgraph)
+</div><p>Purification processes are started on all pairs of nodes with an invocation like:</p><pre><code class="language-julia hljs">for nodea in vertices(network)
+    for nodeb in vertices(network)
         if nodeb&gt;nodea
-            @process purifier(sim, mgraph, nodea, nodeb, ...)
+            @process purifier(sim, network, nodea, nodeb, ...)
         end
     end
 end</code></pre><details><summary>Click to see the implementation of the Entangler process</summary><pre><code class="language-julia hljs">@resumable function purifier(
     sim::Environment,  # The scheduler for all simulation events
-    mgraph,            # The graph of qubit nodes
+    network,           # The graph of quantum nodes
     nodea,             # One of the nodes on which the pairs to be purified rest
     nodeb,             # The other such node
     purifier_wait_time,# The wait time in case there are no pairs available for purification
@@ -225,45 +230,43 @@ end</code></pre><details><summary>Click to see the implementation of the Entangl
     )
     round = 0
     while true
-        pairs_of_bellpairs = findqubitstopurify(mgraph,nodea,nodeb)
+        pairs_of_bellpairs = findqubitstopurify(network,nodea,nodeb)
         if isnothing(pairs_of_bellpairs)
             @yield timeout(sim, purifier_wait_time)
             continue
         end
         pair1qa, pair1qb, pair2qa, pair2qb = pairs_of_bellpairs
-        locks = [get_prop(mgraph,nodea,:locks)[[pair1qa,pair2qa]];
-                 get_prop(mgraph,nodeb,:locks)[[pair1qb,pair2qb]]]
+        locks = [network[nodea,:locks][[pair1qa,pair2qa]];
+                 network[nodeb,:locks][[pair1qb,pair2qb]]]
         @yield mapreduce(request, &amp;, locks)
         @yield timeout(sim, purifier_busy_time)
-        rega = get_prop(mgraph,nodea,:register)
-        regb = get_prop(mgraph,nodeb,:register)
-        println((nodea,nodeb),(pair1qa, pair1qb, pair2qa, pair2qb))
-        gate = (Gates.CNOT, Gates.CPHASE)[round%2+1]
-        apply!([rega,rega],[pair2qa,pair1qa],gate)
-        apply!([regb,regb],[pair2qb,pair1qb],gate)
-        measbasis = [States.X₀, States.X₁]
-        measa = project_traceout!(rega, pair2qa, measbasis)
-        measb = project_traceout!(regb, pair2qb, measbasis)
+        rega = network[nodea]
+        regb = network[nodeb]
+        gate = (CNOT, CPHASE)[round%2+1]
+        apply!((rega[pair2qa],rega[pair1qa]),gate)
+        apply!((regb[pair2qb],regb[pair1qb]),gate)
+        measa = project_traceout!(rega[pair2qa], X)
+        measb = project_traceout!(regb[pair2qb], X)
         if measa!=measb
-            traceout!(rega, pair1qa)
-            traceout!(regb, pair1qb)
-            get_prop(mgraph,nodea,:enttrackers)[pair1qa] = nothing
-            get_prop(mgraph,nodeb,:enttrackers)[pair1qb] = nothing
+            traceout!(rega[pair1qa])
+            traceout!(regb[pair1qb])
+            network[nodea,:enttrackers][pair1qa] = nothing
+            network[nodeb,:enttrackers][pair1qb] = nothing
             @simlog sim &quot;failed purification at $(nodea):$(pair1qa)&amp;$(pair2qa) and $(nodeb):$(pair1qb)&amp;$(pair2qb)&quot;
         else
             round += 1
             @simlog sim &quot;purification at $(nodea):$(pair1qa) $(nodeb):$(pair1qb) by sacrifice of $(nodea):$(pair1qa) $(nodeb):$(pair1qb)&quot;
         end
-        get_prop(mgraph,nodea,:enttrackers)[pair2qa] = nothing
-        get_prop(mgraph,nodeb,:enttrackers)[pair2qb] = nothing
+        network[nodea,:enttrackers][pair2qa] = nothing
+        network[nodeb,:enttrackers][pair2qb] = nothing
         release.(locks)
     end
 end
 
-function findqubitstopurify(mgraph,nodea,nodeb)
-    enttrackers = get_prop(mgraph,nodea,:enttrackers)
-    locksa = get_prop(mgraph,nodea,:locks)
-    locksb = get_prop(mgraph,nodeb,:locks)
+function findqubitstopurify(network,nodea,nodeb)
+    enttrackers = network[nodea,:enttrackers]
+    locksa = network[nodea,:locks]
+    locksb = network[nodeb,:locks]
     enttrackers = [(i=i,n...) for (i,n) in enumerate(enttrackers)
                    if !isnothing(n) &amp;&amp; n.node==nodeb &amp;&amp; isfree(locksa[i]) &amp;&amp; isfree(locksb[n.slot])]
     if length(enttrackers)&gt;=2
@@ -274,8 +277,8 @@ function findqubitstopurify(mgraph,nodea,nodeb)
         return nothing
     end
 end</code></pre></details><h2 id="Running-the-simulations"><a class="docs-heading-anchor" href="#Running-the-simulations">Running the simulations</a><a id="Running-the-simulations-1"></a><a class="docs-heading-anchor-permalink" href="#Running-the-simulations" title="Permalink"></a></h2><p>Now that we have defined the Entangler, Swapper, and Purifier processes, we just need to run the simulation. That is no different from running any other <code>SimJulia.jl</code> simulation, after our custom setup:</p><pre><code class="language-julia hljs">sizes = [2,3,4,3,2]        # Number of qubits in each register
-T2 = 10.0                  # T2 dephasing time of all qubits
-F = 0.9                    # Fidelity of the raw Bell pairs
+T2 = 100.0                 # T2 dephasing time of all qubits
+F = 0.97                   # Fidelity of the raw Bell pairs
 entangler_wait_time = 0.1  # How long to wait if all qubits are busy before retring entangling
 entangler_busy_time = 1.0  # How long it takes to establish a newly entangled pair
 swapper_wait_time = 0.1    # How long to wait if all qubits are unavailable for swapping
@@ -283,21 +286,19 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 purifier_wait_time = 0.15  # How long to wait if there are no pairs to be purified
 purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
-sim, mgraph = simulation_setup(sizes, T2)
+sim, network = simulation_setup(sizes, T2; representation = QuantumCliffordRepresentation)
 
-# run the entangler on each nearest-neighbor pair
-for (;src, dst) in edges(mgraph)
-    @process entangler(sim, mgraph, src, dst, F, entangler_wait_time, entangler_busy_time)
+noisy_pair = stab_noisy_pair_func(F)
+for (;src, dst) in edges(network)
+    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_time)
 end
-# run the swapper on each node
-for node in vertices(mgraph)
-    @process swapper(sim, mgraph, node, swapper_wait_time, swapper_busy_time)
+for node in vertices(network)
+    @process swapper(sim, network, node, swapper_wait_time, swapper_busy_time)
 end
-# run the purifier on each pair of nodes
-for nodea in vertices(mgraph)
-    for nodeb in vertices(mgraph)
+for nodea in vertices(network)
+    for nodeb in vertices(network)
         if nodeb&gt;nodea
-            @process purifier(sim, mgraph, nodea, nodeb, purifier_wait_time, purifier_busy_time)
+            @process purifier(sim, network, nodea, nodeb, purifier_wait_time, purifier_busy_time)
         end
     end
-end</code></pre><p>Then to run the simulation up to time <code>t</code> we just write <code>run(sim, t)</code>. If we want to run until the next event, whenever that is, we can do <code>SimJulia.step(sim)</code></p><h2 id="Figures-of-Merit-and-Visualizations"><a class="docs-heading-anchor" href="#Figures-of-Merit-and-Visualizations">Figures of Merit and Visualizations</a><a id="Figures-of-Merit-and-Visualizations-1"></a><a class="docs-heading-anchor-permalink" href="#Figures-of-Merit-and-Visualizations" title="Permalink"></a></h2><p>These simulations are not particularly useful if we do not track the performance of the quantum network. One convenient way to do that is to compute observables related to the quality of entanglement, e.g., the <code>XX</code> and <code>ZZ</code> correlators. We will compute these correlators for the second pair on the extreme ends of the chain of repeaters:</p><video src="../firstgenrepeater-07.observable.mp4" autoplay loop muted></video><p>Notice how the <code>XX</code> observable drops due to the T₂ dephasing experienced by the qubits. And then it goes back up at the occurence of a successful purification (or all the way to zero at failed purifications). Here is what it looks like if we do not perform purification:</p><video src="../firstgenrepeater-07.observable.nopur.mp4" autoplay loop muted></video><p>The plotting itself is realized with the wonderful <code>Makie.jl</code> plotting library. The figure of merrit is obtained through a call to <a href="../API/#QuantumSavory.observable"><code>observable</code></a>, a convenient method for calculating expectation values of various quantum observables.</p><h2 id="Summary-of-QuantumSavory-tools-employed-in-the-simulation"><a class="docs-heading-anchor" href="#Summary-of-QuantumSavory-tools-employed-in-the-simulation">Summary of <code>QuantumSavory</code> tools employed in the simulation</a><a id="Summary-of-QuantumSavory-tools-employed-in-the-simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Summary-of-QuantumSavory-tools-employed-in-the-simulation" title="Permalink"></a></h2><p>We used the <a href="../API/#QuantumSavory.Register"><code>Register</code></a> data structure to automatically track the quantum states describing our mixed analog-digital quantum dynamics.</p><p>Much of the analog dynamics was implicit through the use of <a href="../propbackgrounds/#Properties-and-Backgrounds">backgrounds, declaring the noise properties of various qubits</a>.</p><p>The digital-ish dynamics was implemented through the use of</p><ul><li><a href="../API/#QuantumSavory.initialize!-Tuple{Vector{Register}, Vector{Int64}, Any}"><code>initialize!</code></a> for setting inital states to various qubits</li><li><a href="../API/#QuantumSavory.apply!-Tuple{Any, Any, Any}"><code>apply!</code></a> for the application of various gates</li><li><a href="../API/#QuantumSavory.traceout!-Tuple{Register, Int64}"><code>traceout!</code></a> for deleting qubits</li><li><a href="../API/#QuantumSavory.project_traceout!"><code>project_traceout!</code></a> for projective measurements over qubits</li><li><a href="../API/#QuantumSavory.observable"><code>observable</code></a> for calculating expectation values of quantum observables</li></ul><p>Many of the above functions take the <code>time</code> keyword argument, which ensures that various background analog processes are simulated before the given operation is performed.</p><p>Of note is that we also used <code>Makie.jl</code> for plotting, <code>MetaGraphs.jl</code> for convenient data structures, <code>SimJulia.jl</code> for discrete event scheduling, <code>QuantumClifford.jl</code> for efficient simulation of Clifford circuits, and <code>QuantumOptics.jl</code> for convenient master equation integration. Many of these tools were used under the hood without being invoked directly.</p><h2 id="Full-Code"><a class="docs-heading-anchor" href="#Full-Code">Full Code</a><a id="Full-Code-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Code" title="Permalink"></a></h2><p>The entirety of the code necessary for reproducing these results is in the <a href="https://github.com/Krastanov/QuantumSavory.jl/tree/master/examples/firstgenrepeater">examples folder of the <code>QuantumSavory.jl</code> repository</a>.</p><h2 id="Suggested-Improvements"><a class="docs-heading-anchor" href="#Suggested-Improvements">Suggested Improvements</a><a id="Suggested-Improvements-1"></a><a class="docs-heading-anchor-permalink" href="#Suggested-Improvements" title="Permalink"></a></h2><ul><li>The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available.</li><li>Calibrating when to perform a purification versus a swap would be important for the performance of the network.</li><li>Balancing what types of entanglement purification is performed, depending on the type of noise experienced, can drastically lower resource requirements.</li><li>Implementing more sophisticated purification schemes can greatly improve the quality of entanglement.</li></ul><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a><a href="../bibliography/#muralidharan2016optimal">Sreraman Muralidharan, Linshu Li, Jungsang Kim, Norbert L{\&quot;u}tkenhaus, Mikhail D Lukin, Liang Jiang (2016)</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« QuantumSavory.jl</a><a class="docs-footer-nextpage" href="../howto-firstgenrepeater-clifford/">1st-gen Repeater (Clifford formalism) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Monday 12 September 2022 16:11">Monday 12 September 2022</span>. Using Julia version 1.8.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><p>Then to run the simulation up to time <code>t</code> we just write <code>run(sim, t)</code>. If we want to run until the next event, whenever that is, we can do <code>SimJulia.step(sim)</code></p><h2 id="Figures-of-Merit-and-Visualizations"><a class="docs-heading-anchor" href="#Figures-of-Merit-and-Visualizations">Figures of Merit and Visualizations</a><a id="Figures-of-Merit-and-Visualizations-1"></a><a class="docs-heading-anchor-permalink" href="#Figures-of-Merit-and-Visualizations" title="Permalink"></a></h2><p>These simulations are not particularly useful if we do not track the performance of the quantum network. One convenient way to do that is to compute observables related to the quality of entanglement, e.g., the <code>XX</code> and <code>ZZ</code> correlators. We will compute these correlators for the second pair on the extreme ends of the chain of repeaters:</p><video src="../firstgenrepeater-07.observable.mp4" autoplay loop muted></video><p>Notice how the <code>XX</code> observable drops due to the T₂ dephasing experienced by the qubits. And then it goes back up at the occurence of a successful purification (or all the way to zero at failed purifications). Here is what it looks like if we do not perform purification:</p><video src="../firstgenrepeater-07.observable.nopur.mp4" autoplay loop muted></video><p>The plotting itself is realized with the wonderful <code>Makie.jl</code> plotting library. The figure of merrit is obtained through a call to <a href="../API/#QuantumSavory.observable"><code>observable</code></a>, a convenient method for calculating expectation values of various quantum observables.</p><h2 id="Summary-of-QuantumSavory-tools-employed-in-the-simulation"><a class="docs-heading-anchor" href="#Summary-of-QuantumSavory-tools-employed-in-the-simulation">Summary of <code>QuantumSavory</code> tools employed in the simulation</a><a id="Summary-of-QuantumSavory-tools-employed-in-the-simulation-1"></a><a class="docs-heading-anchor-permalink" href="#Summary-of-QuantumSavory-tools-employed-in-the-simulation" title="Permalink"></a></h2><p>We used the <a href="../API/#QuantumSavory.Register"><code>Register</code></a> data structure to automatically track the quantum states describing our mixed analog-digital quantum dynamics.</p><p>Much of the analog dynamics was implicit through the use of <a href="../propbackgrounds/#Properties-and-Backgrounds">backgrounds, declaring the noise properties of various qubits</a>.</p><p>The digital-ish dynamics was implemented through the use of</p><ul><li><a href="../API/#QuantumSavory.initialize!-Tuple{Vector{Register}, Vector{Int64}, Any}"><code>initialize!</code></a> for setting inital states to various qubits</li><li><a href="../API/#QuantumSavory.apply!-Tuple{Vector{Register}, Vector{Int64}, Any}"><code>apply!</code></a> for the application of various gates</li><li><a href="../API/#QuantumSavory.traceout!-Tuple{Register, Int64}"><code>traceout!</code></a> for deleting qubits</li><li><a href="../API/#QuantumSavory.project_traceout!"><code>project_traceout!</code></a> for projective measurements over qubits</li><li><a href="../API/#QuantumSavory.observable"><code>observable</code></a> for calculating expectation values of quantum observables</li></ul><p>Many of the above functions take the <code>time</code> keyword argument, which ensures that various background analog processes are simulated before the given operation is performed.</p><p>Of note is that we also used <code>Makie.jl</code> for plotting, <code>SimJulia.jl</code> for discrete event scheduling, <code>QuantumClifford.jl</code> for efficient simulation of Clifford circuits, and <code>QuantumOptics.jl</code> for convenient master equation integration. Many of these tools were used under the hood without being invoked directly.</p><h2 id="Full-Code"><a class="docs-heading-anchor" href="#Full-Code">Full Code</a><a id="Full-Code-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Code" title="Permalink"></a></h2><p>The entirety of the code necessary for reproducing these results is in the <a href="https://github.com/Krastanov/QuantumSavory.jl/tree/master/examples/firstgenrepeater">examples folder of the <code>QuantumSavory.jl</code> repository</a>.</p><h2 id="Suggested-Improvements"><a class="docs-heading-anchor" href="#Suggested-Improvements">Suggested Improvements</a><a id="Suggested-Improvements-1"></a><a class="docs-heading-anchor-permalink" href="#Suggested-Improvements" title="Permalink"></a></h2><ul><li>The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available.</li><li>Calibrating when to perform a purification versus a swap would be important for the performance of the network.</li><li>Balancing what types of entanglement purification is performed, depending on the type of noise experienced, can drastically lower resource requirements.</li><li>Implementing more sophisticated purification schemes can greatly improve the quality of entanglement.</li></ul><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a><a href="../bibliography/#muralidharan2016optimal">Sreraman Muralidharan, Linshu Li, Jungsang Kim, Norbert L{\&quot;u}tkenhaus, Mikhail D Lukin, Liang Jiang (2016)</a></li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« QuantumSavory.jl</a><a class="docs-footer-nextpage" href="../howto-firstgenrepeater-clifford/">1st-gen Repeater (Clifford formalism) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Monday 12 September 2022 20:57">Monday 12 September 2022</span>. Using Julia version 1.8.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
