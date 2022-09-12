@@ -1,4 +1,6 @@
-using QuantumOptics # Should be import
+import QuantumOpticsBase
+import QuantumOpticsBase: GenericBasis, CompositeBasis, StateVector, basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, projector, identityoperator, embed, dm, expect, ptrace
+import QuantumOptics
 
 # TODO should be in quantumoptics
 function _drop_singular_bases(ket::Ket)
@@ -7,7 +9,7 @@ function _drop_singular_bases(ket::Ket)
 end
 function _drop_singular_bases(op::Operator)
     b = tensor([b for b in basis(op).bases if length(b)>1]...)
-    return QuantumOptics.Operator(b, op.data)
+    return Operator(b, op.data)
 end
 
 _branch_prob(psi::Ket) = norm(psi)^2
@@ -27,7 +29,7 @@ function _project_and_drop(state::Ket, project_on, basis_index)
     result = emproj*state
     return _drop_singular_bases(result)
 end
-function _project_and_drop(state::QuantumOptics.Operator, project_on, basis_index)
+function _project_and_drop(state::Operator, project_on, basis_index)
     singularbasis = GenericBasis(1)
     singularket = basisstate(singularbasis,1)
     proj = projector(singularket, project_on')
@@ -63,36 +65,31 @@ traceout!(s::Operator, i) = ptrace(s,i)
 ispadded(::StateVector) = false
 ispadded(::Operator) = false
 
-function observable(state::QuantumOptics.Ket, indices, operation) # TODO union with QO.Operator
+function observable(state::Union{<:Ket,<:Operator}, indices, operation) # TODO union with QO.Operator
+    operation = express(operation, QuantumOpticsRepresentation())
     e = basis(state)==basis(operation)
     op = e ? operation : embed(basis(state), indices, operation)
     expect(op, state)
 end
 
-function observable(state::QuantumOptics.Operator, indices, operation)
-    e = basis(state)==basis(operation)
-    op = e ? operation : embed(basis(state), indices, operation)
-    expect(op, state)
-end
-
-function apply!(state::QuantumOptics.Ket, indices, operation)
+function apply!(state::Ket, indices, operation)
     op = basis(state)==basis(operation) ? operation : embed(basis(state), indices, operation)
     state.data = (op*state).data
     state
 end
 
-function apply!(state::QuantumOptics.Operator, indices, operation)
+function apply!(state::Operator, indices, operation)
     op = basis(state)==basis(operation) ? operation : embed(basis(state), indices, operation)
     state.data = (op*state*op').data
     state
 end
 
-function uptotime!(state::QuantumOptics.StateVector, idx::Int, background, Δt)
-    state = isa(state, QuantumOptics.StateVector) ? dm(state) : state # AAA make more elegant with multiple dispatch
+function uptotime!(state::StateVector, idx::Int, background, Δt)
+    state = isa(state, StateVector) ? dm(state) : state # AAA make more elegant with multiple dispatch
     uptotime!(state, idx, background, Δt)
 end
 
-function uptotime!(state::QuantumOptics.Operator, idx::Int, background, Δt)
+function uptotime!(state::Operator, idx::Int, background, Δt)
     nstate = zero(state)
     tmpl = zero(state)
     tmpr = zero(state)
@@ -108,11 +105,11 @@ function uptotime!(state::QuantumOptics.Operator, idx::Int, background, Δt)
     nstate
 end
 
-function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,basis::Symbolic{Operator})
-    project_traceout!(state::QuantumOptics.Operator,stateindex,eigvecs(basis))
+function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Symbolic{Operator})
+    project_traceout!(state::Operator,stateindex,eigvecs(basis))
 end
 
-function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator},stateindex,psis::Vector{<:Symbolic{Ket}})
+function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Vector{<:Symbolic{Ket}})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of overlap vs _project_and_drop
         overlaps = [overlap(psi,state) for psi in psis]
         branch_probs = cumsum(overlaps)
@@ -130,11 +127,14 @@ function project_traceout!(state::Union{QuantumOptics.Ket,QuantumOptics.Operator
 end
 
 ##
+
 const _b2 = SpinBasis(1//2)
 const _l = spinup(_b2)
 const _h = spindown(_b2) # TODO is this a good decision... look at how clumsy the kraus ops are
 const _s₊ = (_l+_h)/√2
 const _s₋ = (_l-_h)/√2
+const _i₊ = (_l+im*_h)/√2
+const _i₋ = (_l-im*_h)/√2
 const _lh = sigmap(_b2)
 const _ll = projector(_l)
 const _hh = projector(_h)
@@ -146,52 +146,57 @@ const _Id = identityoperator(_b2)
 const _hadamard = (sigmaz(_b2)+sigmax(_b2))/√2
 const _cnot = _ll⊗_Id + _hh⊗_x
 const _cphase = _ll⊗_Id + _hh⊗_z
+const _phase = _ll + im*_hh
+const _iphase = _ll - im*_hh
 
-apply!(state::QuantumOptics.Ket,      indices, operation::Symbolic{Operator}) = apply!(state, indices, express_qo(operation))
-apply!(state::QuantumOptics.Operator, indices, operation::Symbolic{Operator}) = apply!(state, indices, express_qo(operation))
+const QOR = QuantumOpticsRepresentation()
 
-overlap(l::Symbolic{Ket}, r::QuantumOptics.Ket) = overlap(express_qo(l), r)
-overlap(l::Symbolic{Ket}, r::QuantumOptics.Operator) = overlap(express_qo(l), r)
+apply!(state::Ket,      indices, operation::Symbolic{Operator}) = apply!(state, indices, express(operation, QOR))
+apply!(state::Operator, indices, operation::Symbolic{Operator}) = apply!(state, indices, express(operation, QOR))
 
-_project_and_drop(state::QuantumOptics.Ket, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
-_project_and_drop(state::QuantumOptics.Operator, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express_qo(project_on), basis_index)
+overlap(l::Symbolic{Ket}, r::Ket) = overlap(express(l, QOR), r)
+overlap(l::Symbolic{Ket}, r::Operator) = overlap(express(l, QOR), r)
 
-express_qo(::HGate) = _hadamard
-express_qo(::XGate) = _x
-express_qo(::YGate) = _y
-express_qo(::ZGate) = _z
-express_qo(::CPHASEGate) = _cphase
-express_qo(::CNOTGate) = _cnot
+_project_and_drop(state::Ket, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express(project_on, QOR), basis_index)
+_project_and_drop(state::Operator, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express(project_on, QOR), basis_index)
 
-express_qo(s::XBasisState) = (_s₊,_s₋)[s.idx]
-express_qo(s::ZBasisState) = (_l,_h)[s.idx]
+express_nolookup(::HGate, ::QuantumOpticsRepresentation) = _hadamard
+express_nolookup(::XGate, ::QuantumOpticsRepresentation) = _x
+express_nolookup(::YGate, ::QuantumOpticsRepresentation) = _y
+express_nolookup(::ZGate, ::QuantumOpticsRepresentation) = _z
+express_nolookup(::CPHASEGate, ::QuantumOpticsRepresentation) = _cphase
+express_nolookup(::CNOTGate, ::QuantumOpticsRepresentation) = _cnot
 
-express_qo(x::MixedState) = identityoperator(basis(x))/length(basis(x)) # TODO there is probably a more efficient way to represent it
+express_nolookup(s::XBasisState, ::QuantumOpticsRepresentation) = (_s₊,_s₋)[s.idx]
+express_nolookup(s::YBasisState, ::QuantumOpticsRepresentation) = (_i₊,_i₋)[s.idx]
+express_nolookup(s::ZBasisState, ::QuantumOpticsRepresentation) = (_l,_h)[s.idx]
+
+express_nolookup(x::MixedState, ::QuantumOpticsRepresentation) = identityoperator(basis(x))/length(basis(x)) # TODO there is probably a more efficient way to represent it
 
 operation_qo(x) = operation(x)
 operation_qo(x::SProjector) = dm # TODO make QuantumInterface
 # TODO should this be `dm` or `projector`
 
-function express_qo(s::Symbolic{T}) where {T<:Union{Ket,Bra,Operator}}
+function express_nolookup(s::Symbolic{T}, repr::QuantumOpticsRepresentation) where {T<:Union{Ket,Bra,Operator}}
     if istree(s)
-        operation_qo(s)(express_qo.(arguments(s))...)
+        operation_qo(s)(express.(arguments(s), (repr,))...)
     else
         error("Encountered an object $(s) of type $(typeof(s)) that can not be converted to QuantumOptics representation") # TODO make a nice error type
     end
 end
-express_qo(s::Number) = s
 
-express(r,i,state) = express_qo(state) # TODO implement other formats
+
+#express(r,i,state) = express_qo(state) # TODO implement other formats
 
 #= TODO implement superoperators
-apply!(state::QuantumOptics.Ket, indices, dep::Gates.Depolarize) = apply!(dm(state), indices, dep)
-function apply!(state::QuantumOptics.Operator{B,B,D}, indices, dep::Gates.Depolarize) where {B<:CompositeBasis, D}
+apply!(state::Ket, indices, dep::Gates.Depolarize) = apply!(dm(state), indices, dep)
+function apply!(state::Operator{B,B,D}, indices, dep::Gates.Depolarize) where {B<:CompositeBasis, D}
     filler_indices = [i for i in 1:nsubsystems(state) if i∉indices]
     ptr_state = ptrace(state, indices)
     dep_state = embed(basis(state), filler_indices, ptr_state) # TODO optimize
     return dep.p*state + (1-dep.p)/(size(state,1)/size(ptr_state,1))*dep_state
 end
-function apply!(state::QuantumOptics.Operator, indices, dep::Gates.Depolarize) # used for singular bases
+function apply!(state::Operator, indices, dep::Gates.Depolarize) # used for singular bases
     state.data .= dep.p .* state.data .+ (1-dep.p) ./ size(state.data,1) .* I(size(state.data,1))
     state
 end
@@ -206,4 +211,11 @@ end
 function krausops(T2::T2Dephasing, Δt)
     p = exp(-Δt/T2.t2) # TODO check this
     [√(1-p) * _z, √p * _id]
+end
+
+function newstate(::Qubit,::QuantumOpticsRepresentation)
+    copy(_l)
+end
+function newstate(::Qubit,::QuantumMCRepresentation)
+    copy(_l)
 end

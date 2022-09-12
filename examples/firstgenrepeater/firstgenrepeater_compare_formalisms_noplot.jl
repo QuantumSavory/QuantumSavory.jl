@@ -4,8 +4,6 @@ include("firstgenrepeater_clifford_setup.jl")
 
 using Statistics
 using RecursiveArrayTools
-using CairoMakie
-CairoMakie.activate!()
 
 ##
 
@@ -65,8 +63,8 @@ using Logging
 nologging = ConsoleLogger(stderr, Logging.Warn)
 
 # Run sims
-replicates = 1000
-sampled_times = 0.:0.2:25.
+replicates = 100
+sampled_times = 0.:0.4:25.
 @time qo_res = with_logger(nologging) do
     [monte_carlo_trajectory(; sampled_times) for _ in 1:replicates]
 end;
@@ -79,14 +77,3 @@ qcx = mean([x for (x,z) in qc_res])
 qox = mean([x for (x,z) in qo_res])
 qcz = mean([z for (x,z) in qc_res])
 qoz = mean([z for (x,z) in qo_res])
-fig = Figure()
-axx = Axis(fig[1,1][1,1], xlabel="time", ylabel="XX Expectation")
-axz = Axis(fig[2,1][1,1], xlabel="time", ylabel="ZZ Expectation")
-qcplot = stairs!(axx, sampled_times, qcx)
-qoplot = stairs!(axx, sampled_times, qox)
-stairs!(axz, sampled_times, qcz)
-stairs!(axz, sampled_times, qoz)
-Legend(fig[3,1][1,1],[qcplot,qoplot],["Wave function sims","Clifford circuit sims"],
-            orientation = :horizontal, tellwidth = false, tellheight = true)
-display(fig)
-save("firstgenrepeater-09.formalisms.png", fig)

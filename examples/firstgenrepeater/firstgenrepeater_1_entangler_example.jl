@@ -1,5 +1,7 @@
 include("firstgenrepeater_setup.jl")
 
+using GLMakie # For plotting
+
 ##
 # Demo the entangler on its own
 ##
@@ -12,8 +14,9 @@ entangler_busy_time = 1.0  # How long it takes to establish a newly entangled pa
 
 sim, network = simulation_setup(sizes, T2)
 
+noisy_pair = noisy_pair_func(F)
 for (;src, dst) in edges(network)
-    @process entangler(sim, network, src, dst, ()->noisy_pair(F), entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_time)
 end
 
 # set up a plot

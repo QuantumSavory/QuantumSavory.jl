@@ -1,5 +1,7 @@
 include("firstgenrepeater_setup.jl")
 
+using GLMakie # For plotting
+
 ##
 # Demo visualizations of the performance of the network
 ##
@@ -15,8 +17,9 @@ purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
 sim, network = simulation_setup(sizes, T2)
 
+noisy_pair = noisy_pair_func(F)
 for (;src, dst) in edges(network)
-    @process entangler(sim, network, src, dst, ()->noisy_pair(F), entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_time)
 end
 for node in vertices(network)
     @process swapper(sim, network, node, swapper_wait_time, swapper_busy_time)
@@ -29,7 +32,7 @@ for nodea in vertices(network)
     end
 end
 
-fig = Figure(resolution=(400,400))
+fig = Figure(resolution=(800,400))
 subfig_rg, ax_rg, p_rn = registernetplot_axis(fig[1,1],network)
 
 ts = Observable(Float64[0])
@@ -45,12 +48,15 @@ Legend(fig[1,2][2,1],[lXX,lZZ],["XX","ZZ"],
 
 display(fig)
 
+registers = [network[node] for node in vertices(network)]
+last = length(registers)
+
 step_ts = range(0, 100, step=0.1)
 record(fig, "firstgenrepeater-07.observable.mp4", step_ts, framerate=10) do t
     run(sim, t)
 
-    fXX = real(observable(registers[[1,5]], [2,2], qo_XX, 0.0; time=t))
-    fZZ = real(observable(registers[[1,5]], [2,2], qo_ZZ, 0.0; time=t))
+    fXX = real(observable(registers[[1,last]], [2,2], XX, 0.0; time=t))
+    fZZ = real(observable(registers[[1,last]], [2,2], ZZ, 0.0; time=t))
     push!(fidXX[],fXX)
     push!(fidZZ[],fZZ)
     push!(ts[],t)

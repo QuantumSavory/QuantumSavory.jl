@@ -16,4 +16,4 @@ All of the above examples simulate the entire wave function of each qubit throug
 
 The `*_clifford_setup.jl` file implements the few additional steps necessary for a tableau-based simulation, which can be much more efficient. Then `firstgenrepater_clifford_full_example.jl` simply re-runs the same code as the wavefunction-based examples from above.
 
-Lastly, `firstgenrepeater_compare_formalisms.jl` runs repeated trajectory using either representation and compares their average results.
+Lastly, `firstgenrepeater_compare_formalisms.jl` runs repeated trajectory using either representation and compares their average results. The `*_noplot.jl` file runs the same simulation without creating plots.

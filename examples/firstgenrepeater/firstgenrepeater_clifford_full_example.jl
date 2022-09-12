@@ -1,5 +1,7 @@
 include("firstgenrepeater_clifford_setup.jl")
 
+using GLMakie # For plotting
+
 ##
 # Demo visualizations of the performance of the network
 ##
@@ -13,10 +15,11 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 purifier_wait_time = 0.15  # How long to wait if there are no pairs to be purified
 purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
-sim, network = simulation_setup(sizes, T2)
+sim, network = simulation_setup(sizes, T2; representation = QuantumCliffordRepresentation)
 
+noisy_pair = stab_noisy_pair_func(F)
 for (;src, dst) in edges(network)
-    @process entangler(sim, network, src, dst, ()->qc_noisy_pair(F), entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_time)
 end
 for node in vertices(network)
     @process swapper(sim, network, node, swapper_wait_time, swapper_busy_time)
@@ -29,7 +32,7 @@ for nodea in vertices(network)
     end
 end
 
-fig = Figure(resolution=(400,400))
+fig = Figure(resolution=(800,400))
 subfig_rg, ax_rg, p_rn = registernetplot_axis(fig[1,1],network)
 
 ts = Observable(Float64[0])
@@ -45,13 +48,15 @@ Legend(fig[1,2][2,1],[lXX,lZZ],["XX","ZZ"],
 
 display(fig)
 
+registers = [network[node] for node in vertices(network)]
+last = length(registers)
+
 step_ts = range(0, 100, step=0.1)
 record(fig, "firstgenrepeater-08.clifford.mp4", step_ts, framerate=10) do t
     run(sim, t)
 
-    last = length(registers)
-    fXX = real(observable(registers[[1,last]], [2,2], qc_XX, 0.0; time=t))
-    fZZ = real(observable(registers[[1,last]], [2,2], qc_ZZ, 0.0; time=t))
+    fXX = real(observable(registers[[1,last]], [2,2], XX, 0.0; time=t))
+    fZZ = real(observable(registers[[1,last]], [2,2], ZZ, 0.0; time=t))
     push!(fidXX[],fXX)
     push!(fidZZ[],fZZ)
     push!(ts[],t)

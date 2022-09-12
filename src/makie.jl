@@ -1,9 +1,10 @@
 using Graphs
 using NetworkLayout
-using Makie
+import Makie
+import Makie: Observable, @recipe, Axis, plot!, linesegments!, scatter!, Point2
 
 @recipe(RegisterNetPlot) do scene
-    Theme(
+    Makie.Theme(
     Axis = (
         backgroundcolor = :gray90,
         leftspinevisible = false,
@@ -16,15 +17,15 @@ using Makie
     )
 end
 
-function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
+function plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     networkobs = rn[1]
     registers = networkobs[].registers
     register_rectangles = Observable(Makie.Rect2{Float64}[])
-    register_slots_coords = Observable(Makie.Point2f[])
+    register_slots_coords = Observable(Makie.Point2{Float64}[])
     register_slots_coords_backref = Observable([])
-    state_coords = Observable(Makie.Point2f[])
+    state_coords = Observable(Makie.Point2{Float64}[])
     state_coords_backref = Observable([])
-    state_links = Observable(Makie.Point2f[])
+    state_links = Observable(Makie.Point2{Float64}[])
     if haskey(rn, :registercoords) && !isnothing(rn[:registercoords][])
         registercoords = rn[:registercoords][]
     else
@@ -32,7 +33,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         registercoords = spring(adj_matrix, iterations=40, C=1.5*maximum(nsubsystems.(registers)))
     end
     rn[:registercoords] = registercoords # TODO make sure it is an observable
-    processes_coords = Observable(Makie.Point2f[])
+    processes_coords = Observable(Makie.Point2{Float64}[])
     processes = get(rn, :processes, Observable([]))
     rn[:processes] = processes
     function update_plot(network)
@@ -47,7 +48,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         for (i,r) in enumerate(registers) # TODO this should use the layout/connectivity system
             push!(register_rectangles[], Makie.Rect2(registercoords[i][1]-0.3,registercoords[i][2]+0.7-1,0.6,nsubsystems(r)-0.4))
             for j in 1:nsubsystems(r)
-                push!(register_slots_coords[], Makie.Point2f(registercoords[i][1],registercoords[i][2]+j-1))
+                push!(register_slots_coords[], Makie.Point2{Float64}(registercoords[i][1],registercoords[i][2]+j-1))
                 push!(register_slots_coords_backref[], (r,j))
             end
         end
@@ -58,12 +59,12 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 isnothing(r) && continue
                 whichreg = findfirst(o->===(r,o),registers)
                 #isnothing(whichreg) && continue
-                push!(state_coords[], Makie.Point2f(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                push!(state_coords[], Makie.Point2{Float64}(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
                 push!(state_coords_backref[],(s,si))
                 if nsubsystems(s)==1
                     break
                 end
-                push!(state_links[], Makie.Point2f(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                push!(state_links[], Makie.Point2{Float64}(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
                 if !juststarted && si<nsubsystems(s)
                     push!(state_links[], state_links[][end])
                 else
@@ -72,11 +73,11 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
             end
         end
         for p in processes[]
-            edgecoords = Makie.Point2f[]
+            edgecoords = Makie.Point2{Float64}[]
             for (r,i) in p
                 whichreg = findfirst(==(r),registers)
                 if !isnothing(whichreg)
-                    push!(edgecoords, Makie.Point2f(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                    push!(edgecoords, Makie.Point2{Float64}(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
                 end
             end
             center = sum(edgecoords)/length(edgecoords)
@@ -92,7 +93,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     Makie.Observables.onany(update_plot, networkobs)
     Makie.Observables.onany(update_plot, processes)
     update_plot(rn[1][])
-    register_polyplot = poly!(rn,register_rectangles,color=:gray90)
+    register_polyplot = Makie.poly!(rn,register_rectangles,color=:gray90)
     register_polyplot.inspectable[] = false
     register_slots_scatterplot = scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=Makie.SceneSpace)
     process_lineplot = linesegments!(rn,processes_coords,color=:pink,linewidth=20,markerspace=Makie.SceneSpace)
@@ -113,8 +114,8 @@ struct RNHandler <: RegisterNetGraphHandler
     rn
 end
 
-function Makie.MakieLayout.process_interaction(handler::RNHandler, event::MouseEvent, axis)
-    plot, index = mouse_selection(axis.scene)
+function Makie.MakieLayout.process_interaction(handler::RNHandler, event::Makie.MouseEvent, axis)
+    plot, index = Makie.mouse_selection(axis.scene)
     rn = handler.rn
     if plot===rn[:register_slots_scatterplot][]
         register, slot = rn[:register_slots_coords_backref][][index]
@@ -136,12 +137,12 @@ function registernetplot_axis(subfig, registersobservable; registercoords=nothin
     p = registernetplot!(ax, registersobservable,
         registercoords=registercoords,
         )
-    ax.aspect = DataAspect()
-    hidedecorations!(ax)
-    hidespines!(ax)
-    deregister_interaction!(ax, :rectanglezoom)
+    ax.aspect = Makie.DataAspect()
+    Makie.hidedecorations!(ax)
+    Makie.hidespines!(ax)
+    Makie.deregister_interaction!(ax, :rectanglezoom)
     rnh = RNHandler(p)
-    register_interaction!(ax, :registernet, rnh)
+    Makie.register_interaction!(ax, :registernet, rnh)
     subfig, ax, p
 end
 
@@ -171,15 +172,15 @@ function resourceplot_axis(subfig, graphobservable, edgeresources, vertexresourc
         linesegments!(axis,
             lift(x->Point2{Float64}[registercoords[][n] for (;dst,src) in edges(x) for n in (dst,src) if showonplot(get_prop(x,dst,src,edgeres))],
                  graphobservable),
-            color=Cycled(i),
+            color=Makie.Cycled(i),
             #markerspace=Makie.SceneSpace,
             label="$(edgeres)"
             )
     end
-    axis.aspect = DataAspect()
-    Legend(subfig[2,1],axis,tellwidth = false, tellheight = true, orientation=:horizontal)
-    hidedecorations!(axis)
-    hidespines!(axis)
-    autolimits!(axis)
+    axis.aspect = Makie.DataAspect()
+    Makie.Legend(subfig[2,1],axis,tellwidth = false, tellheight = true, orientation=:horizontal)
+    Makie.hidedecorations!(axis)
+    Makie.hidespines!(axis)
+    Makie.autolimits!(axis)
     subfig, axis, baseplot
 end

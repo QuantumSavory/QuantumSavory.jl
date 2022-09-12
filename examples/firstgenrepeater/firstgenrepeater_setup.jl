@@ -1,20 +1,9 @@
-# For plotting
-using GLMakie
-
 # For convenient graph data structures
 using Graphs
-using MetaGraphs
 
 # For discrete event simulation
 using ResumableFunctions
 using SimJulia
-
-# For statistical distributions
-using Distributions
-
-# Low-level simulation tools that are mostly not necessary
-using QuantumOptics
-#using QuantumClifford # We will not use Clifford Simulations here
 
 # The workhorse for the simulation
 using Revise
@@ -28,6 +17,8 @@ using QuantumSavory
 function simulation_setup(
     sizes, # Array giving the number of qubits in each node
     T2 # T2 dephasing times for the qubits
+    ;
+    representation = QuantumOpticsRepresentation # Representation to use for the qubits
     )
     R = length(sizes) # Number of registers
 
@@ -37,9 +28,10 @@ function simulation_setup(
     # All of the quantum register we will be simulating
     registers = Register[]
     for s in sizes
-        lay = Layout([QubitTrait() for i in 1:s])
-        bg = [T2Dephasing(T2) for i in 1:s]
-        push!(registers, Register(lay,bg))
+        traits = [Qubit() for _ in 1:s]
+        repr = [representation() for _ in 1:s]
+        bg = [T2Dephasing(T2) for _ in 1:s]
+        push!(registers, Register(traits,repr,bg))
     end
 
     # A graph structure defining the connectivity among registers
@@ -67,7 +59,7 @@ end
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
-noisy_pair(F) = F*perfect_pair_dm + (1-F)*mixed_dm
+noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 const XX = X⊗X
 const ZZ = Z⊗Z
 const YY = Y⊗Y
@@ -76,7 +68,7 @@ const YY = Y⊗Y
     sim::Environment,   # The scheduler for all simulation events
     network,            # The graph of quantum nodes
     nodea, nodeb,       # The two nodes which we will be entangling
-    noisy_pair,         # A function that generates a raw entangled pair
+    noisy_pair,         # A raw entangled pair
     entangler_wait_time,# The wait time in case all qubits are "busy"
     entangler_busy_time # How long it takes to establish entanglement
     )
@@ -93,7 +85,7 @@ const YY = Y⊗Y
         registera = network[nodea]
         registerb = network[nodeb]
         @yield timeout(sim, entangler_busy_time)
-        initialize!((registera[ia],registerb[ib]),noisy_pair(); time=now(sim))
+        initialize!((registera[ia],registerb[ib]),noisy_pair; time=now(sim))
         network[nodea,:enttrackers][ia] = (node=nodeb,slot=ib)
         network[nodeb,:enttrackers][ib] = (node=nodea,slot=ia)
         @simlog sim "entangled node $(nodea):$(ia) and node $(nodeb):$(ib)"

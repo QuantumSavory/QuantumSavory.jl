@@ -23,6 +23,8 @@ end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
+@doset "register_interface"
+@doset "qo_qc_interop"
 @doset "plotting"
 VERSION == v"1.7" && @doset "doctests"
 

@@ -8,8 +8,11 @@ import TermInterface: istree, exprhead, operation, arguments, similarterm, metad
 using LinearAlgebra
 import LinearAlgebra: eigvecs
 
-using QuantumOpticsBase
-import QuantumOpticsBase: tensor, ⊗, basis # TODO make QuantumInterface
+import QuantumOpticsBase
+import QuantumOpticsBase: tensor, ⊗, basis, Ket, Bra, Operator, Basis, SpinBasis # TODO make QuantumInterface
+import QuantumOptics
+import QuantumClifford
+import QuantumClifford: MixedDestabilizer, Stabilizer, @S_str
 
 function countmap(samples) # A simpler version of StatsBase.countmap, because StatsBase is slow to import
     counts = Dict{Any,Any}()
@@ -49,6 +52,10 @@ function num_to_sub(n::Int)
 end
 
 ##
+
+mutable struct Metadata
+    express_cache::Base.Dict{Any,Any} # TODO use more efficient mapping
+end
 
 struct SKet <: Symbolic{Ket}
     name::Symbol
@@ -442,3 +449,15 @@ MixedState(x::Symbolic{Operator}) = MixedState(basis(x))
 istree(::MixedState) = false
 basis(x::MixedState) = x.basis
 Base.print(io::IO, x::MixedState) = print(io, "𝕄")
+
+struct StabilizerState <: Symbolic{Ket}
+    stabilizer::MixedDestabilizer
+end
+function StabilizerState(x::Stabilizer)
+    r,c = size(x)
+    @assert r==c
+    StabilizerState(MixedDestabilizer(x))
+end
+istree(::StabilizerState) = false
+basis(x::StabilizerState) = SpinBasis(1//2)^QuantumClifford.nqubits(x.stabilizer)
+Base.print(io::IO, x::StabilizerState) = print(io, "𝒮$(num_to_sub(QuantumClifford.nqubits(x.stabilizer)))")

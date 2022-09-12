@@ -1,6 +1,7 @@
 module QuantumSavory
 
-export QubitTrait, QumodeTrait, Layout,
+export Qubit, Qumode,
+    QuantumOpticsRepresentation, QuantumMCRepresentation, QuantumCliffordRepresentation,
     StateRef, Register, newstate, initialize!,
     RegisterNet,
     nsubsystems,
@@ -10,7 +11,8 @@ export QubitTrait, QumodeTrait, Layout,
     observable,
     registernetplot, registernetplot_axis, resourceplot_axis,
     @simlog, isfree, nongreedymultilock, spinlock,
-    X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2,SProjector,MixedState
+    ⊗,X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2,SProjector,MixedState,StabilizerState,@S_str,
+    express, stab_to_ket
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
@@ -25,19 +27,19 @@ include("symbolics.jl")
 
 abstract type QuantumStateTrait end
 """Specifies that a given register slot contains qubits."""
-struct QubitTrait <: QuantumStateTrait end
+struct Qubit <: QuantumStateTrait end
 """Specifies that a given register slot contains qumodes."""
-struct QumodeTrait <: QuantumStateTrait end
+struct Qumode <: QuantumStateTrait end
 
-abstract type AbstractLayout end
-abstract type AbstractConnectivity end
+abstract type AbstractRepresentation end
+"""Representation using kets, densinty matrices, and superoperators governed by `QuantumOptics.jl`."""
+struct QuantumOpticsRepresentation <: AbstractRepresentation end
+"""Similar to `QuantumOpticsRepresentation`, but using trajectories instead of superoperators."""
+struct QuantumMCRepresentation <: AbstractRepresentation end
+"""Representation using tableaux governed by `QuantumClifford.jl`"""
+struct QuantumCliffordRepresentation <: AbstractRepresentation end
 
-struct Layout <: AbstractLayout
-    traits::Vector{QuantumStateTrait}
-    metadata # TODO from here you can grab available lifetimes or other parameters
-end
-
-Layout(traits) = Layout(traits, nothing)
+abstract type AbstractBackground end
 
 # TODO better constructors
 # TODO am I overusing Ref
@@ -54,16 +56,18 @@ StateRef(state, registers, registerindices) = StateRef(Ref{Any}(copy(state)), re
 The main data structure in `QuantumSavory`, used to represent a quantum register in an arbitrary formalism.
 """
 struct Register # TODO better type description
-    layout::AbstractLayout
+    traits::Vector{Any}
+    reprs::Vector{Any}
+    backgrounds::Vector{Any}
     staterefs::Vector{Union{Nothing,StateRef}}
     stateindices::Vector{Int}
     accesstimes::Vector{Float64} # TODO do not hardcode the type
-    backgrounds::Vector{Any}
 end
-Register(l,sr,si,bg) = Register(l,sr,si,fill(0.0,length(l.traits)),bg)
-Register(l,sr,si) = Register(l,sr,si,fill(nothing,length(l.traits)))
-Register(l,bg) = Register(l,fill(nothing,length(l.traits)),fill(0,length(l.traits)),fill(0.0,length(l.traits)),bg)
-Register(l) = Register(l,fill(nothing,length(l.traits))) # TODO traits should be an interface
+Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,fill(0.0,length(traits)))
+Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
+Register(traits,bg::Vector{<:AbstractBackground}) = Register(traits,default_repr.(traits),bg,fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
+Register(traits,reprs::Vector{<:AbstractRepresentation}) = Register(traits,reprs,fill(nothing,length(traits)),fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
+Register(traits) = Register(traits,default_repr.(traits),fill(nothing,length(traits)),fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
 
 struct RegRef
     reg::Register
@@ -121,21 +125,26 @@ function Base.show(io::IO, s::StateRef)
 end
 
 function Base.show(io::IO, r::Register)
-    print(io, "Register with $(length(r.layout.traits)) slots") # TODO make this length call prettier
-    print(io, "\n  ")
-    show(io, r.layout)
+    print(io, "Register with $(length(r.traits)) slots") # TODO make this length call prettier
+    print(io, ": [ ")
+    print(io, join(string.(typeof.(r.traits)), " | "))
+    print(io, " ]")
     print(io, "\n  Slots:")
     for (i,s) in zip(r.stateindices, r.staterefs)
         if isnothing(s)
             print(io, "\n    nothing")
         else
-            print(io, "\n    $(i) @ $(typeof(s.state[]).name.module).$(typeof(s.state[]).name.name) $(objectid(s.state[]))")
+            print(io, "\n    Subsystem $(i) of $(typeof(s.state[]).name.module).$(typeof(s.state[]).name.name) $(objectid(s.state[]))")
         end
     end
 end
 
+function Base.show(io::IO, net::RegisterNet)
+    print(io, "A network of $(length(net.registers)) registers in a graph of $(length(edges(net.graph))) edges\n")
+end
+
 function Base.show(io::IO, r::RegRef)
-    print(io, "Slot $(r.idx)/$(length(r.layout.traits)) of Register $(r.reg.name)") # TODO make this length call prettier
+    print(io, "Slot $(r.idx)/$(length(r.reg.traits)) of Register $(objectid(r.reg))") # TODO make this length call prettier
     print(io, "\nContent:")
     i,s = r.reg.stateindices[r.idx], r.reg.staterefs[r.idx]
     if isnothing(s)
@@ -155,7 +164,7 @@ end
 Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
 
 function initialize!(reg::Register,i::Int; time=nothing)
-    s = newstate(reg.layout.traits[i]) # TODO this should be an interface
+    s = newstate(reg.traits[i], reg.reprs[i])
     initialize!(reg,i,s; time=time)
 end
 initialize!(r::RegRef; time=nothing) = initialize!(r.reg, r.idx; time)
@@ -185,7 +194,7 @@ initialize!(refs::Vector{RegRef}, state; time=nothing) = initialize!([r.reg for 
 initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time) # TODO temporary array allocated here
 initialize!(reg::Register,i::Int,state; time=nothing) = initialize!([reg],[i],state; time)
 initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
-initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(r,i,state); time)
+initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(state,consistent_expression(r,i,state)); time)
 
 
 nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
@@ -338,7 +347,6 @@ function observable(regs::Vector{Register}, indices::Vector{Int}, obs, something
 end
 observable(refs::Vector{RegRef}, obs, something=nothing; time=nothing) = observable([r.reg for r in refs], [r.idx for r in refs], obs, something; time)
 observable(refs::NTuple{N,RegRef}, obs, something=nothing; time=nothing) where {N} = observable((r.reg for r in refs), (r.idx for r in refs), obs, something; time)
-observable(r::Vector{Register},i::Vector{Int},obs::Symbolic, something=nothing; time=nothing) = observable(r,i,express(r,i,obs), something; time)
 
 
 """
@@ -359,9 +367,9 @@ function apply!(regs, indices, operation; time=nothing) # TODO add a type constr
     regs[1].staterefs[indices[1]].state[] = state
     regs
 end
-apply!(refs::Vector{RegRef}, operation; time=nothing) = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time=nothing)
-apply!(refs::NTuple{N,RegRef}, operation; time=nothing) where {N} = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time=nothing) # TODO temporary array allocated here
-apply!(ref::RegRef, operation; time=nothing) = apply!([ref.reg], [ref.idx], operation; time=nothing)
+apply!(refs::Vector{RegRef}, operation; time=nothing) = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time)
+apply!(refs::NTuple{N,RegRef}, operation; time=nothing) where {N} = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time) # TODO temporary array allocated here
+apply!(ref::RegRef, operation; time=nothing) = apply!([ref.reg], [ref.idx], operation; time)
 
 function uptotime!(stateref::StateRef, idx::Int, background, Δt) # TODO this should be just for
     stateref.state[] = uptotime!(stateref.state[], idx, background, Δt)
@@ -406,28 +414,20 @@ overwritetime!(refs::Vector{RegRef}, now) = overwritetime!([r.reg for r in refs]
 # TODO make a library of backgrounds, traits about whether they are unitary or not, etc, and helper interfaces
 
 """A background describing the T₁ decay of a two-level system."""
-struct T1Decay
+struct T1Decay <: AbstractBackground
     t1
 end
 
 """A background describing the T₂ dephasing of a two-level system."""
-struct T2Dephasing
+struct T2Dephasing <: AbstractBackground
     t2
 end
 
+include("representations.jl")
 include("qo_extras.jl")
 include("qc_extras.jl")
+include("qo_qc_interop.jl")
 include("sj_extras.jl")
 include("makie.jl")
-
-function newstate(::QumodeTrait)
-    b = FockBasis(5)
-    basisstate(b,1)
-end
-
-function newstate(::QubitTrait)
-    b = SpinBasis(1//2)
-    spinup(b) # logical 0
-end
 
 end # module

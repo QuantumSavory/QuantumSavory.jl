@@ -1,5 +1,7 @@
 include("firstgenrepeater_setup.jl")
 
+using GLMakie # For plotting
+
 ##
 # Demo all three components, Entangler, Swapper, and Purifer working together
 ##
@@ -15,8 +17,9 @@ purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
 sim, network = simulation_setup(sizes, T2)
 
+noisy_pair = noisy_pair_func(F)
 for (;src, dst) in edges(network)
-    @process entangler(sim, network, src, dst, ()->noisy_pair(F), entangler_wait_time, entangler_busy_time)
+    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_time)
 end
 for node in vertices(network)
     @process swapper(sim, network, node, swapper_wait_time, swapper_busy_time)

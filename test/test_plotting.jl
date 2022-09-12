@@ -6,9 +6,9 @@ using QuantumSavory
 sizes = [2,3,2]
 registers = Register[]
 for s in sizes
-    lay = Layout([QubitTrait() for i in 1:s])
-    bg = [T2Dephasing(1.0) for i in 1:s]
-    push!(registers, Register(lay,bg))
+    traits = [Qubit() for _ in 1:s]
+    bg = [T2Dephasing(1.0) for _ in 1:s]
+    push!(registers, Register(traits,bg))
 end
 network = RegisterNet(registers)
 
