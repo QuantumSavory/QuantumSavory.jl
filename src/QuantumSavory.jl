@@ -2,8 +2,8 @@ module QuantumSavory
 
 export Qubit, Qumode,
     QuantumOpticsRepresentation, QuantumMCRepresentation, QuantumCliffordRepresentation,
-    StateRef, Register, newstate, initialize!,
-    RegisterNet,
+    StateRef, RegRef, Register, RegisterNet,
+    newstate, initialize!,
     nsubsystems,
     subsystemcompose, traceout!, project_traceout!,
     uptotime!, overwritetime!, T1Decay, T2Dephasing, krausops,
@@ -347,6 +347,7 @@ function observable(regs::Vector{Register}, indices::Vector{Int}, obs, something
 end
 observable(refs::Vector{RegRef}, obs, something=nothing; time=nothing) = observable([r.reg for r in refs], [r.idx for r in refs], obs, something; time)
 observable(refs::NTuple{N,RegRef}, obs, something=nothing; time=nothing) where {N} = observable((r.reg for r in refs), (r.idx for r in refs), obs, something; time)
+observable(ref::RegRef, obs, something=nothing; time=nothing) where {N} = observable([ref.reg], [ref.idx], obs, something; time)
 
 
 """
@@ -358,7 +359,7 @@ The appropriate representatin of the gate is used,
 depending on the formalism under which a quantum state is stored in the given registers.
 The Hilbert spaces of the registers are automatically joined if necessary.
 """
-function apply!(regs, indices, operation; time=nothing) # TODO add a type constraint on regs
+function apply!(regs::Vector{Register}, indices::Vector{Int}, operation; time=nothing) # TODO add a type constraint on regs
     !isnothing(time) && uptotime!(regs, indices, time)
     subsystemcompose(regs,indices)
     state = regs[1].staterefs[indices[1]].state[]

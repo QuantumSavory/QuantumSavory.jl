@@ -29,6 +29,9 @@ function main()
         "Properties and Backgrounds" => "propbackgrounds.md",
         "Visualizations" => "visualizations.md",
         "API" => "API.md",
+        "Dev Documentation" => [
+            "Register Interface" => "register_interface.md",
+        ],
         "Bibliography" => "bibliography.md"
     ],
     ]

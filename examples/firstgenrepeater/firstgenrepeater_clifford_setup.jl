@@ -3,7 +3,8 @@ include("firstgenrepeater_setup.jl")
 
 # We switch to tableau representation for our initial states.
 # Converting from tableaux to kets or density matrices is cheap and automated,
-# but the reverse dirrection is difficult.
+# but the reverse direction is difficult. You can actually use the definition below
+# for all types of simulations (tableau, ket, others).
 const tableau = S"XX
                   ZZ"
 const stab_perfect_pair = StabilizerState(tableau)

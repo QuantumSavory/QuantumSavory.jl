@@ -10,40 +10,44 @@ Here we will simulate a quantum repeater by employing a noisy Clifford circuit s
 
 Be sure to check out the more detailed tutorial on [wavefunction simulations of First Generation Quantum Repeater](@ref First-Generation-Quantum-Repeater) before proceeding with this one.
 
-The changes we need to perform to the code are incredibly small. We only change the way the initial states of the entangled pairs are set, without changing any of the code implementing the swapping and purification steps. We can do that by first defining a function that generates noisy Bell states (by randomly returning either a good stabilizer tableau with probability `F` or a completely depolarized tableau with probability `1-F`).
+The changes we need to perform to the code are incredibly small. We only change the way the initial states of the entangled pairs are set, without changing any of the code implementing the swapping and purification steps.
+
+For the wavefunction simulator we had used:
 
 ```julia
-const qc_perfect_pair = QuantumClifford.MixedDestabilizer(QuantumClifford.bell())
-const qc_mixed = QuantumClifford.traceout!(copy(qc_perfect_pair), [1,2])
-function qc_noisy_pair(F)
-    if rand() < F
-        return qc_perfect_pair
-    else
-        return qc_mixed
-    end
-end
+const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+const perfect_pair_dm = SProjector(perfect_pair)
+const mixed_dm = MixedState(perfect_pair_dm)
+noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 ```
 
-We then use that in the entangler setup (the same way we used a similar function when we were doing wavefunction simulations):
+Here we switch to tableau representation for our initial states.
+Converting from tableaux to kets or density matrices is cheap and automated,
+but the reverse direction is difficult, thus we give the initial state explicitly.
+You can actually use the tableau definition below for all types of simulations (tableau, ket, others).
 
 ```julia
-# exerpt from `@resumable function entangler` in `firstgenrepeater_setup.jl`
-        initialize!([registera,registerb],[ia,ib],noisy_pair(); time=now(sim))
+# a tableau corresponding to a Bell pair
+const tableau = S"XX
+                  ZZ"
+const stab_perfect_pair = StabilizerState(tableau)
+const stab_perfect_pair_dm = SProjector(stab_perfect_pair)
+stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*mixed_dm
 ```
 
-For reference, here is the corresponding code for the wavefunction simulations:
+We then use that in the entangler setup (the same way we used a similar function when we were doing wavefunction simulations), simply by selecting the appropriate default representation type ([`QuantumCliffordRepresentation`](@ref) instead of [`QuantumOpticsRepresentation`](@ref)):
 
 ```julia
-b = QuantumOptics.SpinBasis(1//2)
-l = QuantumOptics.spindown(b)
-h = QuantumOptics.spinup(b)
-qo_perfect_pair = (QuantumOptics.tensor(l,l) + QuantumOptics.tensor(h,h))/sqrt(2)
-const qo_perfect_pair_dm = QuantumOptics.dm(qo_perfect_pair)
-const qo_mixed = QuantumOptics.identityoperator(QuantumOptics.basis(qo_perfect_pair))/4
-function qo_noisy_pair(F)
-    F*qo_perfect_pair_dm + (1-F)*qo_mixed
-end
+# exerpt from `firstgenrepeater-firstgenrepeater-clifford.jl`
+sim, network = simulation_setup(sizes, T2; representation = QuantumCliffordRepresentation)
+noisy_pair = stab_noisy_pair_func(F)
 ```
+
+The symbolic-expression-to-density-matrix conversion is cached inside of the symbolic expression `noisy_pair`, so that it does not need to be recomputed each time. In particular, given that this arbitrary mixed state can not be represented as a tableau, rather as a probability distribution over different tableaux, the cache provides for efficient random sampling.
+
+!!! note "You can use tableaux states in the Schroedinger simulations."
+
+    Converting from tableaux to kets or density matrices is cheap and automated, so we could have just as well used `stab_noisy_pair_func` even with the Schroedinger simulations of `QuantumOpticsRepresentation`.
 
 ## Simulation Trace
 
