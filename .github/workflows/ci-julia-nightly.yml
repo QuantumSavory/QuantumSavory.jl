@@ -1,4 +1,4 @@
-name: CI
+name: CI-nightly
 on:
   push:
     branches: [master]
@@ -6,19 +6,21 @@ on:
   pull_request:
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - t=${{ matrix.threads }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    name: Julia ${{ matrix.version }} - t=${{ matrix.threads }} - jet=${{ matrix.jet }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         version:
-          - '1'
-          - '1.6'
+          - nightly
         os:
           - ubuntu-latest
         threads:
           - '1'
           - '5'
+        jet:
+          - 'true'
+          - 'false'
         arch:
           - x64
     steps:
@@ -41,26 +43,9 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         env:
           JULIA_NUM_THREADS: ${{ matrix.threads }}
+          QUANTUMSAVORY_JET_TEST: ${{ matrix.jet }}
       - uses: julia-actions/julia-processcoverage@v1
 #      - uses: julia-actions/julia-uploadcoveralls@v1
       - uses: codecov/codecov-action@v1
         with:
           file: lcov.info
-  docs:
-    name: Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
-        with:
-          version: '1'
-      - run: |
-          julia --project=docs -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()'
-      - run: julia --project=docs docs/make.jl
-        env:
-          GKSwstype: nul # Fix for Plots with GR backend.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
