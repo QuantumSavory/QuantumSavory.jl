@@ -26,7 +26,7 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 @doset "register_interface"
 @doset "qo_qc_interop"
 @doset "plotting"
-VERSION == v"1.7" && @doset "doctests"
+VERSION == v"1.8" && @doset "doctests"
 
 using Aqua
 using QuantumClifford, QuantumOptics, Graphs
