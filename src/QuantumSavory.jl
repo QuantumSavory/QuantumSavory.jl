@@ -25,20 +25,20 @@ using Graphs
 include("symbolics.jl")
 
 abstract type QuantumStateTrait end
+abstract type AbstractRepresentation end
+abstract type AbstractBackground end
+
 """Specifies that a given register slot contains qubits."""
 struct Qubit <: QuantumStateTrait end
 """Specifies that a given register slot contains qumodes."""
 struct Qumode <: QuantumStateTrait end
 
-abstract type AbstractRepresentation end
 """Representation using kets, densinty matrices, and superoperators governed by `QuantumOptics.jl`."""
 struct QuantumOpticsRepresentation <: AbstractRepresentation end
 """Similar to `QuantumOpticsRepresentation`, but using trajectories instead of superoperators."""
 struct QuantumMCRepresentation <: AbstractRepresentation end
 """Representation using tableaux governed by `QuantumClifford.jl`"""
 struct QuantumCliffordRepresentation <: AbstractRepresentation end
-
-abstract type AbstractBackground end
 
 # TODO better constructors
 # TODO am I overusing Ref
@@ -89,8 +89,7 @@ function RegisterNet(registers::Vector{Register})
     RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers])
 end
 function RegisterNet(graph::SimpleGraph, register_factory::F) where F<:Function
-    verts = vertices(graph)
-    RegisterNet(graph, [register_factory(v) for v in vertices], [Dict{Symbol,Any}() for _ in 1:l])
+    RegisterNet(graph, [register_factory(v) for v in vertices(graph)], [Dict{Symbol,Any}() for _ in 1:l])
 end
 
 function add_register!(net::RegisterNet, r::Register)
@@ -411,21 +410,10 @@ function overwritetime!(registers, indices, now)
 end
 overwritetime!(refs::Vector{RegRef}, now) = overwritetime!([r.reg for r in refs], [r.idx for r in refs], now)
 
-# TODO make a library of backgrounds, traits about whether they are unitary or not, etc, and helper interfaces
-
-"""A background describing the T₁ decay of a two-level system."""
-struct T1Decay <: AbstractBackground
-    t1
-end
-
-"""A background describing the T₂ dephasing of a two-level system."""
-struct T2Dephasing <: AbstractBackground
-    t2
-end
-
 include("representations.jl")
+include("backgrounds.jl")
 include("quantumoptics/quantumoptics.jl")
-include("qc_extras.jl")
+include("clifford/clifford.jl")
 include("qo_qc_interop.jl")
 include("sj_extras.jl")
 include("makie.jl")

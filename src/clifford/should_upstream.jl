@@ -1,0 +1,1 @@
+QuantumClifford.apply!(state::QuantumClifford.MixedDestabilizer, op::Type{<:QuantumClifford.AbstractSymbolicOperator}, indices) = QuantumClifford.apply!(state, op(indices...)) # TODO piracy to be moved to QuantumClifford

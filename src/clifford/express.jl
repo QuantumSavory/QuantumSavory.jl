@@ -1,24 +1,3 @@
-import QuantumClifford
-
-function uptotime!(state::QuantumClifford.MixedDestabilizer, idx::Int, background, Δt)
-    prob, op = paulinoise(background, Δt)
-    if rand() > prob
-        QuantumClifford.apply!(state, op(idx))
-    end
-    state
-end
-
-function paulinoise(T2::T2Dephasing, Δt)
-    exp(-Δt/T2.t2), QuantumClifford.sZ
-end
-
-subsystemcompose(states::QuantumClifford.MixedDestabilizer...) = QuantumClifford.tensor(states...)
-
-nsubsystems(state::QuantumClifford.MixedDestabilizer) = QuantumClifford.nqubits(state)
-
-apply!(state::QuantumClifford.MixedDestabilizer, indices, operation::Symbolic{Operator}) = QuantumClifford.apply!(state, express_qc_op(operation), indices)
-QuantumClifford.apply!(state::QuantumClifford.MixedDestabilizer, op::Type{<:QuantumClifford.AbstractSymbolicOperator}, indices) = QuantumClifford.apply!(state, op(indices...)) # TODO piracy to be moved to QuantumClifford
-
 const _qc_l = MixedDestabilizer(S"Z")
 const _qc_h = MixedDestabilizer(S"-Z")
 const _qc_s₊ = MixedDestabilizer(S"X")
@@ -73,14 +52,6 @@ validate_qc_observable(::YGate) = QuantumClifford.P"Y"
 validate_qc_observable(::ZGate) = QuantumClifford.P"Z"
 validate_qc_observable(op::SScaledOperator) = arguments(op)[1] * validate_qc_observable(arguments(op)[2])
 validate_qc_observable(op) = error("can not convert $(op) into a PauliOperator, which is the only observable that can be computed for QuantumClifford objects")
-
-ispadded(::QuantumClifford.MixedDestabilizer) = false
-
-traceout!(s::QuantumClifford.MixedDestabilizer,i) = QuantumClifford.traceoutremove!(s,i) # QuantumClifford.traceout!(s,i) if ispadded()=true
-
-function newstate(::Qubit,::QuantumCliffordRepresentation)
-    copy(_qc_l)
-end
 
 struct QCRandomSampler # TODO specify types
     operators # union of QCRandomSampler and MixedDestabilizer

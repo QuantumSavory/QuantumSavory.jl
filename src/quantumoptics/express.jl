@@ -19,8 +19,6 @@ const _cphase = _ll⊗_Id + _hh⊗_z
 const _phase = _ll + im*_hh
 const _iphase = _ll - im*_hh
 
-const QOR = QuantumOpticsRepresentation()
-
 express_nolookup(::HGate, ::QuantumOpticsRepresentation) = _hadamard
 express_nolookup(::XGate, ::QuantumOpticsRepresentation) = _x
 express_nolookup(::YGate, ::QuantumOpticsRepresentation) = _y
@@ -40,4 +38,17 @@ function express_nolookup(s::Symbolic{T}, repr::QuantumOpticsRepresentation) whe
     else
         error("Encountered an object $(s) of type $(typeof(s)) that can not be converted to $(repr) representation") # TODO make a nice error type
     end
+end
+
+apply!(state::Ket,      indices, operation::Symbolic{Operator}) = apply!(state, indices, express(operation, QOR))
+apply!(state::Operator, indices, operation::Symbolic{Operator}) = apply!(state, indices, express(operation, QOR))
+
+_overlap(l::Symbolic{Ket}, r::Ket) = _overlap(express(l, QOR), r)
+_overlap(l::Symbolic{Ket}, r::Operator) = _overlap(express(l, QOR), r)
+
+_project_and_drop(state::Ket, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express(project_on, QOR), basis_index)
+_project_and_drop(state::Operator, project_on::Symbolic{Ket}, basis_index) = _project_and_drop(state, express(project_on, QOR), basis_index)
+
+function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Symbolic{Operator})
+    project_traceout!(state::Operator,stateindex,eigvecs(basis))
 end
