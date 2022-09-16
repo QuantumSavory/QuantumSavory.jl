@@ -9,7 +9,7 @@ using LinearAlgebra
 import LinearAlgebra: eigvecs
 
 import QuantumOpticsBase
-import QuantumOpticsBase: tensor, ⊗, basis, Ket, Bra, Operator, Basis, SpinBasis # TODO make QuantumInterface
+import QuantumOpticsBase: tensor, ⊗, basis, Ket, Bra, Operator, Basis, SpinBasis, projector # TODO make QuantumInterface
 import QuantumOptics
 import QuantumClifford
 import QuantumClifford: MixedDestabilizer, Stabilizer, @S_str
@@ -433,7 +433,8 @@ end
 istree(::SProjector) = true
 arguments(x::SProjector) = [x.ket]
 metadata(::SProjector) = nothing
-operation(x::SProjector) = SProjector
+operation(x::SProjector) = projector
+QuantumOptics.projector(x::Symbolic{Ket}) = SProjector(x)
 basis(x::SProjector) = basis(x.ket)
 function Base.print(io::IO, x::SProjector)
     print(io,"𝐏[")

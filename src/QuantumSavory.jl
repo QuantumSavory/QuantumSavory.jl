@@ -17,7 +17,6 @@ export Qubit, Qumode,
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
-using Distributions
 using IterTools
 using LinearAlgebra
 using Graphs
@@ -347,7 +346,7 @@ function observable(regs::Vector{Register}, indices::Vector{Int}, obs, something
 end
 observable(refs::Vector{RegRef}, obs, something=nothing; time=nothing) = observable([r.reg for r in refs], [r.idx for r in refs], obs, something; time)
 observable(refs::NTuple{N,RegRef}, obs, something=nothing; time=nothing) where {N} = observable((r.reg for r in refs), (r.idx for r in refs), obs, something; time)
-observable(ref::RegRef, obs, something=nothing; time=nothing) where {N} = observable([ref.reg], [ref.idx], obs, something; time)
+observable(ref::RegRef, obs, something=nothing; time=nothing) = observable([ref.reg], [ref.idx], obs, something; time)
 
 
 """
@@ -425,7 +424,7 @@ struct T2Dephasing <: AbstractBackground
 end
 
 include("representations.jl")
-include("qo_extras.jl")
+include("quantumoptics/quantumoptics.jl")
 include("qc_extras.jl")
 include("qo_qc_interop.jl")
 include("sj_extras.jl")

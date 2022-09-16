@@ -4,7 +4,6 @@ authors = ["Stefan Krastanov <stefan@krastanov.org>"]
 version = "0.1.0-dev"
 
 [deps]
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -22,10 +21,9 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 TermInterface = "8ea1fca8-c5ef-4a55-8b96-4e9afe9c9a3c"
 
 [compat]
-Distributions = "0.24.18, 0.25"
 Graphs = "1.7.2"
 IterTools = "1.4.0"
-Makie = "0.16.6, 0.17"
+Makie = "0.17"
 NetworkLayout = "0.4.4"
 QuantumClifford = "0.6.1"
 QuantumOptics = "1.0.5"
