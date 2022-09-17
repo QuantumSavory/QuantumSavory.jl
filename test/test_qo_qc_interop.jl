@@ -19,5 +19,5 @@ for n in 1:5
     rket = stab_to_ket(lstab)
     dotket = abs(lket'*rket)
     dotstab = abs(dot(lstab,rstab))
-    @test (dotket==0 && dotstab==0) || dotket≈dotstab
+    @test (dotket<=1e-10 && dotstab==0) || dotket≈dotstab
 end

@@ -65,4 +65,4 @@ function express_nolookup(x::MixedState, ::CliffordRepr)
     one(MixedDestabilizer,0,nqubits)
 end
 express_nolookup(x::SProjector, repr::CliffordRepr) = express_nolookup(x.ket, repr)
-express_nolookup(x::StabilizerState, ::CliffordRepr) = x.stabilizer
+express_nolookup(x::StabilizerState, ::CliffordRepr) = copy(x.stabilizer)
