@@ -52,3 +52,7 @@ _project_and_drop(state::Operator, project_on::Symbolic{Ket}, basis_index) = _pr
 function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Symbolic{Operator})
     project_traceout!(state::Operator,stateindex,eigvecs(basis))
 end
+
+function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Vector{<:Symbolic{Ket}})
+    project_traceout!(state::Operator,stateindex,express.(basis,(QOR,)))
+end

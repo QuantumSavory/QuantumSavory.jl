@@ -26,6 +26,9 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 @doset "register_interface"
 @doset "qo_qc_interop"
 @doset "plotting"
+
+@doset "examples"
+
 VERSION == v"1.8" && @doset "doctests"
 
 using Aqua

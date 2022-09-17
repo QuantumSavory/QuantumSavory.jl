@@ -24,7 +24,7 @@ ispadded(::StateVector) = false
 ispadded(::Operator) = false
 
 function observable(state::Union{<:Ket,<:Operator}, indices, operation)
-    operation = express(operation, OQR)
+    operation = express(operation, QOR)
     e = basis(state)==basis(operation)
     op = e ? operation : embed(basis(state), indices, operation)
     expect(op, state)
