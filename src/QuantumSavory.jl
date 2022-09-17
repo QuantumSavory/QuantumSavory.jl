@@ -1,7 +1,7 @@
 module QuantumSavory
 
 export Qubit, Qumode,
-    QuantumOpticsRepresentation, QuantumMCRepresentation, QuantumCliffordRepresentation,
+    QuantumOpticsRepr, QuantumMCRepr, CliffordRepr,
     StateRef, RegRef, Register, RegisterNet,
     newstate, initialize!,
     nsubsystems,
@@ -26,6 +26,7 @@ include("symbolics.jl")
 
 abstract type QuantumStateTrait end
 abstract type AbstractRepresentation end
+abstract type AbstractUse end
 abstract type AbstractBackground end
 
 """Specifies that a given register slot contains qubits."""
@@ -34,11 +35,15 @@ struct Qubit <: QuantumStateTrait end
 struct Qumode <: QuantumStateTrait end
 
 """Representation using kets, densinty matrices, and superoperators governed by `QuantumOptics.jl`."""
-struct QuantumOpticsRepresentation <: AbstractRepresentation end
-"""Similar to `QuantumOpticsRepresentation`, but using trajectories instead of superoperators."""
-struct QuantumMCRepresentation <: AbstractRepresentation end
+struct QuantumOpticsRepr <: AbstractRepresentation end
+"""Similar to `QuantumOpticsRepr`, but using trajectories instead of superoperators."""
+struct QuantumMCRepr <: AbstractRepresentation end
 """Representation using tableaux governed by `QuantumClifford.jl`"""
-struct QuantumCliffordRepresentation <: AbstractRepresentation end
+struct CliffordRepr <: AbstractRepresentation end
+
+struct UseAsState <: AbstractUse end
+struct UseAsOperation <: AbstractUse end
+struct UseAsObservable <: AbstractUse end
 
 # TODO better constructors
 # TODO am I overusing Ref
@@ -192,7 +197,7 @@ initialize!(refs::Vector{RegRef}, state; time=nothing) = initialize!([r.reg for 
 initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time) # TODO temporary array allocated here
 initialize!(reg::Register,i::Int,state; time=nothing) = initialize!([reg],[i],state; time)
 initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
-initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(state,consistent_expression(r,i,state)); time)
+initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(state,consistent_representation(r,i,state)); time)
 
 
 nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)

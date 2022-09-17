@@ -71,7 +71,7 @@ function simulation_setup(
     sizes, # Array giving the number of qubits in each node
     T2 # T2 dephasing times for the qubits
     ;
-    representation = QuantumOpticsRepresentation # Representation to use for the qubits
+    representation = QuantumOpticsRepr # Representation to use for the qubits
     )
     R = length(sizes) # Number of registers
 
@@ -189,7 +189,7 @@ end
 </details>
 ```
 
-Notice that the entangler uses the [`initialize!`](@ref) function to set the state of certain registers, but we never need to explicitly construct the numerical representation of these kets. Rather, we use the [symbolic algebra system](@ref Symbolics) of `QuantumClifford.jl`, and let the simulator automatically convert the symbolic expression into numerical density matrices. This conversion was governed by the choice of `representation = QuantumOpticsRepresentation`. Here is one possible symbolic definition of a `noisy_pair`:
+Notice that the entangler uses the [`initialize!`](@ref) function to set the state of certain registers, but we never need to explicitly construct the numerical representation of these kets. Rather, we use the [symbolic algebra system](@ref Symbolics) of `QuantumClifford.jl`, and let the simulator automatically convert the symbolic expression into numerical density matrices. This conversion was governed by the choice of `representation = QuantumOpticsRepr`. Here is one possible symbolic definition of a `noisy_pair`:
 
 ```julia
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
@@ -494,7 +494,7 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 purifier_wait_time = 0.15  # How long to wait if there are no pairs to be purified
 purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
-sim, network = simulation_setup(sizes, T2; representation = QuantumCliffordRepresentation)
+sim, network = simulation_setup(sizes, T2; representation = CliffordRepr)
 
 noisy_pair = stab_noisy_pair_func(F)
 for (;src, dst) in edges(network)

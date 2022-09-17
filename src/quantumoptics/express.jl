@@ -19,29 +19,26 @@ const _cphase = _ll⊗_Id + _hh⊗_z
 const _phase = _ll + im*_hh
 const _iphase = _ll - im*_hh
 
-express_nolookup(::HGate, ::QuantumOpticsRepresentation) = _hadamard
-express_nolookup(::XGate, ::QuantumOpticsRepresentation) = _x
-express_nolookup(::YGate, ::QuantumOpticsRepresentation) = _y
-express_nolookup(::ZGate, ::QuantumOpticsRepresentation) = _z
-express_nolookup(::CPHASEGate, ::QuantumOpticsRepresentation) = _cphase
-express_nolookup(::CNOTGate, ::QuantumOpticsRepresentation) = _cnot
+express_nolookup(::HGate, ::QuantumOpticsRepr) = _hadamard
+express_nolookup(::XGate, ::QuantumOpticsRepr) = _x
+express_nolookup(::YGate, ::QuantumOpticsRepr) = _y
+express_nolookup(::ZGate, ::QuantumOpticsRepr) = _z
+express_nolookup(::CPHASEGate, ::QuantumOpticsRepr) = _cphase
+express_nolookup(::CNOTGate, ::QuantumOpticsRepr) = _cnot
 
-express_nolookup(s::XBasisState, ::QuantumOpticsRepresentation) = (_s₊,_s₋)[s.idx]
-express_nolookup(s::YBasisState, ::QuantumOpticsRepresentation) = (_i₊,_i₋)[s.idx]
-express_nolookup(s::ZBasisState, ::QuantumOpticsRepresentation) = (_l,_h)[s.idx]
+express_nolookup(s::XBasisState, ::QuantumOpticsRepr) = (_s₊,_s₋)[s.idx]
+express_nolookup(s::YBasisState, ::QuantumOpticsRepr) = (_i₊,_i₋)[s.idx]
+express_nolookup(s::ZBasisState, ::QuantumOpticsRepr) = (_l,_h)[s.idx]
 
-express_nolookup(x::MixedState, ::QuantumOpticsRepresentation) = identityoperator(basis(x))/length(basis(x)) # TODO there is probably a more efficient way to represent it
+express_nolookup(x::MixedState, ::QuantumOpticsRepr) = identityoperator(basis(x))/length(basis(x)) # TODO there is probably a more efficient way to represent it
 
-function express_nolookup(s::Symbolic{T}, repr::QuantumOpticsRepresentation) where {T<:Union{Ket,Bra,Operator}}
+function express_nolookup(s::Symbolic{T}, repr::QuantumOpticsRepr) where {T<:Union{Ket,Bra,Operator}}
     if istree(s)
         operation(s)(express.(arguments(s), (repr,))...)
     else
         error("Encountered an object $(s) of type $(typeof(s)) that can not be converted to $(repr) representation") # TODO make a nice error type
     end
 end
-
-apply!(state::Ket,      indices, operation::Symbolic{Operator}) = apply!(state, indices, express(operation, QOR))
-apply!(state::Operator, indices, operation::Symbolic{Operator}) = apply!(state, indices, express(operation, QOR))
 
 _overlap(l::Symbolic{Ket}, r::Ket) = _overlap(express(l, QOR), r)
 _overlap(l::Symbolic{Ket}, r::Operator) = _overlap(express(l, QOR), r)

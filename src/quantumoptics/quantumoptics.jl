@@ -2,7 +2,7 @@ import QuantumOpticsBase
 import QuantumOpticsBase: GenericBasis, CompositeBasis, StateVector, basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, projector, identityoperator, embed, dm, expect, ptrace
 import QuantumOptics
 
-const QOR = QuantumOpticsRepresentation()
+const QOR = QuantumOpticsRepr()
 
 nsubsystems(s::Ket) = nsubsystems(s.basis)
 function nsubsystems(s::Operator)
@@ -17,6 +17,9 @@ subsystemcompose(ops::Operator...) = tensor(ops...)
 subsystemcompose(k::Ket, op::Operator) = tensor(dm(k),op) # TODO this should be more general
 subsystemcompose(op::Operator, k::Ket) = tensor(op,dm(k)) # TODO this should be more general
 
+default_repr(::StateVector) = QOR
+default_repr(::Operator) = QOR
+
 traceout!(s::StateVector, i) = ptrace(s,i)
 traceout!(s::Operator, i) = ptrace(s,i)
 
@@ -30,13 +33,13 @@ function observable(state::Union{<:Ket,<:Operator}, indices, operation)
     expect(op, state)
 end
 
-function apply!(state::Ket, indices, operation)
+function apply!(state::Ket, indices, operation::Operator)
     op = basis(state)==basis(operation) ? operation : embed(basis(state), indices, operation)
     state.data = (op*state).data
     state
 end
 
-function apply!(state::Operator, indices, operation)
+function apply!(state::Operator, indices, operation::Operator)
     op = basis(state)==basis(operation) ? operation : embed(basis(state), indices, operation)
     state.data = (op*state*op').data
     state
@@ -59,10 +62,10 @@ function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Vector{<:
     end
 end
 
-function newstate(::Qubit,::QuantumOpticsRepresentation)
+function newstate(::Qubit,::QuantumOpticsRepr)
     copy(_l)
 end
-function newstate(::Qubit,::QuantumMCRepresentation)
+function newstate(::Qubit,::QuantumMCRepr)
     copy(_l)
 end
 

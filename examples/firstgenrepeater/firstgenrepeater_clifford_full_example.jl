@@ -15,7 +15,7 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 purifier_wait_time = 0.15  # How long to wait if there are no pairs to be purified
 purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
-sim, network = simulation_setup(sizes, T2; representation = QuantumCliffordRepresentation)
+sim, network = simulation_setup(sizes, T2; representation = CliffordRepr)
 
 noisy_pair = stab_noisy_pair_func(F)
 for (;src, dst) in edges(network)

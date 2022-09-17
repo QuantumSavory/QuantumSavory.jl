@@ -5,27 +5,15 @@ const _qc_s₋ = MixedDestabilizer(S"-X")
 const _qc_i₊ = MixedDestabilizer(S"Y")
 const _qc_i₋ = MixedDestabilizer(S"-Y")
 
-express_nolookup(s::XBasisState, ::QuantumCliffordRepresentation) = (_qc_s₊,_qc_s₋)[s.idx]
-express_nolookup(s::YBasisState, ::QuantumCliffordRepresentation) = (_qc_i₊,_qc_i₋)[s.idx]
-express_nolookup(s::ZBasisState, ::QuantumCliffordRepresentation) = (_qc_l,_qc_h)[s.idx]
+express_nolookup(s::XBasisState, ::CliffordRepr) = (_qc_s₊,_qc_s₋)[s.idx]
+express_nolookup(s::YBasisState, ::CliffordRepr) = (_qc_i₊,_qc_i₋)[s.idx]
+express_nolookup(s::ZBasisState, ::CliffordRepr) = (_qc_l,_qc_h)[s.idx]
 
-# TODO fold express_qc_op into the normal express framework
-express_qc_op(::CPHASEGate) = QuantumClifford.sCPHASE
-express_qc_op(::CNOTGate) = QuantumClifford.sCNOT
-express_qc_op(::XGate) = QuantumClifford.sX
-express_qc_op(::ZGate) = QuantumClifford.sZ
-express_qc_op(x::STensorOperator) = QCGateSequence([express_qc_op(t) for t in x.terms])
-struct QCGateSequence # TODO maybe move to QuantumClifford
-    gates # TODO union of gates and QCGateSequence
-end
-function QuantumClifford.apply!(state::QuantumClifford.MixedDestabilizer, gseq::QCGateSequence, indices)
-    for g in gseq
-        apply_popindex!(state, g, indices)
-    end
-    state
-end
-apply_popindex!(state, g::QuantumClifford.AbstractSingleQubitOperator, indices) = QuantumClifford.apply!(state, g(pop!(indices)))
-apply_popindex!(state, g::QuantumClifford.AbstractTwoQubitOperator, indices) = QuantumClifford.apply!(state, g(pop!(indices),pop!(indices)))
+express_nolookup(::CPHASEGate,       ::CliffordRepr, ::UseAsOperation) = QuantumClifford.sCPHASE
+express_nolookup(::CNOTGate,         ::CliffordRepr, ::UseAsOperation) = QuantumClifford.sCNOT
+express_nolookup(::XGate,            ::CliffordRepr, ::UseAsOperation) = QuantumClifford.sX
+express_nolookup(::ZGate,            ::CliffordRepr, ::UseAsOperation) = QuantumClifford.sZ
+express_nolookup(x::STensorOperator,r::CliffordRepr,u::UseAsOperation) = QCGateSequence([express(t,r,u) for t in x.terms])
 
 function project_traceout!(state::QuantumClifford.MixedDestabilizer,stateindex,basis::Symbolic{Operator})
     # do this if ispadded() = true
@@ -57,7 +45,7 @@ struct QCRandomSampler # TODO specify types
     operators # union of QCRandomSampler and MixedDestabilizer
     weights
 end
-function express_nolookup(x::SAddOperator, repr::QuantumCliffordRepresentation)
+function express_nolookup(x::SAddOperator, repr::CliffordRepr)
     weights = collect(values(x.dict))
     symops = collect(keys(x.dict))
     # TODO assert norms of operators are all ==1
@@ -71,10 +59,10 @@ function express_from_cache(x::QCRandomSampler)
     i = findfirst(>=(threshold), cweights) # TODO make alloc free
     express_from_cache(x.operators[i])
 end
-function express_nolookup(x::MixedState, ::QuantumCliffordRepresentation)
+function express_nolookup(x::MixedState, ::CliffordRepr)
     nqubits = length(x.basis.bases)
     # TODO assert all are qubits
     one(MixedDestabilizer,0,nqubits)
 end
-express_nolookup(x::SProjector, repr::QuantumCliffordRepresentation) = express_nolookup(x.ket, repr)
-express_nolookup(x::StabilizerState, ::QuantumCliffordRepresentation) = x.stabilizer
+express_nolookup(x::SProjector, repr::CliffordRepr) = express_nolookup(x.ket, repr)
+express_nolookup(x::StabilizerState, ::CliffordRepr) = x.stabilizer

@@ -23,4 +23,4 @@ function stab_to_ket(s::Stabilizer)
     ket
 end
 
-express_nolookup(x::StabilizerState, ::QuantumOpticsRepresentation) = stab_to_ket(stabilizerview(x.stabilizer))
+express_nolookup(x::StabilizerState, ::QuantumOpticsRepr) = stab_to_ket(stabilizerview(x.stabilizer))

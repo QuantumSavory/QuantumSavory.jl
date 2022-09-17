@@ -6,9 +6,9 @@ using QuantumClifford: MixedDestabilizer
 # no backgrounds
 traits = [Qubit(), Qubit(), Qubit()]
 reg1 = Register(traits)
-qc_repr = [QuantumOpticsRepresentation(), QuantumCliffordRepresentation(), QuantumCliffordRepresentation()]
+qc_repr = [QuantumOpticsRepr(), CliffordRepr(), CliffordRepr()]
 reg2 = Register(traits, qc_repr)
-qmc_repr = [QuantumOpticsRepresentation(), QuantumMCRepresentation(), QuantumMCRepresentation()]
+qmc_repr = [QuantumOpticsRepr(), QuantumMCRepr(), QuantumMCRepr()]
 reg3 = Register(traits, qmc_repr)
 net = RegisterNet([reg1, reg2, reg3])
 
@@ -43,9 +43,9 @@ apply!([net[i,2], net[i,3]], CNOT)
 traits = [Qubit(), Qubit(), Qubit()]
 backgrounds = [T2Dephasing(1.0),T2Dephasing(1.0),T2Dephasing(1.0)]
 reg1 = Register(traits, backgrounds)
-qc_repr = [QuantumOpticsRepresentation(), QuantumCliffordRepresentation(), QuantumCliffordRepresentation()]
+qc_repr = [QuantumOpticsRepr(), CliffordRepr(), CliffordRepr()]
 reg2 = Register(traits, qc_repr, backgrounds)
-qmc_repr = [QuantumOpticsRepresentation(), QuantumMCRepresentation(), QuantumMCRepresentation()]
+qmc_repr = [QuantumOpticsRepr(), QuantumMCRepr(), QuantumMCRepr()]
 reg3 = Register(traits, qmc_repr, backgrounds)
 net = RegisterNet([reg1, reg2, reg3])
 

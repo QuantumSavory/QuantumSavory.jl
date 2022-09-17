@@ -20,7 +20,7 @@ function monte_carlo_trajectory(;
     swapper_busy_time = 0.15   ,# How long it takes to swap two qubits
     purifier_wait_time = 0.15  ,# How long to wait if there are no pairs to be purified
     purifier_busy_time = 0.2   ,# How long the purification circuit takes to execute
-    representation = QuantumOpticsRepresentation # What representation to use
+    representation = QuantumOpticsRepr # What representation to use
 )
 
     sim, network = simulation_setup(sizes, T2; representation)
@@ -71,7 +71,7 @@ sampled_times = 0.:0.2:25.
     [monte_carlo_trajectory(; sampled_times) for _ in 1:replicates]
 end;
 @time qc_res = with_logger(nologging) do
-    [monte_carlo_trajectory(; sampled_times, representation=QuantumCliffordRepresentation) for _ in 1:replicates]
+    [monte_carlo_trajectory(; sampled_times, representation=CliffordRepr) for _ in 1:replicates]
 end;
 
 # Plot the mean of the observables average over all trajectories
