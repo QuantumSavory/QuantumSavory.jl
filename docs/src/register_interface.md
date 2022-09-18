@@ -84,7 +84,7 @@ Calls [`subsystemcompose!`](@ref) in order to make one big state. Then goes to `
 
 `subsystem_indices` refers to subsystems in `state`.
 
-If `operation<:Symbolic`, then a call like `express(operation, repr)` is used to convert the symbolic `operation` into something useful for the given state type. `repr` is chosen by dispatch on `state`.
+If `operation<:Symbolic`, then `express(operation, repr, ::UseAsOperation)` is used to convert the symbolic `operation` into something workable for the given state type. `repr` is chosen by dispatch on `state`.
 
 !!! warning "Limitations of symbolic-to-explicit conversion"
 
@@ -105,7 +105,7 @@ flowchart TB
   end
   C["<code>apply!(state, subsystem_indices, operation; time)</code>"]
   D{{"<code>operation<:Symbolic</code>"}}
-  D1["<code>express(operation, repr)</code>"]
+  D1["<code>express(operation, repr, ::UseAsOperation)</code>"]
   D2([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> TOP --> C --> D
   D --Yes--> D1
@@ -116,11 +116,15 @@ flowchart TB
 
 !!! warning "Limitations of symbolic-to-explicit conversion"
 
-    The expression interface is still poorly defined, i.e. there is no interface for `repr = some_interface(state, operation)` (and as already mentioned it does not take into account the register `AbstractRepresentation` properties).
+    As mentioned above, converting from symbolic to explicit representation for the `operation` is dependent only on the type of `state`, i.e. by the time the conversion is done, no knowledge of the register and its properties are kept (in particular its prefered representation is not considered).
+
+!!! info "Short-circuiting the `express` dispatch"
+
+    You can add a custom dispatch that skips the `express` functionality by defining a method `apply!(state::YourStateType, indices, operation<:Symbolic{Operator})`. This would preemt the default `apply!(state, indices, operation<:Symbolic{Operator})` containing the `express` logic. The drawback is that this would also skip the memoization employed by `express`.
 
 ## `observable`
 
-Measure a quantum observable.
+Measure a quantum observable. The dispatch down the call three is very similar to the one for `apply!`.
 
 ### `observable(refs::Tuple{Vararg{RegRef, N}}, obs, something=nothing; time)`
 
@@ -140,7 +144,7 @@ Calls [`subsystemcompose!`](@ref) in order to make one big state. Then goes to `
 
 subsystem_indices` refers to subsystems in `state`.
 
-If `operation<:Symbolic`, then an `express(operation, repr)` call is used to convert the symbolic `operation` into something useful for the given state type. `repr` is chosen by dispatch on `state`.
+If `operation<:Symbolic`, then an `express(obs, repr, ::UseAsObservable)` call is used to convert the symbolic `obs` into something workable for the given state type. `repr` is chosen by dispatch on `state`.
 
 !!! warning "Limitations of symbolic-to-explicit conversion"
 
@@ -161,7 +165,7 @@ flowchart TB
   end
   C["<code>observable(state, subsystem_indices, obs; time)</code>"]
   D{{"<code>obs<:Symbolic</code>"}}
-  D1["<code>express(obs, repr)</code>"]
+  D1["<code>express(obs, repr, ::UseAsObservable)</code>"]
   D2([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> TOP --> C --> D
   D --Yes--> D1
@@ -170,13 +174,42 @@ flowchart TB
 </div>
 ```
 
-## `traceout!`
+!!! info "Short-circuiting the `express` dispatch"
 
-TODO
+    Similarly to the case with `apply!`, you can skips the `express` functionality by defining a method `observable(state::YourStateType, indices, obs<:Symbolic{Operator})`.
 
 ## `project_traceout!`
 
 TODO
+
+## `traceout!`
+
+Perform a partial trace over a part of the system (i.e. discard a part of the system).
+
+### `traceout!(r::RegRef)`
+
+Partial trace over a particular register reference.
+
+### `traceout!(r::Register, i::Int)`
+
+Partial trace over slot `i` of register `r`. Calls down to the state reference stored in that particular register.
+
+### `traceout!(s::StateRef, i::Int)`
+
+Partial trace over subsystem `i` of state referenced by `s`.
+
+### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>traceout!(r::RegRef)</code>"]
+  B["<code>traceout!(r::Register, i::Int)</code>"]
+  C["<code>traceout!(r::StateRef, i::Int)</code>"]
+  D([Dispatch on state to low level implementation<br>in an independent library])
+  A --> B --> C --> D
+</div>
+```
 
 ## `uptotime!`
 
