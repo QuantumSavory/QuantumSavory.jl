@@ -13,7 +13,7 @@ withcache = @timed express(state)
 
 state = 1im*X1⊗Z2+2*Y2⊗(Z1+X1)+StabilizerState(S"YX ZZ")
 state = SProjector(state)+2*X⊗(Z+Y)/3im
-state = state+MixedState(basis(state))
+state = state+MixedState(state)
 state2 = deepcopy(state)
 express(state)
 express(state)
