@@ -53,9 +53,50 @@ end
 
 ##
 
+const CacheType = Dict{Tuple{<:AbstractRepresentation,<:AbstractUse},Any}
 mutable struct Metadata
-    express_cache::Base.Dict{Any,Any} # TODO use more efficient mapping
+    express_cache::CacheType # TODO use more efficient mapping
 end
+Metadata() = Metadata(CacheType())
+macro withmetadata(strct)
+    withmetadata(strct)
+end
+function withmetadata(strct)
+    @assert strct.head == :struct
+    struct_name = strct.args[2]
+    if struct_name isa Expr
+        struct_name = struct_name.args[1]
+    end
+    struct_args = strct.args[end].args
+    if all(x->x isa Symbol || x isa LineNumberNode || x.head==:(::), struct_args)
+        # add constructor
+        constructor = :($struct_name() = new())
+        args = [x for x in struct_args if x isa Symbol || x isa Expr]
+        append!(constructor.args[1].args, args)
+        append!(constructor.args[end].args[end].args, args)
+        push!(constructor.args[end].args[end].args, :(Metadata()))
+        push!(struct_args, constructor)
+    else
+        # modify constructor
+        newwithmetadata.(struct_args)
+    end
+    # add metadata slot
+    push!(struct_args, :(metadata::Metadata))
+    esc(quote
+        $strct
+        metadata(x::$struct_name)=x.metadata
+    end)
+end
+function newwithmetadata(expr::Expr)
+    if expr.head==:call && expr.args[1]==:new
+        push!(expr.args, :(Metadata()))
+    else
+        newwithmetadata.(expr.args)
+    end
+end
+newwithmetadata(x) = x
+
+##
 
 struct SKet <: Symbolic{Ket}
     name::Symbol
@@ -84,14 +125,13 @@ metadata(::SOperator) = nothing
 Base.print(io::IO, x::SOperator) = print(io, "$(x.name)")
 basis(x::SOperator) = x.basis
 
-struct SScaledKet <: Symbolic{Ket}
+@withmetadata struct SScaledKet <: Symbolic{Ket}
     coeff
     ket
     SScaledKet(c,k) = _isone(c) ? k : new(c,k)
 end
 istree(::SScaledKet) = true
 arguments(x::SScaledKet) = [x.coeff, x.ket]
-metadata(::SScaledKet) = nothing
 operation(x::SScaledKet) = *
 Base.:(*)(c, x::Symbolic{Ket}) = SScaledKet(c,x)
 Base.:(*)(x::Symbolic{Ket}, c) = SScaledKet(c,x)
@@ -105,14 +145,13 @@ function Base.print(io::IO, x::SScaledKet)
 end
 basis(x::SScaledKet) = basis(x.ket)
 
-struct SScaledBra <: Symbolic{Bra}
+@withmetadata struct SScaledBra <: Symbolic{Bra}
     coeff
     bra
     SScaledBra(c,k) = _isone(c) ? k : new(c,k)
 end
 istree(::SScaledBra) = true
 arguments(x::SScaledBra) = [x.coeff, x.bra]
-metadata(::SScaledBra) = nothing
 operation(x::SScaledBra) = *
 Base.:(*)(c, x::Symbolic{Bra}) = SScaledBra(c,x)
 Base.:(*)(x::Symbolic{Bra}, c) = SScaledBra(c,x)
@@ -126,14 +165,13 @@ function Base.print(io::IO, x::SScaledBra)
 end
 basis(x::SScaledBra) = basis(x.bra)
 
-struct SScaledOperator <: Symbolic{Operator}
+@withmetadata struct SScaledOperator <: Symbolic{Operator}
     coeff
     operator
     SScaledOperator(c,k) = _isone(c) ? k : new(c,k)
 end
 istree(::SScaledOperator) = true
 arguments(x::SScaledOperator) = [x.coeff, x.operator]
-metadata(::SScaledOperator) = nothing
 operation(x::SScaledOperator) = *
 Base.:(*)(c, x::Symbolic{Operator}) = SScaledOperator(c,x)
 Base.:(*)(x::Symbolic{Operator},c) = SScaledOperator(c,x)
@@ -147,43 +185,40 @@ function Base.print(io::IO, x::SScaledOperator)
 end
 basis(x::SScaledOperator) = basis(x.operator)
 
-struct SAddKet <: Symbolic{Ket}
+@withmetadata struct SAddKet <: Symbolic{Ket}
     dict
     SAddKet(d) = length(d)==1 ? SScaledKet(first(d)...) : new(d)
 end
 istree(::SAddKet) = true
 arguments(x::SAddKet) = [SScaledKet(v,k) for (k,v) in pairs(x.dict)]
-metadata(::SAddKet) = nothing
 operation(x::SAddKet) = +
 Base.:(+)(xs::Symbolic{Ket}...) = SAddKet(countmap_flatten(xs, SScaledKet))
 Base.print(io::IO, x::SAddKet) = print(io, join(map(string, arguments(x)),"+"))
 basis(x::SAddKet) = basis(first(x.dict).first)
 
-struct SAddBra <: Symbolic{Bra}
+@withmetadata struct SAddBra <: Symbolic{Bra}
     dict
     SAddBra(d) = length(d)==1 ? SScaledBra(first(d)...) : new(d)
 end
 istree(::SAddBra) = true
 arguments(x::SAddBra) = [SScaledBra(v,k) for (k,v) in pairs(x.dict)]
-metadata(::SAddBra) = nothing
 operation(x::SAddBra) = +
 Base.:(+)(xs::Symbolic{Bra}...) = SAddBra(countmap_flatten(xs, SScaledBra))
 Base.print(io::IO, x::SAddBra) = print(io, join(map(string, arguments(x)),"+"))
 basis(x::SAddBra) = basis(first(x.dict).first)
 
-struct SAddOperator <: Symbolic{Operator}
+@withmetadata struct SAddOperator <: Symbolic{Operator}
     dict
     SAddOperator(d) = length(d)==1 ? SScaledOperator(first(d)...) : new(d)
 end
 istree(::SAddOperator) = true
 arguments(x::SAddOperator) = [SScaledOperator(v,k) for (k,v) in pairs(x.dict)]
-metadata(::SAddOperator) = nothing
 operation(x::SAddOperator) = +
 Base.:(+)(xs::Symbolic{Operator}...) = SAddOperator(countmap_flatten(xs, SScaledOperator))
 Base.print(io::IO, x::SAddOperator) = print(io, join(map(string, arguments(x)),"+"))
 basis(x::SAddOperator) = basis(first(x.dict).first)
 
-struct STensorKet <: Symbolic{Ket}
+@withmetadata struct STensorKet <: Symbolic{Ket}
     terms
     function STensorKet(terms)
         coeff, cleanterms = prefactorscalings(terms)
@@ -192,13 +227,12 @@ struct STensorKet <: Symbolic{Ket}
 end
 istree(::STensorKet) = true
 arguments(x::STensorKet) = x.terms
-metadata(::STensorKet) = nothing
 operation(x::STensorKet) = ⊗
 ⊗(xs::Symbolic{Ket}...) = STensorKet(collect(xs))
 Base.print(io::IO, x::STensorKet) = print(io, join(map(string, arguments(x)),""))
 basis(x::STensorKet) = tensor(basis.(x.terms)...)
 
-struct STensorBra <: Symbolic{Bra}
+@withmetadata struct STensorBra <: Symbolic{Bra}
     terms
     function STensorBra(terms)
         coeff, cleanterms = prefactorscalings(terms)
@@ -207,13 +241,12 @@ struct STensorBra <: Symbolic{Bra}
 end
 istree(::STensorBra) = true
 arguments(x::STensorBra) = x.terms
-metadata(::STensorBra) = nothing
 operation(x::STensorBra) = ⊗
 ⊗(xs::Symbolic{Bra}...) = STensorBra(collect(xs))
 Base.print(io::IO, x::STensorBra) = print(io, join(map(string, arguments(x)),""))
 basis(x::STensorBra) = tensor(basis.(x.terms)...)
 
-struct STensorOperator <: Symbolic{Operator}
+@withmetadata struct STensorOperator <: Symbolic{Operator}
     terms
     function STensorOperator(terms)
         coeff, cleanterms = prefactorscalings(terms)
@@ -222,44 +255,40 @@ struct STensorOperator <: Symbolic{Operator}
 end
 istree(::STensorOperator) = true
 arguments(x::STensorOperator) = x.terms
-metadata(::STensorOperator) = nothing
 operation(x::STensorOperator) = ⊗
 ⊗(xs::Symbolic{Operator}...) = STensorOperator(collect(xs))
 Base.print(io::IO, x::STensorOperator) = print(io, join(map(string, arguments(x)),"⊗"))
 basis(x::STensorOperator) = tensor(basis.(x.terms)...)
 
-struct SApplyKet <: Symbolic{Ket}
+@withmetadata struct SApplyKet <: Symbolic{Ket}
     op
     ket
 end
 istree(::SApplyKet) = true
 arguments(x::SApplyKet) = [x.op,x.ket]
-metadata(::SApplyKet) = nothing
 operation(x::SApplyKet) = *
 Base.:(*)(op::Symbolic{Operator}, k::Symbolic{Ket}) = SApplyKet(op,k)
 Base.print(io::IO, x::SApplyKet) = begin print(io, x.op); print(io, x.ket) end
 basis(x::SApplyKet) = basis(x.ket)
 
-struct SApplyBra <: Symbolic{Bra}
+@withmetadata struct SApplyBra <: Symbolic{Bra}
     bra
     op
 end
 istree(::SApplyBra) = true
 arguments(x::SApplyBra) = [bra,op]
-metadata(::SApplyBra) = nothing
 operation(x::SApplyBra) = *
 Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}) = SApplyBra(b,op)
 Base.print(io::IO, x::SApplyBra) = begin print(io, x.bra); print(io, x.op) end
 basis(x::SApplyBra) = basis(x.bra)
 
-struct SBraKet <: Symbolic{Complex}
+@withmetadata struct SBraKet <: Symbolic{Complex}
     bra
     op
     ket
 end
 istree(::SBraKet) = true
 arguments(x::SBraKet) = [bra,op,ket]
-metadata(::SBraKet) = nothing
 operation(x::SBraKet) = *
 Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}, k::Symbolic{Ket}) = SBraKet(b,op,k)
 function Base.print(io::IO, x::SBraKet)
@@ -330,49 +359,49 @@ abstract type SpecialKet <: Symbolic{Ket} end
 istree(::SpecialKet) = false
 basis(x::SpecialKet) = x.basis
 
-struct XBasisState <: SpecialKet
+@withmetadata struct XBasisState <: SpecialKet
     idx::Int
     basis::Basis
 end
 Base.print(io::IO, x::XBasisState) = print(io, "|X$(num_to_sub(x.idx))⟩")
 
-struct YBasisState <: SpecialKet
+@withmetadata struct YBasisState <: SpecialKet
     idx::Int
     basis::Basis
 end
 Base.print(io::IO, x::YBasisState) = print(io, "|Y$(num_to_sub(x.idx))⟩")
 
-struct ZBasisState <: SpecialKet
+@withmetadata struct ZBasisState <: SpecialKet
     idx::Int
     basis::Basis
 end
 Base.print(io::IO, x::ZBasisState) = print(io, "|Z$(num_to_sub(x.idx))⟩")
 
-struct FockBasisState <: SpecialKet
+@withmetadata struct FockBasisState <: SpecialKet
     idx::Int
     basis::Basis
 end
 Base.print(io::IO, x::FockBasisState) = print(io, "|$(num_to_sub(x.idx))⟩")
 
-struct DiscreteCoherentState <: SpecialKet
+@withmetadata struct DiscreteCoherentState <: SpecialKet
     alpha::Number # TODO parameterize
     basis::Basis
 end
 Base.print(io::IO, x::DiscreteCoherentState) = print(io, "|$(x.alpha)⟩")
 
-struct ContinuousCoherentState <: SpecialKet
+@withmetadata struct ContinuousCoherentState <: SpecialKet
     alpha::Number # TODO parameterize
     basis::Basis
 end
 Base.print(io::IO, x::ContinuousCoherentState) = print(io, "|$(x.alpha)⟩")
 
-struct MomentumEigenState <: SpecialKet
+@withmetadata struct MomentumEigenState <: SpecialKet
     p::Number # TODO parameterize
     basis::Basis
 end
 Base.print(io::IO, x::MomentumEigenState) = print(io, "|δₚ($(x.p))⟩")
 
-struct PositionEigenState <: SpecialKet
+@withmetadata struct PositionEigenState <: SpecialKet
     x::Float64 # TODO parameterize
     basis::Basis
 end
@@ -395,27 +424,27 @@ istree(::AbstractTwoQubitGate) = false
 basis(::AbstractSingleQubitGate) = SpinBasis(1//2)
 basis(::AbstractTwoQubitGate) = SpinBasis(1//2)⊗SpinBasis(1//2)
 
-struct OperatorEmbedding <: Symbolic{Operator}
+@withmetadata struct OperatorEmbedding <: Symbolic{Operator}
     gate::Symbolic{Operator} # TODO parameterize
     indices::Vector{Int}
     basis::Basis
 end
 istree(::OperatorEmbedding) = true
 
-struct XGate <: AbstractSingleQubitGate end
+@withmetadata struct XGate <: AbstractSingleQubitGate end
 eigvecs(g::XGate) = [X1,X2]
 Base.print(io::IO, x::XGate) = print(io, "X̂")
-struct YGate <: AbstractSingleQubitGate end
+@withmetadata struct YGate <: AbstractSingleQubitGate end
 eigvecs(g::YGate) = [Y1,Y2]
 Base.print(io::IO, x::YGate) = print(io, "Ŷ")
-struct ZGate <: AbstractSingleQubitGate end
+@withmetadata struct ZGate <: AbstractSingleQubitGate end
 eigvecs(g::ZGate) = [Z1,Z2]
 Base.print(io::IO, x::ZGate) = print(io, "Ẑ")
-struct HGate <: AbstractSingleQubitGate end
+@withmetadata struct HGate <: AbstractSingleQubitGate end
 Base.print(io::IO, x::HGate) = print(io, "Ĥ")
-struct CNOTGate <: AbstractTwoQubitGate end
+@withmetadata struct CNOTGate <: AbstractTwoQubitGate end
 Base.print(io::IO, x::CNOTGate) = print(io, "ĈNOT")
-struct CPHASEGate <: AbstractTwoQubitGate end
+@withmetadata struct CPHASEGate <: AbstractTwoQubitGate end
 Base.print(io::IO, x::CPHASEGate) = print(io, "ĈPHASE")
 
 const X = XGate()
@@ -427,12 +456,11 @@ const CPHASE = CPHASEGate()
 
 ##
 
-struct SProjector <: Symbolic{Operator}
+@withmetadata struct SProjector <: Symbolic{Operator}
     ket::Symbolic{Ket} # TODO parameterize
 end
 istree(::SProjector) = true
 arguments(x::SProjector) = [x.ket]
-metadata(::SProjector) = nothing
 operation(x::SProjector) = projector
 QuantumOptics.projector(x::Symbolic{Ket}) = SProjector(x)
 basis(x::SProjector) = basis(x.ket)
@@ -442,7 +470,7 @@ function Base.print(io::IO, x::SProjector)
     print(io,"]")
 end
 
-struct MixedState <: Symbolic{Operator}
+@withmetadata struct MixedState <: Symbolic{Operator}
     basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
 end
 MixedState(x::Symbolic{Ket}) = MixedState(basis(x))
@@ -451,7 +479,7 @@ istree(::MixedState) = false
 basis(x::MixedState) = x.basis
 Base.print(io::IO, x::MixedState) = print(io, "𝕄")
 
-struct StabilizerState <: Symbolic{Ket}
+@withmetadata struct StabilizerState <: Symbolic{Ket}
     stabilizer::MixedDestabilizer
 end
 function StabilizerState(x::Stabilizer)

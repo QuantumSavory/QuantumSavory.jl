@@ -1,11 +1,14 @@
 import SymbolicUtils: Symbolic
 
 function express(state::Symbolic, repr::AbstractRepresentation, use::AbstractUse)
-    if false # is in metadata
-        # get from metadata
+    md = metadata(state)
+    isnothing(md) && return express_from_cache(express_nolookup(state, repr, use))
+    if haskey(md.express_cache,(repr,use))
+        return express_from_cache(md.express_cache[(repr,use)])
     else
-        # record in metadata
-        return express_from_cache(express_nolookup(state, repr, use))
+        cache = express_nolookup(state, repr, use)
+        md.express_cache[(repr,use)] = cache
+        return express_from_cache(cache)
     end
 end
 

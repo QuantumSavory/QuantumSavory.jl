@@ -22,8 +22,6 @@ using LinearAlgebra
 using Graphs
 #using Infiltrator
 
-include("symbolics.jl")
-
 abstract type QuantumStateTrait end
 abstract type AbstractRepresentation end
 abstract type AbstractUse end
@@ -44,6 +42,8 @@ struct CliffordRepr <: AbstractRepresentation end
 struct UseAsState <: AbstractUse end
 struct UseAsOperation <: AbstractUse end
 struct UseAsObservable <: AbstractUse end
+
+include("symbolics.jl")
 
 # TODO better constructors
 # TODO am I overusing Ref
