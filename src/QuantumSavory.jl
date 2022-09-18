@@ -419,7 +419,6 @@ include("representations.jl")
 include("backgrounds.jl")
 include("quantumoptics/quantumoptics.jl")
 include("clifford/clifford.jl")
-include("qo_qc_interop.jl")
 include("sj_extras.jl")
 include("makie.jl")
 

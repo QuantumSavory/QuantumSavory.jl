@@ -28,18 +28,17 @@ express_qc_proj(::YGate) = QuantumClifford.projectY! # should be project*rand! i
 express_qc_proj(::ZGate) = QuantumClifford.projectZ! # should be project*rand! if ispadded()=true
 
 function observable(state::QuantumClifford.MixedDestabilizer, indices, operation)
-    operation = validate_qc_observable(operation)
+    operation = express_nolookup(operation, CliffordRepr(), UseAsObservable())
     op = QuantumClifford._expand_pauli(operation,indices,QuantumClifford.nqubits(state)) # TODO create a public `embed` function in QuantumClifford
     QuantumClifford.expect(op, state)
 end
-# TODO fold validate_qc_observable into the normal express framework
-validate_qc_observable(op::QuantumClifford.PauliOperator) = op
-validate_qc_observable(op::STensorOperator) = QuantumClifford.tensor(validate_qc_observable.(arguments(op))...)
-validate_qc_observable(::XGate) = QuantumClifford.P"X"
-validate_qc_observable(::YGate) = QuantumClifford.P"Y"
-validate_qc_observable(::ZGate) = QuantumClifford.P"Z"
-validate_qc_observable(op::SScaledOperator) = arguments(op)[1] * validate_qc_observable(arguments(op)[2])
-validate_qc_observable(op) = error("can not convert $(op) into a PauliOperator, which is the only observable that can be computed for QuantumClifford objects")
+express_nolookup(op::QuantumClifford.PauliOperator, ::CliffordRepr, ::UseAsObservable) = op
+express_nolookup(op::STensorOperator, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.tensor(validate_qc_observable.(arguments(op))...)
+express_nolookup(::XGate, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.P"X"
+express_nolookup(::YGate, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.P"Y"
+express_nolookup(::ZGate, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.P"Z"
+express_nolookup(op::SScaledOperator, ::CliffordRepr, ::UseAsObservable) = arguments(op)[1] * validate_qc_observable(arguments(op)[2])
+express_nolookup(op, ::CliffordRepr, ::UseAsObservable) = error("Can not convert $(op) into a `PauliOperator`, which is the only observable that can be computed for QuantumClifford objects. Consider defining `express_nolookup(op, ::CliffordRepr, ::UseAsObservable)::PauliOperator` for this object.")
 
 struct QCRandomSampler # TODO specify types
     operators # union of QCRandomSampler and MixedDestabilizer

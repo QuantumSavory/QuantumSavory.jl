@@ -72,3 +72,4 @@ end
 include("should_upstream.jl")
 include("express.jl")
 include("uptotime.jl")
+include("clifford_interop.jl")
