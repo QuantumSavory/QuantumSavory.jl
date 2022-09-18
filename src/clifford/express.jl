@@ -33,11 +33,11 @@ function observable(state::QuantumClifford.MixedDestabilizer, indices, operation
     QuantumClifford.expect(op, state)
 end
 express_nolookup(op::QuantumClifford.PauliOperator, ::CliffordRepr, ::UseAsObservable) = op
-express_nolookup(op::STensorOperator, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.tensor(validate_qc_observable.(arguments(op))...)
+express_nolookup(op::STensorOperator, r::CliffordRepr, u::UseAsObservable) = QuantumClifford.tensor(express.(arguments(op),(r,),(u,))...)
 express_nolookup(::XGate, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.P"X"
 express_nolookup(::YGate, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.P"Y"
 express_nolookup(::ZGate, ::CliffordRepr, ::UseAsObservable) = QuantumClifford.P"Z"
-express_nolookup(op::SScaledOperator, ::CliffordRepr, ::UseAsObservable) = arguments(op)[1] * validate_qc_observable(arguments(op)[2])
+express_nolookup(op::SScaledOperator, r::CliffordRepr, u::UseAsObservable) = arguments(op)[1] * express(arguments(op)[2],r,u)
 express_nolookup(op, ::CliffordRepr, ::UseAsObservable) = error("Can not convert $(op) into a `PauliOperator`, which is the only observable that can be computed for QuantumClifford objects. Consider defining `express_nolookup(op, ::CliffordRepr, ::UseAsObservable)::PauliOperator` for this object.")
 
 struct QCRandomSampler # TODO specify types
