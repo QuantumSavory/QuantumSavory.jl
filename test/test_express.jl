@@ -9,7 +9,7 @@ nocache = @timed express(state)
 withcache = @timed express(state)
 @test nocache.time > 10*withcache.time
 @test withcache.bytes == 0
-@test nocache.value == withcache.value == express(1im*X1⊗Z2+2*Y2⊗(Z1+X1)+StabilizerState(S"YX ZZ"))
+@test nocache.value ≈ withcache.value ≈ express(1im*X1⊗Z2+2*Y2⊗(Z1+X1)+StabilizerState(S"YX ZZ"))
 
 state = 1im*X1⊗Z2+2*Y2⊗(Z1+X1)+StabilizerState(S"YX ZZ")
 state = SProjector(state)+2*X⊗(Z+Y)/3im
@@ -21,7 +21,7 @@ nocache = @timed express(state2)
 withcache = @timed express(state2)
 @test nocache.time > 50*withcache.time
 @test withcache.bytes == 0
-@test nocache.value == withcache.value == express(state2)
+@test nocache.value ≈ withcache.value ≈ express(state2)
 
 state = StabilizerState(S"ZZ XX")
 state = SProjector(state)*0.5 + 0.5*MixedState(state)
