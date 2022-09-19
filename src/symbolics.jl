@@ -276,7 +276,7 @@ basis(x::SApplyKet) = basis(x.ket)
     op
 end
 istree(::SApplyBra) = true
-arguments(x::SApplyBra) = [bra,op]
+arguments(x::SApplyBra) = [x.bra,x.op]
 operation(x::SApplyBra) = *
 Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}) = SApplyBra(b,op)
 Base.print(io::IO, x::SApplyBra) = begin print(io, x.bra); print(io, x.op) end
@@ -288,7 +288,7 @@ basis(x::SApplyBra) = basis(x.bra)
     ket
 end
 istree(::SBraKet) = true
-arguments(x::SBraKet) = [bra,op,ket]
+arguments(x::SBraKet) = [x.bra,x.op,x.ket]
 operation(x::SBraKet) = *
 Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}, k::Symbolic{Ket}) = SBraKet(b,op,k)
 function Base.print(io::IO, x::SBraKet)

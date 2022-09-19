@@ -31,6 +31,8 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 
 VERSION == v"1.8" && @doset "doctests"
 
+get(ENV,"QUANTUMSAVORY_JET_TEST","")=="true" && @doset "jet"
+
 using Aqua
 using QuantumClifford, QuantumOptics, Graphs
 doset("aqua") && begin

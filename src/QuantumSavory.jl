@@ -83,23 +83,21 @@ end
 struct RegisterNet
     graph::SimpleGraph{Int64}
     registers::Vector{Register}
-    metadata::Vector{Dict{Symbol,Any}} # Maybe Dict of Vector would be a better idea
+    vertex_metadata::Vector{Dict{Symbol,Any}}
+    edge_metadata::Dict{Tuple{Int,Int},Dict{Symbol,Any}}
 end
 function RegisterNet(graph::SimpleGraph, registers::Vector{Register})
     @assert size(graph, 1) == length(registers)
-    RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers])
+    RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers], Dict{Tuple{Int,Int},Dict{Symbol,Any}}())
 end
 function RegisterNet(registers::Vector{Register})
     graph = grid([length(registers)])
-    RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers])
-end
-function RegisterNet(graph::SimpleGraph, register_factory::F) where F<:Function
-    RegisterNet(graph, [register_factory(v) for v in vertices(graph)], [Dict{Symbol,Any}() for _ in 1:l])
+    RegisterNet(graph, registers)
 end
 
 function add_register!(net::RegisterNet, r::Register)
     add_vertex!(net.graph)
-    push!(registers, r)
+    push!(net.registers, r)
     return length(Graph())
 end
 
@@ -110,8 +108,10 @@ Graphs.adjacency_matrix(net::RegisterNet) = adjacency_matrix(net.graph)
 
 Base.getindex(net::RegisterNet, i::Int) = net.registers[i]
 Base.getindex(net::RegisterNet, i::Int, j::Int) = net.registers[i][j]
-Base.getindex(net::RegisterNet, i::Int, k::Symbol) = net.metadata[i][k]
-Base.setindex!(net::RegisterNet, val, i::Int, k::Symbol) = begin net.metadata[i][k] = val end
+Base.getindex(net::RegisterNet, i::Int, k::Symbol) = net.vertex_metadata[i][k]
+Base.setindex!(net::RegisterNet, val, i::Int, k::Symbol) = begin net.vertex_metadata[i][k] = val end
+Base.getindex(net::RegisterNet, i::Int, j::Int, k::Symbol) = net.edge_metadata[minmax(i,j)][k]
+Base.setindex!(net::RegisterNet, val, i::Int, j::Int, k::Symbol) = begin net.edge_metadata[minmax(i,j)][k] = val end
 
 ##
 
