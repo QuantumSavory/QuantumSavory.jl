@@ -2,6 +2,7 @@ module QuantumSavory
 
 export Qubit, Qumode,
     QuantumOpticsRepr, QuantumMCRepr, CliffordRepr,
+    UseAsState, UseAsOperation, UseAsObservable,
     StateRef, RegRef, Register, RegisterNet,
     newstate, initialize!,
     nsubsystems,

@@ -1,19 +1,10 @@
 using Graphs
 using NetworkLayout
 import Makie
+import Makie: Theme, Axis, @recipe
 
-Makie.@recipe(RegisterNetPlot) do scene
-    Makie.Theme(
-    Axis = (
-        backgroundcolor = :gray90,
-        leftspinevisible = false,
-        rightspinevisible = false,
-        bottomspinevisible = false,
-        topspinevisible = false,
-        xgridcolor = :white,
-        ygridcolor = :white,
-    )
-    )
+@recipe(RegisterNetPlot, regnet) do scene
+    Theme()
 end
 
 function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
@@ -94,9 +85,9 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     update_plot(rn[1][])
     register_polyplot = Makie.poly!(rn,register_rectangles,color=:gray90)
     register_polyplot.inspectable[] = false
-    register_slots_scatterplot = Makie.scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=Makie.SceneSpace)
-    process_lineplot = Makie.linesegments!(rn,processes_coords,color=:pink,linewidth=20,markerspace=Makie.SceneSpace)
-    state_scatterplot = Makie.scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=Makie.SceneSpace)
+    register_slots_scatterplot = Makie.scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=:data)
+    process_lineplot = Makie.linesegments!(rn,processes_coords,color=:pink,linewidth=20,markerspace=:data)
+    state_scatterplot = Makie.scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=:data)
     state_lineplot = Makie.linesegments!(rn,state_links,color=:gray90)
     rn[:register_polyplot] = register_polyplot
     rn[:register_slots_scatterplot] = register_slots_scatterplot
@@ -156,14 +147,12 @@ function resourceplot_axis(subfig, networkobs, edgeresources, vertexresources, r
     baseplot = Makie.scatter!(axis, # just to set coordinates
             registercoords[],
             color=:gray90,
-            #markerspace=Makie.SceneSpace,
             )
     for (i,vertexres) in enumerate(vertexresources)
         Makie.scatter!(axis,
             Makie.lift(x->Makie.Point2{Float64}[registercoords[][j] for j in vertices(x) if showonplot(x[i,vertexres])],
                 networkobs),
             color=Makie.Cycled(i),
-            #markerspace=Makie.SceneSpace,
             label="$(vertexres)"
             )
     end
@@ -172,7 +161,6 @@ function resourceplot_axis(subfig, networkobs, edgeresources, vertexresources, r
             Makie.lift(x->Makie.Point2{Float64}[registercoords[][n] for (;dst,src) in edges(x) for n in (dst,src) if showonplot(x[dst,src,edgeres])],
                 networkobs),
             color=Makie.Makie.Cycled(i),
-            #markerspace=Makie.SceneSpace,
             label="$(edgeres)"
             )
     end
