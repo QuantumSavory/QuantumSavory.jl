@@ -24,6 +24,7 @@ end
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
 @doset "register_interface"
+@doset "noninstant"
 @doset "qo_qc_interop"
 @doset "express"
 @doset "examples"

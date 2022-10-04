@@ -3,6 +3,7 @@ using QuantumSavory
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
 
+##
 # no backgrounds
 traits = [Qubit(), Qubit(), Qubit()]
 reg1 = Register(traits)
@@ -39,6 +40,7 @@ apply!([net[i,2], net[i,3]], CNOT)
 @test net[i].staterefs[2].state[] isa Ket
 @test nsubsystems(net[i].staterefs[2]) == 2
 
+##
 # with backgrounds
 traits = [Qubit(), Qubit(), Qubit()]
 backgrounds = [T2Dephasing(1.0),T2Dephasing(1.0),T2Dephasing(1.0)]

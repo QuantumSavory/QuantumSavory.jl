@@ -1,6 +1,7 @@
 import QuantumOpticsBase
 import QuantumOpticsBase: GenericBasis, CompositeBasis, StateVector, basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, projector, identityoperator, embed, dm, expect, ptrace
 import QuantumOptics
+import QuantumOptics: timeevolution
 
 const QOR = QuantumOpticsRepr()
 
@@ -72,4 +73,5 @@ end
 include("should_upstream.jl")
 include("express.jl")
 include("uptotime.jl")
+include("noninstant.jl")
 include("clifford_interop.jl")

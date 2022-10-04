@@ -14,6 +14,9 @@ import QuantumOptics
 import QuantumClifford
 import QuantumClifford: MixedDestabilizer, Stabilizer, @S_str
 
+export ⊗,X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2,
+       SProjector,MixedState,IdentityOp,StabilizerState,@S_str
+
 function countmap(samples) # A simpler version of StatsBase.countmap, because StatsBase is slow to import
     counts = Dict{Any,Any}()
     for s in samples
@@ -433,19 +436,19 @@ istree(::OperatorEmbedding) = true
 
 @withmetadata struct XGate <: AbstractSingleQubitGate end
 eigvecs(g::XGate) = [X1,X2]
-Base.print(io::IO, x::XGate) = print(io, "X̂")
+Base.print(io::IO, ::XGate) = print(io, "X̂")
 @withmetadata struct YGate <: AbstractSingleQubitGate end
 eigvecs(g::YGate) = [Y1,Y2]
-Base.print(io::IO, x::YGate) = print(io, "Ŷ")
+Base.print(io::IO, ::YGate) = print(io, "Ŷ")
 @withmetadata struct ZGate <: AbstractSingleQubitGate end
 eigvecs(g::ZGate) = [Z1,Z2]
-Base.print(io::IO, x::ZGate) = print(io, "Ẑ")
+Base.print(io::IO, ::ZGate) = print(io, "Ẑ")
 @withmetadata struct HGate <: AbstractSingleQubitGate end
-Base.print(io::IO, x::HGate) = print(io, "Ĥ")
+Base.print(io::IO, ::HGate) = print(io, "Ĥ")
 @withmetadata struct CNOTGate <: AbstractTwoQubitGate end
-Base.print(io::IO, x::CNOTGate) = print(io, "ĈNOT")
+Base.print(io::IO, ::CNOTGate) = print(io, "ĈNOT")
 @withmetadata struct CPHASEGate <: AbstractTwoQubitGate end
-Base.print(io::IO, x::CPHASEGate) = print(io, "ĈPHASE")
+Base.print(io::IO, ::CPHASEGate) = print(io, "ĈPHASE")
 
 const X = XGate()
 const Y = YGate()
@@ -478,6 +481,15 @@ MixedState(x::Symbolic{Operator}) = MixedState(basis(x))
 istree(::MixedState) = false
 basis(x::MixedState) = x.basis
 Base.print(io::IO, x::MixedState) = print(io, "𝕄")
+
+@withmetadata struct IdentityOp <: Symbolic{Operator}
+    basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
+end
+IdentityOp(x::Symbolic{Ket}) = MixedState(basis(x))
+IdentityOp(x::Symbolic{Operator}) = MixedState(basis(x))
+istree(::IdentityOp) = false
+basis(x::IdentityOp) = x.basis
+Base.print(io::IO, x::IdentityOp) = print(io, "𝕀")
 
 @withmetadata struct StabilizerState <: Symbolic{Ket}
     stabilizer::MixedDestabilizer

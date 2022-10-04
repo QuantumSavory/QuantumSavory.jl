@@ -6,13 +6,9 @@ export Qubit, Qumode,
     StateRef, RegRef, Register, RegisterNet,
     newstate, initialize!,
     nsubsystems,
-    subsystemcompose, traceout!, project_traceout!,
-    uptotime!, overwritetime!, T1Decay, T2Dephasing, krausops,
-    removebackref!, swap!, apply!,
-    observable,
+    swap!,
     registernetplot, registernetplot_axis, resourceplot_axis,
     @simlog, isfree, nongreedymultilock, spinlock,
-    ⊗,X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2,SProjector,MixedState,StabilizerState,@S_str,
     express, stab_to_ket
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
@@ -167,152 +163,10 @@ function Base.isassigned(r::Register,i::Int) # TODO erase
 end
 Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
 
-function initialize!(reg::Register,i::Int; time=nothing)
-    s = newstate(reg.traits[i], reg.reprs[i])
-    initialize!(reg,i,s; time=time)
-end
-initialize!(r::RegRef; time=nothing) = initialize!(r.reg, r.idx; time)
-
-"""
-Set the state of a given set of registers.
-
-`initialize!([regA,regB], [slot1,slot2], state)` would
-set the state of the given slots in the given registers to `state`.
-`state` can be any supported state representation,
-e.g., kets or density matrices from `QuantumOptics.jl`
-or tableaux from `QuantumClifford.jl`.
-"""
-function initialize!(regs::Vector{Register},indices::Vector{Int},state; time=nothing)
-    stateref = StateRef(state, collect(regs), collect(indices))
-    for (si,(reg,ri)) in enumerate(zip(regs,indices))
-        if isassigned(reg,ri) # TODO decide if this is an error or a warning or nothing
-            throw("error") # TODO be more descriptive
-        end
-        reg.staterefs[ri] = stateref
-        reg.stateindices[ri] = si
-        !isnothing(time) && (reg.accesstimes[ri] = time)
-    end
-    stateref
-end
-initialize!(refs::Vector{RegRef}, state; time=nothing) = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time)
-initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time) # TODO temporary array allocated here
-initialize!(reg::Register,i::Int,state; time=nothing) = initialize!([reg],[i],state; time)
-initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
-initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(state,consistent_representation(r,i,state)); time)
-
-
 nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
 nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
 nsubsystems(r::Register) = length(r.staterefs)
 nsubsystems(r::RegRef) = 1
-
-#subsystemcompose(s...) = reduce(subsystemcompose, s)
-
-
-# TODO use a trait system to select the type of composition
-# - do they need to be collapsed
-# - do they have unused slots that can be refilled
-# - are they just naively composed together
-function subsystemcompose(regs::Vector{Register}, indices) # TODO add a type constraint on regs
-    # Get all references to states that matter, removing duplicates
-    staterefs = unique(objectid, [r.staterefs[i] for (r,i) in zip(regs,indices)]) # TODO do not use == checks like in `unique`, use ===
-    # Prepare the larger state object
-    newstate = subsystemcompose([s.state[] for s in staterefs]...)
-    # Prepare the new state reference
-    newregisters = vcat([s.registers for s in staterefs]...)
-    newregisterindices = vcat([s.registerindices for s in staterefs]...)
-    newref = StateRef(newstate, newregisters, newregisterindices)
-    # Update all registers to point to the new state reference
-    offsets = [0,cumsum(nsubsystems_padded.(staterefs))...]
-    for (r,i) in zip(newregisters,newregisterindices)
-        isnothing(r) && continue
-        oldref = r.staterefs[i]
-        r.staterefs[i] = newref
-        offset = offsets[findfirst(ref->ref===oldref, staterefs)]
-        r.stateindices[i] += offset
-    end
-    newref
-end
-subsystemcompose(refs::RegRef...) = subsystemcompose([r.reg for r in refs], [r.idx for r in refs]) # TODO temporary arrays are allocated here
-
-function removebackref!(s::StateRef, i) # To be used only with something that updates s.state[]
-    padded = ispadded(s.state[])
-    for (r,ri) in zip(s.registers, s.registerindices)
-        isnothing(r) && continue
-        if r.stateindices[ri] == i
-            r.staterefs[ri] = nothing
-            r.stateindices[ri] = 0
-        elseif !padded && r.stateindices[ri] > i
-            r.stateindices[ri] -= 1
-        end
-    end
-    if padded
-        s.registerindices[i] = 0
-        s.registers[i] = nothing
-    else
-        deleteat!(s.registerindices, i)
-        deleteat!(s.registers, i)
-    end
-    s
-end
-function traceout!(s::StateRef, i::Int)
-    state = s.state[]
-    newstate = traceout!(state, i)
-    s.state[] = newstate
-    removebackref!(s, i)
-    s
-end
-
-"""
-Delete the given slot of the given register.
-
-`traceout!(reg, slot)` would reset (perform a partial trace) over the given subsystem.
-The Hilbert space of the register is automatically shrinked.
-"""
-function traceout!(r::Register, i::Int)
-    stateref = r.staterefs[i]
-    if !isnothing(stateref)
-        if nsubsystems(stateref)>1
-            traceout!(stateref, r.stateindices[i])
-        else
-            r.staterefs[i] = nothing
-            r.stateindices[i] = 0
-        end
-    end
-    r
-end
-traceout!(r::RegRef) = traceout!(r.reg, r.idx)
-
-"""
-Perform a projective measurement on the given slot of the given register.
-
-`project_traceout!(reg, slot, [stateA, stateB])` performs a projective measurement,
-projecting on either `stateA` or `stateB`, returning the index of the subspace
-on which the projection happened. It assumes the list of possible states forms a basis
-for the Hilbert space. The Hilbert space of the register is automatically shrinked.
-
-A basis object can be specified on its own as well, e.g.
-`project_traceout!(reg, slot, basis)`.
-"""
-function project_traceout! end
-
-function project_traceout!(reg::Register, i::Int, psis; time=nothing)
-    project_traceout!(identity, reg, i, psis; time=time)
-end
-project_traceout!(r::RegRef, psis; time=nothing) = project_traceout!(r.reg, r.idx, psis; time=nothing)
-
-function project_traceout!(f, reg::Register, i::Int, psis; time=nothing)
-    !isnothing(time) && uptotime!([reg], [i], time)
-    stateref = reg.staterefs[i]
-    stateindex = reg.stateindices[i]
-    if isnothing(stateref) # TODO maybe use isassigned
-        throw("error") # make it more descriptive
-    end
-    j, stateref.state[] = project_traceout!(stateref.state[],stateindex,psis)
-    removebackref!(stateref, stateindex)
-    f(j)
-end
-project_traceout!(f, r::RegRef, psis; time=nothing) = project_traceout!(f, r.reg, r.idx, psis; time=nothing)
 
 function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
     if reg1===reg2 && i1==i2
@@ -333,95 +187,23 @@ function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
 end
 swap!(r1::RegRef, r2::RegRef) = swap!(r1.reg, r2.reg, r1.idx, r2.idx)
 
-"""
-Calculate the expectation value of a quantum observable on the given register and slot.
-
-`observable([regA, regB], [slot1, slot2], obs)` would calculate the expectation value
-of the `obs` observable (using the appropriate formalism, depending on the state
-representation in the given registers).
-"""
-function observable(regs::Vector{Register}, indices::Vector{Int}, obs, something=nothing; time=nothing) # TODO weird split between positional and keyword arguments
-    staterefs = [r.staterefs[i] for (r,i) in zip(regs, indices)]
-    # TODO it should still work even if they are not represented in the same state
-    (any(isnothing, staterefs) || !all(s->s===staterefs[1], staterefs)) && return something
-    !isnothing(time) && uptotime!(regs, indices, time)
-    state = staterefs[1].state[]
-    state_indices = [r.stateindices[i] for (r,i) in zip(regs, indices)]
-    observable(state, state_indices, obs)
-end
-observable(refs::Vector{RegRef}, obs, something=nothing; time=nothing) = observable([r.reg for r in refs], [r.idx for r in refs], obs, something; time)
-observable(refs::NTuple{N,RegRef}, obs, something=nothing; time=nothing) where {N} = observable((r.reg for r in refs), (r.idx for r in refs), obs, something; time)
-observable(ref::RegRef, obs, something=nothing; time=nothing) = observable([ref.reg], [ref.idx], obs, something; time)
-
-
-"""
-Apply a given operation on the given set of register slots.
-
-`apply!([regA, regB], [slot1, slot2], Gates.CNOT)` would apply a CNOT gate
-on the content of the given registers at the given slots.
-The appropriate representatin of the gate is used,
-depending on the formalism under which a quantum state is stored in the given registers.
-The Hilbert spaces of the registers are automatically joined if necessary.
-"""
-function apply!(regs::Vector{Register}, indices::Vector{Int}, operation; time=nothing) # TODO add a type constraint on regs
-    !isnothing(time) && uptotime!(regs, indices, time)
-    subsystemcompose(regs,indices)
-    state = regs[1].staterefs[indices[1]].state[]
-    state_indices = [r.stateindices[i] for (r,i) in zip(regs, indices)]
-    state = apply!(state, state_indices, operation)
-    regs[1].staterefs[indices[1]].state[] = state
-    regs
-end
-apply!(refs::Vector{RegRef}, operation; time=nothing) = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time)
-apply!(refs::NTuple{N,RegRef}, operation; time=nothing) where {N} = apply!([r.reg for r in refs], [r.idx for r in refs], operation; time) # TODO temporary array allocated here
-apply!(ref::RegRef, operation; time=nothing) = apply!([ref.reg], [ref.idx], operation; time)
-
-function uptotime!(stateref::StateRef, idx::Int, background, Δt) # TODO this should be just for
-    stateref.state[] = uptotime!(stateref.state[], idx, background, Δt)
-end
-
-function uptotime!(state, indices::AbstractVector, backgrounds, Δt) # TODO what about multiqubit correlated backgrounds... e.g. an interaction hamiltonian!?
-    for (i,b) in zip(indices, backgrounds)
-        isnothing(b) && continue
-        uptotime!(state,i,b,Δt)
-    end
-end
-
-function uptotime!(registers, indices, now)
-    staterecords = [(state=r.staterefs[i], idx=r.stateindices[i], bg=r.backgrounds[i], t=r.accesstimes[i])
-                    for (r,i) in zip(registers, indices)]
-    for stategroup in groupby(x->x.state, staterecords) # TODO check this is grouping by ===... Actually, make sure that == for StateRef is the same as ===
-        state = stategroup[1].state
-        timegroups = sort!(collect(groupby(x->x.t, stategroup)), by=x->x[1].t)
-        times = [[g[1].t for g in timegroups]; now]
-        Δtimes = diff(times)
-        for (i,Δt) in enumerate(Δtimes)
-            Δt==0 && continue
-            group = vcat(timegroups[1:i]...)
-            stateindices = [g.idx for g in group]
-            backgrounds = [g.bg for g in group]
-            uptotime!(state, stateindices, backgrounds, Δt)
-        end
-    end
-    for (i,r) in zip(indices, registers)
-        r.accesstimes[i] = now
-    end
-end
-uptotime!(refs::Vector{RegRef}, now) = uptotime!([r.reg for r in refs], [r.idx for r in refs], now)
-
-function overwritetime!(registers, indices, now)
-    for (i,r) in zip(indices, registers)
-        r.accesstimes[i] = now
-    end
-end
-overwritetime!(refs::Vector{RegRef}, now) = overwritetime!([r.reg for r in refs], [r.idx for r in refs], now)
+include("baseops/subsystemcompose.jl")
+include("baseops/initialize.jl")
+include("baseops/traceout.jl")
+include("baseops/apply.jl")
+include("baseops/uptotime.jl")
+include("baseops/observable.jl")
 
 include("representations.jl")
 include("backgrounds.jl")
-include("quantumoptics/quantumoptics.jl")
-include("clifford/clifford.jl")
-include("sj_extras.jl")
+include("noninstant.jl")
+
+include("backends/quantumoptics/quantumoptics.jl")
+include("backends/clifford/clifford.jl")
+
+include("simjulia.jl")
 include("makie.jl")
+
 include("precompile.jl")
 
 end # module
