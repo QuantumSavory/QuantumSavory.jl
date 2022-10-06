@@ -113,15 +113,6 @@ metadata(::SKet) = nothing
 Base.print(io::IO, x::SKet) = print(io, "|$(x.name)⟩")
 basis(x::SKet) = x.basis
 
-struct SBra <: Symbolic{Bra}
-    name::Symbol
-    basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
-end
-istree(::SBra) = false
-metadata(::SBra) = nothing
-Base.print(io::IO, x::SBra) = print(io, "⟨$(x.name)|")
-basis(x::SBra) = x.basis
-
 struct SOperator <: Symbolic{Operator}
     name::Symbol
     basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
@@ -150,26 +141,6 @@ function Base.print(io::IO, x::SScaledKet)
     end
 end
 basis(x::SScaledKet) = basis(x.ket)
-
-@withmetadata struct SScaledBra <: Symbolic{Bra}
-    coeff
-    bra
-    SScaledBra(c,k) = _isone(c) ? k : new(c,k)
-end
-istree(::SScaledBra) = true
-arguments(x::SScaledBra) = [x.coeff, x.bra]
-operation(x::SScaledBra) = *
-Base.:(*)(c, x::Symbolic{Bra}) = SScaledBra(c,x)
-Base.:(*)(x::Symbolic{Bra}, c) = SScaledBra(c,x)
-Base.:(/)(x::Symbolic{Bra}, c) = SScaledBra(1/c,x)
-function Base.print(io::IO, x::SScaledBra)
-    if x.coeff isa Number
-        print(io, "$(x.coeff)$(x.bra)")
-    else
-        print(io, "($(x.coeff))$(x.bra)")
-    end
-end
-basis(x::SScaledBra) = basis(x.bra)
 
 @withmetadata struct SScaledOperator <: Symbolic{Operator}
     coeff
@@ -202,17 +173,6 @@ Base.:(+)(xs::Symbolic{Ket}...) = SAddKet(countmap_flatten(xs, SScaledKet))
 Base.print(io::IO, x::SAddKet) = print(io, join(map(string, arguments(x)),"+"))
 basis(x::SAddKet) = basis(first(x.dict).first)
 
-@withmetadata struct SAddBra <: Symbolic{Bra}
-    dict
-    SAddBra(d) = length(d)==1 ? SScaledBra(first(d)...) : new(d)
-end
-istree(::SAddBra) = true
-arguments(x::SAddBra) = [SScaledBra(v,k) for (k,v) in pairs(x.dict)]
-operation(x::SAddBra) = +
-Base.:(+)(xs::Symbolic{Bra}...) = SAddBra(countmap_flatten(xs, SScaledBra))
-Base.print(io::IO, x::SAddBra) = print(io, join(map(string, arguments(x)),"+"))
-basis(x::SAddBra) = basis(first(x.dict).first)
-
 @withmetadata struct SAddOperator <: Symbolic{Operator}
     dict
     SAddOperator(d) = length(d)==1 ? SScaledOperator(first(d)...) : new(d)
@@ -237,20 +197,6 @@ operation(x::STensorKet) = ⊗
 ⊗(xs::Symbolic{Ket}...) = STensorKet(collect(xs))
 Base.print(io::IO, x::STensorKet) = print(io, join(map(string, arguments(x)),""))
 basis(x::STensorKet) = tensor(basis.(x.terms)...)
-
-@withmetadata struct STensorBra <: Symbolic{Bra}
-    terms
-    function STensorBra(terms)
-        coeff, cleanterms = prefactorscalings(terms)
-        coeff * new(cleanterms)
-    end
-end
-istree(::STensorBra) = true
-arguments(x::STensorBra) = x.terms
-operation(x::STensorBra) = ⊗
-⊗(xs::Symbolic{Bra}...) = STensorBra(collect(xs))
-Base.print(io::IO, x::STensorBra) = print(io, join(map(string, arguments(x)),""))
-basis(x::STensorBra) = tensor(basis.(x.terms)...)
 
 @withmetadata struct STensorOperator <: Symbolic{Operator}
     terms
@@ -277,17 +223,6 @@ Base.:(*)(op::Symbolic{Operator}, k::Symbolic{Ket}) = SApplyKet(op,k)
 Base.print(io::IO, x::SApplyKet) = begin print(io, x.op); print(io, x.ket) end
 basis(x::SApplyKet) = basis(x.ket)
 
-@withmetadata struct SApplyBra <: Symbolic{Bra}
-    bra
-    op
-end
-istree(::SApplyBra) = true
-arguments(x::SApplyBra) = [x.bra,x.op]
-operation(x::SApplyBra) = *
-Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}) = SApplyBra(b,op)
-Base.print(io::IO, x::SApplyBra) = begin print(io, x.bra); print(io, x.op) end
-basis(x::SApplyBra) = basis(x.bra)
-
 @withmetadata struct SBraKet <: Symbolic{Complex}
     bra
     op
@@ -296,7 +231,7 @@ end
 istree(::SBraKet) = true
 arguments(x::SBraKet) = [x.bra,x.op,x.ket]
 operation(x::SBraKet) = *
-Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}, k::Symbolic{Ket}) = SBraKet(b,op,k)
+#Base.:(*)(b::Symbolic{Bra}, op::Symbolic{Operator}, k::Symbolic{Ket}) = SBraKet(b,op,k)
 function Base.print(io::IO, x::SBraKet)
     if isnothing(x.op)
         print(io,string(x.bra)[1:end-1])
@@ -309,7 +244,6 @@ function Base.print(io::IO, x::SBraKet)
 end
 
 Base.show(io::IO, x::Symbolic{Ket}) = print(io,x)
-Base.show(io::IO, x::Symbolic{Bra}) = print(io,x)
 Base.show(io::IO, x::Symbolic{Operator}) = print(io,x)
 
 function hasscalings(xs)
