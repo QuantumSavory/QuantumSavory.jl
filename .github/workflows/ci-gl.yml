@@ -16,7 +16,7 @@ jobs:
         os:
           - ubuntu-latest
         threads:
-          - '5'
+          - '2'
         arch:
           - x64
     steps:

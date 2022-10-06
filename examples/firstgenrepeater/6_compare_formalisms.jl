@@ -1,6 +1,6 @@
 # Include the already implemented code for first gen repeaters in both
 # Schroedinger and Clifford formalisms
-include("firstgenrepeater_clifford_setup.jl")
+include("clifford_setup.jl")
 
 using Statistics
 using RecursiveArrayTools
@@ -65,7 +65,7 @@ using Logging
 nologging = ConsoleLogger(stderr, Logging.Warn)
 
 # Run sims
-replicates = 1000
+replicates = 100
 sampled_times = 0.:0.2:25.
 @time qo_res = with_logger(nologging) do
     [monte_carlo_trajectory(; sampled_times) for _ in 1:replicates]

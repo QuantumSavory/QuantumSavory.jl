@@ -1,4 +1,4 @@
-include("firstgenrepeater_setup.jl")
+include("clifford_setup.jl")
 
 using GLMakie # For plotting
 
@@ -6,8 +6,8 @@ using GLMakie # For plotting
 # Demo visualizations of the performance of the network
 ##
 sizes = [2,3,4,3,2]        # Number of qubits in each register
-T2 = 100.0                  # T2 dephasing time of all qubits
-F = 0.97                    # Fidelity of the raw Bell pairs
+T2 = 100.0                 # T2 dephasing time of all qubits
+F = 0.97                   # Fidelity of the raw Bell pairs
 entangler_wait_time = 0.1  # How long to wait if all qubits are busy before retring entangling
 entangler_busy_time = 1.0  # How long it takes to establish a newly entangled pair
 swapper_wait_time = 0.1    # How long to wait if all qubits are unavailable for swapping
@@ -15,9 +15,9 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 purifier_wait_time = 0.15  # How long to wait if there are no pairs to be purified
 purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
-sim, network = simulation_setup(sizes, T2)
+sim, network = simulation_setup(sizes, T2; representation = CliffordRepr)
 
-noisy_pair = noisy_pair_func(F)
+noisy_pair = stab_noisy_pair_func(F)
 for (;src, dst) in edges(network)
     @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_time)
 end
@@ -52,7 +52,7 @@ registers = [network[node] for node in vertices(network)]
 last = length(registers)
 
 step_ts = range(0, 100, step=0.1)
-record(fig, "firstgenrepeater-07.observable.mp4", step_ts, framerate=10) do t
+record(fig, "firstgenrepeater-08.clifford.mp4", step_ts, framerate=10) do t
     run(sim, t)
 
     fXX = real(observable(registers[[1,last]], [2,2], XX, 0.0; time=t))

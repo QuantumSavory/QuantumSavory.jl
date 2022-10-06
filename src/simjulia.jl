@@ -3,6 +3,8 @@ import SimJulia # Should be using
 using SimJulia: Environment, request, release, now, active_process
 using Printf
 
+export @simlog, isfree, nongreedymultilock, spinlock
+
 macro simlog(env, msg) # this should be part of @process or @resumable and just convert @info and company
     return :(@info(@sprintf("t=%.4f @ %05d : %s", now($(esc(env))), active_process($(esc(env))).bev.id, $(esc(msg)))))
 end

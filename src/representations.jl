@@ -1,3 +1,5 @@
+export express
+
 import SymbolicUtils: Symbolic
 
 function express(state::Symbolic, repr::AbstractRepresentation, use::AbstractUse)

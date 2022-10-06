@@ -1,4 +1,4 @@
-include("firstgenrepeater_setup.jl")
+include("setup.jl")
 
 using GLMakie # For plotting
 

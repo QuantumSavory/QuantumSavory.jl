@@ -3,6 +3,8 @@ using NetworkLayout
 import Makie
 import Makie: Theme, Axis, @recipe
 
+export registernetplot, registernetplot_axis, resourceplot_axis
+
 @recipe(RegisterNetPlot, regnet) do scene
     Theme()
 end
@@ -104,7 +106,7 @@ struct RNHandler <: RegisterNetGraphHandler
     rn
 end
 
-function Makie.MakieLayout.process_interaction(handler::RNHandler, event::Makie.MouseEvent, axis)
+function Makie.process_interaction(handler::RNHandler, event::Makie.MouseEvent, axis)
     plot, index = Makie.mouse_selection(axis.scene)
     rn = handler.rn
     if plot===rn[:register_slots_scatterplot][]
@@ -142,8 +144,9 @@ showonplot(r::SimJulia.Resource) = !isfree(r)
 showonplot(b::Bool) = b
 
 """Draw the various resources and locks stored in the given meta-graph on a given Makie axis."""
-function resourceplot_axis(subfig, networkobs, edgeresources, vertexresources, registercoords; title="")
+function resourceplot_axis(subfig, network, edgeresources, vertexresources; registercoords=nothing, title="")
     axis = Makie.Axis(subfig[1,1], title=title)
+    networkobs = Makie.Observable(network)
     baseplot = Makie.scatter!(axis, # just to set coordinates
             registercoords[],
             color=:gray90,
@@ -158,7 +161,7 @@ function resourceplot_axis(subfig, networkobs, edgeresources, vertexresources, r
     end
     for (i,edgeres) in enumerate(edgeresources)
         Makie.linesegments!(axis,
-            Makie.lift(x->Makie.Point2{Float64}[registercoords[][n] for (;dst,src) in edges(x) for n in (dst,src) if showonplot(x[dst,src,edgeres])],
+            Makie.lift(x->Makie.Point2{Float64}[registercoords[][n] for (;dst,src) in edges(x) for n in (dst,src) if showonplot(x[(dst,src),edgeres])],
                 networkobs),
             color=Makie.Makie.Cycled(i),
             label="$(edgeres)"

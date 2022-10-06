@@ -3,6 +3,8 @@ import QuantumOptics
 import QuantumClifford
 import QuantumClifford: graphstate, stabilizerview
 
+export stab_to_ket
+
 function stab_to_ket(s::Stabilizer)
     r,c = size(s)
     @assert r==c

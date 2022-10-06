@@ -27,9 +27,10 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 @doset "noninstant"
 @doset "qo_qc_interop"
 @doset "express"
-@doset "examples"
 @doset "plotting_cairo"
 get(ENV,"QUANTUMSAVORY_GL_TEST","")=="true" && @doset "plotting_gl"
+
+@doset "examples"
 
 VERSION == v"1.8" && @doset "doctests"
 

@@ -1,5 +1,5 @@
 # Include the already implemented code for first gen repeaters
-include("firstgenrepeater_setup.jl")
+include("setup.jl")
 
 # We switch to tableau representation for our initial states.
 # Converting from tableaux to kets or density matrices is cheap and automated,

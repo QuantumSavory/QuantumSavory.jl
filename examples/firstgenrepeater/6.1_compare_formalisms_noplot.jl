@@ -1,6 +1,6 @@
 # Include the already implemented code for first gen repeaters in both
 # Schroedinger and Clifford formalisms
-include("firstgenrepeater_clifford_setup.jl")
+include("clifford_setup.jl")
 
 using Statistics
 using RecursiveArrayTools

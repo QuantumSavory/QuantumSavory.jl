@@ -140,8 +140,8 @@ end
 
 function swapcircuit(localslot1, localslot2, remslot1, remslot2; time=nothing)
     apply!((localslot1, localslot2), CNOT; time=time)
-    xmeas = project_traceout!(localslot1, X)
-    zmeas = project_traceout!(localslot2, Z)
+    xmeas = project_traceout!(localslot1, σˣ)
+    zmeas = project_traceout!(localslot2, σᶻ)
     if xmeas==2
         apply!(remslot1, Z)
     end
@@ -193,8 +193,8 @@ end
         gate = (CNOT, CPHASE)[round%2+1]
         apply!((rega[pair2qa],rega[pair1qa]),gate)
         apply!((regb[pair2qb],regb[pair1qb]),gate)
-        measa = project_traceout!(rega[pair2qa], X)
-        measb = project_traceout!(regb[pair2qb], X)
+        measa = project_traceout!(rega[pair2qa], σˣ)
+        measb = project_traceout!(regb[pair2qb], σˣ)
         if measa!=measb
             traceout!(rega[pair1qa])
             traceout!(regb[pair1qb])

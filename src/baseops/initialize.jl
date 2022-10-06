@@ -1,4 +1,6 @@
-export initialize!
+export initialize!, newstate
+
+function newstate end
 
 function initialize!(reg::Register,i::Int; time=nothing)
     s = newstate(reg.traits[i], reg.reprs[i])

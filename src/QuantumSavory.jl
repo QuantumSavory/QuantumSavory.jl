@@ -1,15 +1,6 @@
 module QuantumSavory
 
-export Qubit, Qumode,
-    QuantumOpticsRepr, QuantumMCRepr, CliffordRepr,
-    UseAsState, UseAsOperation, UseAsObservable,
-    StateRef, RegRef, Register, RegisterNet,
-    newstate, initialize!,
-    nsubsystems,
-    swap!,
-    registernetplot, registernetplot_axis, resourceplot_axis,
-    @simlog, isfree, nongreedymultilock, spinlock,
-    express, stab_to_ket
+export StateRef, RegRef, Register, RegisterNet
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
@@ -18,6 +9,10 @@ using IterTools
 using LinearAlgebra
 using Graphs
 #using Infiltrator
+
+export Qubit, Qumode,
+       QuantumOpticsRepr, QuantumMCRepr, CliffordRepr,
+       UseAsState, UseAsObservable, UseAsOperation
 
 abstract type QuantumStateTrait end
 abstract type AbstractRepresentation end
@@ -101,14 +96,27 @@ end
 Graphs.add_vertex!(net::RegisterNet, a, b) = add_vertex!(net.graph, a, b)
 Graphs.vertices(net::RegisterNet) = vertices(net.graph)
 Graphs.edges(net::RegisterNet) = edges(net.graph)
+Graphs.neighbors(net::RegisterNet, v) = neighbors(net.graph, v)
 Graphs.adjacency_matrix(net::RegisterNet) = adjacency_matrix(net.graph)
+Graphs.ne(net::RegisterNet) = ne(net.graph)
+Graphs.nv(net::RegisterNet) = nv(net.graph)
 
+# Get register
 Base.getindex(net::RegisterNet, i::Int) = net.registers[i]
+# Get register slot reference
 Base.getindex(net::RegisterNet, i::Int, j::Int) = net.registers[i][j]
+# Get and set vertex metadata
 Base.getindex(net::RegisterNet, i::Int, k::Symbol) = net.vertex_metadata[i][k]
 Base.setindex!(net::RegisterNet, val, i::Int, k::Symbol) = begin net.vertex_metadata[i][k] = val end
-Base.getindex(net::RegisterNet, i::Int, j::Int, k::Symbol) = net.edge_metadata[minmax(i,j)][k]
-Base.setindex!(net::RegisterNet, val, i::Int, j::Int, k::Symbol) = begin net.edge_metadata[minmax(i,j)][k] = val end
+# Get and set edge metadata
+Base.getindex(net::RegisterNet, ij::Tuple{Int,Int}, k::Symbol) = net.edge_metadata[minmax(ij...)][k]
+function Base.setindex!(net::RegisterNet, val, ij::Tuple{Int,Int}, k::Symbol)
+    edge = minmax(ij...)
+    haskey(net.edge_metadata,edge) || (net.edge_metadata[edge] = Dict{Symbol,Any}())
+    net.edge_metadata[edge][k] = val
+end
+Base.getindex(net::RegisterNet, ij::Graphs.SimpleEdge, k::Symbol) = net[(ij.src, ij.dst),k]
+Base.setindex!(net::RegisterNet, val, ij::Graphs.SimpleEdge, k::Symbol) = begin net[(ij.src, ij.dst),k] = val end
 
 ##
 
@@ -162,30 +170,6 @@ function Base.isassigned(r::Register,i::Int) # TODO erase
     r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent
 end
 Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
-
-nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
-nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
-nsubsystems(r::Register) = length(r.staterefs)
-nsubsystems(r::RegRef) = 1
-
-function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
-    if reg1===reg2 && i1==i2
-        return
-    end
-    state1, state2 = reg1.staterefs[i1], reg2.staterefs[i2]
-    stateind1, stateind2 = reg1.stateindices[i1], reg2.stateindices[i2]
-    reg1.staterefs[i1], reg2.staterefs[i2] = state2, state1
-    reg1.stateindices[i1], reg2.stateindices[i2] = stateind2, stateind1
-    if !isnothing(state1)
-        state1.registers[stateind1] = reg2
-        state1.registerindices[stateind1] = i2
-    end
-    if !isnothing(state2)
-        state2.registers[stateind2] = reg1
-        state2.registerindices[stateind2] = i1
-    end
-end
-swap!(r1::RegRef, r2::RegRef) = swap!(r1.reg, r2.reg, r1.idx, r2.idx)
 
 include("baseops/subsystemcompose.jl")
 include("baseops/initialize.jl")

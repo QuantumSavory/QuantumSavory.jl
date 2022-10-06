@@ -14,7 +14,10 @@ import QuantumOptics
 import QuantumClifford
 import QuantumClifford: MixedDestabilizer, Stabilizer, @S_str
 
-export ⊗,X,Y,Z,H,CNOT,CPHASE,X1,X2,Y1,Y2,Z1,Z2,
+export ⊗,
+       X,Y,Z,σˣ,σʸ,σᶻ,
+       H,CNOT,CPHASE,
+       X1,X2,Y1,Y2,Z1,Z2,X₁,X₂,Y₁,Y₂,Z₁,Z₂,
        SProjector,MixedState,IdentityOp,StabilizerState,@S_str
 
 function countmap(samples) # A simpler version of StatsBase.countmap, because StatsBase is slow to import
@@ -411,12 +414,12 @@ end
 Base.print(io::IO, x::PositionEigenState) = print(io, "|δₓ($(x.x))⟩")
 
 const qubit_basis = SpinBasis(1//2)
-const X1 = X₁ = XBasisState(1, qubit_basis)
-const X2 = X₂ = XBasisState(2, qubit_basis)
-const Y1 = Y₁ = YBasisState(1, qubit_basis)
-const Y2 = Y₂ = YBasisState(2, qubit_basis)
-const Z1 = Z₁ = ZBasisState(1, qubit_basis)
-const Z2 = Z₂ = ZBasisState(2, qubit_basis)
+const X1 = const X₁ = XBasisState(1, qubit_basis)
+const X2 = const X₂ = XBasisState(2, qubit_basis)
+const Y1 = const Y₁ = YBasisState(1, qubit_basis)
+const Y2 = const Y₂ = YBasisState(2, qubit_basis)
+const Z1 = const Z₁ = ZBasisState(1, qubit_basis)
+const Z2 = const Z₂ = ZBasisState(2, qubit_basis)
 
 ##
 
@@ -450,9 +453,9 @@ Base.print(io::IO, ::CNOTGate) = print(io, "ĈNOT")
 @withmetadata struct CPHASEGate <: AbstractTwoQubitGate end
 Base.print(io::IO, ::CPHASEGate) = print(io, "ĈPHASE")
 
-const X = XGate()
-const Y = YGate()
-const Z = ZGate()
+const X = const σˣ = XGate()
+const Y = const σʸ = YGate()
+const Z = const σᶻ = ZGate()
 const H = HGate()
 const CNOT = CNOTGate()
 const CPHASE = CPHASEGate()
@@ -485,8 +488,8 @@ Base.print(io::IO, x::MixedState) = print(io, "𝕄")
 @withmetadata struct IdentityOp <: Symbolic{Operator}
     basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
 end
-IdentityOp(x::Symbolic{Ket}) = MixedState(basis(x))
-IdentityOp(x::Symbolic{Operator}) = MixedState(basis(x))
+IdentityOp(x::Symbolic{Ket}) = IdentityOp(basis(x))
+IdentityOp(x::Symbolic{Operator}) = IdentityOp(basis(x))
 istree(::IdentityOp) = false
 basis(x::IdentityOp) = x.basis
 Base.print(io::IO, x::IdentityOp) = print(io, "𝕀")

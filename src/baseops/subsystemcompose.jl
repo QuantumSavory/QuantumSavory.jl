@@ -1,4 +1,28 @@
-export subsystemcompose
+export subsystemcompose, nsubsystems
+
+nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
+nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
+nsubsystems(r::Register) = length(r.staterefs)
+nsubsystems(r::RegRef) = 1
+
+function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
+    if reg1===reg2 && i1==i2
+        return
+    end
+    state1, state2 = reg1.staterefs[i1], reg2.staterefs[i2]
+    stateind1, stateind2 = reg1.stateindices[i1], reg2.stateindices[i2]
+    reg1.staterefs[i1], reg2.staterefs[i2] = state2, state1
+    reg1.stateindices[i1], reg2.stateindices[i2] = stateind2, stateind1
+    if !isnothing(state1)
+        state1.registers[stateind1] = reg2
+        state1.registerindices[stateind1] = i2
+    end
+    if !isnothing(state2)
+        state2.registers[stateind2] = reg1
+        state2.registerindices[stateind2] = i1
+    end
+end
+swap!(r1::RegRef, r2::RegRef) = swap!(r1.reg, r2.reg, r1.idx, r2.idx)
 
 #subsystemcompose(s...) = reduce(subsystemcompose, s)
 

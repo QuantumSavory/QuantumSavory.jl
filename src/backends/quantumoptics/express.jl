@@ -31,6 +31,7 @@ express_nolookup(s::YBasisState, ::QuantumOpticsRepr) = (_i₊,_i₋)[s.idx]
 express_nolookup(s::ZBasisState, ::QuantumOpticsRepr) = (_l,_h)[s.idx]
 
 express_nolookup(x::MixedState, ::QuantumOpticsRepr) = identityoperator(basis(x))/length(basis(x)) # TODO there is probably a more efficient way to represent it
+express_nolookup(x::IdentityOp, ::QuantumOpticsRepr) = identityoperator(basis(x)) # TODO there is probably a more efficient way to represent it
 
 function express_nolookup(s::Symbolic{T}, repr::QuantumOpticsRepr) where {T<:Union{Ket,Bra,Operator}}
     if istree(s)
