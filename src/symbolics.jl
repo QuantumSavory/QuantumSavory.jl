@@ -112,6 +112,31 @@ Base.show(io::IO, ::MIME"text/latex",  x::Symbolic{Operator}) = print(io, x)
 
 ##
 
+const SymbolicKetOrOperator = Symbolic{<:Union{Ket,Operator}}
+Base.:(-)(x::SymbolicKetOrOperator) = (-1)*x
+Base.:(-)(x::SymbolicKetOrOperator,y::SymbolicKetOrOperator) = x + (-y)
+
+function Base.isequal(x::X,y::Y) where {X<:SymbolicKetOrOperator, Y<:SymbolicKetOrOperator}
+    if X==Y
+        if istree(x)
+            if operation(x)==operation(y)
+                ax,ay = arguments(x),arguments(y)
+                (length(ax) == length(ay)) && all(zip(ax,ay)) do xy isequal(xy...) end
+            else
+                false
+            end
+        else
+            propsequal(x,y)
+        end
+    else
+        false
+    end
+end
+
+# TODO check that this does not cause incredibly bad runtime performance
+# use a macro to provide specializations if that is indeed the case
+propsequal(x,y) = all(n->getproperty(x,n)==getproperty(y,n), propertynames(x))
+
 struct SKet <: Symbolic{Ket}
     name::Symbol
     basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
@@ -172,7 +197,7 @@ basis(x::SScaledOperator) = basis(x.operator)
 
 @withmetadata struct SAddKet <: Symbolic{Ket}
     dict
-    SAddKet(d) = length(d)==1 ? SScaledKet(first(d)...) : new(d)
+    SAddKet(d) = length(d)==1 ? SScaledKet(reverse(first(d))...) : new(d)
 end
 istree(::SAddKet) = true
 arguments(x::SAddKet) = [SScaledKet(v,k) for (k,v) in pairs(x.dict)]
@@ -183,7 +208,7 @@ basis(x::SAddKet) = basis(first(x.dict).first)
 
 @withmetadata struct SAddOperator <: Symbolic{Operator}
     dict
-    SAddOperator(d) = length(d)==1 ? SScaledOperator(first(d)...) : new(d)
+    SAddOperator(d) = length(d)==1 ? SScaledOperator(reverse(first(d))...) : new(d)
 end
 istree(::SAddOperator) = true
 arguments(x::SAddOperator) = [SScaledOperator(v,k) for (k,v) in pairs(x.dict)]
