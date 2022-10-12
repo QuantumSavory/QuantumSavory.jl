@@ -1,3 +1,4 @@
+using Revise # for interactive work on docs
 push!(LOAD_PATH,"../src/")
 
 using Documenter
@@ -27,6 +28,7 @@ function main()
     #"Manual" => "manual.md",
     "References" => [
         "Properties and Backgrounds" => "propbackgrounds.md",
+        "Symbolic Expressions" => "symbolics.md",
         "Visualizations" => "visualizations.md",
         "API" => "API.md",
         "Dev Documentation" => [

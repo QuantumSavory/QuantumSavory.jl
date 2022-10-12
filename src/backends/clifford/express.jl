@@ -8,6 +8,14 @@ const _qc_i₋ = MixedDestabilizer(S"-Y")
 express_nolookup(s::XBasisState, ::CliffordRepr) = (_qc_s₊,_qc_s₋)[s.idx]
 express_nolookup(s::YBasisState, ::CliffordRepr) = (_qc_i₊,_qc_i₋)[s.idx]
 express_nolookup(s::ZBasisState, ::CliffordRepr) = (_qc_l,_qc_h)[s.idx]
+function express_nolookup(s::Symbolic{T}, repr::CliffordRepr) where {T<:Union{Ket,Operator}}
+    if istree(s) && operation(s)==⊗
+        #operation(s)(express.(arguments(s), (repr,))...) # TODO this does not work because QuantumClifford.⊗ is different from ⊗
+        QuantumClifford.tensor(express.(arguments(s), (repr,))...)
+    else
+        error("Encountered an object $(s) of type $(typeof(s)) that can not be converted to $(repr) representation") # TODO make a nice error type
+    end
+end
 
 express_nolookup(::CPHASEGate,       ::CliffordRepr, ::UseAsOperation) = QuantumClifford.sCPHASE
 express_nolookup(::CNOTGate,         ::CliffordRepr, ::UseAsOperation) = QuantumClifford.sCNOT
@@ -59,7 +67,7 @@ function express_from_cache(x::QCRandomSampler)
     express_from_cache(x.operators[i])
 end
 function express_nolookup(x::MixedState, ::CliffordRepr)
-    nqubits = length(x.basis.bases)
+    nqubits = isa(x.basis, CompositeBasis) ? length(x.basis.bases) : 1
     # TODO assert all are qubits
     one(MixedDestabilizer,0,nqubits)
 end

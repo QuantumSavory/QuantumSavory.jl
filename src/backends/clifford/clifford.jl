@@ -1,4 +1,5 @@
 import QuantumClifford
+import QuantumClifford: MixedDestabilizer
 
 subsystemcompose(states::QuantumClifford.MixedDestabilizer...) = QuantumClifford.tensor(states...)
 

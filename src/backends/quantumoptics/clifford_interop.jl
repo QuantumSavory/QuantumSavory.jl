@@ -1,7 +1,7 @@
 import QuantumOpticsBase
 import QuantumOptics
 import QuantumClifford
-import QuantumClifford: graphstate, stabilizerview
+import QuantumClifford: graphstate, stabilizerview, Stabilizer
 
 export stab_to_ket
 

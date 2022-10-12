@@ -1,3 +1,7 @@
+module QSymbolics
+
+using ..QuantumSavory: AbstractRepresentation, AbstractUse
+
 using Symbolics
 import Symbolics: simplify
 using SymbolicUtils
@@ -89,7 +93,7 @@ function withmetadata(strct)
     # add metadata slot
     push!(struct_args, :(metadata::Metadata))
     esc(quote
-        $strct
+        Base.@__doc__ $strct
         metadata(x::$struct_name)=x.metadata
     end)
 end
@@ -101,6 +105,10 @@ function newwithmetadata(expr::Expr)
     end
 end
 newwithmetadata(x) = x
+
+# TODO use Latexify for these
+Base.show(io::IO, ::MIME"text/latex", x::Symbolic{Ket}) = print(io, x)
+Base.show(io::IO, ::MIME"text/latex",  x::Symbolic{Operator}) = print(io, x)
 
 ##
 
@@ -170,7 +178,7 @@ istree(::SAddKet) = true
 arguments(x::SAddKet) = [SScaledKet(v,k) for (k,v) in pairs(x.dict)]
 operation(x::SAddKet) = +
 Base.:(+)(xs::Symbolic{Ket}...) = SAddKet(countmap_flatten(xs, SScaledKet))
-Base.print(io::IO, x::SAddKet) = print(io, join(map(string, arguments(x)),"+"))
+Base.print(io::IO, x::SAddKet) = print(io, "("*join(map(string, arguments(x)),"+")*")")
 basis(x::SAddKet) = basis(first(x.dict).first)
 
 @withmetadata struct SAddOperator <: Symbolic{Operator}
@@ -181,7 +189,7 @@ istree(::SAddOperator) = true
 arguments(x::SAddOperator) = [SScaledOperator(v,k) for (k,v) in pairs(x.dict)]
 operation(x::SAddOperator) = +
 Base.:(+)(xs::Symbolic{Operator}...) = SAddOperator(countmap_flatten(xs, SScaledOperator))
-Base.print(io::IO, x::SAddOperator) = print(io, join(map(string, arguments(x)),"+"))
+Base.print(io::IO, x::SAddOperator) = print(io, "("*join(map(string, arguments(x)),"+")*")")
 basis(x::SAddOperator) = basis(first(x.dict).first)
 
 @withmetadata struct STensorKet <: Symbolic{Ket}
@@ -348,11 +356,17 @@ end
 Base.print(io::IO, x::PositionEigenState) = print(io, "|δₓ($(x.x))⟩")
 
 const qubit_basis = SpinBasis(1//2)
+"""Basis state of σˣ"""
 const X1 = const X₁ = XBasisState(1, qubit_basis)
+"""Basis state of σˣ"""
 const X2 = const X₂ = XBasisState(2, qubit_basis)
+"""Basis state of σʸ"""
 const Y1 = const Y₁ = YBasisState(1, qubit_basis)
+"""Basis state of σʸ"""
 const Y2 = const Y₂ = YBasisState(2, qubit_basis)
+"""Basis state of σᶻ"""
 const Z1 = const Z₁ = ZBasisState(1, qubit_basis)
+"""Basis state of σᶻ"""
 const Z2 = const Z₂ = ZBasisState(2, qubit_basis)
 
 ##
@@ -387,15 +401,33 @@ Base.print(io::IO, ::CNOTGate) = print(io, "ĈNOT")
 @withmetadata struct CPHASEGate <: AbstractTwoQubitGate end
 Base.print(io::IO, ::CPHASEGate) = print(io, "ĈPHASE")
 
+"""Pauli X operator, also available as the constant `σˣ`"""
 const X = const σˣ = XGate()
+"""Pauli Y operator, also available as the constant `σʸ`"""
 const Y = const σʸ = YGate()
+"""Pauli Z operator, also available as the constant `σᶻ`"""
 const Z = const σᶻ = ZGate()
+"""Hadamard gate"""
 const H = HGate()
+"""CNOT gate"""
 const CNOT = CNOTGate()
+"""CPHASE gate"""
 const CPHASE = CPHASEGate()
 
 ##
 
+"""Projector for a given ket
+
+```jldoctest
+julia> SProjector(X1⊗X2)
+𝐏[|X₁⟩|X₂⟩]
+
+julia> express(SProjector(X2))
+Operator(dim=2x2)
+  basis: Spin(1/2)
+  0.5+0.0im  -0.5-0.0im
+ -0.5+0.0im   0.5+0.0im
+```"""
 @withmetadata struct SProjector <: Symbolic{Operator}
     ket::Symbolic{Ket} # TODO parameterize
 end
@@ -410,6 +442,28 @@ function Base.print(io::IO, x::SProjector)
     print(io,"]")
 end
 
+"""Completely depolarized state
+
+```jldoctest
+julia> MixedState(X1⊗X2)
+𝕄
+
+julia> express(MixedState(X1⊗X2))
+Operator(dim=4x4)
+  basis: [Spin(1/2) ⊗ Spin(1/2)]sparse([1, 2, 3, 4], [1, 2, 3, 4], ComplexF64[0.25 + 0.0im, 0.25 + 0.0im, 0.25 + 0.0im, 0.25 + 0.0im], 4, 4)
+
+  express(MixedState(X1⊗X2), CliffordRepr())
+  Rank 0 stabilizer
+
+  ━━━━
+  + X_
+  + _X
+  ━━━━
+
+  ━━━━
+  + Z_
+  + _Z
+```"""
 @withmetadata struct MixedState <: Symbolic{Operator}
     basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
 end
@@ -419,6 +473,16 @@ istree(::MixedState) = false
 basis(x::MixedState) = x.basis
 Base.print(io::IO, x::MixedState) = print(io, "𝕄")
 
+"""The identity operator for a given basis
+
+```judoctest
+julia> IdentityOp(X1⊗X2)
+𝕀
+
+julia> express(IdentityOp(Z2))
+Operator(dim=2x2)
+  basis: Spin(1/2)sparse([1, 2], [1, 2], ComplexF64[1.0 + 0.0im, 1.0 + 0.0im], 2, 2)
+```"""
 @withmetadata struct IdentityOp <: Symbolic{Operator}
     basis::Basis # From QuantumOpticsBase # TODO make QuantumInterface
 end
@@ -428,6 +492,18 @@ istree(::IdentityOp) = false
 basis(x::IdentityOp) = x.basis
 Base.print(io::IO, x::IdentityOp) = print(io, "𝕀")
 
+"""State defined by a stabilizer tableau
+
+```jldoctest
+julia> StabilizerState(S"XX ZZ")
+𝒮₂
+
+julia> express(StabilizerState(S"-X"))
+Ket(dim=2)
+  basis: Spin(1/2)
+  0.7071067811865475 + 0.0im
+ -0.7071067811865475 + 0.0im
+```"""
 @withmetadata struct StabilizerState <: Symbolic{Ket}
     stabilizer::MixedDestabilizer
 end
@@ -439,3 +515,5 @@ end
 istree(::StabilizerState) = false
 basis(x::StabilizerState) = SpinBasis(1//2)^QuantumClifford.nqubits(x.stabilizer)
 Base.print(io::IO, x::StabilizerState) = print(io, "𝒮$(num_to_sub(QuantumClifford.nqubits(x.stabilizer)))")
+
+end

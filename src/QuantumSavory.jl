@@ -1,18 +1,18 @@
 module QuantumSavory
 
-export StateRef, RegRef, Register, RegisterNet
-
-#TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
-# basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
+using Reexport
 
 using IterTools
 using LinearAlgebra
 using Graphs
-#using Infiltrator
 
+export StateRef, RegRef, Register, RegisterNet
 export Qubit, Qumode,
        QuantumOpticsRepr, QuantumMCRepr, CliffordRepr,
        UseAsState, UseAsObservable, UseAsOperation
+#TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
+# basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
+
 
 abstract type QuantumStateTrait end
 abstract type AbstractRepresentation end
@@ -36,6 +36,15 @@ struct UseAsOperation <: AbstractUse end
 struct UseAsObservable <: AbstractUse end
 
 include("symbolics.jl")
+@reexport using .QSymbolics
+# also imported, because QuantumSavory code outside of QSymbolics needs them, e.g. for `express`
+using .QSymbolics:
+    basis, tensor, ⊗, Operator, Ket, Basis, SpinBasis, # from QuantumOpticsBase
+    metadata, istree, operation, arguments, Symbolic, # from Symbolics
+    HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
+    XBasisState, YBasisState, ZBasisState,
+    STensorOperator, SScaledOperator, SAddOperator
+
 
 # TODO better constructors
 # TODO am I overusing Ref
