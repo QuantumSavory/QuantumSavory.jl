@@ -35,7 +35,7 @@ struct UseAsState <: AbstractUse end
 struct UseAsOperation <: AbstractUse end
 struct UseAsObservable <: AbstractUse end
 
-include("symbolics.jl")
+include("symbolics/QSymbolics.jl")
 @reexport using .QSymbolics
 # also imported, because QuantumSavory code outside of QSymbolics needs them, e.g. for `express`
 using .QSymbolics:
