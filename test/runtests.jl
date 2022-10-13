@@ -40,6 +40,9 @@ get(ENV,"QUANTUMSAVORY_JET_TEST","")=="true" && @doset "jet"
 using Aqua
 using QuantumClifford, QuantumOptics, Graphs
 doset("aqua") && begin
-    Aqua.test_all(QuantumSavory, ambiguities=false)
+    Aqua.test_all(QuantumSavory,
+                  ambiguities=false,
+                  unbound_args=false, # TODO due to Aqua bug https://github.com/JuliaTesting/Aqua.jl/issues/87
+                  )
     #Aqua.test_ambiguities([QuantumSavory,Core]) # otherwise Base causes false positives
 end
