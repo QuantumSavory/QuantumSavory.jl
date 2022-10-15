@@ -1,5 +1,5 @@
 import QuantumOpticsBase
-import QuantumOpticsBase: GenericBasis, CompositeBasis, StateVector, basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, projector, identityoperator, embed, dm, expect, ptrace, spre, spost
+import QuantumOpticsBase: GenericBasis, CompositeBasis, StateVector, AbstractSuperOperator, basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, projector, identityoperator, embed, dm, expect, ptrace, spre, spost
 import QuantumOptics
 import QuantumOptics: timeevolution
 
