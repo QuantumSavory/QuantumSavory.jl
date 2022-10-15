@@ -39,7 +39,7 @@ include("symbolics/QSymbolics.jl")
 @reexport using .QSymbolics
 # also imported, because QuantumSavory code outside of QSymbolics needs them, e.g. for `express`
 using .QSymbolics:
-    basis, tensor, ⊗, Operator, Ket, Basis, SpinBasis, # from QuantumOpticsBase
+    basis, tensor, ⊗, Operator, Ket, SuperOperator, Basis, SpinBasis, # from QuantumOpticsBase
     metadata, istree, operation, arguments, Symbolic, # from Symbolics
     HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
     XBasisState, YBasisState, ZBasisState,

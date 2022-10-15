@@ -34,3 +34,46 @@ function _project_and_drop(state::Operator, project_on, basis_index)
     result = emproj*state*emproj'
     return _drop_singular_bases(result)
 end
+
+using QuantumOpticsBase: LazyTensor, AbstractSuperOperator
+
+abstract type AbstractLazySuperOperator{B1,B2} <: AbstractSuperOperator{B1,B2} end
+
+struct LazyPrePost{B,DT} <: AbstractLazySuperOperator{Tuple{B,B},Tuple{B,B}}
+    preop::Union{Operator{B,B,DT},Nothing}
+    postop::Union{Operator{B,B,DT},Nothing}
+    function LazyPrePost(preop::T,postop::T) where {B,DT,T<:Union{Operator{B,B,DT},Nothing}}
+        new{B,DT}(preop,postop)
+    end
+end
+
+struct LazySuperSum{B,F,T} <: AbstractLazySuperOperator{Tuple{B,B},Tuple{B,B}}
+    basis::B
+    factors::F
+    sops::T
+end
+
+QuantumOpticsBase.basis(sop::LazyPrePost) = basis(sop.preop)
+QuantumOpticsBase.basis(sop::LazySuperSum) = sop.basis
+QuantumOpticsBase.embed(bl,br,index,op::LazyPrePost) = LazyPrePost(embed(bl,br,index,op.preop),embed(bl,br,index,op.postop))
+function Base.:(*)(sop::LazyPrePost, op::Operator)
+    # TODO do not create the spre and spost objects, do it without intermediaries, do it in place with buffers
+    r = op
+    if !isnothing(sop.preop)
+        r = spre(sop.preop)*r
+    end
+    if !isnothing(sop.postop)
+        r = spost(sop.postop)*r
+    end
+    r
+end
+Base.:(*)(l::LazyPrePost, r::LazyPrePost) = LazyPrePost(l.preop*r.preop, r.postop*l.postop)
+Base.:(+)(ops::LazyPrePost...) = LazySuperSum(basis(first(ops)),fill(1,length(ops)),ops)
+QuantumOpticsBase.embed(bl,br,index,op::LazySuperSum) = LazySuperSum(bl, op.factors, [embed(bl,br,index,o) for o in op.sops])
+function Base.:(*)(ssop::LazySuperSum, op::Operator)
+    res = zero(op)
+    for (f,sop) in zip(ssop.factors,ssop.sops)
+        res += f*(sop*op)
+    end
+    res
+end

@@ -49,3 +49,8 @@ function apply!(state, indices, operation::Symbolic{Operator})
     repr = default_repr(state)
     apply!(state, indices, express(operation, repr, UseAsOperation()))
 end
+
+function apply!(state, indices, operation::Symbolic{SuperOperator})
+    repr = default_repr(state)
+    apply!(state, indices, express(operation, repr, UseAsOperation()))
+end

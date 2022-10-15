@@ -18,7 +18,8 @@ import QuantumOptics
 import QuantumClifford
 import QuantumClifford: MixedDestabilizer, Stabilizer, @S_str
 
-export ⊗,
+export SymQObj,QObj,
+       ⊗,
        X,Y,Z,σˣ,σʸ,σᶻ,
        H,CNOT,CPHASE,
        X1,X2,Y1,Y2,Z1,Z2,X₁,X₂,Y₁,Y₂,Z₁,Z₂,
@@ -153,6 +154,7 @@ propsequal(x,y) = all(n->getproperty(x,n)==getproperty(y,n), propertynames(x))
 include("basic_ops_homogeneous.jl")
 include("basic_ops_inhomogeneous.jl")
 include("predefined.jl")
+include("predefined_CPTP.jl")
 
 ##
 # Symbolic and simplification rules

@@ -33,7 +33,7 @@ express_nolookup(s::ZBasisState, ::QuantumOpticsRepr) = (_l,_h)[s.idx]
 express_nolookup(x::MixedState, ::QuantumOpticsRepr) = identityoperator(basis(x))/length(basis(x)) # TODO there is probably a more efficient way to represent it
 express_nolookup(x::IdentityOp, ::QuantumOpticsRepr) = identityoperator(basis(x)) # TODO there is probably a more efficient way to represent it
 
-function express_nolookup(s::Symbolic{T}, repr::QuantumOpticsRepr) where {T<:Union{Ket,Operator}}
+function express_nolookup(s::SymQObj, repr::QuantumOpticsRepr)
     if istree(s)
         operation(s)(express.(arguments(s), (repr,))...)
     else
@@ -54,3 +54,6 @@ end
 function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Vector{<:Symbolic{Ket}})
     project_traceout!(state::Operator,stateindex,express.(basis,(QOR,)))
 end
+
+express_nolookup(p::PauliNoiseCPTP, ::QuantumOpticsRepr) = LazySuperSum(SpinBasis(1//2), [1-p.px-p.py-p.pz,p.px,p.py,p.pz],
+                                                               [LazyPrePost(_id,_id),LazyPrePost(_x,_x),LazyPrePost(_y,_y),LazyPrePost(_z,_z)])
