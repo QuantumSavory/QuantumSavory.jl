@@ -1,6 +1,7 @@
 include("setup.jl")
 
 using GLMakie # For plotting
+GLMakie.activate!()
 
 ##
 # Demo the entangler and swapper working together

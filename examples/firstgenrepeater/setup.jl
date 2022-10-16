@@ -5,8 +5,11 @@ using Graphs
 using ResumableFunctions
 using SimJulia
 
-# The workhorse for the simulation
+# Useful for interactive work
+# Enables automatic re-compilation of modified codes
 using Revise
+
+# The workhorse for the simulation
 using QuantumSavory
 
 ##

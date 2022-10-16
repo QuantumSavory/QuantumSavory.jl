@@ -22,7 +22,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         registercoords = rn[:registercoords][]
     else
         adj_matrix = adjacency_matrix(networkobs[].graph)
-        registercoords = spring(adj_matrix, iterations=40, C=5*maximum(nsubsystems.(registers)))
+        registercoords = spring(adj_matrix, iterations=40, C=2*maximum(nsubsystems.(registers)))
     end
     rn[:registercoords] = registercoords # TODO make sure it is an observable
     function update_plot(network)
@@ -130,7 +130,7 @@ function resourceplot_axis(subfig, network, edgeresources, vertexresources; regi
     if isnothing(registercoords)
         # copied from registernetplot
         adj_matrix = adjacency_matrix(networkobs[].graph)
-        registercoords = spring(adj_matrix, iterations=40, C=5*maximum(nsubsystems.(network.registers)))
+        registercoords = spring(adj_matrix, iterations=40, C=2*maximum(nsubsystems.(network.registers)))
     else
         registercoords = registercoords[]
     end

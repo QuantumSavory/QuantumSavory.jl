@@ -1,6 +1,7 @@
 include("setup.jl")
 
 using GLMakie # For plotting
+GLMakie.activate!()
 
 ##
 # Demo all three components, Entangler, Swapper, and Purifer working together

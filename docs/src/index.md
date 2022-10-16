@@ -14,7 +14,9 @@ A simulation of a quantum repeater:
 <video src="howto/firstgenrepeater/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
 ```
 
-A limited public demo of a fraction of some internal research code. Full code to be release shortly.
+!!! warning
+
+    This is a limited public demo of a fraction of some internal research code. Full code is slowly being documented and released.
 
 !!! danger
     

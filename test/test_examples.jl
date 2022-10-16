@@ -9,3 +9,6 @@ include("../examples/firstgenrepeater/6_compare_formalisms.jl")
 include("../examples/firstgenrepeater/6.1_compare_formalisms_noplot.jl")
 
 include("../examples/colorcentermodularcluster/1_time_to_connected.jl")
+if get(ENV,"QUANTUMSAVORY_GL_TEST","")=="true"
+    include("../examples/colorcentermodularcluster/2_real_time_visualization.jl")
+end

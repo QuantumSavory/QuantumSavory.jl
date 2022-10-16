@@ -1,6 +1,7 @@
 include("setup.jl")
 
 using GLMakie # For plotting
+GLMakie.activate!()
 
 ##
 # Demo visualizations of the performance of the network

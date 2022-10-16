@@ -24,6 +24,7 @@ function main()
     "HowTos" => [
         "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md"
         "1st-gen Repeater (Clifford formalism)" => "howto/firstgenrepeater/firstgenrepeater-clifford.md"
+        "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md"
     ],
     #"Manual" => "manual.md",
     "References" => [

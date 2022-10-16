@@ -1,18 +1,25 @@
+# For convenient graph data structures
 using Graphs
 
+# For discrete event simulation
 using ResumableFunctions
 using SimJulia
 
+# For sampling from probability distributions
 using Distributions
 
+# Useful for interactive work
+# Enables automatic re-compilation of modified codes
 using Revise
+
+# The workhorse for the simulation
 using QuantumSavory
 
 ##
 
-#"""Start timeouts on two nodes that were just entangled.
-#After the timeout, assume they are bad, delete them,
-#and start entangling them again.""" # TODO this should be a separate per-node process
+# """Start timeouts on two nodes that were just entangled.
+# After the timeout, assume they are bad, delete them,
+# and start entangling them again.""" # TODO this should be a separate per-node process
 @resumable function bk_mem(env::Environment, net, node, conf)
     # check we have not set a decay timer on this node and set one
     decay_queue = net[node, :decay_queue]
