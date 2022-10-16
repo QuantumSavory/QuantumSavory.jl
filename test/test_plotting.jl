@@ -14,16 +14,16 @@ end
 network = RegisterNet(registers)
 
 fig = Figure(resolution=(400,400))
-_, _, plt = registernetplot_axis(fig[1,1],network)
+_, _, plt, netobs = registernetplot_axis(fig[1,1],network)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 initialize!(network[1,1])
 initialize!(network[2,1])
-notify(plt[1])
+notify(netobs)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 apply!([network[1,1],network[2,1]], CNOT)
-notify(plt[1])
+notify(netobs)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 display(fig)
@@ -43,10 +43,17 @@ for e in edges(network)
     network[e,:bool2] = rand(Bool)
 end
 fig2 = Figure(resolution=(400,400))
-resourceplot_axis(fig2[1,1],network,[:bool,:bool2],[:bool,:resource]; registercoords=plt[:registercoords])
+_,_,_,netobs2 = resourceplot_axis(fig2[1,1],network,[:bool,:bool2],[:bool,:resource]; registercoords=plt[:registercoords])
 display(fig2)
 fig3 = Figure(resolution=(400,400))
-resourceplot_axis(fig3[1,1],network,[:bool,:bool2],[:bool,:resource])
+_,_,_,netobs3 = resourceplot_axis(fig3[1,1],network,[:bool,:bool2],[:bool,:resource])
 display(fig3)
 
 ##
+
+for e in edges(network)
+    network[e,:bool] = false
+    network[e,:bool2] = true
+end
+notify(netobs3)
+display(fig3)

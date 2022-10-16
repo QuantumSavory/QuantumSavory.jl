@@ -17,39 +17,6 @@ using QuantumSavory
 
 ##
 
-# """Start timeouts on two nodes that were just entangled.
-# After the timeout, assume they are bad, delete them,
-# and start entangling them again.""" # TODO this should be a separate per-node process
-@resumable function bk_mem(env::Environment, net, node, conf)
-    # check we have not set a decay timer on this node and set one
-    decay_queue = net[node, :decay_queue]
-    nspin_queue = net[node, :nspin_queue]
-    !isfree(decay_queue) && return
-    @yield request(decay_queue)
-    @yield timeout(env, conf.BK_mem_wait_time)
-    # reset the nuclear spin by measuring it
-    @yield request(nspin_queue) # TODO you need to request the electronic spin too
-    reg = net[node]
-    @yield timeout(env, conf.BK_measurement_duration)
-    flip = project_traceout!(reg, 2, [States.Z₀, States.Z₁]; time=now(env)) # FIXXX
-    if rand()>conf.BK_measurement_fidelity # TODO this should be prettier, presumably implemented declaratively inside of project_traceout!
-        flip = flip%2+1
-    end
-    # correct for logical flips
-    for neigh in neighbors(net, node)
-        if flip==2 && net[(node, neigh), :link_register]
-            apply!(net[neigh,2], Z; time=now(env)) # TODO have a pauli frame tracker
-        end
-        net[(node, neigh), :link_register] = false
-    end
-    release(nspin_queue)
-    release(decay_queue)
-    # start entangling procedure again
-    for neigh in neighbors(net, node)
-        @process barrettkok(env, net, node, neigh, conf)
-    end
-end
-
 #"""Set the state of the electronic spins to entangled."""
 function bk_el_init(env::Environment, net, nodea, nodeb, conf)
     rega = net[nodea]
@@ -132,10 +99,6 @@ end
     release.(spin_resources)
     release(link_resource)
     #@simlog env "success on $(nodea) $(nodeb) after $(attempts) attempt(s) $(duration)"
-    if conf.BK_mem_resets
-        @process bk_mem(env, graph, nodea, conf)
-        @process bk_mem(env, graph, nodeb, conf)
-    end
 end
 
 ##
@@ -199,8 +162,6 @@ end
 # frequency is measured in kHz
 
 root_conf = (;
-    BK_mem_resets = false, # whether to reset memories after waiting too long
-
     T1E = 1.,    # 0.1ms if not well cooled, 10ms if cooled, neglected | Transform-Limited Photons From a Coherent Tin-Vacancy Spin in Diamond (Fig. 4c) | 10.1103/PhysRevLett.124.023602
     T2E = 0.01,  # 1μs without dyn decoup, 28μs with | Quantum control of the tin-vacancy spin qubit in diamond (Sec IV and V) | 10.1103/PhysRevX.11.041041
     T1N = 100e3, # generally very large, neglected, example in NV⁻ | A Ten-Qubit Solid-State Spin Register with Quantum Memory up to One Minute | 10.1103/PhysRevX.9.031045

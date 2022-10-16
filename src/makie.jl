@@ -103,7 +103,11 @@ end
 
 ##
 
-"""Draw the given registers on a given Makie axis."""
+"""Draw the given registers on a given Makie axis.
+
+It returns a tuple of (subfigure, axis, plot, observable).
+The observable can be used to issue a `notify` call that updates
+the plot with the current state of the network."""
 function registernetplot_axis(subfig, registersobservable; registercoords=nothing)
     ax = Makie.Axis(subfig)
     p = registernetplot!(ax, registersobservable,
@@ -115,7 +119,7 @@ function registernetplot_axis(subfig, registersobservable; registercoords=nothin
     Makie.deregister_interaction!(ax, :rectanglezoom)
     rnh = RNHandler(p)
     Makie.register_interaction!(ax, :registernet, rnh)
-    subfig, ax, p
+    subfig, ax, p, p[1]
 end
 
 ##
@@ -123,7 +127,11 @@ end
 showonplot(r::SimJulia.Resource) = !isfree(r)
 showonplot(b::Bool) = b
 
-"""Draw the various resources and locks stored in the given meta-graph on a given Makie axis."""
+"""Draw the various resources and locks stored in the given meta-graph on a given Makie axis.
+
+It returns a tuple of (subfigure, axis, plot, observable).
+The observable can be used to issue a `notify` call that updates
+the plot with the current state of the network."""
 function resourceplot_axis(subfig, network, edgeresources, vertexresources; registercoords=nothing, title="")
     axis = Makie.Axis(subfig[1,1], title=title)
     networkobs = Makie.Observable(network)
@@ -159,5 +167,5 @@ function resourceplot_axis(subfig, network, edgeresources, vertexresources; regi
     Makie.hidedecorations!(axis)
     Makie.hidespines!(axis)
     Makie.autolimits!(axis)
-    subfig, axis, baseplot
+    subfig, axis, baseplot, networkobs
 end

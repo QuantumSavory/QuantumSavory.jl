@@ -8,6 +8,10 @@ end
 
 We provide many visualization tools build on top of the [Makie.jl](https://docs.makie.org/stable/) framework for interactive visualizations.
 
+The plotting functions generally return a tuple of (subfigure, axis, plot, observable).
+The observable can be used to issue a `notify` call that updates the plot with the current state of the network without replotting from scratch.
+This is particularly useful for live simulation visualizations.
+
 ## The quantum registers in the network
 
 The [`registernetplot_axis`](@ref) function can be used to draw a given set of registers, together with the quantum states they contain. It also provides interactive tools for inspecting the content of the registers (by hovering or clicking on the corresponding register slot). Here we give an example where we define a network and then plot it:
@@ -33,7 +37,7 @@ apply!((network[2,3],network[3,1]), CNOT)
 
 # create the plot
 fig = Figure(resolution=(400,400))
-_, _, plt = registernetplot_axis(fig[1,1],network)
+_, _, _, obs = registernetplot_axis(fig[1,1],network)
 fig
 ```
 
