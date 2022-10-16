@@ -8,10 +8,16 @@ end
 
 A multi-formalism simulator for noisy quantum communication and computation hardware.
 
-A simulation of a quantum repeater:
+#### A simulation of a quantum repeater:
 
 ```@raw html
 <video src="howto/firstgenrepeater/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
+```
+
+#### A simulation of the generation of a cluster state in color-center memories:
+
+```@raw html
+<video src="howto/colorcentermodularcluster/colorcentermodularcluster-02.simdashboard.mp4" autoplay loop muted></video>
 ```
 
 !!! warning

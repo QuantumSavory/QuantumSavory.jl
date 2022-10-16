@@ -11,7 +11,7 @@ The cluster state is also a [graph state](https://en.wikipedia.org/wiki/Graph_st
 
 One interesting hardware implementation involves entangling a large number of color centers[^1].
 
-[^1]: [muralidharan2016optimal](@cite)
+[^1]: [choi2019percolation](@cite)
 
 We will build a simulator for such a piece of hardware.
 Each node will be a register of one electron spin for networking and one nuclear spin in which the actual long-term entanglement is "stored".
