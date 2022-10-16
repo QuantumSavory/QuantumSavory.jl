@@ -39,9 +39,8 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run the tests
         id: tests
-        continue-on-error: true
         run: >
-          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --project=monorepo -e 'using Pkg; Pkg.test("QuantumSavory", coverage=true)' && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
+          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --project=@. -e 'using Pkg; Pkg.test("QuantumSavory", coverage=true)' && echo "TESTS_SUCCESSFUL=true" >> $GITHUB_ENV
         env:
           JULIA_NUM_THREADS: ${{ matrix.threads }}
           QUANTUMSAVORY_GL_TEST: true
