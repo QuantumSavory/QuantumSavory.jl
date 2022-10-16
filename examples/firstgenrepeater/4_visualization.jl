@@ -34,7 +34,7 @@ for nodea in vertices(network)
 end
 
 fig = Figure(resolution=(800,400))
-_,_,_,obs = registernetplot_axis(fig[1,1],network)
+_,ax,_,obs = registernetplot_axis(fig[1,1],network)
 
 ts = Observable(Float64[0])
 fidXX = Observable(Float64[0])
@@ -62,7 +62,7 @@ record(fig, "firstgenrepeater-07.observable.mp4", step_ts, framerate=10) do t
     push!(fidZZ[],fZZ)
     push!(ts[],t)
 
-    ax_rg.title = "t=$(t)"
+    ax.title = "t=$(t)"
     notify(obs)
     notify(ts)
     xlims!(ax_fid, 0, t+0.5)

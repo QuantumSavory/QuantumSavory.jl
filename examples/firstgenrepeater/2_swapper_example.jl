@@ -27,7 +27,7 @@ end
 
 # set up a plot and save a handle to the plot observable
 fig = Figure(resolution=(400,400))
-_,_,_,obs = registernetplot_axis(fig[1,1],network)
+_,ax,_,obs = registernetplot_axis(fig[1,1],network)
 display(fig)
 
 # record the simulation progress
@@ -35,5 +35,5 @@ step_ts = range(0, 7, step=0.1)
 record(fig, "firstgenrepeater-03.swapper.mp4", step_ts, framerate=10) do t
     run(sim, t)
     notify(obs)
-    ax_rg.title = "t=$(t)"
+    ax.title = "t=$(t)"
 end
