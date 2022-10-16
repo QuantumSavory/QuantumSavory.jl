@@ -1,7 +1,7 @@
 using Graphs
 using NetworkLayout
 import Makie
-import Makie: Theme, Axis, @recipe
+import Makie: Theme, Figure, Axis, @recipe
 
 export registernetplot, registernetplot_axis, resourceplot_axis
 
@@ -22,18 +22,15 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         registercoords = rn[:registercoords][]
     else
         adj_matrix = adjacency_matrix(networkobs[].graph)
-        registercoords = spring(adj_matrix, iterations=40, C=1.5*maximum(nsubsystems.(registers)))
+        registercoords = spring(adj_matrix, iterations=40, C=5*maximum(nsubsystems.(registers)))
     end
     rn[:registercoords] = registercoords # TODO make sure it is an observable
-    processes_coords = Makie.Observable(Makie.Point2{Float64}[])
-    processes = get(rn, :processes, Makie.Observable([]))
-    rn[:processes] = processes
     function update_plot(network)
         registers = network.registers
         all_nodes = [ # TODO it is rather wasteful to replot everything... do it smarter
             register_rectangles, register_slots_coords, register_slots_coords_backref,
             state_coords, state_coords_backref, state_links,
-            processes_coords]
+        ]
         for a in all_nodes
             empty!(a[])
         end
@@ -64,31 +61,15 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 end
             end
         end
-        for p in processes[]
-            edgecoords = Makie.Point2{Float64}[]
-            for (r,i) in p
-                whichreg = findfirst(==(r),registers)
-                if !isnothing(whichreg)
-                    push!(edgecoords, Makie.Point2{Float64}(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
-                end
-            end
-            center = sum(edgecoords)/length(edgecoords)
-            for p in edgecoords
-                push!(processes_coords[], center)
-                push!(processes_coords[], p)
-            end
-        end
         for a in all_nodes
             notify(a)
         end
     end
     Makie.Observables.onany(update_plot, networkobs)
-    Makie.Observables.onany(update_plot, processes)
     update_plot(rn[1][])
     register_polyplot = Makie.poly!(rn,register_rectangles,color=:gray90)
     register_polyplot.inspectable[] = false
     register_slots_scatterplot = Makie.scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=:data)
-    process_lineplot = Makie.linesegments!(rn,processes_coords,color=:pink,linewidth=20,markerspace=:data)
     state_scatterplot = Makie.scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=:data)
     state_lineplot = Makie.linesegments!(rn,state_links,color=:gray90)
     rn[:register_polyplot] = register_polyplot
@@ -97,7 +78,6 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     rn[:state_scatterplot] = state_scatterplot
     rn[:state_coords_backref] = state_coords_backref
     rn[:state_lineplot] = state_lineplot
-    rn[:process_lineplot] = process_lineplot
     rn
 end
 
@@ -125,7 +105,7 @@ end
 
 """Draw the given registers on a given Makie axis."""
 function registernetplot_axis(subfig, registersobservable; registercoords=nothing)
-    ax = Makie.Axis(subfig[1,1])
+    ax = Makie.Axis(subfig)
     p = registernetplot!(ax, registersobservable,
         registercoords=registercoords,
         )
@@ -147,13 +127,20 @@ showonplot(b::Bool) = b
 function resourceplot_axis(subfig, network, edgeresources, vertexresources; registercoords=nothing, title="")
     axis = Makie.Axis(subfig[1,1], title=title)
     networkobs = Makie.Observable(network)
+    if isnothing(registercoords)
+        # copied from registernetplot
+        adj_matrix = adjacency_matrix(networkobs[].graph)
+        registercoords = spring(adj_matrix, iterations=40, C=5*maximum(nsubsystems.(network.registers)))
+    else
+        registercoords = registercoords[]
+    end
     baseplot = Makie.scatter!(axis, # just to set coordinates
-            registercoords[],
+            registercoords,
             color=:gray90,
             )
     for (i,vertexres) in enumerate(vertexresources)
         Makie.scatter!(axis,
-            Makie.lift(x->Makie.Point2{Float64}[registercoords[][j] for j in vertices(x) if showonplot(x[i,vertexres])],
+            Makie.lift(x->Makie.Point2{Float64}[registercoords[j].+0.2*(i-1) for j in vertices(x) if showonplot(x[j,vertexres])],
                 networkobs),
             color=Makie.Cycled(i),
             label="$(vertexres)"
@@ -161,7 +148,7 @@ function resourceplot_axis(subfig, network, edgeresources, vertexresources; regi
     end
     for (i,edgeres) in enumerate(edgeresources)
         Makie.linesegments!(axis,
-            Makie.lift(x->Makie.Point2{Float64}[registercoords[][n] for (;dst,src) in edges(x) for n in (dst,src) if showonplot(x[(dst,src),edgeres])],
+            Makie.lift(x->Makie.Point2{Float64}[registercoords[n].+0.2*(i-1) for (;dst,src) in edges(x) for n in (dst,src) if showonplot(x[(dst,src),edgeres])],
                 networkobs),
             color=Makie.Makie.Cycled(i),
             label="$(edgeres)"
