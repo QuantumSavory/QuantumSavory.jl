@@ -12,13 +12,13 @@ A rather diverse set of simulation libraries is used under the hood. Long term t
 
 Initialize the state of a register to a known state.
 
-### `initialize!(refs::Vector{RegRef}, state; time)`
+#### `initialize!(refs::Vector{RegRef}, state; time)`
 
 Store a `state` in the given register slots.
 
 `refs` can also be `Tuple{Vararg{RegRef, N}}` or a single [`RegRef`](@ref).
 
-### `initialize!(r::Vector{Register}, i::Vector{Int64}, state; time)`
+#### `initialize!(r::Vector{Register}, i::Vector{Int64}, state; time)`
 
 `r` can also be a single [`Register`](@ref).
 
@@ -26,11 +26,11 @@ The `accesstimes` attributes of the slots are reset to the given `time`.
 
 If `state<:Symbolic`, then [`consistent_representation`](@ref) is used to choose an appropriate representation based on the [`AbstractRepresentation`](@ref) properties of the register slots. Then an [`express`](@ref) call is made to transform the symbolic object into the appropriate representation.
 
-### `initialize!(r::RegRef; time)` and `initialize!(reg::Register, i::Int64; time)`
+#### `initialize!(r::RegRef; time)` and `initialize!(reg::Register, i::Int64; time)`
 
 When a `state` is not provided, a default one is calculated from `newstate`, depending on the register slot's [`QuantumStateTrait`](@ref) (e.g. qubit vs qumode) and [`AbstractRepresentation`](@ref) (e.g. ket vs tableaux).
 
-### Interface Overview
+#### Interface Overview
 
 ```@raw html
 <div class="mermaid">
@@ -66,13 +66,13 @@ flowchart TB
 
 Apply a quantum operation to a register.
 
-### `apply!(refs::Vector{RegRef}, operation; time)`
+#### `apply!(refs::Vector{RegRef}, operation; time)`
 
 Applying an `operation` to the qubits referred to by the sequence of [`RegRef`](@ref)s at a specified `time`.
 
 `refs` can also be `Tuple{Vararg{RegRef, N}}` or a single [`RegRef`](@ref).
 
-### `apply!(regs::Vector{Register}, indices, operation; time)`
+#### `apply!(regs::Vector{Register}, indices, operation; time)`
 
 `indices` refers to the slots inside of the given `regs`.
 
@@ -80,7 +80,7 @@ Calls [`uptotime!`](@ref) in order to update any [`AbstractBackground`](@ref) pr
 
 Calls [`subsystemcompose!`](@ref) in order to make one big state. Then goes to `apply!(state, subsystem_indices, operatin; time)`.
 
-### `apply!(state, subsystem_indices, operation; time)`
+#### `apply!(state, subsystem_indices, operation; time)`
 
 `subsystem_indices` refers to subsystems in `state`.
 
@@ -90,7 +90,7 @@ If `operation<:Symbolic`, then `express(operation, repr, ::UseAsOperation)` is u
 
     Currently, the decision of how to convert a symbolic operation is based only on the `state` on which the operation would act. It can not be modified by the [`AbstractRepresentation`](@ref) properties of the `Register`s containing the state.
 
-### Interface Overview
+#### Interface Overview
 
 ```@raw html
 <div class="mermaid">
@@ -126,13 +126,13 @@ flowchart TB
 
 Measure a quantum observable. The dispatch down the call three is very similar to the one for `apply!`.
 
-### `observable(refs::Tuple{Vararg{RegRef, N}}, obs, something=nothing; time)`
+#### `observable(refs::Tuple{Vararg{RegRef, N}}, obs, something=nothing; time)`
 
 Calculate the value of an observable on the state in the sequence of [`RegRef`](@ref)s at a specified `time`. If these registers are not instantiated, return `something`.
 
 `refs` can also be `Tuple{Vararg{RegRef, N}}` or a single [`RegRef`](@ref).
 
-### `observable(regs::Vector{Register}, indices, obs, something=nothing; time)`
+#### `observable(regs::Vector{Register}, indices, obs, something=nothing; time)`
 
 `indices` refers to the slots inside of the given `regs`.
 
@@ -140,7 +140,7 @@ Calls [`uptotime!`](@ref) in order to update any [`AbstractBackground`](@ref) pr
 
 Calls [`subsystemcompose!`](@ref) in order to make one big state. Then goes to `observable(state, subsystem_indices, obs; time)`.
 
-### `observable(state, subsystem_indices, obs; time)`
+#### `observable(state, subsystem_indices, obs; time)`
 
 subsystem_indices` refers to subsystems in `state`.
 
@@ -150,7 +150,7 @@ If `operation<:Symbolic`, then an `express(obs, repr, ::UseAsObservable)` call i
 
     Similar to the limitations faced by `apply!`
 
-### Interface Overview
+#### Interface Overview
 
 ```@raw html
 <div class="mermaid">
@@ -186,19 +186,19 @@ TODO
 
 Perform a partial trace over a part of the system (i.e. discard a part of the system).
 
-### `traceout!(r::RegRef)`
+#### `traceout!(r::RegRef)`
 
 Partial trace over a particular register reference.
 
-### `traceout!(r::Register, i::Int)`
+#### `traceout!(r::Register, i::Int)`
 
 Partial trace over slot `i` of register `r`. Calls down to the state reference stored in that particular register.
 
-### `traceout!(s::StateRef, i::Int)`
+#### `traceout!(s::StateRef, i::Int)`
 
 Partial trace over subsystem `i` of state referenced by `s`.
 
-### Interface Overview
+#### Interface Overview
 
 ```@raw html
 <div class="mermaid">

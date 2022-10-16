@@ -6,6 +6,14 @@ DocTestSetup = quote
 end
 ```
 
+A multi-formalism simulator for noisy quantum communication and computation hardware.
+
+A simulation of a quantum repeater:
+
+```@raw html
+<video src="howto/firstgenrepeater/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
+```
+
 A limited public demo of a fraction of some internal research code. Full code to be release shortly.
 
 !!! danger
