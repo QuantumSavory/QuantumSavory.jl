@@ -1,6 +1,6 @@
 using ResumableFunctions
 import SimJulia # Should be using
-using SimJulia: Environment, request, release, now, active_process
+using SimJulia: Environment, request, release, now, active_process, timeout
 using Printf
 
 export @simlog, isfree, nongreedymultilock, spinlock
@@ -13,7 +13,7 @@ isfree(resource) = resource.level == 0
 
 @resumable function nongreedymultilock(env::Environment, resources)
     while true
-        if all(isfree(r) for r in resources)
+        if all(isfree(r)::Bool for r in resources) # type assert to help with inference
             @yield mapreduce(request, &, resources)
             break
         else

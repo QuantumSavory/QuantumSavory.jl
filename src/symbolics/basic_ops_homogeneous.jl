@@ -48,13 +48,14 @@ end
 istree(::SAdd) = true
 arguments(x::SAdd) = [SScaledKet(v,k) for (k,v) in pairs(x.dict)]
 operation(x::SAdd) = +
-Base.:(+)(xs::Symbolic{T}...) where {T<:QObj} = SAdd{T}(countmap_flatten(xs, SScaled{T}))
+Base.:(+)(xs::Vararg{Symbolic{T},N}) where {T<:QObj,N} = SAdd{T}(countmap_flatten(xs, SScaled{T}))
+Base.:(+)(xs::Vararg{Symbolic{<:QObj},0}) = 0 # to avoid undefined type parameters issue in the above method
 basis(x::SAdd) = basis(first(x.dict).first)
 
 const SAddKet = SAdd{Ket}
-Base.print(io::IO, x::SAddKet) = print(io, "("*join(map(string, arguments(x)),"+")*")")
+Base.print(io::IO, x::SAddKet) = print(io, "("*join(map(string, arguments(x)),"+")::String*")") # type assert to help inference
 const SAddOperator = SAdd{Operator}
-Base.print(io::IO, x::SAddOperator) = print(io, "("*join(map(string, arguments(x)),"+")*")")
+Base.print(io::IO, x::SAddOperator) = print(io, "("*join(map(string, arguments(x)),"+")::String*")") # type assert to help inference
 
 @withmetadata struct STensor{T<:QObj} <: Symbolic{T}
     terms

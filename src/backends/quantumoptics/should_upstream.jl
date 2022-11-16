@@ -39,12 +39,13 @@ using QuantumOpticsBase: LazyTensor, AbstractSuperOperator
 
 abstract type AbstractLazySuperOperator{B1,B2} <: AbstractSuperOperator{B1,B2} end
 
+# TODO split in LazyPre, LazyPost and LazyPrePost
 struct LazyPrePost{B,DT} <: AbstractLazySuperOperator{Tuple{B,B},Tuple{B,B}}
-    preop::Union{Operator{B,B,DT},Nothing}
-    postop::Union{Operator{B,B,DT},Nothing}
-    function LazyPrePost(preop::T,postop::T) where {B,DT,T<:Union{Operator{B,B,DT},Nothing}}
-        new{B,DT}(preop,postop)
-    end
+    preop::Operator{B,B,DT}
+    postop::Operator{B,B,DT}
+end
+function LazyPrePost(preop::T,postop::T) where {B,DT,T<:Operator{B,B,DT}}
+    LazyPrePost{B,DT}(preop,postop)
 end
 
 struct LazySuperSum{B,F,T} <: AbstractLazySuperOperator{Tuple{B,B},Tuple{B,B}}
@@ -59,12 +60,8 @@ QuantumOpticsBase.embed(bl,br,index,op::LazyPrePost) = LazyPrePost(embed(bl,br,i
 function Base.:(*)(sop::LazyPrePost, op::Operator)
     # TODO do not create the spre and spost objects, do it without intermediaries, do it in place with buffers
     r = op
-    if !isnothing(sop.preop)
-        r = spre(sop.preop)*r
-    end
-    if !isnothing(sop.postop)
-        r = spost(sop.postop)*r
-    end
+    r = spre(sop.preop)*r
+    r = spost(sop.postop)*r
     r
 end
 Base.:(*)(l::LazyPrePost, r::LazyPrePost) = LazyPrePost(l.preop*r.preop, r.postop*l.postop)

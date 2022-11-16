@@ -27,7 +27,9 @@ function project_traceout!(state::QuantumClifford.MixedDestabilizer,stateindex,b
     # do this if ispadded() = true
     #state, res = express_qc_proj(basis)(state, stateindex)
     # do this if ispadded() = false
-    state, res = QuantumClifford.projectremoverand!(state, express_qc_proj(basis), stateindex)
+    proj = QuantumClifford.projectremoverand!(state, express_qc_proj(basis), stateindex)
+    state = proj[1]
+    res = proj[2]::UInt8 # type assert to help with inference # TODO fix this upstream in QuantumClifford
     res÷2+1, state
 end
 
