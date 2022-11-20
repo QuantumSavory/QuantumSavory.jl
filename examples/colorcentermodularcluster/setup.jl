@@ -18,51 +18,33 @@ using QuantumSavory
 ##
 
 #"""Set the state of the electronic spins to entangled."""
-function bk_el_init(env::Environment, net, nodea, nodeb, conf)
-    rega = net[nodea]
-    regb = net[nodeb]
-    initialize!([rega[1],regb[1]], conf.BK_electron_entanglement_init_state; time=now(env)) # TODO explicit physics of the initial state
-    apply!(rega[1], H; time=now(env)) # TODO check whether this gate and the H gate in preparing the nuclear spin are necessary
-    #apply!([rega], [1], Gates.Depolarize(conf.BK_electron_singleq_fidelity))
-    # TODO call this MonteCarloDepolarize
-    #skip dep gate rand()>conf.BK_electron_singleq_fidelity && apply!(rega[1], Gates.Depolarize(0.0))
-    # TODO enable this timeout
-    #@yield timeout(env, conf.BK_electron_gate_duration)
-    # TODO relate the above depolarization to the duration of the H gate
+function bk_el_init(env::Environment, rega, regb, conf)
+    initialize!([rega[1],regb[1]], conf.BK_electron_entanglement_init_state; time=now(env))
+    apply!(rega[1], H; time=now(env))
+    # TODO decide whether the H gate is folded into the initialization step
+    # TODO H gate error rate
+    # TODO split out the various imperfections of the initialization in separate parameters
+    # TODO bring the timeout wait in this function
 end
 
 #"""Swap between the electronic and nuclear spins of a node"""
-function bk_swap(env::Environment, net, node, conf)
-    reg = net[node]
+function bk_swap(env::Environment, reg, conf)
     # check whether the nuclear register contains anything
-    if !isassigned(reg, 2) # TODO the nuclear initialization should be separate and explicit, including wait time
-        initialize!(reg[2]; time=now(env)) # TODO the following depolarization should be declarative when setting up the system
-        #apply!([reg], [2], Gates.Depolarize(conf.BK_nuclear_init_fidelity))
-        # TODO call this MonteCarloDepolarize
-        #skip dep gate rand()>conf.BK_nuclear_init_fidelity && apply!(reg[2], Gates.Depolarize(0))
-        apply!(reg[2], H) # TODO the following depolarization should be declarative when setting up the system
-        #apply!([reg], [2], Gates.Depolarize(conf.BK_nuclear_singleq_fidelity))
-        # TODO call this MonteCarloDepolarize
-        #skip dep gate rand()>conf.BK_nuclear_singleq_fidelity && apply!(reg[2], Gates.Depolarize(0))
-        # TODO relate the above depolarization to the duration of the H gate
-        # TODO move the wait time for H in here
-        #@yield timeout(env, BK_nuclear_gate_duration)
+    if !isassigned(reg, 2)
+        initialize!(reg[2]; time=now(env))
+        apply!(reg[2], H)
+        # TODO model the need for nuclear spin initialization before entanglement starts
     end
     # perform the CPHASE gate
     apply!([reg[1],reg[2]], CPHASE; time=now(env)) # TODO the following depolarization should be declarative when setting up the system
-    #apply!([reg,reg], [1,2], Gates.Depolarize(conf.BK_swap_gate_fidelity))
-    # TODO call this MonteCarloDepolarize
-    #skip dep gate rand()>conf.BK_swap_gate_fidelity && apply!([reg[1],reg[2]], Gates.Depolarize(0))
-    # TODO relate the above depolarization the the duration of the SWAP gate
-    # TODO move the wait time for SWAP in here
-    #@yield timeout(env, BK_swap_gate_duration)
+    # TODO conf.BK_swap_gate_fidelity (on top of wait time induced errors)
+    # TODO be careful, the wait time for this gate is already present in the
     # perform the projective measurement on the electron spin
-    off = project_traceout!(reg[1], σˣ) # TODO use a projector object instead of a list
-    if rand()>conf.BK_measurement_fidelity # TODO this should be prettier, presumably implemented declaratively inside of project_traceout!
+    off = project_traceout!(reg[1], σˣ)
+    if rand()>conf.BK_measurement_fidelity # TODO this should be declarative in project_traceout or something like that
         off = off%2+1
     end
-    # TODO CONSTS wait time for measurement
-    # TODO relate wait time for measurements to measurement fidelity
+    # TODO measurement wait time
     return off
 end
 
@@ -74,21 +56,20 @@ end
     spin_resources = [net[nodea, :espin_queue], net[nodeb, :espin_queue]]
     @yield request(link_resource)
     @yield @process nongreedymultilock(env, spin_resources)
-    #@simlog env "got lock on $(nodea) $(nodeb)"
     # wait for a successful entangling attempt (separate attempts not modeled explicitly)
     rega = net[nodea]
     regb = net[nodeb]
     attempts = 1+rand(conf.BK_success_distribution)
     duration = attempts*conf.BK_electron_entanglement_gentime
     @yield timeout(env, duration)
-    bk_el_init(env, net, nodea, nodeb, conf)
+    bk_el_init(env, rega, regb, conf)
     # reserve the nuclear spins, by using a nongreedy multilock
     nspin_resources = [net[nodea, :nspin_queue], net[nodeb, :nspin_queue]]
     @yield @process nongreedymultilock(env, nspin_resources)
     # wait for the two parallel swaps from the electronic to nuclear spins
     @yield timeout(env, conf.BK_swap_duration)
-    r1 = bk_swap(env, net, nodea, conf)
-    r2 = bk_swap(env, net, nodeb, conf)
+    r1 = bk_swap(env, rega, conf)
+    r2 = bk_swap(env, regb, conf)
     # if necessary, correct the computational basis - currently done by affecting the state # TODO use a pauli frame
     r1==2 && apply!(regb[2], Z)
     r2==2 && apply!(rega[2], Z)
@@ -141,15 +122,11 @@ function prep_sim(root_conf)
     # set up SimJulia discrete events simulation
     sim = Simulation()
 
-    for r in vertices(net)
-        net[r, :espin_queue] = Resource(sim,1)
-        net[r, :nspin_queue] = Resource(sim,1)
-        net[r, :decay_queue] = Resource(sim,1)
-    end
-    for e in edges(net)
-        net[e, :link_queue] = Resource(sim,1)
-        net[e, :link_register] = false
-    end
+    net[:, :espin_queue] = () -> Resource(sim,1)
+    net[:, :nspin_queue] = () -> Resource(sim,1)
+    net[:, :decay_queue] = () -> Resource(sim,1)
+    net[(:,:), :link_queue]    = () -> Resource(sim,1)
+    net[(:,:), :link_register] = false
 
     for (;src,dst) in edges(net)
         @process barrettkok(sim, net, src, dst, conf)
@@ -183,11 +160,11 @@ root_conf = (;
     BK_electron_entanglement_fidelity = 1.0,
 
     BK_measurement_duration = 0.004, # CONSTS TODO
-    BK_measurement_fidelity = 1., # CONSTS TODO
+    BK_measurement_fidelity = 0.99, # CONSTS TODO
     BK_electron_init_fidelity = 1., # CONSTS TODO
     BK_nuclear_init_fidelity = 1., # CONSTS TODO
     BK_electron_singleq_fidelity = 1., # CONSTS TODO
     BK_nuclear_singleq_fidelity = 1., # CONSTS TODO
     BK_swap_gate_fidelity = 1., # CONSTS TODO
-    BK_mem_wait_factor = 10,
+    BK_mem_wait_factor = 10, # CONSTS TODO
 )
