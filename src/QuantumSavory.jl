@@ -126,6 +126,31 @@ function Base.setindex!(net::RegisterNet, val, ij::Tuple{Int,Int}, k::Symbol)
 end
 Base.getindex(net::RegisterNet, ij::Graphs.SimpleEdge, k::Symbol) = net[(ij.src, ij.dst),k]
 Base.setindex!(net::RegisterNet, val, ij::Graphs.SimpleEdge, k::Symbol) = begin net[(ij.src, ij.dst),k] = val end
+# Get and set with colon notation
+Base.getindex(net::RegisterNet, ::Colon) = net.registers
+Base.getindex(net::RegisterNet, ::Colon, j::Int) = [r[j] for r in net.registers]
+Base.getindex(net::RegisterNet, ::Colon, k::Symbol) = [m[k] for m in net.vertex_metadata]
+Base.getindex(net::RegisterNet, ::Tuple{Colon,Colon}, k::Symbol) = [net.edge_metadata[minmax(ij)...][k] for ij in edges(net)]
+function Base.setindex!(net::RegisterNet, v, ::Colon, k::Symbol)
+    for m in net.vertex_metadata
+        m[k] = v
+    end
+end
+function Base.setindex!(net::RegisterNet, v, ::Tuple{Colon,Colon}, k::Symbol)
+    for ij in edges(net)
+        net[ij,k] = v
+    end
+end
+function Base.setindex!(net::RegisterNet, @nospecialize(f::Function), ::Colon, k::Symbol)
+    for m in net.vertex_metadata
+        m[k] = f()
+    end
+end
+function Base.setindex!(net::RegisterNet, @nospecialize(f::Function), ::Tuple{Colon,Colon}, k::Symbol)
+    for ij in edges(net)
+        net[ij,k] = f()
+    end
+end
 
 ##
 
