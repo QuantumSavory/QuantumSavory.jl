@@ -191,4 +191,6 @@ end
 ##
 # Serve the Makie app
 
-JSServe.route!(JSServe.get_server(), "/" => app)
+server = JSServe.get_server()
+JSServe.route!(server, "/" => app)
+wait(server.server_task[])
