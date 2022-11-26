@@ -6,6 +6,17 @@ using IterTools
 using LinearAlgebra
 using Graphs
 
+@reexport using QSymbolics
+# also imported, because QuantumSavory code outside of QSymbolics needs them, e.g. for `express`
+using QSymbolics:
+    AbstractRepresentation, AbstractUse,
+    CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
+    basis, tensor, ⊗, Operator, Ket, SuperOperator, Basis, SpinBasis, # from QuantumOpticsBase
+    metadata, istree, operation, arguments, Symbolic, # from Symbolics
+    HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
+    XBasisState, YBasisState, ZBasisState,
+    STensorOperator, SScaledOperator, SAddOperator
+
 export StateRef, RegRef, Register, RegisterNet
 export Qubit, Qumode,
        QuantumOpticsRepr, QuantumMCRepr, CliffordRepr,
@@ -13,10 +24,7 @@ export Qubit, Qumode,
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
-
 abstract type QuantumStateTrait end
-abstract type AbstractRepresentation end
-abstract type AbstractUse end
 abstract type AbstractBackground end
 
 """Specifies that a given register slot contains qubits."""
@@ -24,26 +32,8 @@ struct Qubit <: QuantumStateTrait end
 """Specifies that a given register slot contains qumodes."""
 struct Qumode <: QuantumStateTrait end
 
-"""Representation using kets, densinty matrices, and superoperators governed by `QuantumOptics.jl`."""
-struct QuantumOpticsRepr <: AbstractRepresentation end
-"""Similar to `QuantumOpticsRepr`, but using trajectories instead of superoperators."""
-struct QuantumMCRepr <: AbstractRepresentation end
-"""Representation using tableaux governed by `QuantumClifford.jl`"""
-struct CliffordRepr <: AbstractRepresentation end
-
-struct UseAsState <: AbstractUse end
-struct UseAsOperation <: AbstractUse end
-struct UseAsObservable <: AbstractUse end
-
-include("symbolics/QSymbolics.jl")
-@reexport using .QSymbolics
-# also imported, because QuantumSavory code outside of QSymbolics needs them, e.g. for `express`
-using .QSymbolics:
-    basis, tensor, ⊗, Operator, Ket, SuperOperator, Basis, SpinBasis, # from QuantumOpticsBase
-    metadata, istree, operation, arguments, Symbolic, # from Symbolics
-    HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
-    XBasisState, YBasisState, ZBasisState,
-    STensorOperator, SScaledOperator, SAddOperator
+# TODO move these definitions to a neater place
+default_repr(::Qubit) = QuantumOpticsRepr()
 
 
 # TODO better constructors

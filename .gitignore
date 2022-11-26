@@ -1,2 +1,5 @@
 Manifest.toml
 build
+.gitignore
+ROADMAP.md
+coverage

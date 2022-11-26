@@ -120,7 +120,7 @@ flowchart TB
 
 !!! info "Short-circuiting the `express` dispatch"
 
-    You can add a custom dispatch that skips the `express` functionality by defining a method `apply!(state::YourStateType, indices, operation<:Symbolic{Operator})`. This would preemt the default `apply!(state, indices, operation<:Symbolic{Operator})` containing the `express` logic. The drawback is that this would also skip the memoization employed by `express`.
+    You can add a custom dispatch that skips the `express` functionality by defining a method `apply!(state::YourStateType, indices, operation<:Symbolic{AbstractOperator})`. This would preemt the default `apply!(state, indices, operation<:Symbolic{AbstractOperator})` containing the `express` logic. The drawback is that this would also skip the memoization employed by `express`.
 
 ## `observable`
 
@@ -176,7 +176,7 @@ flowchart TB
 
 !!! info "Short-circuiting the `express` dispatch"
 
-    Similarly to the case with `apply!`, you can skips the `express` functionality by defining a method `observable(state::YourStateType, indices, obs<:Symbolic{Operator})`.
+    Similarly to the case with `apply!`, you can skips the `express` functionality by defining a method `observable(state::YourStateType, indices, obs<:Symbolic{AbstractOperator})`.
 
 ## `project_traceout!`
 

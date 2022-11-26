@@ -34,28 +34,6 @@ function observable(state::Union{<:Ket,<:Operator}, indices, operation)
     expect(op, state)
 end
 
-function apply!(state::Ket, indices, operation::Operator)
-    op = basis(state)==basis(operation) ? operation : embed(basis(state), indices, operation)
-    state.data = (op*state).data
-    state
-end
-
-function apply!(state::Operator, indices, operation::Operator)
-    op = basis(state)==basis(operation) ? operation : embed(basis(state), indices, operation)
-    state.data = (op*state*op').data
-    state
-end
-
-function apply!(state::Ket, indices, operation::T) where {T<:AbstractSuperOperator}
-    apply!(dm(state), indices, operation)
-end
-
-function apply!(state::Operator, indices, operation::T) where {T<:AbstractSuperOperator}
-    op = basis(state)==basis(operation) ? operation : embed(basis(state), indices, operation)
-    state.data = (op*state).data
-    state
-end
-
 function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Vector{<:Ket})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of _overlap vs _project_and_drop
         _overlaps = [_overlap(psi,state) for psi in psis]
