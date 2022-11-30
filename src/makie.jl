@@ -108,7 +108,7 @@ end
 It returns a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates
 the plot with the current state of the network."""
-function registernetplot_axis(subfig, registersobservable; registercoords=nothing)
+function registernetplot_axis(subfig, registersobservable; registercoords=nothing, interactions=false)
     ax = Makie.Axis(subfig)
     p = registernetplot!(ax, registersobservable,
         registercoords=registercoords,
@@ -117,8 +117,10 @@ function registernetplot_axis(subfig, registersobservable; registercoords=nothin
     Makie.hidedecorations!(ax)
     Makie.hidespines!(ax)
     Makie.deregister_interaction!(ax, :rectanglezoom)
-    rnh = RNHandler(p)
-    Makie.register_interaction!(ax, :registernet, rnh)
+    if interactions
+        rnh = RNHandler(p)
+        Makie.register_interaction!(ax, :registernet, rnh)
+    end
     subfig, ax, p, p[1]
 end
 
