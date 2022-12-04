@@ -25,7 +25,7 @@ TermInterface = "8ea1fca8-c5ef-4a55-8b96-4e9afe9c9a3c"
 [compat]
 Graphs = "1.7.3"
 IterTools = "1.4.0"
-Makie = "0.17.13"
+Makie = "0.17.13, 0.19"
 NetworkLayout = "0.4.4"
 QuantumClifford = "0.6.3"
 QuantumOptics = "1.0.5"
