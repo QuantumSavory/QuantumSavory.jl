@@ -25,7 +25,7 @@ function run_until_connected(root_conf)
 end
 
 ##
-# Prepare functions that can repeatedly run simulations and store the results
+# Functions that can repeatedly run simulations and store the results
 
 const N = 100
 
@@ -54,6 +54,7 @@ function fill_results!(times,fids,conf)
     end
 end
 
+# Default values to see on first load
 def_times = Observable(zeros(Float64, N))
 def_fids = Observable(zeros(Float64, N))
 
@@ -63,12 +64,13 @@ fill_results!(def_times,def_fids,root_conf)
 # Prepare the Makie app for landing page
 
 landing = App() do
+    config_str = Markdown.parse("```\nParameters:\n"*join(["$(k)\t= $(v)" for (k,v) in pairs(root_conf)], "\n")*"\n```")
     dom = md"""
     # Simulations of the generation of GHZ and 3×2 cluster states in Tin-vacancy color centers
 
     For simulations over many repetition of the state generation experiment consult the [Ensemble Sims Page](./ensemble).
 
-    For single instances of the experiment with detailed visualizations consider the [Single Trajectory Sim Page](./single-trajectory). The parameter sliders in this simulation are not functional yet.
+    For single instances of the experiment with detailed visualizations consider the [Single Trajectory Sim Page](./single-trajectory).
 
     ## A few notes on parameterization
 
@@ -90,7 +92,9 @@ landing = App() do
     ## The default parameter values
 
     The default parameter values for emitter properties are mostly taken from `10.1103/PhysRevLett.124.023602` and `10.1103/PhysRevX.11.041041`.
-    For the nuclear spins we reused some NV⁻ data.
+    For the nuclear spins we reused some NV⁻ data. Below are the defaults.
+
+    $(config_str)
 
     ## A few things that are not modeled in detail
 
@@ -100,6 +104,7 @@ landing = App() do
         - it would increase fidelity
         - it would decrease efficiency
     - mismatches between emitters (random or systematic) are lumped into "raw entanglement fidelity"
+    - the Purcell factor's effect on the spectral properties (indistinguishability) of the photons
     - detector dark counts and other imperfections are lumped into "coincidence measurement fidelity"
     - most single-qubit gate times and fidelities are neglected
     - initialization of the nuclear and electronic spins is not modeled in detail
@@ -122,7 +127,7 @@ ensemble = App() do
     fids[] .= def_fids[]
     max_time = Observable(maximum(def_times[]))
     current_step = Ref(1)
-    conf = Observable(deepcopy(root_conf))
+    conf_obs = Observable(deepcopy(root_conf))
 
     # Plot the time to complete vs average fidelity
 
@@ -154,10 +159,10 @@ ensemble = App() do
         running[] = !running[]
     end
     on(running) do r
-        r && @async continue_results!(times,fids,current_step,conf,running,max_time)
+        r && @async continue_results!(times,fids,current_step,conf_obs,running,max_time)
     end
 
-    add_conf_sliders(F[1, 2], conf, root_conf)
+    add_conf_sliders(F[1, 2], conf_obs, root_conf)
 
     dom = md"""$(F.scene)
     # Simulations of the generation of 3×2 cluster states in Tin-vacancy color centers
@@ -188,18 +193,18 @@ function continue_singlerun!(sim, net,
     fids, fidsMax, fidsMin, ts,
     linkcolors,
     obs_rg,obs_1,obs_2,ax2,
-    current_time, running)
-    while running[]
-        current_time[] += conf[].T2N/600
+    current_time)
+    for _ in 1:1000
+        current_time[] += conf[:T₂ⁿ]/600
         fetch(@spawn run(sim, current_time[])) # do not run heavy calculations on the main thread, even if async
 
-        fid = map(vertices(net)) do v
+        fid = fetch( @spawn map(vertices(net)) do v # do not run heavy calculations on the main thread, even if async
             neighs = neighbors(net,v)
             l = length(neighs)
             obs = observables[l]
             regs = [net[i, 2] for i in [v, neighs...]]
             real(observable(regs, obs, 0.0; time=now(sim)))
-        end
+        end)
         linkcolors[] .= fid
         push!(fids[],mean(fid))
         push!(fidsMax[],maximum(fid))
@@ -212,16 +217,15 @@ function continue_singlerun!(sim, net,
         notify(obs_rg)
         notify(obs_1)
         notify(obs_2)
-        xlims!(ax2,max(0,ts[][end]-conf[].BK_mem_wait_time*5), nothing)
+        xlims!(ax2,max(0,ts[][end]-2*conf[:T₂ⁿ]), nothing)
     end
 end
 
 singletraj = App() do
     net, sim, observables, conf = prep_sim(root_conf)
-    conf = Observable(conf)
     current_time = Observable(0.0)
 
-    F = Figure(resolution=(1900,800))
+    F = Figure(resolution=(1200,800))
 
     # Plot of the quantum states in the registers
     subfig_rg, ax_rg, p_rg, obs_rg = registernetplot_axis(F[1:4,1],net; interactions=false)
@@ -270,23 +274,30 @@ singletraj = App() do
     xlims!(0, nothing)
     ylims!(-0.05, 1.05)
 
-    F[6, 3] = buttongrid = GridLayout(tellwidth = false)
+    F[7, 1:2] = buttongrid = GridLayout(tellwidth = false)
     running = Observable(false)
-    buttongrid[1,1] = b = Makie.Button(F, label = @lift($running ? "Stop" : "Run"))
+    buttongrid[1,1] = b = Makie.Button(F, label = @lift($running ? "Running..." : "Run once"))
 
     on(b.clicks) do _
-        running[] = !running[]
+        if !running[]
+            running[] = true
+        end
     end
     on(running) do r
-        r && @async continue_singlerun!(sim, net,
-        observables, conf,
-        fids, fidsMax, fidsMin, ts,
-        linkcolors,
-        obs_rg,obs_1,obs_2,ax2,
-        current_time, running)
+        if r
+            @async continue_singlerun!(sim, net,
+            observables, conf,
+            fids, fidsMax, fidsMin, ts,
+            linkcolors,
+            obs_rg,obs_1,obs_2,ax2,
+            current_time)
+        end
     end
 
-    add_conf_sliders(F[1:5, 3], conf, root_conf)
+    # TODO enable sliders
+    #add_conf_sliders(F[1:5, 3], conf_obs, root_conf)
+
+    config_str = Markdown.parse("```\nParameters:\n"*join(["$(k)\t= $(v)" for (k,v) in pairs(root_conf)], "\n")*"\n```")
 
     dom = md"""$(F.scene)
     # Simulations of the generation of 3×2 cluster states in Tin-vacancy color centers
@@ -298,10 +309,11 @@ singletraj = App() do
 
     To the right the various locks and resource queues being tracked by the simulation are plotted in real time. For instance, whether the electron spin is currently being reserved by an entangler process is shown in the top plot.
 
-    To the right you can modify various hardware parameters before you run the simulation.
     Press "Run" to start the simulation.
 
-    The parameter sliders in this simulation are not functional yet.
+    The following parameters are used in this simulation:
+
+    $(config_str)
 
     Back at the [landing page](/..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
     """
@@ -311,51 +323,53 @@ end;
 ##
 # A helper to add parameter sliders to visualizations
 
-function add_conf_sliders(fig,conf_obs,root_conf)
+function add_conf_sliders(fig,conf_obs,root_conf; same_dict=false)
     sg = SliderGrid(
         fig,
-        (label = "Raw Entanglement Fidelity", #BK_electron_entanglement_fidelity
-            range = 0.85:0.005:1.0, format = "{:.2f}", startvalue = root_conf.BK_electron_entanglement_fidelity),
-        #-> "BK_electron_entanglement_init_state",
+        (label = "Raw Entanglement Fidelity",
+            range = 0.85:0.005:1.0, format = "{:.2f}", startvalue = root_conf[:Fᵉⁿᵗ]),
 
-        (label = "coincidence measurement fidelity", #BK_measurement_fidelity
-            range = 0.85:0.005:1.0, format = "{:.2f}", startvalue = root_conf.BK_measurement_fidelity),
+        (label = "coincidence measurement fidelity",
+            range = 0.85:0.005:1.0, format = "{:.2f}", startvalue = root_conf[:Fᵐᵉᵃˢ]),
 
-        (label = "optical circuit efficiency", #losses
-            range = 0.01:0.01:1.0, format = "{:.2f}", startvalue = root_conf.losses),
+        (label = "optical circuit efficiency",
+            range = 0.01:0.01:1.0, format = "{:.2f}", startvalue = root_conf[:ηᵒᵖᵗ]),
         (label = "ξ optical branching",
-            range = 0.5:0.01:1.0, format = "{:.2f}", startvalue = root_conf.ξ_optical_branching),
+            range = 0.5:0.01:1.0, format = "{:.2f}", startvalue = root_conf[:ξᴼᴮ]),
         (label = "ξ Debye-Waller",
-            range = 0.5:0.01:1.0, format = "{:.2f}", startvalue = root_conf.ξ_debye_waller),
+            range = 0.5:0.01:1.0, format = "{:.2f}", startvalue = root_conf[:ξᴰᵂ]),
         (label = "ξ quantum efficiency",
-            range = 0.5:0.01:1.0, format = "{:.2f}", startvalue = root_conf.ξ_quantum_efficiency),
+            range = 0.5:0.01:1.0, format = "{:.2f}", startvalue = root_conf[:ξᴱ]),
         (label = "F Purcell",
-            range = 1:100, format = "{:.2f}", startvalue = root_conf.F_purcell),
-        #-> BK_total_efficiency -> BK_success_prob -> BK_success_distribution
+            range = 1:100, format = "{:.2f}", startvalue = root_conf[:Fᵖᵘʳᶜ]),
 
-        (label = "Barret-Kok attempt duration (ms)", #BK_electron_entanglement_gentime
-            range = 0.001:0.001:0.1, format = "{:.3f}", startvalue = root_conf.BK_electron_entanglement_gentime),
-        (label = "hyperfine coupling (kHz)", #hyperfine_coupling
-            range = 5e3:1e3:80e3, format = "{:.2f}", startvalue = root_conf.hyperfine_coupling),
+        (label = "Barret-Kok attempt duration (ms)",
+            range = 0.001:0.001:0.1, format = "{:.3f}", startvalue = root_conf[:Fᵉⁿᵗ]),
+        (label = "hyperfine coupling (kHz)",
+            range = 1e3:1e4:2e6, format = "{:.2f}", startvalue = root_conf[:gʰᶠ]),
 
-        (label = "T₁ᵉ (ms)", #T1E
-            range = 0.1:0.1:20, format = "{:.2f}", startvalue = root_conf.T1E),
-        (label = "T₂ᵉ (ms)", #T2E
-            range = 0.001:0.001:0.08, format = "{:.3f}", startvalue = root_conf.T2E),
-        (label = "T₂ⁿ (ms)", #T1E
-            range = 100:100:2000, format = "{:.2f}", startvalue = root_conf.T2N),
+        (label = "T₁ᵉ (ms)", #T₁ᵉ
+            range = 0.1:0.1:20, format = "{:.2f}", startvalue = root_conf[:T₁ᵉ]),
+        (label = "T₂ᵉ (ms)", #T₂ᵉ
+            range = 0.001:0.001:0.08, format = "{:.3f}", startvalue = root_conf[:T₂ᵉ]),
+        (label = "T₂ⁿ (ms)", #T₁ᵉ
+            range = 100:100:2000, format = "{:.2f}", startvalue = root_conf[:T₂ⁿ]),
 
         width = 600,
         tellheight = false)
 
     # TODO there should be a nicer way to link sliders to the configuration
-    names = [:BK_electron_entanglement_fidelity, :BK_measurement_fidelity,
-        :losses, :ξ_optical_branching, :ξ_debye_waller, :ξ_quantum_efficiency, :F_purcell,
-        :BK_electron_entanglement_gentime, :hyperfine_coupling,
-        :T1E, :T2E, :T2N]
+    names = [:Fᵉⁿᵗ, :Fᵐᵉᵃˢ,
+        :ηᵒᵖᵗ, :ξᴼᴮ, :ξᴰᵂ, :ξᴱ, :Fᵖᵘʳᶜ,
+        :τᵉⁿᵗ, :gʰᶠ,
+        :T₁ᵉ, :T₂ᵉ, :T₂ⁿ
+        ]
     for (name,slider) in zip(names,sg.sliders)
         on(slider.value) do val
-            conf_obs[] = (;conf_obs[]..., NamedTuple{(name,)}((val,))...)
+            conf_obs[][name] = val
+            if same_dict # modify the configuration in place | used when the simulation might already be running
+                derive_conf(conf_obs[],inplace=true)
+            end
         end
     end
 end
@@ -363,10 +377,11 @@ end
 ##
 # Serve the Makie app
 
-
-isdefined(Main, :server) && close(server)
+isdefined(Main, :server) && close(server);
 server = JSServe.Server(landing, "0.0.0.0", 8888);
 JSServe.route!(server, "/" => landing);
 JSServe.route!(server, "/ensemble" => ensemble);
 JSServe.route!(server, "/single-trajectory" => singletraj);
+
+##
 wait(server.server_task[])

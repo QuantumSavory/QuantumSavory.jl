@@ -1,4 +1,4 @@
-@time include("setup.jl")
+include("setup.jl")
 using GLMakie
 GLMakie.activate!()
 
@@ -57,7 +57,7 @@ display(F)
 
 # Run the simulation
 FRAMERATE = 10
-tscale = conf.T2N/3
+tscale = conf[:T₂ⁿ]/3
 step_ts = range(0, tscale, step=tscale/500)
 record(F, "colorcentermodularcluster-02.simdashboard.mp4", step_ts, framerate=FRAMERATE) do t
     run(sim, t)
@@ -82,5 +82,5 @@ record(F, "colorcentermodularcluster-02.simdashboard.mp4", step_ts, framerate=FR
     notify(obs_rg)
     notify(obs_1)
     notify(obs_2)
-    xlims!(ax2,max(0,ts[][end]-conf.BK_mem_wait_time*5), nothing)
+    xlims!(ax2,max(0,ts[][end]-2*conf[:T₂ⁿ]), nothing)
 end
