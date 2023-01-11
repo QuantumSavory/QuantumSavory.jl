@@ -1,9 +1,12 @@
+module QuantumSavoryMakie
+
+using QuantumSavory
 using Graphs
 using NetworkLayout
+import SimJulia
 import Makie
 import Makie: Theme, Figure, Axis, @recipe
-
-export registernetplot, registernetplot_axis, resourceplot_axis
+import QuantumSavory: registernetplot, registernetplot_axis, resourceplot_axis, showonplot
 
 @recipe(RegisterNetPlot, regnet) do scene
     Theme()
@@ -170,4 +173,6 @@ function resourceplot_axis(subfig, network, edgeresources, vertexresources; regi
     Makie.hidespines!(axis)
     Makie.autolimits!(axis)
     subfig, axis, baseplot, networkobs
+end
+
 end
