@@ -7,8 +7,8 @@ GLMakie.activate!()
 # Demo visualizations of the performance of the network
 ##
 sizes = [2,3,4,3,2]        # Number of qubits in each register
-T2 = 100.0                  # T2 dephasing time of all qubits
-F = 0.97                    # Fidelity of the raw Bell pairs
+T2 = 100.0                 # T2 dephasing time of all qubits
+F = 0.97                   # Fidelity of the raw Bell pairs
 entangler_wait_time = 0.1  # How long to wait if all qubits are busy before retring entangling
 entangler_busy_time = 1.0  # How long it takes to establish a newly entangled pair
 swapper_wait_time = 0.1    # How long to wait if all qubits are unavailable for swapping

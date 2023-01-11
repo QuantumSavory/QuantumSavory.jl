@@ -34,15 +34,15 @@ using SnoopPrecompile
         nsubsystems(net[i].staterefs[2]) == 2
 
         # Symbolics and state expression
-        state = 1im*X2⊗Z1+2*Y1⊗(Z2+X2)+StabilizerState(S"XZ YY")
+        state = 1im*X2⊗Z1+2*Y1⊗(Z2+X2)+StabilizerState("XZ YY")
         express(state)
         express(state)
-        state = 1im*X1⊗Z2+2*Y2⊗(Z1+X1)+StabilizerState(S"YX ZZ")
+        state = 1im*X1⊗Z2+2*Y2⊗(Z1+X1)+StabilizerState("YX ZZ")
         state = SProjector(state)+2*X⊗(Z+Y)/3im
         state = state+MixedState(basis(state))
         express(state)
         express(state)
-        state = StabilizerState(S"ZZ XX")
+        state = StabilizerState("ZZ XX")
         state = SProjector(state)*0.5 + 0.5*MixedState(state)
         state2 = deepcopy(state)
         express(state2)

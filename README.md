@@ -12,7 +12,7 @@
     <tr>
         <td>Continuous integration</td>
         <td>
-            <a href="https://github.com/Krastanov/QuantumSavory.jl/actions?query=workflow%3ACI+branch%3Amaster"><img src="https://img.shields.io/github/workflow/status/Krastanov/QuantumSavory.jl/CI" alt="GitHub Workflow Status"></a>
+            <a href="https://github.com/Krastanov/QuantumSavory.jl/actions?query=workflow%3ACI+branch%3Amaster"><img src="https://img.shields.io/github/actions/workflow/status/Krastanov/QuantumSavory.jl/ci.yml?branch=master" alt="GitHub Workflow Status"></a>
         </td>
     </tr><tr></tr>
     <tr>

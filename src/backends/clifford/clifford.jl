@@ -11,8 +11,7 @@ apply!(state::QuantumClifford.MixedDestabilizer, indices, operation::Type{<:Quan
 
 ispadded(::QuantumClifford.MixedDestabilizer) = false
 
-traceout!(s::QuantumClifford.MixedDestabilizer,i) = QuantumClifford.traceoutremove!(s,i) # QuantumClifford.traceout!(s,i) if ispadded()=true
-
+const _qc_l = copy(express(Z1, CliffordRepr()))
 function newstate(::Qubit,::CliffordRepr)
     copy(_qc_l)
 end

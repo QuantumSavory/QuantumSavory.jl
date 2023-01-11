@@ -1,5 +1,8 @@
 import QuantumOpticsBase
-import QuantumOpticsBase: GenericBasis, CompositeBasis, StateVector, AbstractSuperOperator, basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, projector, identityoperator, embed, dm, expect, ptrace, spre, spost
+import QuantumOpticsBase: GenericBasis, CompositeBasis,
+    StateVector, AbstractSuperOperator, Ket, Operator,
+    basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz,
+    projector, identityoperator, embed, dm, expect, ptrace, spre, spost
 import QuantumOptics
 import QuantumOptics: timeevolution
 
@@ -51,6 +54,7 @@ function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Vector{<:
     end
 end
 
+const _l = copy(express(Z1, QuantumOpticsRepr()))
 function newstate(::Qubit,::QuantumOpticsRepr)
     copy(_l)
 end
@@ -62,4 +66,3 @@ include("should_upstream.jl")
 include("express.jl")
 include("uptotime.jl")
 include("noninstant.jl")
-include("clifford_interop.jl")

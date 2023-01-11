@@ -1,4 +1,4 @@
-export apply!
+import QuantumInterface: apply!
 
 """
 Apply a given operation on the given set of register slots.

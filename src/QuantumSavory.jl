@@ -6,12 +6,16 @@ using IterTools
 using LinearAlgebra
 using Graphs
 
-@reexport using QSymbolics
-# also imported, because QuantumSavory code outside of QSymbolics needs them, e.g. for `express`
-using QSymbolics:
+using QuantumInterface: basis, tensor, ⊗, apply!, traceout!,
+    AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
+
+export apply!, traceout!, removebackref!
+export project_traceout! #TODO should move to QuantumInterface
+
+@reexport using QuantumSymbolics
+using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
-    basis, tensor, ⊗, Operator, Ket, SuperOperator, Basis, SpinBasis, # from QuantumOpticsBase
     metadata, istree, operation, arguments, Symbolic, # from Symbolics
     HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
     XBasisState, YBasisState, ZBasisState,
@@ -19,8 +23,8 @@ using QSymbolics:
 
 export StateRef, RegRef, Register, RegisterNet
 export Qubit, Qumode,
-       QuantumOpticsRepr, QuantumMCRepr, CliffordRepr,
-       UseAsState, UseAsObservable, UseAsOperation
+    CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
+    UseAsState, UseAsObservable, UseAsOperation
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 

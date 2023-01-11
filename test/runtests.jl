@@ -25,12 +25,8 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 
 @doset "register_interface"
 @doset "noninstant"
-@doset "qo"
-@doset "qo_qc_interop"
-@doset "symbolics"
-@doset "express"
-@doset "plotting_cairo"
-get(ENV,"QUANTUMSAVORY_GL_TEST","")=="true" && @doset "plotting_gl"
+get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_cairo"
+get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_gl"
 
 @doset "examples"
 
@@ -42,8 +38,7 @@ using Aqua
 using QuantumClifford, QuantumOptics, Graphs
 doset("aqua") && begin
     Aqua.test_all(QuantumSavory,
-                  ambiguities=false,
-                  unbound_args=false, # TODO due to Aqua bug https://github.com/JuliaTesting/Aqua.jl/issues/87
+                  ambiguities=false
                   )
     #Aqua.test_ambiguities([QuantumSavory,Core]) # otherwise Base causes false positives
 end

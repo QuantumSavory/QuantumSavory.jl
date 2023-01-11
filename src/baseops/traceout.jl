@@ -1,4 +1,4 @@
-export removebackref!, traceout!, project_traceout!
+import QuantumInterface: traceout!
 
 function removebackref!(s::StateRef, i) # To be used only with something that updates s.state[]
     padded = ispadded(s.state[])

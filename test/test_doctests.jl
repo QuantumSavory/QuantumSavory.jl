@@ -1,9 +1,9 @@
-using Documenter
+using Documenter, QuantumSavory
 
 function doctests()
     @testset "Doctests" begin
-        DocMeta.setdocmeta!(QuantumClifford, :DocTestSetup, :(using QuantumClifford); recursive=true)
-        doctest(QuantumClifford)
+        DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory); recursive=true)
+        doctest(QuantumSavory)
     end
 end
 
