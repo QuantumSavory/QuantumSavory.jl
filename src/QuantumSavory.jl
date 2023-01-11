@@ -214,7 +214,8 @@ include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
 
 include("simjulia.jl")
-include("makie.jl")
+
+include("plots.jl")
 
 include("precompile.jl")
 

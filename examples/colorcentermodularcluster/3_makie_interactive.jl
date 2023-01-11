@@ -378,7 +378,9 @@ end
 # Serve the Makie app
 
 isdefined(Main, :server) && close(server);
-server = JSServe.Server(landing, "0.0.0.0", 8888);
+port = parse(Int, get(ENV, "QS_COLORCENTERMODCLUSTER_PORT", "8888"))
+interface = get(ENV, "QS_COLORCENTERMODCLUSTER_IP", "127.0.0.1")
+server = JSServe.Server(landing, interface, port);
 JSServe.route!(server, "/" => landing);
 JSServe.route!(server, "/ensemble" => ensemble);
 JSServe.route!(server, "/single-trajectory" => singletraj);
