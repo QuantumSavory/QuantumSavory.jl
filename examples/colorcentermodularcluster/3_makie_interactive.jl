@@ -65,7 +65,7 @@ fill_results!(def_times,def_fids,root_conf)
 
 landing = App() do
     config_str = Markdown.parse("```\nParameters:\n"*join(["$(k)\t= $(v)" for (k,v) in pairs(root_conf)], "\n")*"\n```")
-    dom = md"""
+    content = md"""
     # Simulations of the generation of GHZ and 3×2 cluster states in Tin-vacancy color centers
 
     For simulations over many repetition of the state generation experiment consult the [Ensemble Sims Page](./ensemble).
@@ -114,7 +114,7 @@ landing = App() do
     - optical crosstalk and poor extinction are not modeled
     - decoupling the electronic and nuclear spin after a failed measurement is not modeled in detail
     """
-    return JSServe.DOM.div(JSServe.MarkdownCSS, JSServe.Styling, dom)
+    return DOM.html(DOM.meta(charset="UTF-8"),DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content))
 end;
 
 ##
@@ -164,7 +164,7 @@ ensemble = App() do
 
     add_conf_sliders(F[1, 2], conf_obs, root_conf)
 
-    dom = md"""$(F.scene)
+    content = md"""$(F.scene)
     # Simulations of the generation of 3×2 cluster states in Tin-vacancy color centers
 
     Each dot in the plot corresponds to one complete Monte Carlo simulation run.
@@ -182,7 +182,7 @@ ensemble = App() do
 
     Back at the [landing page](/..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
     """
-    return JSServe.DOM.div(JSServe.MarkdownCSS, JSServe.Styling, dom)
+    return DOM.html(DOM.meta(charset="UTF-8"),DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content))
 end;
 
 ##
@@ -299,7 +299,7 @@ singletraj = App() do
 
     config_str = Markdown.parse("```\nParameters:\n"*join(["$(k)\t= $(v)" for (k,v) in pairs(root_conf)], "\n")*"\n```")
 
-    dom = md"""$(F.scene)
+    content = md"""$(F.scene)
     # Simulations of the generation of 3×2 cluster states in Tin-vacancy color centers
 
     The top-left plot shows the state of the network of registers. Each register has two slots, one for an electron spin where the entanglement gets established through a Barrett-Kok protocol, and one for a nuclear spin for long term storage.
@@ -317,7 +317,7 @@ singletraj = App() do
 
     Back at the [landing page](/..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
     """
-    return JSServe.DOM.div(JSServe.MarkdownCSS, JSServe.Styling, dom)
+    return DOM.html(DOM.meta(charset="UTF-8"),DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content))
 end;
 
 ##
@@ -380,10 +380,13 @@ end
 isdefined(Main, :server) && close(server);
 port = parse(Int, get(ENV, "QS_COLORCENTERMODCLUSTER_PORT", "8888"))
 interface = get(ENV, "QS_COLORCENTERMODCLUSTER_IP", "127.0.0.1")
-server = JSServe.Server(landing, interface, port);
+proxy_url = get(ENV, "QS_COLORCENTERMODCLUSTER_PROXY", "")
+server = JSServe.Server(interface, port; proxy_url);
+JSServe.HTTPServer.start(server)
 JSServe.route!(server, "/" => landing);
 JSServe.route!(server, "/ensemble" => ensemble);
 JSServe.route!(server, "/single-trajectory" => singletraj);
 
 ##
-wait(server.server_task[])
+
+wait(server)

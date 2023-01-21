@@ -1,18 +1,20 @@
-export AbstractNoninstantOperation, NoninstantGate, ConstantHamiltonianEvolution
+export AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution
 
 abstract type AbstractNoninstantOperation end
 
-struct NoninstantGate <: AbstractNoninstantOperation
+"""Represents an gate applied instantaneously followed by a waiting period. See also [`ConstantHamiltonianEvolution`](@ref)."""
+struct NonInstantGate <: AbstractNoninstantOperation
     gate
     duration # TODO assert larger than zero
 end
 
-function apply!(regs::Vector{Register}, indices::Vector{Int}, operation::NoninstantGate; time=nothing)
+function apply!(regs::Vector{Register}, indices::Vector{Int}, operation::NonInstantGate; time=nothing)
     _, new_time = apply!(regs, indices, operation.gate; time)
     uptotime!(regs, indices, new_time+operation.duration)
     regs, new_time+operation.duration
 end
 
+"""Represents a Hamiltonian being applied for the given duration. See also [`NonInstantGate`](@ref)."""
 struct ConstantHamiltonianEvolution <: AbstractNoninstantOperation
     hamiltonian
     duration # TODO assert larger than zero

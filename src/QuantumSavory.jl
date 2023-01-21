@@ -64,7 +64,7 @@ struct Register # TODO better type description
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,fill(0.0,length(traits)))
 Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
-Register(traits,bg::Vector{<:AbstractBackground}) = Register(traits,default_repr.(traits),bg,fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
+Register(traits,bg::Vector{<:Union{Nothing,<:AbstractBackground}}) = Register(traits,default_repr.(traits),bg,fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
 Register(traits,reprs::Vector{<:AbstractRepresentation}) = Register(traits,reprs,fill(nothing,length(traits)),fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
 Register(traits) = Register(traits,default_repr.(traits),fill(nothing,length(traits)),fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
 

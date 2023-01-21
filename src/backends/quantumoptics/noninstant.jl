@@ -4,11 +4,15 @@ function apply_noninstant!(state::Operator, state_indices::Vector{Int}, operatio
     Δt = operation.duration
     base = basis(state)
     e = isa(base,CompositeBasis)
-    lindbladians = [e ? embed(base,[i],lindbladop(bg)) : lindbladop(bg) for (i,bg) in zip(state_indices,backgrounds)]
+    lindbladians = [e ? embed(base,[i],lindbladop(bg)) : lindbladop(bg) for (i,bg) in zip(state_indices,backgrounds) if !isnothing(bg)]
     ham = express(operation.hamiltonian, QOR)
     ham = e ? embed(base,state_indices,ham) : ham
     _, sol = timeevolution.master([0,Δt], state, ham, lindbladians)
     sol[end]
+end
+
+function apply_noninstant!(state::Ket, state_indices::Vector{Int}, operation::ConstantHamiltonianEvolution, backgrounds)
+    apply_noninstant!(dm(state), state_indices, operation, backgrounds)
 end
 
 function lindbladop(T1::T1Decay)
