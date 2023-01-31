@@ -1,7 +1,7 @@
 name = "QuantumSavory"
 uuid = "2de2e421-972c-4cb5-a0c3-999c85908079"
 authors = ["Stefan Krastanov <stefan@krastanov.org>"]
-version = "0.1.0-dev"
+version = "0.1.0"
 
 [deps]
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
