@@ -1,5 +1,6 @@
 using Test
 using QuantumSavory
+using QuantumSavory: NonInstantGate
 
 ##
 # Time of application and gate durations
@@ -10,8 +11,8 @@ uptotime!(reg[1],0.2)
 uptotime!(reg[1],0.2)
 @test_throws ErrorException uptotime!(reg[1],0.1)
 apply!(reg[1], H; time=0.3)
-apply!(reg[1], NoninstantGate(H,0.1); time=0.4)
-apply!([reg[1],reg[2]], NoninstantGate(CNOT, 0.1))
+apply!(reg[1], NonInstantGate(H,0.1); time=0.4)
+apply!([reg[1],reg[2]], NonInstantGate(CNOT, 0.1))
 @test_throws ErrorException uptotime!(reg[1],0.55)
 @test_throws ErrorException apply!(reg[1], H; time=0.55)
 
