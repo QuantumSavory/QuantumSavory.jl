@@ -37,7 +37,7 @@ apply!((network[2,3],network[3,1]), CNOT)
 
 # create the plot
 fig = Figure(resolution=(400,400))
-_, _, _, obs = registernetplot_axis(fig[1,1],network)
+_, _, plt, obs = registernetplot_axis(fig[1,1],network)
 fig
 ```
 
