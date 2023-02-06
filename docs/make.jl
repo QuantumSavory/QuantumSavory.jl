@@ -40,6 +40,7 @@ function main()
     "Tutorials" => [
         "tutorial.md",
         "Gate duration" => "tutorial/noninstantgate.md",
+        #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
     ],
     "References" => [
         "references.md",

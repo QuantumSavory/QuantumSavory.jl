@@ -114,7 +114,7 @@ landing = App() do
     - optical crosstalk and poor extinction are not modeled
     - decoupling the electronic and nuclear spin after a failed measurement is not modeled in detail
     """
-    return DOM.html(DOM.meta(charset="UTF-8"),DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content))
+    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content)
 end;
 
 ##
@@ -182,7 +182,7 @@ ensemble = App() do
 
     Back at the [landing page](/..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
     """
-    return DOM.html(DOM.meta(charset="UTF-8"),DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content))
+    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content)
 end;
 
 ##
@@ -317,7 +317,7 @@ singletraj = App() do
 
     Back at the [landing page](/..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
     """
-    return DOM.html(DOM.meta(charset="UTF-8"),DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content))
+    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content)
 end;
 
 ##
