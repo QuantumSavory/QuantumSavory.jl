@@ -38,6 +38,7 @@ struct Qumode <: QuantumStateTrait end
 
 # TODO move these definitions to a neater place
 default_repr(::Qubit) = QuantumOpticsRepr()
+default_repr(::Qumode) = QuantumOpticsRepr()
 
 
 # TODO better constructors

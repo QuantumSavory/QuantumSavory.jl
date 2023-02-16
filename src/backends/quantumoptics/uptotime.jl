@@ -11,11 +11,20 @@ function uptotime!(state::Operator, idx::Int, background, Δt)
     tmpr = zero(state)
     b = basis(state)
     e = isa(b,CompositeBasis) # TODO make this more elegant with multiple dispatch
-    for k in krausops(background, Δt)
-        k = e ? embed(b,[idx],k) : k # TODO lazy product would be better maybe
-        mul!(tmpl,k,state,1,0) # TODO there must be a prettier way to do this
-        mul!(tmpr,tmpl,k',1,0)
-        nstate.data .+= tmpr.data
+    Ks = krausops(background, Δt, b)
+    if isnothing(Ks) # TODO turn this into a dispatch on a trait of having a kraus representations
+        # TODO code repetition with apply_noninstant!
+        L = lindbladop(background,b)
+        lindbladian = e ? embed(b,[idx],L) : L
+        _, sol = timeevolution.master([0,Δt], state, identityoperator(b), [lindbladian])
+        nstate.data .= sol[end].data
+    else
+        for k in Ks
+            k = e ? embed(b,[idx],k) : k # TODO lazy product would be better maybe
+            mul!(tmpl,k,state,1,0) # TODO there must be a prettier way to do this
+            mul!(tmpr,tmpl,k',1,0)
+            nstate.data .+= tmpr.data
+        end
     end
     @assert abs(tr(nstate)) ≈ 1. # TODO maybe put under a debug flag
     nstate
@@ -42,6 +51,10 @@ const _cphase = _ll⊗_Id + _hh⊗_z
 const _phase = _ll + im*_hh
 const _iphase = _ll - im*_hh
 
+function krausops(b::AbstractBackground, Δt, basis) # shortcircuit for backgrounds that work on a single basis
+    return krausops(b, Δt)
+end
+
 # TODO move to QuantumSymbolics (and remove the above constants)
 function krausops(T1::T1Decay, Δt) # TODO checks comparing krausops and lindbladops
     p = exp(-Δt/T1.t1) # TODO check this
@@ -53,3 +66,9 @@ function krausops(T2::T2Dephasing, Δt)
     [√(1-p/2) * _id, √(p/2) * _z]
     #[√(1-p) * _id, √(p) * _hh, √(p) * _ll]
 end
+
+function krausops(d::AmplitudeDamping, Δt, basis) # https://quantumcomputing.stackexchange.com/questions/6828/amplitude-damping-of-a-harmonic-oscillator
+    nothing # TODO maybe encode this as a trait
+end
+
+# TODO add an amplitude damping example of transduction

@@ -15,8 +15,16 @@ function apply_noninstant!(state::Ket, state_indices::Vector{Int}, operation::Co
     apply_noninstant!(dm(state), state_indices, operation, backgrounds)
 end
 
+function lindbladop(b::AbstractBackground, basis) # shortcircuit for backgrounds that work on a single basis
+    lindbladop(b)
+end
+
 function lindbladop(T1::T1Decay)
     1/√T1.t1 * _lh
+end
+
+function lindbladop(d::AmplitudeDamping, basis)
+    1/√d.τ * destroy(basis)
 end
 
 function lindbladop(T2::T2Dephasing) # TODO pay attention to the √2 necessary to match to kraus operators
@@ -24,7 +32,9 @@ function lindbladop(T2::T2Dephasing) # TODO pay attention to the √2 necessary 
 end
 
 function lindbladop(D::Depolarization)
+    # TODO
 end
 
 function lindbladop(P::PauliNoise)
+    # TODO
 end

@@ -1,4 +1,4 @@
-export T1Decay, T2Dephasing, Depolarization, PauliNoise
+export T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping
 
 """A background describing the T₁ decay of a two-level system."""
 struct T1Decay <: AbstractBackground
@@ -20,4 +20,9 @@ struct PauliNoise <: AbstractBackground
     τˣ
     τʸ
     τᶻ
+end
+
+"""A depolarization background."""
+struct AmplitudeDamping <: AbstractBackground
+    τ
 end

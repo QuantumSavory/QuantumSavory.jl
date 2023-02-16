@@ -1,7 +1,7 @@
 import QuantumOpticsBase
 import QuantumOpticsBase: GenericBasis, CompositeBasis,
     StateVector, AbstractSuperOperator, Ket, Operator,
-    basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz,
+    basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy,
     projector, identityoperator, embed, dm, expect, ptrace, spre, spost
 import QuantumOptics
 import QuantumOptics: timeevolution
@@ -60,6 +60,13 @@ function newstate(::Qubit,::QuantumOpticsRepr)
 end
 function newstate(::Qubit,::QuantumMCRepr)
     copy(_l)
+end
+const _vac = copy(express(F0, QuantumOpticsRepr()))
+function newstate(::Qumode,::QuantumOpticsRepr)
+    copy(_vac)
+end
+function newstate(::Qumode,::QuantumMCRepr)
+    copy(_vac)
 end
 
 include("should_upstream.jl")

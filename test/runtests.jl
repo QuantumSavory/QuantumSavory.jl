@@ -24,7 +24,8 @@ end
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
 @doset "register_interface"
-@doset "noninstant"
+@doset "noninstant_and_backgrounds_qubit"
+@doset "noninstant_and_backgrounds_qumode"
 @doset "examples"
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_cairo"
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_gl"
