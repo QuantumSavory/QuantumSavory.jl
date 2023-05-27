@@ -11,4 +11,4 @@ SimJulia = "428bdadb-6287-5aa5-874b-9969638295fd"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
-JSServe = "2.1.0"
+JSServe = "2.2.3"
