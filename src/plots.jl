@@ -16,7 +16,3 @@ Requires a Makie backend be already imported."""
 function resourceplot_axis end
 
 function showonplot end
-
-if !isdefined(Base, :get_extension)
-    include("../ext/QuantumSavoryMakie/QuantumSavoryMakie.jl")
-end
