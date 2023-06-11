@@ -11,7 +11,7 @@ end
 - It provides for algebraic manipulation of mathematical expressions related to your models. Particularly helpful when having to automatically generate or simplify expressions of significant complexity.
 - An assortment of "expression translators" are provided that can turn a symbolic expression into a numerical one in any of the representations supported by the simulator (e.g. wavefunctions, tableaux, etc).
 
-Below we list some commonly used expressions. For more detailed documentation consult [`QuantumSymbolics.jl`](https://krastanov.github.io/QuantumSymbolics.jl/dev/).
+Below we list some commonly used expressions. For more detailed documentation consult [`QuantumSymbolics.jl`](https://quantumsavory.github.io/QuantumSymbolics.jl/dev/).
 
 ```@setup symb
 using QuantumSavory

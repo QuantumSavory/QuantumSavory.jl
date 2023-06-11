@@ -47,4 +47,4 @@ The user does not need to know much about these libraries, but if they wish, it 
 ## Full Code
 
 The entirety of the code necessary for reproducing these results is in the
-[examples folder of the `QuantumSavory.jl` repository](https://github.com/Krastanov/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster).
+[examples folder of the `QuantumSavory.jl` repository](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster).

@@ -51,7 +51,7 @@ function main()
     ]
     )
     deploydocs(
-        repo = "github.com/Krastanov/QuantumSavory.jl.git"
+        repo = "github.com/QuantumSavory/QuantumSavory.jl.git"
     )
 end
 

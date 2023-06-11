@@ -66,4 +66,4 @@ We can run the either simulation multiple times in order to compare the results 
 ## Full Code
 
 The entirety of the code necessary for reproducing these results is in the
-[examples folder of the `QuantumSavory.jl` repository](https://github.com/Krastanov/QuantumSavory.jl/tree/master/examples/firstgenrepeater).
+[examples folder of the `QuantumSavory.jl` repository](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater).
