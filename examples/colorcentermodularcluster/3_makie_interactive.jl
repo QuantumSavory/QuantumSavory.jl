@@ -12,7 +12,7 @@ function run_until_connected(root_conf)
     net, sim, observables, conf = prep_sim(root_conf)
     # Run until all connections succeed
     while !all([net[v,:link_register] for v in edges(net)])
-        SimJulia.step(sim)
+        ConcurrentSim.step(sim)
     end
     # Calculate fidelity of each cluster vertex
     fid = map(vertices(net)) do v

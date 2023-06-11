@@ -1,5 +1,5 @@
 using QuantumSavory, JET
-using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, SimJulia, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols
+using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols
 
 using JET: ReportPass, BasicPass, InferenceErrorReport, UncaughtExceptionReport
 
@@ -30,7 +30,7 @@ rep = report_package("QuantumSavory";
         AnyFrameModule(QuantumOpticsBase),
         AnyFrameModule(QuantumClifford),
         AnyFrameModule(ResumableFunctions),
-        AnyFrameModule(SimJulia),
+        AnyFrameModule(ConcurrentSim),
         AnyFrameModule(WignerSymbols),
         ))
 

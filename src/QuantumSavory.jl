@@ -214,7 +214,7 @@ include("noninstant.jl")
 include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
 
-include("simjulia.jl")
+include("concurrentsim.jl")
 
 include("plots.jl")
 

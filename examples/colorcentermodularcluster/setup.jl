@@ -3,7 +3,7 @@ using Graphs
 
 # For discrete event simulation
 using ResumableFunctions
-using SimJulia
+using ConcurrentSim
 
 # For sampling from probability distributions
 using Distributions
@@ -87,7 +87,7 @@ function prep_sim(root_conf)
     # compute various derived constants for the simulation
     conf = derive_conf(root_conf)
 
-    # set up SimJulia discrete events simulation
+    # set up ConcurrentSim discrete events simulation
     sim = Simulation()
 
     net[:, :espin_queue] = () -> Resource(sim,1)

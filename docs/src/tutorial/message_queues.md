@@ -8,20 +8,20 @@ end
 ```
 
 In network simulations, a convenient synchronization primitive is the passing of messages between nodes.
-The `ResumableFunctions` and `SimJulia` libraries provide such primitives, convenient to use with `QuatumSavory`.
+The `ResumableFunctions` and `ConcurrentSim` libraries provide such primitives, convenient to use with `QuatumSavory`.
 
 Here we run through a simple example: there are two nodes that perform certain measurements. If the measurement result is the same, then the simulation ends. If the results differ, then we reset both nodes and try again. No actual physics will be simulated here (we will just generate some random numbers).
 
 There are a number of convenient queue structures provided by these libraries. We will focus on `Store` and `DelayChannel` both of which are FILO stacks on which you can `put` messages or `get` messages.
 
-We use `SimJulia`'s `@yield` and `@process` constructs to provide concurrency in our simulation.
+We use `ConcurrentSim`'s `@yield` and `@process` constructs to provide concurrency in our simulation.
 
 First we create a `Simulation` object (to track the fictitious simulation time and currently active simulated process) and create a few FILO stacks for `put`ting and `get`ting messages.
 
 ```@example messagechannel
 using QuantumSavory
 using ResumableFunctions
-using SimJulia
+using ConcurrentSim
 using CairoMakie
 
 sim = Simulation()
@@ -118,7 +118,7 @@ Finally, we schedule the two concurrent processes and run the simulation until s
 @process process_node1(sim)
 @process process_node2(sim)
 
-SimJulia.run(sim)
+ConcurrentSim.run(sim)
 time_before_success = now(sim)
 ```
 
@@ -183,7 +183,7 @@ end
 @process process_node1(sim)
 @process process_node2(sim)
 
-SimJulia.run(sim)
+ConcurrentSim.run(sim)
 
 fig = Figure()
 ax = Axis(fig[1,1],xlabel="time")

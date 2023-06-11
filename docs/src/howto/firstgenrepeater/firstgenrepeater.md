@@ -28,7 +28,7 @@ For a convenient data structure to track per-node metadata in a graph (network) 
 
 Moreover, behind the scenes `QuantumSavory.jl` will use:
 
-- `SimJulia.jl` for discrete event scheduling and simulation;
+- `ConcurrentSim.jl` for discrete event scheduling and simulation;
 - `Makie.jl` together with our custom plotting recipes for visualizations;
 - `QuantumOptics.jl` for low-level quantum states.
 
@@ -54,7 +54,7 @@ The `RegisterNet` would contain, on each node:
 
 - a [`Register`](@ref) of the appropriate size;
 - an array of tuples keeping track of whom each qubit in the register is entangled to (as the `:enttracker` property);
-- an array of locks (from `SimJulia.jl`) keeping track of whether a process is happening on the given qubit (as the `:locks` property).
+- an array of locks (from `ConcurrentSim.jl`) keeping track of whether a process is happening on the given qubit (as the `:locks` property).
 
 !!! note
     To see how to visualize these data structures as the simulation is proceeding, consult the [Visualizations](@ref Visualizations) page.
@@ -481,7 +481,7 @@ end
 ## Running the simulations
 
 Now that we have defined the Entangler, Swapper, and Purifier processes, we just need to run the simulation.
-That is no different from running any other `SimJulia.jl` simulation, after our custom setup:
+That is no different from running any other `ConcurrentSim.jl` simulation, after our custom setup:
 
 ```julia
 sizes = [2,3,4,3,2]        # Number of qubits in each register
@@ -513,7 +513,7 @@ end
 ```
 
 Then to run the simulation up to time `t` we just write `run(sim, t)`.
-If we want to run until the next event, whenever that is, we can do `SimJulia.step(sim)`
+If we want to run until the next event, whenever that is, we can do `ConcurrentSim.step(sim)`
 
 ## Figures of Merit and Visualizations
 
@@ -558,7 +558,7 @@ Many of the above functions take the `time` keyword argument, which ensures that
 
 Of note is that we also used
 `Makie.jl` for plotting,
-`SimJulia.jl` for discrete event scheduling,
+`ConcurrentSim.jl` for discrete event scheduling,
 `QuantumClifford.jl` for efficient simulation of Clifford circuits,
 and `QuantumOptics.jl` for convenient master equation integration.
 Many of these tools were used under the hood without being invoked directly.

@@ -31,7 +31,7 @@ display(fig)
 ##
 
 using Graphs
-using SimJulia
+using ConcurrentSim
 sim = Simulation()
 for v in vertices(network)
     network[v,:bool] = rand(Bool)

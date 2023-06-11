@@ -47,7 +47,7 @@ The [`resourceplot_axis`](@ref) function can be used to draw all locks and resou
 
 ```@example vis
 using Graphs
-using SimJulia
+using ConcurrentSim
 
 sim = Simulation()
 

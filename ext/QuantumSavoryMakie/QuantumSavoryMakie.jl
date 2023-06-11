@@ -3,7 +3,7 @@ module QuantumSavoryMakie
 using QuantumSavory
 using Graphs
 using NetworkLayout
-import SimJulia
+import ConcurrentSim
 import Makie
 import Makie: Theme, Figure, Axis, @recipe
 import QuantumSavory: registernetplot, registernetplot_axis, resourceplot_axis, showonplot
@@ -129,7 +129,7 @@ end
 
 ##
 
-showonplot(r::SimJulia.Resource) = !isfree(r)
+showonplot(r::ConcurrentSim.Resource) = !isfree(r)
 showonplot(b::Bool) = b
 
 """Draw the various resources and locks stored in the given meta-graph on a given Makie axis.

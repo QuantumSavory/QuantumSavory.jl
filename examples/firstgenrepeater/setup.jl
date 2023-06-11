@@ -3,7 +3,7 @@ using Graphs
 
 # For discrete event simulation
 using ResumableFunctions
-using SimJulia
+using ConcurrentSim
 
 # Useful for interactive work
 # Enables automatic re-compilation of modified codes

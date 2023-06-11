@@ -34,7 +34,7 @@ For a convenient data structure to track per-node metadata in a graph (network) 
 
 Moreover, behind the scenes `QuantumSavory.jl` will use:
 
-- `SimJulia.jl` for discrete event scheduling and simulation;
+- `ConcurrentSim.jl` for discrete event scheduling and simulation;
 - `Makie.jl` together with our custom plotting recipes for visualizations;
 - `QuantumOptics.jl` for low-level quantum states.
 
