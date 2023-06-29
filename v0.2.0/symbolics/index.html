@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Symbolic Expressions · QuantumSavory.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><script src="../assets/init.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="QuantumSavory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">QuantumSavory.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">QuantumSavory.jl</a></li><li><a class="tocitem" href="../manual/">Getting Started Manual</a></li><li><span class="tocitem">Explanations</span><ul><li><a class="tocitem" href="../explanations/">Explanations</a></li><li><a class="tocitem" href="../propbackgrounds/">Properties and Backgrounds</a></li><li class="is-active"><a class="tocitem" href>Symbolic Expressions</a></li><li><a class="tocitem" href="../visualizations/">Visualizations</a></li><li><input class="collapse-toggle" id="menuitem-3-5" type="checkbox"/><label class="tocitem" for="menuitem-3-5"><span class="docs-label">Dev Documentation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../register_interface/">Register Interface</a></li></ul></li></ul></li><li><span class="tocitem">How-To Guides</span><ul><li><a class="tocitem" href="../howto/">How-To Guides</a></li><li><a class="tocitem" href="../howto/firstgenrepeater/firstgenrepeater/">1st-gen Repeater</a></li><li><a class="tocitem" href="../howto/firstgenrepeater/firstgenrepeater-clifford/">1st-gen Repeater (Clifford formalism)</a></li><li><a class="tocitem" href="../howto/colorcentermodularcluster/colorcentermodularcluster/">Cluster States in Atomic Memories</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../tutorial/">Tutorials</a></li><li><a class="tocitem" href="../tutorial/noninstantgate/">Gate duration</a></li><li><a class="tocitem" href="../tutorial/message_queues/">Message queues</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../references/">References</a></li><li><a class="tocitem" href="../API/">API</a></li><li><a class="tocitem" href="../bibliography/">Bibliography</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Explanations</a></li><li class="is-active"><a href>Symbolic Expressions</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Symbolic Expressions</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/docs/src/symbolics.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Symbolic-Expressions"><a class="docs-heading-anchor" href="#Symbolic-Expressions">Symbolic Expressions</a><a id="Symbolic-Expressions-1"></a><a class="docs-heading-anchor-permalink" href="#Symbolic-Expressions" title="Permalink"></a></h1><p><code>QuantumSavory</code> supports symbolic expressions for the quantum states and operations being simulated thanks to the <code>QuantumSymbolics</code> library. It serves two purposes:</p><ul><li>It provides for algebraic manipulation of mathematical expressions related to your models. Particularly helpful when having to automatically generate or simplify expressions of significant complexity.</li><li>An assortment of &quot;expression translators&quot; are provided that can turn a symbolic expression into a numerical one in any of the representations supported by the simulator (e.g. wavefunctions, tableaux, etc).</li></ul><p>Below we list some commonly used expressions. For more detailed documentation consult <a href="https://quantumsavory.github.io/QuantumSymbolics.jl/dev/"><code>QuantumSymbolics.jl</code></a>.</p><table>
+<tr>
+<th></th><th>Symbolic Example</th><th>Conversion Example</th>
+</tr>
+<tr><!-- Qubit Basis States -->
+<td><p>Qubit Basis States <code>X1</code>, <code>X2</code>, <code>Y1</code>, <code>Y2</code>, <code>Z1</code>, <code>Z2</code></p></td>
+<td><pre><code class="language-julia hljs">Z1</code></pre><p class="math-container">\[\left|Z_1\right\rangle\]</p></td>
+<td><pre><code class="language-julia hljs">express(Z1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Ket(dim=2)
+  basis: Spin(1/2)
+ 1.0 + 0.0im
+ 0.0 + 0.0im</code></pre><pre><code class="language-julia hljs">express(Y2, CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
++ Z
+𝒮𝓉𝒶𝒷
+- Y</code></pre></td>
+</tr>
+<tr><!-- Common gates -->
+<td><p>Common gates: <code>CNOT</code>, <code>H</code>, etc</p></td>
+<td><pre><code class="language-julia hljs">CNOT</code></pre><p>\hat CNOT</p></td>
+<td><pre><code class="language-julia hljs">express(H)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Operator(dim=2x2)
+  basis: Spin(1/2)sparse([1, 2, 1, 2], [1, 1, 2, 2], ComplexF64[0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im, -0.7071067811865475 + 0.0im], 2, 2)</code></pre><pre><code class="language-julia hljs">express(CNOT, CliffordRepr(), UseAsOperation())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">QuantumClifford.sCNOT</code></pre></td>
+</tr>
+<tr><!-- Tensor products and sums -->
+<td><p>Tensor products <code>⊗</code> and sums <code>+</code></p></td>
+<td><pre><code class="language-julia hljs">(X1⊗Z2 + Y1⊗Y2 ) / √3</code></pre><p class="math-container">\[0.5773502691896258 \left|Y_1\right\rangle\otimes\left|Y_2\right\rangle + \left|X_1\right\rangle\otimes\left|Z_2\right\rangle\]</p></td>
+<td><pre><code class="language-julia hljs">express(X1⊗Z1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Ket(dim=4)
+  basis: [Spin(1/2) ⊗ Spin(1/2)]
+ 0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im</code></pre><pre><code class="language-julia hljs">express(X1⊗Y2, CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
++ Z_
++ _Z
+𝒮𝓉𝒶𝒷
++ X_
+- _Y</code></pre></td>
+</tr>
+<tr><!-- Projectors -->
+<td><p>Projectors, pure density matrices</p></td>
+<td><pre><code class="language-julia hljs">SProjector(X1⊗Z2)</code></pre><p class="math-container">\[\mathrm{projector}\left( \left|X_1\right\rangle\otimes\left|Z_2\right\rangle \right)\]</p></td>
+<td><pre><code class="language-julia hljs">express(SProjector(X1⊗Z1))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Operator(dim=4x4)
+  basis: [Spin(1/2) ⊗ Spin(1/2)]
+ 0.5+0.0im  0.5+0.0im  0.0+0.0im  0.0+0.0im
+ 0.5+0.0im  0.5+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im
+ 0.0+0.0im  0.0+0.0im  0.0+0.0im  0.0+0.0im</code></pre><pre><code class="language-julia hljs">express(SProjector(X1⊗Z1), CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
++ Z_
++ _X
+𝒮𝓉𝒶𝒷
++ X_
++ _Z</code></pre></td>
+</tr>
+<tr><!-- Completely mixed state -->
+<td><p>Completely depolarized (mixed) state</p></td>
+<td><pre><code class="language-julia hljs">MixedState(X1)</code></pre><p>\mathbb{M}</p></td>
+<td><pre><code class="language-julia hljs">express(MixedState(X1))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Operator(dim=2x2)
+  basis: Spin(1/2)sparse([1, 2], [1, 2], ComplexF64[0.5 + 0.0im, 0.5 + 0.0im], 2, 2)</code></pre><pre><code class="language-julia hljs">express(MixedState(X1), CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
+
+𝒳ₗ━
++ X
+𝒮𝓉𝒶𝒷
+
+𝒵ₗ━
++ Z</code></pre></td>
+</tr>
+<tr><!-- Mixtures -->
+<td><p>Impure states, represented as sum of density matrices</p></td>
+<td><pre><code class="language-julia hljs">(MixedState(X1)+SProjector(Z1)) / 2</code></pre><p class="math-container">\[0.5 \mathbb{M} + \mathrm{projector}\left( \left|Z_1\right\rangle \right)\]</p></td>
+<td><pre><code class="language-julia hljs">express((MixedState(X1)+SProjector(Z1)) / 2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Operator(dim=2x2)
+  basis: Spin(1/2)
+ 0.75+0.0im   0.0+0.0im
+  0.0+0.0im  0.25+0.0im</code></pre><p>When a Clifford representation is used, an efficient sampler is generated, and stabilizer states are randomly sampled from the correct distribution:</p><pre><code class="language-julia hljs">express(MixedState(X1)/2+SProjector(Z1)/2, CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
++ X
+𝒮𝓉𝒶𝒷
++ Z</code></pre></td>
+</tr>
+<tr></tr>
+</table><div class="admonition is-warning"><header class="admonition-header">Stabilizer state expressions</header><div class="admonition-body"><p>The state writen as <span>$\frac{|Z₁⟩⊗|Z₁⟩+|Z₂⟩⊗|Z₂⟩}{√2}$</span> is a well known stabilizer state, namely a Bell state. However, automatically expressing it as a stabilizer is a prohibitively expensive computational operation in general. We do not perform that computation automatically. If you want to ensure that states you define can be automatically converted to tableaux for Clifford simulations, avoid using sumation of kets. On the other hand, in all of our Clifford Monte-Carlo simulations, <code>⊗</code> is fully supported, as well as <a href="@ref"><code>SProjector</code></a>, <a href="@ref"><code>MixedState</code></a>, <a href="@ref"><code>StabilizerState</code></a>, and sumation of density matrices.</p></div></div></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../propbackgrounds/">« Properties and Backgrounds</a><a class="docs-footer-nextpage" href="../visualizations/">Visualizations »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Thursday 29 June 2023 21:06">Thursday 29 June 2023</span>. Using Julia version 1.9.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
