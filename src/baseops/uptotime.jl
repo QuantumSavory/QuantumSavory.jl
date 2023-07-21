@@ -4,14 +4,14 @@ function uptotime!(stateref::StateRef, idx::Int, background, Δt) # TODO this sh
     stateref.state[] = uptotime!(stateref.state[], idx, background, Δt)
 end
 
-function uptotime!(state, indices::AbstractVector, backgrounds, Δt) # TODO what about multiqubit correlated backgrounds... e.g. an interaction hamiltonian!?
+function uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt) # TODO what about multiqubit correlated backgrounds... e.g. an interaction hamiltonian!?
     for (i,b) in zip(indices, backgrounds)
         isnothing(b) && continue
         uptotime!(state,i,b,Δt)
     end
 end
 
-function uptotime!(registers, indices, now)
+function uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)
     staterecords = [(state=r.staterefs[i], idx=r.stateindices[i], bg=r.backgrounds[i], t=r.accesstimes[i])
                     for (r,i) in zip(registers, indices)]
     for stategroup in groupby(x->x.state, staterecords) # TODO check this is grouping by ===... Actually, make sure that == for StateRef is the same as ===
@@ -34,7 +34,7 @@ function uptotime!(registers, indices, now)
         r.accesstimes[i] = now
     end
 end
-uptotime!(refs::Vector{RegRef}, now) = uptotime!([r.reg for r in refs], [r.idx for r in refs], now)
+uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now) = uptotime!(map(r->r.reg, refs), map(r->r.idx, refs), now)
 uptotime!(ref::RegRef, now) = uptotime!([ref.reg], [ref.idx], now)
 
 function overwritetime!(registers, indices, now)
@@ -43,4 +43,4 @@ function overwritetime!(registers, indices, now)
     end
     now
 end
-overwritetime!(refs::Vector{RegRef}, now) = overwritetime!([r.reg for r in refs], [r.idx for r in refs], now)
+overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now) = overwritetime!(map(r->r.reg, refs), map(r->r.idx, refs), now)
