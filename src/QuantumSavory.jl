@@ -221,6 +221,8 @@ include("concurrentsim.jl")
 
 include("plots.jl")
 
+include("CircuitZoo/CircuitZoo.jl")
+
 include("precompile.jl")
 
 end # module

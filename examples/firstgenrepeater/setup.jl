@@ -12,6 +12,9 @@ using Revise
 # The workhorse for the simulation
 using QuantumSavory
 
+# Predefined useful circuits
+using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
+
 ##
 # Create a handful of qubit registers in a chain
 ##
@@ -131,7 +134,8 @@ end
         reg1 = network[node1.node]
         node2 = network[node,:enttrackers][q2]
         reg2 = network[node2.node]
-        swapcircuit(reg[q1], reg[q2], reg1[node1.slot], reg2[node2.slot]; time=now(sim))
+        uptotime!((reg[q1], reg1[node1.slot], reg[q2], reg2[node2.slot]), now(sim))
+        swapcircuit(reg[q1], reg1[node1.slot], reg[q2], reg2[node2.slot])
         network[node1.node,:enttrackers][node1.slot] = node2
         network[node2.node,:enttrackers][node2.slot] = node1
         network[node,:enttrackers][q1] = nothing
@@ -141,17 +145,7 @@ end
     end
 end
 
-function swapcircuit(localslot1, localslot2, remslot1, remslot2; time=nothing)
-    apply!((localslot1, localslot2), CNOT; time=time)
-    xmeas = project_traceout!(localslot1, σˣ)
-    zmeas = project_traceout!(localslot2, σᶻ)
-    if xmeas==2
-        apply!(remslot1, Z)
-    end
-    if zmeas==2
-        apply!(remslot2, X)
-    end
-end
+swapcircuit = EntanglementSwap()
 
 function findswapablequbits(network,node)
     enttrackers = network[node,:enttrackers]
@@ -193,14 +187,10 @@ end
         @yield timeout(sim, purifier_busy_time)
         rega = network[nodea]
         regb = network[nodeb]
-        gate = (CNOT, CPHASE)[round%2+1]
-        apply!((rega[pair2qa],rega[pair1qa]),gate)
-        apply!((regb[pair2qb],regb[pair1qb]),gate)
-        measa = project_traceout!(rega[pair2qa], σˣ)
-        measb = project_traceout!(regb[pair2qb], σˣ)
-        if measa!=measb
-            traceout!(rega[pair1qa])
-            traceout!(regb[pair1qb])
+        purifyerror =  (:X, :Z)[round%2+1]
+        purificationcircuit = Purify2to1(purifyerror)
+        success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb])
+        if !success
             network[nodea,:enttrackers][pair1qa] = nothing
             network[nodeb,:enttrackers][pair1qb] = nothing
             @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa) and $(nodeb):$(pair1qb)&$(pair2qb)"
