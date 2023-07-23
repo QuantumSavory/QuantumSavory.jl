@@ -169,9 +169,9 @@ end
 # Serve the Makie app
 
 isdefined(Main, :server) && close(server);
-port = parse(Int, get(ENV, "QS_CONGENSTIONCHAIN_PORT", "8888"))
-interface = get(ENV, "QS_CONGENSTIONCHAIN_IP", "127.0.0.1")
-proxy_url = get(ENV, "QS_CONGENSTIONCHAIN_PROXY", "")
+port = parse(Int, get(ENV, "QS_CONGESTIONCHAIN_PORT", "8888"))
+interface = get(ENV, "QS_CONGESTIONCHAIN_IP", "127.0.0.1")
+proxy_url = get(ENV, "QS_CONGESTIONCHAIN_PROXY", "")
 server = JSServe.Server(interface, port; proxy_url);
 JSServe.HTTPServer.start(server)
 JSServe.route!(server, "/" => landing);
