@@ -7,7 +7,7 @@ Calculate the expectation value of a quantum observable on the given register an
 of the `obs` observable (using the appropriate formalism, depending on the state
 representation in the given registers).
 """
-function observable(regs::Vector{Register}, indices::Vector{Int}, obs, something=nothing; time=nothing) # TODO weird split between positional and keyword arguments
+function observable(regs::Base.AbstractVecOrTuple{Register}, indices::Base.AbstractVecOrTuple{Int}, obs, something=nothing; time=nothing) # TODO weird split between positional and keyword arguments
     staterefs = [r.staterefs[i] for (r,i) in zip(regs, indices)]
     # TODO it should still work even if they are not represented in the same state
     (any(isnothing, staterefs) || !all(s->s===staterefs[1], staterefs)) && return something
@@ -16,6 +16,5 @@ function observable(regs::Vector{Register}, indices::Vector{Int}, obs, something
     state_indices = [r.stateindices[i] for (r,i) in zip(regs, indices)]
     observable(state, state_indices, obs)
 end
-observable(refs::Vector{RegRef}, obs, something=nothing; time=nothing) = observable([r.reg for r in refs], [r.idx for r in refs], obs, something; time)
-observable(refs::NTuple{N,RegRef}, obs, something=nothing; time=nothing) where {N} = observable((r.reg for r in refs), (r.idx for r in refs), obs, something; time)
+observable(refs::Base.AbstractVecOrTuple{RegRef}, obs, something=nothing; time=nothing) = observable(map(r->r.reg, refs), map(r->r.idx, refs), obs, something; time)
 observable(ref::RegRef, obs, something=nothing; time=nothing) = observable([ref.reg], [ref.idx], obs, something; time)
