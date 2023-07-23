@@ -48,6 +48,7 @@ function traceout!(r::Register, i::Int)
     r
 end
 traceout!(r::RegRef) = traceout!(r.reg, r.idx)
+traceout!(rs::RegRef...) = map(traceout!, rs)
 
 """
 Perform a projective measurement on the given slot of the given register.

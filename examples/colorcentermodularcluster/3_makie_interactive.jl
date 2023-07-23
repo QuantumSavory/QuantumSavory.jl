@@ -6,6 +6,8 @@ using Markdown
 
 include("setup.jl");
 
+const custom_css = JSServe.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in JSServe https://github.com/SimonDanisch/JSServe.jl/issues/178
+
 """Run a simulation until all links in the cluster state are established,
 then report time to completion and average link fidelity."""
 function run_until_connected(root_conf)
@@ -113,8 +115,10 @@ landing = App() do
     - crosstalk in microwave control is not modeled
     - optical crosstalk and poor extinction are not modeled
     - decoupling the electronic and nuclear spin after a failed measurement is not modeled in detail
+
+    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content)
+    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, custom_css, content)
 end;
 
 ##
@@ -181,8 +185,10 @@ ensemble = App() do
     `Ctrl`+click resets the view.
 
     Back at the [landing page](/..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
+
+    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content)
+    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, custom_css, content)
 end;
 
 ##
@@ -316,8 +322,10 @@ singletraj = App() do
     $(config_str)
 
     Back at the [landing page](/..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
+
+    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, content)
+    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, custom_css, content)
 end;
 
 ##

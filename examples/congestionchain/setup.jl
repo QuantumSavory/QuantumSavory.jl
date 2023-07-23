@@ -1,6 +1,9 @@
 # For convenient graph data structures
 using Graphs
 
+# For probability distributions
+using Distributions
+
 # For discrete event simulation
 using ResumableFunctions
 using ConcurrentSim
@@ -13,7 +16,7 @@ using Revise
 using QuantumSavory
 
 # Predefined useful circuits
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
+using QuantumSavory.CircuitZoo: EntanglementSwap
 
 ##
 # Create a handful of qubit registers in a chain
@@ -21,22 +24,22 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
 
 """Creates the datastructures representing the simulated network"""
 function simulation_setup(
-    sizes, # Array giving the number of qubits in each node
+    length, # The length of the chain
+    regsize, # The size of each register
     T2 # T2 dephasing times for the qubits
     ;
     representation = QuantumOpticsRepr # Representation to use for the qubits
     )
-    R = length(sizes) # Number of registers
 
     # A scheduler datastructure for the discrete event simulation
     sim = Simulation()
 
     # All of the quantum register we will be simulating
     registers = Register[]
-    for s in sizes
-        traits = [Qubit() for _ in 1:s]
-        repr = [representation() for _ in 1:s]
-        bg = [T2Dephasing(T2) for _ in 1:s]
+    for _ in 1:length
+        traits = [Qubit() for _ in 1:regsize]
+        repr = [representation() for _ in 1:regsize]
+        bg = [T2Dephasing(T2) for _ in 1:regsize]
         push!(registers, Register(traits,repr,bg))
     end
 
@@ -44,15 +47,15 @@ function simulation_setup(
     # It is not necessary to use such a structure, however, it is a convenient way to
     # store data about the simulation (and we have created helper plotting functions
     # expecting such a structure).
-    graph = grid([R])
+    graph = grid([length])
     network = RegisterNet(graph, registers) # A graphs with extra "meta data"
 
     # Add a register datastructures and event locks to each node.
     for v in vertices(network)
         # Create an array specifying whether a qubit is entangled with another qubit
-        network[v,:enttrackers] = Any[nothing for i in 1:sizes[v]]
+        network[v,:enttrackers] = Any[nothing for i in 1:length]
         # Create an array of locks, telling us whether a qubit is undergoing an operation
-        network[v,:locks] = [Resource(sim,1) for i in 1:sizes[v]]
+        network[v,:locks] = [Resource(sim,1) for i in 1:length]
     end
 
     sim, network
@@ -76,11 +79,11 @@ const YY = Y⊗Y
     nodea, nodeb,       # The two nodes which we will be entangling
     noisy_pair,         # A raw entangled pair
     entangler_wait_time,# The wait time in case all qubits are "busy"
-    entangler_busy_time # How long it takes to establish entanglement
+    entangler_busy_λ    # The λ parameter of the exp distribution of time to establish entanglement
     )
     while true
-        ia = findfreequbit(network, nodea)
-        ib = findfreequbit(network, nodeb)
+        ia = findfreequbit(network, nodea; constraint=:odd)
+        ib = findfreequbit(network, nodeb; constraint=:even)
         if isnothing(ia) || isnothing(ib)
             @yield timeout(sim, entangler_wait_time)
             continue
@@ -90,7 +93,7 @@ const YY = Y⊗Y
         @yield request(locka) & request(lockb)
         registera = network[nodea]
         registerb = network[nodeb]
-        @yield timeout(sim, entangler_busy_time)
+        @yield timeout(sim, rand(Exponential(entangler_busy_λ)))
         initialize!((registera[ia],registerb[ib]),noisy_pair; time=now(sim))
         network[nodea,:enttrackers][ia] = (node=nodeb,slot=ib)
         network[nodeb,:enttrackers][ib] = (node=nodea,slot=ia)
@@ -101,11 +104,19 @@ const YY = Y⊗Y
 end
 
 """Find an uninitialized unlocked qubit on a given node"""
-function findfreequbit(network, node)
+function findfreequbit(network, node; constraint=nothing)
     register = network[node]
     locks = network[node,:locks]
     regsize = nsubsystems(register)
-    findfirst(i->!isassigned(register,i) & isfree(locks[i]), 1:regsize)
+    indices_to_check = if isnothing(constraint)
+        1:regsize
+    elseif constraint==:odd
+        1:2:regsize
+    elseif constraint==:even
+        2:2:regsize
+    end
+    i = findfirst(i->!isassigned(register,i) & isfree(locks[i]), indices_to_check)
+    return isnothing(i) ? nothing : indices_to_check[i]
 end
 
 ##
@@ -162,59 +173,54 @@ function findswapablequbits(network,node)
 end
 
 ##
-# The Purifier
+# The Consumer
 ##
 
-@resumable function purifier(
-    sim::Environment,  # The scheduler for all simulation events
-    network,           # The graph of quantum nodes
-    nodea,             # One of the nodes on which the pairs to be purified rest
-    nodeb,             # The other such node
-    purifier_wait_time,# The wait time in case there are no pairs available for purification
-    purifier_busy_time # The duration of the purification circuit
+@resumable function consumer(
+    sim::Environment, # The scheduler for all simulation events
+    network,          # The graph of quantum nodes
+    node1, node2,     # The nodes from which we try to consume
+    consume_wait_time,# The wait time in case there are no available qubits for consuming
+    timelog,          # A log of the times at which we consume
+    fidelityXXlog,    # A log of the XX fidelities of the consumed pairs
+    fidelityZZlog,    # A log of the ZZ fidelities of the consumed pairs
     )
-    round = 0
+    last_success = 0.0
     while true
-        pairs_of_bellpairs = findqubitstopurify(network,nodea,nodeb)
-        if isnothing(pairs_of_bellpairs)
-            @yield timeout(sim, purifier_wait_time)
+        qubit_pair = findconsumablequbits(network,node1,node2)
+        if isnothing(qubit_pair)
+            @yield timeout(sim, consume_wait_time)
             continue
         end
-        pair1qa, pair1qb, pair2qa, pair2qb = pairs_of_bellpairs
-        locks = [network[nodea,:locks][[pair1qa,pair2qa]];
-                 network[nodeb,:locks][[pair1qb,pair2qb]]]
-        @yield mapreduce(request, &, locks)
-        @yield timeout(sim, purifier_busy_time)
-        rega = network[nodea]
-        regb = network[nodeb]
-        purifyerror =  (:X, :Z)[round%2+1]
-        purificationcircuit = Purify2to1(purifyerror)
-        success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb])
-        if !success
-            network[nodea,:enttrackers][pair1qa] = nothing
-            network[nodeb,:enttrackers][pair1qb] = nothing
-            @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa) and $(nodeb):$(pair1qb)&$(pair2qb)"
-        else
-            round += 1
-            @simlog sim "purification at $(nodea):$(pair1qa) $(nodeb):$(pair1qb) by sacrifice of $(nodea):$(pair1qa) $(nodeb):$(pair1qb)"
-        end
-        network[nodea,:enttrackers][pair2qa] = nothing
-        network[nodeb,:enttrackers][pair2qb] = nothing
-        release.(locks)
+        q1, q2 = qubit_pair
+        lock1 = network[node1, :locks][q1]
+        lock2 = network[node2, :locks][q2]
+        reg1 = network[node1]
+        reg2 = network[node2]
+        @yield mapreduce(request, &, (lock1, lock2)) # TODO simplify this... why is lock1&lock2 failing
+        uptotime!((reg1[q1], reg2[q2]), now(sim))
+        fXX = real(observable((reg1[q1],reg2[q2]), XX, 0.0; time=now(sim)))
+        fZZ = real(observable((reg1[q1],reg2[q2]), ZZ, 0.0; time=now(sim)))
+        push!(fidelityXXlog[], fXX)
+        push!(fidelityZZlog[], fZZ)
+        push!(timelog[], now(sim)-last_success)
+        last_success = now(sim)
+        traceout!(reg1[q1], reg2[q2])
+        network[node1,:enttrackers][q1] = nothing
+        network[node2,:enttrackers][q2] = nothing
+        @simlog sim "consuming at $(node1):$(q1)& $(node2):$(q2)"
+        release(lock1)
+        release(lock2)
     end
 end
 
-function findqubitstopurify(network,nodea,nodeb)
-    enttrackers = network[nodea,:enttrackers]
-    locksa = network[nodea,:locks]
-    locksb = network[nodeb,:locks]
-    enttrackers = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node==nodeb && isfree(locksa[i]) && isfree(locksb[n.slot])]
-    if length(enttrackers)>=2
-        aqubits = [n.i for n in enttrackers[end-1:end]]
-        bqubits = [n.slot for n in enttrackers[end-1:end]]
-        return aqubits[2], bqubits[2], aqubits[1], bqubits[1]
-    else
-        return nothing
-    end
+function findconsumablequbits(network,nodea,nodeb)
+    enttrackers_a = network[nodea,:enttrackers]
+    locks_a = network[nodea,:locks]
+    locks_b = network[nodeb,:locks]
+    slots_a  = [(i=i,n...) for (i,n) in enumerate(enttrackers_a)
+                if !isnothing(n) && n.node==nodeb && isfree(locks_a[i]) && isfree(locks_b[n.slot])]
+    isempty(slots_a)  && return nothing
+    pair_to_be_consumed = first(slots_a)
+    return pair_to_be_consumed.i, pair_to_be_consumed.slot
 end

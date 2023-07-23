@@ -124,6 +124,7 @@ function registernetplot_axis(subfig, registersobservable; registercoords=nothin
         rnh = RNHandler(p)
         Makie.register_interaction!(ax, :registernet, rnh)
     end
+    Makie.autolimits!(ax)
     subfig, ax, p, p[1]
 end
 
