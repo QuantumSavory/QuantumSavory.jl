@@ -18,7 +18,7 @@ function prepare_singlerun(
     T2 = 100.0,                 # T2 dephasing time of all qubits
     F = 0.97,                   # Fidelity of the raw Bell pairs
     entangler_wait_time = 0.1,  # How long to wait if all qubits are busy before retring entangling
-    entangler_busy_λinv = 0.5,  # How long it takes to establish a newly entangled pair (Exponential distribution parameter)
+    entangler_busy_λ = 0.5,     # How long it takes to establish a newly entangled pair (Exponential distribution parameter)
     swapper_wait_time = 0.1,    # How long to wait if all qubits are unavailable for swapping
     swapper_busy_time = 0.55,   # How long it takes to swap two qubits
     consume_wait_time = 0.1,    # How long to wait if there are no qubits ready for consumption
@@ -27,7 +27,7 @@ function prepare_singlerun(
 
     noisy_pair = noisy_pair_func(F)
     for (;src, dst) in edges(network)
-        @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, 1/entangler_busy_λinv)
+        @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_λ)
     end
 
     for node in vertices(network)
@@ -131,7 +131,7 @@ function add_conf_sliders(fig)
         :regsize => 2,
         :T2 => 100.0,
         :F => 0.97,
-        :entangler_busy_λinv => 0.5,
+        :entangler_busy_λ => 0.5,
         :swapper_busy_time => 0.5
     )
     conf_obs = Observable(conf)
@@ -148,7 +148,7 @@ function add_conf_sliders(fig)
         (label = "fidelity of raw pairs",
             range = 0.6:0.01:1.0, format = "{:.2f}", startvalue = conf[:F]),
         (label = "avg. time of ent. generation",
-            range = 0.05:0.05:1.0, format = "{:.2f}", startvalue = conf[:entangler_busy_λinv]),
+            range = 0.05:0.05:1.0, format = "{:.2f}", startvalue = conf[:entangler_busy_λ]),
         (label = "swap duration",
             range = 0.05:0.05:1.0, format = "{:.2f}", startvalue = conf[:swapper_busy_time]),
         width = 600,
@@ -156,7 +156,7 @@ function add_conf_sliders(fig)
     )
 
     # TODO there should be a nicer way to link sliders to the configuration
-    names = [:len, :regsize, :T2, :F, :entangler_busy_λinv, :swapper_busy_time]
+    names = [:len, :regsize, :T2, :F, :entangler_busy_λ, :swapper_busy_time]
     for (name,slider) in zip(names,sg.sliders)
         on(slider.value) do val
             conf_obs[][name] = val

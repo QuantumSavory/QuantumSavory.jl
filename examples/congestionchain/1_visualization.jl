@@ -11,7 +11,7 @@ regsize = 2                # Number of qubits in each register
 T2 = 100.0                 # T2 dephasing time of all qubits
 F = 0.97                   # Fidelity of the raw Bell pairs
 entangler_wait_time = 0.1  # How long to wait if all qubits are busy before retring entangling
-entangler_busy_λinv = 0.5     # How long it takes to establish a newly entangled pair (Exponential distribution parameter)
+entangler_busy_λ = 0.5     # How long it takes to establish a newly entangled pair (Exponential distribution parameter)
 swapper_wait_time = 0.1    # How long to wait if all qubits are unavailable for swapping
 swapper_busy_time = 0.55   # How long it takes to swap two qubits
 consume_wait_time = 0.1    # How long to wait if there are no qubits ready for consumption
@@ -20,7 +20,7 @@ sim, network = simulation_setup(len, regsize, T2)
 
 noisy_pair = noisy_pair_func(F)
 for (;src, dst) in edges(network)
-    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, 1/entangler_busy_λinv)
+    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_λ)
 end
 
 for node in vertices(network)

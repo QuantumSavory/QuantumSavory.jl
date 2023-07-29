@@ -43,12 +43,12 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     elseif circuit.leaveout==:Z
         CPHASE, σˣ, 0
     elseif circuit.leaveout==:Y
-        error("TODO this needs to be implemented")
+        YCX, σʸ, 1
     end
     apply!((sacrificedL,purifiedL),gate)
     apply!((sacrificedR,purifiedR),gate)
-    measa = project_traceout!(sacrificedL, σˣ)
-    measb = project_traceout!(sacrificedR, σˣ)
+    measa = project_traceout!(sacrificedL, basis)
+    measb = project_traceout!(sacrificedR, basis)
     success = measa ⊻ measb == parity
     if !success
         traceout!(purifiedL)
