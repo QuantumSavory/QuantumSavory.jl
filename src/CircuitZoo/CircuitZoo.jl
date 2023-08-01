@@ -37,6 +37,23 @@ struct Purify2to1 <: AbstractCircuit
     end
 end
 
+struct Purify3to1 <: AbstractCircuit
+    leaveout::Symbol
+    function Purify3to1(leaveout)
+        if leaveout ∉ (:X, :Y, :Z)
+            throw(ArgumentError(lazy"""
+            `Purify3to1` can represent one of three purification circuits (see its docstring),
+            parameterized by the argument `leaveout` which has to be one of `:X`, `:Y`, or `:Z`.
+            You have instead chosen `$(repr(leaveout))` which is not a valid option.
+            Investigate where you are creating a purification circuit of type `Purify2to1`
+            and ensure you are passing a valid argument.
+            """))
+        else
+            new(leaveout)
+        end
+    end
+end
+
 function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     gate, basis, parity = if circuit.leaveout==:X
         CNOT, σˣ, 0
@@ -47,8 +64,8 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     end
     apply!((sacrificedL,purifiedL),gate)
     apply!((sacrificedR,purifiedR),gate)
-    measa = project_traceout!(sacrificedL, σˣ)
-    measb = project_traceout!(sacrificedR, σˣ)
+    measa = project_traceout!(sacrificedL, basis)
+    measb = project_traceout!(sacrificedR, basis)
     success = measa ⊻ measb == parity
     if !success
         traceout!(purifiedL)
@@ -56,5 +73,44 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     end
     success
 end
+
+function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL1,sacrificedR1,sacrificedL2,sacrificedR2)
+    gate, basis1, basis2, parity = if circuit.leaveout==:X
+        CNOT, σˣ, σᶻ, 0
+    elseif circuit.leaveout==:Z
+        CPHASE, σˣ, σᶻ, 0
+    elseif circuit.leaveout==:Y
+        error("TODO this needs to be implemented")
+    end
+
+
+    apply!((sacrificedL1,purifiedL),gate)
+    apply!((sacrificedR1,purifiedR),gate)
+
+
+    apply!((sacrificedR1,sacrificedR2),gate)
+    apply!((sacrificedL1,sacrificedL2),gate)
+
+    measa1 = project_traceout!(sacrificedL1, basis1)
+    measb1 = project_traceout!(sacrificedR1, basis1)
+
+
+    measa2 = project_traceout!(sacrificedL2, basis2)
+    measb2 = project_traceout!(sacrificedR2, basis2)
+
+
+
+    success1 = measa1 ⊻ measb1 == parity
+
+    success2 = measa2 ⊻ measb2 == parity
+
+    if !(success1 && success2)
+        traceout!(purifiedL)
+        traceout!(purifiedR)
+    end
+    (success1 && success2)
+end
+
+
 
 end # module

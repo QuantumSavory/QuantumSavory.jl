@@ -13,7 +13,7 @@ using Revise
 using QuantumSavory
 
 # Predefined useful circuits
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
+using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1
 
 ##
 # Create a handful of qubit registers in a chain
@@ -214,6 +214,66 @@ function findqubitstopurify(network,nodea,nodeb)
         aqubits = [n.i for n in enttrackers[end-1:end]]
         bqubits = [n.slot for n in enttrackers[end-1:end]]
         return aqubits[2], bqubits[2], aqubits[1], bqubits[1]
+    else
+        return nothing
+    end
+end
+
+
+## Double selection Purifier
+
+@resumable function purifierdoubleselection(
+    sim::Environment,  # The scheduler for all simulation events
+    network,           # The graph of quantum nodes
+    nodea,             # One of the nodes on which the pairs to be purified rest
+    nodeb,             # The other such node
+    purifier_wait_time,# The wait time in case there are no pairs available for purification
+    purifier_busy_time # The duration of the purification circuit
+    )
+    round = 0
+    while true
+        pairs_of_bellpairs = findqubitstopurifydoubleselection(network,nodea,nodeb)
+        if isnothing(pairs_of_bellpairs)
+            @yield timeout(sim, purifier_wait_time)
+            continue
+        end
+        pair1qa, pair1qb, pair2qa, pair2qb, pair3qa, pair3qb = pairs_of_bellpairs
+        locks = [network[nodea,:locks][[pair1qa,pair2qa,pair3qa]];
+                 network[nodeb,:locks][[pair1qb,pair2qb,pair3qb]]]
+        @yield mapreduce(request, &, locks)
+        @yield timeout(sim, purifier_busy_time)
+        rega = network[nodea]
+        regb = network[nodeb]
+        purifyerror =  (:X, :Z)[round%2+1]
+        purificationcircuit = Purify3to1(purifyerror)
+        success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb],rega[pair3qa],regb[pair3qb])
+        if !success
+            network[nodea,:enttrackers][pair1qa] = nothing
+            network[nodeb,:enttrackers][pair1qb] = nothing
+            @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa)&$(pair3qa) and $(nodeb):$(pair1qb)&$(pair2qb)&$(pair3qa)"
+        else
+            round += 1
+            @simlog sim "purification at $(nodea):$(pair1qa) $(nodeb):$(pair1qb) by sacrifice of $(nodea):$(pair2qa) $(nodeb):$(pair2qb), and $(nodea):$(pair3qa) $(nodeb):$(pair3qb)"
+        end
+        network[nodea,:enttrackers][pair2qa] = nothing
+        network[nodeb,:enttrackers][pair2qb] = nothing
+
+        network[nodea,:enttrackers][pair3qa] = nothing
+        network[nodeb,:enttrackers][pair3qb] = nothing
+        release.(locks)
+    end
+end
+
+function findqubitstopurifydoubleselection(network,nodea,nodeb)
+    enttrackers = network[nodea,:enttrackers]
+    locksa = network[nodea,:locks]
+    locksb = network[nodeb,:locks]
+    enttrackers = [(i=i,n...) for (i,n) in enumerate(enttrackers)
+                   if !isnothing(n) && n.node==nodeb && isfree(locksa[i]) && isfree(locksb[n.slot])]
+    if length(enttrackers)>=3
+        aqubits = [n.i for n in enttrackers[end-2:end]]
+        bqubits = [n.slot for n in enttrackers[end-2:end]]
+        return aqubits[3], bqubits[3] ,aqubits[2], bqubits[2], aqubits[1], bqubits[1]
     else
         return nothing
     end
