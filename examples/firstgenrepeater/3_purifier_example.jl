@@ -28,7 +28,7 @@ end
 for nodea in vertices(network)
     for nodeb in vertices(network)
         if nodeb>nodea
-            @process purifierdoubleselection(sim, network, nodea, nodeb, purifier_wait_time, purifier_busy_time)
+            @process purifier(sim, network, nodea, nodeb, purifier_wait_time, purifier_busy_time)
         end
     end
 end
