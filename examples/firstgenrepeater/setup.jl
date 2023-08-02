@@ -245,7 +245,7 @@ end
         rega = network[nodea]
         regb = network[nodeb]
         purifyerror =  (:X, :Z)[round%2+1]
-        purificationcircuit = Purify3to1(purifyerror)
+        purificationcircuit = Purify3to1()
         success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb],rega[pair3qa],regb[pair3qb])
         if !success
             network[nodea,:enttrackers][pair1qa] = nothing
@@ -278,3 +278,4 @@ function findqubitstopurifydoubleselection(network,nodea,nodeb)
         return nothing
     end
 end
+

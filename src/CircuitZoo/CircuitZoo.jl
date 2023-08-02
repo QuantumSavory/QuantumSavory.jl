@@ -39,18 +39,8 @@ end
 
 struct Purify3to1 <: AbstractCircuit
     leaveout::Symbol
-    function Purify3to1(leaveout)
-        if leaveout ∉ (:X, :Y, :Z)
-            throw(ArgumentError(lazy"""
-            `Purify3to1` can represent one of three purification circuits (see its docstring),
-            parameterized by the argument `leaveout` which has to be one of `:X`, `:Y`, or `:Z`.
-            You have instead chosen `$(repr(leaveout))` which is not a valid option.
-            Investigate where you are creating a purification circuit of type `Purify2to1`
-            and ensure you are passing a valid argument.
-            """))
-        else
-            new(leaveout)
-        end
+    function Purify3to1()
+        new()
     end
 end
 
@@ -75,13 +65,7 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
 end
 
 function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL1,sacrificedR1,sacrificedL2,sacrificedR2)
-    gate, basis1, basis2, parity = if circuit.leaveout==:X
-        CNOT, σˣ, σᶻ, 0
-    elseif circuit.leaveout==:Z
-        CPHASE, σˣ, σᶻ, 0
-    elseif circuit.leaveout==:Y
-        error("TODO this needs to be implemented")
-    end
+    gate, basis1, basis2, parity = CNOT, σˣ, σᶻ, 0
 
 
     apply!((sacrificedL1,purifiedL),gate)
