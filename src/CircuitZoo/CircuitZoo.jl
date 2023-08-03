@@ -38,10 +38,6 @@ struct Purify2to1 <: AbstractCircuit
 end
 
 struct Purify3to1 <: AbstractCircuit
-    leaveout::Symbol
-    function Purify3to1()
-        new()
-    end
 end
 
 function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
