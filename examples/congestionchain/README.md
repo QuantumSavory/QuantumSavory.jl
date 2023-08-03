@@ -9,5 +9,6 @@ A simple, more instructive, example is also
 
 The `setup.jl` file implements all necessary base functionality.
 The other files run the simulation and generate visuals in a number of different circumstances:
-1. A single simulator script convenient for exploratory coding;
+1. A single simulator script convenient for exploratory coding, running one single Monte Carlo simulation of a repeater chain;
 2. A web-app version of the simulator;
+3. A script running thousands of simulations like the ones in point 1, followed by plotting average statistical results for these simulations for a variety of repeater chain lengths.

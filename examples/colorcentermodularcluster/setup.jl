@@ -43,11 +43,11 @@ end
 @resumable function barrettkok(env::Environment, net, nodea, nodeb, conf)
     # check whether this link is already being attempted
     link_resource = net[(nodea, nodeb), :link_queue]
-    !isfree(link_resource) && return
+    islocked(link_resource) && return
     # if not, reserve both electronic spins, by using a nongreedy multilock
-    spin_resources = [net[nodea, :espin_queue], net[nodeb, :espin_queue]]
+    espin_slots = [net[nodea, 1], net[nodeb, 1]]
     @yield request(link_resource)
-    @yield @process nongreedymultilock(env, spin_resources)
+    @yield @process nongreedymultilock(env, espin_slots)
     # wait for a successful entangling attempt (separate attempts not modeled explicitly)
     rega = net[nodea]
     regb = net[nodeb]
@@ -56,8 +56,8 @@ end
     @yield timeout(env, duration)
     bk_el_init(env, rega, regb, conf)
     # reserve the nuclear spins, by using a nongreedy multilock
-    nspin_resources = [net[nodea, :nspin_queue], net[nodeb, :nspin_queue]]
-    @yield @process nongreedymultilock(env, nspin_resources)
+    nspin_slots = [net[nodea, 2], net[nodeb, 2]]
+    @yield @process nongreedymultilock(env, nspin_slots)
     # wait for the two parallel swaps from the electronic to nuclear spins
     @yield timeout(env, conf[:τˢʷᵃᵖ])
     r1 = bk_swap(env, rega, conf)
@@ -69,8 +69,8 @@ end
     # register that we believe an entanglement was established
     net[(nodea, nodeb), :link_register] = true
     # release locks
-    release.(nspin_resources)
-    release.(spin_resources)
+    release.(nspin_slots)
+    release.(espin_slots)
     release(link_resource)
     #@simlog env "success on $(nodea) $(nodeb) after $(attempts) attempt(s) $(duration)"
 end
@@ -88,12 +88,10 @@ function prep_sim(root_conf)
     conf = derive_conf(root_conf)
 
     # set up ConcurrentSim discrete events simulation
-    sim = Simulation()
+    sim = get_time_tracker(net)
 
-    net[:, :espin_queue] = () -> Resource(sim,1)
-    net[:, :nspin_queue] = () -> Resource(sim,1)
-    net[:, :decay_queue] = () -> Resource(sim,1)
-    net[(:,:), :link_queue]    = () -> Resource(sim,1)
+    net[:, :decay_queue] = () -> Resource(sim)
+    net[(:,:), :link_queue]    = () -> Resource(sim)
     net[(:,:), :link_register] = false
 
     for (;src,dst) in edges(net)

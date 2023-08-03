@@ -184,7 +184,7 @@ ensemble = App() do
     Drag over the plot to select manual region to zoom in.
     `Ctrl`+click resets the view.
 
-    Back at the [landing page](..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
+    Back at the [landing page](./..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
@@ -242,7 +242,7 @@ singletraj = App() do
     # Plots of various metadata and locks
     _,_,_,obs_1 = resourceplot_axis(F[1:3,2],
         net,
-        [:link_queue], [:espin_queue,:nspin_queue,:decay_queue];
+        [:link_queue], [:decay_queue];
         registercoords=registercoords,
         title="Processes and Queues")
     _,_,_,obs_2 = resourceplot_axis(F[4:6,2],
@@ -321,7 +321,7 @@ singletraj = App() do
 
     $(config_str)
 
-    Back at the [landing page](..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
+    Back at the [landing page](./..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """

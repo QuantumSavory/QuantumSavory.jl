@@ -15,7 +15,7 @@ registercoords = p_rg[:registercoords]
 # Plots of various metadata and locks
 _,_,_,obs_1 = resourceplot_axis(F[1,2],
     net,
-    [:link_queue], [:espin_queue,:nspin_queue,:decay_queue];
+    [:link_queue], [:decay_queue];
     registercoords=registercoords,
     title="Processes and Queues")
 _,_,_,obs_2 = resourceplot_axis(F[2,2],
@@ -59,7 +59,7 @@ display(F)
 FRAMERATE = 10
 tscale = conf[:T₂ⁿ]/3
 step_ts = range(0, tscale, step=tscale/500)
-record(F, "colorcentermodularcluster-02.simdashboard.mp4", step_ts, framerate=FRAMERATE) do t
+record(F, "colorcentermodularcluster-02.simdashboard.mp4", step_ts, framerate=FRAMERATE, visible=true) do t
     run(sim, t)
 
     # calculate the fidelities for each node of the cluster state

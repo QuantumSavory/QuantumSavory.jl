@@ -3,7 +3,7 @@
 include("clifford_setup.jl")
 
 using Statistics
-using RecursiveArrayTools
+#using RecursiveArrayTools
 using CairoMakie
 CairoMakie.activate!()
 

@@ -12,6 +12,8 @@ using QuantumInterface: basis, tensor, ⊗, apply!, traceout!,
 export apply!, traceout!, removebackref!
 export project_traceout! #TODO should move to QuantumInterface
 
+import ConcurrentSim
+
 @reexport using QuantumSymbolics
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
@@ -55,13 +57,15 @@ StateRef(state, registers, registerindices) = StateRef(Ref{Any}(copy(state)), re
 """
 The main data structure in `QuantumSavory`, used to represent a quantum register in an arbitrary formalism.
 """
-struct Register # TODO better type description
+mutable struct Register # TODO better type description
     traits::Vector{Any}
     reprs::Vector{Any}
     backgrounds::Vector{Any}
     staterefs::Vector{Union{Nothing,StateRef}}
     stateindices::Vector{Int}
     accesstimes::Vector{Float64} # TODO do not hardcode the type
+    env::Any
+    locks::Vector{Any}
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,fill(0.0,length(traits)))
 Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
@@ -70,7 +74,10 @@ Register(traits,reprs::Base.AbstractVecOrTuple{<:AbstractRepresentation}) = Regi
 Register(traits) = Register(traits,default_repr.(traits),fill(nothing,length(traits)),fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
 Register(nqubits::Int) = Register([Qubit() for _ in 1:nqubits])
 Register(nqubits::Int,repr::AbstractRepresentation) = Register(fill(Qubit(),nqubits),fill(repr,nqubits))
-
+function Register(traits, reprs, bg, sr, si, at)
+    env = ConcurrentSim.Simulation()
+    Register(traits, reprs, bg, sr, si, at, env, [ConcurrentSim.Resource(env) for _ in traits])
+end
 struct RegRef
     reg::Register
     idx::Int
@@ -83,6 +90,24 @@ struct RegisterNet
     registers::Vector{Register}
     vertex_metadata::Vector{Dict{Symbol,Any}}
     edge_metadata::Dict{Tuple{Int,Int},Dict{Symbol,Any}}
+    function RegisterNet(graph, registers, vertex_metadata, edge_metadata)
+        all_are_at_zero = all(iszero(ConcurrentSim.now(r.env)) && isempty(r.env.heap) && isnothing(r.env.active_proc) for r in registers)
+        all_are_same = all(registers[1].env === r.env for r in registers)
+        if !all_are_same
+            if all_are_at_zero
+                env = ConcurrentSim.Simulation()
+                for r in registers
+                    r.env = env
+                    for i in eachindex(r.locks)
+                        r.locks[i] = ConcurrentSim.Resource(env,1)
+                    end
+                end
+            else
+                error("When constructing a `RegisterNet`, the registers must either have not been used yet or have to already belong to the same simulation time tracker, which is not the case here. The simplest way to fix this error is to immediately construct the `RegisterNet` after you have constructed the registers.")
+            end
+        end
+        new(graph, registers, vertex_metadata, edge_metadata)
+    end
 end
 function RegisterNet(graph::SimpleGraph, registers::Vector{Register})
     @assert size(graph, 1) == length(registers)
