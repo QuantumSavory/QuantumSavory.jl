@@ -81,11 +81,11 @@ end
 
 function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL::Array,sacrificedR::Array)
     gate1, gate2, basis1, basis2, parity1, parity2 = if circuit.fixtwice==:X
-        YCZ, ZCX, σˣ, σᶻ, 1, 0
+        YCZ, ZCX, σʸ, σᶻ, 1, 0
     elseif circuit.fixtwice==:Y
         ZCX, XCZ, σᶻ, σˣ, 0, 0
     elseif circuit.fixtwice==:Z
-        XCZ, YCZ, σˣ, σˣ, 0, 1
+        XCZ, YCZ, σˣ, σʸ, 0, 1
     end
 
     apply!((purifiedL, sacrificedL[1]),gate1)

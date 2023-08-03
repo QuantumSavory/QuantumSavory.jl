@@ -23,11 +23,11 @@ function entangled_registers(size, purity, T2=0)
     regA, regB
 end
 
-@testset "Keep Pure Entanglement" begin
+@testset "Keep Pure I Entanglement" begin
     @testset "Purify2to1" begin
         for _ in 1:10
             regA, regB = entangled_registers(2, 1)
-            purificationcircuit = Purify2to1(:Z) # original single selection
+            purificationcircuit = Purify2to1(:X) # original single selection
             success = purificationcircuit(regA[1], regB[1], regA[2], regB[2])
             @test success == true
         end
@@ -42,3 +42,4 @@ end
         end
     end
 end
+
