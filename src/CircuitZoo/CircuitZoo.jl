@@ -37,6 +37,9 @@ struct Purify2to1 <: AbstractCircuit
     end
 end
 
+struct Purify3to1 <: AbstractCircuit
+end
+
 function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     gate, basis, parity = if circuit.leaveout==:X
         CNOT, σˣ, 0
@@ -56,5 +59,38 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     end
     success
 end
+
+function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL1,sacrificedR1,sacrificedL2,sacrificedR2)
+    gate, basis1, basis2, parity = CNOT, σˣ, σᶻ, 0
+
+
+    apply!((sacrificedL1,purifiedL),gate)
+    apply!((sacrificedR1,purifiedR),gate)
+
+
+    apply!((sacrificedR1,sacrificedR2),gate)
+    apply!((sacrificedL1,sacrificedL2),gate)
+
+    measa1 = project_traceout!(sacrificedL1, basis1)
+    measb1 = project_traceout!(sacrificedR1, basis1)
+
+
+    measa2 = project_traceout!(sacrificedL2, basis2)
+    measb2 = project_traceout!(sacrificedR2, basis2)
+
+
+
+    success1 = measa1 ⊻ measb1 == parity
+
+    success2 = measa2 ⊻ measb2 == parity
+
+    if !(success1 && success2)
+        traceout!(purifiedL)
+        traceout!(purifiedR)
+    end
+    (success1 && success2)
+end
+
+
 
 end # module
