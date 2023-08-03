@@ -17,12 +17,9 @@ function entangled_registers(size, purity, T2=0)
                     [QuantumOpticsRepr() for  _ in 1:size], 
                     [T2Dephasing(T2) for  _ in 1:size])
 
-    
-
     for i in 1:size
         initialize!((regA[i],regB[i]), noisy_pair_func(purity))
     end
-
     regA, regB
 end
 
