@@ -53,7 +53,7 @@ registers = [network[node] for node in vertices(network)]
 last = length(registers)
 
 step_ts = range(0, 100, step=0.1)
-record(fig, "firstgenrepeater-08.clifford.mp4", step_ts, framerate=10) do t
+record(fig, "firstgenrepeater-08.clifford.mp4", step_ts, framerate=10, visible=true) do t
     run(sim, t)
 
     fXX = real(observable(registers[[1,last]], [2,2], XX, 0.0; time=t))

@@ -28,9 +28,6 @@ function simulation_setup(
     )
     R = length(sizes) # Number of registers
 
-    # A scheduler datastructure for the discrete event simulation
-    sim = Simulation()
-
     # All of the quantum register we will be simulating
     registers = Register[]
     for s in sizes
@@ -47,12 +44,13 @@ function simulation_setup(
     graph = grid([R])
     network = RegisterNet(graph, registers) # A graphs with extra "meta data"
 
+    # The scheduler datastructure for the discrete event simulation
+    sim = get_time_tracker(network)
+
     # Add a register datastructures and event locks to each node.
     for v in vertices(network)
         # Create an array specifying whether a qubit is entangled with another qubit
         network[v,:enttrackers] = Any[nothing for i in 1:sizes[v]]
-        # Create an array of locks, telling us whether a qubit is undergoing an operation
-        network[v,:locks] = [Resource(sim,1) for i in 1:sizes[v]]
     end
 
     sim, network
@@ -85,9 +83,9 @@ const YY = Y⊗Y
             @yield timeout(sim, entangler_wait_time)
             continue
         end
-        locka = network[nodea,:locks][ia]
-        lockb = network[nodeb,:locks][ib]
-        @yield request(locka) & request(lockb)
+        slota = network[nodea,ia]
+        slotb = network[nodeb,ib]
+        @yield request(slota) & request(slotb)
         registera = network[nodea]
         registerb = network[nodeb]
         @yield timeout(sim, entangler_busy_time)
@@ -95,17 +93,16 @@ const YY = Y⊗Y
         network[nodea,:enttrackers][ia] = (node=nodeb,slot=ib)
         network[nodeb,:enttrackers][ib] = (node=nodea,slot=ia)
         @simlog sim "entangled node $(nodea):$(ia) and node $(nodeb):$(ib)"
-        release(locka)
-        release(lockb)
+        unlock(slota)
+        unlock(slotb)
     end
 end
 
 """Find an uninitialized unlocked qubit on a given node"""
 function findfreequbit(network, node)
     register = network[node]
-    locks = network[node,:locks]
     regsize = nsubsystems(register)
-    findfirst(i->!isassigned(register,i) & isfree(locks[i]), 1:regsize)
+    findfirst(i->!isassigned(register,i) && !islocked(register[i]), 1:regsize)
 end
 
 ##
@@ -126,8 +123,7 @@ end
             continue
         end
         q1, q2 = qubit_pair
-        locks = network[node, :locks][[q1,q2]]
-        @yield mapreduce(request, &, locks)
+        @yield request(network[node][q1]) & request(network[node][q2])
         reg = network[node]
         @yield timeout(sim, swapper_busy_time)
         node1 = network[node,:enttrackers][q1]
@@ -141,7 +137,8 @@ end
         network[node,:enttrackers][q1] = nothing
         network[node,:enttrackers][q2] = nothing
         @simlog sim "swap at $(node):$(q1)&$(q2) connecting $(node1) and $(node2)"
-        release.(locks)
+        unlock(network[node][q1])
+        unlock(network[node][q2])
     end
 end
 
@@ -149,12 +146,11 @@ swapcircuit = EntanglementSwap()
 
 function findswapablequbits(network,node)
     enttrackers = network[node,:enttrackers]
-    locks = network[node,:locks]
     left_nodes  = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node<node && isfree(locks[i])]
+                   if !isnothing(n) && n.node<node && !islocked(network[node][i])]
     isempty(left_nodes)  && return nothing
     right_nodes = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node>node && isfree(locks[i])]
+                   if !isnothing(n) && n.node>node && !islocked(network[node][i])]
     isempty(right_nodes) && return nothing
     _, farthest_left  = findmin(n->n.node, left_nodes)
     _, farthest_right = findmax(n->n.node, right_nodes)
@@ -181,8 +177,8 @@ end
             continue
         end
         pair1qa, pair1qb, pair2qa, pair2qb = pairs_of_bellpairs
-        locks = [network[nodea,:locks][[pair1qa,pair2qa]];
-                 network[nodeb,:locks][[pair1qb,pair2qb]]]
+        locks = [network[nodea][[pair1qa,pair2qa]];
+                 network[nodeb][[pair1qb,pair2qb]]]
         @yield mapreduce(request, &, locks)
         @yield timeout(sim, purifier_busy_time)
         rega = network[nodea]
@@ -206,10 +202,10 @@ end
 
 function findqubitstopurify(network,nodea,nodeb)
     enttrackers = network[nodea,:enttrackers]
-    locksa = network[nodea,:locks]
-    locksb = network[nodeb,:locks]
+    rega = network[nodea]
+    regb = network[nodeb]
     enttrackers = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node==nodeb && isfree(locksa[i]) && isfree(locksb[n.slot])]
+                   if !isnothing(n) && n.node==nodeb && !islocked(rega[i]) && !islocked(regb[n.slot])]
     if length(enttrackers)>=2
         aqubits = [n.i for n in enttrackers[end-1:end]]
         bqubits = [n.slot for n in enttrackers[end-1:end]]

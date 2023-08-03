@@ -12,7 +12,7 @@ import QuantumSavory: registernetplot, registernetplot_axis, resourceplot_axis, 
     Theme()
 end
 
-function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
+function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the state of the locks
     networkobs = rn[1]
     registers = networkobs[].registers
     register_rectangles = Makie.Observable(Makie.Rect2{Float64}[])
@@ -130,7 +130,7 @@ end
 
 ##
 
-showonplot(r::ConcurrentSim.Resource) = !isfree(r)
+showonplot(r::ConcurrentSim.Resource) = islocked(r)
 showonplot(b::Bool) = b
 
 """Draw the various resources and locks stored in the given meta-graph on a given Makie axis.

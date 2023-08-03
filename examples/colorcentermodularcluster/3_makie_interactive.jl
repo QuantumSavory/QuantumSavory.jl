@@ -242,7 +242,7 @@ singletraj = App() do
     # Plots of various metadata and locks
     _,_,_,obs_1 = resourceplot_axis(F[1:3,2],
         net,
-        [:link_queue], [:espin_queue,:nspin_queue,:decay_queue];
+        [:link_queue], [:decay_queue];
         registercoords=registercoords,
         title="Processes and Queues")
     _,_,_,obs_2 = resourceplot_axis(F[4:6,2],
