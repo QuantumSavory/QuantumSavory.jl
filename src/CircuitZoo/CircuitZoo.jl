@@ -49,7 +49,7 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     apply!((sacrificedR,purifiedR),gate)
     measa = project_traceout!(sacrificedL, basis)
     measb = project_traceout!(sacrificedR, basis)
-    success = measa ⊻ measb == parity
+    success = (measa ⊻ measb == parity)
     if !success
         traceout!(purifiedL)
         traceout!(purifiedR)
@@ -98,8 +98,8 @@ function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL::Array,sacrificed
     measb1 = project_traceout!(sacrificedR[1], basis1)
     measa2 = project_traceout!(sacrificedL[2], basis2)
     measb2 = project_traceout!(sacrificedR[2], basis2)
-    success1 = measa1 ⊻ measb1 == parity1
-    success2 = measa2 ⊻ measb2 == parity2
+    success1 = (measa1 ⊻ measb1 == parity1)
+    success2 = (measa2 ⊻ measb2 == parity2)
 
     if !(success1 && success2)
         traceout!(purifiedL)
