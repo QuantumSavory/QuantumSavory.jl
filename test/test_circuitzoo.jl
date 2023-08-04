@@ -1,6 +1,6 @@
 using Test
 using QuantumSavory
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1
+using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, PurifyStringent
 
 
 const T2=0
@@ -38,6 +38,17 @@ end
             regA, regB = entangled_registers(3, 1)
             purificationcircuit = Purify3to1(:Y) # original double selection
             success = purificationcircuit(regA[1], regB[1], [regA[2], regA[3]], [regB[2], regB[3]])
+            @test success == true
+        end
+    end
+end
+
+@testset "STRINGENT" begin
+    @testset "PurifyStringent" begin
+        for _ in 1:10
+            regA, regB = entangled_registers(13, 1)
+            purificationcircuit = PurifyStringent() # original single selection
+            success = purificationcircuit(regA[1], regB[1], regA[2:13], regB[2:13])
             @test success == true
         end
     end

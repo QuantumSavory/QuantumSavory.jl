@@ -89,193 +89,162 @@ function coin(basis, pair::Array, parity=0)
     success
 end
 
-function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL::Array,sacrificedR::Array)
+function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     gate1, gate2 = ZCZ, XCZ
     basis = X
-    size = 13
-    sacrificedL_1 = sacrificedL[1]
-    sacrificedR_1 = sacrificedR[1]
-    sacrificedL_2 = sacrificedL[2]
-    sacrificedR_2 = sacrificedR[2]
-    free_index = 3
-    apply!((purifiedL, sacrificedL_1), gate1)
-    apply!((purifiedR, sacrificedR_1), gate1)
+    free_index = 1
+    free_index_1 = 1
 
-    apply!((sacrificedR_1, sacrificedR_2), gate1)
-    apply!((sacrificedL_1, sacrificedL_2), gate1)
+    sacrificedL_0 = sacrificedL[1:4]
+    sacrificedL_1 = sacrificedL[5:12]
 
-    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+    sacrificedR_0 = sacrificedR[1:4]
+    sacrificedR_1 = sacrificedR[5:12]
+
+    apply!((purifiedL, sacrificedL_0[free_index]), gate1)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate1)
+
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+
+
+    success = true
+
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
 
-    apply!((purifiedL, sacrificedL_1), gate2)
-    apply!((purifiedR, sacrificedR_1), gate2)
+    free_index_1 = free_index_1 + 1
 
-    apply!((sacrificedL_1, sacrificedL_2), gate1)
-    apply!((sacrificedR_1, sacrificedR_2), gate1)
+    apply!((purifiedL, sacrificedL_0[free_index]), gate2)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate2)
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
 
     # Green rectangle
 
-    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
 
-    apply!((sacrificedL_1, sacrificedL_2), gate2)
-    apply!((sacrificedR_1, sacrificedR_2), gate2)
+    free_index_1 = free_index_1 + 1
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate2)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate2)
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
 
-    apply!((sacrificedL_1, sacrificedL_2), gate1)
-    apply!((sacrificedR_1, sacrificedR_2), gate1)
+    free_index_1 = free_index_1 + 1
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
 
     # EO Rectangle
 
-    apply!((purifiedL, sacrificedL_1), gate1)
-    apply!((purifiedR, sacrificedR_1), gate1)
+    apply!((purifiedL, sacrificedL_0[free_index]), gate1)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate1)
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
+
+    free_index_1 = free_index_1 + 1
     
-    apply!((sacrificedL_1, sacrificedL_2), gate1)
-    apply!((sacrificedR_1, sacrificedR_2), gate1)
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
 
     # Green rectangle
 
-    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
 
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
     end
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
 
-    apply!((sacrificedL_1, sacrificedL_2), gate2)
-    apply!((sacrificedR_1, sacrificedR_2), gate2)
+    free_index_1 = free_index_1 + 1
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate2)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate2)
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
 
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
     end
 
-    apply!((sacrificedL_1, sacrificedL_2), gate1)
-    apply!((sacrificedR_1, sacrificedR_2), gate1)
+    free_index_1 = free_index_1 + 1
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
 
     # EO Rectangle
 
-    apply!((purifiedL, sacrificedL_1), gate2)
-    apply!((purifiedR, sacrificedR_1), gate2)
+    apply!((purifiedL, sacrificedL_0[free_index]), gate2)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate2)
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
+
+    free_index_1 = free_index_1 + 1
     
-    apply!((sacrificedL_1, sacrificedL_2), gate1)
-    apply!((sacrificedR_1, sacrificedR_2), gate1)
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
 
-    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
 
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
     end
 
-    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
         # sacrifice pairs
-        sacrificedL_1 = sacrificedL[free_index]
-        sacrificedL_2 = sacrificedL[free_index+1]
-
-        sacrificedR_1 = sacrificedR[free_index]
-        sacrificedR_2 = sacrificedR[free_index+1]
-
-        free_index = free_index + 2
+        success = false
+        
     end
 
-    
+    free_index_1 = free_index_1 + 1
+
+    success
 
 end
 
