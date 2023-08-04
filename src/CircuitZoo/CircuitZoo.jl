@@ -79,6 +79,175 @@ struct Purify3to1 <: AbstractCircuit
     end
 end
 
+struct PurifyStringent <: AbstractCircuit
+end
+
+function coin(basis, pair::Array, parity=0)
+    measa = project_traceout!(pair[1], basis)
+    measb = project_traceout!(pair[2], basis)
+    success = (measa ⊻ measb == parity)
+    success
+end
+
+function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL,sacrificedR)
+    gate1, gate2 = ZCZ, XCZ
+    basis = X
+    free_index = 1
+    free_index_1 = 1
+
+    sacrificedL_0 = sacrificedL[1:4]
+    sacrificedL_1 = sacrificedL[5:12]
+
+    sacrificedR_0 = sacrificedR[1:4]
+    sacrificedR_1 = sacrificedR[5:12]
+
+    apply!((purifiedL, sacrificedL_0[free_index]), gate1)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate1)
+
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+
+
+    success = true
+
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index_1 = free_index_1 + 1
+
+    apply!((purifiedL, sacrificedL_0[free_index]), gate2)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate2)
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
+
+    # Green rectangle
+
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index_1 = free_index_1 + 1
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate2)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate2)
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index_1 = free_index_1 + 1
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
+
+    # EO Rectangle
+
+    apply!((purifiedL, sacrificedL_0[free_index]), gate1)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate1)
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index_1 = free_index_1 + 1
+    
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
+
+    # Green rectangle
+
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
+        # sacrifice pairs
+
+        success = false
+    end
+
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index_1 = free_index_1 + 1
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate2)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate2)
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+
+        success = false
+    end
+
+    free_index_1 = free_index_1 + 1
+
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
+
+    # EO Rectangle
+
+    apply!((purifiedL, sacrificedL_0[free_index]), gate2)
+    apply!((purifiedR, sacrificedR_0[free_index]), gate2)
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index_1 = free_index_1 + 1
+    
+    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
+    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
+
+    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
+        # sacrifice pairs
+
+        success = false
+    end
+
+    free_index = free_index + 1
+
+    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
+        # sacrifice pairs
+        success = false
+        
+    end
+
+    free_index_1 = free_index_1 + 1
+
+    success
+
+end
+
 function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL::Array,sacrificedR::Array)
     gate1, gate2, basis1, basis2, parity1, parity2 = if circuit.fixtwice==:X
         YCZ, ZCX, σʸ, σᶻ, 1, 0
