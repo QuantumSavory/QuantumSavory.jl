@@ -79,6 +79,206 @@ struct Purify3to1 <: AbstractCircuit
     end
 end
 
+struct PurifyStringent <: AbstractCircuit
+end
+
+function coin(basis, pair::Array, parity=0)
+    measa = project_traceout!(pair[1], basis)
+    measb = project_traceout!(pair[2], basis)
+    success = (measa ⊻ measb == parity)
+    success
+end
+
+function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL::Array,sacrificedR::Array)
+    gate1, gate2 = ZCZ, XCZ
+    basis = X
+    size = 13
+    sacrificedL_1 = sacrificedL[1]
+    sacrificedR_1 = sacrificedR[1]
+    sacrificedL_2 = sacrificedL[2]
+    sacrificedR_2 = sacrificedR[2]
+    free_index = 3
+    apply!((purifiedL, sacrificedL_1), gate1)
+    apply!((purifiedR, sacrificedR_1), gate1)
+
+    apply!((sacrificedR_1, sacrificedR_2), gate1)
+    apply!((sacrificedL_1, sacrificedL_2), gate1)
+
+    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    apply!((purifiedL, sacrificedL_1), gate2)
+    apply!((purifiedR, sacrificedR_1), gate2)
+
+    apply!((sacrificedL_1, sacrificedL_2), gate1)
+    apply!((sacrificedR_1, sacrificedR_2), gate1)
+
+    # Green rectangle
+
+    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    apply!((sacrificedL_1, sacrificedL_2), gate2)
+    apply!((sacrificedR_1, sacrificedR_2), gate2)
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    apply!((sacrificedL_1, sacrificedL_2), gate1)
+    apply!((sacrificedR_1, sacrificedR_2), gate1)
+
+    # EO Rectangle
+
+    apply!((purifiedL, sacrificedL_1), gate1)
+    apply!((purifiedR, sacrificedR_1), gate1)
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+    
+    apply!((sacrificedL_1, sacrificedL_2), gate1)
+    apply!((sacrificedR_1, sacrificedR_2), gate1)
+
+    # Green rectangle
+
+    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    apply!((sacrificedL_1, sacrificedL_2), gate2)
+    apply!((sacrificedR_1, sacrificedR_2), gate2)
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    apply!((sacrificedL_1, sacrificedL_2), gate1)
+    apply!((sacrificedR_1, sacrificedR_2), gate1)
+
+    # EO Rectangle
+
+    apply!((purifiedL, sacrificedL_1), gate2)
+    apply!((purifiedR, sacrificedR_1), gate2)
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+    
+    apply!((sacrificedL_1, sacrificedL_2), gate1)
+    apply!((sacrificedR_1, sacrificedR_2), gate1)
+
+    if coin(σˣ, [sacrificedL_1, sacrificedR_1]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    if coin(σˣ, [sacrificedL_2, sacrificedR_2]) == 1
+        # sacrifice pairs
+        sacrificedL_1 = sacrificedL[free_index]
+        sacrificedL_2 = sacrificedL[free_index+1]
+
+        sacrificedR_1 = sacrificedR[free_index]
+        sacrificedR_2 = sacrificedR[free_index+1]
+
+        free_index = free_index + 2
+    end
+
+    
+
+end
+
 function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL::Array,sacrificedR::Array)
     gate1, gate2, basis1, basis2, parity1, parity2 = if circuit.fixtwice==:X
         YCZ, ZCX, σʸ, σᶻ, 1, 0
