@@ -165,10 +165,10 @@ struct StringentBody <: AbstractCircuit
 end
 
 function (circuit::StringentBody)(purifiedL, purifiedR, sacrificedL, sacrificedR)
-    gate = if circuit.type == :Z
-        ZCZ
+    gate, success = if circuit.type == :Z
+        ZCZ, true
     else
-        ZCX
+        ZCX, true
     end
 
     # TODO;;
