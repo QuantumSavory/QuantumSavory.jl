@@ -142,15 +142,16 @@ function (circuit::StringentHead)(purifiedL, purifiedR, sacrificedL, sacrificedR
     apply!((sacrificedR[1], sacrificedR[2]), ZCZ)
     apply!((sacrificedL[1], sacrificedL[2]), ZCZ)
 
-    success = success & !coin(σˣ, [sacrificedL[1], sacrificedR[1]])
-    success = success & !coin(σˣ, [sacrificedL[2], sacrificedR[2]])
+    success = success & coin(σˣ, [sacrificedL[1], sacrificedR[1]])
+    success = success & coin(σˣ, [sacrificedL[2], sacrificedR[2]])
 
     success
 end
 
 struct StringentBody <: AbstractCircuit
     type::Symbol
-    function StringentHead(type)
+    expedient::Bool
+    function StringentBody(type, expedient=false)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
             `type` has to be one of `:X`, or `:Z`.
@@ -159,7 +160,7 @@ struct StringentBody <: AbstractCircuit
             and ensure you are passing a valid argument.
             """))
         else
-            new(type)
+            new(type, expedient)
         end
     end
 end
@@ -168,174 +169,76 @@ function (circuit::StringentBody)(purifiedL, purifiedR, sacrificedL, sacrificedR
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
-        ZCX, true
+        XCZ, true
+    end
+    ## Indices for emulating pair creation
+    i1 = 1
+    i2 = 1
+    sacrificedL1 = sacrificedL[1:1]
+    sacrificedR1 = sacrificedR[1:1]
+
+    sacrificedL2 = circuit.expedient ? sacrificedL[2:3] : sacrificedL[2:4]
+    sacrificedR2 = circuit.expedient ? sacrificedR[2:3] : sacrificedR[2:4]
+
+    apply!((sacrificedL1[i1], sacrificedL2[i2]), XCZ)
+    apply!((sacrificedR1[i1], sacrificedR2[i2]), XCZ)
+    success = success & coin(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
+    i2 = i2 + 1
+
+    apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
+    apply!((sacrificedR1[i1], sacrificedR2[i2]), ZCZ)
+    success = success & coin(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
+
+    apply!((purifiedL, sacrificedL1[i1]), gate)
+    apply!((purifiedR, sacrificedR1[i1]), gate)
+
+    if !circuit.expedient 
+        i2 = i2 + 1
+        apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
+        apply!((sacrificedR1[i1], sacrificedR2[i2]), ZCZ)
+
+        success = success & coin(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
     end
 
-    # TODO;;
+    success = success & coin(σˣ, [sacrificedL1[i1], sacrificedR1[i1]])
+
+    success
+
 end
 
 struct PurifyStringent <: AbstractCircuit
 end
 
 function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL,sacrificedR)
-    # 2 x {:X,:Z} StringentBody ; 2 x {:X,:Z} StringentHead
-    # TODO: wait for nodes to fill
-    gate1, gate2 = ZCZ, XCZ
-    basis = X
-    free_index = 1
-    free_index_1 = 1
-
-    sacrificedL_0 = sacrificedL[1:4]
-    sacrificedL_1 = sacrificedL[5:12]
-
-    sacrificedR_0 = sacrificedR[1:4]
-    sacrificedR_1 = sacrificedR[5:12]
-
-    apply!((purifiedL, sacrificedL_0[free_index]), gate1)
-    apply!((purifiedR, sacrificedR_0[free_index]), gate1)
-
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
-
-
     success = true
+    stringentHead_Z = StringentHead(:Z)
+    stringentHead_X = StringentHead(:X)
+    stringentBody_Z = StringentBody(:Z)
+    stringentBody_X = StringentBody(:X)
 
-    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index = free_index + 1
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index_1 = free_index_1 + 1
-
-    apply!((purifiedL, sacrificedL_0[free_index]), gate2)
-    apply!((purifiedR, sacrificedR_0[free_index]), gate2)
-
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
-
-    # Green rectangle
-
-    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index = free_index + 1
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index_1 = free_index_1 + 1
-
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate2)
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate2)
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index_1 = free_index_1 + 1
-
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
-
-    # EO Rectangle
-
-    apply!((purifiedL, sacrificedL_0[free_index]), gate1)
-    apply!((purifiedR, sacrificedR_0[free_index]), gate1)
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index_1 = free_index_1 + 1
+    success = success & stringentHead_Z(purifiedL, purifiedR, sacrificedL[1:2], sacrificedR[1:2])
+    success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4], sacrificedR[3:4])
+    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:8], sacrificedR[5:8])
+    success = success & stringentBody_X(purifiedL, purifiedR, sacrificedL[9:12], sacrificedR[9:12])
     
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
-
-    # Green rectangle
-
-    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
-        # sacrifice pairs
-
-        success = false
-    end
-
-    free_index = free_index + 1
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index_1 = free_index_1 + 1
-
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate2)
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate2)
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-
-        success = false
-    end
-
-    free_index_1 = free_index_1 + 1
-
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
-
-    # EO Rectangle
-
-    apply!((purifiedL, sacrificedL_0[free_index]), gate2)
-    apply!((purifiedR, sacrificedR_0[free_index]), gate2)
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index_1 = free_index_1 + 1
-    
-    apply!((sacrificedL_0[free_index], sacrificedL_1[free_index_1]), gate1)
-    apply!((sacrificedR_0[free_index], sacrificedR_1[free_index_1]), gate1)
-
-    if !coin(σˣ, [sacrificedL_0[free_index], sacrificedR_0[free_index]])
-        # sacrifice pairs
-
-        success = false
-    end
-
-    free_index = free_index + 1
-
-    if !coin(σˣ, [sacrificedL_1[free_index_1], sacrificedR_1[free_index_1]])
-        # sacrifice pairs
-        success = false
-        
-    end
-
-    free_index_1 = free_index_1 + 1
-
     success
+end
 
+struct PurifyExpedient <: AbstractCircuit
+end
+
+function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificedL,sacrificedR)
+    success = true
+    stringentHead_Z = StringentHead(:Z)
+    stringentHead_X = StringentHead(:X)
+    stringentBody_Z = StringentBody(:Z, true)
+
+    success = success & stringentHead_Z(purifiedL, purifiedR, sacrificedL[1:2], sacrificedR[1:2])
+    success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4], sacrificedR[3:4])
+    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:7], sacrificedR[5:7])
+    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[8:10], sacrificedR[8:10])
+    
+    success
 end
 
 end # module
