@@ -58,7 +58,7 @@ projecting on either `stateA` or `stateB`, returning the index of the subspace
 on which the projection happened. It assumes the list of possible states forms a basis
 for the Hilbert space. The Hilbert space of the register is automatically shrinked.
 
-A basis object can be specified on its own as well, e.g.
+A basis object / observable can be specified on its own as well, e.g.
 `project_traceout!(reg, slot, basis)`.
 """
 function project_traceout! end
@@ -80,3 +80,35 @@ function project_traceout!(f, reg::Register, i::Int, psis; time=nothing)
     f(j)
 end
 project_traceout!(f, r::RegRef, psis; time=nothing) = project_traceout!(f, r.reg, r.idx, psis; time=nothing)
+
+"""
+Perform a projective nondemolition measurement on the given slot of the given register.
+
+`project_qnd!(reg, slot, [stateA, stateB])` performs a projective measurement,
+projecting on either `stateA` or `stateB`, returning the index of the subspace
+on which the projection happened. It assumes the list of possible states forms a basis
+for the Hilbert space.
+
+A basis object can be specified on its own as well, e.g.
+`project_qnd!(reg, slot, basis)`.
+"""
+function project_qnd! end # TODO code repetition with project_traceout! -- dry it out
+
+function project_qnd!(reg::Register, i::Int, psis; time=nothing)
+    project_qnd!(identity, reg, i, psis; time=time)
+end
+project_qnd!(r::RegRef, psis; time=nothing) = project_qnd!(r.reg, r.idx, psis; time=nothing)
+
+function project_qnd!(f, reg::Register, i::Int, psis; time=nothing)
+    !isnothing(time) && uptotime!([reg], [i], time)
+    stateref = reg.staterefs[i]
+    stateindex = reg.stateindices[i]
+    if isnothing(stateref) # TODO maybe use isassigned
+        throw("error") # make it more descriptive
+    end
+    j, stateref.state[] = project_qnd!(stateref.state[],stateindex,psis)
+    removebackref!(stateref, stateindex)
+    initialize!(reg[i], copy(psis[j]); time)
+    f(j)
+end
+project_qnd!(f, r::RegRef, psis; time=nothing) = project_qnd!(f, r.reg, r.idx, psis; time=nothing)

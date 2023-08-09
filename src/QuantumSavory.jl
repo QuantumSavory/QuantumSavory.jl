@@ -10,7 +10,7 @@ using QuantumInterface: basis, tensor, ⊗, apply!, traceout!,
     AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
 
 export apply!, traceout!, removebackref!
-export project_traceout! #TODO should move to QuantumInterface
+export project_traceout!, project_qnd! #TODO should move to QuantumInterface
 
 import ConcurrentSim
 
@@ -74,6 +74,7 @@ Register(traits,reprs::Base.AbstractVecOrTuple{<:AbstractRepresentation}) = Regi
 Register(traits) = Register(traits,default_repr.(traits),fill(nothing,length(traits)),fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
 Register(nqubits::Int) = Register([Qubit() for _ in 1:nqubits])
 Register(nqubits::Int,repr::AbstractRepresentation) = Register(fill(Qubit(),nqubits),fill(repr,nqubits))
+Register(trait::QuantumStateTrait, bg::AbstractBackground) = Register([trait], [default_repr(trait)], [bg])
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
     Register(traits, reprs, bg, sr, si, at, env, [ConcurrentSim.Resource(env) for _ in traits])
