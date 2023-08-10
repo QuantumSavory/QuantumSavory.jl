@@ -78,7 +78,7 @@ Applying an `operation` to the qubits referred to by the sequence of [`RegRef`](
 
 Calls [`uptotime!`](@ref) in order to update any [`AbstractBackground`](@ref) properties.
 
-Calls [`subsystemcompose!`](@ref) in order to make one big state. Then goes to `apply!(state, subsystem_indices, operatin; time)`.
+Calls [`subsystemcompose`](@ref) in order to make one big state. Then goes to `apply!(state, subsystem_indices, operatin; time)`.
 
 #### `apply!(state, subsystem_indices, operation; time)`
 
@@ -100,7 +100,7 @@ flowchart TB
   subgraph TOP [lower from registers to states]
     direction LR
     B1["<code>uptotime!</code>"]
-    B2["<code>subsystemcompose!</code>"]
+    B2["<code>subsystemcompose</code>"]
     B1 --> B2
   end
   C["<code>apply!(state, subsystem_indices, operation; time)</code>"]
@@ -138,7 +138,7 @@ Calculate the value of an observable on the state in the sequence of [`RegRef`](
 
 Calls [`uptotime!`](@ref) in order to update any [`AbstractBackground`](@ref) properties.
 
-Calls [`subsystemcompose!`](@ref) in order to make one big state. Then goes to `observable(state, subsystem_indices, obs; time)`.
+Calls [`subsystemcompose`](@ref) in order to make one big state. Then goes to `observable(state, subsystem_indices, obs; time)`.
 
 #### `observable(state, subsystem_indices, obs; time)`
 
@@ -160,7 +160,7 @@ flowchart TB
   subgraph TOP [lower from registers to states]
     direction LR
     B1["<code>uptotime!</code>"]
-    B2["<code>subsystemcompose!</code>"]
+    B2["<code>subsystemcompose</code>"]
     B1 --> B2
   end
   C["<code>observable(state, subsystem_indices, obs; time)</code>"]

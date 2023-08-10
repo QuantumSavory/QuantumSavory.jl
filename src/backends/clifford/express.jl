@@ -13,7 +13,14 @@ express_qc_proj(::YGate) = QuantumClifford.projectY! # should be project*rand! i
 express_qc_proj(::ZGate) = QuantumClifford.projectZ! # should be project*rand! if ispadded()=true
 
 function observable(state::QuantumClifford.MixedDestabilizer, indices, operation)
-    operation = express_nolookup(operation, CliffordRepr(), UseAsObservable())
-    op = QuantumClifford._expand_pauli(operation,indices,QuantumClifford.nqubits(state)) # TODO create a public `embed` function in QuantumClifford
+    operation = express(operation, CliffordRepr(), UseAsObservable())
+    op = embed(QuantumClifford.nqubits(state), indices, operation)
     QuantumClifford.expect(op, state)
+end
+
+# This is a bit of a hack to work specifically with SProjector. If you start needing more of these for other types, consider doing a bit of a redesign. This all should pass through `express(...,::UseAsObservable)`.
+function observable(state::QuantumClifford.MixedDestabilizer, indices, operation::SProjector)
+    pstate = express(operation.ket, CliffordRepr())
+    QuantumClifford.nqubits(state)==length(indices)==QuantumClifford.nqubits(pstate) || error("An attempt was made to measure a projection observable while using Clifford representation for the qubits. However, the qubits that are being observed are entangled with other qubits. Currently this is not supported. Consider tracing out the extra qubits or using Pauli observables that do not suffer from this embedding limitation.")
+    dot(pstate, state)
 end

@@ -8,7 +8,7 @@ end
 
 A multi-formalism simulator for noisy quantum communication and computation hardware with support for symbolic algebra, multiple simulation backends, a variety of noise models, discrete event simulation, optimization, and visualization.
 
-We are also preparing a [getting started manual](/manual).
+We are also preparing a [getting started manual](@ref manual).
 
 The rest of the documentation is [structured](https://diataxis.fr/) as follows:
 
