@@ -5,6 +5,7 @@ version = "0.3.0"
 
 [deps]
 ConcurrentSim = "6ed1e86c-fcaf-46a9-97e0-2b26a2cdb499"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 IterTools = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -29,6 +30,7 @@ QuantumSavoryMakie = "Makie"
 
 [compat]
 ConcurrentSim = "1.1"
+DocStringExtensions = "0.9"
 Graphs = "1.7.3"
 IterTools = "1.4.0"
 Makie = "0.19"

@@ -18,6 +18,7 @@ e.g., kets or density matrices from `QuantumOptics.jl`
 or tableaux from `QuantumClifford.jl`.
 """
 function initialize!(regs::Vector{Register},indices::Vector{Int},state; time=nothing)
+    length(regs)==length(indices)==nsubsystems(state) || throw(DimensionMismatch(lazy"Attempting to initialize a set of registers with a state that does not have the correct number of subsystems."))
     stateref = StateRef(state, collect(regs), collect(indices))
     for (si,(reg,ri)) in enumerate(zip(regs,indices))
         if isassigned(reg,ri) # TODO decide if this is an error or a warning or nothing

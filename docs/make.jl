@@ -46,6 +46,7 @@ function main()
     "References" => [
         "references.md",
         "API" => "API.md",
+        "CircuitZoo API" => "API_CircuitZoo.md",
         "Bibliography" => "bibliography.md",
     ],
     ]
