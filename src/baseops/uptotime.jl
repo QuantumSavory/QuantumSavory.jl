@@ -1,5 +1,26 @@
 export uptotime!, overwritetime!
 
+"""
+Evolve all the states in a register to a given time, according to the various backgrounds that they might have.
+
+```jldoctest
+julia> reg = Register(2, T1Decay(1.0))
+Register with 2 slots: [ Qubit | Qubit ]
+  Slots:
+    nothing
+    nothing
+
+julia> initialize!(reg[1], X₁)
+       observable(reg[1], σᶻ)
+0.0 + 0.0im
+
+julia> uptotime!(reg[1], 10)
+       observable(reg[1], Z)
+0.9999546000702374 + 0.0im
+```
+"""
+function uptotime! end
+
 function uptotime!(stateref::StateRef, idx::Int, background, Δt) # TODO this should be just for
     stateref.state[] = uptotime!(stateref.state[], idx, background, Δt)
 end

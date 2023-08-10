@@ -24,13 +24,17 @@ using QuantumSymbolics:
     STensorOperator, SScaledOperator, SAddOperator
 
 export StateRef, RegRef, Register, RegisterNet
-export Qubit, Qumode,
+export Qubit, Qumode, QuantumStateTrait,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
-    UseAsState, UseAsObservable, UseAsOperation
+    UseAsState, UseAsObservable, UseAsOperation,
+    AbstractBackground
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
+"""An abstract type for the various types of states that can be given to [`Register`](@ref) slots, e.g. qubit, harmonic oscillator, etc."""
 abstract type QuantumStateTrait end
+
+"""An abstract type for the various background processes that might be inflicted upon a [`Register`](@ref) slot, e.g. decay, dephasing, etc."""
 abstract type AbstractBackground end
 
 """Specifies that a given register slot contains qubits."""
@@ -74,18 +78,31 @@ Register(traits,reprs::Base.AbstractVecOrTuple{<:AbstractRepresentation}) = Regi
 Register(traits) = Register(traits,default_repr.(traits),fill(nothing,length(traits)),fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
 Register(nqubits::Int) = Register([Qubit() for _ in 1:nqubits])
 Register(nqubits::Int,repr::AbstractRepresentation) = Register(fill(Qubit(),nqubits),fill(repr,nqubits))
+Register(nqubits::Int,bg::AbstractBackground) = Register(fill(Qubit(),nqubits),fill(bg,nqubits))
 Register(trait::QuantumStateTrait, bg::AbstractBackground) = Register([trait], [default_repr(trait)], [bg])
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
     Register(traits, reprs, bg, sr, si, at, env, [ConcurrentSim.Resource(env) for _ in traits])
 end
+
+"""
+A reference to a [`Register`](@ref) slot, convenient for use with functions like [`apply!`](@ref), etc.
+
+```jldoctest
+julia> r = Register(2)
+       initialize!(r[1], X₁)
+       observable(r[1], X)
+0.9999999999999998 + 0.0im
+```
+"""
 struct RegRef
     reg::Register
     idx::Int
 end
 
-##
-
+"""
+A network of [`Register`](@ref)s with convenient graph API as well.
+"""
 struct RegisterNet
     graph::SimpleGraph{Int64}
     registers::Vector{Register}
@@ -110,10 +127,56 @@ struct RegisterNet
         new(graph, registers, vertex_metadata, edge_metadata)
     end
 end
+"""
+Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s and a graph.
+
+```jldoctest
+julia> graph = grid([2,2])
+{4, 4} undirected simple Int64 graph
+
+julia> registers = [Register(1), Register(2), Register(1), Register(2)]
+4-element Vector{Register}:
+ Register with 1 slots: [ Qubit ]
+  Slots:
+    nothing
+ Register with 2 slots: [ Qubit | Qubit ]
+  Slots:
+    nothing
+    nothing
+ Register with 1 slots: [ Qubit ]
+  Slots:
+    nothing
+ Register with 2 slots: [ Qubit | Qubit ]
+  Slots:
+    nothing
+    nothing
+
+julia> net = RegisterNet(graph, registers)
+A network of 4 registers in a graph of 4 edges
+
+
+julia> neighbors(net, 1)
+2-element Vector{Int64}:
+ 2
+ 3
+```
+"""
 function RegisterNet(graph::SimpleGraph, registers::Vector{Register})
     @assert size(graph, 1) == length(registers)
     RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers], Dict{Tuple{Int,Int},Dict{Symbol,Any}}())
 end
+"""Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s, defaulting to a chain topology.
+
+```jldoctest
+julia> net = RegisterNet([Register(2), Register(4), Register(2)])
+A network of 3 registers in a graph of 2 edges
+
+julia> neighbors(net,2)
+2-element Vector{Int64}:
+ 1
+ 3
+```
+"""
 function RegisterNet(registers::Vector{Register})
     graph = grid([length(registers)])
     RegisterNet(graph, registers)
