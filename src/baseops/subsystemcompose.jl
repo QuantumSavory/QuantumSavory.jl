@@ -32,7 +32,8 @@ swap!(r1::RegRef, r2::RegRef) = swap!(r1.reg, r2.reg, r1.idx, r2.idx)
 # - do they need to be collapsed
 # - do they have unused slots that can be refilled
 # - are they just naively composed together
-function subsystemcompose(regs::Vector{Register}, indices) # TODO add a type constraint on regs
+"""Ensure that the all slots of the given registers are represented by one single state object, i.e. that all the register slots are tracked in the same Hilbert space."""
+function subsystemcompose(regs::Base.AbstractVecOrTuple{Register}, indices) # TODO add a type constraint on regs
     # Get all references to states that matter, removing duplicates
     staterefs = unique(objectid, [r.staterefs[i] for (r,i) in zip(regs,indices)]) # TODO do not use == checks like in `unique`, use ===
     # Prepare the larger state object
