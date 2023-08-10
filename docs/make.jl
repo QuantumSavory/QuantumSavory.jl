@@ -13,7 +13,7 @@ function main()
     bib,
     doctest = false,
     clean = true,
-    #strict = Documenter.except(:missing_docs), TODO
+    # strict = Documenter.except(:missing_docs), TODO
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
         assets=["assets/init.js"]
