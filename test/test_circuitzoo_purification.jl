@@ -5,9 +5,16 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify
 
 
 const bell = StabilizerState("XX ZZ")
+const bgd = T2Dephasing(1.0)
 # or equivalently `const bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2`,
 # however converting to stabilizer state for Clifford simulations
 # is not implemented (and can not be done efficiently).
+
+const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+const perfect_pair_dm = SProjector(perfect_pair)
+const mixed_dm = MixedState(perfect_pair_dm)
+noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolarization helper
+
 
 @test_throws ArgumentError Purify2to1(:lalala)
 
@@ -36,6 +43,23 @@ const bell = StabilizerState("XX ZZ")
             end
         end
     end
+
+    for rep in [QuantumOpticsRepr]
+        for leaveout in [:X, :Y, :Z]
+            # test that pure state gets mapped to pure state
+            r = Register(4, rep())
+
+            rnd = rand() / 4 + 0.5
+
+            noisy_pair = noisy_pair_func(rnd)
+            initialize!(r[1:2], noisy_pair)
+            initialize!(r[3:4], noisy_pair)
+            if Purify2to1(leaveout)(r[1:4]...)==true
+                @test abs(observable(r[1:2], projector(bell))) >= rnd
+            end
+            # @test observable(r[1:2], projector(bell))≈1.0
+        end
+    end
 end
 
 @testset "3to1" begin
@@ -62,9 +86,28 @@ end
             #     apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
             #     @testset "1:2 error: $(error) fx: $(fixtwice)" begin
             #         @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
-            #     end 
-            
+            #     end
             # end 
+
+            
+        end
+    end
+
+    for rep in [QuantumOpticsRepr]
+        for fixtwice in [:X, :Y, :Z]
+            # test that pure state gets mapped to pure state
+            r = Register(6, rep())
+
+            rnd = rand() / 4 + 0.5
+
+            noisy_pair = noisy_pair_func(rnd)
+            initialize!(r[1:2], noisy_pair)
+            initialize!(r[3:4], noisy_pair)
+            initialize!(r[5:6], noisy_pair)
+            if Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
+                @test abs(observable(r[1:2], projector(bell))) >= rnd
+            end
+            # @test observable(r[1:2], projector(bell))≈1.0
         end
     end
 end
