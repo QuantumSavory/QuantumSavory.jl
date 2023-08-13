@@ -62,7 +62,8 @@ end
             #     apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
             #     @testset "1:2 error: $(error) fx: $(fixtwice)" begin
             #         @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
-            #     end
+            #     end 
+            
             # end 
         end
     end
