@@ -132,7 +132,40 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     success
 end
 
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+A purification circuit sacrificing 2 Bell pairs to produce another.
+The circuit is parameterized by a `fixtwice` symbol argument
+which specifies which of the three possible Pauli errors is fixed twice.
+This purificaiton circuit is capable of detecting all errors.
+
+If an error was detected, the circuit returns `false` and the state is reset.
+If no error was detected, the circuit returns `true`.
+
+The sacrificial qubits are removed from the register.
+
+```jldoctest
+julia> a = Register(2)
+       b = Register(2)
+       c = Register(2)
+       initalize!(a[1:2], bell)
+       initalize!(b[1:2], bell)
+       initalize!(c[1:2], bell)
+
+
+julia> Purify3to1(:X)(a[1], a[2], [b[1], c[1]], [b[2], c[2]])
+false
+```
+
+"""
+
 struct Purify3to1 <: AbstractCircuit
+    """The error to be fixed twice"""
     fixtwice::Symbol
     function Purify3to1(fixtwice)
         if fixtwice ∉ (:X, :Y, :Z)
@@ -282,8 +315,40 @@ function (circuit::StringentBody)(purifiedL, purifiedR, sacrificedL, sacrificedR
 
 end
 
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The STRINGENT purification circuit 
+
+If an error was detected, the circuit returns `false` and the state is reset.
+If no error was detected, the circuit returns `true`.
+
+The sacrificial qubits are removed from the register.
+
+```jldoctest
+julia> r = Register(26, rep())
+    for i in 1:13
+        initialize!(r[(2*i-1):(2*i)], bell)
+    end
+
+julia> PurifyStringent()(r[1], r[2],
+        [r[3], r[5], r[7], r[9], r[11], r[13], r[15], r[17], r[19], r[21], r[23], r[25]],
+        [r[4], r[6], r[8], r[10], r[12], r[14], r[16], r[18], r[20], r[22], r[24], r[26]])
+    true
+
+```
+
+"""
+
 struct PurifyStringent <: AbstractCircuit
 end
+
+
 
 function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     success = true
