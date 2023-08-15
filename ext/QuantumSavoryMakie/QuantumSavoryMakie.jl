@@ -74,7 +74,6 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
         for i in 1:2:length(state_links[])
             fid = real(observable([registers[regs[][i][1]][regs[][i][2]], registers[regs[][i+1][1]][regs[][i+1][2]]], projector(bell)))
             push!(clrs[], fid)
-            push!(clrs[], fid)
         end
 
         for a in all_nodes
@@ -87,7 +86,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
     register_polyplot.inspectable[] = false
     register_slots_scatterplot = Makie.scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=:data)
     state_scatterplot = Makie.scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=:data)
-    state_lineplot = Makie.linesegments!(rn,state_links,color=clrs, colormap=:viridis, colorrange = (0, 1))
+    state_lineplot = Makie.linesegments!(rn,state_links,color=clrs, colormap=:Spectral, colorrange = (0.77, 0.82))
     rn[:register_polyplot] = register_polyplot
     rn[:register_slots_scatterplot] = register_slots_scatterplot
     rn[:register_slots_coords_backref] = register_slots_coords_backref
