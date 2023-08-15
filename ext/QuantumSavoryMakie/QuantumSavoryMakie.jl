@@ -66,26 +66,16 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
                 if !juststarted && si<nsubsystems(s)
                     push!(state_links[], state_links[][end])
                     push!(regs[], regs[][end])
-
                 else
                     juststarted = false
                 end
             end
         end
-
         for i in 1:2:length(state_links[])
             fid = real(observable([registers[regs[][i][1]][regs[][i][2]], registers[regs[][i+1][1]][regs[][i+1][2]]], projector(bell)))
             push!(clrs[], fid)
             push!(clrs[], fid)
         end
-        # println("OBSERVABLES [[[[[[[")
-
-        # println(rn)
-        # println(state_links[])
-        # println(clrs[])
-        # println(LinRange(1, 5, length(state_links[])))
-
-        # println("]]]]]]")
 
         for a in all_nodes
             notify(a)
