@@ -46,18 +46,14 @@ noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolariza
 
     for rep in [QuantumOpticsRepr]
         for leaveout in [:X, :Y, :Z]
-            # test that pure state gets mapped to pure state
             r = Register(4, rep())
-
             rnd = rand() / 4 + 0.5
-
             noisy_pair = noisy_pair_func(rnd)
             initialize!(r[1:2], noisy_pair)
             initialize!(r[3:4], noisy_pair)
             if Purify2to1(leaveout)(r[1:4]...)==true
                 @test abs(observable(r[1:2], projector(bell))) >= rnd
             end
-            # @test observable(r[1:2], projector(bell))≈1.0
         end
     end
 end
@@ -82,24 +78,19 @@ end
             ## When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true is that supposed to happen?
             # for error in [:X, :Y, :Z], target in 1:2
             #     r = Register(6, rep())
-            #     initialize!(r[1:6], bell⊗bell⊗bell)
-            #     apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
-            #     @testset "1:2 error: $(error) fx: $(fixtwice)" begin
-            #         @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
+            #     for i in 1:3
+            #         initialize!(r[(2*i-1):(2*i)], bell)
             #     end
-            # end 
-
-            
+            #     apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
+            #     @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
+            # end
         end
     end
-
+    # testing fidelity - Error when using CliffordRepr
     for rep in [QuantumOpticsRepr]
         for fixtwice in [:X, :Y, :Z]
-            # test that pure state gets mapped to pure state
             r = Register(6, rep())
-
             rnd = rand() / 4 + 0.5
-
             noisy_pair = noisy_pair_func(rnd)
             initialize!(r[1:2], noisy_pair)
             initialize!(r[3:4], noisy_pair)
@@ -107,20 +98,31 @@ end
             if Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
                 @test abs(observable(r[1:2], projector(bell))) >= rnd
             end
-            # @test observable(r[1:2], projector(bell))≈1.0
         end
     end
 end
 
 @testset "Stringent" begin
-    for rep in [CliffordRepr]
-
+    for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(26, rep())
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], bell)
         end
         @test PurifyStringent()(r[1], r[2],
             [r[3], r[5], r[7], r[9], r[11], r[13], r[15], r[17], r[19], r[21], r[23], r[25]],
+            [r[4], r[6], r[8], r[10], r[12], r[14], r[16], r[18], r[20], r[22], r[24], r[26]]) == true 
+    end
+    # testing fidelity - Error when using CliffordRepr
+    for rep in [QuantumOpticsRepr]
+        r = Register(26, rep())
+        rnd = rand() / 4 + 0.5
+        noisy_pair = noisy_pair_func(rnd)
+        for i in 1:13
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        if PurifyStringent()(r[1], r[2],
+            [r[3], r[5], r[7], r[9], r[11], r[13], r[15], r[17], r[19], r[21], r[23], r[25]],
             [r[4], r[6], r[8], r[10], r[12], r[14], r[16], r[18], r[20], r[22], r[24], r[26]]) == true
+        end
     end
 end
