@@ -24,6 +24,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
     state_links = Makie.Observable(Makie.Point2{Float64}[])
     clrs = Makie.Observable(Float32[])
     regs = Makie.Observable([])
+    color2qubitlinks = rn[:color2qubitlinks][]
     if haskey(rn, :registercoords) && !isnothing(rn[:registercoords][])
         registercoords = rn[:registercoords][]
     else
@@ -61,19 +62,22 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
                     break
                 end
                 push!(state_links[], Makie.Point2{Float64}(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
-                push!(regs[], (whichreg, i))
+                color2qubitlinks && push!(regs[], (whichreg, i))
 
                 if !juststarted && si<nsubsystems(s)
                     push!(state_links[], state_links[][end])
-                    push!(regs[], regs[][end])
+                    color2qubitlinks && push!(regs[], regs[][end])
                 else
                     juststarted = false
                 end
             end
         end
-        for i in 1:2:length(state_links[])
-            fid = real(observable([registers[regs[][i][1]][regs[][i][2]], registers[regs[][i+1][1]][regs[][i+1][2]]], projector(bell)))
-            push!(clrs[], fid)
+
+        if color2qubitlinks
+            for i in 1:2:length(state_links[])
+                fid = real(observable([registers[regs[][i][1]][regs[][i][2]], registers[regs[][i+1][1]][regs[][i+1][2]]], projector(bell)))
+                push!(clrs[], fid)
+            end
         end
 
         for a in all_nodes
@@ -86,13 +90,14 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
     register_polyplot.inspectable[] = false
     register_slots_scatterplot = Makie.scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=:data)
     state_scatterplot = Makie.scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=:data)
-    state_lineplot = Makie.linesegments!(rn,state_links,color=clrs, colormap=:Spectral, colorrange = (0, 1))
+    state_lineplot = Makie.linesegments!(rn,state_links,color=color2qubitlinks ? clrs : (:gray90), colormap=:Spectral, colorrange = (0,1))
     rn[:register_polyplot] = register_polyplot
     rn[:register_slots_scatterplot] = register_slots_scatterplot
     rn[:register_slots_coords_backref] = register_slots_coords_backref
     rn[:state_scatterplot] = state_scatterplot
     rn[:state_coords_backref] = state_coords_backref
     rn[:state_lineplot] = state_lineplot
+    rn[:color2qubitlinks] = color2qubitlinks
     rn
 end
 
@@ -123,10 +128,10 @@ end
 It returns a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates
 the plot with the current state of the network."""
-function registernetplot_axis(subfig, registersobservable; registercoords=nothing, interactions=false)
+function registernetplot_axis(subfig, registersobservable; registercoords=nothing, interactions=false, color2qubitlinks=false)
     ax = Makie.Axis(subfig)
     p = registernetplot!(ax, registersobservable,
-        registercoords=registercoords,
+        registercoords=registercoords, color2qubitlinks=color2qubitlinks
         )
     ax.aspect = Makie.DataAspect()
     Makie.hidedecorations!(ax)
