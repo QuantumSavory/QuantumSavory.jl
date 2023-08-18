@@ -107,7 +107,8 @@ struct RegisterNet
     registers::Vector{Register}
     vertex_metadata::Vector{Dict{Symbol,Any}}
     edge_metadata::Dict{Tuple{Int,Int},Dict{Symbol,Any}}
-    function RegisterNet(graph, registers, vertex_metadata, edge_metadata)
+    directed_edge_metadata::Dict{Pair{Int,Int},Dict{Symbol,Any}}
+    function RegisterNet(graph, registers, vertex_metadata, edge_metadata, directed_edge_metadata)
         all_are_at_zero = all(iszero(ConcurrentSim.now(r.env)) && isempty(r.env.heap) && isnothing(r.env.active_proc) for r in registers)
         all_are_same = all(registers[1].env === r.env for r in registers)
         if !all_are_same
@@ -123,7 +124,7 @@ struct RegisterNet
                 error("When constructing a `RegisterNet`, the registers must either have not been used yet or have to already belong to the same simulation time tracker, which is not the case here. The simplest way to fix this error is to immediately construct the `RegisterNet` after you have constructed the registers.")
             end
         end
-        new(graph, registers, vertex_metadata, edge_metadata)
+        new(graph, registers, vertex_metadata, edge_metadata, directed_edge_metadata)
     end
 end
 """
@@ -162,7 +163,7 @@ julia> neighbors(net, 1)
 """
 function RegisterNet(graph::SimpleGraph, registers::Vector{Register})
     @assert size(graph, 1) == length(registers)
-    RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers], Dict{Tuple{Int,Int},Dict{Symbol,Any}}())
+    RegisterNet(graph, registers, [Dict{Symbol,Any}() for _ in registers], Dict{Tuple{Int,Int},Dict{Symbol,Any}}(), Dict{Pair{Int,Int},Dict{Symbol,Any}}())
 end
 """Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s, defaulting to a chain topology.
 
@@ -209,6 +210,13 @@ function Base.setindex!(net::RegisterNet, val, ij::Tuple{Int,Int}, k::Symbol)
     haskey(net.edge_metadata,edge) || (net.edge_metadata[edge] = Dict{Symbol,Any}())
     net.edge_metadata[edge][k] = val
 end
+# Get and set directed edge metadata
+Base.getindex(net::RegisterNet, ij::Pair{Int,Int}, k::Symbol) = net.directed_edge_metadata[ij][k]
+function Base.setindex!(net::RegisterNet, val, ij::Pair{Int,Int}, k::Symbol)
+    edge = ij
+    haskey(net.directed_edge_metadata,edge) || (net.directed_edge_metadata[edge] = Dict{Symbol,Any}())
+    net.directed_edge_metadata[edge][k] = val
+end
 Base.getindex(net::RegisterNet, ij::Graphs.SimpleEdge, k::Symbol) = net[(ij.src, ij.dst),k]
 Base.setindex!(net::RegisterNet, val, ij::Graphs.SimpleEdge, k::Symbol) = begin net[(ij.src, ij.dst),k] = val end
 # Get and set with colon notation
@@ -216,6 +224,8 @@ Base.getindex(net::RegisterNet, ::Colon) = net.registers
 Base.getindex(net::RegisterNet, ::Colon, j::Int) = [r[j] for r in net.registers]
 Base.getindex(net::RegisterNet, ::Colon, k::Symbol) = [m[k] for m in net.vertex_metadata]
 Base.getindex(net::RegisterNet, ::Tuple{Colon,Colon}, k::Symbol) = [net.edge_metadata[minmax(ij)...][k] for ij in edges(net)]
+Base.getindex(net::RegisterNet, ::Pair{Colon,Colon}, k::Symbol) = [net.directed_edge_metadata[ij][k] for ij in edges(net)]
+
 function Base.setindex!(net::RegisterNet, v, ::Colon, k::Symbol)
     for m in net.vertex_metadata
         m[k] = v
@@ -226,12 +236,22 @@ function Base.setindex!(net::RegisterNet, v, ::Tuple{Colon,Colon}, k::Symbol)
         net[ij,k] = v
     end
 end
+function Base.setindex!(net::RegisterNet, v, ::Pair{Colon,Colon}, k::Symbol)
+    for ij in edges(net)
+        net[ij,k] = v
+    end
+end
 function Base.setindex!(net::RegisterNet, @nospecialize(f::Function), ::Colon, k::Symbol)
     for m in net.vertex_metadata
         m[k] = f()
     end
 end
 function Base.setindex!(net::RegisterNet, @nospecialize(f::Function), ::Tuple{Colon,Colon}, k::Symbol)
+    for ij in edges(net)
+        net[ij,k] = f()
+    end
+end
+function Base.setindex!(net::RegisterNet, @nospecialize(f::Function), ::Pair{Colon,Colon}, k::Symbol)
     for ij in edges(net)
         net[ij,k] = f()
     end
