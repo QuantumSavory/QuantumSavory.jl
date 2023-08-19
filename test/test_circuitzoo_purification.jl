@@ -76,16 +76,20 @@ end
                 @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
             end
             # When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true is that supposed to happen?
-            # for error in [:X, :Y, :Z], target in 1:2
-            #     r = Register(6, rep())
-            #     for i in 1:3
-            #         initialize!(r[(2*i-1):(2*i)], bell)
-            #     end
-            #     apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
-            #     @testset "Error: $error, Fix: $fixtwice" begin
-            #         @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
-            #     end
-            # end
+            for error in [:X, :Y, :Z], target in 1:2
+                r = Register(6, rep())
+                for i in 1:3
+                    initialize!(r[(2*i-1):(2*i)], bell)
+                end
+                apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
+
+                if Dict(:X=>:Z, :Y=>:X, :Z=>:Y)[error] == fixtwice
+                    @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
+                    @test observable(r[1:2], projector(bell))≈0.0
+                else
+                    @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
+                end
+            end
         end
     end
     # testing fidelity - Error when using CliffordRepr
