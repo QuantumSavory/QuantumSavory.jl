@@ -75,14 +75,16 @@ end
                 apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
                 @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
             end
-            ## When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true is that supposed to happen?
+            # When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true is that supposed to happen?
             # for error in [:X, :Y, :Z], target in 1:2
             #     r = Register(6, rep())
             #     for i in 1:3
             #         initialize!(r[(2*i-1):(2*i)], bell)
             #     end
             #     apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
-            #     @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
+            #     @testset "Error: $error, Fix: $fixtwice" begin
+            #         @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
+            #     end
             # end
         end
     end
@@ -108,9 +110,9 @@ end
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], bell)
         end
-        @test PurifyStringent()(r[1], r[2],
-            [r[3], r[5], r[7], r[9], r[11], r[13], r[15], r[17], r[19], r[21], r[23], r[25]],
-            [r[4], r[6], r[8], r[10], r[12], r[14], r[16], r[18], r[20], r[22], r[24], r[26]]) == true 
+
+        # 3:2:25 ...
+        @test PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true 
     end
     # testing fidelity - Error when using CliffordRepr
     for rep in [QuantumOpticsRepr]
@@ -120,9 +122,8 @@ end
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
-        if PurifyStringent()(r[1], r[2],
-            [r[3], r[5], r[7], r[9], r[11], r[13], r[15], r[17], r[19], r[21], r[23], r[25]],
-            [r[4], r[6], r[8], r[10], r[12], r[14], r[16], r[18], r[20], r[22], r[24], r[26]]) == true
+        if PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true
+            @test abs(observable(r[1:2], projector(bell))) >= rnd
         end
     end
 end

@@ -336,9 +336,7 @@ julia> r = Register(26, rep())
         initialize!(r[(2*i-1):(2*i)], bell)
     end
 
-julia> PurifyStringent()(r[1], r[2],
-        [r[3], r[5], r[7], r[9], r[11], r[13], r[15], r[17], r[19], r[21], r[23], r[25]],
-        [r[4], r[6], r[8], r[10], r[12], r[14], r[16], r[18], r[20], r[22], r[24], r[26]])
+julia> PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26])
     true
 
 ```
