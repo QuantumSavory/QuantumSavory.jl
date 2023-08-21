@@ -1,7 +1,7 @@
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using Test
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, PurifyStringent, PurifyExpedient
+using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Left, Purify2to1Left, PurifyStringent, PurifyStringentLeft, PurifyExpedient
 
 
 const bell = StabilizerState("XX ZZ")
@@ -26,8 +26,7 @@ noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolariza
             initialize!(r[1:4], bell⊗bell)
             @test Purify2to1(leaveout)(r[1:4]...)==true
             @test observable(r[1:2], projector(bell))≈1.0
-            # test that single qubit errors are detected as expected
-            # TODO: Should also taget qubits 1 and 2
+
             for error in [:X, :Y, :Z], target in 1:4
                 r = Register(4, rep())
                 initialize!(r[1:4], bell⊗bell)
@@ -43,16 +42,36 @@ noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolariza
             end
         end
     end
+end
 
-    for rep in [QuantumOpticsRepr]
+@testset "2to1 - Single Qubit" begin
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
+            # test that pure state gets mapped to pure state
+
             r = Register(4, rep())
-            rnd = rand() / 4 + 0.5
-            noisy_pair = noisy_pair_func(rnd)
-            initialize!(r[1:2], noisy_pair)
-            initialize!(r[3:4], noisy_pair)
-            if Purify2to1(leaveout)(r[1:4]...)==true
-                @test abs(observable(r[1:2], projector(bell))) >= rnd
+            initialize!(r[1:4], bell⊗bell)
+            ma = Purify2to1Left(leaveout)(r[1], r[3])
+            mb = Purify2to1Left(leaveout)(r[2], r[4])
+            @test ma == mb
+            @test observable(r[1:2], projector(bell))≈1.0
+
+            for error in [:X, :Y, :Z], target in 1:4
+                r = Register(4, rep())
+                initialize!(r[1:4], bell⊗bell)
+                apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
+                if error==leaveout
+                    # undetected error
+                    ma = Purify2to1Left(leaveout)(r[1], r[3])
+                    mb = Purify2to1Left(leaveout)(r[2], r[4])
+                    @test ma == mb
+                    @test observable(r[1:2], projector(bell))≈0.0
+                else
+                    # detected error
+                    ma = Purify2to1Left(leaveout)(r[1], r[3])
+                    mb = Purify2to1Left(leaveout)(r[2], r[4])
+                    @test ma != mb
+                end
             end
         end
     end
@@ -66,6 +85,13 @@ end
             initialize!(r[1:6], bell⊗bell⊗bell)
             @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
             @test observable(r[1:2], projector(bell))≈1.0
+
+            r = Register(6, rep())
+            initialize!(r[1:6], bell⊗bell⊗bell)
+            ma = Purify3to1Left(fixtwice)(r[1], [r[3],r[5]])
+            mb = Purify3to1Left(fixtwice)(r[2], [r[4],r[6]])
+            @test ma == mb
+
             # TODO: Should also taget qubits 1 and 2
             for error in [:X, :Y, :Z], target in 3:6
                 r = Register(6, rep())
@@ -75,7 +101,7 @@ end
                 apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
                 @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==false
             end
-            # When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true is that supposed to happen?
+            # When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true.
             for error in [:X, :Y, :Z], target in 1:2
                 r = Register(6, rep())
                 for i in 1:3
@@ -108,14 +134,73 @@ end
     end
 end
 
+
+@testset "3to1 - Single Qubit" begin
+    for rep in [QuantumOpticsRepr, CliffordRepr]
+        for fixtwice in [:X, :Y, :Z]
+            # test that pure state gets mapped to pure state
+            r = Register(6, rep())
+            initialize!(r[1:6], bell⊗bell⊗bell)
+            ma = Purify3to1Left(fixtwice)(r[1], [r[3],r[5]])
+            mb = Purify3to1Left(fixtwice)(r[2], [r[4],r[6]])
+            @test ma == mb
+
+            # TODO: Should also taget qubits 1 and 2
+            for error in [:X, :Y, :Z], target in 3:6
+                r = Register(6, rep())
+                for i in 1:3
+                    initialize!(r[(2*i-1):(2*i)], bell)
+                end
+                apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
+                ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
+                mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+                @test ma != mb
+            end
+            # When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true.
+            for error in [:X, :Y, :Z], target in 1:2
+                r = Register(6, rep())
+                for i in 1:3
+                    initialize!(r[(2*i-1):(2*i)], bell)
+                end
+                apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
+
+                if Dict(:X=>:Z, :Y=>:X, :Z=>:Y)[error] == fixtwice
+                    ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
+                    mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+                    @test ma == mb
+                    @test observable(r[1:2], projector(bell))≈0.0
+                else
+                    ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
+                    mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+                    @test ma != mb
+                end
+            end
+        end
+    end
+    # testing fidelity - Error when using CliffordRepr
+    for rep in [QuantumOpticsRepr]
+        for fixtwice in [:X, :Y, :Z]
+            r = Register(6, rep())
+            rnd = rand() / 4 + 0.5
+            noisy_pair = noisy_pair_func(rnd)
+            initialize!(r[1:2], noisy_pair)
+            initialize!(r[3:4], noisy_pair)
+            initialize!(r[5:6], noisy_pair)
+            ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
+            mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+            if ma == mb
+                @test abs(observable(r[1:2], projector(bell))) >= rnd
+            end
+        end
+    end
+end
+
 @testset "Stringent" begin
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(26, rep())
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], bell)
         end
-
-        # 3:2:25 ...
         @test PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true 
     end
     # testing fidelity - Error when using CliffordRepr
