@@ -98,6 +98,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
     rn[:state_coords_backref] = state_coords_backref
     rn[:state_lineplot] = state_lineplot
     rn[:color2qubitlinks] = color2qubitlinks
+    rn[:fids] = clrs
     rn
 end
 
