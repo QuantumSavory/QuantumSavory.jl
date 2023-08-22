@@ -29,6 +29,7 @@ obs_USE = Observable(3)
 obs_emitonpurifsuccess = Observable(0)
 logstring = Observable([DOM.span("Log:", id="console_line_0.0_1"), ])
 logdiv = Observable([])
+logwrap = Observable(wrap(""))
 stamp = Observable(0.0)
 showlog = true
 purifcircuit = Dict(
@@ -333,11 +334,6 @@ landing = App() do session::Session
     # Obtain reactive layout of the figures
     layout, content = layout_content(DOM, mainfigures, menufigures, titles_zstack, session, activeidx)
 
-    # Add title to the right in the form of a ZStack
-    titles_div = [DOM.h1(t) for t in titles]
-    titles_div[1] = active(titles_div[1])
-    titles_div = zstack(titles_div; activeidx=activeidx, anim=[:static]
-    , style="""color: $(config[:colorscheme][4]);""") # static = no animation
 
     if showlog
         on(logstring) do val
@@ -354,7 +350,15 @@ landing = App() do session::Session
         end
     end
     
-    logwrap = wrap(logdiv, class="log_wrapper", style="
+    
+
+    style = DOM.style("""
+        .console_line:hover{
+            background-color: rgba(38, 39, 41, 0.6);
+        }
+    """)
+    
+    logwrap[] = wrap(logdiv, class="log_wrapper", style="
         max-height: 85vh !important; max-width: 90% !important; color: white; 
         display: flex;
         flex-direction: column-reverse;
@@ -364,24 +368,80 @@ landing = App() do session::Session
         background-color: black;
         overflow: auto;
     ")
-    print(logwrap)
-    println(logstring)
 
-    style = DOM.style("""
-        .console_line:hover{
-            background-color: rgba(38, 39, 41, 0.6);
-        }
-    """)
+    on(activeidx) do val
+        if val == 1
+            logwrap[] = wrap(logdiv, class="log_wrapper", style="
+                max-height: 85vh !important; max-width: 90% !important; color: white; 
+                display: flex;
+                flex-direction: column-reverse;
+                border-left: 2px solid rgb(38, 39, 41);
+                border-bottom: 2px solid rgb(38, 39, 41);
+
+                background-color: black;
+                overflow: auto;
+            ")
+        else
+            logwrap[] = wrap("")
+        end
+        notify(logwrap)
+    end
 
 
-    return hstack(layout, vstack(titles_div, logwrap; style="padding: 20px; margin-left: 10px;
+    # Add title to the right in the form of a ZStack
+    titles_div = [DOM.h1(titles[i]) for i in 1:3]
+    titles_div[1] = active(titles_div[1])
+    (titles_div[i] = wrap(titles_div[i]) for i in 2:3)
+    titles_div = zstack(titles_div; activeidx=activeidx, anim=[:static]
+    , style="""color: $(config[:colorscheme][4]);""") # static = no animation
+
+    return hstack(layout, vstack(titles_div,logwrap; style="padding: 20px; margin-left: 10px;
                                 background-color: $(config[:colorscheme][3]);"), style; style="width: 100%;")
 
 end
 
 
 nav = App() do session::Session
-    return vstack(DOM.a("LANDING", href="/1"))
+    # vstack(DOM.a("LANDING", href="/1"))
+    img1 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/entanglement_flow.png?raw=true"; style="width:40vw;")
+    img2 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/purification_flow.png?raw=true"; style="width:40vw;")
+
+    text = md"""
+    # Entanglement generation in a network, using Delayed Channels for communication
+    
+    Using this $(DOM.a("simulation", href="/1")), one can vizualize the processes happening in a network of nodes, as
+    they communicate with eacother, requesting entanglement, or purification of already entangled pairs.
+    The simulation has 3 parts, from which only the first one is available.
+
+    ## Part 1: Entanglement and Purification between Alice and Bob
+
+    The main goal of this simulation is to help in the understanding and visualization of the protocol,
+    with different parameters.
+
+    ### About the Free Qubit Trigger Protocol
+    
+    The protocol consists (for now) of two steps: entanglement and purification. It has the following parameters:
+    - `circuit`: The purification circuit being used (can be 2 for **Single Selection** and 3 for **Double Selection**)
+    - `pauli error prob`: The Pauli noise for initial entanglement generation
+    - `channel delay`(s): The time it takes for a message to get from the sender to the receiver.
+    - `recycle purif pairs` (also called `emitonpurifsuccess` in the code): If the protocol should use purified pairs reccurently to create even stronger ones (fidelity-wise).
+
+    The protocol can be split in two parts: **Entanglement Generation**, and **Purification** (wheather reccurent or not).
+
+    The way they work can be visualized in the diagrams on the right.
+    
+
+    This $(DOM.a("simulation", href="/1")) consists of a layout containing the following components:
+    - The network graph (left side)
+    - The sliders and the number of pairs of each fidelity (top right and top)
+    - The maximum fidelity among all existing pairs (right)
+
+    View the simulation here!
+    $(vstack(DOM.a("SIMULATION", href="/1")))
+    """
+    return hstack(
+        wrap(text; style="width:50vw;"), vstack(img1, img2; style="width:50vw;"), CSSMakieLayout.formatstyle
+    )
 end
 
 ##
