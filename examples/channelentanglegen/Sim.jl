@@ -111,10 +111,10 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false)
                                                     :process_channel=>:process_channel), # keywords to store the 2 types of channels in the network
                                                 emitonpurifsuccess, 10) # emit on purifsucess
     sim, network = simulation_setup(registersizes, commtimes, protocol)
-    _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; color2qubitlinks=true)
+    _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
     _,mfig_ax,mfig_p,mfig_obs = nothing, nothing, nothing, nothing
     (mfig !== nothing) && begin
-        _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; color2qubitlinks=true)
+        _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
     end
     if hidedecor
         return
@@ -187,10 +187,10 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false)
                                                             :process_channel=>:process_channel), # keywords to store the 2 types of channels in the network
                                                         emitonpurifsuccess, 10) # emit on purif success
             sim, network = simulation_setup(registersizes, commtimes, protocol)
-            _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; color2qubitlinks=true)
+            _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             if mfig !== nothing
                 empty!(mfig_ax)
-                _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; color2qubitlinks=true)
+                _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             end
             
             currenttime = Observable(0.0)
@@ -239,10 +239,10 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false)
             end
             
             #sim, network = simulation_setup(registersizes, commtimes, protocol)
-            #_,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; color2qubitlinks=true)
+            #_,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             if mfig !== nothing
                 empty!(mfig_ax)
-                _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; color2qubitlinks=true)
+                _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             end
         end
     end

@@ -9,10 +9,10 @@ PURIFICATION = true                 # if true, purification is also performed
 console = false                     # if true, the program will not produce a vide file
 time = 20.3                         # time to run the simulation
 commtimes = [0.1, 0.1]            # communication times from sender->receiver, and receiver->sender
-registersizes = [4, 5, 6, 4]               # sizes of the registers
+registersizes = [6, 6]               # sizes of the registers
 node_timedelay = [0.4, 0.3]         # waittime and busytime for processes
 noisy_pair = noisy_pair_func(0.7)   # noisy pair
-USE = 2                             # 3 for double selection, 2 for single selection
+USE = 3                             # 3 for double selection, 2 for single selection
 
 purifcircuit = Dict(
     2=>purify2to1,
@@ -40,14 +40,16 @@ if PURIFICATION
         @process purifier(sim, protocol, network, dst, src)
     end
 end
+
+bell = StabilizerState("XX ZZ")
 # Running the simulation
 if console
     run(sim, time)
 else
     # set up a plot and save a handle to the plot observable
     fig = Figure(resolution=(400,400))
-    _,ax,_,obs = registernetplot_axis(fig[1,1],network; color2qubitlinks=true)
-    display(fig; color2qubitlinks=true)
+    _,ax,_,obs = registernetplot_axis(fig[1,1],network; twoqubitobservable=projector(bell))
+    display(fig)
 
     # record the simulation progress
     step_ts = range(0, time, step=0.1)
