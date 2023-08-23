@@ -5,16 +5,23 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify
 
 
 const bell = StabilizerState("XX ZZ")
-const bgd = T2Dephasing(1.0)
 # or equivalently `const bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2`,
 # however converting to stabilizer state for Clifford simulations
 # is not implemented (and can not be done efficiently).
 
+
+# QOptics repr
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
 noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolarization helper
 
+
+# Qclifford repr
+const stab_perfect_pair = StabilizerState("XX ZZ")
+const stab_perfect_pair_dm = SProjector(stab_perfect_pair)
+const stab_mixed_dm = MixedState(stab_perfect_pair_dm)
+stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*stab_mixed_dm
 
 @test_throws ArgumentError Purify2to1(:lalala)
 
@@ -48,14 +55,12 @@ end
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
             # test that pure state gets mapped to pure state
-
             r = Register(4, rep())
             initialize!(r[1:4], bell⊗bell)
             ma = Purify2to1Left(leaveout)(r[1], r[3])
             mb = Purify2to1Left(leaveout)(r[2], r[4])
             @test ma == mb
             @test observable(r[1:2], projector(bell))≈1.0
-
             for error in [:X, :Y, :Z], target in 1:4
                 r = Register(4, rep())
                 initialize!(r[1:4], bell⊗bell)
@@ -118,7 +123,9 @@ end
             end
         end
     end
-    # testing fidelity - Error when using CliffordRepr
+end
+
+@testset "3to1 - Fidelity - QuantumOpticsRepr" begin
     for rep in [QuantumOpticsRepr]
         for fixtwice in [:X, :Y, :Z]
             r = Register(6, rep())
@@ -128,7 +135,35 @@ end
             initialize!(r[3:4], noisy_pair)
             initialize!(r[5:6], noisy_pair)
             if Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
-                @test abs(observable(r[1:2], projector(bell))) >= rnd
+                @test real(observable(r[1:2], projector(bell))) > rnd
+            end
+        end
+    end
+end
+
+@testset "3to1 - Fidelity - CliffordRepr" begin
+    for rep in [CliffordRepr]
+        for fixtwice in [:X, :Y, :Z]
+            r = Register(6, rep())
+            noisy_pair = stab_noisy_pair_func(1)
+            initialize!(r[1:2], noisy_pair)
+            initialize!(r[3:4], noisy_pair)
+            initialize!(r[5:6], noisy_pair)
+            if Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
+                @test observable(r[1:2], projector(bell)) ≈ 1.0
+            end
+        end
+    end
+
+    for rep in [CliffordRepr]
+        for fixtwice in [:X, :Y, :Z]
+            r = Register(6, rep())
+            noisy_pair = stab_noisy_pair_func(1)
+            initialize!(r[1:2], noisy_pair)
+            initialize!(r[3:4], noisy_pair)
+            initialize!(r[5:6], noisy_pair)
+            if Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
+                @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
             end
         end
     end
@@ -177,7 +212,9 @@ end
             end
         end
     end
-    # testing fidelity - Error when using CliffordRepr
+end
+
+@testset "3to1 - Single Qubit - Fidelity - QuantumOpticsRepr" begin
     for rep in [QuantumOpticsRepr]
         for fixtwice in [:X, :Y, :Z]
             r = Register(6, rep())
@@ -189,7 +226,39 @@ end
             ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
             mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
             if ma == mb
-                @test abs(observable(r[1:2], projector(bell))) >= rnd
+                @test real(observable(r[1:2], projector(bell))) > rnd
+            end
+        end
+    end
+end
+
+@testset "3to1 - Single Qubit - Fidelity - CliffordRepr" begin
+    for rep in [CliffordRepr]
+        for fixtwice in [:X, :Y, :Z]
+            r = Register(6, rep())
+            noisy_pair = stab_noisy_pair_func(1)
+            initialize!(r[1:2], noisy_pair)
+            initialize!(r[3:4], noisy_pair)
+            initialize!(r[5:6], noisy_pair)
+            ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
+            mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+            if ma == mb
+                @test observable(r[1:2], projector(bell)) ≈ 1.0
+            end
+        end
+    end
+
+    for rep in [CliffordRepr]
+        for fixtwice in [:X, :Y, :Z]
+            r = Register(6, rep())
+            noisy_pair = stab_noisy_pair_func(0)
+            initialize!(r[1:2], noisy_pair)
+            initialize!(r[3:4], noisy_pair)
+            initialize!(r[5:6], noisy_pair)
+            ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
+            mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+            if ma == mb
+                @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
             end
         end
     end
@@ -203,7 +272,9 @@ end
         end
         @test PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true 
     end
-    # testing fidelity - Error when using CliffordRepr
+end
+
+@testset "Stringent - Fidelity - QuantumOpticsRepr" begin
     for rep in [QuantumOpticsRepr]
         r = Register(26, rep())
         rnd = rand() / 4 + 0.5
@@ -212,7 +283,31 @@ end
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
         if PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true
-            @test abs(observable(r[1:2], projector(bell))) >= rnd
+            @test real(observable(r[1:2], projector(bell))) > rnd
+        end
+    end
+end
+
+@testset "Stringent - Fidelity - CliffordRepr" begin
+    for rep in [CliffordRepr]
+        r = Register(26, rep())
+        noisy_pair = stab_noisy_pair_func(1)
+        for i in 1:13
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        if PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true
+            @test observable(r[1:2], projector(bell)) ≈ 1.0
+        end
+    end
+
+    for rep in [CliffordRepr]
+        r = Register(26, rep())
+        noisy_pair = stab_noisy_pair_func(0)
+        for i in 1:13
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        if PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true
+            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
         end
     end
 end
