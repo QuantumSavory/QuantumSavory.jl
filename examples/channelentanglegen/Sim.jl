@@ -27,11 +27,11 @@ obs_node_timedelay = Observable([0.4, 0.3])
 obs_initial_prob = Observable(0.7)
 obs_USE = Observable(3)
 obs_emitonpurifsuccess = Observable(0)
-logstring = Observable([DOM.span("Log:", id="console_line_0.0_1"), ])
+logstring = Observable("")
 logdiv = Observable([])
 logwrap = Observable(wrap(""))
 stamp = Observable(0.0)
-showlog = true
+showlog = Observable(false)
 purifcircuit = Dict(
     2=>purify2to1,
     3=>purify3to1
@@ -170,7 +170,7 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false)
 
     on(running) do r
         if r
-            logstring[] = [DOM.span("Log:", id="console_line_0.0_1"), ]
+            logstring[] = ""
             logdiv[] = []
             PURIFICATION = obs_PURIFICATION[]
             time = obs_time[]
@@ -197,15 +197,15 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false)
             currenttime = Observable(0.0)
             # Setting up the ENTANGMELENT protocol
             for (;src, dst) in edges(network)
-                @process freequbit_trigger(sim, protocol, network, src, dst, showlog ? logstring : nothing)
-                @process entangle(sim, protocol, network, src, dst, noisy_pair, showlog ? logstring : nothing)
-                @process entangle(sim, protocol, network, dst, src, noisy_pair, showlog ? logstring : nothing)
+                @process freequbit_trigger(sim, protocol, network, src, dst, showlog[] ? logstring : nothing)
+                @process entangle(sim, protocol, network, src, dst, noisy_pair, showlog[] ? logstring : nothing)
+                @process entangle(sim, protocol, network, dst, src, noisy_pair, showlog[] ? logstring : nothing)
             end
             # Setting up the purification protocol 
             if PURIFICATION
                 for (;src, dst) in edges(network)
-                    @process purifier(sim, protocol, network, src, dst, showlog ? logstring : nothing)
-                    @process purifier(sim, protocol, network, dst, src, showlog ? logstring : nothing)
+                    @process purifier(sim, protocol, network, src, dst, showlog[] ? logstring : nothing)
+                    @process purifier(sim, protocol, network, dst, src, showlog[] ? logstring : nothing)
                 end
             end
 
@@ -333,69 +333,61 @@ landing = App() do session::Session
 
     # Obtain reactive layout of the figures
     layout, content = layout_content(DOM, mainfigures, menufigures, titles_zstack, session, activeidx)
-
-
-    if showlog
-        on(logstring) do val
-            el = val[end]
-            # el = DOM.button(
-            #     el,
-            #     onclick=js"""event=> {
-            #         $(stamp).notify(parseFloat($(el).id.split('_')[2]))
-            #         console.log("TIME STAMP AT ", $(el).id.split('_')[2])
-            #     }"""
-            # ) # working on stamping feature
-            push!(logdiv[], el)
-            notify(logdiv)
-        end
-    end
     
-    
-
     style = DOM.style("""
         .console_line:hover{
             background-color: rgba(38, 39, 41, 0.6);
         }
+        .log_wrapper{
+            max-height: 65vh !important; max-width: 90% !important; color: white; 
+            display: flex;
+            flex-direction: column-reverse;
+            border-left: 2px solid rgb(38, 39, 41);
+            border-bottom: 2px solid rgb(38, 39, 41);
+
+            background-color: black;
+            overflow: auto;
+        }
+        .backbutton{
+            color: $(config[:colorscheme][4]) !important;
+            background-color: white;
+            padding: 10px;
+            height: min-content;
+        }
+
+        .backbutton:hover{
+            color: $(config[:colorscheme][4]) !important;
+            opacity: 0.8;
+        }
+
+        .backbutton a{
+            font-weight: bold;
+        }
+        .nostyle{
+            border: none !important;
+            padding: 0 0 0 0 !important;
+            margin: 0 0 0 0 !important;
+            background: transparent !important;
+        }
     """)
-    
-    logwrap[] = wrap(logdiv, class="log_wrapper", style="
-        max-height: 85vh !important; max-width: 90% !important; color: white; 
-        display: flex;
-        flex-direction: column-reverse;
-        border-left: 2px solid rgb(38, 39, 41);
-        border-bottom: 2px solid rgb(38, 39, 41);
+    logs = [wrap(tie(logstring), class="log_wrapper"),
+            wrap("log2"; style="color: white;"), 
+            wrap("log3"; style="color: white;")]
 
-        background-color: black;
-        overflow: auto;
-    ")
+    backbutton = wrap(DOM.a("←", href="/"; style="width: 40px; height: 40px;"); class="backbutton")
+    logbutton = wrap(modifier(DOM.span("📜"), parameter=showlog, class="nostyle"); class="backbutton")
 
-    on(activeidx) do val
-        if val == 1
-            logwrap[] = wrap(logdiv, class="log_wrapper", style="
-                max-height: 85vh !important; max-width: 90% !important; color: white; 
-                display: flex;
-                flex-direction: column-reverse;
-                border-left: 2px solid rgb(38, 39, 41);
-                border-bottom: 2px solid rgb(38, 39, 41);
-
-                background-color: black;
-                overflow: auto;
-            ")
-        else
-            logwrap[] = wrap("")
-        end
-        notify(logwrap)
-    end
-
+    btns = vstack(backbutton, logbutton)
+    loginfo = DOM.h4(@lift($showlog ? "Log Enabled" : "Log Disabled"); style="color: white;")
 
     # Add title to the right in the form of a ZStack
-    titles_div = [DOM.h1(titles[i]) for i in 1:3]
+    titles_div = [vstack(hstack(DOM.h1(titles[i]), btns), loginfo, logs[i]) for i in 1:3]
     titles_div[1] = active(titles_div[1])
-    (titles_div[i] = wrap(titles_div[i]) for i in 2:3)
+    (titles_div[i] = wrap(titles_div[i]) for i in 2:3) 
     titles_div = zstack(titles_div; activeidx=activeidx, anim=[:static]
     , style="""color: $(config[:colorscheme][4]);""") # static = no animation
 
-    return hstack(layout, vstack(titles_div,logwrap; style="padding: 20px; margin-left: 10px;
+    return hstack(layout, vstack(titles_div; style="padding: 20px; margin-left: 10px;
                                 background-color: $(config[:colorscheme][3]);"), style; style="width: 100%;")
 
 end
@@ -403,9 +395,20 @@ end
 
 nav = App() do session::Session
     # vstack(DOM.a("LANDING", href="/1"))
-    img1 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/entanglement_flow.png?raw=true"; style="width:40vw;")
-    img2 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/purification_flow.png?raw=true"; style="width:40vw;")
+    img1 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/entanglement_flow.png?raw=true"; style="height:30vw; width: fit-content;border-bottom: 2px solid black; margin: 5px;")
+    img2 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/purification_flow.png?raw=true"; style="height:30vw; width: fit-content;border-bottom: 2px solid black margin: 5px; transform: translateX(-25px);")
 
+    list1 = DOM.ul(
+        DOM.li(md"""`circuit`: The purification circuit being used (can be 2 for **Single Selection** and 3 for **Double Selection**)"""),
+        DOM.li(md"""`pauli error prob`: The Pauli noise for initial entanglement generation"""),
+        DOM.li(md"""`channel delay`(s): The time it takes for a message to get from the sender to the receiver."""),
+        DOM.li(md"""`recycle purif pairs` (also called `emitonpurifsuccess` in the code): If the protocol should use purified pairs reccurently to create even stronger ones (fidelity-wise)."""),
+    )
+    list2 = DOM.ul(
+        DOM.li(md"""The network graph *(left side)*"""),
+        DOM.li(md"""The sliders and the number of pairs of each fidelity *(top right and top)*"""),
+        DOM.li(md"""The maximum fidelity among all existing pairs *(right)*"""),
+    )
     text = md"""
     # Entanglement generation in a network, using Delayed Channels for communication
     
@@ -421,26 +424,21 @@ nav = App() do session::Session
     ### About the Free Qubit Trigger Protocol
     
     The protocol consists (for now) of two steps: entanglement and purification. It has the following parameters:
-    - `circuit`: The purification circuit being used (can be 2 for **Single Selection** and 3 for **Double Selection**)
-    - `pauli error prob`: The Pauli noise for initial entanglement generation
-    - `channel delay`(s): The time it takes for a message to get from the sender to the receiver.
-    - `recycle purif pairs` (also called `emitonpurifsuccess` in the code): If the protocol should use purified pairs reccurently to create even stronger ones (fidelity-wise).
-
+    $(list1)
+    
     The protocol can be split in two parts: **Entanglement Generation**, and **Purification** (wheather reccurent or not).
 
     The way they work can be visualized in the diagrams on the right.
     
 
-    This $(DOM.a("simulation", href="/1")) consists of a layout containing the following components:
-    - The network graph (left side)
-    - The sliders and the number of pairs of each fidelity (top right and top)
-    - The maximum fidelity among all existing pairs (right)
+    ### This $(DOM.a("simulation", href="/1")) consists of a layout containing the following components:
+    $(list2)
 
     View the simulation here!
     $(vstack(DOM.a("SIMULATION", href="/1")))
     """
     return hstack(
-        wrap(text; style="width:50vw;"), vstack(img1, img2; style="width:50vw;"), CSSMakieLayout.formatstyle
+        wrap(text; style="width:50vw;"), vstack(DOM.h2("Entanglement process flow"), img1, DOM.h2("Purifier process flow"), img2; style="width:50vw;", class="align-center justify-center"), CSSMakieLayout.formatstyle
     )
 end
 

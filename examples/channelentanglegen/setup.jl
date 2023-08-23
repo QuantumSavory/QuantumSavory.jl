@@ -45,8 +45,9 @@ function slog!(s, msg)
     end
     signature,message = split(msg, ">"; limit=2)
     time=  getfirstfloat(signature)
-    el = DOM.div(DOM.span(replace(signature * " | ", "\"" => ""), style="color: cyan;"), DOM.span(replace(message, "\"" => "")), DOM.br(), class="console_line", id="console_line_$(time)_$(length(s[]))_$(rand())")
-    s[] = append!(s[], [el]) 
+    s[] = s[] * """<div><span style='color:cyan'>$signature | </span><span>$message</span></div>"""
+    #el = DOM.div(DOM.span(replace(signature * " | ", "\"" => ""), style="color: cyan;"), DOM.span(replace(message, "\"" => "")), DOM.br(), class="console_line", id="console_line_$(time)_$(length(s[]))_$(rand())")
+    #s[] = append!(s[], [el]) 
     notify(s)
 end
 
