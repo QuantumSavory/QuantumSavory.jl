@@ -40,7 +40,7 @@ end
 
 function slog!(s, msg)
     if s === nothing
-        println(msg)
+        #println(msg)
         return
     end
     signature,message = split(msg, ">"; limit=2)
