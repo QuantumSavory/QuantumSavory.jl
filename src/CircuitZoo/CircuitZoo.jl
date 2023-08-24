@@ -132,13 +132,41 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     success
 end
 
-struct Purify2to1Left <: AbstractCircuit
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+A purification circuit sacrificing 2 Bell qubits to produce another qubit.
+The circuit is parameterized by a single `leaveout` symbol argument
+which specifies which of the three possible Pauli errors are to be left undetected.
+A simple purificaiton circuit is not capable of detecting all errors.
+
+This circuit returns the array of measurements made.
+
+This circuit is the same as the Purifiy2to1 one but it works on individual qubits
+(i.e. only one qubit of a pair)
+
+```jldoctest
+julia> a = Register(2)
+       b = Register(2)
+       initalize!(a[1:2], bell)
+       initalize!(b[1:2], bell)
+
+
+julia> Purify2to1Node(:X)(a[1], b[1]) == Purify2to1Node(:X)(a[2], b[2])
+false
+```
+"""
+struct Purify2to1Node <: AbstractCircuit
     """A symbol specifying which of the three Pauli errors to leave undetectable."""
     leaveout::Symbol
-    function Purify2to1Left(leaveout)
+    function Purify2to1Node(leaveout)
         if leaveout ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
-            `Purify2to1Left` is a Purify2to1 circuit that only operates on one member of the pair
+            `Purify2to1Node` is a Purify2to1 circuit that only operates on one member of the pair
             """))
         else
             new(leaveout)
@@ -146,7 +174,7 @@ struct Purify2to1Left <: AbstractCircuit
     end
 end
 
-function (circuit::Purify2to1Left)(purifiedR,sacrificedR)
+function (circuit::Purify2to1Node)(purifiedR,sacrificedR)
     gate, basis = if circuit.leaveout==:X
         CNOT, σˣ
     elseif circuit.leaveout==:Z
@@ -168,7 +196,7 @@ Fields:
 
 $FIELDS
 
-A purification circuit sacrificing 2 Bell pairs to produce another.
+A purification circuit sacrificing a Bell pair to produce another.
 The circuit is parameterized by a `fixtwice` symbol argument
 which specifies which of the three possible Pauli errors is fixed twice.
 This purificaiton circuit is capable of detecting all errors.
@@ -190,9 +218,7 @@ julia> a = Register(2)
 julia> Purify3to1(:X)(a[1], a[2], [b[1], c[1]], [b[2], c[2]])
 false
 ```
-
 """
-
 struct Purify3to1 <: AbstractCircuit
     """The error to be fixed twice"""
     fixtwice::Symbol
@@ -246,13 +272,43 @@ function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL::Array,sacrificed
     (success1 && success2)
 end
 
-struct Purify3to1Left <: AbstractCircuit
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+A purification circuit sacrificing 2 Bell qubits to produce another qubit.
+The circuit is parameterized by a `fixtwice` symbol argument
+which specifies which of the three possible Pauli errors is fixed twice.
+This purificaiton circuit is capable of detecting all errors.
+
+This circuit returns the array of measurements made.
+
+This circuit is the same as the Purifiy3to1 one but it works on individual qubits
+(i.e. only one qubit of a pair)
+
+```jldoctest
+julia> a = Register(2)
+       b = Register(2)
+       c = Register(2)
+       initalize!(a[1:2], bell)
+       initalize!(b[1:2], bell)
+       initalize!(c[1:2], bell)
+
+
+julia> Purify3to1Node(:X)(a[1], [b[1], c[1]]) == Purify3to1Node(:X)(a[2], [b[2], c[2]])
+false
+```
+"""
+struct Purify3to1Node <: AbstractCircuit
     """The error to be fixed twice"""
     fixtwice::Symbol
-    function Purify3to1Left(fixtwice)
+    function Purify3to1Node(fixtwice)
         if fixtwice ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
-            `Purify3to1Left` is a Purify3to1 circuit that only operates on one member of the pair
+            `Purify3to1Node` is a Purify3to1 circuit that only operates on one member of the pair
             """))
         else
             new(fixtwice)
@@ -260,7 +316,7 @@ struct Purify3to1Left <: AbstractCircuit
     end
 end
 
-function (circuit::Purify3to1Left)(purifiedL,sacrificedL::Array)
+function (circuit::Purify3to1Node)(purifiedL,sacrificedL::Array)
     gate1, gate2, basis1, basis2 = if circuit.fixtwice==:X
         ZCY, XCZ, σʸ, σᶻ
     elseif circuit.fixtwice==:Y
@@ -289,13 +345,25 @@ function coinleft(basis, pair::Array, parity=0)
     measa
 end
 
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The STRINGENT-HEAD purification circuit.
+The first part of the STRINGENT and EXPEDIENT circuit.
+It has one parameter, that determines the first gate which is used.
+"""
 struct StringentHead <: AbstractCircuit
+    """A symbol determining whether ZCZ or XCZ should be used as a gate"""
     type::Symbol
     function StringentHead(type)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
             `type` has to be one of `:X`, or `:Z`.
-            You have instead chosen `$(repr(fixtwice))` which is not a valid option.
+            You have instead chosen `$(repr(type))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `StringentHead`
             and ensure you are passing a valid argument.
             """))
@@ -322,13 +390,25 @@ function (circuit::StringentHead)(purifiedL, purifiedR, sacrificedL, sacrificedR
     success
 end
 
-struct StringentHeadLeft <: AbstractCircuit
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The STRINGENT-HEAD purification circuit, on one qubit of a pair of 2.
+The first part of the STRINGENT and EXPEDIENT circuit.
+It has one parameter, that determines the first gate which is used.
+It returns the array of measurements made by the circuit.
+"""
+struct StringentHeadNode <: AbstractCircuit
     type::Symbol
-    function StringentHeadLeft(type)
+    function StringentHeadNode(type)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
             `type` has to be one of `:X`, or `:Z`.
-            You have instead chosen `$(repr(fixtwice))` which is not a valid option.
+            You have instead chosen `$(repr(type))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `StringentHead`
             and ensure you are passing a valid argument.
             """))
@@ -338,7 +418,7 @@ struct StringentHeadLeft <: AbstractCircuit
     end
 end
 
-function (circuit::StringentHeadLeft)(purifiedL, sacrificedL)
+function (circuit::StringentHeadNode)(purifiedL, sacrificedL)
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
@@ -347,17 +427,35 @@ function (circuit::StringentHeadLeft)(purifiedL, sacrificedL)
     apply!((purifiedL, sacrificedL[1]), gate)
     apply!((sacrificedL[1], sacrificedL[2]), ZCZ)
 
-    [coinleft(σˣ, [sacrificedL[1]]), coinleft(σˣ, [sacrificedL[2]])]
+    alfa = coinleft(σˣ, [sacrificedL[1]])
+    beta = coinleft(σˣ, [sacrificedL[2]])
+
+    (alfa, beta)
 end
 
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The STRINGENT-BODY purification circuit.
+The second part of the STRINGENT and EXPEDIENT circuit.
+It has 2 parameters, one that determines the first gate which is used,
+and the other one which determines if it is used
+inside the STRINGENT or EXPEDIENT cicuits
+"""
 struct StringentBody <: AbstractCircuit
+    """A symbol determining whether ZCZ or XCZ should be used as a gate"""
     type::Symbol
+    """For EXPEDIENT circuits"""
     expedient::Bool
     function StringentBody(type, expedient=false)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
             `type` has to be one of `:X`, or `:Z`.
-            You have instead chosen `$(repr(fixtwice))` which is not a valid option.
+            You have instead chosen `$(repr(type))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `StringentBody`
             and ensure you are passing a valid argument.
             """))
@@ -408,14 +506,28 @@ function (circuit::StringentBody)(purifiedL, purifiedR, sacrificedL, sacrificedR
 
 end
 
-struct StringentBodyLeft <: AbstractCircuit
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The STRINGENT-BODY purification circuit, on one qubit of a pair of 2.
+The second part of the STRINGENT and EXPEDIENT circuit.
+It has 2 parameters, one that determines the first gate which is used,
+and the other one which determines if it is used
+inside the STRINGENT or EXPEDIENT cicuits
+It returns the array of measurements made by the circuits.
+"""
+struct StringentBodyNode <: AbstractCircuit
     type::Symbol
     expedient::Bool
-    function StringentBodyLeft(type, expedient=false)
+    function StringentBodyNode(type, expedient=false)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
             `type` has to be one of `:X`, or `:Z`.
-            You have instead chosen `$(repr(fixtwice))` which is not a valid option.
+            You have instead chosen `$(repr(type))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `StringentBody`
             and ensure you are passing a valid argument.
             """))
@@ -425,7 +537,7 @@ struct StringentBodyLeft <: AbstractCircuit
     end
 end
 
-function (circuit::StringentBodyLeft)(purifiedL, sacrificedL)
+function (circuit::StringentBodyNode)(purifiedL, sacrificedL)
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
@@ -437,24 +549,21 @@ function (circuit::StringentBodyLeft)(purifiedL, sacrificedL)
     sacrificedL1 = sacrificedL[1:1]
     sacrificedL2 = circuit.expedient ? sacrificedL[2:3] : sacrificedL[2:4]
 
-
     apply!((sacrificedL1[i1], sacrificedL2[i2]), XCZ)
-    a = coinleft(σˣ, [sacrificedL2[i2]])
+    alfa = coinleft(σˣ, [sacrificedL2[i2]])
     i2 = i2 + 1
 
     apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
-    b = coinleft(σˣ, [sacrificedL2[i2]])
+    beta = coinleft(σˣ, [sacrificedL2[i2]])
     apply!((purifiedL, sacrificedL1[i1]), gate)
-
 
     if !circuit.expedient 
         i2 = i2 + 1
         apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
-        c = coinleft(σˣ, [sacrificedL2[i2]])
+        gamma = coinleft(σˣ, [sacrificedL2[i2]])
     end
-
-    d = coinleft(σˣ, [sacrificedL1[i1]])
-    (a,b,c,d)
+    delta = coinleft(σˣ, [sacrificedL1[i1]])
+    (alfa)
 end
 
 
@@ -465,7 +574,9 @@ Fields:
 
 $FIELDS
 
-The STRINGENT purification circuit 
+The STRINGENT purification circuit.
+It is composed of a head and a body.
+The head is repeated twice and the body is also repeating twice
 
 If an error was detected, the circuit returns `false` and the state is reset.
 If no error was detected, the circuit returns `true`.
@@ -482,9 +593,7 @@ julia> PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26])
     true
 
 ```
-
 """
-
 struct PurifyStringent <: AbstractCircuit
 end
 
@@ -505,6 +614,35 @@ function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     success
 end
 
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The EXPEDIENT purification circuit.
+It is composed of a head and a body.
+The head is repeated twice and the body is also repeating twice
+The difference between it and the STRINGENT circuit is that the body is a bit modified.
+
+If an error was detected, the circuit returns `false` and the state is reset.
+If no error was detected, the circuit returns `true`.
+
+The sacrificial qubits are removed from the register.
+
+```jldoctest
+julia> r = Register(22, rep())
+    for i in 1:11
+        initialize!(r[(2*i-1):(2*i)], bell)
+    end
+
+julia> PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22])
+    true
+
+```
+"""
 struct PurifyExpedient <: AbstractCircuit
 end
 
@@ -523,33 +661,79 @@ function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificedL,sacrificedR)
 end
 
 
-struct PurifyStringentLeft <: AbstractCircuit
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The STRINGENT purification circuit ( on a single qubit of a pair ).
+It is composed of a head and a body.
+The head is repeated twice and the body is also repeating twice
+
+This returns the array of measurements made by the circuit.
+
+```jldoctest
+julia> r = Register(26, rep())
+    for i in 1:13
+        initialize!(r[(2*i-1):(2*i)], bell)
+    end
+
+julia> PurifyStringentNode()(r[1], r[3:2:25]) == PurifyStringentNode()(r[2], r[4:2:26])
+    true
+
+```
+"""
+struct PurifyStringentNode <: AbstractCircuit
 end
 
-
-
-function (circuit::PurifyStringentLeft)(purifiedL,sacrificedL)
+function (circuit::PurifyStringentNode)(purifiedL,sacrificedL)
     success = true
-    stringentHead_Z = StringentHeadLeft(:Z)
-    stringentHead_X = StringentHeadLeft(:X)
-    stringentBody_Z = StringentBodyLeft(:Z)
+    stringentHead_Z = StringentHeadNode(:Z)
+    stringentHead_X = StringentHeadNode(:X)
+    stringentBody_Z = StringentBodyNode(:Z)
+    stringentBody_X = StringentBodyNode(:X)
 
     a = stringentHead_Z(purifiedL, sacrificedL[1:2])
     b = stringentHead_X(purifiedL, sacrificedL[3:4])
     c = stringentBody_Z(purifiedL, sacrificedL[5:8])
-    d = stringentBody_Z(purifiedL, sacrificedL[9:12])
-    
+    d = stringentBody_X(purifiedL, sacrificedL[9:12])
     [a..., b..., c..., d...]
 end
 
-struct PurifyExpedientLeft <: AbstractCircuit
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The EXPEDIENT purification circuit ( on a single qubit of a pair ).
+It is composed of a head and a body.
+The head is repeated twice and the body is also repeating twice
+
+This returns the array of measurements made by the circuit.
+
+```jldoctest
+julia> r = Register(22, rep())
+    for i in 1:11
+        initialize!(r[(2*i-1):(2*i)], bell)
+    end
+
+julia> PurifyExpedientNode()(r[1], r[3:2:21]) == PurifyExpedientNode()(r[2], r[4:2:22])
+    true
+
+```
+"""
+struct PurifyExpedientNode <: AbstractCircuit
 end
 
-function (circuit::PurifyExpedientLeft)(purifiedL,sacrificedL)
+function (circuit::PurifyExpedientNode)(purifiedL,sacrificedL)
     success = true
-    stringentHead_Z = StringentHeadLeft(:Z)
-    stringentHead_X = StringentHeadLeft(:X)
-    stringentBody_Z = StringentBodyLeft(:Z, true)
+    stringentHead_Z = StringentHeadNode(:Z)
+    stringentHead_X = StringentHeadNode(:X)
+    stringentBody_Z = StringentBodyNode(:Z, true)
 
     a = stringentHead_Z(purifiedL, sacrificedL[1:2])
     b = stringentHead_X(purifiedL, sacrificedL[3:4])

@@ -1,7 +1,7 @@
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using Test
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Left, Purify2to1Left, PurifyStringent, PurifyStringentLeft, PurifyExpedient
+using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
 
 
 const bell = StabilizerState("XX ZZ")
@@ -24,6 +24,11 @@ const stab_mixed_dm = MixedState(stab_perfect_pair_dm)
 stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*stab_mixed_dm
 
 @test_throws ArgumentError Purify2to1(:lalala)
+@test_throws ArgumentError Purify3to1(:lalala)
+@test_throws ArgumentError Purify2to1(:lalala)
+@test_throws ArgumentError Purify3to1(:lalala)
+@test_throws ArgumentError StringentHead(:lalala)
+@test_throws ArgumentError StringentBody(:lalala)
 
 @testset "2to1" begin
     for rep in [QuantumOpticsRepr, CliffordRepr]
@@ -57,8 +62,8 @@ end
             # test that pure state gets mapped to pure state
             r = Register(4, rep())
             initialize!(r[1:4], bell⊗bell)
-            ma = Purify2to1Left(leaveout)(r[1], r[3])
-            mb = Purify2to1Left(leaveout)(r[2], r[4])
+            ma = Purify2to1Node(leaveout)(r[1], r[3])
+            mb = Purify2to1Node(leaveout)(r[2], r[4])
             @test ma == mb
             @test observable(r[1:2], projector(bell))≈1.0
             for error in [:X, :Y, :Z], target in 1:4
@@ -67,14 +72,14 @@ end
                 apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
                 if error==leaveout
                     # undetected error
-                    ma = Purify2to1Left(leaveout)(r[1], r[3])
-                    mb = Purify2to1Left(leaveout)(r[2], r[4])
+                    ma = Purify2to1Node(leaveout)(r[1], r[3])
+                    mb = Purify2to1Node(leaveout)(r[2], r[4])
                     @test ma == mb
                     @test observable(r[1:2], projector(bell))≈0.0
                 else
                     # detected error
-                    ma = Purify2to1Left(leaveout)(r[1], r[3])
-                    mb = Purify2to1Left(leaveout)(r[2], r[4])
+                    ma = Purify2to1Node(leaveout)(r[1], r[3])
+                    mb = Purify2to1Node(leaveout)(r[2], r[4])
                     @test ma != mb
                 end
             end
@@ -93,8 +98,8 @@ end
 
             r = Register(6, rep())
             initialize!(r[1:6], bell⊗bell⊗bell)
-            ma = Purify3to1Left(fixtwice)(r[1], [r[3],r[5]])
-            mb = Purify3to1Left(fixtwice)(r[2], [r[4],r[6]])
+            ma = Purify3to1Node(fixtwice)(r[1], [r[3],r[5]])
+            mb = Purify3to1Node(fixtwice)(r[2], [r[4],r[6]])
             @test ma == mb
 
             # TODO: Should also taget qubits 1 and 2
@@ -176,8 +181,8 @@ end
             # test that pure state gets mapped to pure state
             r = Register(6, rep())
             initialize!(r[1:6], bell⊗bell⊗bell)
-            ma = Purify3to1Left(fixtwice)(r[1], [r[3],r[5]])
-            mb = Purify3to1Left(fixtwice)(r[2], [r[4],r[6]])
+            ma = Purify3to1Node(fixtwice)(r[1], [r[3],r[5]])
+            mb = Purify3to1Node(fixtwice)(r[2], [r[4],r[6]])
             @test ma == mb
 
             # TODO: Should also taget qubits 1 and 2
@@ -187,8 +192,8 @@ end
                     initialize!(r[(2*i-1):(2*i)], bell)
                 end
                 apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
-                ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
-                mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+                ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
+                mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
                 @test ma != mb
             end
             # When [error, fixtwice] in {[X,Z], [Z,Y], [Y,X]} it yields true.
@@ -200,13 +205,13 @@ end
                 apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
 
                 if Dict(:X=>:Z, :Y=>:X, :Z=>:Y)[error] == fixtwice
-                    ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
-                    mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+                    ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
+                    mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
                     @test ma == mb
                     @test observable(r[1:2], projector(bell))≈0.0
                 else
-                    ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
-                    mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+                    ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
+                    mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
                     @test ma != mb
                 end
             end
@@ -223,8 +228,8 @@ end
             initialize!(r[1:2], noisy_pair)
             initialize!(r[3:4], noisy_pair)
             initialize!(r[5:6], noisy_pair)
-            ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
-            mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+            ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
+            mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
             if ma == mb
                 @test real(observable(r[1:2], projector(bell))) > rnd
             end
@@ -240,8 +245,8 @@ end
             initialize!(r[1:2], noisy_pair)
             initialize!(r[3:4], noisy_pair)
             initialize!(r[5:6], noisy_pair)
-            ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
-            mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+            ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
+            mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
             if ma == mb
                 @test observable(r[1:2], projector(bell)) ≈ 1.0
             end
@@ -255,8 +260,8 @@ end
             initialize!(r[1:2], noisy_pair)
             initialize!(r[3:4], noisy_pair)
             initialize!(r[5:6], noisy_pair)
-            ma = Purify3to1Left(fixtwice)(r[1], [r[3], r[5]])
-            mb = Purify3to1Left(fixtwice)(r[2], [r[4], r[6]])
+            ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
+            mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
             if ma == mb
                 @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
             end
@@ -307,6 +312,54 @@ end
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
         if PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true
+            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
+        end
+    end
+end
+
+@testset "Expedient" begin
+    for rep in [CliffordRepr, QuantumOpticsRepr]
+        r = Register(22, rep())
+        for i in 1:11
+            initialize!(r[(2*i-1):(2*i)], bell)
+        end
+        @test PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22]) == true 
+    end
+end
+
+@testset "Expedient - Fidelity - QuantumOpticsRepr" begin
+    for rep in [QuantumOpticsRepr]
+        r = Register(22, rep())
+        rnd = rand() / 4 + 0.5
+        noisy_pair = noisy_pair_func(rnd)
+        for i in 1:11
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        if PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22]) == true 
+            @test real(observable(r[1:2], projector(bell))) > rnd
+        end
+    end
+end
+
+@testset "Expedient - Fidelity - CliffordRepr" begin
+    for rep in [CliffordRepr]
+        r = Register(22, rep())
+        noisy_pair = stab_noisy_pair_func(1)
+        for i in 1:11
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        if PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22]) == true
+            @test observable(r[1:2], projector(bell)) ≈ 1.0
+        end
+    end
+
+    for rep in [CliffordRepr]
+        r = Register(22, rep())
+        noisy_pair = stab_noisy_pair_func(0)
+        for i in 1:11
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        if PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22]) == true
             @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
         end
     end
