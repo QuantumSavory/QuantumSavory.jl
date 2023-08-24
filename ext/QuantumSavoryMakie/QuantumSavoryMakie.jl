@@ -12,7 +12,6 @@ import QuantumSavory: registernetplot, registernetplot_axis, resourceplot_axis, 
     Theme()
 end
 
-const bell = StabilizerState("XX ZZ")
 function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the state of the locks
     networkobs = rn[1]
     registers = networkobs[].registers
