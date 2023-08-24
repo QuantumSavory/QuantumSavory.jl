@@ -37,8 +37,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
         registers = network.registers
         all_nodes = [ # TODO it is rather wasteful to replot everything... do it smarter
             register_rectangles, register_slots_coords, register_slots_coords_backref,
-            state_coords, state_coords_backref, state_links,
-            clrs, regs, twoqubitstate_links
+            state_coords, state_coords_backref, state_links, twoqubitstate_links,
+            clrs, regs
         ]
         for a in all_nodes
             empty!(a[])
@@ -78,9 +78,6 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
                 end
             end
         end
-
-        println("-------$(length(twoqubitstate_links[]))--$(length(regs[]))")
-
         if !isnothing(twoqubitobservable)
             for i in 1:2:length(regs[])
                 s = regs[][i][3]
@@ -100,7 +97,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
     register_slots_scatterplot = Makie.scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=:data)
     state_scatterplot = Makie.scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=:data)
     state_lineplot = Makie.linesegments!(rn,state_links,color=:gray90)
-    twoqubitstate_lineplot = Makie.linesegments!(rn,twoqubitstate_links,color= !isnothing(twoqubitobservable) ? clrs : (:gray90), colormap=:Spectral, colorrange = (0,1))
+    twoqubitstate_lineplot = Makie.linesegments!(rn,twoqubitstate_links,color= clrs, colormap=:Spectral, colorrange = (0,1))
     rn[:register_polyplot] = register_polyplot
     rn[:register_slots_scatterplot] = register_slots_scatterplot
     rn[:register_slots_coords_backref] = register_slots_coords_backref
