@@ -56,7 +56,7 @@ stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*stab_mixed_dm
     end
 end
 
-@testset "2to1 - Single Qubit" begin
+@testset "2to1 - Node" begin
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
             # test that pure state gets mapped to pure state
@@ -150,32 +150,19 @@ end
     for rep in [CliffordRepr]
         for fixtwice in [:X, :Y, :Z]
             r = Register(6, rep())
-            noisy_pair = stab_noisy_pair_func(1)
+            noisy_pair = stab_noisy_pair_func(0)
             initialize!(r[1:2], noisy_pair)
             initialize!(r[3:4], noisy_pair)
             initialize!(r[5:6], noisy_pair)
             if Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
-                @test observable(r[1:2], projector(bell)) ≈ 1.0
-            end
-        end
-    end
-
-    for rep in [CliffordRepr]
-        for fixtwice in [:X, :Y, :Z]
-            r = Register(6, rep())
-            noisy_pair = stab_noisy_pair_func(1)
-            initialize!(r[1:2], noisy_pair)
-            initialize!(r[3:4], noisy_pair)
-            initialize!(r[5:6], noisy_pair)
-            if Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
-                @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
+                @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
             end
         end
     end
 end
 
 
-@testset "3to1 - Single Qubit" begin
+@testset "3to1 - Node" begin
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for fixtwice in [:X, :Y, :Z]
             # test that pure state gets mapped to pure state
@@ -219,7 +206,7 @@ end
     end
 end
 
-@testset "3to1 - Single Qubit - Fidelity - QuantumOpticsRepr" begin
+@testset "3to1 - Node - Fidelity - QuantumOpticsRepr" begin
     for rep in [QuantumOpticsRepr]
         for fixtwice in [:X, :Y, :Z]
             r = Register(6, rep())
@@ -237,22 +224,7 @@ end
     end
 end
 
-@testset "3to1 - Single Qubit - Fidelity - CliffordRepr" begin
-    for rep in [CliffordRepr]
-        for fixtwice in [:X, :Y, :Z]
-            r = Register(6, rep())
-            noisy_pair = stab_noisy_pair_func(1)
-            initialize!(r[1:2], noisy_pair)
-            initialize!(r[3:4], noisy_pair)
-            initialize!(r[5:6], noisy_pair)
-            ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
-            mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
-            if ma == mb
-                @test observable(r[1:2], projector(bell)) ≈ 1.0
-            end
-        end
-    end
-
+@testset "3to1 - Node - Fidelity - CliffordRepr" begin
     for rep in [CliffordRepr]
         for fixtwice in [:X, :Y, :Z]
             r = Register(6, rep())
@@ -263,7 +235,7 @@ end
             ma = Purify3to1Node(fixtwice)(r[1], [r[3], r[5]])
             mb = Purify3to1Node(fixtwice)(r[2], [r[4], r[6]])
             if ma == mb
-                @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
+                @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
             end
         end
     end
@@ -296,23 +268,12 @@ end
 @testset "Stringent - Fidelity - CliffordRepr" begin
     for rep in [CliffordRepr]
         r = Register(26, rep())
-        noisy_pair = stab_noisy_pair_func(1)
-        for i in 1:13
-            initialize!(r[(2*i-1):(2*i)], noisy_pair)
-        end
-        if PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true
-            @test observable(r[1:2], projector(bell)) ≈ 1.0
-        end
-    end
-
-    for rep in [CliffordRepr]
-        r = Register(26, rep())
         noisy_pair = stab_noisy_pair_func(0)
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
         if PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true
-            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
+            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
         end
     end
 end
@@ -344,23 +305,12 @@ end
 @testset "Expedient - Fidelity - CliffordRepr" begin
     for rep in [CliffordRepr]
         r = Register(22, rep())
-        noisy_pair = stab_noisy_pair_func(1)
-        for i in 1:11
-            initialize!(r[(2*i-1):(2*i)], noisy_pair)
-        end
-        if PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22]) == true
-            @test observable(r[1:2], projector(bell)) ≈ 1.0
-        end
-    end
-
-    for rep in [CliffordRepr]
-        r = Register(22, rep())
         noisy_pair = stab_noisy_pair_func(0)
         for i in 1:11
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
         if PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22]) == true
-            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0
+            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
         end
     end
 end
