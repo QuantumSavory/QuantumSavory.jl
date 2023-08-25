@@ -96,12 +96,6 @@ end
             @test Purify3to1(fixtwice)(r[1], r[2], [r[3], r[5]], [r[4], r[6]])==true
             @test observable(r[1:2], projector(bell))≈1.0
 
-            r = Register(6, rep())
-            initialize!(r[1:6], bell⊗bell⊗bell)
-            ma = Purify3to1Node(fixtwice)(r[1], [r[3],r[5]])
-            mb = Purify3to1Node(fixtwice)(r[2], [r[4],r[6]])
-            @test ma == mb
-
             # TODO: Should also taget qubits 1 and 2
             for error in [:X, :Y, :Z], target in 3:6
                 r = Register(6, rep())
@@ -171,6 +165,7 @@ end
             ma = Purify3to1Node(fixtwice)(r[1], [r[3],r[5]])
             mb = Purify3to1Node(fixtwice)(r[2], [r[4],r[6]])
             @test ma == mb
+            @test observable(r[1:2], projector(bell)) ≈ 1.0
 
             # TODO: Should also taget qubits 1 and 2
             for error in [:X, :Y, :Z], target in 3:6
@@ -248,6 +243,7 @@ end
             initialize!(r[(2*i-1):(2*i)], bell)
         end
         @test PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26]) == true 
+        @test observable(r[1:2], projector(bell)) ≈ 1.0
     end
 end
 
@@ -285,6 +281,7 @@ end
             initialize!(r[(2*i-1):(2*i)], bell)
         end
         @test PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22]) == true 
+        @test observable(r[1:2], projector(bell)) ≈ 1.0
     end
 end
 
