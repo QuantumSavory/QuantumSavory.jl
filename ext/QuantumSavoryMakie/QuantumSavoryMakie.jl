@@ -21,6 +21,10 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
     state_coords = Makie.Observable(Makie.Point2{Float64}[])
     state_coords_backref = Makie.Observable([])
     state_links = Makie.Observable(Makie.Point2{Float64}[])
+    twoqubitstate_links = Makie.Observable(Makie.Point2{Float64}[])
+    clrs = Makie.Observable(Float32[])
+    regs = Makie.Observable([])
+    twoqubitobservable = rn[:twoqubitobservable][]
     if haskey(rn, :registercoords) && !isnothing(rn[:registercoords][])
         registercoords = rn[:registercoords][]
     else
@@ -32,7 +36,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
         registers = network.registers
         all_nodes = [ # TODO it is rather wasteful to replot everything... do it smarter
             register_rectangles, register_slots_coords, register_slots_coords_backref,
-            state_coords, state_coords_backref, state_links,
+            state_coords, state_coords_backref, state_links, twoqubitstate_links,
+            clrs, regs
         ]
         for a in all_nodes
             empty!(a[])
@@ -57,13 +62,29 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
                     break
                 end
                 push!(state_links[], Makie.Point2{Float64}(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                if nsubsystems(s)==2 && !isnothing(twoqubitobservable) 
+                    push!(regs[], (whichreg, i, s))
+                    push!(twoqubitstate_links[], Makie.Point2{Float64}(registercoords[whichreg][1], registercoords[whichreg][2]+i-1))
+                end
                 if !juststarted && si<nsubsystems(s)
                     push!(state_links[], state_links[][end])
+                    if nsubsystems(s)==2 && !isnothing(twoqubitobservable)
+                        push!(regs[], regs[][end])
+                        push!(twoqubitstate_links[], twoqubitstate_links[][end])
+                    end
                 else
                     juststarted = false
                 end
             end
         end
+        if !isnothing(twoqubitobservable)
+            for i in 1:2:length(regs[])
+                s = regs[][i][3]
+                fid = real(observable([registers[regs[][i][1]][regs[][i][2]], registers[regs[][i+1][1]][regs[][i+1][2]]], twoqubitobservable))
+                push!(clrs[], fid)
+            end
+        end
+
         for a in all_nodes
             notify(a)
         end
@@ -75,12 +96,16 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}}) # TODO plot the 
     register_slots_scatterplot = Makie.scatter!(rn,register_slots_coords,marker=:rect,color=:gray60,markersize=0.6,markerspace=:data)
     state_scatterplot = Makie.scatter!(rn,state_coords,marker=:diamond,color=:black,markersize=0.4,markerspace=:data)
     state_lineplot = Makie.linesegments!(rn,state_links,color=:gray90)
+    twoqubitstate_lineplot = Makie.linesegments!(rn,twoqubitstate_links,color= !isnothing(twoqubitobservable) ? clrs : (:gray90), colormap=:Spectral, colorrange = (0,1))
     rn[:register_polyplot] = register_polyplot
     rn[:register_slots_scatterplot] = register_slots_scatterplot
     rn[:register_slots_coords_backref] = register_slots_coords_backref
     rn[:state_scatterplot] = state_scatterplot
     rn[:state_coords_backref] = state_coords_backref
     rn[:state_lineplot] = state_lineplot
+    rn[:twoqubitstate_lineplot] = twoqubitstate_lineplot
+    rn[:twoqubitobservable] = twoqubitobservable
+    rn[:fids] = clrs
     rn
 end
 
@@ -111,10 +136,10 @@ end
 It returns a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates
 the plot with the current state of the network."""
-function registernetplot_axis(subfig, registersobservable; registercoords=nothing, interactions=false)
+function registernetplot_axis(subfig, registersobservable; registercoords=nothing, interactions=false, twoqubitobservable=nothing)
     ax = Makie.Axis(subfig)
     p = registernetplot!(ax, registersobservable,
-        registercoords=registercoords,
+        registercoords=registercoords, twoqubitobservable=twoqubitobservable
         )
     ax.aspect = Makie.DataAspect()
     Makie.hidedecorations!(ax)
