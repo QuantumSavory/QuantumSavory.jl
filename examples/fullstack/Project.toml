@@ -16,3 +16,6 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 SumTypes = "8e1ec7a9-0e02-4297-b0fe-6433085c89f2"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
+
+[compat]
+WGLMakie = "0.8.10"
