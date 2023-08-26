@@ -37,7 +37,7 @@ function observable(state::Union{<:Ket,<:Operator}, indices, operation)
     expect(op, state)
 end
 
-function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Union{Tuple{ZBasisState, ZBasisState},Vector{<:Ket}})
+function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Union{Tuple,Vector{<:Ket}})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of _overlap vs _project_and_drop
         _overlaps = [_overlap(psi,state) for psi in psis]
         branch_probs = cumsum(_overlaps)
