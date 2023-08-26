@@ -18,16 +18,6 @@ config = Dict(
     #:colorscheme => ["rgb(242, 242, 247)", "black", "rgb(242, 242, 247)", "black"]
 )
 
-obs_PURIFICATION = Observable(true)
-obs_time = Observable(20.3)
-obs_commtime = Observable(0.1)
-obs_registersizes = Observable(6)
-obs_node_timedelay = Observable([0.4, 0.3])
-obs_initial_prob = Observable(0.7)
-obs_USE = Observable(3)
-obs_emitonpurifsuccess = Observable(0)
-logstring = Observable("")
-showlog = Observable(false)
 purifcircuit = Dict(
     2=>purify2to1,
     3=>purify3to1
@@ -40,7 +30,7 @@ purifcircuit = Dict(
 #   clicked)
 
 function layout_content(DOM, mainfigures
-    , menufigures, title_zstack, session, active_index; keepsame=false)
+    , menufigures, title_zstack, active_index; keepsame=false)
     
     menufigs_style = """
         display:flex;
@@ -89,7 +79,14 @@ end
 #   , as one can see in the plot(figure_array, metas) function.
 
 
-function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false)
+function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
+    if isnothing(observables)
+        return
+    end
+    obs_PURIFICATION, obs_time, obs_commtime, 
+        obs_registersizes, obs_node_timedelay, obs_initial_prob,
+        obs_USE, obs_emitonpurifsuccess, logstring, showlog = observables
+
     PURIFICATION = obs_PURIFICATION[]
     time = obs_time[]
     commtimes = [obs_commtime[], obs_commtime[]]
@@ -270,16 +267,16 @@ end
 #   the mainfigures which get toggled by the identical figures in
 #   the menu (the menufigures), as well as for the menufigures themselves
 
-function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false)
+function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false, observables=[])
     if length(menufigs)==0
         #with_theme(fontsize=32) do
-            plot_alphafig(figure_array[1], metas[1]; hidedecor=hidedecor)
+            plot_alphafig(figure_array[1], metas[1]; hidedecor=hidedecor, observables=observables[1])
             plot_betafig( figure_array[2], metas[2]; hidedecor=hidedecor)
             plot_gammafig(figure_array[3], metas[3]; hidedecor=hidedecor)
         #end
     else
         #with_theme(fontsize=32) do
-            plot_alphafig(figure_array[1], metas[1], menufigs[1]; hidedecor=hidedecor)
+            plot_alphafig(figure_array[1], metas[1], menufigs[1]; hidedecor=hidedecor, observables=observables[1])
             plot_betafig( figure_array[2], metas[2]; hidedecor=hidedecor)
             plot_gammafig(figure_array[3], metas[3]; hidedecor=hidedecor)
         #end
@@ -288,7 +285,20 @@ end
 
 ###################### 4. LANDING PAGE OF THE APP ######################
 
-landing = App() do session::Session
+landing = App() do
+    obs_PURIFICATION = Observable(true)
+    obs_time = Observable(20.3)
+    obs_commtime = Observable(0.1)
+    obs_registersizes = Observable(6)
+    obs_node_timedelay = Observable([0.4, 0.3])
+    obs_initial_prob = Observable(0.7)
+    obs_USE = Observable(3)
+    obs_emitonpurifsuccess = Observable(0)
+    logstring = Observable("")
+    showlog = Observable(false)
+    allobs = [obs_PURIFICATION, obs_time, obs_commtime, 
+                obs_registersizes, obs_node_timedelay, obs_initial_prob,
+                obs_USE, obs_emitonpurifsuccess, logstring, showlog]
     keepsame=true
     # Create the menufigures and the mainfigures
     mainfigures = [Figure(backgroundcolor=:white,  resolution=config[:resolution]) for _ in 1:3]
@@ -312,7 +322,7 @@ landing = App() do session::Session
     end
 
     # Using the aforementioned plot function to plot for each figure array
-    plot(mainfigures, menufigures)
+    plot(mainfigures, menufigures, observables=[allobs, nothing, nothing])
     
     # Create ZStacks displayong titles below the menu graphs
     titles_zstack = [zstack(wrap(DOM.h4(titles[i], class="upper")),
@@ -321,7 +331,7 @@ landing = App() do session::Session
                             anim=[:opacity], style="""color: $(config[:colorscheme][2]);""") for i in 1:3]
 
     # Obtain reactive layout of the figures
-    layout, content = layout_content(DOM, mainfigures, menufigures, titles_zstack, session, activeidx)
+    layout, content = layout_content(DOM, mainfigures, menufigures, titles_zstack, activeidx)
     # Add the logs
     logs = [wrap(tie(logstring), class="log_wrapper"),
             wrap("log2"; style="color: white;"), 
@@ -387,7 +397,7 @@ landing = App() do session::Session
 end
 
 
-nav = App() do session::Session
+nav = App() do
     img1 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/entanglement_flow.png?raw=true"; style="height:30vw; width: fit-content;border-bottom: 2px solid black; margin: 5px;")
     img2 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/purification_flow.png?raw=true"; style="height:30vw; width: fit-content;border-bottom: 2px solid black margin: 5px; transform: translateX(-25px);")
 
