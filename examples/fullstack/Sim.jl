@@ -124,7 +124,8 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false)
     flipaxis = false)
 
     plotfig = F[2,4:6]
-    fidax = Axis(plotfig[2:24, 2:24], title="Maximum Entanglement Fidelity", titlesize=32)
+    #fidax = Axis(plotfig[2:24, 2:24], title="Maximum Entanglement Fidelity", titlesize=32)
+    fidax = Axis(plotfig[1, 1], title="Maximum Entanglement Fidelity")
 
     sfigtext = F[1,4]
     textax = Axis(sfigtext[1, 2:8])
@@ -271,17 +272,17 @@ end
 
 function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false)
     if length(menufigs)==0
-        with_theme(fontsize=32) do
+        #with_theme(fontsize=32) do
             plot_alphafig(figure_array[1], metas[1]; hidedecor=hidedecor)
             plot_betafig( figure_array[2], metas[2]; hidedecor=hidedecor)
             plot_gammafig(figure_array[3], metas[3]; hidedecor=hidedecor)
-        end
+        #end
     else
-        with_theme(fontsize=32) do
+        #with_theme(fontsize=32) do
             plot_alphafig(figure_array[1], metas[1], menufigs[1]; hidedecor=hidedecor)
             plot_betafig( figure_array[2], metas[2]; hidedecor=hidedecor)
             plot_gammafig(figure_array[3], metas[3]; hidedecor=hidedecor)
-        end
+        #end
     end
 end
 
