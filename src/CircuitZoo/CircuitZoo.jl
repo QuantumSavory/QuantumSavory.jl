@@ -743,4 +743,73 @@ function (circuit::PurifyExpedientNode)(purifiedL,sacrificedL)
     [a..., b..., c..., d...]
 end
 
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The circuit for Superdense Coding to encode the 2 (classical) bit message
+to its corresponding bell pair representation. `reg` is a single qubit register containing
+Alice's half of the entangled bell pair and message is the 2 bit message Alice intends to send to Bob.
+Based on the 2 bit message the state of the qubit in the register is mutated in place with `apply!`
+
+```jldoctest
+julia> reg = Register(1)
+
+julia> initialize!(reg[1], Z1)
+
+julia> message = [1, 1]
+
+julia> SDEncode()(reg, message)
+```
+"""
+
+struct SDEncode <: AbstractCircuit
+end
+
+function (circuit::SDEncode)(reg, message)
+    if message[1] == 1
+        apply!(reg[1], X)
+    end
+    if message[2] == 1
+        apply!(reg[1], Z)
+    end
+end
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The circuit for Superdense Coding to decode the 2 (classical) bit message
+using the entangled bell pair stored in the registers regA and regB after Alice's encoding of the first qubit.
+
+```jldoctest
+julia> regA = Register(1)
+
+julia> regB = Register(1)
+
+julia> initalize!(regA[1], Z1)
+
+julia> initalize!(regB[1], Z1)
+
+julia> SDDecode()(regA, regB)
+```
+"""
+
+struct SDDecode <: AbstractCircuit
+end
+
+function (circuit::SDDecode)(regA, regB)
+    apply!((regB[1], regA[1]), CNOT)
+    apply!(regB[1], H)
+    b1 = project_traceout!(regA, 1, Z)
+    b2 = project_traceout!(regB, 1, Z)
+    return b1-1, b2-1
+end
+
 end # module
