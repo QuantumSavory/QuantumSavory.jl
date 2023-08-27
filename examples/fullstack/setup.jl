@@ -20,7 +20,7 @@ using Revise
 using QuantumSavory
 
 # Predefined useful circuits
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
+using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1Node, Purify3to1Node, AbstractCircuit
 using SumTypes
 
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
@@ -31,6 +31,7 @@ noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 struct FreeQubitTriggerProtocolSimulation
     purifier_circuit_size
     purifier_circuit
+    looptype
     waittime
     busytime
     keywords
@@ -38,27 +39,33 @@ struct FreeQubitTriggerProtocolSimulation
     maxgeneration
 end
 
+function circuit_size(circ) # maybe add this in circuitzoo?
+    sizes = Dict(
+        Purify2to1Node=>2,
+        Purify3to1Node=>3
+    )
+    return sizes[circ]
+end
+FreeQubitTriggerProtocolSimulation(circ;
+                                    looptype::Array{Symbol}=[:X, :Y, :Z],
+                                    waittime=0.4, busytime=0.3,
+                                    keywords=Dict(:simple_channel=>:fqtp_channel, :process_channel=>:fqtp_process_channel),
+                                    emitonpurifsuccess=false,
+                                    maxgeneration=10) = FreeQubitTriggerProtocolSimulation(circuit_size(circ), circ, looptype, waittime, busytime, keywords, emitonpurifsuccess, maxgeneration)
+
+
 function slog!(s, msg)
     if s === nothing
         println(msg)
         return
     end
     signature,message = split(msg, ">"; limit=2)
-    time=  getfirstfloat(signature)
+    # time=  getfirstfloat(signature)
     s[] = s[] * """<div><span style='color:cyan'>$signature | </span><span>$message</span></div>"""
     #el = DOM.div(DOM.span(replace(signature * " | ", "\"" => ""), style="color: cyan;"), DOM.span(replace(message, "\"" => "")), DOM.br(), class="console_line", id="console_line_$(time)_$(length(s[]))_$(rand())")
     #s[] = append!(s[], [el]) 
     notify(s)
 end
-
-function getfirstfloat(s)
-    for el in split(s, " ")
-        if tryparse(Float64, el) !== nothing
-            return parse(Float64, el)
-        end
-    end
-end
-
 #=
     https://github.com/MasonProtter/SumTypes.jl
     We have 2 types of channels:
@@ -87,43 +94,6 @@ end
     mPURIFY(remote_measurement, indices, remoteindices, generation)
     mREPORT_SUCCESS(success , indices, remoteindices, generation)
 end
-
-#= 
-    R (or L) side of purify2to1[:X] and purify3to1[:Y]
-    TODO: implement in CircuitZoo, once current pull req regarding CircuitZoo is merged
-=#
-function purify2to1(rega, regb; type::Symbol=:X)
-    if type == :X
-        apply!((regb, rega), CNOT)
-        meas = project_traceout!(regb, σˣ)
-        meas
-    else
-        apply!((rega, regb), CNOT)
-        meas = project_traceout!(regb, σᶻ)
-        meas
-    end
-end
-
-function purify3to1(rega, regb, regc; type::Symbol=:Y)
-    if type == :Y || type == :X
-        apply!((rega, regb), CNOT)
-        apply!((regc, regb), CNOT)
-
-        meas1 = project_traceout!(regb, σᶻ)
-        meas2 = project_traceout!(regc, σˣ)
-        meas = [meas1, meas2]
-        meas
-    else
-        apply!((rega, regb), XCZ)
-        apply!((regc, regb), ZCY)
-
-        meas1 = project_traceout!(regb, σˣ)
-        meas2 = project_traceout!(regc, σʸ)
-        meas = [meas1, meas2]
-        meas
-    end
-end
-
 # finding a free qubit in the local register
 function findfreequbit(network, node)
     register = network[node]
@@ -285,7 +255,7 @@ end
 
                     slots = [network[node][x] for x in indicesg[generation]]
                     #slog!(logfile, slots)
-                    local_measurement = protocol.purifier_circuit(slots...; type=(:X, :Z)[generation%2+1])
+                    local_measurement = protocol.purifier_circuit(protocol.looptype[generation % length(protocol.looptype) + 1])(slots[1], length(slots[2:end])==1 ? slots[2:end][1] : slots[2:end])
                     # send message to other node to apply purif side of circuit
                     put!(process_channel, mPURIFY(local_measurement, remoteindicesg[generation], indicesg[generation], generation))
                     indicesg[generation] = []
@@ -298,7 +268,7 @@ end
                 #slog!(logfile, slots)
                 @yield timeout(sim, busytime)
 
-                local_measurement = protocol.purifier_circuit(slots...; type=(:X, :Z)[generation%2+1])
+                local_measurement = protocol.purifier_circuit(protocol.looptype[generation % length(protocol.looptype) + 1])(slots[1], length(slots[2:end])==1 ? slots[2:end][1] : slots[2:end])
                 success = local_measurement == remote_measurement
                 put!(process_channel, mREPORT_SUCCESS(success, remoteindices, indices, generation))
                 if !success

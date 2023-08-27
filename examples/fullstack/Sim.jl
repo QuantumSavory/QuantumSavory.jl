@@ -19,8 +19,8 @@ config = Dict(
 )
 
 purifcircuit = Dict(
-    2=>purify2to1,
-    3=>purify3to1
+    2=>Purify2to1Node,
+    3=>Purify3to1Node
 )
 
 ###################### 2. LAYOUT ######################
@@ -96,13 +96,12 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
     USE = obs_USE[]
     noisy_pair = noisy_pair_func(initial_prob[])
     emitonpurifsuccess = obs_emitonpurifsuccess[]==1
-    old_params = []
 
-    protocol = FreeQubitTriggerProtocolSimulation(USE, purifcircuit[USE], # purifcircuit
-                                                node_timedelay[1], node_timedelay[2], # wait and busy times
-                                                Dict(:simple_channel=>:channel,
-                                                    :process_channel=>:process_channel), # keywords to store the 2 types of channels in the network
-                                                emitonpurifsuccess, 10) # emit on purifsucess
+    protocol = FreeQubitTriggerProtocolSimulation(
+                purifcircuit[USE];
+                waittime=node_timedelay[1], busytime=node_timedelay[2],
+                emitonpurifsuccess=emitonpurifsuccess
+            )
     sim, network = simulation_setup(registersizes, commtimes, protocol)
     _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
     _,mfig_ax,mfig_p,mfig_obs = nothing, nothing, nothing, nothing
@@ -173,11 +172,12 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
             noisy_pair = noisy_pair_func(initial_prob[])
             emitonpurifsuccess = obs_emitonpurifsuccess[]==1
 
-            protocol = FreeQubitTriggerProtocolSimulation(USE, purifcircuit[USE], # purifcircuit
-                                                        node_timedelay[1], node_timedelay[2], # wait and busy times
-                                                        Dict(:simple_channel=>:channel,
-                                                            :process_channel=>:process_channel), # keywords to store the 2 types of channels in the network
-                                                        emitonpurifsuccess, 10) # emit on purif success
+            protocol = FreeQubitTriggerProtocolSimulation(
+                purifcircuit[USE];
+                waittime=node_timedelay[1], busytime=node_timedelay[2],
+                emitonpurifsuccess=emitonpurifsuccess
+            )
+            
             sim, network = simulation_setup(registersizes, commtimes, protocol)
             _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             if mfig !== nothing

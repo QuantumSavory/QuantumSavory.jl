@@ -15,16 +15,15 @@ noisy_pair = noisy_pair_func(0.7)   # noisy pair
 USE = 3                             # 3 for double selection, 2 for single selection
 
 purifcircuit = Dict(
-    2=>purify2to1,
-    3=>purify3to1
+    2=>Purify2to1Node,
+    3=>Purify3to1Node
 )
 
-protocol = FreeQubitTriggerProtocolSimulation(USE, purifcircuit[USE], # purifcircuit
-                                                node_timedelay[1], node_timedelay[2], # wait and busy times
-                                                Dict(:simple_channel=>:yayayayya,
-                                                    :process_channel=>:yoyoyooy), # keywords to store the 2 types of channels in the network
-                                                false, 10) # recicle purified pairs
-                                                
+protocol = FreeQubitTriggerProtocolSimulation(
+                purifcircuit[USE];
+                waittime=node_timedelay[1], busytime=node_timedelay[2],
+                emitonpurifsuccess=false
+            )
 sim, network = simulation_setup(registersizes, commtimes, protocol) # Simulation and Network
 
 # Setting up the ENTANGMELENT protocol
