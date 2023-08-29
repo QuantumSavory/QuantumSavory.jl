@@ -180,6 +180,8 @@ struct Purify2to1Node <: AbstractCircuit
         end
     end
 end
+
+inputqubits(circuit::Purify2to1Node) = 2
 # remove R
 function (circuit::Purify2to1Node)(purified,sacrificed)
     gate, basis = if circuit.leaveout==:X
@@ -222,7 +224,7 @@ julia> a = Register(2)
        initalize!(c[1:2], bell)
 
 
-julia> Purify3to1(:Z, :Y)(a[1], a[2], [b[1], c[1]], [b[2], c[2]])
+julia> Purify3to1(:Z, :Y)(a[1], a[2], b[1], c[1], b[2], c[2])
 false
 ```
 """
@@ -244,7 +246,9 @@ struct Purify3to1 <: AbstractCircuit
         end
     end
 end
-# use args LRLLRR
+
+inputqubits(circuit::Purify3to1) = 3
+
 function (circuit::Purify3to1)(purifiedL, purifiedR, sacrificedL1, sacrificedL2, sacrificedR1, sacrificedR2)
     dictionary_measurement = Dict(:X => σˣ, :Y => σʸ, :Z => σᶻ)
     if circuit.leaveout1 != :Y || circuit.leaveout2 != :X
@@ -302,7 +306,7 @@ julia> a = Register(2)
        initalize!(c[1:2], bell)
 
 
-julia> Purify3to1Node(:Z, :Y)(a[1], [b[1], c[1]]) == Purify3to1Node(:X)(a[2], [b[2], c[2]])
+julia> Purify3to1Node(:Z, :Y)(a[1], b[1], c[1]) == Purify3to1Node(:X)(a[2], b[2], c[2])
 false
 ```
 """
@@ -324,6 +328,8 @@ struct Purify3to1Node <: AbstractCircuit
         end
     end
 end
+
+inputqubits(circuit::Purify3to1Node) = 3
 
 function (circuit::Purify3to1Node)(purified,sacrificed1,sacrificed2)
     dictionary_measurement = Dict(:X => σˣ, :Y => σʸ, :Z => σᶻ)
@@ -382,6 +388,8 @@ struct StringentHead <: AbstractCircuit
     end
 end
 
+inputqubits(circuit::StringentHead) = 2
+
 function (circuit::StringentHead)(purifiedL, purifiedR, sacrificed...)
     sacrificedL = [sacrificed[1:2]...]
     sacrificedR = [sacrificed[3:4]...]
@@ -431,17 +439,21 @@ struct StringentHeadNode <: AbstractCircuit
     end
 end
 
+inputqubits(circuit::StringentHeadNode) = 2
+
 function (circuit::StringentHeadNode)(purified, sacrificed...)
+    sacrificedarr = [sacrificed[1:2]...]
+
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
         XCZ, true
     end
-    apply!((purified, sacrificedL[1]), gate)
-    apply!((sacrificed[1], sacrificedL[2]), ZCZ)
+    apply!((purified, sacrificedarr[1]), gate)
+    apply!((sacrificedarr[1], sacrificedarr[2]), ZCZ)
 
-    alfa = coinnode(σˣ, [sacrificed[1]])
-    beta = coinnode(σˣ, [sacrificed[2]])
+    alfa = coinnode(σˣ, [sacrificedarr[1]])
+    beta = coinnode(σˣ, [sacrificedarr[2]])
 
     (alfa, beta)
 end
@@ -479,6 +491,8 @@ struct StringentBody <: AbstractCircuit
         end
     end
 end
+
+inputqubits(circuit::StringentBody) = circuit.expedient ? 3 : 4
 
 function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
     gate, success = if circuit.type == :Z
@@ -557,6 +571,8 @@ struct StringentBodyNode <: AbstractCircuit
     end
 end
 
+inputqubits(circuit::StringentBodyNode) = circuit.expedient ? 3 : 4
+
 function (circuit::StringentBodyNode)(purified, sacrificed...)
     gate, success = if circuit.type == :Z
         ZCZ, true
@@ -567,7 +583,7 @@ function (circuit::StringentBodyNode)(purified, sacrificed...)
     i1 = 1
     i2 = 1
     sacrificed1 = sacrificed[1:1]
-    sacrificed2 = circuit.expedient ? sacrificed[2:3] : sacrificed[2:4]
+    sacrificed2 = circuit.expedient ? [sacrificed[2:3]...] : [sacrificed[2:4]...]
 
     apply!((sacrificed1[i1], sacrificed2[i2]), XCZ)
     alfa = coinnode(σˣ, [sacrificed2[i2]])
@@ -621,7 +637,7 @@ julia> PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26])
 struct PurifyStringent <: AbstractCircuit
 end
 
-
+inputqubits(circuit::PurifyStringent) = 13
 
 function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
     success = true
@@ -640,6 +656,8 @@ function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
     
     success
 end
+
+
 
 
 """
@@ -674,6 +692,8 @@ julia> PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22])
 """
 struct PurifyExpedient <: AbstractCircuit
 end
+
+inputqubits(circuit::PurifyExpedient) = 11
 
 function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificed...)
     success = true
@@ -722,6 +742,8 @@ julia> PurifyStringentNode()(r[1], r[3:2:25]) == PurifyStringentNode()(r[2], r[4
 struct PurifyStringentNode <: AbstractCircuit
 end
 
+inputqubits(circuit::PurifyStringentNode) = 13
+
 function (circuit::PurifyStringentNode)(purified,sacrificed...)
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
@@ -729,10 +751,10 @@ function (circuit::PurifyStringentNode)(purified,sacrificed...)
     stringentBody_Z = StringentBodyNode(:Z)
     stringentBody_X = StringentBodyNode(:X)
 
-    a = stringentHead_Z(purified, sacrificed[1:2])
-    b = stringentHead_X(purified, sacrificed[3:4])
-    c = stringentBody_Z(purified, sacrificed[5:8])
-    d = stringentBody_X(purified, sacrificed[9:12])
+    a = stringentHead_Z(purified, sacrificed[1:2]...)
+    b = stringentHead_X(purified, sacrificed[3:4]...)
+    c = stringentBody_Z(purified, sacrificed[5:8]...)
+    d = stringentBody_X(purified, sacrificed[9:12]...)
     [a..., b..., c..., d...]
 end
 
@@ -765,16 +787,18 @@ julia> PurifyExpedientNode()(r[1], r[3:2:21]) == PurifyExpedientNode()(r[2], r[4
 struct PurifyExpedientNode <: AbstractCircuit
 end
 
+inputqubits(circuit::PurifyExpedientNode) = 11
+
 function (circuit::PurifyExpedientNode)(purified,sacrificed...)
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
     stringentHead_X = StringentHeadNode(:X)
     stringentBody_Z = StringentBodyNode(:Z, true)
 
-    a = stringentHead_Z(purified, sacrificed[1:2])
-    b = stringentHead_X(purified, sacrificed[3:4])
-    c = stringentBody_Z(purified, sacrificed[5:7])
-    d = stringentBody_Z(purified, sacrificed[8:10])
+    a = stringentHead_Z(purified, sacrificed[1:2]...)
+    b = stringentHead_X(purified, sacrificed[3:4]...)
+    c = stringentBody_Z(purified, sacrificed[5:7]...)
+    d = stringentBody_Z(purified, sacrificed[8:10]...)
     
     [a..., b..., c..., d...]
 end
