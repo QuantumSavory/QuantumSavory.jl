@@ -398,8 +398,8 @@ end
 
 
 nav = App() do
-    img1 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/entanglement_flow.png?raw=true"; style="height:30vw; width: fit-content;border-bottom: 2px solid black; margin: 5px;")
-    img2 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/purification_flow.png?raw=true"; style="height:30vw; width: fit-content;border-bottom: 2px solid black margin: 5px; transform: translateX(-25px);")
+    img1 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/entanglement_flow.png?raw=true"; style="height:30vw; width: fit-contentt;border-bottom: 2px solid black; margin: 5px;")
+    img2 = DOM.img(src="https://github.com/adrianariton/QuantumFristGenRepeater/blob/master/purification_flow.png?raw=true"; style="height:30vw; width: fit-contentt;border-bottom: 2px solid black margin: 5px; transform: translateX(-25px);")
 
     list1 = DOM.ul(
         DOM.li(md"""`circuit`: The purification circuit being used (can be 2 for **Single Selection** and 3 for **Double Selection**)"""),
