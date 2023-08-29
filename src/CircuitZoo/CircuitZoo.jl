@@ -7,6 +7,8 @@ export Purify2to1
 
 abstract type AbstractCircuit end
 
+function inputqubits end
+
 struct EntanglementSwap <: AbstractCircuit
 end
 
@@ -22,6 +24,9 @@ function (::EntanglementSwap)(localL, remoteL, lacalR, remoteR)
     end
     xmeas, zmeas
 end
+
+inputqubits(::EntanglementSwap) = 2
+
 
 """
 $TYPEDEF
@@ -112,6 +117,8 @@ struct Purify2to1 <: AbstractCircuit
     end
 end
 
+inputqubits(circuit::Purify2to1) = 2
+
 function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     gate, basis = if circuit.leaveout==:X
         CNOT, σˣ
@@ -173,8 +180,8 @@ struct Purify2to1Node <: AbstractCircuit
         end
     end
 end
-
-function (circuit::Purify2to1Node)(purifiedR,sacrificedR)
+# remove R
+function (circuit::Purify2to1Node)(purified,sacrificed)
     gate, basis = if circuit.leaveout==:X
         CNOT, σˣ
     elseif circuit.leaveout==:Z
@@ -182,8 +189,8 @@ function (circuit::Purify2to1Node)(purifiedR,sacrificedR)
     elseif circuit.leaveout==:Y
         ZCY, σʸ
     end
-    apply!((sacrificedR,purifiedR),gate)
-    measb = project_traceout!(sacrificedR, basis)
+    apply!((sacrificed,purified),gate)
+    measb = project_traceout!(sacrificed, basis)
     measb
 end
 
@@ -197,8 +204,8 @@ Fields:
 $FIELDS
 
 A purification circuit sacrificing a Bell pair to produce another.
-The circuit is parameterized by a `fixtwice` symbol argument
-which specifies which of the three possible Pauli errors is fixed twice.
+The circuit is parameterized by a `leaveout1`, and a `leaveout2` symbol argument
+which specifies the leaveout of each of the two purification subcircuits
 This purificaiton circuit is capable of detecting all errors.
 
 If an error was detected, the circuit returns `false` and the state is reset.
@@ -215,52 +222,47 @@ julia> a = Register(2)
        initalize!(c[1:2], bell)
 
 
-julia> Purify3to1(:X)(a[1], a[2], [b[1], c[1]], [b[2], c[2]])
+julia> Purify3to1(:Z, :Y)(a[1], a[2], [b[1], c[1]], [b[2], c[2]])
 false
 ```
 """
 struct Purify3to1 <: AbstractCircuit
     """The error to be fixed twice"""
-    fixtwice::Symbol
-    function Purify3to1(fixtwice)
-        if fixtwice ∉ (:X, :Y, :Z)
+    leaveout1::Symbol
+    leaveout2::Symbol
+    function Purify3to1(leaveout1, leaveout2)
+        if leaveout1 ∉ (:X, :Y, :Z) && leaveout2 ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
             `Purify3to1` can represent one of three purification circuits (see its docstring),
-            parameterized by the argument `fixtwice` which has to be one of `:X`, `:Y`, or `:Z`.
-            You have instead chosen `$(repr(fixtwice))` which is not a valid option.
+            parameterized by the argument `leaveout1` and `leaveout2` which has to be one of `:X`, `:Y`, or `:Z`.
+            You have instead chosen `$(repr(leaveout1))`, `$(repr(leaveout1))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `Purify3to1`
             and ensure you are passing a valid argument.
-
-            The `fixtwice` parameter represents the error that the putifying circuit will 
-            'fix twice', meaning for example, for a fixtwice Y circuit (original double selection),
-            Purify3to1 will represent the succesive applying of a leaveout Z and then a leaveout X
-            Purify2to1 circuit, with coincidence measurments pushed to the end.
             """))
         else
-            new(fixtwice)
+            new(leaveout1, leaveout2)
         end
     end
 end
-
-function (circuit::Purify3to1)(purifiedL,purifiedR,sacrificedL::Array,sacrificedR::Array)
-    gate1, gate2, basis1, basis2 = if circuit.fixtwice==:X
-        ZCY, XCZ, σʸ, σᶻ
-    elseif circuit.fixtwice==:Y
-        XCZ, CNOT, σᶻ, σˣ
-    elseif circuit.fixtwice==:Z
-        CNOT, ZCY, σˣ, σʸ
+# use args LRLLRR
+function (circuit::Purify3to1)(purifiedL, purifiedR, sacrificedL1, sacrificedL2, sacrificedR1, sacrificedR2)
+    dictionary_measurement = Dict(:X => σˣ, :Y => σʸ, :Z => σᶻ)
+    if circuit.leaveout1 != :Y || circuit.leaveout2 != :X
+        dictionary_gate = Dict(:X => CNOT, :Y => ZCY, :Z => XCZ)
+    else
+        dictionary_gate = Dict(:X => CNOT, :Y => XCY, :Z => XCZ)
     end
+    gate1, gate2, basis1, basis2 = dictionary_gate[circuit.leaveout1], dictionary_gate[circuit.leaveout2], dictionary_measurement[circuit.leaveout1], dictionary_measurement[circuit.leaveout2]
+    apply!((sacrificedL1, purifiedL),gate1)
+    apply!((sacrificedR1, purifiedR),gate1)
 
-    apply!((sacrificedL[1], purifiedL),gate1)
-    apply!((sacrificedR[1], purifiedR),gate1)
+    apply!((sacrificedR2,sacrificedR1),gate2)
+    apply!((sacrificedL2,sacrificedL1),gate2)
 
-    apply!((sacrificedR[2],sacrificedR[1]),gate2)
-    apply!((sacrificedL[2],sacrificedL[1]),gate2)
-
-    measa1 = project_traceout!(sacrificedL[1], basis1)
-    measb1 = project_traceout!(sacrificedR[1], basis1)
-    measa2 = project_traceout!(sacrificedL[2], basis2)
-    measb2 = project_traceout!(sacrificedR[2], basis2)
+    measa1 = project_traceout!(sacrificedL1, basis1)
+    measb1 = project_traceout!(sacrificedR1, basis1)
+    measa2 = project_traceout!(sacrificedL2, basis2)
+    measb2 = project_traceout!(sacrificedR2, basis2)
     
     success1 = measa1 == measb1
     success2 = measa2 == measb2
@@ -279,15 +281,17 @@ Fields:
 
 $FIELDS
 
-A purification circuit sacrificing 2 Bell qubits to produce another qubit.
-The circuit is parameterized by a `fixtwice` symbol argument
-which specifies which of the three possible Pauli errors is fixed twice.
+A purification circuit sacrificing 2 Bell qubits to produce another.
+The circuit is parameterized by a `leaveout1`, and a `leaveout2` symbol argument
+which specifies the leaveout of each of the two purification subcircuits
 This purificaiton circuit is capable of detecting all errors.
 
 This circuit returns the array of measurements made.
 
 This circuit is the same as the Purifiy3to1 one but it works on individual qubits
 (i.e. only one qubit of a pair)
+
+This algorithm is detailed in [keisuke2009doubleselection](@cite)
 
 ```jldoctest
 julia> a = Register(2)
@@ -298,37 +302,42 @@ julia> a = Register(2)
        initalize!(c[1:2], bell)
 
 
-julia> Purify3to1Node(:X)(a[1], [b[1], c[1]]) == Purify3to1Node(:X)(a[2], [b[2], c[2]])
+julia> Purify3to1Node(:Z, :Y)(a[1], [b[1], c[1]]) == Purify3to1Node(:X)(a[2], [b[2], c[2]])
 false
 ```
 """
 struct Purify3to1Node <: AbstractCircuit
     """The error to be fixed twice"""
-    fixtwice::Symbol
-    function Purify3to1Node(fixtwice)
-        if fixtwice ∉ (:X, :Y, :Z)
+    leaveout1::Symbol
+    leaveout2::Symbol
+    function Purify3to1Node(leaveout1, leaveout2)
+        if leaveout1 ∉ (:X, :Y, :Z) && leaveout2 ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
-            `Purify3to1Node` is a Purify3to1 circuit that only operates on one member of the pair
+            `Purify3to1` can represent one of three purification circuits (see its docstring),
+            parameterized by the argument `leaveout1` and `leaveout2` which has to be one of `:X`, `:Y`, or `:Z`.
+            You have instead chosen `$(repr(leaveout1))`, `$(repr(leaveout1))` which is not a valid option.
+            Investigate where you are creating a purification circuit of type `Purify3to1`
+            and ensure you are passing a valid argument.
             """))
         else
-            new(fixtwice)
+            new(leaveout1, leaveout2)
         end
     end
 end
 
-function (circuit::Purify3to1Node)(purifiedL,sacrificedL::Array)
-    gate1, gate2, basis1, basis2 = if circuit.fixtwice==:X
-        ZCY, XCZ, σʸ, σᶻ
-    elseif circuit.fixtwice==:Y
-        XCZ, CNOT, σᶻ, σˣ
-    elseif circuit.fixtwice==:Z
-        CNOT, ZCY, σˣ, σʸ
+function (circuit::Purify3to1Node)(purified,sacrificed1,sacrificed2)
+    dictionary_measurement = Dict(:X => σˣ, :Y => σʸ, :Z => σᶻ)
+    if circuit.leaveout1 != :Y || circuit.leaveout2 != :X
+        dictionary_gate = Dict(:X => CNOT, :Y => ZCY, :Z => XCZ)
+    else
+        dictionary_gate = Dict(:X => CNOT, :Y => XCY, :Z => XCZ)
     end
+    gate1, gate2, basis1, basis2 = dictionary_gate[circuit.leaveout1], dictionary_gate[circuit.leaveout2], dictionary_measurement[circuit.leaveout1], dictionary_measurement[circuit.leaveout2]
 
-    apply!((sacrificedL[1], purifiedL),gate1)
-    apply!((sacrificedL[2],sacrificedL[1]),gate2)
-    measa1 = project_traceout!(sacrificedL[1], basis1)
-    measa2 = project_traceout!(sacrificedL[2], basis2)
+    apply!((sacrificed1, purified),gate1)
+    apply!((sacrificed2, sacrificed1),gate2)
+    measa1 = project_traceout!(sacrificed1, basis1)
+    measa2 = project_traceout!(sacrificed2, basis2)
     
     (measa1, measa2)
 end
@@ -340,7 +349,7 @@ function coin(basis, pair::Array, parity=0)
     success
 end
 
-function coinleft(basis, pair::Array, parity=0)
+function coinnode(basis, pair::Array, parity=0)
     measa = project_traceout!(pair[1], basis)
     measa
 end
@@ -373,7 +382,9 @@ struct StringentHead <: AbstractCircuit
     end
 end
 
-function (circuit::StringentHead)(purifiedL, purifiedR, sacrificedL, sacrificedR)
+function (circuit::StringentHead)(purifiedL, purifiedR, sacrificed...)
+    sacrificedL = [sacrificed[1:2]...]
+    sacrificedR = [sacrificed[3:4]...]
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
@@ -401,6 +412,8 @@ The STRINGENT-HEAD purification circuit, on one qubit of a pair of 2.
 The first part of the STRINGENT and EXPEDIENT circuit.
 It has one parameter, that determines the first gate which is used.
 It returns the array of measurements made by the circuit.
+
+This algorithm is detailed in [naomi2013topological](@cite)
 """
 struct StringentHeadNode <: AbstractCircuit
     type::Symbol
@@ -418,17 +431,17 @@ struct StringentHeadNode <: AbstractCircuit
     end
 end
 
-function (circuit::StringentHeadNode)(purifiedL, sacrificedL)
+function (circuit::StringentHeadNode)(purified, sacrificed...)
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
         XCZ, true
     end
-    apply!((purifiedL, sacrificedL[1]), gate)
-    apply!((sacrificedL[1], sacrificedL[2]), ZCZ)
+    apply!((purified, sacrificedL[1]), gate)
+    apply!((sacrificed[1], sacrificedL[2]), ZCZ)
 
-    alfa = coinleft(σˣ, [sacrificedL[1]])
-    beta = coinleft(σˣ, [sacrificedL[2]])
+    alfa = coinnode(σˣ, [sacrificed[1]])
+    beta = coinnode(σˣ, [sacrificed[2]])
 
     (alfa, beta)
 end
@@ -445,6 +458,8 @@ The second part of the STRINGENT and EXPEDIENT circuit.
 It has 2 parameters, one that determines the first gate which is used,
 and the other one which determines if it is used
 inside the STRINGENT or EXPEDIENT cicuits
+
+This algorithm is detailed in [naomi2013topological](@cite)
 """
 struct StringentBody <: AbstractCircuit
     """A symbol determining whether ZCZ or XCZ should be used as a gate"""
@@ -465,7 +480,7 @@ struct StringentBody <: AbstractCircuit
     end
 end
 
-function (circuit::StringentBody)(purifiedL, purifiedR, sacrificedL, sacrificedR)
+function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
@@ -474,6 +489,9 @@ function (circuit::StringentBody)(purifiedL, purifiedR, sacrificedL, sacrificedR
     ## Indices for emulating pair creation
     i1 = 1
     i2 = 1
+
+    sacrificedL = circuit.expedient ? [sacrificed[1:3]...] : [sacrificed[1:4]...]
+    sacrificedR = circuit.expedient ? [sacrificed[4:6]...] : [sacrificed[5:8]...]
     sacrificedL1 = sacrificedL[1:1]
     sacrificedR1 = sacrificedR[1:1]
 
@@ -519,6 +537,8 @@ It has 2 parameters, one that determines the first gate which is used,
 and the other one which determines if it is used
 inside the STRINGENT or EXPEDIENT cicuits
 It returns the array of measurements made by the circuits.
+
+This algorithm is detailed in [naomi2013topological](@cite)
 """
 struct StringentBodyNode <: AbstractCircuit
     type::Symbol
@@ -537,7 +557,7 @@ struct StringentBodyNode <: AbstractCircuit
     end
 end
 
-function (circuit::StringentBodyNode)(purifiedL, sacrificedL)
+function (circuit::StringentBodyNode)(purified, sacrificed...)
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
@@ -546,23 +566,23 @@ function (circuit::StringentBodyNode)(purifiedL, sacrificedL)
     ## Indices for emulating pair creation
     i1 = 1
     i2 = 1
-    sacrificedL1 = sacrificedL[1:1]
-    sacrificedL2 = circuit.expedient ? sacrificedL[2:3] : sacrificedL[2:4]
+    sacrificed1 = sacrificed[1:1]
+    sacrificed2 = circuit.expedient ? sacrificed[2:3] : sacrificed[2:4]
 
-    apply!((sacrificedL1[i1], sacrificedL2[i2]), XCZ)
-    alfa = coinleft(σˣ, [sacrificedL2[i2]])
+    apply!((sacrificed1[i1], sacrificed2[i2]), XCZ)
+    alfa = coinnode(σˣ, [sacrificed2[i2]])
     i2 = i2 + 1
 
-    apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
-    beta = coinleft(σˣ, [sacrificedL2[i2]])
-    apply!((purifiedL, sacrificedL1[i1]), gate)
+    apply!((sacrificed1[i1], sacrificed2[i2]), ZCZ)
+    beta = coinnode(σˣ, [sacrificed2[i2]])
+    apply!((purified, sacrificed1[i1]), gate)
 
     if !circuit.expedient 
         i2 = i2 + 1
-        apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
-        gamma = coinleft(σˣ, [sacrificedL2[i2]])
+        apply!((sacrificed1[i1], sacrificed2[i2]), ZCZ)
+        gamma = coinnode(σˣ, [sacrificed2[i2]])
     end
-    delta = coinleft(σˣ, [sacrificedL1[i1]])
+    delta = coinnode(σˣ, [sacrificed1[i1]])
     (alfa)
 end
 
@@ -578,8 +598,12 @@ The STRINGENT purification circuit.
 It is composed of a head and a body.
 The head is repeated twice and the body is also repeating twice
 
+This algorithm is detailed in [krastanov2019optimised](@cite)
+
 If an error was detected, the circuit returns `false` and the state is reset.
 If no error was detected, the circuit returns `true`.
+
+This algorithm is detailed in [naomi2013topological](@cite)
 
 The sacrificial qubits are removed from the register.
 
@@ -599,17 +623,20 @@ end
 
 
 
-function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificedL,sacrificedR)
+function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
     success = true
     stringentHead_Z = StringentHead(:Z)
     stringentHead_X = StringentHead(:X)
     stringentBody_Z = StringentBody(:Z)
     stringentBody_X = StringentBody(:X)
 
-    success = success & stringentHead_Z(purifiedL, purifiedR, sacrificedL[1:2], sacrificedR[1:2])
-    success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4], sacrificedR[3:4])
-    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:8], sacrificedR[5:8])
-    success = success & stringentBody_X(purifiedL, purifiedR, sacrificedL[9:12], sacrificedR[9:12])
+    sacrificedL = [sacrificed[1:12]...]
+    sacrificedR = [sacrificed[13:24]...]
+
+    success = success & stringentHead_Z(purifiedL, purifiedR, sacrificedL[1:2]..., sacrificedR[1:2]...)
+    success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4]..., sacrificedR[3:4]...)
+    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:8]..., sacrificedR[5:8]...)
+    success = success & stringentBody_X(purifiedL, purifiedR, sacrificedL[9:12]..., sacrificedR[9:12]...)
     
     success
 end
@@ -630,6 +657,8 @@ The difference between it and the STRINGENT circuit is that the body is a bit mo
 If an error was detected, the circuit returns `false` and the state is reset.
 If no error was detected, the circuit returns `true`.
 
+This algorithm is detailed in [naomi2013topological](@cite)
+
 The sacrificial qubits are removed from the register.
 
 ```jldoctest
@@ -646,16 +675,19 @@ julia> PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22])
 struct PurifyExpedient <: AbstractCircuit
 end
 
-function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificedL,sacrificedR)
+function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificed...)
     success = true
     stringentHead_Z = StringentHead(:Z)
     stringentHead_X = StringentHead(:X)
     stringentBody_Z = StringentBody(:Z, true)
 
-    success = success & stringentHead_Z(purifiedL, purifiedR, sacrificedL[1:2], sacrificedR[1:2])
-    success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4], sacrificedR[3:4])
-    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:7], sacrificedR[5:7])
-    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[8:10], sacrificedR[8:10])
+    sacrificedL = [sacrificed[1:10]...]
+    sacrificedR = [sacrificed[11:20]...]
+
+    success = success & stringentHead_Z(purifiedL, purifiedR, sacrificedL[1:2]..., sacrificedR[1:2]...)
+    success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4]..., sacrificedR[3:4]...)
+    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:7]..., sacrificedR[5:7]...)
+    success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[8:10]..., sacrificedR[8:10]...)
     
     success
 end
@@ -674,6 +706,8 @@ The head is repeated twice and the body is also repeating twice
 
 This returns the array of measurements made by the circuit.
 
+This algorithm is detailed in [naomi2013topological](@cite)
+
 ```jldoctest
 julia> r = Register(26, rep())
     for i in 1:13
@@ -688,17 +722,17 @@ julia> PurifyStringentNode()(r[1], r[3:2:25]) == PurifyStringentNode()(r[2], r[4
 struct PurifyStringentNode <: AbstractCircuit
 end
 
-function (circuit::PurifyStringentNode)(purifiedL,sacrificedL)
+function (circuit::PurifyStringentNode)(purified,sacrificed...)
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
     stringentHead_X = StringentHeadNode(:X)
     stringentBody_Z = StringentBodyNode(:Z)
     stringentBody_X = StringentBodyNode(:X)
 
-    a = stringentHead_Z(purifiedL, sacrificedL[1:2])
-    b = stringentHead_X(purifiedL, sacrificedL[3:4])
-    c = stringentBody_Z(purifiedL, sacrificedL[5:8])
-    d = stringentBody_X(purifiedL, sacrificedL[9:12])
+    a = stringentHead_Z(purified, sacrificed[1:2])
+    b = stringentHead_X(purified, sacrificed[3:4])
+    c = stringentBody_Z(purified, sacrificed[5:8])
+    d = stringentBody_X(purified, sacrificed[9:12])
     [a..., b..., c..., d...]
 end
 
@@ -715,6 +749,8 @@ The head is repeated twice and the body is also repeating twice
 
 This returns the array of measurements made by the circuit.
 
+This algorithm is detailed in [naomi2013topological](@cite)
+
 ```jldoctest
 julia> r = Register(22, rep())
     for i in 1:11
@@ -729,16 +765,16 @@ julia> PurifyExpedientNode()(r[1], r[3:2:21]) == PurifyExpedientNode()(r[2], r[4
 struct PurifyExpedientNode <: AbstractCircuit
 end
 
-function (circuit::PurifyExpedientNode)(purifiedL,sacrificedL)
+function (circuit::PurifyExpedientNode)(purified,sacrificed...)
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
     stringentHead_X = StringentHeadNode(:X)
     stringentBody_Z = StringentBodyNode(:Z, true)
 
-    a = stringentHead_Z(purifiedL, sacrificedL[1:2])
-    b = stringentHead_X(purifiedL, sacrificedL[3:4])
-    c = stringentBody_Z(purifiedL, sacrificedL[5:7])
-    d = stringentBody_Z(purifiedL, sacrificedL[8:10])
+    a = stringentHead_Z(purified, sacrificed[1:2])
+    b = stringentHead_X(purified, sacrificed[3:4])
+    c = stringentBody_Z(purified, sacrificed[5:7])
+    d = stringentBody_Z(purified, sacrificed[8:10])
     
     [a..., b..., c..., d...]
 end
