@@ -351,6 +351,7 @@ landing = App() do
     style = DOM.style("""
         .console_line:hover{
             background-color: rgba(38, 39, 41, 0.6);
+            cursor: pointer;
         }
         .log_wrapper{
             max-height: 65vh !important; max-width: 90% !important; color: white; 
@@ -359,7 +360,7 @@ landing = App() do
             border-left: 2px solid rgb(38, 39, 41);
             border-bottom: 2px solid rgb(38, 39, 41);
 
-            background-color: black;
+            background-color: #003049;
             overflow: auto;
         }
         .backbutton{

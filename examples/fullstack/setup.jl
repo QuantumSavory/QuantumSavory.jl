@@ -60,10 +60,12 @@ function slog!(s, msg)
         return
     end
     signature,message = split(msg, ">"; limit=2)
-    # time=  getfirstfloat(signature)
-    s[] = s[] * """<div><span style='color:cyan'>$signature | </span><span>$message</span></div>"""
-    #el = DOM.div(DOM.span(replace(signature * " | ", "\"" => ""), style="color: cyan;"), DOM.span(replace(message, "\"" => "")), DOM.br(), class="console_line", id="console_line_$(time)_$(length(s[]))_$(rand())")
-    #s[] = append!(s[], [el]) 
+    signaturespl = split(signature, "::"; limit=3)
+    signaturespl = [strip(s) for s in signaturespl]
+    involvedpairs = length(signaturespl)==3 ? signaturespl[3] : ""
+    signaturestr = """<span style='color:#003049; background-color:#f77f00; border-radius: 15px;'>$(signaturespl[1])</span>
+                      &nbsp;<span style='color:#d62828;'>@$(signaturespl[2]) &nbsp; | </span>"""
+    s[] = s[] * """<div class='console_line $involvedpairs'><span>$signaturestr</span><span>$message</span></div>"""
     notify(s)
 end
 #=
@@ -139,17 +141,16 @@ end
     channel = network[node=>remotenode, protocol.keywords[:simple_channel]]
     remote_channel = network[remotenode=>node, protocol.keywords[:simple_channel]]
     while true
-        slog!(logfile, "$(now(sim)) :: $node > [SEARCHING] $node")
+        slog!(logfile, "$(now(sim)) :: $node > Searching for freequbit in $node")
 
         i = findfreequbit(network, node)
         if isnothing(i)
             @yield timeout(sim, waittime)
-            slog!(logfile, "$(now(sim)) :: $node > [NOTHING FOUND]")
             continue
         end
 
         @yield request(network[node][i])
-        slog!(logfile, "[ENTANGLER TRIGGERED] $(now(sim)) :: $node > [trig] Locked $(node):$(i)")
+        slog!(logfile, "$(now(sim)) :: $node > Entanglement process is triggered! Found and Locked $(node):$(i). Requesting pair...")
         @yield timeout(sim, busytime)
         put!(channel, mFIND_QUBIT_TO_PAIR(i))
     end
@@ -163,13 +164,13 @@ end
     remote_channel = network[remotenode=>node, protocol.keywords[:simple_channel]]
     while true
         message = @yield take!(remote_channel)
-        slog!(logfile, "$(now(sim)) :: $node > Replying to $message")
+        #slog!(logfile, "$(now(sim)) :: $node > Replying to $message ...")
         
         @cases message begin
             mFIND_QUBIT_TO_PAIR(remote_i) => begin
                 i = findfreequbit(network, node)
                 if isnothing(i)
-                    slog!(logfile, "$(now(sim)) :: $node > Nothing found at $node. Unlocking $remotenode:$remote_i")
+                    slog!(logfile, "$(now(sim)) :: $node > Nothing found at $node per request of $remotenode. Requested the unlocking of $remotenode:$remote_i")
                     put!(channel, mUNLOCK(remote_i))
                 else
                     @yield request(network[node][i])
@@ -180,14 +181,14 @@ end
             end
             
             mASSIGN_ORIGIN(remote_i, i) => begin
-                slog!(logfile, "$(now(sim)) :: $node > Pairing $node:$i, $remotenode:$remote_i")
+                slog!(logfile, "$(now(sim)) :: $node > Pair found! Pairing $node:$i, $remotenode:$remote_i ...")
                 network[node,:enttrackers][i] = (remotenode,remote_i)
                 put!(channel, mINITIALIZE_STATE(i, remote_i))
             end
             
             mINITIALIZE_STATE(remote_i, i) => begin
                 initialize!((network[node][i], network[remotenode][remote_i]),noisy_pair; time=now(sim))
-                slog!(logfile, "$(now(sim)) :: $node > Paired \t\t\t\t$node:$i, $remotenode:$remote_i")
+                slog!(logfile, "$(now(sim)) :: $node > Success! $node:$i and $remotenode:$remote_i are now entangled.")
                 unlock(network[node][i])
                 put!(channel, mUNLOCK(remote_i))
                 @yield timeout(sim, busytime)
@@ -203,13 +204,13 @@ end
 
             mUNLOCK(i) => begin
                 unlock(network[node][i])
-                slog!(logfile, "[*] $(now(sim)) :: $node > [*] UnLocked $node:$i \n")
+                slog!(logfile, "$(now(sim)) :: $node > Unlocked $node:$i \n")
                 @yield timeout(sim, waittime)
             end
 
             mLOCK(i) => begin
                 @yield request(network[node][i])
-                slog!(logfile, "[*] $(now(sim)) :: $node > [*] Locked $node:$i \n")
+                slog!(logfile, "$(now(sim)) :: $node > Locked $node:$i \n")
                 @yield timeout(sim, busytime)
             end
         end
@@ -246,10 +247,10 @@ end
                 @yield timeout(sim, busytime)
                 put!(channel, mLOCK(remote_i))
 
-                slog!(logfile, "$(now(sim)) :: $node > Locked $node:$i, $remotenode:$remote_i; Indices Queue: $(indicesg[generation]), $(remoteindicesg[generation]). Generation #$generation")
+                slog!(logfile, "$(now(sim)) :: $node > Locked $node:$i, $remotenode:$remote_i. Awaiting for purificaiton. Indices Queue: $(indicesg[generation]), $(remoteindicesg[generation]). Generation #$generation")
 
                 if length(indicesg[generation]) == purif_circuit_size
-                    slog!(logfile, "$(now(sim)) :: $node > PURIFICATION : Tupled pairs: $node:$(indicesg[generation]), $remotenode:$(remoteindicesg[generation]); Preparing for purification")
+                    slog!(logfile, "$(now(sim)) :: $node > Purification process triggered for: $node:$(indicesg[generation]), $remotenode:$(remoteindicesg[generation]). Preparing for purification...")
                     # begin purification of self
                     @yield timeout(sim, busytime)
 
@@ -272,11 +273,11 @@ end
                 success = local_measurement == remote_measurement
                 put!(process_channel, mREPORT_SUCCESS(success, remoteindices, indices, generation))
                 if !success
-                    slog!(logfile, "$(now(sim)) :: PURIFICATION FAILED > @ $node:$indices, $remotenode:$remoteindices")
+                    slog!(logfile, "$(now(sim)) :: $node > Purification failed @ $node:$indices, $remotenode:$remoteindices")
                     traceout!(network[node][indices[1]])
                     network[node,:enttrackers][indices[1]] = nothing
                 else
-                    slog!(logfile, "$(now(sim)) :: PURIFICATION SUCCEDED > @ $node:$indices, $remotenode:$remoteindices\n")
+                    slog!(logfile, "$(now(sim)) :: $node > Purification succeded @ $node:$indices, $remotenode:$remoteindices\n")
                 end
                 (network[node,:enttrackers][indices[i]] = nothing for i in 2:purif_circuit_size)
                 unlock.(network[node][indices])
@@ -289,7 +290,6 @@ end
                 end
                 (network[node,:enttrackers][indices[i]] = nothing for i in 2:purif_circuit_size)
                 unlock.(network[node][indices])
-                # OPTION: Here we have a choice. We can either leave it as such, or signal anouther entanglement generation to the simple channel
                 if emitonpurifsuccess && success && generation+1 <= maxgeneration
                     @yield timeout(sim, busytime)
                     put!(channel, mGENERATED_ENTANGLEMENT(indices[1], remoteindices[1], generation+1)) # emit ready for purification and increase generation
