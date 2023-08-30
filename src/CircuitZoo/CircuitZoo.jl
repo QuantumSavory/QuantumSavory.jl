@@ -391,6 +391,11 @@ end
 inputqubits(circuit::StringentHead) = 2
 
 function (circuit::StringentHead)(purifiedL, purifiedR, sacrificed...)
+    if length(sacrificed) != 4
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
     sacrificedL = [sacrificed[1:2]...]
     sacrificedR = [sacrificed[3:4]...]
     gate, success = if circuit.type == :Z
@@ -442,6 +447,12 @@ end
 inputqubits(circuit::StringentHeadNode) = 2
 
 function (circuit::StringentHeadNode)(purified, sacrificed...)
+
+    if length(sacrificed) != 2
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
     sacrificedarr = [sacrificed[1:2]...]
 
     gate, success = if circuit.type == :Z
@@ -495,6 +506,11 @@ end
 inputqubits(circuit::StringentBody) = circuit.expedient ? 3 : 4
 
 function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
+    if length(sacrificed) != (circuit.expedient ? 6 : 8)
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
@@ -574,6 +590,12 @@ end
 inputqubits(circuit::StringentBodyNode) = circuit.expedient ? 3 : 4
 
 function (circuit::StringentBodyNode)(purified, sacrificed...)
+    if length(sacrificed) != (circuit.expedient ? 3 : 4)
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
+
     gate, success = if circuit.type == :Z
         ZCZ, true
     else
@@ -640,6 +662,12 @@ end
 inputqubits(circuit::PurifyStringent) = 13
 
 function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
+    if length(sacrificed) != 24
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
+
     success = true
     stringentHead_Z = StringentHead(:Z)
     stringentHead_X = StringentHead(:X)
@@ -696,6 +724,11 @@ end
 inputqubits(circuit::PurifyExpedient) = 11
 
 function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificed...)
+    if length(sacrificed) != 20
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
     success = true
     stringentHead_Z = StringentHead(:Z)
     stringentHead_X = StringentHead(:X)
@@ -745,6 +778,11 @@ end
 inputqubits(circuit::PurifyStringentNode) = 13
 
 function (circuit::PurifyStringentNode)(purified,sacrificed...)
+    if length(sacrificed) != 12
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
     stringentHead_X = StringentHeadNode(:X)
@@ -790,6 +828,11 @@ end
 inputqubits(circuit::PurifyExpedientNode) = 11
 
 function (circuit::PurifyExpedientNode)(purified,sacrificed...)
+    if length(sacrificed) != 10
+        throw(ArgumentError(lazy"""
+            Function hasn't got the right number of arguments.
+            """))
+    end
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
     stringentHead_X = StringentHeadNode(:X)

@@ -24,9 +24,9 @@ const stab_mixed_dm = MixedState(stab_perfect_pair_dm)
 stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*stab_mixed_dm
 
 @test_throws ArgumentError Purify2to1(:lalala)
-# @test_throws ArgumentError Purify3to1(:lalala)
-@test_throws ArgumentError Purify2to1(:lalala)
-# @test_throws ArgumentError Purify3to1(:lalala)
+@test_throws ArgumentError Purify3to1(:lalala, :lalala)
+@test_throws ArgumentError Purify2to1Node(:lalala)
+@test_throws ArgumentError Purify3to1Node(:lalala, :lalala)
 @test_throws ArgumentError StringentHead(:lalala)
 @test_throws ArgumentError StringentBody(:lalala)
 
@@ -300,6 +300,17 @@ end
     end
 end
 
+@testset "Stringent - Argument Length" begin
+    for rep in [CliffordRepr]
+        r = Register(26, rep())
+        noisy_pair = stab_noisy_pair_func(0)
+        for i in 1:13
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        @test_throws ArgumentError PurifyStringent()(r[1], r[2], r[3:2:21]...) == true
+    end
+end
+
 @testset "Expedient" begin
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(22, rep())
@@ -335,5 +346,16 @@ end
         if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
             @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
         end
+    end
+end
+
+@testset "Expedient - Argument Length" begin
+    for rep in [CliffordRepr]
+        r = Register(26, rep())
+        noisy_pair = stab_noisy_pair_func(0)
+        for i in 1:13
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        @test_throws ArgumentError PurifyExpedient()(r[1], r[2], r[3:2:21]...) == true
     end
 end
