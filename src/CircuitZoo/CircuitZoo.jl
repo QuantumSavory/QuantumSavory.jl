@@ -120,6 +120,7 @@ struct Purify2to1 <: AbstractCircuit
         end
     end
 end
+Purify2to1() = Purify2to1(:X)
 
 inputqubits(circuit::Purify2to1) = 4
 
@@ -184,6 +185,7 @@ struct Purify2to1Node <: AbstractCircuit
         end
     end
 end
+Purify2to1Node() = Purify2to1Node(:X)
 
 inputqubits(circuit::Purify2to1Node) = 2
 
@@ -250,6 +252,7 @@ struct Purify3to1 <: AbstractCircuit
         end
     end
 end
+Purify3to1() = Purify3to1(:X, :Z)
 
 inputqubits(circuit::Purify3to1) = 6
 
@@ -332,6 +335,7 @@ struct Purify3to1Node <: AbstractCircuit
         end
     end
 end
+Purify3to1Node() = Purify3to1Node(:X, :Z)
 
 inputqubits(circuit::Purify3to1Node) = 3
 
@@ -391,6 +395,7 @@ struct StringentHead <: AbstractCircuit
         end
     end
 end
+StringentHead() = StringentHead(:X)
 
 inputqubits(circuit::StringentHead) = 6
 
@@ -447,6 +452,7 @@ struct StringentHeadNode <: AbstractCircuit
         end
     end
 end
+StringentHeadNode() = StringentHeadNode(:X)
 
 inputqubits(circuit::StringentHeadNode) = 3
 
@@ -506,6 +512,7 @@ struct StringentBody <: AbstractCircuit
         end
     end
 end
+StringentBody() = StringentBody(:X)
 
 inputqubits(circuit::StringentBody) = circuit.expedient ? 6 : 8
 
@@ -590,6 +597,7 @@ struct StringentBodyNode <: AbstractCircuit
         end
     end
 end
+StringentBodyNode() = StringentBodyNode(:X)
 
 inputqubits(circuit::StringentBodyNode) = circuit.expedient ? 3 : 4
 
