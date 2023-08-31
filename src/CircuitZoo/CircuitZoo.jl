@@ -3,7 +3,8 @@ module CircuitZoo
 using QuantumSavory
 using DocStringExtensions
 
-export Purify2to1
+export EntanglementSwap, Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
+    PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode
 
 abstract type AbstractCircuit end
 
@@ -311,9 +312,9 @@ This algorithm is detailed in [keisuke2009doubleselection](@cite)
 julia> a = Register(2)
        b = Register(2)
        c = Register(2)
-       initalize!(a[1:2], bell)
-       initalize!(b[1:2], bell)
-       initalize!(c[1:2], bell)
+       initialize!(a[1:2], bell)
+       initialize!(b[1:2], bell)
+       initialize!(c[1:2], bell)
 
 
 julia> Purify3to1Node(:Z, :Y)(a[1], b[1], c[1]) == Purify3to1Node(:X)(a[2], b[2], c[2])
