@@ -7,6 +7,10 @@ export Purify2to1
 
 abstract type AbstractCircuit end
 
+"""Number of qubits taken by a predefined circuit.
+
+Part of the `QuantumSavory.CircuitZoo.AbstractCircuit` interface.
+"""
 function inputqubits end
 
 struct EntanglementSwap <: AbstractCircuit
@@ -25,7 +29,7 @@ function (::EntanglementSwap)(localL, remoteL, lacalR, remoteR)
     xmeas, zmeas
 end
 
-inputqubits(::EntanglementSwap) = 2
+inputqubits(::EntanglementSwap) = 4
 
 
 """
@@ -117,7 +121,7 @@ struct Purify2to1 <: AbstractCircuit
     end
 end
 
-inputqubits(circuit::Purify2to1) = 2
+inputqubits(circuit::Purify2to1) = 4
 
 function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     gate, basis = if circuit.leaveout==:X
@@ -247,7 +251,7 @@ struct Purify3to1 <: AbstractCircuit
     end
 end
 
-inputqubits(circuit::Purify3to1) = 3
+inputqubits(circuit::Purify3to1) = 6
 
 function (circuit::Purify3to1)(purifiedL, purifiedR, sacrificedL1, sacrificedL2, sacrificedR1, sacrificedR2)
     dictionary_measurement = Dict(:X => σˣ, :Y => σʸ, :Z => σᶻ)
@@ -267,7 +271,7 @@ function (circuit::Purify3to1)(purifiedL, purifiedR, sacrificedL1, sacrificedL2,
     measb1 = project_traceout!(sacrificedR1, basis1)
     measa2 = project_traceout!(sacrificedL2, basis2)
     measb2 = project_traceout!(sacrificedR2, basis2)
-    
+
     success1 = measa1 == measb1
     success2 = measa2 == measb2
 
@@ -344,7 +348,7 @@ function (circuit::Purify3to1Node)(purified,sacrificed1,sacrificed2)
     apply!((sacrificed2, sacrificed1),gate2)
     measa1 = project_traceout!(sacrificed1, basis1)
     measa2 = project_traceout!(sacrificed2, basis2)
-    
+
     (measa1, measa2)
 end
 
@@ -388,7 +392,7 @@ struct StringentHead <: AbstractCircuit
     end
 end
 
-inputqubits(circuit::StringentHead) = 2
+inputqubits(circuit::StringentHead) = 6
 
 function (circuit::StringentHead)(purifiedL, purifiedR, sacrificed...)
     if length(sacrificed) != 4
@@ -444,7 +448,7 @@ struct StringentHeadNode <: AbstractCircuit
     end
 end
 
-inputqubits(circuit::StringentHeadNode) = 2
+inputqubits(circuit::StringentHeadNode) = 3
 
 function (circuit::StringentHeadNode)(purified, sacrificed...)
 
@@ -503,7 +507,7 @@ struct StringentBody <: AbstractCircuit
     end
 end
 
-inputqubits(circuit::StringentBody) = circuit.expedient ? 3 : 4
+inputqubits(circuit::StringentBody) = circuit.expedient ? 6 : 8
 
 function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
     if length(sacrificed) != (circuit.expedient ? 6 : 8)
@@ -540,7 +544,7 @@ function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
     apply!((purifiedL, sacrificedL1[i1]), gate)
     apply!((purifiedR, sacrificedR1[i1]), gate)
 
-    if !circuit.expedient 
+    if !circuit.expedient
         i2 = i2 + 1
         apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
         apply!((sacrificedR1[i1], sacrificedR2[i2]), ZCZ)
@@ -615,7 +619,7 @@ function (circuit::StringentBodyNode)(purified, sacrificed...)
     beta = coinnode(σˣ, [sacrificed2[i2]])
     apply!((purified, sacrificed1[i1]), gate)
 
-    if !circuit.expedient 
+    if !circuit.expedient
         i2 = i2 + 1
         apply!((sacrificed1[i1], sacrificed2[i2]), ZCZ)
         gamma = coinnode(σˣ, [sacrificed2[i2]])
@@ -659,7 +663,7 @@ julia> PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26])
 struct PurifyStringent <: AbstractCircuit
 end
 
-inputqubits(circuit::PurifyStringent) = 13
+inputqubits(circuit::PurifyStringent) = 26
 
 function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
     if length(sacrificed) != 24
@@ -681,7 +685,7 @@ function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
     success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4]..., sacrificedR[3:4]...)
     success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:8]..., sacrificedR[5:8]...)
     success = success & stringentBody_X(purifiedL, purifiedR, sacrificedL[9:12]..., sacrificedR[9:12]...)
-    
+
     success
 end
 
@@ -721,7 +725,7 @@ julia> PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22])
 struct PurifyExpedient <: AbstractCircuit
 end
 
-inputqubits(circuit::PurifyExpedient) = 11
+inputqubits(circuit::PurifyExpedient) = 22
 
 function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificed...)
     if length(sacrificed) != 20
@@ -741,7 +745,7 @@ function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificed...)
     success = success & stringentHead_X(purifiedL, purifiedR, sacrificedL[3:4]..., sacrificedR[3:4]...)
     success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[5:7]..., sacrificedR[5:7]...)
     success = success & stringentBody_Z(purifiedL, purifiedR, sacrificedL[8:10]..., sacrificedR[8:10]...)
-    
+
     success
 end
 
@@ -842,7 +846,7 @@ function (circuit::PurifyExpedientNode)(purified,sacrificed...)
     b = stringentHead_X(purified, sacrificed[3:4]...)
     c = stringentBody_Z(purified, sacrificed[5:7]...)
     d = stringentBody_Z(purified, sacrificed[8:10]...)
-    
+
     [a..., b..., c..., d...]
 end
 
