@@ -237,7 +237,7 @@ struct Purify3to1 <: AbstractCircuit
     leaveout1::Symbol
     leaveout2::Symbol
     function Purify3to1(leaveout1, leaveout2)
-        if leaveout1 ∉ (:X, :Y, :Z) && leaveout2 ∉ (:X, :Y, :Z)
+        if leaveout1 ∉ (:X, :Y, :Z) || leaveout2 ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
             `Purify3to1` can represent one of three purification circuits (see its docstring),
             parameterized by the argument `leaveout1` and `leaveout2` which has to be one of `:X`, `:Y`, or `:Z`.
@@ -319,7 +319,7 @@ struct Purify3to1Node <: AbstractCircuit
     leaveout1::Symbol
     leaveout2::Symbol
     function Purify3to1Node(leaveout1, leaveout2)
-        if leaveout1 ∉ (:X, :Y, :Z) && leaveout2 ∉ (:X, :Y, :Z)
+        if leaveout1 ∉ (:X, :Y, :Z) || leaveout2 ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
             `Purify3to1` can represent one of three purification circuits (see its docstring),
             parameterized by the argument `leaveout1` and `leaveout2` which has to be one of `:X`, `:Y`, or `:Z`.

@@ -24,9 +24,9 @@ const stab_mixed_dm = MixedState(stab_perfect_pair_dm)
 stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*stab_mixed_dm
 
 @test_throws ArgumentError Purify2to1(:lalala)
-@test_throws ArgumentError Purify3to1(:lalala, :lalala)
+@test_throws ArgumentError Purify3to1(:lalala, :X)
 @test_throws ArgumentError Purify2to1Node(:lalala)
-@test_throws ArgumentError Purify3to1Node(:lalala, :lalala)
+@test_throws ArgumentError Purify3to1Node(:X, :lalala)
 @test_throws ArgumentError StringentHead(:lalala)
 @test_throws ArgumentError StringentBody(:lalala)
 
@@ -96,7 +96,7 @@ end
                     r = Register(6, rep())
                     initialize!(r[1:6], bell⊗bell⊗bell)
 
-                    @testset "$leaveout1, $leaveout2" begin 
+                    @testset "$leaveout1, $leaveout2" begin
                         @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==true
                         @test observable(r[1:2], projector(bell))≈1.0
                     end
@@ -106,7 +106,7 @@ end
                             initialize!(r[(2*i-1):(2*i)], bell)
                         end
                         apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
-                        @testset "error: $leaveout1, $leaveout2" begin 
+                        @testset "error: $leaveout1, $leaveout2" begin
                             @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==false
                         end
                     end
@@ -268,7 +268,7 @@ end
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], bell)
         end
-        @test PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...) == true 
+        @test PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...) == true
         @test observable(r[1:2], projector(bell)) ≈ 1.0
     end
 end
@@ -317,7 +317,7 @@ end
         for i in 1:11
             initialize!(r[(2*i-1):(2*i)], bell)
         end
-        @test PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true 
+        @test PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
         @test observable(r[1:2], projector(bell)) ≈ 1.0
     end
 end
@@ -330,7 +330,7 @@ end
         for i in 1:11
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
-        if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true 
+        if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
             @test real(observable(r[1:2], projector(bell))) > rnd
         end
     end
