@@ -102,6 +102,8 @@ true
 julia> observable((a[1], b[1]), projector(bell))
 0.0 + 0.0im
 ```
+
+See also: [`Purifiy2to1Node`](@ref), [`Purify3to1`](@ref), [`PurifyExpedient`](@ref), [`PurifyStringent`](@ref)
 """
 struct Purify2to1 <: AbstractCircuit
     """A symbol specifying which of the three Pauli errors to leave undetectable."""
@@ -156,20 +158,21 @@ The circuit is parameterized by a single `leaveout` symbol argument
 which specifies which of the three possible Pauli errors are to be left undetected.
 A simple purificaiton circuit is not capable of detecting all errors.
 
-This circuit returns the array of measurements made.
+This is only "half" of the full purification circuit - the local gates to be applied at
+a network node. For a complete purification circuit, you need to apply this circuit to
+the remote node as well. Alternatively, you can use the complete `Purifiy2to1`](@ref) circuit.
 
-This circuit is the same as the Purifiy2to1 one but it works on individual qubits
-(i.e. only one qubit of a pair)
+This circuit returns the measurements result (as an integer index among the possible basis states).
 
 ```jldoctest
 julia> a = Register(2)
        b = Register(2)
-       initalize!(a[1:2], bell)
-       initalize!(b[1:2], bell)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell)
 
-
-julia> Purify2to1Node(:X)(a[1], b[1]) == Purify2to1Node(:X)(a[2], b[2])
-false
+julia> Purify2to1Node(:X)(a[1:2]...) == Purify2to1Node(:X)(b[1:2]...)
+true
 ```
 """
 struct Purify2to1Node <: AbstractCircuit
