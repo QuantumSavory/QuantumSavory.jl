@@ -182,7 +182,7 @@ struct Purify2to1Node <: AbstractCircuit
 end
 
 inputqubits(circuit::Purify2to1Node) = 2
-# remove R
+
 function (circuit::Purify2to1Node)(purified,sacrificed)
     gate, basis = if circuit.leaveout==:X
         CNOT, σˣ
