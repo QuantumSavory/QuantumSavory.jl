@@ -787,6 +787,7 @@ $FIELDS
 
 The circuit for Superdense Coding to decode the 2 (classical) bit message
 using the entangled bell pair stored in the registers regA and regB after Alice's encoding of the first qubit.
+Returns a Tuple of the decoded message.
 
 ```jldoctest
 julia> regA = Register(1)
