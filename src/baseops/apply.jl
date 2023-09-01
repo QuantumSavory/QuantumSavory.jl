@@ -18,7 +18,12 @@ function apply!(regs::Vector{Register}, indices::Vector{Int}, operation; time=no
     uptotime!(regs, indices, max_time)
     subsystemcompose(regs,indices)
     state = regs[1].staterefs[indices[1]].state[]
-    state_indices = [r.stateindices[i] for (r,i) in zip(regs, indices)]
+    if !(basis(state)==basis(operation)) # e.g., performing a 2 qubit operation on a 4 qubit ket state
+        state_indices_app = [r.stateindices[i] for (r,i) in zip(regs, indices)] # state indices on which we are performing the op
+        state_indices = [idx for idx in 1:length(basis(state).bases) if idx ∉ state_indices_app] #state indices on which no op is performed
+    else
+        state_indices = []
+    end
     state = apply!(state, state_indices, operation)
     regs[1].staterefs[indices[1]].state[] = state
     regs, max_time

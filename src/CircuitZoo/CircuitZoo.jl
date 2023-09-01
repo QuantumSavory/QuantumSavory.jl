@@ -771,10 +771,10 @@ end
 
 function (circuit::SDEncode)(reg, message)
     if message[1] == 1
-        apply!(reg[1], X)
+        apply!(reg[1], Z)
     end
     if message[2] == 1
-        apply!(reg[1], Z)
+        apply!(reg[1], X)
     end
 end
 
