@@ -10,7 +10,7 @@ include("setup.jl")
 import JSServe.TailwindDashboard as D
 
 # Change between color schemes by uncommentinh lines 17-18
-retina_scale = 1
+retina_scale = 2
 config = Dict(
     :resolution => (retina_scale*1400, retina_scale*700), #used for the main figures
     :smallresolution => (280, 160), #used for the menufigures
@@ -68,6 +68,11 @@ function layout_content(DOM, mainfigures
 
 end
 
+idof = Dict(
+    "Single Selection"=>2,
+    "Double Selection"=>3
+)
+
 ###################### 3. PLOT FUNCTIONS ######################
 #   These are used to configure each figure from the layout,
 #   meaning both the menufigures and the mainfigures.
@@ -108,14 +113,11 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
     (mfig !== nothing) && begin
         _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
     end
-    if hidedecor
-        return
-    end
+    hidedecor && return
 
     F[3, 1:6] = buttongrid = GridLayout(tellwidth = false)
     running = Observable(false)
     buttongrid[1,1] = b = Makie.Button(F, label = @lift($running ? "Stop" : "Run"), fontsize=32)
-
     leftfig = F[1:2, 1:3]
     rightfig = F[1:2, 4:6]
     
@@ -129,19 +131,15 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
 
     subfig = rightfig[1, 2:4]
     sg = SliderGrid(subfig[1, 1],
-    (label="time", range=3:0.1:30, startvalue=20.3),
-    (label="1 - pauli error prob", range=0.5:0.1:0.9, startvalue=0.7),
-    (label="chanel delay", range=0.1:0.1:0.3, startvalue=0.1),
-    (label="recycle purif pairs", range=0:1, startvalue=0),
-    (label="register size", range=3:10, startvalue=6))
+        (label="time", range=3:0.1:30, startvalue=20.3),
+        (label="1 - pauli error prob", range=0.5:0.1:0.9, startvalue=0.7),
+        (label="chanel delay", range=0.1:0.1:0.3, startvalue=0.1),
+        (label="recycle purif pairs", range=0:1, startvalue=0),
+        (label="register size", range=3:10, startvalue=6))
     observable_params = [obs_time, obs_initial_prob, obs_commtime, obs_emitonpurifsuccess, obs_registersizes]
     m = Menu(subfig[2, 1], options = ["Single Selection", "Double Selection"], prompt="Purification circuit...", default="Double Selection")
     on(m.selection) do sel
-        if sel == "Single Selection"
-            obs_USE[] = 2
-        elseif sel == "Double Selection"
-            obs_USE[] = 3
-        end
+        obs_USE[] = idof[sel]
         notify(obs_USE)
     end
 
@@ -176,7 +174,8 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
                 waittime=node_timedelay[1], busytime=node_timedelay[2],
                 emitonpurifsuccess=emitonpurifsuccess
             )
-            
+
+            empty!(ax)
             sim, network = simulation_setup(registersizes, commtimes, protocol)
             _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             if mfig !== nothing
@@ -219,17 +218,6 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
                     empty!(fidax)
                     stairs!(fidax, coordsx, maxcoordsy, color=(emitonpurifsuccess ? :blue : :green), linewidth=3)
                 end
-            end
-        else
-            empty!(ax)
-            ax.title=nothing
-            if mfig !== nothing
-                empty!(mfig_ax)
-                mfig_ax.title=nothing
-            end
-            if mfig !== nothing
-                empty!(mfig_ax)
-                _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             end
         end
     end
@@ -280,7 +268,7 @@ end
 
 ###################### 4. LANDING PAGE OF THE APP ######################
 
-landing = App() do
+landing = App() do session::Session
     obs_PURIFICATION = Observable(true)
     obs_time = Observable(20.3)
     obs_commtime = Observable(0.1)
@@ -326,8 +314,11 @@ landing = App() do
 
     # Obtain reactive layout of the figures
     layout, content = layout_content(DOM, mainfigures, menufigures, titles_zstack, activeidx)
-    # Add the logs
-    logs = [wrap(tie(logstring), class="log_wrapper"),
+    # Add the logs + editlog option (clicking on a line and seeing only the log lines connecting to and from it)
+    editlog = Observable(false)
+    editlogbtn = DOM.div(modifier("✎", parameter=editlog, class="nostyle"), class="backbutton",
+                                style=@lift(($editlog ? "border: 2px solid #d62828 !important;" : "border: 2px solid #003049;")))
+    logs = [hstack(editlogbtn, vstack("Log...", @lift($showlog ? "[Enabled]" : "[Disabled]"), tie(logstring), class="log_wrapper")),
             wrap("log2"; style="color: white;"), 
             wrap("log3"; style="color: white;")]
     about_sections = [hstack(
@@ -359,7 +350,7 @@ landing = App() do
             flex-direction: column-reverse;
             border-left: 2px solid rgb(38, 39, 41);
             border-bottom: 2px solid rgb(38, 39, 41);
-
+            min-height: 40px !important;
             background-color: #003049;
             overflow: auto;
         }
@@ -384,9 +375,61 @@ landing = App() do
             margin: 0 0 0 0 !important;
             background: transparent !important;
         }
+        .hide{
+            display: none;
+        }
+        .active {
+            background-color: rgba(38, 39, 41, 0.8);
+        }
+        .infodiv{
+            color: white;
+            background-color: $(config[:colorscheme][3]);
+            padding: 10px;
+        }
     """)
+    # console (log) lines script to select all that are related to a line
+    onjs(session, editlog, js"""function on_update(new_value) {
+        console.log(new_value)
+        console_lines = document.querySelectorAll(".console_line.new")
+        console_lines.forEach((line_deref, index, array) => {
+            if (new_value == false) {
+                array[index].classList.remove("hide")
+                array[index].classList.add("unreactive")
+            } else {
+                array[index].classList.remove("unreactive")
+                array[index].addEventListener("click", ()=>{
+                    classes = array[index].className.split(' ')
+                    if (classes.indexOf('unreactive') > -1) {return}
+                    const index_cl = classes.indexOf('console_line');
+                    if (index_cl > -1) {
+                        classes.splice(index_cl, 1);
+                    }
+                    console_lines.forEach(elem=>{
+                        elem.classList.remove("active")
+                        elem.classList.add("hide")
+                    })
+                    array[index].classList.add("active")
+                    classes.forEach(currclass=>{
+                        console.log(currclass)
+                        elemssharingclass = document.querySelectorAll("."+currclass)
+                        if(currclass!="new" && currclass!="console_line" && currclass!="active") {
+                            elemssharingclass.forEach(elem=>{
+                                elem.classList.remove("hide")
+                            })
+                        }
+                    })
+                })
+            }
+        })
+    }""")
 
-    return hstack(layout, vstack(titles_div; style="padding: 20px; margin-left: 10px;
+    infodiv = wrap(
+        DOM.div(@lift($showlog ? "Click on 📜 to disable log." : "Click on 📜 to enable log.")),
+        DOM.div(@lift($editlog==false ? "Click on ✎ to select lines from log." : "Click on a line from the log to see all events related to it or, click on ✎ to show the full log again.")),
+        class="infodiv"
+    )
+
+    return hstack(vstack(layout, infodiv), vstack(titles_div; style="padding: 20px; margin-left: 10px;
                                 background-color: $(config[:colorscheme][3]);"), style; style="width: 100%;")
 
 end
