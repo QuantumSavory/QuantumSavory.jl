@@ -37,11 +37,13 @@ function observable(state::Union{<:Ket,<:Operator}, indices, operation)
     expect(op, state)
 end
 
-function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Vector{<:Ket})
+function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Base.AbstractVecOrTuple{Ket})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of _overlap vs _project_and_drop
         _overlaps = [_overlap(psi,state) for psi in psis]
         branch_probs = cumsum(_overlaps)
-        @assert branch_probs[end] ≈ 1.0
+        if !(branch_probs[end] ≈ 1.0)
+            throw("State not normalized. Could be due to passing wrong state to `initialize!`")
+        end
         j = findfirst(>=(rand()), branch_probs) # TODO what if there is numerical imprecision and sum<1
         j, nothing
     else

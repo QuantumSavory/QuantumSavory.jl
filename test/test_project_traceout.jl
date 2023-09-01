@@ -27,3 +27,7 @@ for rep in [QuantumOpticsRepr(), CliffordRepr()]
     initialize!(a[1], X1)
     @test project_traceout!(a[1], σˣ) == 1
 end
+
+r = Register(1)
+initialize!(r[1], Z)
+@test_throws "State not normalized. Could be due to passing wrong state to `initialize!`" project_traceout!(r[1], (L0, L1))
