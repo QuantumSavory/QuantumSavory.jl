@@ -35,7 +35,6 @@ get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_gl"
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && VERSION >= v"1.9" && @doset "doctests"
 get(ENV,"JET_TEST","")=="true" && @doset "jet"
 
-
 using Aqua
 using QuantumClifford, QuantumOptics, Graphs
 doset("aqua") && begin
