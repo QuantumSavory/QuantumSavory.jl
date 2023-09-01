@@ -4,30 +4,22 @@ WGLMakie.activate!()
 using JSServe
 using Markdown
 
-# 1. LOAD LAYOUT HELPER FUNCTION AND UTILSm    
 using CSSMakieLayout
 include("setup.jl")
 import JSServe.TailwindDashboard as D
 
-# Change between color schemes by uncommentinh lines 17-18
 retina_scale = 1
 config = Dict(
     :resolution => (retina_scale*1400, retina_scale*700), #used for the main figures
-    :smallresolution => (280, 160), #used for the menufigures
+    :smallresolution => (280, 160),                       #used for the menufigures
     :colorscheme => ["rgb(242, 242, 247)", "black", "#000529", "white"]
-    #:colorscheme => ["rgb(242, 242, 247)", "black", "rgb(242, 242, 247)", "black"]
+    # another color scheme: :colorscheme => ["rgb(242, 242, 247)", "black", "rgb(242, 242, 247)", "black"]
 )
 
 purifcircuit = Dict(
     2=>Purify2to1Node,
     3=>Purify3to1Node
 )
-
-###################### 2. LAYOUT ######################
-#   Returns the reactive (click events handled by zstack)
-#   layout of the activefigure (mainfigure)
-#   and menufigures (the small figures at the top which get
-#   clicked)
 
 function layout_content(DOM, mainfigures
     , menufigures, title_zstack, active_index; keepsame=false)
@@ -72,17 +64,6 @@ idof = Dict(
     "Single Selection"=>2,
     "Double Selection"=>3
 )
-
-###################### 3. PLOT FUNCTIONS ######################
-#   These are used to configure each figure from the layout,
-#   meaning both the menufigures and the mainfigures.
-#   One can use either on whatever figure, but for the purpose
-#   of this project, they will be used as such
-#       |   plot_alphafig - for the first figure (Entanglement Generation)
-#       |   plot_betafig - for the second figure (Entanglement Swapping)
-#       |   plot_gammafig - for the third figure (Entanglement Purification)
-#   , as one can see in the plot(figure_array, metas) function.
-
 
 function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
     if isnothing(observables)
@@ -266,7 +247,7 @@ function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false, ob
     end
 end
 
-###################### 4. LANDING PAGE OF THE APP ######################
+###################### LANDING PAGE OF THE APP ######################
 
 landing = App() do session::Session
     obs_PURIFICATION = Observable(true)

@@ -76,14 +76,6 @@ end
     We have 2 types of channels:
         - normal channels (which perform basic operations)
         - process channels (which need more than just qubits to perform actions)
-
-    The structure of a message on the normal channels is as such
-        | send      => channel        (MESSAGE_ID, index, remote_index)
-        | receive   => remote_channel (MESSAGE_ID, remote_index, index)
-
-    On the process channel we have (except on the message connecting the 2 types of channels)
-        | send      => process_channel (MESSAGE_ID, variable, [remote_indices, indices])
-        | receive   => remote_process_channel (MESSAGE_ID, variable, [indices, remote_indices])
 =#
 @sum_type SimpleMessage begin
     mFIND_QUBIT_TO_PAIR(remote_i)
