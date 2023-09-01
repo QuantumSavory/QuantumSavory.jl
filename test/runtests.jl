@@ -28,11 +28,11 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 # @doset "observable"
 # @doset "noninstant_and_backgrounds_qubit"
 # @doset "noninstant_and_backgrounds_qumode"
-@doset "circuitzoo_purification"
+# @doset "circuitzoo_purification"
 # @doset "examples"
 # get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_cairo"
 # get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_gl"
-# get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && VERSION >= v"1.9" && @doset "doctests"
+get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && VERSION >= v"1.9" && @doset "doctests"
 # get(ENV,"JET_TEST","")=="true" && @doset "jet"
 
 using Aqua

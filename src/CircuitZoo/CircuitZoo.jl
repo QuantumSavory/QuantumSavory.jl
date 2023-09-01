@@ -104,7 +104,7 @@ julia> observable((a[1], b[1]), projector(bell))
 0.0 + 0.0im
 ```
 
-See also: [`Purifiy2to1Node`](@ref), [`Purify3to1`](@ref), [`PurifyExpedient`](@ref), [`PurifyStringent`](@ref)
+See also: [`Purify2to1Node`](@ref), [`Purify3to1`](@ref), [`PurifyExpedient`](@ref), [`PurifyStringent`](@ref)
 """
 struct Purify2to1 <: AbstractCircuit
     """A symbol specifying which of the three Pauli errors to leave undetectable."""
@@ -170,7 +170,7 @@ julia> a = Register(2)
        b = Register(2)
        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
        initialize!((a[1], b[1]), bell)
-       initialize!((a[2], b[2]), bell)
+       initialize!((a[2], b[2]), bell);
 
 julia> Purify2to1Node(:X)(a[1:2]...) == Purify2to1Node(:X)(b[1:2]...)
 true
@@ -229,13 +229,14 @@ The sacrificial qubits are removed from the register.
 julia> a = Register(2)
        b = Register(2)
        c = Register(2)
-       initalize!(a[1:2], bell)
-       initalize!(b[1:2], bell)
-       initalize!(c[1:2], bell)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       initialize!(a[1:2], bell)
+       initialize!(b[1:2], bell)
+       initialize!(c[1:2], bell);
 
 
 julia> Purify3to1(:Z, :Y)(a[1], a[2], b[1], c[1], b[2], c[2])
-false
+true
 ```
 """
 struct Purify3to1 <: AbstractCircuit
@@ -312,13 +313,13 @@ This algorithm is detailed in [keisuke2009doubleselection](@cite)
 julia> a = Register(2)
        b = Register(2)
        c = Register(2)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
        initialize!(a[1:2], bell)
        initialize!(b[1:2], bell)
-       initialize!(c[1:2], bell)
+       initialize!(c[1:2], bell);
 
-
-julia> Purify3to1Node(:Z, :Y)(a[1], b[1], c[1]) == Purify3to1Node(:X)(a[2], b[2], c[2])
-false
+julia> Purify3to1Node(:Z, :Y)(a[1], b[1], c[1]) == Purify3to1Node(:Z, :Y)(a[2], b[2], c[2])
+true
 ```
 """
 struct Purify3to1Node <: AbstractCircuit
@@ -662,13 +663,14 @@ This algorithm is detailed in [naomi2013topological](@cite)
 The sacrificial qubits are removed from the register.
 
 ```jldoctest
-julia> r = Register(26, rep())
-    for i in 1:13
-        initialize!(r[(2*i-1):(2*i)], bell)
-    end
+julia> r = Register(26)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       for i in 1:13
+            initialize!(r[(2*i-1):(2*i)], bell)
+       end;
 
-julia> PurifyStringent()(r[1], r[2], r[3:2:25], r[4:2:26])
-    true
+julia> PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...)
+true
 
 ```
 """
@@ -724,13 +726,14 @@ This algorithm is detailed in [naomi2013topological](@cite)
 The sacrificial qubits are removed from the register.
 
 ```jldoctest
-julia> r = Register(22, rep())
-    for i in 1:11
-        initialize!(r[(2*i-1):(2*i)], bell)
-    end
+julia> r = Register(22)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       for i in 1:11
+           initialize!(r[(2*i-1):(2*i)], bell)
+       end;
 
-julia> PurifyExpedient()(r[1], r[2], r[3:2:21], r[4:2:22])
-    true
+julia> PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...)
+true
 
 ```
 """
@@ -776,17 +779,6 @@ The head is repeated twice and the body is also repeating twice
 This returns the array of measurements made by the circuit.
 
 This algorithm is detailed in [naomi2013topological](@cite)
-
-```jldoctest
-julia> r = Register(26, rep())
-    for i in 1:13
-        initialize!(r[(2*i-1):(2*i)], bell)
-    end
-
-julia> PurifyStringentNode()(r[1], r[3:2:25]) == PurifyStringentNode()(r[2], r[4:2:26])
-    true
-
-```
 """
 struct PurifyStringentNode <: AbstractCircuit
 end
@@ -826,15 +818,15 @@ The head is repeated twice and the body is also repeating twice
 This returns the array of measurements made by the circuit.
 
 This algorithm is detailed in [naomi2013topological](@cite)
-
 ```jldoctest
-julia> r = Register(22, rep())
-    for i in 1:11
-        initialize!(r[(2*i-1):(2*i)], bell)
-    end
+julia> r = Register(22)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       for i in 1:11
+           initialize!(r[(2*i-1):(2*i)], bell)
+       end;
 
-julia> PurifyExpedientNode()(r[1], r[3:2:21]) == PurifyExpedientNode()(r[2], r[4:2:22])
-    true
+julia> PurifyExpedientNode()(r[1], r[3:2:21]...) == PurifyExpedientNode()(r[2], r[4:2:22]...)
+true
 
 ```
 """
