@@ -1,6 +1,6 @@
 import QuantumOpticsBase
 import QuantumOpticsBase: GenericBasis, CompositeBasis,
-    StateVector, AbstractSuperOperator, Ket, Operator,
+    StateVector, AbstractSuperOperator, Ket, Operator,basis,
     basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy,
     projector, identityoperator, embed, dm, expect, ptrace, spre, spost
 import QuantumOptics
@@ -37,7 +37,7 @@ function observable(state::Union{<:Ket,<:Operator}, indices, operation)
     expect(op, state)
 end
 
-function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Base.AbstractVecOrTuple{Ket})
+function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Base.AbstractVecOrTuple{})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of _overlap vs _project_and_drop
         _overlaps = [_overlap(psi,state) for psi in psis]
         branch_probs = cumsum(_overlaps)
