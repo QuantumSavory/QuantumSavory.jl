@@ -182,7 +182,11 @@ struct Purify2to1Node <: AbstractCircuit
     function Purify2to1Node(leaveout)
         if leaveout ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
-            `Purify2to1Node` is a Purify2to1 circuit that only operates on one member of the pair
+            `Purify2to1Node` can represent one of three purification circuits (see its docstring),
+            parameterized by the argument `leaveout` which has to be one of `:X`, `:Y`, or `:Z`.
+            You have instead chosen `$(repr(leaveout))` which is not a valid option.
+            Investigate where you are creating a purification circuit of type `Purify2to1Node`
+            and ensure you are passing a valid argument.
             """))
         else
             new(leaveout)
@@ -246,8 +250,8 @@ struct Purify3to1 <: AbstractCircuit
     function Purify3to1(leaveout1, leaveout2)
         if leaveout1 ∉ (:X, :Y, :Z) || leaveout2 ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
-            `Purify3to1` can represent one of three purification circuits (see its docstring),
-            parameterized by the argument `leaveout1` and `leaveout2` which has to be one of `:X`, `:Y`, or `:Z`.
+            `Purify3to1` can represent only a few specific purification circuits (see its docstring),
+            parameterized by the arguments `leaveout1` and `leaveout2` which have to be one of `:X`, `:Y`, or `:Z`.
             You have instead chosen `$(repr(leaveout1))`, `$(repr(leaveout1))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `Purify3to1`
             and ensure you are passing a valid argument.
@@ -329,10 +333,10 @@ struct Purify3to1Node <: AbstractCircuit
     function Purify3to1Node(leaveout1, leaveout2)
         if leaveout1 ∉ (:X, :Y, :Z) || leaveout2 ∉ (:X, :Y, :Z)
             throw(ArgumentError(lazy"""
-            `Purify3to1` can represent one of three purification circuits (see its docstring),
-            parameterized by the argument `leaveout1` and `leaveout2` which has to be one of `:X`, `:Y`, or `:Z`.
+            `Purify3to1Node` can represent only a few specific purification circuits (see its docstring),
+            parameterized by the arguments `leaveout1` and `leaveout2` which have to be one of `:X`, `:Y`, or `:Z`.
             You have instead chosen `$(repr(leaveout1))`, `$(repr(leaveout1))` which is not a valid option.
-            Investigate where you are creating a purification circuit of type `Purify3to1`
+            Investigate where you are creating a purification circuit of type `Purify3to1Node`
             and ensure you are passing a valid argument.
             """))
         else
@@ -390,7 +394,7 @@ struct StringentHead <: AbstractCircuit
     function StringentHead(type)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
-            `type` has to be one of `:X`, or `:Z`.
+            `StringentHead` `type` has to be either `:X` or `:Z`.
             You have instead chosen `$(repr(type))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `StringentHead`
             and ensure you are passing a valid argument.
@@ -406,9 +410,7 @@ inputqubits(circuit::StringentHead) = 6
 
 function (circuit::StringentHead)(purifiedL, purifiedR, sacrificed...)
     if length(sacrificed) != 4
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `StringentHead` purification circuit acts on 6 qubits and has to be called with 6 arguments."))
     end
     sacrificedL = [sacrificed[1:2]...]
     sacrificedR = [sacrificed[3:4]...]
@@ -447,9 +449,9 @@ struct StringentHeadNode <: AbstractCircuit
     function StringentHeadNode(type)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
-            `type` has to be one of `:X`, or `:Z`.
+            `StringentHeadNode` `type` has to be either `:X` or `:Z`.
             You have instead chosen `$(repr(type))` which is not a valid option.
-            Investigate where you are creating a purification circuit of type `StringentHead`
+            Investigate where you are creating a purification circuit of type `StringentHeadNode`
             and ensure you are passing a valid argument.
             """))
         else
@@ -464,11 +466,9 @@ inputqubits(circuit::StringentHeadNode) = 3
 function (circuit::StringentHeadNode)(purified, sacrificed...)
 
     if length(sacrificed) != 2
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `StringentHeadNode` purification circuit acts on 3 qubits and has to be called with 3 arguments."))
     end
-    sacrificedarr = [sacrificed[1:2]...]
+    sacrificedarr = sacrificed[1:2]
 
     gate, success = if circuit.type == :Z
         ZCZ, true
@@ -507,7 +507,7 @@ struct StringentBody <: AbstractCircuit
     function StringentBody(type, expedient=false)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
-            `type` has to be one of `:X`, or `:Z`.
+            `StringentBody` `type` has to be either `:X` or `:Z`.
             You have instead chosen `$(repr(type))` which is not a valid option.
             Investigate where you are creating a purification circuit of type `StringentBody`
             and ensure you are passing a valid argument.
@@ -523,9 +523,7 @@ inputqubits(circuit::StringentBody) = circuit.expedient ? 6 : 8
 
 function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
     if length(sacrificed) != (circuit.expedient ? 6 : 8)
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `StringentBody` circuit was called on an incorrect number of qubits."))
     end
     gate, success = if circuit.type == :Z
         ZCZ, true
@@ -592,9 +590,9 @@ struct StringentBodyNode <: AbstractCircuit
     function StringentBodyNode(type, expedient=false)
         if type ∉ (:X, :Z)
             throw(ArgumentError(lazy"""
-            `type` has to be one of `:X`, or `:Z`.
+            `StringentBodyNode` `type` has to be either `:X` or `:Z`.
             You have instead chosen `$(repr(type))` which is not a valid option.
-            Investigate where you are creating a purification circuit of type `StringentBody`
+            Investigate where you are creating a purification circuit of type `StringentBodyNode`
             and ensure you are passing a valid argument.
             """))
         else
@@ -608,15 +606,13 @@ inputqubits(circuit::StringentBodyNode) = circuit.expedient ? 3 : 4
 
 function (circuit::StringentBodyNode)(purified, sacrificed...)
     if length(sacrificed) != (circuit.expedient ? 3 : 4)
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `StringentBodyNode` circuit was called on an incorrect number of qubits."))
     end
 
-    gate, success = if circuit.type == :Z
-        ZCZ, true
+    gate = if circuit.type == :Z
+        ZCZ
     else
-        XCZ, true
+        XCZ
     end
     ## Indices for emulating pair creation
     i1 = 1
@@ -681,9 +677,7 @@ inputqubits(circuit::PurifyStringent) = 26
 
 function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
     if length(sacrificed) != 24
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `PurifyStringent` purification circuit acts on 26 qubits and has to be called with 26 arguments."))
     end
 
     success = true
@@ -744,9 +738,7 @@ inputqubits(circuit::PurifyExpedient) = 22
 
 function (circuit::PurifyExpedient)(purifiedL,purifiedR,sacrificed...)
     if length(sacrificed) != 20
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `PurifyExpedient` purification circuit acts on 22 qubits and has to be called with 22 arguments."))
     end
     success = true
     stringentHead_Z = StringentHead(:Z)
@@ -787,9 +779,7 @@ inputqubits(circuit::PurifyStringentNode) = 13
 
 function (circuit::PurifyStringentNode)(purified,sacrificed...)
     if length(sacrificed) != 12
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `PurifyStringentNode` purification circuit acts on 13 qubits and has to be called with 13 arguments."))
     end
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
@@ -837,9 +827,7 @@ inputqubits(circuit::PurifyExpedientNode) = 11
 
 function (circuit::PurifyExpedientNode)(purified,sacrificed...)
     if length(sacrificed) != 10
-        throw(ArgumentError(lazy"""
-            Function hasn't got the right number of arguments.
-            """))
+        throw(ArgumentError("The `PurifyExpedientNode` purification circuit acts on 11 qubits and has to be called with 11 arguments."))
     end
     success = true
     stringentHead_Z = StringentHeadNode(:Z)
