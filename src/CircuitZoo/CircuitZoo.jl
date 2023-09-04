@@ -365,14 +365,14 @@ function (circuit::Purify3to1Node)(purified,sacrificed1,sacrificed2)
     (measa1, measa2)
 end
 
-function coin(basis, pair::Array, parity=0)
+function coin(basis, pair::Array, parity=0) # TODO rename to coincidence and remove the parity argument (it does not seem to be used)
     measa = project_traceout!(pair[1], basis)
     measb = project_traceout!(pair[2], basis)
     success = (measa ⊻ measb == parity)
     success
 end
 
-function coinnode(basis, pair::Array, parity=0)
+function coinnode(basis, pair::Array, parity=0) # TODO remove this function altogether, it is just a call to project_traceout! which would be more legible and semantically meaningful
     measa = project_traceout!(pair[1], basis)
     measa
 end
@@ -387,6 +387,10 @@ $FIELDS
 The STRINGENT-HEAD purification circuit.
 The first part of the STRINGENT and EXPEDIENT circuit.
 It has one parameter, that determines the first gate which is used.
+
+This circuit is detailed in [naomi2013topological](@cite).
+
+See also: [`StringentHeadNode`](@ref), [`PurifyStringent`](@ref)
 """
 struct StringentHead <: AbstractCircuit
     """A symbol determining whether ZCZ or XCZ should be used as a gate"""
@@ -437,12 +441,14 @@ Fields:
 
 $FIELDS
 
-The STRINGENT-HEAD purification circuit, on one qubit of a pair of 2.
-The first part of the STRINGENT and EXPEDIENT circuit.
+The "local" half of STRINGENT-HEAD purification circuit, i.e. only the gates executed on a given network node.
+
 It has one parameter, that determines the first gate which is used.
 It returns the array of measurements made by the circuit.
 
-This algorithm is detailed in [naomi2013topological](@cite)
+This circuit is detailed in [naomi2013topological](@cite).
+
+See also: [`StringentHead`](@ref), [`PurifyStringent`](@ref)
 """
 struct StringentHeadNode <: AbstractCircuit
     type::Symbol
@@ -497,7 +503,9 @@ It has 2 parameters, one that determines the first gate which is used,
 and the other one which determines if it is used
 inside the STRINGENT or EXPEDIENT cicuits
 
-This algorithm is detailed in [naomi2013topological](@cite)
+This circuit is detailed in [naomi2013topological](@cite).
+
+See also: [`StringentBodyNode`](@ref), [`PurifyStringent`](@ref)
 """
 struct StringentBody <: AbstractCircuit
     """A symbol determining whether ZCZ or XCZ should be used as a gate"""
@@ -575,14 +583,17 @@ Fields:
 
 $FIELDS
 
-The STRINGENT-BODY purification circuit, on one qubit of a pair of 2.
-The second part of the STRINGENT and EXPEDIENT circuit.
+The "local" half of STRINGENT-BODY purification circuit, i.e. only the gates executed on a given network node.
+
 It has 2 parameters, one that determines the first gate which is used,
 and the other one which determines if it is used
 inside the STRINGENT or EXPEDIENT cicuits
+
 It returns the array of measurements made by the circuits.
 
-This algorithm is detailed in [naomi2013topological](@cite)
+This circuit is detailed in [naomi2013topological](@cite).
+
+See also: [`StringentBody`](@ref), [`PurifyStringent`](@ref)
 """
 struct StringentBodyNode <: AbstractCircuit
     type::Symbol
@@ -646,7 +657,7 @@ Fields:
 $FIELDS
 
 The STRINGENT purification circuit.
-It is composed of a head and a body.
+It is composed of a "head" and a "body".
 The head is repeated twice and the body is also repeating twice
 
 This algorithm is detailed in [krastanov2019optimised](@cite)
@@ -654,7 +665,7 @@ This algorithm is detailed in [krastanov2019optimised](@cite)
 If an error was detected, the circuit returns `false` and the state is reset.
 If no error was detected, the circuit returns `true`.
 
-This algorithm is detailed in [naomi2013topological](@cite)
+This circuit is detailed in [naomi2013topological](@cite).
 
 The sacrificial qubits are removed from the register.
 
@@ -667,11 +678,11 @@ julia> r = Register(26)
 
 julia> PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...)
 true
-
 ```
+
+See also: [`PurifyStringentNode`](@ref), [`PurifyExpedient`](@ref)
 """
-struct PurifyStringent <: AbstractCircuit
-end
+struct PurifyStringent <: AbstractCircuit end
 
 inputqubits(circuit::PurifyStringent) = 26
 
@@ -698,8 +709,6 @@ function (circuit::PurifyStringent)(purifiedL,purifiedR,sacrificed...)
 end
 
 
-
-
 """
 $TYPEDEF
 
@@ -710,12 +719,13 @@ $FIELDS
 The EXPEDIENT purification circuit.
 It is composed of a head and a body.
 The head is repeated twice and the body is also repeating twice
-The difference between it and the STRINGENT circuit is that the body is a bit modified.
+
+The difference between it and the STRINGENT circuit is that the body is shorter.
 
 If an error was detected, the circuit returns `false` and the state is reset.
 If no error was detected, the circuit returns `true`.
 
-This algorithm is detailed in [naomi2013topological](@cite)
+This circuit is detailed in [naomi2013topological](@cite)
 
 The sacrificial qubits are removed from the register.
 
@@ -728,8 +738,9 @@ julia> r = Register(22)
 
 julia> PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...)
 true
-
 ```
+
+See also: [`PurifyExpedientNode`](@ref), [`PurifyStringent`](@ref)
 """
 struct PurifyExpedient <: AbstractCircuit
 end
@@ -764,13 +775,13 @@ Fields:
 
 $FIELDS
 
-The STRINGENT purification circuit ( on a single qubit of a pair ).
-It is composed of a head and a body.
-The head is repeated twice and the body is also repeating twice
+The STRINGENT purification circuit (only the local half, executed on a single network node).
 
 This returns the array of measurements made by the circuit.
 
-This algorithm is detailed in [naomi2013topological](@cite)
+This circuit is detailed in [naomi2013topological](@cite).
+
+See also: [`PurifyStringent`](@ref)
 """
 struct PurifyStringentNode <: AbstractCircuit
 end
@@ -801,13 +812,12 @@ Fields:
 
 $FIELDS
 
-The EXPEDIENT purification circuit ( on a single qubit of a pair ).
-It is composed of a head and a body.
-The head is repeated twice and the body is also repeating twice
+The EXPEDIENT purification circuit (only the local half, executed on a single network node).
 
 This returns the array of measurements made by the circuit.
 
-This algorithm is detailed in [naomi2013topological](@cite)
+This circuit is detailed in [naomi2013topological](@cite).
+
 ```jldoctest
 julia> r = Register(22)
        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
@@ -817,7 +827,6 @@ julia> r = Register(22)
 
 julia> PurifyExpedientNode()(r[1], r[3:2:21]...) == PurifyExpedientNode()(r[2], r[4:2:22]...)
 true
-
 ```
 """
 struct PurifyExpedientNode <: AbstractCircuit
