@@ -131,7 +131,7 @@ end
 Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s and a graph.
 
 ```jldoctest
-julia> graph = grid([2,2])
+julia> graph = grid([2,2]) # from Graphs.jl
 {4, 4} undirected simple Int64 graph
 
 julia> registers = [Register(1), Register(2), Register(1), Register(2)]
@@ -155,7 +155,7 @@ julia> net = RegisterNet(graph, registers)
 A network of 4 registers in a graph of 4 edges
 
 
-julia> neighbors(net, 1)
+julia> neighbors(net, 1) # from Graphs.jl
 2-element Vector{Int64}:
  2
  3
@@ -171,7 +171,7 @@ end
 julia> net = RegisterNet([Register(2), Register(4), Register(2)])
 A network of 3 registers in a graph of 2 edges
 
-julia> neighbors(net,2)
+julia> neighbors(net,2) # from Graphs.jl
 2-element Vector{Int64}:
  1
  3
