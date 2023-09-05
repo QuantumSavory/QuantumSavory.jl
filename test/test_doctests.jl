@@ -1,8 +1,10 @@
-using Documenter, QuantumSavory
+using Test
+using Documenter
+using QuantumSavory
 
 function doctests()
     @testset "Doctests" begin
-        DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory); recursive=true)
+        DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory; using QuantumSavory.CircuitZoo; using Graphs); recursive=true)
         doctest(QuantumSavory)
     end
 end
