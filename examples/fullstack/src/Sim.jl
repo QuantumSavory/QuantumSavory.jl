@@ -8,7 +8,7 @@ using CSSMakieLayout
 include("setup.jl")
 import JSServe.TailwindDashboard as D
 
-retina_scale = 1
+retina_scale = 2
 config = Dict(
     :resolution => (retina_scale*1400, retina_scale*700), #used for the main figures
     :smallresolution => (280, 160),                       #used for the menufigures
@@ -65,13 +65,13 @@ idof = Dict(
     "Double Selection"=>3
 )
 
-function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
+function plot_alphafig(F, meta="",mfig=nothing, extrafig=nothing; hidedecor=false, observables=nothing)
     if isnothing(observables)
         return
     end
     obs_PURIFICATION, obs_time, obs_commtime, 
         obs_registersizes, obs_node_timedelay, obs_initial_prob,
-        obs_USE, obs_emitonpurifsuccess, logstring, showlog = observables
+        obs_USE, obs_emitonpurifsuccess, logstring, showlog, obs_sampledenttimes = observables
 
     PURIFICATION = obs_PURIFICATION[]
     time = obs_time[]
@@ -91,9 +91,11 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
     sim, network = simulation_setup(registersizes, commtimes, protocol)
     _,ax,p,obs = registernetplot_axis(F[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
     _,mfig_ax,mfig_p,mfig_obs = nothing, nothing, nothing, nothing
+    _,extrafig_ax,extrafig_p,extrafig_obs = nothing, nothing, nothing, nothing
     (mfig !== nothing) && begin
-        _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
-    end
+        _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ"))) end
+    (extrafig !==nothing) && begin
+        _,extrafig_ax,extrafig_p,extrafig_obs = registernetplot_axis(extrafig[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ"))) end
     hidedecor && return
 
     F[3, 1:6] = buttongrid = GridLayout(tellwidth = false)
@@ -112,12 +114,9 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
 
     subfig = rightfig[1, 2:4]
     sg = SliderGrid(subfig[1, 1],
-        (label="time", range=3:0.1:30, startvalue=20.3),
-        (label="1 - pauli error prob", range=0.5:0.1:0.9, startvalue=0.7),
-        (label="chanel delay", range=0.1:0.1:0.3, startvalue=0.1),
         (label="recycle purif pairs", range=0:1, startvalue=0),
         (label="register size", range=3:10, startvalue=6))
-    observable_params = [obs_time, obs_initial_prob, obs_commtime, obs_emitonpurifsuccess, obs_registersizes]
+    observable_params = [obs_emitonpurifsuccess, obs_registersizes]
     m = Menu(subfig[2, 1], options = ["Single Selection", "Double Selection"], prompt="Purification circuit...", default="Double Selection")
     on(m.selection) do sel
         obs_USE[] = idof[sel]
@@ -163,13 +162,17 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
                 empty!(mfig_ax)
                 _,mfig_ax,mfig_p,mfig_obs = registernetplot_axis(mfig[1, 1],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
             end
+            if extrafig !== nothing
+                empty!(extrafig_ax)
+                _,extrafig_ax,extrafig_p,extrafig_obs = registernetplot_axis(extrafig[1:2,1:3],network; twoqubitobservable=projector(StabilizerState("XX ZZ")))
+            end
             
             currenttime = Observable(0.0)
             # Setting up the ENTANGMELENT protocol
             for (;src, dst) in edges(network)
                 @process freequbit_trigger(sim, protocol, network, src, dst, showlog[] ? logstring : nothing)
-                @process entangle(sim, protocol, network, src, dst, noisy_pair, showlog[] ? logstring : nothing)
-                @process entangle(sim, protocol, network, dst, src, noisy_pair, showlog[] ? logstring : nothing)
+                @process entangle(sim, protocol, network, src, dst, noisy_pair, showlog[] ? logstring : nothing, [obs_sampledenttimes])
+                @process entangle(sim, protocol, network, dst, src, noisy_pair, showlog[] ? logstring : nothing, [obs_sampledenttimes])
             end
             # Setting up the purification protocol 
             if PURIFICATION
@@ -187,6 +190,8 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
                 run(sim, t)
                 notify(obs)
                 notify(mfig_obs)
+                notify(extrafig_obs)
+                notify(obs_sampledenttimes)
                 ax.title = "t=$(t)"
                 if !running[]
                     break
@@ -202,48 +207,63 @@ function plot_alphafig(F, meta="",mfig=nothing; hidedecor=false, observables=not
             end
         end
     end
+    return running
 end
 
-function plot_betafig(figure, meta=""; hidedecor=false)
-    # This is where we will do the receipe for the second figure (Entanglement Swap)
-    ax = Axis(figure[1, 1])
-    scatter!(ax, [1,2], [2,3], color=(:black, 0.2))
-    axx = Axis(figure[1, 2])
-    scatter!(axx, [1,2], [2,3], color=(:black, 0.2))
-    axxx = Axis(figure[2, 1:2])
-    scatter!(axxx, [1,2], [2,3], color=(:black, 0.2))
+function plot_betafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
+    obs_PURIFICATION, obs_time, obs_commtime, 
+        obs_registersizes, obs_node_timedelay, obs_initial_prob,
+        obs_USE, obs_emitonpurifsuccess, logstring, showlog, obs_sampledenttimes, running = observables
+    rightfig = F[1:2, 4:6]
+    plotfig = rightfig[2,1:4]
+    waittimeax = Axis(plotfig, title="Entanglement generation wait time")
+    subfig = rightfig[1, 2:4]
+    sg = SliderGrid(subfig[1, 1],
+        (label="time", range=3:0.1:30, startvalue=20.3),
+        (label="initial fidelity", range=0.5:0.1:0.9, startvalue=0.7),
+        (label="chanel delay", range=0.1:0.1:0.3, startvalue=0.1))
+    observable_params = [obs_time, obs_initial_prob, obs_commtime]
+    F[3, 1:6] = buttongrid = GridLayout(tellwidth = false)
+    buttongrid[1,1] = b = Makie.Button(F, label = @lift($running ? "Stop" : "Run"), fontsize=32)
 
-    if hidedecor
-        hidedecorations!(ax)
-        hidedecorations!(axx)
-        hidedecorations!(axxx)
+    for i in 1:length(observable_params)
+        on(sg.sliders[i].value) do val
+            if !running[]
+                observable_params[i][] = val
+                notify(observable_params[i])
+            end
+        end
     end
+    on(b.clicks) do _ 
+        running[] = !running[]
+    end
+    distr = Exponential(0.4)
+    range = 0.05:0.1:4.95
+    lines!(waittimeax, range, 1/0.4 * exp.(-(collect(range) ./ 0.4)))
+    on(obs_sampledenttimes) do val
+        empty!(waittimeax)
+        lines!(waittimeax, range, 1/0.4 * exp.(-(collect(range) ./ 0.4)), color=:blue)
+        hist!(waittimeax, val, color=:blue)
+    end
+    
 end
 
-function plot_gammafig(figure, meta=""; hidedecor=false)
-    # This is where we will do the receipe for the third figure (Entanglement Purif)
-
-    ax = Axis(figure[1, 1])
-    scatter!(ax, [1,2], [2,3], color=(:black, 0.2))
-
-    if hidedecor
-        hidedecorations!(ax)
-    end
+function plot_gammafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
+    
 end
 
 #   The plot function is used to prepare the receipe (plots) for
 #   the mainfigures which get toggled by the identical figures in
 #   the menu (the menufigures), as well as for the menufigures themselves
 
-function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false, observables=[])
+function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false, observables=nothing)
     if length(menufigs)==0
-        plot_alphafig(figure_array[1], metas[1]; hidedecor=hidedecor, observables=observables[1])
-        plot_betafig( figure_array[2], metas[2]; hidedecor=hidedecor)
-        plot_gammafig(figure_array[3], metas[3]; hidedecor=hidedecor)
+        plot_alphafig(figure_array[1], metas[1]; hidedecor=hidedecor, observables=observables)
+        plot_betafig( figure_array[2], metas[2]; hidedecor=hidedecor, observables=observables)
+        plot_gammafig(figure_array[3], metas[3]; hidedecor=hidedecor, observables=observables)
     else
-        plot_alphafig(figure_array[1], metas[1], menufigs[1]; hidedecor=hidedecor, observables=observables[1])
-        plot_betafig( figure_array[2], metas[2]; hidedecor=hidedecor)
-        plot_gammafig(figure_array[3], metas[3]; hidedecor=hidedecor)
+        running = plot_alphafig(figure_array[2], metas[2], menufigs[2], figure_array[1]; hidedecor=hidedecor, observables=observables)
+        plot_betafig(figure_array[1]; observables=push!(observables, running))
     end
 end
 
@@ -260,9 +280,10 @@ landing = App() do session::Session
     obs_emitonpurifsuccess = Observable(0)
     logstring = Observable("")
     showlog = Observable(false)
+    obs_sampledenttimes = Observable([0.0])
     allobs = [obs_PURIFICATION, obs_time, obs_commtime, 
                 obs_registersizes, obs_node_timedelay, obs_initial_prob,
-                obs_USE, obs_emitonpurifsuccess, logstring, showlog]
+                obs_USE, obs_emitonpurifsuccess, logstring, showlog, obs_sampledenttimes]
     keepsame=true
     # Create the menufigures and the mainfigures
     mainfigures = [Figure(backgroundcolor=:white,  resolution=config[:resolution]) for _ in 1:3]
@@ -285,7 +306,7 @@ landing = App() do session::Session
     end
 
     # Using the aforementioned plot function to plot for each figure array
-    plot(mainfigures, menufigures, observables=[allobs, nothing, nothing])
+    plot(mainfigures, menufigures, observables=allobs)
     
     # Create ZStacks displayong titles below the menu graphs
     titles_zstack = [zstack(wrap(DOM.h4(titles[i], class="upper")),
@@ -467,7 +488,7 @@ end
 ##
 # Serve the Makie app
 isdefined(Main, :server) && close(server);
-port = parse(Int, get(ENV, "QS_COLORCENTERMODCLUSTER_PORT", "8888"))
+port = parse(Int, get(ENV, "QS_COLORCENTERMODCLUSTER_PORT", "8889"))
 interface = get(ENV, "QS_COLORCENTERMODCLUSTER_IP", "127.0.0.1")
 proxy_url = get(ENV, "QS_COLORCENTERMODCLUSTER_PROXY", "")
 server = JSServe.Server(interface, port; proxy_url);

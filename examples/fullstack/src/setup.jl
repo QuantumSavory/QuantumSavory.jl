@@ -6,22 +6,22 @@ using Crayons
 using Crayons.Box
 # For convenient graph data structures
 using Graphs
-
 # For discrete event simulation
 using ResumableFunctions
 using ConcurrentSim
 import Base: put!, take!
-
 # Useful for interactive work
 # Enables automatic re-compilation of modified codes
 using Revise
-
 # The workhorse for the simulation
 using QuantumSavory
-
 # Predefined useful circuits
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1Node, Purify3to1Node, AbstractCircuit
+using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1Node, Purify3to1Node, AbstractCircuit, inputqubits
+# Clean messages
 using SumTypes
+# Random stuff
+using Random, Distributions
+Random.seed!(123)
 
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
@@ -29,7 +29,6 @@ const mixed_dm = MixedState(perfect_pair_dm)
 noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 
 struct FreeQubitTriggerProtocolSimulation
-    purifier_circuit_size
     purifier_circuit
     looptype
     waittime
@@ -38,20 +37,12 @@ struct FreeQubitTriggerProtocolSimulation
     emitonpurifsuccess
     maxgeneration
 end
-
-function circuit_size(circ) # todo: replace with optio from circuit zoo once merged
-    sizes = Dict(
-        Purify2to1Node=>2,
-        Purify3to1Node=>3
-    )
-    return sizes[circ]
-end
 FreeQubitTriggerProtocolSimulation(circ;
                                     looptype::Array{Symbol}=[:X, :Y, :Z],
                                     waittime=0.4, busytime=0.3,
                                     keywords=Dict(:simple_channel=>:fqtp_channel, :process_channel=>:fqtp_process_channel),
                                     emitonpurifsuccess=false,
-                                    maxgeneration=10) = FreeQubitTriggerProtocolSimulation(circuit_size(circ), circ, looptype, waittime, busytime, keywords, emitonpurifsuccess, maxgeneration)
+                                    maxgeneration=10) = FreeQubitTriggerProtocolSimulation(circ, looptype, waittime, busytime, keywords, emitonpurifsuccess, maxgeneration)
 
 # formatting the message string so it looks nice in browser
 function slog!(s, msg, id)
@@ -72,7 +63,6 @@ function slog!(s, msg, id)
     notify(s)
 end
 #=
-    https://github.com/MasonProtter/SumTypes.jl
     We have 2 types of channels:
         - normal channels (which perform basic operations)
         - process channels (which need more than just qubits to perform actions)
@@ -152,7 +142,7 @@ end
 end
 
 @resumable function entangle(sim::Simulation, protocol::FreeQubitTriggerProtocolSimulation, network, node, remotenode, noisy_pair = noisy_pair_func(0.7)
-    , logfile=nothing)
+    , logfile=nothing, sampledentangledtimes=[nothing], entangletimedist=Exponential(0.4))
     waittime = protocol.waittime
     busytime = protocol.busytime
     channel = network[node=>remotenode, protocol.keywords[:simple_channel]]
@@ -180,11 +170,16 @@ end
             end
             
             mINITIALIZE_STATE(remote_i, i) => begin
+                slog!(logfile, "$(now(sim)) :: $node > Waiting on entanglement generation between $node:$i and $remotenode:$remote_i ...", "$node:$i $remotenode:$remote_i")
+                entangletime = rand(entangletimedist)
+                @yield timeout(sim, entangletime)
+                (sampledentangledtimes[1] != false) && (push!(sampledentangledtimes[1][], entangletime))
+                println(sampledentangledtimes[1])
                 initialize!((network[node][i], network[remotenode][remote_i]),noisy_pair; time=now(sim))
                 slog!(logfile, "$(now(sim)) :: $node > Success! $node:$i and $remotenode:$remote_i are now entangled.", "$node:$i $remotenode:$remote_i")
                 unlock(network[node][i])
                 put!(channel, mUNLOCK(remote_i))
-                @yield timeout(sim, busytime)
+                # @yield timeout(sim, busytime)
                 # signal that entanglement got generated
                 put!(channel, mGENERATED_ENTANGLEMENT(i, remote_i, 1))
             end
@@ -229,7 +224,7 @@ end
         push!(indicesg, [])
         push!(remoteindicesg, [])
     end
-    purif_circuit_size = protocol.purifier_circuit_size
+    purif_circuit_size = inputqubits(protocol.purifier_circuit())
     while true
         message = @yield take!(remote_process_channel)
         @cases message begin
@@ -249,7 +244,8 @@ end
                     @yield timeout(sim, busytime)
 
                     slots = [network[node][x] for x in indicesg[generation]]
-                    local_measurement = protocol.purifier_circuit(protocol.looptype[generation % length(protocol.looptype) + 1])(slots[1], length(slots[2:end])==1 ? slots[2:end][1] : slots[2:end])
+                    type = [protocol.looptype[(generation + i - 1) % length(protocol.looptype) + 1] for i in 1:inputqubits(protocol.purifier_circuit())-1]
+                    local_measurement = protocol.purifier_circuit(type...)(slots...)
                     # send message to other node to apply purif side of circuit
                     put!(process_channel, mPURIFY(local_measurement, remoteindicesg[generation], indicesg[generation], generation))
                     indicesg[generation] = []
@@ -260,8 +256,8 @@ end
             mPURIFY(remote_measurement, indices, remoteindices, generation) => begin
                 slots = [network[node][x] for x in indices]
                 @yield timeout(sim, busytime)
-
-                local_measurement = protocol.purifier_circuit(protocol.looptype[generation % length(protocol.looptype) + 1])(slots[1], length(slots[2:end])==1 ? slots[2:end][1] : slots[2:end])
+                type = [protocol.looptype[(generation + i - 1) % length(protocol.looptype) + 1] for i in 1:inputqubits(protocol.purifier_circuit())-1]
+                local_measurement = protocol.purifier_circuit(type...)(slots...)
                 success = local_measurement == remote_measurement
                 put!(process_channel, mREPORT_SUCCESS(success, remoteindices, indices, generation))
                 if !success
