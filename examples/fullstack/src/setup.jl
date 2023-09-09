@@ -142,7 +142,7 @@ end
 end
 
 @resumable function entangle(sim::Simulation, protocol::FreeQubitTriggerProtocolSimulation, network, node, remotenode, noisy_pair = noisy_pair_func(0.7)
-    , logfile=nothing, sampledentangledtimes=[nothing], entangletimedist=Exponential(0.4))
+    , logfile=nothing, sampledentangledtimes=[false], entangletimedist=Exponential(0.4))
     waittime = protocol.waittime
     busytime = protocol.busytime
     channel = network[node=>remotenode, protocol.keywords[:simple_channel]]
