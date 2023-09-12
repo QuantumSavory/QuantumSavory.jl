@@ -65,20 +65,20 @@ A basis object can be specified on its own as well, e.g.
 """
 function project_traceout! end
 
-function project_traceout!(reg::Register, i::Int, psis; time=nothing)
-    project_traceout!(identity, reg, i, psis; time=time)
+function project_traceout!(reg::Register, i::Int, basis; time=nothing)
+    project_traceout!(identity, reg, i, basis; time=time)
 end
-project_traceout!(r::RegRef, psis; time=nothing) = project_traceout!(r.reg, r.idx, psis; time=nothing)
+project_traceout!(r::RegRef, basis; time=nothing) = project_traceout!(r.reg, r.idx, basis; time=nothing)
 
-function project_traceout!(f, reg::Register, i::Int, psis; time=nothing)
+function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
     !isnothing(time) && uptotime!([reg], [i], time)
     stateref = reg.staterefs[i]
     stateindex = reg.stateindices[i]
     if isnothing(stateref) # TODO maybe use isassigned
         throw("error") # make it more descriptive
     end
-    j, stateref.state[] = project_traceout!(stateref.state[],stateindex,psis)
+    j, stateref.state[] = project_traceout!(stateref.state[],stateindex,basis)
     removebackref!(stateref, stateindex)
     f(j)
 end
-project_traceout!(f, r::RegRef, psis; time=nothing) = project_traceout!(f, r.reg, r.idx, psis; time=nothing)
+project_traceout!(f, r::RegRef, basis; time=nothing) = project_traceout!(f, r.reg, r.idx, basis; time=nothing)
