@@ -12,7 +12,8 @@ retina_scale = 2
 config = Dict(
     :resolution => (retina_scale*1400, retina_scale*700), #used for the main figures
     :smallresolution => (280, 160),                       #used for the menufigures
-    :colorscheme => ["rgb(242, 242, 247)", "black", "#000529", "white"]
+    :colorscheme => ["rgb(11, 42, 64)", "white", "#1f77b4", "white"]
+    # :colorscheme => ["rgb(242, 242, 247)", "black", "#000529", "white"]
     # another color scheme: :colorscheme => ["rgb(242, 242, 247)", "black", "rgb(242, 242, 247)", "black"]
 )
 
@@ -39,12 +40,12 @@ function layout_content(DOM, mainfigures
             title_zstack[i];
             class="justify-center align-center "  
             ) 
-        for i in 1:3]; class="menufigs", style=menufigs_style)
+        for i in 1:length(mainfigures)]; class="menufigs", style=menufigs_style)
    
+    unactive = [wrap(mainfigures[i]) for i in 2:length(mainfigures)]
     activefig = zstack(
                 active(mainfigures[1]),
-                wrap(mainfigures[2]),
-                wrap(mainfigures[3]);
+                unactive...;
                 activeidx=active_index,
                 anim=[:whoop],
                 style="width: $(config[:resolution][1]/retina_scale)px")
@@ -196,16 +197,15 @@ function plot_alphafig(F, meta="",mfig=nothing, extrafig=nothing; hidedecor=fals
                 end
                 if length(p[:fids][]) > 0
                     empty!(textax)
-                    hist!(textax, p[:fids][], direction=:x, color=:blue)
+                    hist!(textax, p[:fids][], direction=:x, color=1, colormap=:tab10, colorrange = (1, 10))
                     push!(coordsx, t)
                     push!(maxcoordsy, maximum(p[:fids][]))
                     empty!(fidax)
-                    stairs!(fidax, coordsx, maxcoordsy, color=(emitonpurifsuccess ? :blue : :green), linewidth=3)
+                    stairs!(fidax, coordsx, maxcoordsy, color=1, linewidth=3, colormap=:tab10, colorrange = (1, 10))
                 end
             end
         end
     end
-    return running
 end
 
 function plot_betafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
@@ -250,28 +250,24 @@ function plot_betafig(F, meta="",mfig=nothing; hidedecor=false, observables=noth
         end
     end
     for axis in axes
-        lines!(axis, range, 1/0.4 * exp.(-(collect(range) ./ 0.4)), color=:blue)
-        hist!(axis, obs_sampledenttimes, color=:blue)
+        lines!(axis, range, 1/0.4 * exp.(-(collect(range) ./ 0.4)))
+        hist!(axis, obs_sampledenttimes)
     end
     
 end
-
-function plot_gammafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
-    
-end
-
 #   The plot function is used to prepare the receipe (plots) for
 #   the mainfigures which get toggled by the identical figures in
 #   the menu (the menufigures), as well as for the menufigures themselves
 
 function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false, observables=nothing)
-    plot_alphafig(figure_array[2], metas[2], menufigs[2], figure_array[1]; hidedecor=hidedecor, observables=observables)
     plot_betafig(figure_array[1], metas[1], menufigs[1]; observables=observables)
+    plot_alphafig(figure_array[2], metas[2], menufigs[2], figure_array[1]; hidedecor=hidedecor, observables=observables)
 end
 
 ###################### LANDING PAGE OF THE APP ######################
 
 landing = App() do session::Session
+    figurescount = 2
     running = Observable(false)
     obs_PURIFICATION = Observable(true)
     obs_time = Observable(20.3)
@@ -281,7 +277,7 @@ landing = App() do session::Session
     obs_initial_prob = Observable(0.7)
     obs_USE = Observable(3)
     obs_emitonpurifsuccess = Observable(0)
-    logstring = Observable("")
+    logstring = Observable("--")
     showlog = Observable(false)
     obs_sampledenttimes = Observable([-1.0])
     allobs = [running, obs_PURIFICATION, obs_time, obs_commtime, 
@@ -289,15 +285,15 @@ landing = App() do session::Session
                 obs_USE, obs_emitonpurifsuccess, logstring, showlog, obs_sampledenttimes]
     keepsame=true
     # Create the menufigures and the mainfigures
-    mainfigures = [Figure(backgroundcolor=:white,  resolution=config[:resolution]) for _ in 1:3]
-    menufigures = [Figure(backgroundcolor=:white,  resolution=config[:smallresolution]) for i in 1:3]
+    mainfigures = [Figure(backgroundcolor=:white,  resolution=config[:resolution]) for _ in 1:figurescount]
+    menufigures = [Figure(backgroundcolor=:white,  resolution=config[:smallresolution]) for i in 1:figurescount]
     titles= ["Entanglement Generation",
-    "Entanglement Swapping",
-    "Entanglement Purification"]
+    "Entanglement Purification",
+    "-"]
     activeidx = Observable(1)
     hoveredidx = Observable(0)
 
-    for i in 1:3
+    for i in 1:figurescount
         on(events(menufigures[i]).mousebutton) do event
             activeidx[]=i  
             notify(activeidx)
@@ -315,14 +311,14 @@ landing = App() do session::Session
     titles_zstack = [zstack(wrap(DOM.h4(titles[i], class="upper")),
                             wrap(""); 
                             activeidx=@lift(($hoveredidx == i || $activeidx == i)),
-                            anim=[:opacity], style="""color: $(config[:colorscheme][2]);""") for i in 1:3]
+                            anim=[:opacity], style="""color: $(config[:colorscheme][2]);""") for i in 1:figurescount]
 
     # Obtain reactive layout of the figures
     layout, content = layout_content(DOM, mainfigures, menufigures, titles_zstack, activeidx)
     # Add the logs + editlog option (clicking on a line and seeing only the log lines connecting to and from it)
     editlog = Observable(false)
     editlogbtn = DOM.div(modifier("✎", parameter=editlog, class="nostyle"), class="backbutton",
-                                style=@lift(($editlog ? "border: 2px solid #d62828 !important;" : "border: 2px solid #003049;")))
+                                style=@lift(($editlog==true ? "border: 2px solid #d62828 !important;" : "border: 2px solid rgb(11, 42, 64);")))
     logs = [hstack(editlogbtn, vstack("Log...", @lift($showlog ? "[Enabled]" : "[Disabled]"), tie(logstring), class="log_wrapper"))]
     about_sections = [hstack(
                         DOM.span(@lift($obs_USE==2 ? "Single Selection" : "Double Selection")),
@@ -335,14 +331,19 @@ landing = App() do session::Session
     # Info about the log: enabled/disabled
     loginfo = DOM.h4(@lift($showlog ? "Log Enabled" : "Log Disabled"); style="color: white;")
     # Add title to the right in the form of a ZStack
-    titles_div = [vstack(hstack(DOM.h1(titles[i]), btns), about_sections[1], loginfo,
-                            logs[1]) for i in 1:3]
+    titles_div = [vstack(hstack(DOM.h1(titles[i]), btns)) for i in 1:figurescount]
     titles_div[1] = active(titles_div[1])
-    (titles_div[i] = wrap(titles_div[i]) for i in 2:3) 
-    titles_div = zstack(titles_div; activeidx=activeidx, anim=[:static]
-    , style="""color: $(config[:colorscheme][4]);""") # static = no animation
+    (titles_div[i] = wrap(titles_div[i]) for i in 2:figurescount) 
+    titles_div = wrap(zstack(titles_div; activeidx=activeidx, anim=[:static]
+    , style="""color: $(config[:colorscheme][4]);"""),
+        about_sections[1], loginfo,
+        zstack(active(logs[1]), wrap(logs[1]), activeidx=activeidx, anim=[:static])
+    ) # static = no animation
 
     style = DOM.style("""
+        body {
+            font-family: Arial;
+        }
         .console_line:hover{
             background-color: rgba(38, 39, 41, 0.6);
             cursor: pointer;
@@ -354,7 +355,7 @@ landing = App() do session::Session
             border-left: 2px solid rgb(38, 39, 41);
             border-bottom: 2px solid rgb(38, 39, 41);
             min-height: 40px !important;
-            background-color: #003049;
+            background-color: rgb(11, 42, 64);
             overflow: auto;
         }
         .backbutton{
@@ -431,7 +432,6 @@ landing = App() do session::Session
         DOM.div(@lift($editlog==false ? "Click on ✎ to select lines from log." : "Click on a line from the log to see all events related to it or, click on ✎ to show the full log again.")),
         class="infodiv"
     )
-
     return hstack(vstack(layout, infodiv), vstack(titles_div; style="padding: 20px; margin-left: 10px;
                                 background-color: $(config[:colorscheme][3]);"), style; style="width: 100%;")
 
@@ -500,6 +500,7 @@ nav = App() do
     Their performance is different, Double Selection resulting in a higher fidelity than Single Selection.
 
     One can view their performance in the following plot, which plots **final vs initial fidelity (blue)** and **success rate vs initial fidelity (yellow)**: 
+    
     $(img3)
     
     (first column - variants of single selection, colums 2 to 4 - variants of double selection)
@@ -507,7 +508,11 @@ nav = App() do
 
     """]
     return hstack(
-        wrap(text; style="width:50vw;"), vstack(DOM.h2("Entanglement process flow"), img1, DOM.h2("Purifier process flow"), img2; style="width:50vw;", class="align-center justify-center"), CSSMakieLayout.formatstyle
+        wrap(text; style="width:50vw;"), vstack(DOM.h2("Entanglement process flow"), img1, DOM.h2("Purifier process flow"), img2; style="width:50vw;", class="align-center justify-center"), CSSMakieLayout.formatstyle, DOM.style("""
+            body {
+                font-family: Arial;
+            }
+        """)
     )
 end
 

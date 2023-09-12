@@ -57,8 +57,8 @@ function slog!(s, msg, id)
     involvedpairs = id
     involvedpairs = "node"*replace(replace(involvedpairs, ":"=>"slot"), " "=>" node")
     style = isdestroyed=="destroyed" ? "border-bottom: 2px solid red;" : ""
-    signaturestr = """<span style='color:#003049; background-color:#f77f00; border-radius: 15px;'>$(signaturespl[1])</span>
-                      &nbsp;<span style='color:#d62828;'>@$(signaturespl[2]) &nbsp; | </span>"""
+    signaturestr = """<span style='color:#2ca02c; border-radius: 15px;'>$(signaturespl[1])s</span>
+                      &nbsp;<span style='color:#1f77b4;'>@$(signaturespl[2]) &nbsp; | </span>"""
     s[] = s[] * """<div class='console_line new $involvedpairs' style='$style'><span>$signaturestr</span><span>$message</span></div>"""
     notify(s)
 end
@@ -174,7 +174,6 @@ end
                 entangletime = rand(entangletimedist)
                 @yield timeout(sim, entangletime)
                 (sampledentangledtimes[1] != false) && (push!(sampledentangledtimes[1][], entangletime))
-                println(sampledentangledtimes[1])
                 initialize!((network[node][i], network[remotenode][remote_i]),noisy_pair; time=now(sim))
                 slog!(logfile, "$(now(sim)) :: $node > Success! $node:$i and $remotenode:$remote_i are now entangled.", "$node:$i $remotenode:$remote_i")
                 unlock(network[node][i])
