@@ -1,6 +1,6 @@
 import QuantumOpticsBase
 import QuantumOpticsBase: GenericBasis, CompositeBasis,
-    StateVector, AbstractSuperOperator, Ket, Operator,basis,
+    StateVector, AbstractSuperOperator, Ket, Operator,
     basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy,
     projector, identityoperator, embed, dm, expect, ptrace, spre, spost
 import QuantumOptics
