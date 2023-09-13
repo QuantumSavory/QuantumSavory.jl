@@ -8,6 +8,6 @@ function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Symbolic
     project_traceout!(state,stateindex,eigvecs(basis))
 end
 
-function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Vector{<:Symbolic{AbstractKet}})
+function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}})
     project_traceout!(state,stateindex,express.(basis,(QOR,)))
 end
