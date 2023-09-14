@@ -180,7 +180,59 @@ flowchart TB
 
 ## `project_traceout!`
 
-TODO
+#### `project_traceout!(r::RegRef, basis; time)`
+
+Project the state in `RegRef` on `basis` at a specified `time`. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+
+#### `project_traceout(reg::Register, i::Int, basis; time)`
+
+Project the state in the slot in index `i` of `Register` on `basis` at a specified `time`.  `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+
+#### `project_traceout!(f, r::RegRef, basis; time)`
+
+Project the state in `RegRef` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+
+#### `project_traceout!(f, reg::Register, i::Int, basis; time)`
+
+Project the state in the slot in index `i` of `Register` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+Lowers the representation from registers to states.
+
+#### `project_traceout!(state::Union{Ket,Operator},stateindex,basis::Symbolic{AbstractOperator})`
+
+If `basis` is an operator, call `eigvecs` to convert it into a matrix whose columns are the eigenvectors of the basis.
+
+#### `project_traceout!(state::Union{Ket,Operator},stateindex,basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}})`
+
+If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call express to convert it to   `QuantumOpticsRepr`
+
+#### `project_traceout!(state::Union{Ket,Operator},stateindex,psis::Base.AbstractVecOrTuple{<:Ket})`
+
+Low level implementation to calculate the projected state of qubit at index `stateindex` in `state` out of the basis states `psis`
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+A["<code>project_traceout!(r::RegRef, basis; time)</code>"]
+B["<code>project_traceout(reg::Register, i::Int, basis; time)</code>"]
+C["<code>project_traceout!(f, r::RegRef, basis; time)</code>"]
+D["<code>project_traceout!(f, reg::Register, i::Int, basis; time)</code>"]
+subgraph TOP [lower from registers to states]
+  direction LR
+  D1["<code>reg.staterefs[i].state[]</code>"]
+  D2["<code>reg.stateindices[i]</code>"]
+end
+E1["<code>basis::Symbolic{AbstractOperator}</code>"]
+F1["<code>eigvecs(basis)</code>"]
+E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
+F2["<code>express.(basis,(QOR,))</code>"]
+G(["<code>Dispatch on state to low level implementation<br>within the library</code>"])
+A --> B --> C --> D --> TOP
+TOP --> E1 --> F1 --> G
+TOP --> E2 --> F2 --> G
+</div>
+```
 
 ## `traceout!`
 
