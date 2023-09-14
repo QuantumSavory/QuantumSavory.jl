@@ -214,23 +214,23 @@ Low level implementation to calculate the projected state of qubit at index `sta
 ```@raw html
 <div class="mermaid">
 flowchart TB
-A["<code>project_traceout!(r::RegRef, basis; time)</code>"]
-B["<code>project_traceout(reg::Register, i::Int, basis; time)</code>"]
-C["<code>project_traceout!(f, r::RegRef, basis; time)</code>"]
-D["<code>project_traceout!(f, reg::Register, i::Int, basis; time)</code>"]
-subgraph TOP [lower from registers to states]
-  direction LR
-  D1["<code>reg.staterefs[i].state[]</code>"]
-  D2["<code>reg.stateindices[i]</code>"]
-end
-E1["<code>basis::Symbolic{AbstractOperator}</code>"]
-F1["<code>eigvecs(basis)</code>"]
-E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
-F2["<code>express.(basis,(QOR,))</code>"]
-G(["<code>Dispatch on state to low level implementation<br>within the library</code>"])
-A --> B --> C --> D --> TOP
-TOP --> E1 --> F1 --> G
-TOP --> E2 --> F2 --> G
+  A["<code>project_traceout!(r::RegRef, basis; time)</code>"]
+  B["<code>project_traceout(reg::Register, i::Int, basis; time)</code>"]
+  C["<code>project_traceout!(f, r::RegRef, basis; time)</code>"]
+  D["<code>project_traceout!(f, reg::Register, i::Int, basis; time)</code>"]
+  subgraph TOP [lower from registers to states]
+    direction LR
+    D1["<code>reg.staterefs[i].state[]</code>"]
+    D2["<code>reg.stateindices[i]</code>"]
+  end
+  E1["<code>basis::Symbolic{AbstractOperator}</code>"]
+  F1["<code>eigvecs(basis)</code>"]
+  E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
+  F2["<code>express.(basis,(QOR,))</code>"]
+  G(["<code>Dispatch on state to low level implementation<br>within the library</code>"])
+  A --> B --> C --> D --> TOP
+  TOP --> E1 --> F1 --> G
+  TOP --> E2 --> F2 --> G
 </div>
 ```
 
@@ -265,7 +265,62 @@ flowchart TB
 
 ## `uptotime!`
 
-TODO
+#### `uptotime!(ref::RegRef, now)`
+
+Evolve the state in a `RegRef` upto a given time `now`
+
+#### `uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)`
+
+Evolve the state represented by the given `RegRef`s upto time `now`
+
+#### `uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)`
+
+Evolve the state of all the given `registers` at the slots represented by `indices` upto a time `now`
+
+#### `uptotime!(stateref::StateRef, idx::Int, background, Δt)`
+
+Evolve a `StateRef` at index `idx` with given `background` and `Δt`
+
+#### `uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt)`
+
+Evolve `state` at `indices` given `backgrounds` and `Δt`
+
+#### `uptotime!(state::QuantumClifford.MixedDestabilizer, idx::Int, background, Δt)`
+
+Low level implementation to compute the result of `uptotime!` for states using Clifford representation
+
+#### `uptotime!(state::StateVector, idx::Int, background, Δt)`
+
+Low level implementation to compute the result of `uptotime!` for states using Ket representation. The `state` in ket representation is converted to a density matrix before calling the `uptotime!` for final computation.
+
+#### `uptotime!(state::Operator, idx::Int, background, Δt)`
+
+Low level implementation to compute the result of `uptotime!` for `Operator`
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>uptotime!(ref::RegRef, now)</code>"]
+  B["<code>uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
+  C["<code>uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)</code>"]
+  subgraph TOP [lower from registers to states]
+  end
+  D["<code>uptotime!(stateref::StateRef, idx::Int, background, Δt)</code>"]
+  E["<code>uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt)</code>"]
+  F["<code>uptotime!(state::QuantumClifford.MixedDestabilizer, idx::Int, background, Δt)</code>"]
+  G["<code>uptotime!(state::StateVector, idx::Int, background, Δt)</code>"]
+  H["<code>uptotime!(state::Operator, idx::Int, background, Δt)</code>"]
+  A --> C
+  B --> C
+  C --> E
+  D --> E
+  E --> F
+  E --> G
+  G --> H
+</div>
+```
 
 ## `swap!`
 
