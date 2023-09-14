@@ -324,8 +324,41 @@ flowchart TB
 
 ## `swap!`
 
-TODO
+#### `swap!(r1::RegRef, r2::RegRef)`
+
+Swap the state of the given `RegRef`s
+
+#### `swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)`
+Swap the state stored in the two `Registers` at slots `i1` and `i2` respectively
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>swap!(r1::RegRef, r2::RegRef)</code>"]
+  B["<code>swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)</code>"]
+  A --> B
+</div>
+```
 
 ## `overwritetime!`
 
-TODO
+#### `overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now)`
+
+Overwrite the time of the simulation for the given references to `now`
+
+#### `overwritetime!(registers, indices, now)`
+
+Overwrite the time of the simulation for the given `registers` at `indices` to `now`
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
+  B["<code>overwritetime!(registers, indices, now)</code>"]
+  A --> B
+</div>
+```
