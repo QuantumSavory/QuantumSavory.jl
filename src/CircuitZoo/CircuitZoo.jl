@@ -886,6 +886,7 @@ function (circuit::SDEncode)(reg, message)
     end
 end
 
+
 """
 $TYPEDEF
 
