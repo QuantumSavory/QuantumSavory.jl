@@ -4,7 +4,8 @@ using QuantumSavory
 using DocStringExtensions
 
 export EntanglementSwap, Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
-    PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode
+    PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
+    SDDecode, SDEncode
 
 abstract type AbstractCircuit end
 
@@ -858,31 +859,31 @@ Fields:
 
 $FIELDS
 
-The circuit for Superdense Coding to encode the 2 (classical) bit message
-to its corresponding bell pair representation. `reg` is a single qubit register containing
-Alice's half of the entangled bell pair and message is the 2 bit message Alice intends to send to Bob.
-Based on the 2 bit message the state of the qubit in the register is mutated in place with `apply!`
+The circuit for [Superdense Coding](https://en.wikipedia.org/wiki/Superdense_coding) to encode the 2 (classical) bit message
+to its corresponding Bell pair representation. It takes as argumes a single qubit register containing
+Alice's half of the entangled Bell pair and the 2 bit message Alice intends to send to Bob.
 
 ```jldoctest
-julia> reg = Register(1)
+julia> regA = Register(1); regB = Register(2);
 
-julia> initialize!(reg[1], Z1)
+julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
 
-julia> message = [1, 1]
+julia> message = [1, 1];
 
-julia> SDEncode()(reg, message)
+julia> SDEncode()(regA, message);
 ```
-"""
 
+See also [`SDDecode`](@ref)
+"""
 struct SDEncode <: AbstractCircuit
 end
 
 function (circuit::SDEncode)(reg, message)
-    if message[1] == 1
-        apply!(reg[1], Z)
-    end
     if message[2] == 1
         apply!(reg[1], X)
+    end
+    if message[1] == 1
+        apply!(reg[1], Z)
     end
 end
 
@@ -899,24 +900,26 @@ using the entangled bell pair stored in the registers regA and regB after Alice'
 Returns a Tuple of the decoded message.
 
 ```jldoctest
-julia> regA = Register(1)
+julia> regA = Register(1); regB = Register(2);
 
-julia> regB = Register(1)
+julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
 
-julia> initalize!(regA[1], Z1)
+julia> message = [1, 1];
 
-julia> initalize!(regB[1], Z1)
+julia> SDEncode()(regA, message);
 
 julia> SDDecode()(regA, regB)
+(1, 1)
 ```
-"""
 
+See also [`SDEncode`](@ref)
+"""
 struct SDDecode <: AbstractCircuit
 end
 
 function (circuit::SDDecode)(regA, regB)
-    apply!((regB[1], regA[1]), CNOT)
-    apply!(regB[1], H)
+    apply!((regA[1], regB[1]), CNOT)
+    apply!(regA[1], H)
     b1 = project_traceout!(regA, 1, Z)
     b2 = project_traceout!(regB, 1, Z)
     return b1-1, b2-1

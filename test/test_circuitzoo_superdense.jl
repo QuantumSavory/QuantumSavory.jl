@@ -21,5 +21,4 @@ for i in 1:8
     rec = SDDecode()(ra, rb)
 
     @test message == rec
-
 end
