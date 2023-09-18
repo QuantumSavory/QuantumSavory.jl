@@ -4,7 +4,8 @@ using QuantumSavory
 using DocStringExtensions
 
 export EntanglementSwap, Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
-    PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode
+    PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
+    SDDecode, SDEncode
 
 abstract type AbstractCircuit end
 
@@ -849,6 +850,79 @@ function (circuit::PurifyExpedientNode)(purified,sacrificed...)
     d = stringentBody_Z(purified, sacrificed[8:10]...)
 
     [a..., b..., c..., d...]
+end
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The circuit for [Superdense Coding](https://en.wikipedia.org/wiki/Superdense_coding) to encode the 2 (classical) bit message
+to its corresponding Bell pair representation. It takes as argumes a single qubit register containing
+Alice's half of the entangled Bell pair and the 2 bit message Alice intends to send to Bob.
+
+```jldoctest
+julia> regA = Register(1); regB = Register(2);
+
+julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
+
+julia> message = [1, 1];
+
+julia> SDEncode()(regA, message);
+```
+
+See also [`SDDecode`](@ref)
+"""
+struct SDEncode <: AbstractCircuit
+end
+
+function (circuit::SDEncode)(reg, message)
+    if message[2] == 1
+        apply!(reg[1], X)
+    end
+    if message[1] == 1
+        apply!(reg[1], Z)
+    end
+end
+
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+The circuit for Superdense Coding to decode the 2 (classical) bit message
+using the entangled bell pair stored in the registers regA and regB after Alice's encoding of the first qubit.
+Returns a Tuple of the decoded message.
+
+```jldoctest
+julia> regA = Register(1); regB = Register(2);
+
+julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
+
+julia> message = [1, 1];
+
+julia> SDEncode()(regA, message);
+
+julia> SDDecode()(regA, regB)
+(1, 1)
+```
+
+See also [`SDEncode`](@ref)
+"""
+struct SDDecode <: AbstractCircuit
+end
+
+function (circuit::SDDecode)(regA, regB)
+    apply!((regA[1], regB[1]), CNOT)
+    apply!(regA[1], H)
+    b1 = project_traceout!(regA, 1, Z)
+    b2 = project_traceout!(regB, 1, Z)
+    return b1-1, b2-1
 end
 
 end # module

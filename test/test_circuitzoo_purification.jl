@@ -104,19 +104,15 @@ end
                     r = Register(6, rep())
                     initialize!(r[1:6], bell⊗bell⊗bell)
 
-                    @testset "$leaveout1, $leaveout2" begin
-                        @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==true
-                        @test observable(r[1:2], projector(bell))≈1.0
-                    end
+                    @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==true
+                    @test observable(r[1:2], projector(bell))≈1.0
                     for error in [:X, :Y, :Z], target in 3:6
                         r = Register(6, rep())
                         for i in 1:3
                             initialize!(r[(2*i-1):(2*i)], bell)
                         end
                         apply!(r[target], Dict(:X=>X, :Y=>Y, :Z=>Z)[error])
-                        @testset "error: $leaveout1, $leaveout2" begin
-                            @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==false
-                        end
+                        @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==false
                     end
                     for error in [:X, :Y, :Z], target in 1:2
                         r = Register(6, rep())
