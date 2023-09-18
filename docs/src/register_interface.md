@@ -271,7 +271,7 @@ Evolve the state in a `RegRef` upto a given time `now`
 
 #### `uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)`
 
-Evolve the state represented by the given `RegRef`s upto time `now`
+Evolve the state represented by the given `RegRef`s upto a time `now`
 
 #### `uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)`
 
