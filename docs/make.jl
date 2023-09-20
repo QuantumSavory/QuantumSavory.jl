@@ -10,10 +10,10 @@ DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory); recurs
 function main()
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
     makedocs(
-    bib,
+    plugins = [bib],
     doctest = false,
     clean = true,
-    # strict = Documenter.except(:missing_docs), TODO
+    warnonly = true, # TODO [:missing_docs],
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
         assets=["assets/init.js"]
