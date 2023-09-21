@@ -6,36 +6,39 @@ using Markdown
 
 using CSSMakieLayout
 include("setup.jl")
+include("cssconfig.jl")
 import JSServe.TailwindDashboard as D
 
-retina_scale = 2
-config = Dict(
-    :resolution => (retina_scale*1400, retina_scale*700), #used for the main figures
-    :smallresolution => (280, 160),                       #used for the menufigures
-    :colorscheme => ["rgb(11, 42, 64)", "white", "#1f77b4", "white"]
-    # :colorscheme => ["rgb(242, 242, 247)", "black", "#000529", "white"]
-    # another color scheme: :colorscheme => ["rgb(242, 242, 247)", "black", "rgb(242, 242, 247)", "black"]
-)
-
+"""
+    Dictionary that assigns an integer identifier to each type of
+    purificaiton circuit. Used when one of the two circuits is selected
+    to be used by the free qubit trigger protocol.
+"""
 purifcircuit = Dict(
     2=>Purify2to1Node,
     3=>Purify3to1Node
 )
 
+"""
+    Dictionary that assigns a name to each identifier of a purificaiton
+    circuit. Used when one of the two circuits is selected
+    to be used by the free qubit trigger protocol.
+"""
+idof = Dict(
+    "Single Selection"=>2,
+    "Double Selection"=>3
+)
+
+"""
+    Function that returns the left side of the layout, meaning the figures 
+    from the menu and the main active figure.
+"""
 function layout_content(DOM, mainfigures
-    , menufigures, title_zstack, active_index; keepsame=false)
+    , menufigures, title_zstack, active_index)
     
-    menufigs_style = """
-        display:flex;
-        flex-direction: row;
-        justify-content: space-around;
-        background-color: $(config[:colorscheme][1]);
-        padding-top: 20px;
-        width: $(config[:resolution][1]/retina_scale)px;
-    """
     menufigs_andtitles = wrap([
         vstack(
-            hoverable(keepsame ? mainfigures[i] : menufigures[i], anim=[:border], class="$(config[:colorscheme][2])";
+            hoverable(menufigures[i], anim=[:border], class="$(config[:colorscheme][2])";
                     stayactiveif=@lift($active_index == i)),
             title_zstack[i];
             class="justify-center align-center "  
@@ -61,31 +64,57 @@ function layout_content(DOM, mainfigures
 
 end
 
-idof = Dict(
-    "Single Selection"=>2,
-    "Double Selection"=>3
-)
+"""
+    Plots the second figure in the layout with information about purification.
 
+    On the left side, one can see the network with each entangled pair color
+    coded for easier visualization, and on the center one can view the color scale 
+    that is used.
+
+    The right side has 2 sections: the sliders and the fidelity plots.
+    There are two fidelity plots: one that plots the maximum fidelity among all pairs
+    (the big one at the bottom), and one that keeps an inventory of the fidelities
+    in the form of a histogram (small one at the top, near the sliders).
+
+    The sliders are chosen to be representative for what the purification part does, and
+    they are: *recycle purif pairs* and *register size*.
+
+    - *recycle purif pairs* selects weather the already purified pairs can be used again
+    for purification. The protocol handles this option optimally, by only allowing a generation
+    of pairs to purify a pair of the same generation (we define a generation by the number of times
+    a pair has been purified). This parameter defaults to false, but should be set to true if
+    one wants to visualize a wider range of fidelities as they grow from generation to generation.
+    
+    - *register size* sets the register size (defaults to 6). Has been put in this figure to
+    help the user increase/decrease the size of the register to make the using of bigger/smaller
+    purification circuits viable.
+
+    - *circuit*: can be either Double Selection or Simple Selection. When modifying it, one can
+    see how Double Selection perfoms much better in terms of final vs initial fidelity.
+
+    This function also handles the stopping/running events, which are used by both plots, and
+    are facilitated by the **running** observable.
+"""
 function plot_alphafig(F, meta="",mfig=nothing, extrafig=nothing; hidedecor=false, observables=nothing)
     if isnothing(observables)
         return
     end
-    running, obs_PURIFICATION, obs_time, obs_commtime, 
+    running, obs_perform_purification, obs_time, obs_commtime, 
         obs_registersizes, obs_node_timedelay, obs_initial_prob,
-        obs_USE, obs_emitonpurifsuccess, logstring, showlog, obs_sampledenttimes = observables
+        obs_purifcircuitid, obs_emitonpurifsuccess, webobs_logcontent, webobs_showlog, obs_sampledenttimes = observables
 
-    PURIFICATION = obs_PURIFICATION[]
+    perform_purification = obs_perform_purification[]
     time = obs_time[]
     commtimes = [obs_commtime[], obs_commtime[]]
     registersizes = [obs_registersizes[],obs_registersizes[]]
     node_timedelay = obs_node_timedelay[]
     initial_prob = obs_initial_prob[]
-    USE = obs_USE[]         # id of circuit in use: 2 for singlesel, 3 for double sel
+    purifcircuitid = obs_purifcircuitid[]         # id of circuit in use: 2 for singlesel, 3 for double sel
     noisy_pair = noisy_pair_func(initial_prob[])
     emitonpurifsuccess = obs_emitonpurifsuccess[]==1
 
     protocol = FreeQubitTriggerProtocolSimulation(
-                purifcircuit[USE];
+                purifcircuit[purifcircuitid];
                 waittime=node_timedelay[1], busytime=node_timedelay[2],
                 emitonpurifsuccess=emitonpurifsuccess
             )
@@ -119,8 +148,8 @@ function plot_alphafig(F, meta="",mfig=nothing, extrafig=nothing; hidedecor=fals
     observable_params = [obs_emitonpurifsuccess, obs_registersizes]
     m = Menu(subfig[2, 1], options = ["Single Selection", "Double Selection"], prompt="Purification circuit...", default="Double Selection")
     on(m.selection) do sel
-        obs_USE[] = idof[sel]
-        notify(obs_USE)
+        obs_purifcircuitid[] = idof[sel]
+        notify(obs_purifcircuitid)
     end
 
     for i in 1:length(observable_params)
@@ -138,19 +167,19 @@ function plot_alphafig(F, meta="",mfig=nothing, extrafig=nothing; hidedecor=fals
 
     on(running) do r
         if r
-            logstring[] = ""
-            PURIFICATION = obs_PURIFICATION[]
+            webobs_logcontent[] = ""
+            perform_purification = obs_perform_purification[]
             time = obs_time[]
             commtimes = [obs_commtime[], obs_commtime[]]
             registersizes = [obs_registersizes[], obs_registersizes[]]
             node_timedelay = obs_node_timedelay[]
             initial_prob = obs_initial_prob[]
-            USE = obs_USE[]
+            purifcircuitid = obs_purifcircuitid[]
             noisy_pair = noisy_pair_func(initial_prob[])
             emitonpurifsuccess = obs_emitonpurifsuccess[]==1
             obs_sampledenttimes[] = [-1.0]
             protocol = FreeQubitTriggerProtocolSimulation(
-                purifcircuit[USE];
+                purifcircuit[purifcircuitid];
                 waittime=node_timedelay[1], busytime=node_timedelay[2],
                 emitonpurifsuccess=emitonpurifsuccess
             )
@@ -170,18 +199,18 @@ function plot_alphafig(F, meta="",mfig=nothing, extrafig=nothing; hidedecor=fals
             currenttime = Observable(0.0)
             # Setting up the ENTANGMELENT protocol
             for (;src, dst) in edges(network)
-                @process freequbit_trigger(sim, protocol, network, src, dst, showlog[] ? logstring : nothing)
-                @process entangle(sim, protocol, network, src, dst, noisy_pair, showlog[] ? logstring : nothing, [obs_sampledenttimes])
-                @process entangle(sim, protocol, network, dst, src, noisy_pair, showlog[] ? logstring : nothing, [obs_sampledenttimes])
+                @process freequbit_trigger(sim, protocol, network, src, dst, webobs_showlog[] ? webobs_logcontent : nothing)
+                @process entangle(sim, protocol, network, src, dst, noisy_pair, webobs_showlog[] ? webobs_logcontent : nothing, [obs_sampledenttimes])
+                @process entangle(sim, protocol, network, dst, src, noisy_pair, webobs_showlog[] ? webobs_logcontent : nothing, [obs_sampledenttimes])
             end
             # Setting up the purification protocol 
-            if PURIFICATION
+            if perform_purification
                 for (;src, dst) in edges(network)
-                    @process purifier(sim, protocol, network, src, dst, showlog[] ? logstring : nothing)
-                    @process purifier(sim, protocol, network, dst, src, showlog[] ? logstring : nothing)
+                    @process purifier(sim, protocol, network, src, dst, webobs_showlog[] ? webobs_logcontent : nothing)
+                    @process purifier(sim, protocol, network, dst, src, webobs_showlog[] ? webobs_logcontent : nothing)
                 end
             end
-
+            # Plotting time on x axis and max fidelity on y axis
             coordsx = Float32[]
             maxcoordsy= Float32[]
             for t in 0:0.1:time
@@ -208,10 +237,40 @@ function plot_alphafig(F, meta="",mfig=nothing, extrafig=nothing; hidedecor=fals
     end
 end
 
+"""
+    Plots the first figure with information about entanglement generation.
+
+    On the left side, one can see the network with each entangled pair color
+    coded for easier visualization, and on the right one can view the sliders and
+    a plot showing the entanglement generation time sampled from an exponential 
+    distribution.
+
+    An **exponential distribution** is used usually for predicting time until an
+    event occurs, which in our case is the entangled pair generation.
+
+    When an entangled pair is generated it's sampled generation time is plotted on the
+    right side of the figure.
+
+    The sliders are chosen to be the most important parameters of the entanglement 
+    generation part of the protocol: *time*, *initial fidelity*, *channel delay*.
+
+    - *time*: the time in which the simultation runs. Use it to increase/decrease the
+    duration of the simulation. The more time, the higher the maximum fidelity will get.
+
+    - *initial fidelity*: the initial fidelity used for the initialization of the pairs
+    as a probabilistic object with F probability to be a clear state, and 1-F probability
+    to be a mixed state. Has been put here to help the user see how the purification protocol
+    and ciruits perform starting from a wider range of probabilities.
+
+    - *chanel delay*: as the communication happens through channels it is mandatory that
+    the protocol imposes a time delay between the sender and the receiver of a message.
+    The *channel delay* parameter is exactly that, and it's modification will only affect
+    the run time of the simulation, and perhaps the positions of the pairs being entangled.
+"""
 function plot_betafig(F, meta="",mfig=nothing; hidedecor=false, observables=nothing)
-    running, obs_PURIFICATION, obs_time, obs_commtime, 
+    running, obs_perform_purification, obs_time, obs_commtime, 
         obs_registersizes, obs_node_timedelay, obs_initial_prob,
-        obs_USE, obs_emitonpurifsuccess, logstring, showlog, obs_sampledenttimes = observables
+        obs_purifcircuitid, obs_emitonpurifsuccess, webobs_logcontent, webobs_showlog, obs_sampledenttimes = observables
     rightfig = F[1:2, 4:6]
     plotfig = rightfig[2,1:4]
     waittimeax = Axis(plotfig, title="Entanglement generation wait time", limits = (0, 5, 0, 2))
@@ -255,35 +314,80 @@ function plot_betafig(F, meta="",mfig=nothing; hidedecor=false, observables=noth
     end
     
 end
-#   The plot function is used to prepare the receipe (plots) for
-#   the mainfigures which get toggled by the identical figures in
-#   the menu (the menufigures), as well as for the menufigures themselves
 
+"""
+    This function is used to plot both the purification and entanglement figures.
+"""
 function plot(figure_array, menufigs=[], metas=["", "", ""]; hidedecor=false, observables=nothing)
     plot_betafig(figure_array[1], metas[1], menufigs[1]; observables=observables)
     plot_alphafig(figure_array[2], metas[2], menufigs[2], figure_array[1]; hidedecor=hidedecor, observables=observables)
 end
 
-###################### LANDING PAGE OF THE APP ######################
+"""
+    Landing Page of the app.
 
+    This is the part of the program that handles the interactive part of the simulation.
+    It uses CSSMakieLayout.jl for web layouting, and the above plot functions for the figures,
+    as well as the setup.jl file for running the simulation.
+
+    We use a big number of observables to make the layout as reactive as possible for the user
+    to enjoy and learn from it.
+
+    The observables split into two categories:
+        - parameters of the simulation (which can be also found in 1_entangler_purifier_console.jl)
+        - toggles and logs for the web part
+    
+    First we have the params of the simulation:
+        
+        - obs_perform_purification: weather purification should be performed (set to true)
+        - obs_time: duration of the simulation
+        - obs_commtime: channel time delay 
+        - obs_registersizes: size of each register
+        - obs_node_timedelay: [wait time, busy time], set to [0.4, 0.3]
+        - obs_initial_prob: inital fidelity
+        - obs_purifcircuitid: what circuit to use, based on the dictionaries above, 2 for SingleSelection (2to1)
+                            and 3 for DoubleSelection (3to1)
+        - obs_emitonpurifsuccess: if true the protocol will recycle purified pairs, elst it will not.
+        - and obs_sampledenttimes: time intervals sampled by the entangled pair generation based on an exponantial
+                                ditribution
+    
+    And then the web toggles and logs that are used to toggle logs, log interactions, or for the log itself.
+        
+        - webobs_logcontent: the content of the log
+        - webobs_showlog: weather the log is enabled or not
+        - webobs_editlog: weather log interactions are enabled or not
+    
+    The log enable/disable can be used to slightly imporve the run time of the simulation, although
+    in some cases it might not seem like it improves the run time that much. It is kept (and defaulted to false)
+    just in case one adds to this simulation, and time improvement becomes noticeable.
+
+    The edit log enable/disable button is present because in some cases one might like to see what happened
+    to a certain slot in a certain register as the simulation ran. When enabling this option, one can click a
+    line from the log, and only all other events that involve the slots present in the clicked line will be 
+    displayed. To go back to the full log, one should click the edit log buttin again to disable it.
+
+    figurescount (set to 2), can be changed to 3 or more, if one wants to add more figures with some
+    more information to the fullstack simulation. As we only handle entanglement generation and purification
+    in this example, we kept it to 2, but as in the future, swapping and more could be added,
+    the figurescount can be increased.
+"""
 landing = App() do session::Session
     figurescount = 2
     running = Observable(false)
-    obs_PURIFICATION = Observable(true)
+    obs_perform_purification = Observable(true)
     obs_time = Observable(20.3)
     obs_commtime = Observable(0.1)
     obs_registersizes = Observable(6)
     obs_node_timedelay = Observable([0.4, 0.3])
     obs_initial_prob = Observable(0.7)
-    obs_USE = Observable(3)
+    obs_purifcircuitid = Observable(3)
     obs_emitonpurifsuccess = Observable(0)
-    logstring = Observable("--")
-    showlog = Observable(false)
+    webobs_logcontent = Observable("--")
+    webobs_showlog = Observable(false)
     obs_sampledenttimes = Observable([-1.0])
-    allobs = [running, obs_PURIFICATION, obs_time, obs_commtime, 
+    allobs = [running, obs_perform_purification, obs_time, obs_commtime, 
                 obs_registersizes, obs_node_timedelay, obs_initial_prob,
-                obs_USE, obs_emitonpurifsuccess, logstring, showlog, obs_sampledenttimes]
-    keepsame=true
+                obs_purifcircuitid, obs_emitonpurifsuccess, webobs_logcontent, webobs_showlog, obs_sampledenttimes]
     # Create the menufigures and the mainfigures
     mainfigures = [Figure(backgroundcolor=:white,  resolution=config[:resolution]) for _ in 1:figurescount]
     menufigures = [Figure(backgroundcolor=:white,  resolution=config[:smallresolution]) for i in 1:figurescount]
@@ -315,21 +419,21 @@ landing = App() do session::Session
 
     # Obtain reactive layout of the figures
     layout, content = layout_content(DOM, mainfigures, menufigures, titles_zstack, activeidx)
-    # Add the logs + editlog option (clicking on a line and seeing only the log lines connecting to and from it)
-    editlog = Observable(false)
-    editlogbtn = DOM.div(modifier("✎", parameter=editlog, class="nostyle"), class="backbutton",
-                                style=@lift(($editlog==true ? "border: 2px solid #d62828 !important;" : "border: 2px solid rgb(11, 42, 64);")))
-    logs = [hstack(editlogbtn, vstack("Log...", @lift($showlog ? "[Enabled]" : "[Disabled]"), tie(logstring), class="log_wrapper"))]
+    # Add the logs + webobs_editlog option (clicking on a line and seeing only the log lines connecting to and from it)
+    webobs_editlog = Observable(false)
+    webobs_editlogbtn = DOM.div(modifier("✎", parameter=webobs_editlog, class="nostyle"), class="backbutton",
+                                style=@lift(($webobs_editlog==true ? "border: 2px solid #d62828 !important;" : "border: 2px solid rgb(11, 42, 64);")))
+    logs = [hstack(webobs_editlogbtn, vstack("Log...", @lift($webobs_showlog ? "[Enabled]" : "[Disabled]"), tie(webobs_logcontent), class="log_wrapper"))]
     about_sections = [hstack(
-                        DOM.span(@lift($obs_USE==2 ? "Single Selection" : "Double Selection")),
+                        DOM.span(@lift($obs_purifcircuitid==2 ? "Single Selection" : "Double Selection")),
                         " | Register size: ",DOM.span(obs_registersizes)
                         ;style="color: $(config[:colorscheme][3]) !important; padding: 5px; background-color: white;")]
     # Add the back and log buttons
     backbutton = wrap(DOM.a("←", href="/"; style="width: 40px; height: 40px;"); class="backbutton")
-    logbutton = wrap(modifier(DOM.span("📜"), parameter=showlog, class="nostyle"); class="backbutton")
+    logbutton = wrap(modifier(DOM.span("📜"), parameter=webobs_showlog, class="nostyle"); class="backbutton")
     btns = vstack(backbutton, logbutton)
     # Info about the log: enabled/disabled
-    loginfo = DOM.h4(@lift($showlog ? "Log Enabled" : "Log Disabled"); style="color: white;")
+    loginfo = DOM.h4(@lift($webobs_showlog ? "Log Enabled" : "Log Disabled"); style="color: white;")
     # Add title to the right in the form of a ZStack
     titles_div = [vstack(hstack(DOM.h1(titles[i]), btns)) for i in 1:figurescount]
     titles_div[1] = active(titles_div[1])
@@ -338,61 +442,10 @@ landing = App() do session::Session
     , style="""color: $(config[:colorscheme][4]);"""),
         about_sections[1], loginfo,
         zstack(active(logs[1]), wrap(logs[1]), activeidx=activeidx, anim=[:static])
-    ) # static = no animation
+    )
 
-    style = DOM.style("""
-        body {
-            font-family: Arial;
-        }
-        .console_line:hover{
-            background-color: rgba(38, 39, 41, 0.6);
-            cursor: pointer;
-        }
-        .log_wrapper{
-            max-height: 65vh !important; max-width: 90% !important; color: white; 
-            display: flex;
-            flex-direction: column-reverse;
-            border-left: 2px solid rgb(38, 39, 41);
-            border-bottom: 2px solid rgb(38, 39, 41);
-            min-height: 40px !important;
-            background-color: rgb(11, 42, 64);
-            overflow: auto;
-        }
-        .backbutton{
-            color: $(config[:colorscheme][4]) !important;
-            background-color: white;
-            padding: 10px;
-            height: min-content;
-        }
-
-        .backbutton:hover{
-            color: $(config[:colorscheme][4]) !important;
-            opacity: 0.8;
-        }
-
-        .backbutton a{
-            font-weight: bold;
-        }
-        .nostyle{
-            border: none !important;
-            padding: 0 0 0 0 !important;
-            margin: 0 0 0 0 !important;
-            background: transparent !important;
-        }
-        .hide{
-            display: none;
-        }
-        .active {
-            background-color: rgba(38, 39, 41, 0.8);
-        }
-        .infodiv{
-            color: white;
-            background-color: $(config[:colorscheme][3]);
-            padding: 10px;
-        }
-    """)
-    # console (log) lines script to select all that are related to a line
-    onjs(session, editlog, js"""function on_update(new_value) {
+    # Add event listeners for when a log line is clicked
+    onjs(session, webobs_editlog, js"""function on_update(new_value) {
         console.log(new_value)
         console_lines = document.querySelectorAll(".console_line.new")
         console_lines.forEach((line_deref, index, array) => {
@@ -428,12 +481,12 @@ landing = App() do session::Session
     }""")
 
     infodiv = wrap(
-        DOM.div(@lift($showlog ? "Click on 📜 to disable log." : "Click on 📜 to enable log.")),
-        DOM.div(@lift($editlog==false ? "Click on ✎ to select lines from log." : "Click on a line from the log to see all events related to it or, click on ✎ to show the full log again.")),
+        DOM.div(@lift($webobs_showlog ? "Click on 📜 to disable log." : "Click on 📜 to enable log.")),
+        DOM.div(@lift($webobs_editlog==false ? "Click on ✎ to select lines from log." : "Click on a line from the log to see all events related to it or, click on ✎ to show the full log again.")),
         class="infodiv"
     )
     return hstack(vstack(layout, infodiv), vstack(titles_div; style="padding: 20px; margin-left: 10px;
-                                background-color: $(config[:colorscheme][3]);"), style; style="width: 100%;")
+                                background-color: $(config[:colorscheme][3]);"), DOM.style(style); style="width: 100%;")
 
 end
 
@@ -517,17 +570,15 @@ nav = App() do
 end
 
 
-##
-# Serve the Makie app
+
+# Serving the app.
 isdefined(Main, :server) && close(server);
-port = parse(Int, get(ENV, "QS_COLORCENTERMODCLUSTER_PORT", "8889"))
-interface = get(ENV, "QS_COLORCENTERMODCLUSTER_IP", "127.0.0.1")
-proxy_url = get(ENV, "QS_COLORCENTERMODCLUSTER_PROXY", "")
+port = parse(Int, get(ENV, "QS_MESSAGEPASSINGDISTILATION_PORT", "8889"))
+interface = get(ENV, "QS_MESSAGEPASSINGDISTILATION_IP", "127.0.0.1")
+proxy_url = get(ENV, "QS_MESSAGEPASSINGDISTILATION_PROXY", "")
 server = JSServe.Server(interface, port; proxy_url);
 JSServe.HTTPServer.start(server)
 JSServe.route!(server, "/" => nav);
 JSServe.route!(server, "/1" => landing);
-
-##
 
 wait(server)
