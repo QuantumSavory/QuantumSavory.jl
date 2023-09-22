@@ -9,18 +9,20 @@ This is why, in this example we will go over one way to do exactly that: We will
 You might notice that in this example we (for now) omit swapping. That is because to understand the protocol and the code we need to take it step by step and start froma  2 node network.
 
 The communication processes between 2 nodes of the same edge are set up in `setup.jl`, and are the following (and can be found mor indepth in the next section):
-    - the **free_qubittrigger**, which is added to one single node from each edge of the network to prevent overlocking, and signals a free local slot when one is found
-    - the **entangler** which replies to the **free_qubittrigger** and finds a pair for the node that it replies to
-    - and the **purifier** which waits for the **entangler** to entangle enough pairs for it to be able to perform purification.
+
+- the **free_qubittrigger**, which is added to one single node from each edge of the network to prevent overlocking, and signals a free local slot when one is found
+- the **entangler** which replies to the **free_qubittrigger** and finds a pair for the node that it replies to
+- and the **purifier** which waits for the **entangler** to entangle enough pairs for it to be able to perform purification.
 
 Each of the three listens on a channel tied to each of the network's edges.
 
 This example is split into 4 files that are set up this way for easier delimitation of
-what this simulation does. We have
-    - `setup.jl` : sets up the simulation and the three processes above
-    - `1_entangler_purifier_console.jl` : records a the simulation and saves it as a video
-    - `2_wglmakie_fullstack.jl` : shows the interactive simulation in a web browser
-    - `cssconfig.jl` : css style and configurations used by `2_wglmakie_fullstack.jl`
+what this simulation does. We have:
+
+- `setup.jl` : sets up the simulation and the three processes above
+- `1_entangler_purifier_console.jl` : records a the simulation and saves it as a video
+- `2_wglmakie_fullstack.jl` : shows the interactive simulation in a web browser
+- `cssconfig.jl` : css style and configurations used by `2_wglmakie_fullstack.jl`
 
 One goal of this example is to not only understand a way of passing messages to request entanglement, but to also initiate one to quantum entanglement purification. 
 
