@@ -1,4 +1,4 @@
-retina_scale = 2
+retina_scale = 1
 """
     Resolutions and color schemes used by 2_wglmakie_fullstack.jl
 """
