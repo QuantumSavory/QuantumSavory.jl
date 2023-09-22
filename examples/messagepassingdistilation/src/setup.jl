@@ -47,7 +47,7 @@ noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
         
         - keywords: this argument is a problematic one because it lacks abstraction. It defaults to `Dict(:simple_channel=>:fqtp_channel, :process_channel=>:fqtp_process_channel)`,
                         mening the keyword used for the `simple_channel` will be `fqtp_channel`, ad the keyword used for the `process_channel` will be `fqtp_process_channel`.
-                        This is added one might want to use some keywords for other features/traits in the network, and it would be 
+                        This is added because one might want to use some keywords for other features/traits in the network, and it would be 
                         bad if there would be no way to simply change the keywords attached to the channels used for this simulation.
                         
                         How do they work? `network[remotenode=>node, protocol.keywords[:simple_channel]]` is equivalent to 

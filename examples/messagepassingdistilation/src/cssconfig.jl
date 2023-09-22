@@ -1,4 +1,7 @@
 retina_scale = 2
+"""
+    Resolutions and color schemes used by 2_wglmakie_fullstack.jl
+"""
 config = Dict(
     :resolution => (retina_scale*1400, retina_scale*700), # used for the main figures
     :smallresolution => (280, 160),                       # used for the menufigures
@@ -6,6 +9,7 @@ config = Dict(
     # :colorscheme => ["rgb(242, 242, 247)", "black", "#000529", "white"]
     # :colorscheme => ["rgb(242, 242, 247)", "black", "rgb(242, 242, 247)", "black"]
 )
+
 menufigs_style = """
         display:flex;
         flex-direction: row;
@@ -14,7 +18,6 @@ menufigs_style = """
         padding-top: 20px;
         width: $(config[:resolution][1]/retina_scale)px;
     """
-
 
 style = """
     body {
@@ -67,7 +70,6 @@ style = """
         padding: 10px;
     }
 """
-
 
 """
     Adds `msg`'s content into the `s` observable if set, or simply prints to console if `s`
