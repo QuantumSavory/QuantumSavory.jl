@@ -331,6 +331,8 @@ include("plots.jl")
 
 include("CircuitZoo/CircuitZoo.jl")
 
+include("StatesZoo/StatesZoo.jl")
+
 include("precompile.jl")
 
 end # module
