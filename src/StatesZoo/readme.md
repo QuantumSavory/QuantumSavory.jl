@@ -64,3 +64,5 @@ Vis = 0.99
 
 midswap_dual_rail(eA,eB,gA,gB,Pd,Vis)
 ```
+
+Note: Details and references in the respective readme.md files in the matlab folder
