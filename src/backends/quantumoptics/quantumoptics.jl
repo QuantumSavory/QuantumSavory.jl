@@ -5,16 +5,9 @@ import QuantumOpticsBase: GenericBasis, CompositeBasis,
     projector, identityoperator, embed, dm, expect, ptrace, spre, spost
 import QuantumOptics
 import QuantumOptics: timeevolution
+import QuantumInterface: nsubsystems
 
 const QOR = QuantumOpticsRepr()
-
-nsubsystems(s::Ket) = nsubsystems(s.basis)
-function nsubsystems(s::Operator)
-    @assert s.basis_l == s.basis_r
-    nsubsystems(s.basis_l)
-end
-nsubsystems(b::CompositeBasis) = length(b.bases)
-nsubsystems(b::Basis) = 1
 
 subsystemcompose(states::Ket...) = tensor(states...)
 subsystemcompose(ops::Operator...) = tensor(ops...)

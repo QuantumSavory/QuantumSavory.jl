@@ -8,6 +8,7 @@ using Graphs
 
 using QuantumInterface: basis, tensor, ⊗, apply!, traceout!,
     AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
+import QuantumInterface: nsubsystems
 
 export apply!, traceout!, removebackref!
 export project_traceout! #TODO should move to QuantumInterface
