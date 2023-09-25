@@ -26,3 +26,38 @@ function midswap_dual_rail(eA,eB,gA,gB,Pd,Vis)
 
     return [m11 0 0 0 ; 0 m22 m23 0 ; 0 m23' m33 0 ; 0 0 0 m44]
 end
+
+@withmetadata struct SingleRailMidSwapBell <: AbstractTwoQubitState
+    eA::Float64
+    eB::Float64
+    gA::Float64
+    gB::Float64
+    Pd::Float64
+    Vis::Float64
+end
+
+symbollabel(x::SingleRailMidSwapBell) = "ρˢʳᵐˢ"
+
+@withmetadata struct DualRailMidSwapBell <: AbstractTwoQubitState
+    eA::Float64
+    eB::Float64
+    gA::Float64
+    gB::Float64
+    Pd::Float64
+    Vis::Float64
+end
+
+symbollabel(x::DualRailMidSwapBell) = "ρᵈʳᵐˢ"
+
+
+## express
+
+function express_nolookup(x::SingleRailMidSwapBell, ::QuantumOpticsRepr)
+    data = midswap_single_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
+    return SparseOperator(_bspin⊗_bspin, Complex.(data))
+end
+
+function express_nolookup(x::DualRailMidSwapBell, ::QuantumOpticsRepr)
+    data = midswap_dual_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
+    return SparseOperator(_bspin⊗_bspin, Complex.(data))
+end

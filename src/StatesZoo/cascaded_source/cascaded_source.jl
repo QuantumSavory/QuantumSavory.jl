@@ -559,3 +559,25 @@ function cascaded_source_spin(Ns,gA,gB,eAm,eBm,eAs,eBs,eD,Pd,Pdo1,Pdo2,VisF)
     
     return [m11 0 0 0 ; 0 m22 m23 0 ; 0 m23' m33 0 ; 0 0 0 m44]
 end
+
+@withmetadata struct ZALMpair <: AbstractTwoQubitState
+    Ns::Float64
+    gA::Float64
+    gB::Float64
+    eAm::Float64
+    eBm::Float64
+    eAs::Float64
+    eBs::Float64
+    eD::Float64
+    Pd::Float64
+    Pdo1::Float64
+    Pdo2::Float64
+    VisF::Float64
+end
+
+symbollabel(x::ZALMpair) = "ρᶻᵃˡᵐ"
+
+function express_nolookup(x::ZALMpair, ::QuantumOpticsRepr)
+    data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
+    return SparseOperator(_bspin⊗_bspin, Complex.(data))
+end
