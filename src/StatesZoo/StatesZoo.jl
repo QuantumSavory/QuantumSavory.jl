@@ -49,8 +49,8 @@ const cascaded_source_basis = [0 0 0 0;
                                2 0 2 0]
 
     
-include("cascaded_source/cascaded_source.jl")
-include("cascaded_source/ret_cxy.jl")
-include("entanglement_swap/entanglement_swap.jl")
+include("zalm_pair/zalm_pair.jl")
+include("zalm_pair/ret_cxy.jl")
+include("single_dual_rail_midswap/single_dual_rail_midswap.jl")
 
 end # module

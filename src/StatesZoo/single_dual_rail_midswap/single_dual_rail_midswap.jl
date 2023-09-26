@@ -27,6 +27,10 @@ function midswap_dual_rail(eA,eB,gA,gB,Pd,Vis)
     return [m11 0 0 0 ; 0 m22 m23 0 ; 0 m23' m33 0 ; 0 0 0 m44]
 end
 
+```
+Generates the spin-spin density matrix for linear photonic entanglement swap 
+with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite)
+```
 @withmetadata struct SingleRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64
     eB::Float64
@@ -38,6 +42,11 @@ end
 
 symbollabel(x::SingleRailMidSwapBell) = "ρˢʳᵐˢ"
 
+
+```
+Generates the spin-spin density matrix for linear photonic entanglement swap with emissive
+ memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite)
+```
 @withmetadata struct DualRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64
     eB::Float64

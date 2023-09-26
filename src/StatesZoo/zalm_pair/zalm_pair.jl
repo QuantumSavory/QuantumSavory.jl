@@ -560,6 +560,11 @@ function cascaded_source_spin(Ns,gA,gB,eAm,eBm,eAs,eBs,eD,Pd,Pdo1,Pdo2,VisF)
     return [m11 0 0 0 ; 0 m22 m23 0 ; 0 m23' m33 0 ; 0 0 0 m44]
 end
 
+
+```
+Generate symbolic object for the spin-spin density matrix for a 
+cascaded source swapped with emissive spin memories from the paper [prajit2023entangling](@cite)
+```
 @withmetadata struct ZALMpair <: AbstractTwoQubitState
     Ns::Float64
     gA::Float64
