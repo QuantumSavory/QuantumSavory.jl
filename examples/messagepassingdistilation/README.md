@@ -95,3 +95,4 @@ go to cssconfig.jl and modify
 ```julia
 retina_scale = 1 # modify to 2 instead of 1
 ```
+Related github issue: [https://github.com/MakieOrg/Makie.jl/pull/2544](https://github.com/MakieOrg/Makie.jl/pull/2544)
