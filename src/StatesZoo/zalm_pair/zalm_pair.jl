@@ -565,9 +565,9 @@ end
 Generate symbolic object for the spin-spin density matrix for a 
 cascaded source swapped with emissive spin memories. The cascaded 
 source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
-is stored in spin memories as discussed in [prajit2023entangling](@cite)
+is stored in spin memories as discussed in [prajit2023entangling](@cite).
 """
-@withmetadata struct ZALMpair <: AbstractTwoQubitState
+@withmetadata struct ZALMSpinPair <: AbstractTwoQubitState
     Ns::Float64
     gA::Float64
     gB::Float64
@@ -582,9 +582,9 @@ is stored in spin memories as discussed in [prajit2023entangling](@cite)
     VisF::Float64
 end
 
-symbollabel(x::ZALMpair) = "ρᶻᵃˡᵐ"
+symbollabel(x::ZALMSpinPair) = "ρᶻᵃˡᵐ"
 
-function express_nolookup(x::ZALMpair, ::QuantumOpticsRepr)
+function express_nolookup(x::ZALMSpinPair, ::QuantumOpticsRepr)
     data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
     return SparseOperator(_bspin⊗_bspin, Complex.(data))
 end
