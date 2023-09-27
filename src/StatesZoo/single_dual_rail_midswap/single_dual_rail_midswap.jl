@@ -30,6 +30,11 @@ end
 """
 Generates the spin-spin density matrix for linear photonic entanglement swap 
 with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite)
+It takes the following parameters:
+- eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
+- gA, gB: Memory initialization parameter for memories A and B
+- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
+- Vis: Interferometer visibility for the midpoint swap' can be complex to account for phase instability
 """
 @withmetadata struct SingleRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64
@@ -45,7 +50,12 @@ symbollabel(x::SingleRailMidSwapBell) = "ρˢʳᵐˢ"
 
 """
 Generates the spin-spin density matrix for linear photonic entanglement swap with emissive
- memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite)
+ memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite).
+ It takes the following parameters:
+ - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
+- gA, gB: Memory initialization parameter for memories A and B 
+- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
+- Vis: Interferometer visibility for the midpoint swap 
 """
 @withmetadata struct DualRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64

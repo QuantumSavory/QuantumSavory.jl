@@ -566,6 +566,20 @@ Generate symbolic object for the spin-spin density matrix for a
 cascaded source swapped with emissive spin memories. The cascaded 
 source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
 is stored in spin memories as discussed in [prajit2023entangling](@cite).
+It takes the following parameters:
+- Ns: mean photon number per mode of the cascaded source model
+- gA: qubit initialization parameter on Alice's side 
+- gB: qubit initialization parameter on Bob's side 
+- eAm: memory out-coupling efficiency for Alice's side (Allowed range: [0,1])
+- eBm: memory out-coupling efficiency for Bob's side (Allowed range: [0,1])
+- eAs: source out-coupling efficiency for Alice's side (Allowed range: [0,1])
+- eBs: source out-coupling efficiency for Bob's side (Allowed range: [0,1])
+- eD: detector efficiency (Allowed range: [0,1])
+- Pd: dark click probability per photonic mode on source's swap 
+- Pdo1: dark click probability per photonic mode on Alice side swap 
+- Pdo2: dark click probability per photonic mode on Bob side swap
+- VisF: product of visibilities of all three  interferometers (Allowed range: [0,1])
+```
 """
 @withmetadata struct ZALMSpinPair <: AbstractTwoQubitState
     Ns::Float64
