@@ -563,7 +563,9 @@ end
 
 """
 Generate symbolic object for the spin-spin density matrix for a 
-cascaded source swapped with emissive spin memories from the paper [prajit2023entangling](@cite)
+cascaded source swapped with emissive spin memories. The cascaded 
+source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
+is stored in spin memories as discussed in [prajit2023entangling](@cite)
 """
 @withmetadata struct ZALMpair <: AbstractTwoQubitState
     Ns::Float64
