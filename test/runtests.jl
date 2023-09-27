@@ -30,6 +30,7 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 @doset "noninstant_and_backgrounds_qumode"
 @doset "circuitzoo_superdense"
 @doset "circuitzoo_purification"
+@doset "stateszoo_api"
 @doset "examples"
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_cairo"
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_gl"
