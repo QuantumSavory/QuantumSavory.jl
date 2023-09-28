@@ -197,17 +197,11 @@ Project the state in `RegRef` on `basis` at a specified `time` and apply functio
 Project the state in the slot in index `i` of `Register` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
 Lowers the representation from registers to states.
 
-#### `project_traceout!(state::Union{Ket,Operator},stateindex,basis::Symbolic{AbstractOperator})`
+#### `project_traceout!(state, stateindex, basis::Symbolic{AbstractOperator})` and `basis::AbstractVecOrTuple{<:Symbolic{AbstractKet}}`
 
-If `basis` is an operator, call `eigvecs` to convert it into a matrix whose columns are the eigenvectors of the basis.
-
-#### `project_traceout!(state::Union{Ket,Operator},stateindex,basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}})`
-
-If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call express to convert it to   `QuantumOpticsRepr`
-
-#### `project_traceout!(state::Union{Ket,Operator},stateindex,psis::Base.AbstractVecOrTuple{<:Ket})`
-
-Low level implementation to calculate the projected state of qubit at index `stateindex` in `state` out of the basis states `psis`
+Backend implementations.
+If `basis` is an operator, call `eigvecs` to convert it into a matrix whose columns are the eigenvectors of the operator.
+If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` to convert it to the necessary representation.
 
 #### Interface Overview
 
@@ -215,9 +209,7 @@ Low level implementation to calculate the projected state of qubit at index `sta
 <div class="mermaid">
 flowchart TB
   A["<code>project_traceout!(r::RegRef, basis; time)</code>"]
-  B["<code>project_traceout(reg::Register, i::Int, basis; time)</code>"]
-  C["<code>project_traceout!(f, r::RegRef, basis; time)</code>"]
-  D["<code>project_traceout!(f, reg::Register, i::Int, basis; time)</code>"]
+  B["<code>project_traceout!(reg::Register, i::Int, basis; time)</code>"]
   subgraph TOP [lower from registers to states]
     direction LR
     D1["<code>reg.staterefs[i].state[]</code>"]
@@ -226,9 +218,9 @@ flowchart TB
   E1["<code>basis::Symbolic{AbstractOperator}</code>"]
   F1["<code>eigvecs(basis)</code>"]
   E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
-  F2["<code>express.(basis,(QOR,))</code>"]
-  G(["<code>Dispatch on state to low level implementation<br>within the library</code>"])
-  A --> B --> C --> D --> TOP
+  F2["<code>express.(basis)</code>"]
+  G([Dispatch on state to low level implementation<br>in an independent library])
+  A --> B --> TOP
   TOP --> E1 --> F1 --> G
   TOP --> E2 --> F2 --> G
 </div>
@@ -305,20 +297,16 @@ flowchart TB
   A["<code>uptotime!(ref::RegRef, now)</code>"]
   B["<code>uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
   C["<code>uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)</code>"]
-  subgraph TOP [lower from registers to states]
-  end
+  C1["lower from registers to states"]
   D["<code>uptotime!(stateref::StateRef, idx::Int, background, Δt)</code>"]
   E["<code>uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt)</code>"]
-  F["<code>uptotime!(state::QuantumClifford.MixedDestabilizer, idx::Int, background, Δt)</code>"]
-  G["<code>uptotime!(state::StateVector, idx::Int, background, Δt)</code>"]
-  H["<code>uptotime!(state::Operator, idx::Int, background, Δt)</code>"]
   A --> C
   B --> C
-  C --> E
+  C --> C1
+  C1 --> E
   D --> E
+  F([Dispatch on state to low level implementation<br>in an independent library])
   E --> F
-  E --> G
-  G --> H
 </div>
 ```
 
