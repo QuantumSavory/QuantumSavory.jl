@@ -1,0 +1,46 @@
+function Mv=midswap_dual_rail(eA,eB,gA,gB,Pd,Vis)
+% Author: Prajit Dhara
+% Function to calculate the spin-spin density matrix for midpoint swap
+% using memories emitting dual rail photonic qubits
+% Inputs:
+% eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
+%         Range: [0,1]; Typical value: 1-1e-4
+% gA, gB: Memory initialization parameter for memories A and B 
+%         Range: [0,1]; Typical value: 0.5
+%         Memory emission model: \sqrt{1-g} |0>_M\otimes |0,1>_P + \sqrt{g} |1>_M\otimes |1,0>_P
+% Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
+%     Range: [0,1]; Typical value: 1e-8
+% Vis: Interferometer visibility for the midpoint swap ()
+%     Range:[0,1]; Typical value: 0.9-1
+% Output:
+% Mv: Spin-spin density matrix for the two memories after the midpoint swap
+%     Basis: |00>, |01>, |10>, |11>
+
+    m11=((1/2).*eA.*(1+(-1).*eB).*gA.*gB+(1/2).*(1+(-1).*eA).*eB.* ...
+        gA.*gB).*(1+(-1).*Pd).^3.*Pd+(1+(-1).*eA).*(1+(-1).*eB).* ...
+        gA.*gB.*(1+(-1).*Pd).^2.*Pd.^2;
+
+    m22=(1/4).*eA.*eB.*gA.*(1+(-1).*gB).*(1+(-1).*Pd).^4+(1/2).*eA.* ...
+        (1+(-1).*eB).*gA.*(1+(-1).*gB).*(1+(-1).*Pd).^3.*Pd+(1/2).*( ...
+        1+(-1).*eA).*eB.*gA.*(1+(-1).*gB).*(1+(-1).*Pd).^3.*Pd+(1+( ...
+        -1).*eA).*(1+(-1).*eB).*gA.*(1+(-1).*gB).*(1+(-1).*Pd).^2.* ...
+        Pd.^2;
+
+    m33=(1/4).*eA.*eB.*(1+(-1).*gA).*gB.*(1+(-1).*Pd).^4+(1/2).*eA.* ...
+        (1+(-1).*eB).*(1+(-1).*gA).*gB.*(1+(-1).*Pd).^3.*Pd+(1/2).*( ...
+        1+(-1).*eA).*eB.*(1+(-1).*gA).*gB.*(1+(-1).*Pd).^3.*Pd+(1+( ...
+        -1).*eA).*(1+(-1).*eB).*(1+(-1).*gA).*gB.*(1+(-1).*Pd).^2.* ...
+        Pd.^2;
+
+    m44=((1/2).*eA.*(1+(-1).*eB).*(1+(-1).*gA).*(1+(-1).*gB)+(1/2).* ...
+        (1+(-1).*eA).*eB.*(1+(-1).*gA).*(1+(-1).*gB)).*(1+(-1).*Pd) ...
+        .^3.*Pd+(1+(-1).*eA).*(1+(-1).*eB).*(1+(-1).*gA).*(1+(-1).* ...
+        gB).*(1+(-1).*Pd).^2.*Pd.^2;
+
+    m23=(Vis.^2).*(1/4).*eA.*eB.*(1+(-1).*gA).^(1/2).*gA.^(1/2).*(1+(-1).*gB) ...
+        .^(1/2).*gB.^(1/2).*(1+(-1).*Pd).^4;
+
+    m32=conj(m23);
+    Mv=[m11, 0, 0, 0 ; 0, m22, m23, 0 ; 0, m32, m33, 0 ; 0, 0, 0, m44];
+
+end
