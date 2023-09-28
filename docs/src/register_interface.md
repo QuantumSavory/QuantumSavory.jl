@@ -180,7 +180,51 @@ flowchart TB
 
 ## `project_traceout!`
 
-TODO
+#### `project_traceout!(r::RegRef, basis; time)`
+
+Project the state in `RegRef` on `basis` at a specified `time`. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+
+#### `project_traceout(reg::Register, i::Int, basis; time)`
+
+Project the state in the slot in index `i` of `Register` on `basis` at a specified `time`.  `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+
+#### `project_traceout!(f, r::RegRef, basis; time)`
+
+Project the state in `RegRef` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+
+#### `project_traceout!(f, reg::Register, i::Int, basis; time)`
+
+Project the state in the slot in index `i` of `Register` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+Lowers the representation from registers to states.
+
+#### `project_traceout!(state, stateindex, basis::Symbolic{AbstractOperator})` and `basis::AbstractVecOrTuple{<:Symbolic{AbstractKet}}`
+
+Backend implementations.
+If `basis` is an operator, call `eigvecs` to convert it into a matrix whose columns are the eigenvectors of the operator.
+If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` to convert it to the necessary representation.
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>project_traceout!(r::RegRef, basis; time)</code>"]
+  B["<code>project_traceout!(reg::Register, i::Int, basis; time)</code>"]
+  subgraph TOP [lower from registers to states]
+    direction LR
+    D1["<code>reg.staterefs[i].state[]</code>"]
+    D2["<code>reg.stateindices[i]</code>"]
+  end
+  E1["<code>basis::Symbolic{AbstractOperator}</code>"]
+  F1["<code>eigvecs(basis)</code>"]
+  E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
+  F2["<code>express.(basis)</code>"]
+  G([Dispatch on state to low level implementation<br>in an independent library])
+  A --> B --> TOP
+  TOP --> E1 --> F1 --> G
+  TOP --> E2 --> F2 --> G
+</div>
+```
 
 ## `traceout!`
 
@@ -213,12 +257,96 @@ flowchart TB
 
 ## `uptotime!`
 
-TODO
+#### `uptotime!(ref::RegRef, now)`
+
+Evolve the state in a `RegRef` upto a given time `now`
+
+#### `uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)`
+
+Evolve the state represented by the given `RegRef`s upto a time `now`
+
+#### `uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)`
+
+Evolve the state of all the given `registers` at the slots represented by `indices` upto a time `now`
+
+#### `uptotime!(stateref::StateRef, idx::Int, background, Δt)`
+
+Evolve a `StateRef` at index `idx` with given `background` and `Δt`
+
+#### `uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt)`
+
+Evolve `state` at `indices` given `backgrounds` and `Δt`
+
+#### `uptotime!(state::QuantumClifford.MixedDestabilizer, idx::Int, background, Δt)`
+
+Low level implementation to compute the result of `uptotime!` for states using Clifford representation
+
+#### `uptotime!(state::StateVector, idx::Int, background, Δt)`
+
+Low level implementation to compute the result of `uptotime!` for states using Ket representation. The `state` in ket representation is converted to a density matrix before calling the `uptotime!` for final computation.
+
+#### `uptotime!(state::Operator, idx::Int, background, Δt)`
+
+Low level implementation to compute the result of `uptotime!` for `Operator`
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>uptotime!(ref::RegRef, now)</code>"]
+  B["<code>uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
+  C["<code>uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)</code>"]
+  C1["lower from registers to states"]
+  D["<code>uptotime!(stateref::StateRef, idx::Int, background, Δt)</code>"]
+  E["<code>uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt)</code>"]
+  A --> C
+  B --> C
+  C --> C1
+  C1 --> E
+  D --> E
+  F([Dispatch on state to low level implementation<br>in an independent library])
+  E --> F
+</div>
+```
 
 ## `swap!`
 
-TODO
+#### `swap!(r1::RegRef, r2::RegRef)`
+
+Swap the state of the given `RegRef`s
+
+#### `swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)`
+Swap the state stored in the two `Registers` at slots `i1` and `i2` respectively
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>swap!(r1::RegRef, r2::RegRef)</code>"]
+  B["<code>swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)</code>"]
+  A --> B
+</div>
+```
 
 ## `overwritetime!`
 
-TODO
+#### `overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now)`
+
+Overwrite the time of the simulation for the given references to `now`
+
+#### `overwritetime!(registers, indices, now)`
+
+Overwrite the time of the simulation for the given `registers` at `indices` to `now`
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+  A["<code>overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
+  B["<code>overwritetime!(registers, indices, now)</code>"]
+  A --> B
+</div>
+```
