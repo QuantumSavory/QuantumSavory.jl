@@ -1,5 +1,6 @@
 module StatesZoo
 
+using DocStringExtensions
 using QuantumSymbolics, QuantumOpticsBase
 using QuantumSymbolics: withmetadata, @withmetadata, Metadata
 import QuantumSymbolics: express_nolookup
