@@ -28,6 +28,12 @@ function midswap_dual_rail(eA,eB,gA,gB,Pd,Vis)
 end
 
 """
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
 Generates the spin-spin density matrix for linear photonic entanglement swap 
 with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite)
 It takes the following parameters:
@@ -35,6 +41,14 @@ It takes the following parameters:
 - gA, gB: Memory initialization parameter for memories A and B
 - Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
 - Vis: Interferometer visibility for the midpoint swap' can be complex to account for phase instability
+
+```jldoctest
+julia> r = Register(2)
+
+julia> initialize!(r[1:2], SingleRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+
+julia> observable(r[1:2], Z⊗Z)
+```
 """
 @withmetadata struct SingleRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64
@@ -49,6 +63,12 @@ symbollabel(x::SingleRailMidSwapBell) = "ρˢʳᵐˢ"
 
 
 """
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
 Generates the spin-spin density matrix for linear photonic entanglement swap with emissive
  memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite).
  It takes the following parameters:
@@ -56,6 +76,14 @@ Generates the spin-spin density matrix for linear photonic entanglement swap wit
 - gA, gB: Memory initialization parameter for memories A and B 
 - Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
 - Vis: Interferometer visibility for the midpoint swap 
+
+```jldoctest
+julia> r = Register(2)
+
+julia> initialize!(r[1:2], DualRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+
+julia> observable(r[1:2], Z⊗Z)
+```
 """
 @withmetadata struct DualRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64
