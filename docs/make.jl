@@ -13,7 +13,7 @@ function main()
     plugins = [bib],
     doctest = false,
     clean = true,
-    warnonly = true, # TODO [:missing_docs],
+    warnonly = [:missing_docs],
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
         assets=["assets/init.js"]
