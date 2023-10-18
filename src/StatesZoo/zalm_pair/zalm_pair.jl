@@ -662,7 +662,7 @@ end
 
 symbollabel(x::ZALMSpinPairN) = "ρᶻᵃˡᵐᴺ"
 
-# express
+## express
 
 function express_nolookup(x::ZALMSpinPairU, ::QuantumOpticsRepr)
     data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
@@ -673,3 +673,6 @@ function express_nolookup(x::ZALMSpinPairN, ::QuantumOpticsRepr)
     data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
     return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
 end
+
+## trace
+tr(x::ZALMSpinPairU) = Float64(tr(express(x).data))

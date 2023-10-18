@@ -188,3 +188,8 @@ function express_nolookup(x::DualRailMidSwapBellN, ::QuantumOpticsRepr)
     data = midswap_dual_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
     return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
 end
+
+## trace
+
+tr(x::SingleRailMidSwapBellU) = Float64(tr(express(x).data))
+tr(x::DualRailMidSwapBellU) = Float64(tr(express(x).data))

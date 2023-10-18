@@ -6,6 +6,7 @@ using QuantumSymbolics: withmetadata, @withmetadata, Metadata
 import QuantumSymbolics: express_nolookup
 
 using LinearAlgebra
+import LinearAlgebra: tr
 
 export SingleRailMidSwapBellU, SingleRailMidSwapBellN, DualRailMidSwapBellU, DualRailMidSwapBellN, ZALMSpinPairU, ZALMSpinPairN
 
