@@ -15,8 +15,3 @@
 Modules = [QuantumSavory]
 Private = false
 ```
-
-```@autodocs
-Modules = [QuantumSymbolics]
-Private = false
-```
