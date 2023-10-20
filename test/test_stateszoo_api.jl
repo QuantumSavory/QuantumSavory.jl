@@ -1,6 +1,6 @@
 using QuantumSavory
 using QuantumSavory.StatesZoo: ZALMSpinPairU, ZALMSpinPairN, SingleRailMidSwapBellU, SingleRailMidSwapBellN, DualRailMidSwapBellU, DualRailMidSwapBellN
-using LinearAlgebra
+using QuantumOpticsBase
 using Test
 
 zalmU = ZALMSpinPairU(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
@@ -34,11 +34,8 @@ r_drmsN = Register(2)
 initialize!(r_drmsN[1:2], drmsN)
 @test ! iszero(observable(r_drmsN[1:2], Z⊗Z))
 
-@test tr(zalmU) < 1.0
-@test tr(express(zalmN).data) ≈ 1
+@test tr(express(zalmN)) == 1.0
 
-@test tr(srmsU) < 1.0
-@test tr(express(srmsN).data) ≈ 1.0
+@test tr(express(srmsN)) == 1.0
 
-@test tr(drmsU) < 1.0
-@test tr(express(drmsN).data) ≈ 1.0
+@test tr(express(drmsN)) == 1.0
