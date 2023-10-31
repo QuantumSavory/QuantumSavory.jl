@@ -3,7 +3,7 @@ import ConcurrentSim # Should be using
 using ConcurrentSim: Environment, request, release, now, active_process, timeout, Store, @process, Process, put, get
 using Printf
 
-export @simlog, nongreedymultilock, spinlock, DelayChannel, get_time_tracker
+export @simlog, nongreedymultilock, spinlock, get_time_tracker
 
 macro simlog(env, msg) # this should be part of @process or @resumable and just convert @info and company
     return :(@info(@sprintf("t=%.4f @ %05d : %s", now($(esc(env))), active_process($(esc(env))).bev.id, $(esc(msg)))))
