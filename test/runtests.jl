@@ -23,6 +23,7 @@ end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
+@doset "quantumchannel"
 @doset "register_interface"
 @doset "project_traceout"
 @doset "observable"

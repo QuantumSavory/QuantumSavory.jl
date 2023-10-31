@@ -14,6 +14,7 @@ export apply!, traceout!, removebackref!
 export project_traceout! #TODO should move to QuantumInterface
 
 import ConcurrentSim
+using ResumableFunctions
 
 @reexport using QuantumSymbolics
 using QuantumSymbolics:
@@ -29,6 +30,9 @@ export Qubit, Qumode, QuantumStateTrait,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground
+export QuantumChannel, take!, put!
+
+
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
@@ -329,6 +333,8 @@ include("backends/clifford/clifford.jl")
 include("concurrentsim.jl")
 
 include("plots.jl")
+
+include("quantumchannel.jl")
 
 include("CircuitZoo/CircuitZoo.jl")
 
