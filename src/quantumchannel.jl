@@ -60,7 +60,7 @@ QuantumChannel(env::ConcurrentSim.Simulation, delay, background=nothing) = Quant
 
 function Base.put!(qc::QuantumChannel, rref::RegRef)
   if !isnothing(qc.background)
-      uptotime!(rref, qc.queue.env)
+      uptotime!(rref, ConcurrentSim.now(qc.queue.store.env))
   end
 
   channel_reg = Register(1)
