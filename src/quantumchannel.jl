@@ -11,11 +11,11 @@ julia> bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0); regA = Register(2); regB = Register
 
 julia> sim = Simulation();
 
-julia> queue = DelayQueue{RegRef}(sim, 10.0)
-DelayQueue{RegRef}(QueueStore{RegRef, Int64}, 10.0)
+julia> queue = DelayQueue{Register}(sim, 10.0)
+DelayQueue{Register}(QueueStore{Register, Int64}, 10.0)
 
 julia> qc = QuantumChannel(queue)
-QuantumChannel(Qubit(), DelayQueue{RegRef}(QueueStore{RegRef, Int64}, 10.0), nothing)
+QuantumChannel(Qubit(), DelayQueue{Register}(QueueStore{Register, Int64}, 10.0), nothing)
 
 julia> @resumable function alice_node(env, qc)
             println("Putting Alice's qubit in the channel at ", now(env))
@@ -49,41 +49,38 @@ Register with 2 slots: [ Qubit | Qubit ]
 ```
 """
 struct QuantumChannel
-    trait::Qubit
-    queue::ConcurrentSim.DelayQueue{RegRef}
-    background::Any
+  trait::Qubit
+  queue::ConcurrentSim.DelayQueue{Register}
+  background::Any
 end
 
-function QuantumChannel(queue::ConcurrentSim.DelayQueue{RegRef}, background=nothing)
-    QuantumChannel(Qubit(), queue, background)
+QuantumChannel(queue::ConcurrentSim.DelayQueue{Register}, background=nothing) = QuantumChannel(Qubit(), queue, background)
+
+QuantumChannel(env::ConcurrentSim.Simulation, delay, background=nothing) = QuantumChannel(ConcurrentSim.DelayQueue{Register}(env, delay), background)
+
+function Base.put!(qc::QuantumChannel, rref::RegRef)
+  if !isnothing(qc.background)
+      uptotime!(rref, qc.queue.env)
+  end
+
+  channel_reg = Register(1)
+  channel_reg.backgrounds[1] = qc.background
+  channel_reg.traits[1] = qc.trait
+  swap!(rref, channel_reg[1])
+
+  if !isnothing(qc.background)
+      uptotime!(channel_reg[1], qc.queue.delay)
+  end
+
+  put!(qc.queue, channel_reg)
 end
 
-function Base.put!(qc::QuantumChannel, rref::RegRef, Δt=nothing)
-    if xor(isnothing(qc.background), isnothing(Δt))
-        throw(ArgumentError(lazy"""
-        Either both background and Δt should be nothing or both should be initialized to appropriate values
-        """))
-    elseif !isnothing(Δt) # if both are not nothing
-        uptotime!(rref.reg.staterefs[rref.idx], rref.reg.stateindices[rref.idx], qc.background, Δt)
-    end
 
-    put!(qc.queue, rref)
-end
-
-# should we mandate that rref_rec.reg is not initialized beforehand
-# should other register attributes of the sent regref be copied over like reprs[idx], backgrounds[idx], accesstimes[idx], env and locks[idx]
 @resumable function Base.take!(env, qc::QuantumChannel, rref_rec::RegRef)
-    rref = @yield take!(qc.queue)
+  if isassigned(rref_rec.reg, rref_rec.idx)
+      throw("Receiving register index already initialized")
+  end
+  channel_reg = @yield take!(qc.queue)
 
-    rref_rec.reg.staterefs[rref_rec.idx] = rref.reg.staterefs[rref.idx]
-    rref_rec.reg.stateindices[rref_rec.idx] = rref.reg.stateindices[rref.idx]
-
-    # update the stateref
-    sref = rref.reg.staterefs[rref.idx]
-    sref.registers[rref.idx] = rref_rec.reg
-    sref.registerindices[rref.idx] = rref_rec.idx
-
-    # erase the state from the sending register
-    rref.reg.staterefs[rref.idx] = nothing
-    rref.reg.stateindices[rref.idx] = 0
+  swap!(rref_rec, channel_reg[1])
 end
