@@ -17,8 +17,8 @@ for i in 1:8
     message = Tuple(rand(0:1, 2))
 
     # Use the circuits to encode and decode the message
-    SDEncode()(ra, message)
-    rec = SDDecode()(ra, rb)
+    SDEncode()(ra[1], message)
+    rec = SDDecode()(ra[1], rb[1])
 
     @test message == rec
 end
