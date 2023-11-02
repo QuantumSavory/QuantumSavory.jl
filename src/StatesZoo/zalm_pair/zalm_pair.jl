@@ -569,7 +569,8 @@ Fields:
 $FIELDS
 
 Generate symbolic object for the unnormalized spin-spin density matrix for a 
-cascaded source swapped with emissive spin memories. The cascaded 
+cascaded source swapped with emissive spin memories. Since the matrix is 'weighted' by the probability for 
+success, it is suffixed with a W to distinguish it from the normalized object `ZALMSpinPair`. The cascaded 
 source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
 is stored in spin memories as discussed in [prajit2023entangling](@cite).
 It takes the following parameters:
@@ -589,12 +590,12 @@ It takes the following parameters:
 ```jldoctest
 julia> r = Register(2)
 
-julia> initialize!(r[1:2], ZALMSpinPairU(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99))
+julia> initialize!(r[1:2], ZALMSpinPairW(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99))
 
 juilia> observable(r[1:2], Z⊗Z)
 ```
 """
-@withmetadata struct ZALMSpinPairU <: AbstractTwoQubitState
+@withmetadata struct ZALMSpinPairW <: AbstractTwoQubitState
     Ns::Float64
     gA::Float64
     gB::Float64
@@ -609,7 +610,7 @@ juilia> observable(r[1:2], Z⊗Z)
     VisF::Float64
 end
 
-symbollabel(x::ZALMSpinPairU) = "ρᶻᵃˡᵐᵁ"
+symbollabel(x::ZALMSpinPairW) = "ρᶻᵃˡᵐᵂ"
 
 
 """
@@ -640,12 +641,12 @@ It takes the following parameters:
 ```jldoctest
 julia> r = Register(2)
 
-julia> initialize!(r[1:2], ZALMSpinPairN(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99))
+julia> initialize!(r[1:2], ZALMSpinPair(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99))
 
 juilia> observable(r[1:2], Z⊗Z)
 ```
 """
-@withmetadata struct ZALMSpinPairN <: AbstractTwoQubitState
+@withmetadata struct ZALMSpinPair <: AbstractTwoQubitState
     Ns::Float64
     gA::Float64
     gB::Float64
@@ -660,19 +661,19 @@ juilia> observable(r[1:2], Z⊗Z)
     VisF::Float64
 end
 
-symbollabel(x::ZALMSpinPairN) = "ρᶻᵃˡᵐᴺ"
+symbollabel(x::ZALMSpinPair) = "ρᶻᵃˡᵐ"
 
 ## express
 
-function express_nolookup(x::ZALMSpinPairU, ::QuantumOpticsRepr)
+function express_nolookup(x::ZALMSpinPairW, ::QuantumOpticsRepr)
     data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
     return SparseOperator(_bspin⊗_bspin, Complex.(data))
 end
 
-function express_nolookup(x::ZALMSpinPairN, ::QuantumOpticsRepr)
+function express_nolookup(x::ZALMSpinPair, ::QuantumOpticsRepr)
     data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
     return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
 end
 
 ## Symbolic trace 
-tr(::ZALMSpinPairN) = 1
+tr(::ZALMSpinPair) = 1

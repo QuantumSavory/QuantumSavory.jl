@@ -35,7 +35,9 @@ Fields:
 $FIELDS
 
 Generates the unnormalized spin-spin density matrix for linear photonic entanglement swap 
-with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite)
+with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite).
+Since the matrix is 'weighted' by the probability for success, it is suffixed with a W to distinguish it 
+from the normalized object `SingleRailMidSwapBell`.
 It takes the following parameters:
 - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
 - gA, gB: Memory initialization parameter for memories A and B
@@ -45,12 +47,12 @@ It takes the following parameters:
 ```jldoctest
 julia> r = Register(2)
 
-julia> initialize!(r[1:2], SingleRailMidSwapBellU(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> initialize!(r[1:2], SingleRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
 
 julia> observable(r[1:2], Z⊗Z)
 ```
 """
-@withmetadata struct SingleRailMidSwapBellU <: AbstractTwoQubitState
+@withmetadata struct SingleRailMidSwapBellW <: AbstractTwoQubitState
     eA::Float64
     eB::Float64
     gA::Float64
@@ -59,7 +61,7 @@ julia> observable(r[1:2], Z⊗Z)
     Vis::Float64
 end
 
-symbollabel(x::SingleRailMidSwapBellU) = "ρˢʳᵐˢᵁ"
+symbollabel(x::SingleRailMidSwapBellW) = "ρˢʳᵐˢᵂ"
 
 
 """
@@ -80,12 +82,12 @@ It takes the following parameters:
 ```jldoctest
 julia> r = Register(2)
 
-julia> initialize!(r[1:2], SingleRailMidSwapBellN(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> initialize!(r[1:2], SingleRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
 
 julia> observable(r[1:2], Z⊗Z)
 ```
 """
-@withmetadata struct SingleRailMidSwapBellN <: AbstractTwoQubitState
+@withmetadata struct SingleRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64
     eB::Float64
     gA::Float64
@@ -94,7 +96,7 @@ julia> observable(r[1:2], Z⊗Z)
     Vis::Float64
 end
 
-symbollabel(x::SingleRailMidSwapBellN) = "ρˢʳᵐˢᴺ"
+symbollabel(x::SingleRailMidSwapBell) = "ρˢʳᵐˢ"
 
 
 """
@@ -105,7 +107,9 @@ Fields:
 $FIELDS
 
 Generates the unnormalized spin-spin density matrix for linear photonic entanglement swap with emissive
- memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite).
+ memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite). 
+ Since the matrix is 'weighted' by the probability for success, it is suffixed with a W to distinguish it 
+from the normalized object `DualRailMidSwapBell`.
  It takes the following parameters:
  - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
 - gA, gB: Memory initialization parameter for memories A and B 
@@ -115,12 +119,12 @@ Generates the unnormalized spin-spin density matrix for linear photonic entangle
 ```jldoctest
 julia> r = Register(2)
 
-julia> initialize!(r[1:2], DualRailMidSwapBellU(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> initialize!(r[1:2], DualRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
 
 julia> observable(r[1:2], Z⊗Z)
 ```
 """
-@withmetadata struct DualRailMidSwapBellU <: AbstractTwoQubitState
+@withmetadata struct DualRailMidSwapBellW <: AbstractTwoQubitState
     eA::Float64
     eB::Float64
     gA::Float64
@@ -129,7 +133,7 @@ julia> observable(r[1:2], Z⊗Z)
     Vis::Float64
 end
 
-symbollabel(x::DualRailMidSwapBellU) = "ρᵈʳᵐˢᵁ"
+symbollabel(x::DualRailMidSwapBellW) = "ρᵈʳᵐˢᵂ"
 
 
 """
@@ -150,12 +154,12 @@ Generates the normalized spin-spin density matrix for linear photonic entangleme
 ```jldoctest
 julia> r = Register(2)
 
-julia> initialize!(r[1:2], DualRailMidSwapBellN(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> initialize!(r[1:2], DualRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
 
 julia> observable(r[1:2], Z⊗Z)
 ```
 """
-@withmetadata struct DualRailMidSwapBellN <: AbstractTwoQubitState
+@withmetadata struct DualRailMidSwapBell <: AbstractTwoQubitState
     eA::Float64
     eB::Float64
     gA::Float64
@@ -164,32 +168,32 @@ julia> observable(r[1:2], Z⊗Z)
     Vis::Float64
 end
 
-symbollabel(x::DualRailMidSwapBellN) = "ρᵈʳᵐˢᴺ"
+symbollabel(x::DualRailMidSwapBell) = "ρᵈʳᵐˢ"
 
 
 ## express
 
-function express_nolookup(x::SingleRailMidSwapBellU, ::QuantumOpticsRepr)
+function express_nolookup(x::SingleRailMidSwapBellW, ::QuantumOpticsRepr)
     data = midswap_single_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
     return SparseOperator(_bspin⊗_bspin, Complex.(data))
 end
 
-function express_nolookup(x::SingleRailMidSwapBellN, ::QuantumOpticsRepr)
+function express_nolookup(x::SingleRailMidSwapBell, ::QuantumOpticsRepr)
     data = midswap_single_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
     return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
 end
 
-function express_nolookup(x::DualRailMidSwapBellU, ::QuantumOpticsRepr)
+function express_nolookup(x::DualRailMidSwapBellW, ::QuantumOpticsRepr)
     data = midswap_dual_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
     return SparseOperator(_bspin⊗_bspin, Complex.(data))
 end
 
-function express_nolookup(x::DualRailMidSwapBellN, ::QuantumOpticsRepr)
+function express_nolookup(x::DualRailMidSwapBell, ::QuantumOpticsRepr)
     data = midswap_dual_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
     return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
 end
 
 # Symbolic trace
 
-tr(::SingleRailMidSwapBellN) = 1
-tr(::DualRailMidSwapBellN) = 1
+tr(::SingleRailMidSwapBell) = 1
+tr(::DualRailMidSwapBell) = 1

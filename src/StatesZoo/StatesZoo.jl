@@ -8,7 +8,7 @@ import QuantumSymbolics: express_nolookup
 using LinearAlgebra
 import LinearAlgebra: tr
 
-export SingleRailMidSwapBellU, SingleRailMidSwapBellN, DualRailMidSwapBellU, DualRailMidSwapBellN, ZALMSpinPairU, ZALMSpinPairN, tr
+export SingleRailMidSwapBellW, SingleRailMidSwapBell, DualRailMidSwapBellW, DualRailMidSwapBell, ZALMSpinPairW, ZALMSpinPair, tr
 
 abstract type AbstractTwoQubitState <: QuantumSymbolics.AbstractTwoQubitOp end #For representing density matrices
 Base.show(io::IO, x::AbstractTwoQubitState) = print(io, "$(symbollabel(x))")
