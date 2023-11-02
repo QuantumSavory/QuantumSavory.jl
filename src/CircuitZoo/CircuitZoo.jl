@@ -870,7 +870,7 @@ julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
 
 julia> message = [1, 1];
 
-julia> SDEncode()(regA, message);
+julia> SDEncode()(regA[1], message);
 ```
 
 See also [`SDDecode`](@ref)
@@ -878,12 +878,12 @@ See also [`SDDecode`](@ref)
 struct SDEncode <: AbstractCircuit
 end
 
-function (circuit::SDEncode)(reg, message)
+function (circuit::SDEncode)(rref, message)
     if message[2] == 1
-        apply!(reg[1], X)
+        apply!(rref, X)
     end
     if message[1] == 1
-        apply!(reg[1], Z)
+        apply!(rref, Z)
     end
 end
 
@@ -900,7 +900,7 @@ using the entangled bell pair stored in the registers regA and regB after Alice'
 Returns a Tuple of the decoded message.
 
 ```jldoctest
-julia> regA = Register(1); regB = Register(2);
+julia> regA = Register(1); regB = Register(1);
 
 julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
 
@@ -908,7 +908,7 @@ julia> message = [1, 1];
 
 julia> SDEncode()(regA, message);
 
-julia> SDDecode()(regA, regB)
+julia> SDDecode()(regA[1], regB[1])
 (1, 1)
 ```
 
@@ -917,11 +917,11 @@ See also [`SDEncode`](@ref)
 struct SDDecode <: AbstractCircuit
 end
 
-function (circuit::SDDecode)(regA, regB)
-    apply!((regA[1], regB[1]), CNOT)
-    apply!(regA[1], H)
-    b1 = project_traceout!(regA, 1, Z)
-    b2 = project_traceout!(regB, 1, Z)
+function (circuit::SDDecode)(rrefA, rrefB)
+    apply!((rrefA, rrefB), CNOT)
+    apply!(rrefA, H)
+    b1 = project_traceout!(rrefA, Z)
+    b2 = project_traceout!(rrefB, Z)
     return b1-1, b2-1
 end
 
