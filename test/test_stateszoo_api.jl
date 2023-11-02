@@ -1,41 +1,41 @@
 using QuantumSavory
-using QuantumSavory.StatesZoo: ZALMSpinPairU, ZALMSpinPairN, SingleRailMidSwapBellU, SingleRailMidSwapBellN, DualRailMidSwapBellU, DualRailMidSwapBellN
+using QuantumSavory.StatesZoo: ZALMSpinPairW, ZALMSpinPair, SingleRailMidSwapBellW, SingleRailMidSwapBell, DualRailMidSwapBellW, DualRailMidSwapBell
 using QuantumOpticsBase
 using Test
 
-zalmU = ZALMSpinPairU(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
-zalmN = ZALMSpinPairN(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
-srmsU = SingleRailMidSwapBellU(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
-srmsN = SingleRailMidSwapBellN(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
-drmsU = DualRailMidSwapBellU(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
-drmsN = DualRailMidSwapBellN(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
+zalmW = ZALMSpinPairW(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
+zalm = ZALMSpinPair(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
+srmsW = SingleRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
+srms = SingleRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
+drmsW = DualRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
+drms = DualRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
 
-r_zalmU = Register(2)
-initialize!(r_zalmU[1:2], zalmU)
-@test ! iszero(observable(r_zalmU[1:2], Z⊗Z))
+r_zalmW = Register(2)
+initialize!(r_zalmW[1:2], zalmW)
+@test ! iszero(observable(r_zalmW[1:2], Z⊗Z))
 
-r_zalmN = Register(2)
-initialize!(r_zalmN[1:2], zalmN)
-@test ! iszero(observable(r_zalmN[1:2], Z⊗Z))
+r_zalm = Register(2)
+initialize!(r_zalm[1:2], zalm)
+@test ! iszero(observable(r_zalm[1:2], Z⊗Z))
 
-r_srmsU = Register(2)
-initialize!(r_srmsU[1:2], srmsU)
-@test ! iszero(observable(r_srmsU[1:2], Z⊗Z))
+r_srmsW = Register(2)
+initialize!(r_srmsW[1:2], srmsW)
+@test ! iszero(observable(r_srmsW[1:2], Z⊗Z))
 
-r_srmsN = Register(2)
-initialize!(r_srmsN[1:2], srmsN)
-@test ! iszero(observable(r_srmsN[1:2], Z⊗Z))
+r_srms = Register(2)
+initialize!(r_srms[1:2], srms)
+@test ! iszero(observable(r_srms[1:2], Z⊗Z))
 
-r_drmsU = Register(2)
-initialize!(r_drmsU[1:2], drmsU)
-@test ! iszero(observable(r_drmsU[1:2], Z⊗Z))
+r_drmsW = Register(2)
+initialize!(r_drmsW[1:2], drmsW)
+@test ! iszero(observable(r_drmsW[1:2], Z⊗Z))
 
-r_drmsN = Register(2)
-initialize!(r_drmsN[1:2], drmsN)
-@test ! iszero(observable(r_drmsN[1:2], Z⊗Z))
+r_drms = Register(2)
+initialize!(r_drms[1:2], drms)
+@test ! iszero(observable(r_drms[1:2], Z⊗Z))
 
-@test tr(zalmN) == tr(express(zalmN))
+@test tr(zalm) == tr(express(zalm))
 
-@test tr(srmsN) == tr(express(srmsN))
+@test tr(srms) == tr(express(srms))
 
-@test tr(drmsN) == tr(express(drmsN))
+@test tr(drms) == tr(express(drms))
