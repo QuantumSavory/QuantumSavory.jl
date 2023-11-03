@@ -30,7 +30,7 @@ export Qubit, Qumode, QuantumStateTrait,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground
-export QuantumChannel, take!, put!
+export QuantumChannel
 
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]

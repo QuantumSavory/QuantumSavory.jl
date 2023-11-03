@@ -34,7 +34,6 @@ sref = regB.staterefs[1]
 @test sref.registers[1] == sref.registers[2]
 
 ## Test with the second constructor
-bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 regA = Register(2)
 regB = Register(2)
 initialize!((regA[1], regB[2]), bell)
@@ -62,7 +61,6 @@ sref = regB.staterefs[1]
 
 ## Test with T1Decay
 
-bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 regA = Register(2)
 regB = Register(2)
 initialize!((regA[1], regB[2]), bell)
@@ -84,9 +82,14 @@ end
 
 run(sim)
 
+reg = Register([Qubit(), Qubit()], [T1Decay(0.1), nothing])
+initialize!(reg[1:2], bell)
+uptotime!(reg[1], 10.0)
+
+@test observable(reg[1:2], projector(bell)) == observable(regB[1:2], projector(bell))
+
 ## Test with T2Dephasing
 
-bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 regA = Register(2)
 regB = Register(2)
 initialize!((regA[1], regB[2]), bell)
@@ -107,3 +110,14 @@ end
 @process bob_node(sim, qc)
 
 run(sim)
+
+reg = Register([Qubit(), Qubit()], [T2Dephasing(0.1), nothing])
+initialize!(reg[1:2], bell)
+uptotime!(reg[1], 10.0)
+
+@test observable(reg[1:2], projector(bell)) == observable(regB[1:2], projector(bell))
+
+sim = Simulation()
+@process take!(sim, qc, regB[1])
+
+@test_throws "A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized)." run(sim)

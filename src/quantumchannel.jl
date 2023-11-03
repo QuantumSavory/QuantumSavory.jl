@@ -48,24 +48,23 @@ Register with 2 slots: [ Qubit | Qubit ]
     Subsystem 2 of QuantumOpticsBase.Ket 12382959472027850978
 ```
 """
-struct QuantumChannel
-  trait::Qubit
+struct QuantumChannel{T}
+  trait::T
   queue::ConcurrentSim.DelayQueue{Register}
   background::Any
 end
 
-QuantumChannel(queue::ConcurrentSim.DelayQueue{Register}, background=nothing) = QuantumChannel(Qubit(), queue, background)
+QuantumChannel(queue::ConcurrentSim.DelayQueue{Register}, background=nothing, trait=Qubit()) = QuantumChannel(trait, queue, background)
 
-QuantumChannel(env::ConcurrentSim.Simulation, delay, background=nothing) = QuantumChannel(ConcurrentSim.DelayQueue{Register}(env, delay), background)
+QuantumChannel(env::ConcurrentSim.Simulation, delay, background=nothing, trait=Qubit()) = QuantumChannel(ConcurrentSim.DelayQueue{Register}(env, delay), background, trait)
+Register(qc::QuantumChannel) = Register([qc.trait], [qc.background])
 
 function Base.put!(qc::QuantumChannel, rref::RegRef)
   if !isnothing(qc.background)
       uptotime!(rref, ConcurrentSim.now(qc.queue.store.env))
   end
 
-  channel_reg = Register(1)
-  channel_reg.backgrounds[1] = qc.background
-  channel_reg.traits[1] = qc.trait
+  channel_reg = Register(qc)
   swap!(rref, channel_reg[1])
 
   if !isnothing(qc.background)
@@ -77,8 +76,8 @@ end
 
 
 @resumable function Base.take!(env, qc::QuantumChannel, rref_rec::RegRef)
-  if isassigned(rref_rec.reg, rref_rec.idx)
-      throw("Receiving register index already initialized")
+  if isassigned(rref_rec)
+      error("A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized).")
   end
   channel_reg = @yield take!(qc.queue)
 
