@@ -34,7 +34,44 @@ Fields:
 
 $FIELDS
 
-Generates the spin-spin density matrix for linear photonic entanglement swap 
+Generates the unnormalized spin-spin density matrix for linear photonic entanglement swap 
+with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite).
+Since the matrix is 'weighted' by the probability for success, it is suffixed with a W to distinguish it 
+from the normalized object `SingleRailMidSwapBell`.
+It takes the following parameters:
+- eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
+- gA, gB: Memory initialization parameter for memories A and B
+- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
+- Vis: Interferometer visibility for the midpoint swap' can be complex to account for phase instability
+
+```jldoctest
+julia> r = Register(2)
+
+julia> initialize!(r[1:2], SingleRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+
+julia> observable(r[1:2], Z⊗Z)
+```
+"""
+@withmetadata struct SingleRailMidSwapBellW <: AbstractTwoQubitState
+    eA::Float64
+    eB::Float64
+    gA::Float64
+    gB::Float64
+    Pd::Float64
+    Vis::Float64
+end
+
+symbollabel(x::SingleRailMidSwapBellW) = "ρˢʳᵐˢᵂ"
+
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+Generates the normalized spin-spin density matrix for linear photonic entanglement swap 
 with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite)
 It takes the following parameters:
 - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
@@ -69,7 +106,44 @@ Fields:
 
 $FIELDS
 
-Generates the spin-spin density matrix for linear photonic entanglement swap with emissive
+Generates the unnormalized spin-spin density matrix for linear photonic entanglement swap with emissive
+ memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite). 
+ Since the matrix is 'weighted' by the probability for success, it is suffixed with a W to distinguish it 
+from the normalized object `DualRailMidSwapBell`.
+ It takes the following parameters:
+ - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
+- gA, gB: Memory initialization parameter for memories A and B 
+- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
+- Vis: Interferometer visibility for the midpoint swap 
+
+```jldoctest
+julia> r = Register(2)
+
+julia> initialize!(r[1:2], DualRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+
+julia> observable(r[1:2], Z⊗Z)
+```
+"""
+@withmetadata struct DualRailMidSwapBellW <: AbstractTwoQubitState
+    eA::Float64
+    eB::Float64
+    gA::Float64
+    gB::Float64
+    Pd::Float64
+    Vis::Float64
+end
+
+symbollabel(x::DualRailMidSwapBellW) = "ρᵈʳᵐˢᵂ"
+
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+Generates the normalized spin-spin density matrix for linear photonic entanglement swap with emissive
  memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite).
  It takes the following parameters:
  - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
@@ -99,12 +173,27 @@ symbollabel(x::DualRailMidSwapBell) = "ρᵈʳᵐˢ"
 
 ## express
 
+function express_nolookup(x::SingleRailMidSwapBellW, ::QuantumOpticsRepr)
+    data = midswap_single_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
+    return SparseOperator(_bspin⊗_bspin, Complex.(data))
+end
+
 function express_nolookup(x::SingleRailMidSwapBell, ::QuantumOpticsRepr)
     data = midswap_single_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
+    return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
+end
+
+function express_nolookup(x::DualRailMidSwapBellW, ::QuantumOpticsRepr)
+    data = midswap_dual_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
     return SparseOperator(_bspin⊗_bspin, Complex.(data))
 end
 
 function express_nolookup(x::DualRailMidSwapBell, ::QuantumOpticsRepr)
     data = midswap_dual_rail(x.eA, x.eB, x.gA, x.gB, x.Pd, x.Vis)
-    return SparseOperator(_bspin⊗_bspin, Complex.(data))
+    return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
 end
+
+# Symbolic trace
+
+tr(::SingleRailMidSwapBell) = 1
+tr(::DualRailMidSwapBell) = 1

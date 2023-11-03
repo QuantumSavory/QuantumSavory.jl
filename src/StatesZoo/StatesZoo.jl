@@ -5,7 +5,10 @@ using QuantumSymbolics, QuantumOpticsBase
 using QuantumSymbolics: withmetadata, @withmetadata, Metadata
 import QuantumSymbolics: express_nolookup
 
-export SingleRailMidSwapBell, DualRailMidSwapBell, ZALMSpinPair
+using LinearAlgebra
+import LinearAlgebra: tr
+
+export SingleRailMidSwapBellW, SingleRailMidSwapBell, DualRailMidSwapBellW, DualRailMidSwapBell, ZALMSpinPairW, ZALMSpinPair, tr
 
 abstract type AbstractTwoQubitState <: QuantumSymbolics.AbstractTwoQubitOp end #For representing density matrices
 Base.show(io::IO, x::AbstractTwoQubitState) = print(io, "$(symbollabel(x))")

@@ -568,7 +568,59 @@ Fields:
 
 $FIELDS
 
-Generate symbolic object for the spin-spin density matrix for a 
+Generate symbolic object for the unnormalized spin-spin density matrix for a 
+cascaded source swapped with emissive spin memories. Since the matrix is 'weighted' by the probability for 
+success, it is suffixed with a W to distinguish it from the normalized object `ZALMSpinPair`. The cascaded 
+source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
+is stored in spin memories as discussed in [prajit2023entangling](@cite).
+It takes the following parameters:
+- Ns: mean photon number per mode of the cascaded source model
+- gA: qubit initialization parameter on Alice's side 
+- gB: qubit initialization parameter on Bob's side 
+- eAm: memory out-coupling efficiency for Alice's side (Allowed range: [0,1])
+- eBm: memory out-coupling efficiency for Bob's side (Allowed range: [0,1])
+- eAs: source out-coupling efficiency for Alice's side (Allowed range: [0,1])
+- eBs: source out-coupling efficiency for Bob's side (Allowed range: [0,1])
+- eD: detector efficiency (Allowed range: [0,1])
+- Pd: dark click probability per photonic mode on source's swap 
+- Pdo1: dark click probability per photonic mode on Alice side swap 
+- Pdo2: dark click probability per photonic mode on Bob side swap
+- VisF: product of visibilities of all three  interferometers (Allowed range: [0,1])
+
+```jldoctest
+julia> r = Register(2)
+
+julia> initialize!(r[1:2], ZALMSpinPairW(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99))
+
+juilia> observable(r[1:2], Z⊗Z)
+```
+"""
+@withmetadata struct ZALMSpinPairW <: AbstractTwoQubitState
+    Ns::Float64
+    gA::Float64
+    gB::Float64
+    eAm::Float64
+    eBm::Float64
+    eAs::Float64
+    eBs::Float64
+    eD::Float64
+    Pd::Float64
+    Pdo1::Float64
+    Pdo2::Float64
+    VisF::Float64
+end
+
+symbollabel(x::ZALMSpinPairW) = "ρᶻᵃˡᵐᵂ"
+
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+Generate symbolic object for the normalized spin-spin density matrix for a 
 cascaded source swapped with emissive spin memories. The cascaded 
 source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
 is stored in spin memories as discussed in [prajit2023entangling](@cite).
@@ -611,7 +663,17 @@ end
 
 symbollabel(x::ZALMSpinPair) = "ρᶻᵃˡᵐ"
 
-function express_nolookup(x::ZALMSpinPair, ::QuantumOpticsRepr)
+## express
+
+function express_nolookup(x::ZALMSpinPairW, ::QuantumOpticsRepr)
     data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
     return SparseOperator(_bspin⊗_bspin, Complex.(data))
 end
+
+function express_nolookup(x::ZALMSpinPair, ::QuantumOpticsRepr)
+    data = cascaded_source_spin(x.Ns, x.gA, x.gB, x.eAm, x.eBm, x.eAs, x.eBs, x.eD, x.Pd, x.Pdo1, x.Pdo2, x.VisF)
+    return SparseOperator(_bspin⊗_bspin, Complex.(data/tr(data)))
+end
+
+## Symbolic trace 
+tr(::ZALMSpinPair) = 1
