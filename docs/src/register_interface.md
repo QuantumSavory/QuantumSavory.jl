@@ -24,11 +24,11 @@ Store a `state` in the given register slots.
 
 The `accesstimes` attributes of the slots are reset to the given `time`.
 
-If `state<:Symbolic`, then [`consistent_representation`](@ref) is used to choose an appropriate representation based on the [`AbstractRepresentation`](@ref) properties of the register slots. Then an [`express`](@ref) call is made to transform the symbolic object into the appropriate representation.
+If `state<:Symbolic`, then [`consistent_representation`](@ref) is used to choose an appropriate representation based on the [`QuantumSymbolics.AbstractRepresentation`](@ref) properties of the register slots. Then an [`QuantumSymbolics.express`](@ref) call is made to transform the symbolic object into the appropriate representation.
 
 #### `initialize!(r::RegRef; time)` and `initialize!(reg::Register, i::Int64; time)`
 
-When a `state` is not provided, a default one is calculated from `newstate`, depending on the register slot's [`QuantumStateTrait`](@ref) (e.g. qubit vs qumode) and [`AbstractRepresentation`](@ref) (e.g. ket vs tableaux).
+When a `state` is not provided, a default one is calculated from `newstate`, depending on the register slot's [`QuantumStateTrait`](@ref) (e.g. qubit vs qumode) and [`QuantumSymbolics.AbstractRepresentation`](@ref) (e.g. ket vs tableaux).
 
 #### Interface Overview
 
@@ -88,7 +88,7 @@ If `operation<:Symbolic`, then `express(operation, repr, ::UseAsOperation)` is u
 
 !!! warning "Limitations of symbolic-to-explicit conversion"
 
-    Currently, the decision of how to convert a symbolic operation is based only on the `state` on which the operation would act. It can not be modified by the [`AbstractRepresentation`](@ref) properties of the `Register`s containing the state.
+    Currently, the decision of how to convert a symbolic operation is based only on the `state` on which the operation would act. It can not be modified by the [`QuantumSymbolics.AbstractRepresentation`](@ref) properties of the `Register`s containing the state.
 
 #### Interface Overview
 
