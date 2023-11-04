@@ -20,7 +20,7 @@ qc = QuantumChannel(queue)
 end
 
 @resumable function bob_node(env, qc)
-    @yield @process take!(env, qc, regB[1])
+    @yield take!(qc, regB[1])
 end
 
 @process alice_node(sim, qc)
@@ -47,7 +47,7 @@ qc = QuantumChannel(sim, 10.0)
 end
 
 @resumable function bob_node(env, qc)
-    @yield @process take!(env, qc, regB[1])
+    @yield take!(qc, regB[1])
 end
 
 @process alice_node(sim, qc)
@@ -74,7 +74,7 @@ qc = QuantumChannel(sim, 10.0, T1Decay(0.1))
 end
 
 @resumable function bob_node(env, qc)
-    @yield @process take!(env, qc, regB[1])
+    @yield take!(qc, regB[1])
 end
 
 @process alice_node(sim, qc)
@@ -103,7 +103,7 @@ qc = QuantumChannel(sim, 10.0, T2Dephasing(0.1))
 end
 
 @resumable function bob_node(env, qc)
-    @yield @process take!(env, qc, regB[1])
+    @yield take!(qc, regB[1])
 end
 
 @process alice_node(sim, qc)
@@ -117,7 +117,4 @@ uptotime!(reg[1], 10.0)
 
 @test observable(reg[1:2], projector(bell)) == observable(regB[1:2], projector(bell))
 
-sim = Simulation()
-@process take!(sim, qc, regB[1])
-
-@test_throws "A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized)." run(sim)
+@test_throws "A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized)." take!(qc, regB[1])

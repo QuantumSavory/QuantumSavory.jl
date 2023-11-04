@@ -24,7 +24,7 @@ julia> @resumable function alice_node(env, qc)
 alice_node (generic function with 1 method)
 
 julia> @resumable function bob_node(env, qc)
-            @yield @process take!(env, qc, regB[1]) # wait for the process with delay to complete
+            @yield take!(qc, regB[1])
             println("Taking the qubit from alice at ", now(env))
         end
 bob_node (generic function with 1 method)
@@ -75,11 +75,15 @@ function Base.put!(qc::QuantumChannel, rref::RegRef)
 end
 
 
-@resumable function Base.take!(env, qc::QuantumChannel, rref_rec::RegRef)
-  if isassigned(rref_rec)
+@resumable function post_take(env, take_event, rref)
+  channel_reg = @yield take_event
+  QuantumSavory.swap!(channel_reg[1], rref)
+end
+
+function Base.take!(qc::QuantumChannel, rref::RegRef)
+  if isassigned(rref)
       error("A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized).")
   end
-  channel_reg = @yield take!(qc.queue)
-
-  swap!(rref_rec, channel_reg[1])
+  take_event = take!(qc.queue)
+  @process post_take(qc.queue.store.env, take_event, rref)
 end
