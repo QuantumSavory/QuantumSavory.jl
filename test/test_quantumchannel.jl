@@ -117,4 +117,13 @@ uptotime!(reg[1], 10.0)
 
 @test observable(reg[1:2], projector(bell)) == observable(regB[1:2], projector(bell))
 
-@test_throws "A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized)." take!(qc, regB[1])
+## Test for slot availability
+
+sim = Simulation()
+qc = QuantumChannel(sim, 10.0, T2Dephasing(0.1))
+regC = Register(1)
+initialize!(regC[1], Z1)
+put!(qc, regC[1])
+take!(qc, regB[1])
+
+@test_throws "A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized)." run(sim)

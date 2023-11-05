@@ -77,13 +77,13 @@ end
 
 @resumable function post_take(env, take_event, rref)
   channel_reg = @yield take_event
-  QuantumSavory.swap!(channel_reg[1], rref)
+  if isassigned(rref)
+    error("A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized).")
+  end
+  swap!(channel_reg[1], rref)
 end
 
 function Base.take!(qc::QuantumChannel, rref::RegRef)
-  if isassigned(rref)
-      error("A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized).")
-  end
   take_event = take!(qc.queue)
   @process post_take(qc.queue.store.env, take_event, rref)
 end
