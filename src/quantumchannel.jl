@@ -7,7 +7,9 @@ the receiving register after a specified delay using the take! method in a synch
 ```jldoctest
 julia> using QuantumSavory; using ResumableFunctions; using ConcurrentSim
 
-julia> bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0); regA = Register(2); regB = Register(2); initialize!((regA[1], regB[2]), bell);
+julia> regA = Register(1); regB = Register(1);
+
+julia> initialize!(regA[1], Z1)
 
 julia> sim = Simulation();
 
@@ -24,7 +26,7 @@ julia> @resumable function alice_node(env, qc)
 alice_node (generic function with 1 method)
 
 julia> @resumable function bob_node(env, qc)
-            @yield take!(qc, regB[1])
+            @yield (qc, regB[1])
             println("Taking the qubit from alice at ", now(env))
         end
 bob_node (generic function with 1 method)
@@ -36,16 +38,14 @@ Putting Alice's qubit in the channel at 0.0
 Taking the qubit from alice at 10.0
 
 julia> regA
-Register with 2 slots: [ Qubit | Qubit ]
+Register with 1 slots: [ Qubit ]
   Slots:
-    nothing
     nothing
 
 julia> regB
-Register with 2 slots: [ Qubit | Qubit ]
-  Slots:
-    Subsystem 1 of QuantumOpticsBase.Ket 12382959472027850978
-    Subsystem 2 of QuantumOpticsBase.Ket 12382959472027850978
+Register with 1 slots: [ Qubit ]
+Slots:
+  Subsystem 1 of QuantumOpticsBase.Ket 7474956998997307987
 ```
 """
 struct QuantumChannel{T}
@@ -60,16 +60,12 @@ QuantumChannel(env::ConcurrentSim.Simulation, delay, background=nothing, trait=Q
 Register(qc::QuantumChannel) = Register([qc.trait], [qc.background])
 
 function Base.put!(qc::QuantumChannel, rref::RegRef)
-  if !isnothing(qc.background)
-      uptotime!(rref, ConcurrentSim.now(qc.queue.store.env))
-  end
+  uptotime!(rref, ConcurrentSim.now(qc.queue.store.env))
 
   channel_reg = Register(qc)
   swap!(rref, channel_reg[1])
 
-  if !isnothing(qc.background)
-      uptotime!(channel_reg[1], qc.queue.delay)
-  end
+  uptotime!(channel_reg[1], qc.queue.delay)
 
   put!(qc.queue, channel_reg)
 end
