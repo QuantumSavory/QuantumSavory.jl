@@ -6,9 +6,15 @@ nsubsystems(r::Register) = length(r.staterefs)
 nsubsystems(r::RegRef) = 1
 nsubsystems(::Nothing) = 1 # TODO consider removing this and reworking the functions that depend on it. E.g., a reason to have it when performing a project_traceout measurement on a state that contains only one subsystem
 
-function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
+function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int; time=nothing)
     if reg1===reg2 && i1==i2
         return
+    end
+    if reg1.accesstimes[i1] != reg2.accesstimes[i2]
+        maxtime = max(reg1.accesstimes[i1], reg2.accesstimes[i2])
+        maxtime = isnothing(time) ? maxtime : max(maxtime, time)
+        uptotime!(reg1[i1], maxtime)
+        uptotime!(reg2[i2], maxtime)
     end
     state1, state2 = reg1.staterefs[i1], reg2.staterefs[i2]
     stateind1, stateind2 = reg1.stateindices[i1], reg2.stateindices[i2]
@@ -23,7 +29,7 @@ function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)
         state2.registerindices[stateind2] = i1
     end
 end
-swap!(r1::RegRef, r2::RegRef) = swap!(r1.reg, r2.reg, r1.idx, r2.idx)
+swap!(r1::RegRef, r2::RegRef; time=nothing) = swap!(r1.reg, r2.reg, r1.idx, r2.idx; time)
 
 #subsystemcompose(s...) = reduce(subsystemcompose, s)
 

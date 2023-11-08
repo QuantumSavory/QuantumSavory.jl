@@ -1,5 +1,5 @@
 """
-QuantumChannel for transmitting qubits as `RegRef`s from one register to another in a quantum protocol simulation, 
+QuantumChannel for transmitting qubits as `RegRef`s from one register to another in a quantum protocol simulation,
 with a channel delay and under the influence of a background process.
 The function `put!` is used to put the `RegRef` containing the qubit in the channel, which can then be received by
 the receiving register after a specified delay using the take! method in a synchronous way.
@@ -49,9 +49,9 @@ Slots:
 ```
 """
 struct QuantumChannel{T}
-  trait::T
-  queue::ConcurrentSim.DelayQueue{Register}
-  background::Any
+    trait::T
+    queue::ConcurrentSim.DelayQueue{Register}
+    background::Any
 end
 
 QuantumChannel(queue::ConcurrentSim.DelayQueue{Register}, background=nothing, trait=Qubit()) = QuantumChannel(trait, queue, background)
@@ -60,26 +60,22 @@ QuantumChannel(env::ConcurrentSim.Simulation, delay, background=nothing, trait=Q
 Register(qc::QuantumChannel) = Register([qc.trait], [qc.background])
 
 function Base.put!(qc::QuantumChannel, rref::RegRef)
-  uptotime!(rref, ConcurrentSim.now(qc.queue.store.env))
-
-  channel_reg = Register(qc)
-  swap!(rref, channel_reg[1])
-
-  uptotime!(channel_reg[1], qc.queue.delay)
-
-  put!(qc.queue, channel_reg)
+    time = ConcurrentSim.now(qc.queue.store.env)
+    channel_reg = Register(qc)
+    swap!(rref, channel_reg[1]; time)
+    uptotime!(channel_reg[1], time+qc.queue.delay)
+    put!(qc.queue, channel_reg)
 end
 
-
 @resumable function post_take(env, take_event, rref)
-  channel_reg = @yield take_event
-  if isassigned(rref)
-    error("A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized).")
-  end
-  swap!(channel_reg[1], rref)
+    channel_reg = @yield take_event
+    if isassigned(rref)
+        error("A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized).")
+    end
+    swap!(channel_reg[1], rref; time=now(env))
 end
 
 function Base.take!(qc::QuantumChannel, rref::RegRef)
-  take_event = take!(qc.queue)
-  @process post_take(qc.queue.store.env, take_event, rref)
+    take_event = take!(qc.queue)
+    @process post_take(qc.queue.store.env, take_event, rref)
 end
