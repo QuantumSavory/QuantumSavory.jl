@@ -1,22 +1,21 @@
 """
-QuantumChannel for transmitting qubits as `RegRef`s from one register to another in a quantum protocol simulation,
-with a channel delay and under the influence of a background process.
-The function `put!` is used to put the `RegRef` containing the qubit in the channel, which can then be received by
-the receiving register after a specified delay using the take! method in a synchronous way.
+Quantum channel for transmitting quantum states from one register to another.
 
-```jldoctest
-julia> using QuantumSavory; using ResumableFunctions; using ConcurrentSim
+Delay and background noise processes are supported.
+
+The function `put!` is used to take the contents of a `RegRef` and put it in the channel.
+That state can can then be received by a register (after a delay) using the `take!` method.
+
+```jldoctest; filter = r"(\d{4})\d+" => s"at some memory address"
+julia> using QuantumSavory, ResumableFunctions, ConcurrentSim
 
 julia> regA = Register(1); regB = Register(1);
 
-julia> initialize!(regA[1], Z1)
+julia> initialize!(regA[1], Z1);
 
 julia> sim = Simulation();
 
-julia> queue = DelayQueue{Register}(sim, 10.0)
-DelayQueue{Register}(QueueStore{Register, Int64}, 10.0)
-
-julia> qc = QuantumChannel(queue)
+julia> qc = QuantumChannel(sim, 10.0) # a delay of 10 units
 QuantumChannel(Qubit(), DelayQueue{Register}(QueueStore{Register, Int64}, 10.0), nothing)
 
 julia> @resumable function alice_node(env, qc)
@@ -26,7 +25,7 @@ julia> @resumable function alice_node(env, qc)
 alice_node (generic function with 1 method)
 
 julia> @resumable function bob_node(env, qc)
-            @yield (qc, regB[1])
+            @yield take!(qc, regB[1])
             println("Taking the qubit from alice at ", now(env))
         end
 bob_node (generic function with 1 method)
