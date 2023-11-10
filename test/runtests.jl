@@ -40,6 +40,16 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_cairo"
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_gl"
 get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && VERSION >= v"1.9" && @doset "doctests"
+
+const GROUP = get(ENV, "GROUP", "All")
+begin
+    if GROUP == "QUANTUMSAVORY_PLOT_TEST"
+        @safetestset "plotting_cairo" begin include("test_plotting_cairo.jl") end
+        @safetestset "plotting_gl" begin include("test_plotting_gl.jl") end
+        @safetestset "doctests" begin include("test_doctests.jl") end
+    end
+end
+
 get(ENV,"JET_TEST","")=="true" && @doset "jet"
 
 using Aqua
