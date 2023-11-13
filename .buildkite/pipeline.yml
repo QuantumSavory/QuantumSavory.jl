@@ -1,20 +1,12 @@
 steps:
-  - label: "CI_Plot_&_Doctests"
-    matrix:
-      setup:
-        version:
-          - "1"
-        group:
-          - "QUANTUMSAVORY_PLOT_TEST"
-    env:
-      BUILDKITE_PLUGIN_JULIA_VERSION: "{{matrix.version}}"
-      GROUP: "{{matrix.group}}"
+  - label: "CI Plot and Doctests"
     plugins:
-      - JuliaCI/julia#v1
+      - JuliaCI/julia#v1:
+          version: "1"
       - JuliaCI/julia-test#v1:
           coverage: false
-          julia_args: "--threads=auto"
     agents:
       os: "linux"
       arch: "x86_64"
-    timeout_in_minutes: 600
+    env:
+      GROUP: QUANTUMSAVORY_PLOT_TEST
