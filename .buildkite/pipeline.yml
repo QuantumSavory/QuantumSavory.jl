@@ -3,7 +3,7 @@ steps:
     command: |
       julia --project -e '
         @info "Building Project"
-        cd(@__DIR__)
+        cd("..")
         using Pkg
         Pkg.activate("ci-plot-and-doctests")
         Pkg.instantiate()'
