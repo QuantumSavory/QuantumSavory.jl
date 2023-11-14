@@ -17,7 +17,7 @@ steps:
         Pkg.instantiate()
         using SafeTestsets
         @info "Running Doctests"
-        @safetestset "doctests" begin include("test/test_doctests.jl")
+        @safetestset "doctests" begin include("test/test_doctests.jl") end
         @info "Plotting Cairo"
         @safetestset "plotting_cairo" begin include("test/test_plotting_cairo.jl") end
         @info "Plotting GL"
