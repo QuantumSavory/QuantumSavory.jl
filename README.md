@@ -17,6 +17,12 @@
         </td>
     </tr><tr></tr>
     <tr>
+        <td>Buildkite</td>
+        <td>
+            <a href="https://buildkite.com/quantumsavory/ci-plot-and-doctests"><img src="https://badge.buildkite.com/2713c9978db76235fbe98094b7cad9a05f04671fd442739c47.svg" alt="Buildkite Workflow Status"></a>
+        </td>
+    </tr><tr></tr>
+    <tr>
         <td>Code coverage</td>
         <td>
             <a href="https://codecov.io/gh/QuantumSavory/QuantumSavory.jl"><img src="https://img.shields.io/codecov/c/gh/QuantumSavory/QuantumSavory.jl?label=codecov" alt="Test coverage from codecov"></a>
