@@ -1,12 +1,24 @@
 steps:
-  - label: "CI Plot and Doctests"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: "1"
-      - JuliaCI/julia-test#v1:
-          coverage: false
-    agents:
-      os: "linux"
-      arch: "x86_64"
-    env:
-      GROUP: QUANTUMSAVORY_PLOT_TEST
+  - label: "Build Project"
+    command: |
+      julia --project -e '
+        @info "Building Project"
+        cd(@__DIR__)
+        using Pkg
+        Pkg.activate("ci-plot-and-doctests")
+        Pkg.instantiate()'
+
+  - label: "CI Plot"
+    command: |
+      julia --project -e '
+        using Pkg
+        @info "Running CI"
+        Pkg.activate("test")
+        Pkg.instantiate()
+        using SafeTestsets
+        @info "Running Doctests"
+        @safetestset "doctests" begin include("test/test_doctests.jl")
+        @info "Plotting Cairo"
+        @safetestset "plotting_cairo" begin include("test/test_plotting_cairo.jl") end
+        @info "Plotting GL"
+        @safetestset "plotting_gl" begin include("test/test_plotting_gl.jl") end'
