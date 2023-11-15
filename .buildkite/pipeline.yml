@@ -1,3 +1,6 @@
+env:
+  CODECOV_TOKEN: 1551efda-9a0d-4cfd-a549-63790fc83605
+  
 steps:
   - label: "Build Project"
     plugins:
@@ -16,6 +19,8 @@ steps:
       - JuliaCI/julia#v1:
           version: "1"
       - JuliaCI/julia-test#v1: ~
+      - JuliaCI/julia-coverage#v1:
+          codecov: true
     command: |
       julia --project -e '
         using Pkg
