@@ -1,5 +1,8 @@
 steps:
   - label: "Build Project"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
     command: |
       julia --project -e '
         @info "Building Project"
@@ -9,6 +12,10 @@ steps:
         Pkg.instantiate()'
 
   - label: "CI Plot"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+      - JuliaCI/julia-test#v1: ~
     command: |
       julia --project -e '
         using Pkg
