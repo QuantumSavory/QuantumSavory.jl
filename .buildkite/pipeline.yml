@@ -1,36 +1,12 @@
 env:
   CODECOV_TOKEN: 1551efda-9a0d-4cfd-a549-63790fc83605
+  JULIA_NUM_THREADS: auto
   
 steps:
-  - label: "Build Project"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: "1"
-    command: |
-      julia --project -e '
-        @info "Building Project"
-        cd("..")
-        using Pkg
-        Pkg.activate("ci-plot-and-doctests")
-        Pkg.instantiate()'
-
-  - label: "CI Plot"
+  - label: "CI Buildkite"
     plugins:
       - JuliaCI/julia#v1:
           version: "1"
       - JuliaCI/julia-test#v1: ~
       - JuliaCI/julia-coverage#v1:
           codecov: true
-    command: |
-      julia --project -e '
-        using Pkg
-        @info "Running CI"
-        Pkg.activate("test")
-        Pkg.instantiate()
-        using SafeTestsets
-        @info "Running Doctests"
-        @safetestset "doctests" begin include("test/test_doctests.jl") end
-        @info "Plotting Cairo"
-        @safetestset "plotting_cairo" begin include("test/test_plotting_cairo.jl") end
-        @info "Plotting GL"
-        @safetestset "plotting_gl" begin include("test/test_plotting_gl.jl") end'
