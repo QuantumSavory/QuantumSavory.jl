@@ -1,6 +1,7 @@
 env:
   CODECOV_TOKEN: 1551efda-9a0d-4cfd-a549-63790fc83605
   JULIA_NUM_THREADS: auto
+  QUANTUMSAVORY_PLOT_TEST: true
   
 steps:
   - label: "CI Buildkite"
