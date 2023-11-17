@@ -16,7 +16,7 @@ export project_traceout! #TODO should move to QuantumInterface
 import ConcurrentSim
 using ResumableFunctions
 
-import SumTypes: @sum_type
+import SumTypes: @sum_type, isvariant
 import Combinatorics: powerset
 
 @reexport using QuantumSymbolics
@@ -34,7 +34,7 @@ export Qubit, Qumode, QuantumStateTrait,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground
 export QuantumChannel
-export tag!, tag_types
+export tag!, tag_types, W, ❓, query
 
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
@@ -302,13 +302,17 @@ function Base.show(io::IO, net::RegisterNet)
 end
 
 function Base.show(io::IO, r::RegRef)
-    print(io, "Slot $(r.idx)/$(length(r.reg.traits)) of Register $(objectid(r.reg))") # TODO make this length call prettier
-    print(io, "\nContent:")
-    i,s = r.reg.stateindices[r.idx], r.reg.staterefs[r.idx]
-    if isnothing(s)
-        print(io, "\n    nothing")
+    if get(io, :compact, false) | haskey(io, :typeinfo)
+        print(io, "Slot $(r.idx)")
     else
-        print(io, "\n    $(i) @ $(typeof(s.state[]).name.module).$(typeof(s.state[]).name.name) $(objectid(s.state[]))")
+        print(io, "Slot $(r.idx)/$(length(r.reg.traits)) of Register $(objectid(r.reg))") # TODO make this length call prettier
+        print(io, "\nContent:")
+        i,s = r.reg.stateindices[r.idx], r.reg.staterefs[r.idx]
+        if isnothing(s)
+            print(io, "\n    nothing")
+        else
+            print(io, "\n    $(i) @ $(typeof(s.state[]).name.module).$(typeof(s.state[]).name.name) $(objectid(s.state[]))")
+        end
     end
 end
 

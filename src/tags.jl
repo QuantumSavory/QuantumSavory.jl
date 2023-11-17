@@ -1,5 +1,3 @@
-export tags
-
 @sum_type Tag :hidden begin
     Symbol(::Symbol)
     SymbolInt(::Symbol, ::Int)
