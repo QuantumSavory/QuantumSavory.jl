@@ -1,20 +1,14 @@
+env:
+  CODECOV_TOKEN: 1551efda-9a0d-4cfd-a549-63790fc83605
+  JULIA_NUM_THREADS: auto
+  QUANTUMSAVORY_PLOT_TEST: true
+  
 steps:
-  - label: "CI_Plot_&_Doctests"
-    matrix:
-      setup:
-        version:
-          - "1"
-        group:
-          - "QUANTUMSAVORY_PLOT_TEST"
-    env:
-      BUILDKITE_PLUGIN_JULIA_VERSION: "{{matrix.version}}"
-      GROUP: "{{matrix.group}}"
+  - label: "CI Buildkite"
     plugins:
-      - JuliaCI/julia#v1
-      - JuliaCI/julia-test#v1:
-          coverage: false
-          julia_args: "--threads=auto"
-    agents:
-      os: "linux"
-      arch: "x86_64"
-    timeout_in_minutes: 600
+      - JuliaCI/julia#v1:
+          version: "1"
+      - QuantumSavory/julia-xvfb#v1:
+      - JuliaCI/julia-test#v1: ~
+      - JuliaCI/julia-coverage#v1:
+          codecov: true
