@@ -864,11 +864,11 @@ to its corresponding Bell pair representation. It takes as argumes a single qubi
 Alice's half of the entangled Bell pair and the 2 bit message Alice intends to send to Bob.
 
 ```jldoctest
-julia> regA = Register(1); regB = Register(2);
+julia> regA = Register(1); regB = Register(1);
 
 julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
 
-julia> message = [1, 1];
+julia> message = (1, 1);
 
 julia> SDEncode()(regA[1], message);
 ```
@@ -904,9 +904,9 @@ julia> regA = Register(1); regB = Register(1);
 
 julia> initialize!((regA[1], regB[1]), (L0⊗L0+L1⊗L1)/√2);
 
-julia> message = [1, 1];
+julia> message = (1, 1);
 
-julia> SDEncode()(regA, message);
+julia> SDEncode()(regA[1], message);
 
 julia> SDDecode()(regA[1], regB[1])
 (1, 1)

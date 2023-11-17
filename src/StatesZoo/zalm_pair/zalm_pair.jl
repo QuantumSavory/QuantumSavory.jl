@@ -588,11 +588,14 @@ It takes the following parameters:
 - VisF: product of visibilities of all three  interferometers (Allowed range: [0,1])
 
 ```jldoctest
-julia> r = Register(2)
+julia> using QuantumSavory.StatesZoo: ZALMSpinPairW
 
-julia> initialize!(r[1:2], ZALMSpinPairW(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99))
+julia> r = Register(2);
 
-juilia> observable(r[1:2], Z⊗Z)
+julia> initialize!(r[1:2], ZALMSpinPairW(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99));
+
+julia> observable(r[1:2], Z⊗Z)
+-6.290288032211147e-9 + 0.0im
 ```
 """
 @withmetadata struct ZALMSpinPairW <: AbstractTwoQubitState
@@ -639,11 +642,14 @@ It takes the following parameters:
 - VisF: product of visibilities of all three  interferometers (Allowed range: [0,1])
 
 ```jldoctest
-julia> r = Register(2)
+julia> using QuantumSavory.StatesZoo: ZALMSpinPair
 
-julia> initialize!(r[1:2], ZALMSpinPair(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99))
+julia> r = Register(2);
 
-juilia> observable(r[1:2], Z⊗Z)
+julia> initialize!(r[1:2], ZALMSpinPair(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99));
+
+julia> observable(r[1:2], Z⊗Z)
+-0.9999999911111112 + 0.0im
 ```
 """
 @withmetadata struct ZALMSpinPair <: AbstractTwoQubitState
