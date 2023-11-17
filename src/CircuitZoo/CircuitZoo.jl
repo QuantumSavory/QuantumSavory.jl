@@ -80,7 +80,7 @@ julia> Purify2to1(:X)(a[1], b[1], a[2], b[2])
 false
 
 julia> a
-Register with 2 slots: [ QuantumSavory.Qubit | QuantumSavory.Qubit ]
+Register with 2 slots: [ Qubit | Qubit ]
   Slots:
     nothing
     nothing

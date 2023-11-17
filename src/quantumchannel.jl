@@ -6,7 +6,7 @@ Delay and background noise processes are supported.
 The function `put!` is used to take the contents of a `RegRef` and put it in the channel.
 That state can can then be received by a register (after a delay) using the `take!` method.
 
-```jldoctest; filter = r"(\\d{5})\\d+" => s"at some memory address"
+```jldoctest; filter = r"(\\d{5})\\d+" => s"\\d+"
 julia> using QuantumSavory, ResumableFunctions, ConcurrentSim
 
 julia> regA = Register(1); regB = Register(1);
@@ -16,7 +16,7 @@ julia> initialize!(regA[1], Z1);
 julia> sim = Simulation();
 
 julia> qc = QuantumChannel(sim, 10.0) # a delay of 10 units
-QuantumChannel{Qubit}(Qubit(), DelayQueue{Register}(ConcurrentSim.QueueStore{QuantumSavory.Register, Int64}, 10.0), nothing)
+QuantumChannel{Qubit}(Qubit(), DelayQueue{Register}(ConcurrentSim.QueueStore{Register, Int64}, 10.0), nothing)
 
 julia> @resumable function alice_node(env, qc)
             println("Putting Alice's qubit in the channel at ", now(env))
@@ -37,12 +37,12 @@ Putting Alice's qubit in the channel at 0.0
 Taking the qubit from alice at 10.0
 
 julia> regA
-Register with 1 slots: [ QuantumSavory.Qubit ]
+Register with 1 slots: [ Qubit ]
   Slots:
     nothing
 
 julia> regB
-Register with 1 slots: [ QuantumSavory.Qubit ]
+Register with 1 slots: [ Qubit ]
   Slots:
     Subsystem 1 of QuantumOpticsBase.Ket 7474956998997307987
 ```
