@@ -16,6 +16,9 @@ export project_traceout! #TODO should move to QuantumInterface
 import ConcurrentSim
 using ResumableFunctions
 
+import SumTypes: @sum_type
+import Combinatorics: powerset
+
 @reexport using QuantumSymbolics
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
@@ -31,6 +34,7 @@ export Qubit, Qumode, QuantumStateTrait,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground
 export QuantumChannel
+export tag!, tag_types
 
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
@@ -51,6 +55,7 @@ struct Qumode <: QuantumStateTrait end
 default_repr(::Qubit) = QuantumOpticsRepr()
 default_repr(::Qumode) = QuantumOpticsRepr()
 
+include("tags.jl")
 
 # TODO better constructors
 # TODO am I overusing Ref
@@ -75,6 +80,7 @@ mutable struct Register # TODO better type description
     accesstimes::Vector{Float64} # TODO do not hardcode the type
     env::Any
     locks::Vector{Any}
+    tags::Vector{Set{Tag}}
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,fill(0.0,length(traits)))
 Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),fill(0,length(traits)),fill(0.0,length(traits)))
@@ -86,7 +92,7 @@ Register(nqubits::Int,repr::AbstractRepresentation) = Register(fill(Qubit(),nqub
 Register(nqubits::Int,bg::AbstractBackground) = Register(fill(Qubit(),nqubits),fill(bg,nqubits))
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, env, [ConcurrentSim.Resource(env) for _ in traits])
+    Register(traits, reprs, bg, sr, si, at, env, [ConcurrentSim.Resource(env) for _ in traits], [Set{Tag}() for _ in traits])
 end
 
 """
@@ -322,6 +328,8 @@ include("baseops/traceout.jl")
 include("baseops/apply.jl")
 include("baseops/uptotime.jl")
 include("baseops/observable.jl")
+
+include("queries.jl")
 
 include("representations.jl")
 include("backgrounds.jl")
