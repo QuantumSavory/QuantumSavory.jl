@@ -16,7 +16,7 @@ julia> initialize!(regA[1], Z1);
 julia> sim = Simulation();
 
 julia> qc = QuantumChannel(sim, 10.0) # a delay of 10 units
-QuantumChannel(Qubit(), DelayQueue{Register}(QueueStore{Register, Int64}, 10.0), nothing)
+QuantumChannel{Qubit}(Qubit(), DelayQueue{Register}(ConcurrentSim.QueueStore{QuantumSavory.Register, Int64}, 10.0), nothing)
 
 julia> @resumable function alice_node(env, qc)
             println("Putting Alice's qubit in the channel at ", now(env))
@@ -37,14 +37,14 @@ Putting Alice's qubit in the channel at 0.0
 Taking the qubit from alice at 10.0
 
 julia> regA
-Register with 1 slots: [ Qubit ]
+Register with 1 slots: [ QuantumSavory.Qubit ]
   Slots:
     nothing
 
 julia> regB
-Register with 1 slots: [ Qubit ]
-Slots:
-  Subsystem 1 of QuantumOpticsBase.Ket 7474956998997307987
+Register with 1 slots: [ QuantumSavory.Qubit ]
+  Slots:
+    Subsystem 1 of QuantumOpticsBase.Ket 7474956998997307987
 ```
 """
 struct QuantumChannel{T}

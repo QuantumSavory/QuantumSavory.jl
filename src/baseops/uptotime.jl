@@ -5,7 +5,7 @@ Evolve all the states in a register to a given time, according to the various ba
 
 ```jldoctest
 julia> reg = Register(2, T1Decay(1.0))
-Register with 2 slots: [ Qubit | Qubit ]
+Register with 2 slots: [ QuantumSavory.Qubit | QuantumSavory.Qubit ]
   Slots:
     nothing
     nothing

@@ -45,11 +45,14 @@ It takes the following parameters:
 - Vis: Interferometer visibility for the midpoint swap' can be complex to account for phase instability
 
 ```jldoctest
-julia> r = Register(2)
+julia> using QuantumSavory.StatesZoo: SingleRailMidSwapBellW
 
-julia> initialize!(r[1:2], SingleRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> r = Register(2);
+
+julia> initialize!(r[1:2], SingleRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99));
 
 julia> observable(r[1:2], Z⊗Z)
+-0.202499993925 + 0.0im
 ```
 """
 @withmetadata struct SingleRailMidSwapBellW <: AbstractTwoQubitState
@@ -80,11 +83,14 @@ It takes the following parameters:
 - Vis: Interferometer visibility for the midpoint swap' can be complex to account for phase instability
 
 ```jldoctest
-julia> r = Register(2)
+julia> using QuantumSavory.StatesZoo: SingleRailMidSwapBell
 
-julia> initialize!(r[1:2], SingleRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> r = Register(2);
+
+julia> initialize!(r[1:2], SingleRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99));
 
 julia> observable(r[1:2], Z⊗Z)
+-0.8181818000000001 + 0.0im
 ```
 """
 @withmetadata struct SingleRailMidSwapBell <: AbstractTwoQubitState
@@ -117,11 +123,14 @@ from the normalized object `DualRailMidSwapBell`.
 - Vis: Interferometer visibility for the midpoint swap 
 
 ```jldoctest
-julia> r = Register(2)
+julia> using QuantumSavory.StatesZoo: DualRailMidSwapBellW
 
-julia> initialize!(r[1:2], DualRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> r = Register(2);
+
+julia> initialize!(r[1:2], DualRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99));
 
 julia> observable(r[1:2], Z⊗Z)
+-0.10124999595000005 + 0.0im
 ```
 """
 @withmetadata struct DualRailMidSwapBellW <: AbstractTwoQubitState
@@ -152,11 +161,14 @@ Generates the normalized spin-spin density matrix for linear photonic entangleme
 - Vis: Interferometer visibility for the midpoint swap 
 
 ```jldoctest
-julia> r = Register(2)
+julia> using QuantumSavory.StatesZoo: DualRailMidSwapBell
 
-julia> initialize!(r[1:2], DualRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99))
+julia> r = Register(2);
+
+julia> initialize!(r[1:2], DualRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99));
 
 julia> observable(r[1:2], Z⊗Z)
+-0.9999999911111113 + 0.0im
 ```
 """
 @withmetadata struct DualRailMidSwapBell <: AbstractTwoQubitState

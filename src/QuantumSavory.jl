@@ -141,17 +141,17 @@ julia> graph = grid([2,2]) # from Graphs.jl
 
 julia> registers = [Register(1), Register(2), Register(1), Register(2)]
 4-element Vector{Register}:
- Register with 1 slots: [ Qubit ]
+ Register with 1 slots: [ QuantumSavory.Qubit ]
   Slots:
     nothing
- Register with 2 slots: [ Qubit | Qubit ]
+ Register with 2 slots: [ QuantumSavory.Qubit | QuantumSavory.Qubit ]
   Slots:
     nothing
     nothing
- Register with 1 slots: [ Qubit ]
+ Register with 1 slots: [ QuantumSavory.Qubit ]
   Slots:
     nothing
- Register with 2 slots: [ Qubit | Qubit ]
+ Register with 2 slots: [ QuantumSavory.Qubit | QuantumSavory.Qubit ]
   Slots:
     nothing
     nothing
