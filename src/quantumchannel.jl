@@ -6,7 +6,7 @@ Delay and background noise processes are supported.
 The function `put!` is used to take the contents of a `RegRef` and put it in the channel.
 That state can can then be received by a register (after a delay) using the `take!` method.
 
-```jldoctest; filter = r"(\\d{5})\\d+" => s"<at some memory address>"
+```jldoctest; filter = r"(\\d{5})\\d+" => s"at some memory address"
 julia> using QuantumSavory, ResumableFunctions, ConcurrentSim
 
 julia> regA = Register(1); regB = Register(1);
