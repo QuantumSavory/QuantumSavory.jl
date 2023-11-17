@@ -41,10 +41,7 @@ Register with 1 slots: [ Qubit ]
   Slots:
     nothing
 
-julia> regB
-Register with 1 slots: [ Qubit ]
-  Slots:
-    Subsystem 1 of QuantumOpticsBase.Ket 7474956998997307987
+julia> regB;
 ```
 """
 struct QuantumChannel{T}
