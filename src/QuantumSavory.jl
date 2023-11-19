@@ -89,6 +89,8 @@ include("CircuitZoo/CircuitZoo.jl")
 
 include("StatesZoo/StatesZoo.jl")
 
+include("ProtocolZoo/ProtocolZoo.jl")
+
 include("precompile.jl")
 
 end # module

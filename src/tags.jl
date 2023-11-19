@@ -14,3 +14,5 @@ end
 
 See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const tag_types = Tag'
+
+Base.getindex(tag::Tag, i::Int) = tag.data[i]
