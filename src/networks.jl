@@ -7,14 +7,12 @@ struct RegisterNet
     vertex_metadata::Vector{Dict{Symbol,Any}}
     edge_metadata::Dict{Tuple{Int,Int},Dict{Symbol,Any}}
     directed_edge_metadata::Dict{Pair{Int,Int},Dict{Symbol,Any}}
-    function RegisterNet(graph, registers, vertex_metadata, edge_metadata, directed_edge_metadata)
-        all_are_at_zero = all(iszero(ConcurrentSim.now(r.env)) && isempty(r.env.heap) && isnothing(r.env.active_proc) for r in registers)
-        all_are_same = all(registers[1].env === r.env for r in registers)
+        all_are_at_zero = all(iszero(ConcurrentSim.now(get_time_tracker(r))) && isempty(get_time_tracker(r).heap) && isnothing(get_time_tracker(r).active_proc) for r in registers)
+        env = get_time_tracker(registers[1])
+        all_are_same = all(env === get_time_tracker(r) for r in registers)
         if !all_are_same
             if all_are_at_zero
-                env = ConcurrentSim.Simulation()
                 for r in registers
-                    r.env = env
                     for i in eachindex(r.locks)
                         r.locks[i] = ConcurrentSim.Resource(env,1)
                     end

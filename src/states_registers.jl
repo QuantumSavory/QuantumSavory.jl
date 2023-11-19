@@ -12,21 +12,20 @@ StateRef(state, registers, registerindices) = StateRef(Ref{Any}(copy(state)), re
 """
 The main data structure in `QuantumSavory`, used to represent a quantum register in an arbitrary formalism.
 """
-mutable struct Register # TODO better type description
+struct Register # TODO better type description
     traits::Vector{Any}
     reprs::Vector{Any}
     backgrounds::Vector{Any}
     staterefs::Vector{Union{Nothing,StateRef}}
     stateindices::Vector{Int}
     accesstimes::Vector{Float64} # TODO do not hardcode the type
-    env::Any
     locks::Vector{Any}
     tags::Vector{Set{Tag}}
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, env, [ConcurrentSim.Resource(env) for _ in traits], [Set{Tag}() for _ in traits])
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], [Set{Tag}() for _ in traits])
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
 Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),zeros(Int,length(traits)),zeros(length(traits)))
