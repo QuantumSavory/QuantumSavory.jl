@@ -61,6 +61,7 @@ include("traits_and_defaults.jl")
 include("tags.jl")
 
 include("states_registers_networks.jl")
+include("states_registers_networks_getset.jl")
 include("states_registers_networks_shows.jl")
 
 include("baseops/subsystemcompose.jl")
