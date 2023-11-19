@@ -29,11 +29,13 @@ using QuantumSymbolics:
     STensorOperator, SScaledOperator, SAddOperator
 
 export
-    StateRef, RegRef, Register, RegisterNet,
+    StateRef, RegRef, Register,
     Qubit, Qumode, QuantumStateTrait,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
+    # networks.jl
+    RegisterNet, channel, qchannel,
     # initialize.jl
     initialize!, newstate,
     # subsystemcompose.jl
