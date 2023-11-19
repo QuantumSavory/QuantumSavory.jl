@@ -1,5 +1,3 @@
-import QuantumInterface: traceout!
-
 ispadded(::Nothing) = false # TODO consider removing this and reworking the functions that depend on it. E.g., a reason to have it when performing a project_traceout measurement on a state that contains only one subsystem
 
 function removebackref!(s::StateRef, i) # To be used only with something that updates s.state[]

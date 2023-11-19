@@ -1,5 +1,3 @@
-export registernetplot, registernetplot_axis, resourceplot_axis
-
 """Draw the given registers on a given Makie axis.
 
 Requires a Makie backend be already imported."""

@@ -1,5 +1,3 @@
-export initialize!, newstate
-
 function newstate end
 
 function initialize!(reg::Register,i::Int; time=nothing)

@@ -1,5 +1,3 @@
-export uptotime!, overwritetime!
-
 """
 Evolve all the states in a register to a given time, according to the various backgrounds that they might have.
 
