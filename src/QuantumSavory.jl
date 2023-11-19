@@ -6,7 +6,8 @@ using IterTools
 using LinearAlgebra
 using Graphs
 import ConcurrentSim
-using ConcurrentSim: Environment, request, release, now, active_process, timeout, Store, @process, Process, put, get
+using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Process, @process,
+      request, release, now, active_process, timeout, put, get
 using ResumableFunctions
 using Printf
 import SumTypes: @sum_type, isvariant
@@ -60,7 +61,9 @@ include("traits_and_defaults.jl")
 
 include("tags.jl")
 
-include("states_registers_networks.jl")
+include("states_registers.jl")
+include("quantumchannel.jl")
+include("networks.jl")
 include("states_registers_networks_getset.jl")
 include("states_registers_networks_shows.jl")
 
@@ -83,8 +86,6 @@ include("backends/clifford/clifford.jl")
 include("concurrentsim.jl")
 
 include("plots.jl")
-
-include("quantumchannel.jl")
 
 include("CircuitZoo/CircuitZoo.jl")
 
