@@ -32,16 +32,16 @@ julia> r = Register(10);
        tag!(r[2], :symbol, 4, 5);
 
 julia> queryall(r, :symbol, ❓, ❓)
-2-element Vector{Tuple{RegRef, QuantumSavory.Tag}}:
- (Slot 1, SymbolIntInt(:symbol, 2, 3)::QuantumSavory.Tag)
- (Slot 2, SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
+2-element Vector{NamedTuple{(:slot, :tag), Tuple{RegRef, QuantumSavory.Tag}}}:
+ (slot = Slot 1, tag = SymbolIntInt(:symbol, 2, 3)::QuantumSavory.Tag)
+ (slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
 
 julia> queryall(r, :symbol, ❓, >(4))
-1-element Vector{Tuple{RegRef, QuantumSavory.Tag}}:
- (Slot 2, SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
+1-element Vector{NamedTuple{(:slot, :tag), Tuple{RegRef, QuantumSavory.Tag}}}:
+ (slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
 
 julia> queryall(r, :symbol, ❓, >(5))
-Tuple{RegRef, QuantumSavory.Tag}[]
+NamedTuple{(:slot, :tag), Tuple{RegRef, QuantumSavory.Tag}}[]
 ```
 """
 queryall(args...; kwargs...) = query(args..., Val{true}(); kwargs...)
@@ -59,15 +59,17 @@ julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
 
+
 julia> query(r, :symbol, 4, 5)
-(Slot 2, SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
+(slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
 
 julia> lock(r[1]);
 
 julia> query(r, :symbol, 4, 5; locked=false) |> isnothing
+false
 
 julia> query(r, :symbol, ❓, 3)
-(Slot 1, SymbolIntInt(:symbol, 2, 3)::QuantumSavory.Tag)
+(slot = Slot 1, tag = SymbolIntInt(:symbol, 2, 3)::QuantumSavory.Tag)
 
 julia> query(r, :symbol, ❓, 3; assigned=true) |> isnothing
 true
@@ -84,12 +86,12 @@ julia> query(r, Int, 4, >(7)) |> isnothing
 true
 
 julia> query(r, Int, 4, <(7))
-(Slot 5, TypeIntInt(Int64, 4, 5)::QuantumSavory.Tag)
+(slot = Slot 5, tag = TypeIntInt(Int64, 4, 5)::QuantumSavory.Tag)
 ```
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`tag_types`](@ref), [`Wildcard`](@ref)
 """
-function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
+function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
     find = allB ? findall : findfirst
     i = find(i -> _nothingor(locked, islocked(reg[i])) && _nothingor(assigned, isassigned(reg[i])) && tag ∈ reg.tags[i],
                   1:length(reg))
@@ -118,8 +120,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         tag!(ref, ($tagvariant)($(args...)))
     end end)
 
-    eval(quote function query(reg::Register, $(argssig...), ::Val{allB}=Val{false}; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
-        query(reg, ($tagvariant)($(args...)); locked, assigned)
+    eval(quote function query(reg::Register, $(argssig...), _all::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
+        query(reg, ($tagvariant)($(args...)), _all; locked, assigned)
     end end)
 
     int_idx_all = [i for (i,s) in enumerate(sig) if s == Int]
@@ -131,7 +133,7 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         argssig_wild = [:($a::$t) for (a,t) in zip(args, sig_wild)]
         wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag.data[$i])) for i in idx]
         nonwild_checks = [:(tag.data[$i]==$(args[i])) for i in complement_idx]
-        newmethod = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
+        newmethod = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
             res = NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}[]
             for (reg_idx, tags) in enumerate(reg.tags)
                 slot = reg[reg_idx]
@@ -151,7 +153,6 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         #println(newmethod)
         eval(newmethod)
     end
-
 end
 
 """Find an empty unlocked slot in a given [`Register`](@ref).
@@ -164,7 +165,8 @@ true
 
 julia> lock(findfreeslot(reg));
 
-julia> findfreeslot(reg) === nothing
+julia> findfreeslot(reg) |> isnothing
+true
 ```
 """
 function findfreeslot(reg::Register)
