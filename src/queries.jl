@@ -1,6 +1,6 @@
 """Assign a tag to a slot in a register.
 
-See also: [`query`](@ref), [`tag_types`](@ref)"""
+See also: [`query`](@ref)"""
 function tag!(ref::RegRef, tag::Tag)
     push!(ref.reg.tags[ref.idx], tag)
 end
@@ -11,17 +11,17 @@ end
 
 """Wildcard for use with the tag querying functionality.
 
-See also: [`query`](@ref), [`tag!`](@ref), [`tag_types`](@ref)"""
+See also: [`query`](@ref), [`tag!`](@ref)"""
 struct Wildcard end
 
 """A wildcard instance for use with the tag querying functionality.
 
-See also: [`query`](@ref), [`tag!`](@ref), [`tag_types`](@ref), [`Wildcard`](@ref)"""
+See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const W = Wildcard()
 
 """A wildcard instance for use with the tag querying functionality.
 
-See also: [`query`](@ref), [`tag!`](@ref), [`tag_types`](@ref), [`Wildcard`](@ref)"""
+See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const ❓ = W
 
 """ A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
@@ -32,16 +32,16 @@ julia> r = Register(10);
        tag!(r[2], :symbol, 4, 5);
 
 julia> queryall(r, :symbol, ❓, ❓)
-2-element Vector{NamedTuple{(:slot, :tag), Tuple{RegRef, QuantumSavory.Tag}}}:
- (slot = Slot 1, tag = SymbolIntInt(:symbol, 2, 3)::QuantumSavory.Tag)
- (slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
+2-element Vector{NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}}:
+ (slot = Slot 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+ (slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(4))
-1-element Vector{NamedTuple{(:slot, :tag), Tuple{RegRef, QuantumSavory.Tag}}}:
- (slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
+1-element Vector{NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}}:
+ (slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(5))
-NamedTuple{(:slot, :tag), Tuple{RegRef, QuantumSavory.Tag}}[]
+NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}[]
 ```
 """
 queryall(args...; kwargs...) = query(args..., Val{true}(); kwargs...)
@@ -61,7 +61,7 @@ julia> r = Register(10);
 
 
 julia> query(r, :symbol, 4, 5)
-(slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::QuantumSavory.Tag)
+(slot = Slot 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> lock(r[1]);
 
@@ -69,7 +69,7 @@ julia> query(r, :symbol, 4, 5; locked=false) |> isnothing
 false
 
 julia> query(r, :symbol, ❓, 3)
-(slot = Slot 1, tag = SymbolIntInt(:symbol, 2, 3)::QuantumSavory.Tag)
+(slot = Slot 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> query(r, :symbol, ❓, 3; assigned=true) |> isnothing
 true
@@ -86,10 +86,10 @@ julia> query(r, Int, 4, >(7)) |> isnothing
 true
 
 julia> query(r, Int, 4, <(7))
-(slot = Slot 5, tag = TypeIntInt(Int64, 4, 5)::QuantumSavory.Tag)
+(slot = Slot 5, tag = TypeIntInt(Int64, 4, 5)::Tag)
 ```
 
-See also: [`queryall`](@ref), [`tag!`](@ref), [`tag_types`](@ref), [`Wildcard`](@ref)
+See also: [`queryall`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)
 """
 function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
     find = allB ? findall : findfirst
@@ -118,6 +118,10 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
 
     eval(quote function tag!(ref::RegRef, $(argssig...))
         tag!(ref, ($tagvariant)($(args...)))
+    end end)
+
+    eval(quote function Tag($(argssig...))
+        ($tagvariant)($(args...))
     end end)
 
     eval(quote function query(reg::Register, $(argssig...), _all::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}

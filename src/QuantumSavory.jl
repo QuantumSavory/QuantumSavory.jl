@@ -43,7 +43,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl
-    tag!, tag_types, W, ❓, query, queryall, findfreeslot,
+    Tag, tag!, W, ❓, query, queryall, findfreeslot,
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl

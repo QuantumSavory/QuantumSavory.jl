@@ -81,8 +81,8 @@ end
         @yield timeout(prot.sim, (rand(Geometric(prot.success_prob))+1) * prot.attempt_time)
         initialize!((a,b), prot.pairstate; time=now(prot.sim))
         @yield timeout(prot.sim, prot.local_busy_time_post)
-        tag!(a, tag_types.SymbolIntInt(:entanglement, prot.nodeB, b.idx))
-        tag!(b, tag_types.SymbolIntInt(:entanglement, prot.nodeA, a.idx))
+        tag!(a, :entanglement, prot.nodeB, b.idx)
+        tag!(b, :entanglement, prot.nodeA, a.idx)
         unlock(a)
         unlock(b)
         rounds -= 1
@@ -145,8 +145,8 @@ end
         q2remote = prot.net[tag2[2]][tag2[3]]
         swapcircuit = EntanglementSwap()
         swapcircuit(q1, q1remote, q2, q2remote) # TODO no one is making sure that q1 and q2 were locked for this operation
-        pop!(q1remote, tag_types.SymbolIntInt(:entanglement, prot.node, q1.idx))
-        pop!(q2remote, tag_types.SymbolIntInt(:entanglement, prot.node, q2.idx))
+        pop!(q1remote, Tag(:entanglement, prot.node, q1.idx))
+        pop!(q2remote, Tag(:entanglement, prot.node, q2.idx))
         tag!(q1remote, tag1)
         tag!(q2remote, tag2)
         #
