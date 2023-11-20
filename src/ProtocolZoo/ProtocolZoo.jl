@@ -85,7 +85,7 @@ end
         tag!(b, :entanglement, prot.nodeA, a.idx)
         unlock(a)
         unlock(b)
-        rounds -= 1
+        rounds==-1 || rounds -= 1
     end
 end
 
@@ -152,7 +152,7 @@ end
         #
         unlock(q1)
         unlock(q2)
-        rounds -= 1
+        rounds==-1 || rounds -= 1
     end
 end
 
