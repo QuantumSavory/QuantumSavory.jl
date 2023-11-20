@@ -38,11 +38,6 @@ Generates the unnormalized spin-spin density matrix for linear photonic entangle
 with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite).
 Since the matrix is 'weighted' by the probability for success, it is suffixed with a W to distinguish it 
 from the normalized object `SingleRailMidSwapBell`.
-It takes the following parameters:
-- eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
-- gA, gB: Memory initialization parameter for memories A and B
-- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
-- Vis: Interferometer visibility for the midpoint swap' can be complex to account for phase instability
 
 ```jldoctest
 julia> using QuantumSavory.StatesZoo: SingleRailMidSwapBellW
@@ -56,11 +51,17 @@ julia> observable(r[1:2], Z⊗Z)
 ```
 """
 @withmetadata struct SingleRailMidSwapBellW <: AbstractTwoQubitState
+    "Link efficiencies for memory A upto the swap (include link loss, detector efficiency, etc.)"
     eA::Float64
+    "Link efficiencies for memory B upto the swap (include link loss, detector efficiency, etc.)"
     eB::Float64
+    "Memory initialization parameter for memory A"
     gA::Float64
+    "Memory initialization parameter for memory B"
     gB::Float64
+    "Detector dark count probability per photonic mode (assumed to be the same for both detectors)"
     Pd::Float64
+    "Interferometer visibility for the midpoint swap' can be complex to account for phase instability"
     Vis::Float64
 end
 
@@ -76,11 +77,6 @@ $FIELDS
 
 Generates the normalized spin-spin density matrix for linear photonic entanglement swap 
 with emissive memories emitting single rail photonic qubits from the paper [prajit2023entangling](@cite)
-It takes the following parameters:
-- eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
-- gA, gB: Memory initialization parameter for memories A and B
-- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
-- Vis: Interferometer visibility for the midpoint swap' can be complex to account for phase instability
 
 ```jldoctest
 julia> using QuantumSavory.StatesZoo: SingleRailMidSwapBell
@@ -94,11 +90,17 @@ julia> observable(r[1:2], Z⊗Z)
 ```
 """
 @withmetadata struct SingleRailMidSwapBell <: AbstractTwoQubitState
+    "Link efficiencies for memory A upto the swap (include link loss, detector efficiency, etc.)"
     eA::Float64
+    "Link efficiencies for memory B upto the swap (include link loss, detector efficiency, etc.)"
     eB::Float64
+    "Memory initialization parameter for memory A"
     gA::Float64
+    "Memory initialization parameter for memory B"
     gB::Float64
+    "Detector dark count probability per photonic mode (assumed to be the same for both detectors)"
     Pd::Float64
+    "Interferometer visibility for the midpoint swap' can be complex to account for phase instability"
     Vis::Float64
 end
 
@@ -116,11 +118,6 @@ Generates the unnormalized spin-spin density matrix for linear photonic entangle
  memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite). 
  Since the matrix is 'weighted' by the probability for success, it is suffixed with a W to distinguish it 
 from the normalized object `DualRailMidSwapBell`.
- It takes the following parameters:
- - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
-- gA, gB: Memory initialization parameter for memories A and B 
-- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
-- Vis: Interferometer visibility for the midpoint swap 
 
 ```jldoctest
 julia> using QuantumSavory.StatesZoo: DualRailMidSwapBellW
@@ -134,11 +131,17 @@ julia> observable(r[1:2], Z⊗Z)
 ```
 """
 @withmetadata struct DualRailMidSwapBellW <: AbstractTwoQubitState
+    "Link efficiencies for memory A upto the swap (include link loss, detector efficiency, etc.)"
     eA::Float64
+    "Link efficiencies for memory B upto the swap (include link loss, detector efficiency, etc.)"
     eB::Float64
+    "Memory initialization parameter for memory A"
     gA::Float64
+    "Memory initialization parameter for memory B"
     gB::Float64
+    "Detector dark count probability per photonic mode (assumed to be the same for both detectors)"
     Pd::Float64
+    "Interferometer visibility for the midpoint swap"
     Vis::Float64
 end
 
@@ -154,11 +157,6 @@ $FIELDS
 
 Generates the normalized spin-spin density matrix for linear photonic entanglement swap with emissive
  memories emitting dual rail photonic qubits from the paper [prajit2023entangling](@cite).
- It takes the following parameters:
- - eA, eB: Link efficiencies for memories A and B upto the swap (include link loss, detector efficiency, etc.)
-- gA, gB: Memory initialization parameter for memories A and B 
-- Pd: Detector dark count probability per photonic mode (assumed to be the same for both detectors)
-- Vis: Interferometer visibility for the midpoint swap 
 
 ```jldoctest
 julia> using QuantumSavory.StatesZoo: DualRailMidSwapBell
@@ -172,11 +170,17 @@ julia> observable(r[1:2], Z⊗Z)
 ```
 """
 @withmetadata struct DualRailMidSwapBell <: AbstractTwoQubitState
+    "Link efficiencies for memory A upto the swap (include link loss, detector efficiency, etc.)"
     eA::Float64
+    "Link efficiencies for memory B upto the swap (include link loss, detector efficiency, etc.)"
     eB::Float64
+    "Memory initialization parameter for memory A"
     gA::Float64
+    "Memory initialization parameter for memory B"
     gB::Float64
+    "Detector dark count probability per photonic mode (assumed to be the same for both detectors)"
     Pd::Float64
+    "Interferometer visibility for the midpoint swap"
     Vis::Float64
 end
 

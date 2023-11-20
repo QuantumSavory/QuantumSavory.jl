@@ -573,19 +573,6 @@ cascaded source swapped with emissive spin memories. Since the matrix is 'weight
 success, it is suffixed with a W to distinguish it from the normalized object `ZALMSpinPair`. The cascaded 
 source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
 is stored in spin memories as discussed in [prajit2023entangling](@cite).
-It takes the following parameters:
-- Ns: mean photon number per mode of the cascaded source model
-- gA: qubit initialization parameter on Alice's side 
-- gB: qubit initialization parameter on Bob's side 
-- eAm: memory out-coupling efficiency for Alice's side (Allowed range: [0,1])
-- eBm: memory out-coupling efficiency for Bob's side (Allowed range: [0,1])
-- eAs: source out-coupling efficiency for Alice's side (Allowed range: [0,1])
-- eBs: source out-coupling efficiency for Bob's side (Allowed range: [0,1])
-- eD: detector efficiency (Allowed range: [0,1])
-- Pd: dark click probability per photonic mode on source's swap 
-- Pdo1: dark click probability per photonic mode on Alice side swap 
-- Pdo2: dark click probability per photonic mode on Bob side swap
-- VisF: product of visibilities of all three  interferometers (Allowed range: [0,1])
 
 ```jldoctest
 julia> using QuantumSavory.StatesZoo: ZALMSpinPairW
@@ -599,17 +586,29 @@ julia> observable(r[1:2], Z⊗Z)
 ```
 """
 @withmetadata struct ZALMSpinPairW <: AbstractTwoQubitState
+    "mean photon number per mode of the cascaded source model"
     Ns::Float64
+    "qubit initialization parameter on Alice's side"
     gA::Float64
+    "qubit initialization parameter on Bob's side"
     gB::Float64
+    "memory out-coupling efficiency for Alice's side (Allowed range: [0,1])"
     eAm::Float64
+    "memory out-coupling efficiency for Bob's side (Allowed range: [0,1])"
     eBm::Float64
+    "source out-coupling efficiency for Alice's side (Allowed range: [0,1])"
     eAs::Float64
+    "source out-coupling efficiency for Bob's side (Allowed range: [0,1])"
     eBs::Float64
+    "detector efficiency (Allowed range: [0,1])"
     eD::Float64
+    "dark click probability per photonic mode on source's swap"
     Pd::Float64
+    "dark click probability per photonic mode on Alice side swap"
     Pdo1::Float64
+    "dark click probability per photonic mode on Bob side swap"
     Pdo2::Float64
+    "product of visibilities of all three  interferometers (Allowed range: [0,1])"
     VisF::Float64
 end
 
@@ -627,19 +626,6 @@ Generate symbolic object for the normalized spin-spin density matrix for a
 cascaded source swapped with emissive spin memories. The cascaded 
 source from papers [prajit2022heralded](@cite) and [kevin2023zero](@cite) 
 is stored in spin memories as discussed in [prajit2023entangling](@cite).
-It takes the following parameters:
-- Ns: mean photon number per mode of the cascaded source model
-- gA: qubit initialization parameter on Alice's side 
-- gB: qubit initialization parameter on Bob's side 
-- eAm: memory out-coupling efficiency for Alice's side (Allowed range: [0,1])
-- eBm: memory out-coupling efficiency for Bob's side (Allowed range: [0,1])
-- eAs: source out-coupling efficiency for Alice's side (Allowed range: [0,1])
-- eBs: source out-coupling efficiency for Bob's side (Allowed range: [0,1])
-- eD: detector efficiency (Allowed range: [0,1])
-- Pd: dark click probability per photonic mode on source's swap 
-- Pdo1: dark click probability per photonic mode on Alice side swap 
-- Pdo2: dark click probability per photonic mode on Bob side swap
-- VisF: product of visibilities of all three  interferometers (Allowed range: [0,1])
 
 ```jldoctest
 julia> using QuantumSavory.StatesZoo: ZALMSpinPair
@@ -653,17 +639,29 @@ julia> observable(r[1:2], Z⊗Z)
 ```
 """
 @withmetadata struct ZALMSpinPair <: AbstractTwoQubitState
+    "mean photon number per mode of the cascaded source model"
     Ns::Float64
+    "qubit initialization parameter on Alice's side"
     gA::Float64
+    "qubit initialization parameter on Bob's side"
     gB::Float64
+    "memory out-coupling efficiency for Alice's side (Allowed range: [0,1])"
     eAm::Float64
+    "memory out-coupling efficiency for Bob's side (Allowed range: [0,1])"
     eBm::Float64
+    "source out-coupling efficiency for Alice's side (Allowed range: [0,1])"
     eAs::Float64
+    "source out-coupling efficiency for Bob's side (Allowed range: [0,1])"
     eBs::Float64
+    "detector efficiency (Allowed range: [0,1])"
     eD::Float64
+    "dark click probability per photonic mode on source's swap"
     Pd::Float64
+    "dark click probability per photonic mode on Alice side swap"
     Pdo1::Float64
+    "dark click probability per photonic mode on Bob side swap"
     Pdo2::Float64
+    "product of visibilities of all three  interferometers (Allowed range: [0,1])"
     VisF::Float64
 end
 
