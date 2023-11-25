@@ -1,29 +1,37 @@
 struct MessageBuffer{T}
-    queue::DelayQueue{T}
-    buffer::Vector{T}
-    signalreception::Resource
+    env::Simulation
+    buffer::Vector{NamedTuple{(:src,:tag), Tuple{Int,T}}}
+    waiters::IdDict{Resource,Resource}
 end
 
-@resumable function take_loop_mb(env, q, mb)
+@resumable function take_loop_mb(env, channel, src, mb)
     while true
-        @yield lock(mb.signalreception)
-        msg = @yield take!(q)
-        push!(mb.buffer, msg)
-        unlock(mb.signalreception)
+        tag = @yield take!(channel)
+        push!(mb.buffer, (;src,tag))
+        for waiter in keys(mb.waiters)
+            unlock(waiter)
+        end
     end
 end
 
-function MessageBuffer(q::DelayQueue{T}) where {T}
-    mb = MessageBuffer{T}(q, T[], ConcurrentSim.Resource(q.store.env))
-    @process take_loop_mb(q.store.env, q, mb)
+function MessageBuffer(qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
+    env = qs[1].channel.store.env
+    signal = IdDict{Resource,Resource}()
+    mb = MessageBuffer{T}(env, Tuple{Int,T}[], signal)
+    for (;src, channel) in qs
+        @process take_loop_mb(env, channel, src, mb)
+    end
     mb
 end
 
 @resumable function wait_process(env, mb::MessageBuffer)
-    @yield lock(mb.signalreception)
-    unlock(mb.signalreception)
+    waitresource = Resource(env)
+    lock(waitresource)
+    mb.waiters[waitresource] = waitresource
+    @yield lock(waitresource)
+    pop!(mb.waiters, waitresource)
 end
 
 function Base.wait(mb::MessageBuffer)
-    @process wait_process(mb.queue.store.env, mb)
+    @process wait_process(mb.env, mb)
 end

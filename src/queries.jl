@@ -106,10 +106,10 @@ end
 
 """A [`query`](@ref) for classical message buffers.
 
-You are advised actually use [`querypop!`](@ref), not `query` when working with classical message buffers."""
+You are advised to actually use [`querypop!`](@ref), not `query` when working with classical message buffers."""
 function query(mb::MessageBuffer, tag::Tag)
-    i = findfirst(==(tag), mb.buffer)
-    return isnothing(i) ? nothing : (;slot=i, tag=mb.buffer[i])
+    i = findfirst(t->t.tag==tag, mb.buffer)
+    return isnothing(i) ? nothing : (;depth=i, src=mb.buffer[i][1], tag=mb.buffer[i][2])
 end
 
 raw"""A [`query`](@ref) for classical message buffers that also pops the message out of the buffer.
@@ -118,61 +118,58 @@ raw"""A [`query`](@ref) for classical message buffers that also pops the message
 julia> net = RegisterNet([Register(3), Register(2)])
 A network of 2 registers in a graph of 1 edges
 
-
-julia> put!(channel(net, 1=>2), Tag(:my_tag))
-ConcurrentSim.Process 5
-
-julia> net = RegisterNet([Register(3), Register(2)])
-A network of 2 registers in a graph of 1 edges
-
 julia> put!(channel(net, 1=>2), Tag(:my_tag));
 
 julia> put!(channel(net, 1=>2), Tag(:another_tag, 123, 456));
 
-julia> query(messagebuffer(net, 1=>2), :my_tag)
+julia> query(messagebuffer(net, 2), :my_tag)
 
 julia> run(get_time_tracker(net))
 
-julia> query(messagebuffer(net, 1=>2), :my_tag)
-(slot = 1, tag = Symbol(:my_tag)::Tag)
+julia> query(messagebuffer(net, 2), :my_tag)
+(depth = 1, src = 1, tag = Symbol(:my_tag)::Tag)
 
-julia> querypop!(messagebuffer(net, 1=>2), :my_tag)
-Symbol(:my_tag)::Tag
+julia> querypop!(messagebuffer(net, 2), :my_tag)
+(src = 1, tag = Symbol(:my_tag)::Tag)
 
-julia> querypop!(messagebuffer(net, 1=>2), :my_tag) === nothing
+julia> querypop!(messagebuffer(net, 2), :my_tag) === nothing
 true
 
-julia> querypop!(messagebuffer(net, 1=>2), :another_tag, ❓, ❓)
-SymbolIntInt(:another_tag, 123, 456)::Tag
+julia> querypop!(messagebuffer(net, 2), :another_tag, ❓, ❓)
+(src = 1, tag = SymbolIntInt(:another_tag, 123, 456)::Tag)
 
-julia> querypop!(messagebuffer(net, 1=>2), :another_tag, ❓, ❓) === nothing
+julia> querypop!(messagebuffer(net, 2), :another_tag, ❓, ❓) === nothing
 true
 ```
 
-You can also wait on a message buffer for a message to arrive before runnign a query:
+You can also wait on a message buffer for a message to arrive before running a query:
 
 ```jldoctes
-julia> net = RegisterNet([Register(3), Register(2)])
-A network of 2 registers in a graph of 1 edges
-
+julia> net = RegisterNet([Register(3), Register(2), Register(3)])
+A network of 3 registers in a graph of 2 edges
 
 julia> env = get_time_tracker(net);
 
 julia> @resumable function receive_tags(env)
            while true
-               mb = messagebuffer(net, 1=>2)
+               mb = messagebuffer(net, 2)
                @yield wait(mb)
                msg = querypop!(mb, :second_tag, ❓, ❓)
-               println("t=$(now(env)): query returns $msg")
+               print("t=$(now(env)): query returns ")
+               if isnothing(msg)
+                   println("nothing")
+               else
+                   println("$(msg.tag) received from node $(msg.src)")
+               end
            end
        end
 receive_tags (generic function with 1 method)
 
 julia> @resumable function send_tags(env)
-           @yield timeout(env, 1)
+           @yield timeout(env, 1.0)
            put!(channel(net, 1=>2), Tag(:my_tag))
-           @yield timeout(env, 2)
-           put!(channel(net, 1=>2), Tag(:second_tag, 123, 456))
+           @yield timeout(env, 2.0)
+           put!(channel(net, 3=>2), Tag(:second_tag, 123, 456))
        end
 send_tags (generic function with 1 method)
 
@@ -182,12 +179,12 @@ julia> @process receive_tags(env);
 
 julia> run(env, 10)
 t=1.0: query returns nothing
-t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag
+t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node 3
 ```
 """
 function querypop!(mb::MessageBuffer, args...)
     r = query(mb, args...)
-    return isnothing(r) ? nothing : popat!(mb.buffer, r.slot)
+    return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
 _nothingor(l,r) = isnothing(l) || l==r
@@ -240,10 +237,10 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
             allB ? res : nothing
         end end
         newmethod_mb = quote function query(mb::MessageBuffer, $(argssig_wild...))
-            for (slot, tag) in enumerate(mb.buffer)
+            for (depth, (src, tag)) in pairs(mb.buffer)
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
                     if _all($(nonwild_checks...)) && _all($(wild_checks...))
-                        return (;slot, tag)
+                        return (;depth, src, tag)
                     end
                 end
             end

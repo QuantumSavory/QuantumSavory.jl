@@ -7,9 +7,9 @@ struct RegisterNet
     vertex_metadata::Vector{Dict{Symbol,Any}}
     edge_metadata::Dict{Tuple{Int,Int},Dict{Symbol,Any}}
     directed_edge_metadata::Dict{Pair{Int,Int},Dict{Symbol,Any}}
-    cchannels::Dict{Pair{Int,Int},Any}
-    cbuffers::Dict{Pair{Int,Int},Any}
-    qchannels::Dict{Pair{Int,Int},Any}
+    cchannels::Dict{Pair{Int,Int},DelayQueue{Tag}} # Dict{src=>dst, DelayQueue}
+    cbuffers::Dict{Int,MessageBuffer{Tag}} # Dict{dst, MessageBuffer}
+    qchannels::Dict{Pair{Int,Int},Any} # Dict{src=>dst, QuantumChannel}
     reverse_lookup::IdDict{Register,Int}
 end
 
@@ -30,16 +30,18 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
         end
     end
 
-    cchannels = Dict{Pair{Int,Int},Any}()
-    cbuffers = Dict{Pair{Int,Int},Any}()
+    cchannels = Dict{Pair{Int,Int},DelayQueue{Tag}}()
     qchannels = Dict{Pair{Int,Int},Any}()
     for (;src,dst) in edges(graph)
         cchannels[src=>dst] = DelayQueue{Tag}(env, 0)
-        cbuffers[src=>dst] = MessageBuffer(cchannels[src=>dst])
         qchannels[src=>dst] = QuantumChannel(env, 0)
         cchannels[dst=>src] = DelayQueue{Tag}(env, 0)
-        cbuffers[dst=>src] = MessageBuffer(cchannels[dst=>src])
         qchannels[dst=>src] = QuantumChannel(env, 0)
+    end
+    cbuffers = Dict{Int,MessageBuffer{Tag}}()
+    for (v,r) in zip(vertices(graph), registers)
+        channels = [(;src=w, channel=cchannels[w=>v]) for w in neighbors(graph, v)]
+        cbuffers[v] = MessageBuffer(channels)
     end
     reverse_lookup = IdDict{Register,Int}()
     for (v,r) in zip(vertices(graph), registers)
@@ -119,6 +121,10 @@ end
 
 """Get a handle to a classical channel between two registers.
 
+Usually used for sending classical messages between registers.
+It can be used for receiving as well, but a more convenient choice is [`messagebuffer`](@ref),
+which is a message buffer listening to **all** channels sending to a given destination register.
+
 ```jldoctest
 julia> net = RegisterNet([Register(2), Register(2), Register(2)]) # defaults to a chain topology
 A network of 3 registers in a graph of 2 edges
@@ -133,7 +139,7 @@ julia> channel(net, 1=>2) === channel(net, net[1]=>net[2])
 true
 ```
 
-See also: [`qchannel`](@ref)
+See also: [`qchannel`](@ref), [`messagebuffer`](@ref)
 """
 function channel(net::RegisterNet, args...)
     return achannel(net, args..., Val{:C}())
@@ -158,33 +164,19 @@ function qchannel(net::RegisterNet, args...)
     return achannel(net, args..., Val{:Q}())
 end
 
-"""Get a handle to a classical message buffer corresponding to a channel between two registers.
-
-```jldoctest
-julia> net = RegisterNet([Register(2), Register(2), Register(2)]) # defaults to a chain topology
-A network of 3 registers in a graph of 2 edges
-
-julia> qchannel(net, 1=>2)
-QuantumChannel{Qubit}(Qubit(), ConcurrentSim.DelayQueue{Register}(ConcurrentSim.QueueStore{Register, Int64}, 0.0), nothing)
-
-julia> qchannel(net, 1=>2) === qchannel(net, net[1]=>net[2])
-true
-```
+"""Get a handle to a classical message buffer corresponding to all channels sending to a given destination register.
 
 See also: [`channel`](@ref)
 """
-function messagebuffer(net::RegisterNet, args...)
-    return achannel(net, args..., Val{:B}())
+function messagebuffer(net::RegisterNet, dst::Int)
+    return net.cbuffers[dst]
 end
-
 
 function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{Q}) where {Q}
     if Q==:Q
         return net.qchannels[src=>dst]
     elseif Q==:C
         return net.cchannels[src=>dst]
-    elseif Q==:B
-        return net.cbuffers[src=>dst]
     end
 end
 
