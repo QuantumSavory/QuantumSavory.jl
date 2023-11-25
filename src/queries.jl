@@ -104,6 +104,56 @@ function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{
     end
 end
 
+"""A [`query`](@ref) for classical message buffers.
+
+You are advised actually use [`querypop!`](@ref), not `query` when working with classical message buffers."""
+function query(mb::MessageBuffer, tag::Tag)
+    i = findfirst(==(tag), mb.buffer)
+    return isnothing(i) ? nothing : (;slot=i, tag=mb.buffer[i])
+end
+
+"""A [`query`](@ref) for classical message buffers that also pops the message out of the buffer.
+
+```jldoctest
+julia> net = RegisterNet([Register(3), Register(2)])
+A network of 2 registers in a graph of 1 edges
+
+
+julia> put!(channel(net, 1=>2), Tag(:my_tag))
+ConcurrentSim.Process 5
+
+julia> net = RegisterNet([Register(3), Register(2)])
+A network of 2 registers in a graph of 1 edges
+
+
+julia> put!(channel(net, 1=>2), Tag(:my_tag));
+
+julia> put!(channel(net, 1=>2), Tag(:another_tag, 123, 456));
+
+julia> query(messagebuffer(net, 1=>2), :my_tag)
+
+julia> run(get_time_tracker(net))
+
+julia> query(messagebuffer(net, 1=>2), :my_tag)
+(slot = 1, tag = Symbol(:my_tag)::Tag)
+
+julia> querypop!(messagebuffer(net, 1=>2), :my_tag)
+Symbol(:my_tag)::Tag
+
+julia> querypop!(messagebuffer(net, 1=>2), :my_tag) === nothing
+true
+
+julia> querypop!(messagebuffer(net, 1=>2), :another_tag, ❓, ❓)
+SymbolIntInt(:another_tag, 123, 456)::Tag
+
+julia> querypop!(messagebuffer(net, 1=>2), :another_tag, ❓, ❓) === nothing
+true
+```
+"""
+function querypop!(mb::MessageBuffer, args...)
+    r = query(mb, args...)
+    return isnothing(r) ? nothing : popat!(mb.buffer, r.slot)
+end
 
 _nothingor(l,r) = isnothing(l) || l==r
 _all() = true
@@ -126,8 +176,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         ($tagvariant)($(args...))
     end end)
 
-    eval(quote function query(reg::Register, $(argssig...), _all::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
-        query(reg, ($tagvariant)($(args...)), _all; locked, assigned)
+    eval(quote function query(tagcontainer, $(argssig...), ars...; kwa...)
+        query(tagcontainer, ($tagvariant)($(args...)), ars...; kwa...)
     end end)
 
     int_idx_all = [i for (i,s) in enumerate(sig) if s == Int]
@@ -139,7 +189,7 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         argssig_wild = [:($a::$t) for (a,t) in zip(args, sig_wild)]
         wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag.data[$i])) for i in idx]
         nonwild_checks = [:(tag.data[$i]==$(args[i])) for i in complement_idx]
-        newmethod = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
+        newmethod_reg = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
             res = NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}[]
             for (reg_idx, tags) in enumerate(reg.tags)
                 slot = reg[reg_idx]
@@ -154,10 +204,20 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
             end
             allB ? res : nothing
         end end
+        newmethod_mb = quote function query(mb::MessageBuffer, $(argssig_wild...))
+            for (slot, tag) in enumerate(mb.buffer)
+                if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
+                    if _all($(nonwild_checks...)) && _all($(wild_checks...))
+                        return (;slot, tag)
+                    end
+                end
+            end
+        end end
         #println(sig)
         #println(sig_wild)
-        #println(newmethod)
-        eval(newmethod)
+        #println(newmethod_reg)
+        eval(newmethod_reg)
+        eval(newmethod_mb) # TODO there is a lot of code duplication here
     end
 end
 

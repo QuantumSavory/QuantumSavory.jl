@@ -35,7 +35,7 @@ export
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
     # networks.jl
-    RegisterNet, channel, qchannel,
+    RegisterNet, channel, qchannel, messagebuffer,
     # initialize.jl
     initialize!, newstate,
     # subsystemcompose.jl
@@ -45,7 +45,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, findfreeslot,
+    Tag, tag!, untag!, W, ❓, query, queryall, querypop!, findfreeslot,
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
@@ -65,6 +65,7 @@ include("tags.jl")
 
 include("states_registers.jl")
 include("quantumchannel.jl")
+include("messagebuffer.jl")
 include("networks.jl")
 include("states_registers_networks_getset.jl")
 include("states_registers_networks_shows.jl")
