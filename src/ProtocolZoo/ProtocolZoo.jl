@@ -68,7 +68,7 @@ end
 @resumable function (prot::EntanglerProt)(;_prot::EntanglerProt=prot)
     prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
     rounds = prot.rounds
-    while rounds == -1 || rounds > 0
+    while rounds != 0
         a = findfreeslot(prot.net[prot.nodeA])
         b = findfreeslot(prot.net[prot.nodeB])
         if isnothing(a) || isnothing(b)
@@ -124,7 +124,7 @@ end
 @resumable function (prot::SwapperProt)(;_prot::SwapperProt=prot)
     prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
     rounds = prot.rounds
-    while rounds == -1 || rounds > 0
+    while rounds != 0
         reg = prot.net[prot.node]
         qubit_pair = findswapablequbits(prot.net,prot.node)
         if isnothing(qubit_pair)
