@@ -112,7 +112,7 @@ function query(mb::MessageBuffer, tag::Tag)
     return isnothing(i) ? nothing : (;slot=i, tag=mb.buffer[i])
 end
 
-"""A [`query`](@ref) for classical message buffers that also pops the message out of the buffer.
+raw"""A [`query`](@ref) for classical message buffers that also pops the message out of the buffer.
 
 ```jldoctest
 julia> net = RegisterNet([Register(3), Register(2)])
@@ -124,7 +124,6 @@ ConcurrentSim.Process 5
 
 julia> net = RegisterNet([Register(3), Register(2)])
 A network of 2 registers in a graph of 1 edges
-
 
 julia> put!(channel(net, 1=>2), Tag(:my_tag));
 
@@ -148,6 +147,42 @@ SymbolIntInt(:another_tag, 123, 456)::Tag
 
 julia> querypop!(messagebuffer(net, 1=>2), :another_tag, ❓, ❓) === nothing
 true
+```
+
+You can also wait on a message buffer for a message to arrive before runnign a query:
+
+```jldoctes
+julia> net = RegisterNet([Register(3), Register(2)])
+A network of 2 registers in a graph of 1 edges
+
+
+julia> env = get_time_tracker(net);
+
+julia> @resumable function receive_tags(env)
+           while true
+               mb = messagebuffer(net, 1=>2)
+               @yield wait(mb)
+               msg = querypop!(mb, :second_tag, ❓, ❓)
+               println("t=$(now(env)): query returns $msg")
+           end
+       end
+receive_tags (generic function with 1 method)
+
+julia> @resumable function send_tags(env)
+           @yield timeout(env, 1)
+           put!(channel(net, 1=>2), Tag(:my_tag))
+           @yield timeout(env, 2)
+           put!(channel(net, 1=>2), Tag(:second_tag, 123, 456))
+       end
+send_tags (generic function with 1 method)
+
+julia> @process send_tags(env);
+
+julia> @process receive_tags(env);
+
+julia> run(env, 10)
+t=1.0: query returns nothing
+t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag
 ```
 """
 function querypop!(mb::MessageBuffer, args...)

@@ -6,7 +6,8 @@ using IterTools
 using LinearAlgebra
 using Graphs
 import ConcurrentSim
-using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Process, @process,
+using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Resource,
+      Process, @process,
       request, release, now, active_process, timeout, put, get
 using ResumableFunctions
 using Printf
