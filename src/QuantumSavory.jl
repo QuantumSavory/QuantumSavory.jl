@@ -10,8 +10,8 @@ using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Process, @proce
       request, release, now, active_process, timeout, put, get
 using ResumableFunctions
 using Printf
-import SumTypes: @sum_type, isvariant
-import Combinatorics: powerset
+using SumTypes: @sum_type, isvariant
+using Combinatorics: powerset
 
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,
     AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
@@ -45,7 +45,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl
-    Tag, tag!, W, ❓, query, queryall, findfreeslot,
+    Tag, tag!, untag!, W, ❓, query, queryall, findfreeslot,
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl

@@ -5,8 +5,10 @@ function tag!(ref::RegRef, tag::Tag)
     push!(ref.reg.tags[ref.idx], tag)
 end
 
-function Base.pop!(ref::RegRef, tag::Tag)
-    pop!(ref.reg.tags[ref.idx], tag)
+function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See issue #74
+    tags = ref.reg.tags[ref.idx]
+    i = findfirst(==(tag), tags)
+    isnothing(i) ? throw(KeyError(tag)) : deleteat!(tags, i) # TODO make sure there is a clear error message
 end
 
 """Wildcard for use with the tag querying functionality.

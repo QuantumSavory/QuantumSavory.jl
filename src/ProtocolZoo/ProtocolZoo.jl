@@ -81,11 +81,11 @@ end
         @yield timeout(prot.sim, (rand(Geometric(prot.success_prob))+1) * prot.attempt_time)
         initialize!((a,b), prot.pairstate; time=now(prot.sim))
         @yield timeout(prot.sim, prot.local_busy_time_post)
-        tag!(a, :entanglement, prot.nodeB, b.idx)
-        tag!(b, :entanglement, prot.nodeA, a.idx)
+        tag!(a, :EntanglementCounterpart, prot.nodeB, b.idx)
+        tag!(b, :EntanglementCounterpart, prot.nodeA, a.idx)
         unlock(a)
         unlock(b)
-        rounds==-1 || rounds -= 1
+        rounds==-1 || (rounds -= 1)
     end
 end
 
@@ -135,8 +135,8 @@ end
         (q1, tag1), (q2, tag2) = qubit_pair
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but better defensive
         @yield timeout(prot.sim, prot.local_busy_time)
-        pop!(q1, tag1)
-        pop!(q2, tag2)
+        untag!(q1, tag1)
+        untag!(q2, tag2)
         uptotime!((q1, q2), now(prot.sim))
         # TODO
         # tell brother of q1 and brother of q2 to update their entanglement tags and send them the Pauli frame correction
@@ -145,22 +145,22 @@ end
         q2remote = prot.net[tag2[2]][tag2[3]]
         swapcircuit = EntanglementSwap()
         swapcircuit(q1, q1remote, q2, q2remote) # TODO no one is making sure that q1 and q2 were locked for this operation
-        pop!(q1remote, Tag(:entanglement, prot.node, q1.idx))
-        pop!(q2remote, Tag(:entanglement, prot.node, q2.idx))
+        untag!(q1remote, Tag(:EntanglementCounterpart, prot.node, q1.idx))
+        untag!(q2remote, Tag(:EntanglementCounterpart, prot.node, q2.idx))
         tag!(q1remote, tag1)
         tag!(q2remote, tag2)
         #
         unlock(q1)
         unlock(q2)
-        rounds==-1 || rounds -= 1
+        rounds==-1 || (rounds -= 1)
     end
 end
 
 function findswapablequbits(net,node) # TODO parameterize the query predicates and the findmin/findmax
     reg = net[node]
 
-    leftnodes  = queryall(reg, :entanglement, <(node), ❓; locked=false, assigned=true)
-    rightnodes = queryall(reg, :entanglement, >(node), ❓; locked=false, assigned=true)
+    leftnodes  = queryall(reg, :EntanglementCounterpart, <(node), ❓; locked=false, assigned=true)
+    rightnodes = queryall(reg, :EntanglementCounterpart, >(node), ❓; locked=false, assigned=true)
 
     (isempty(leftnodes) || isempty(rightnodes)) && return nothing
     _, il = findmin(n->n.tag[2], leftnodes)   # TODO make [2] into a nice named property
