@@ -104,6 +104,34 @@ function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{
     end
 end
 
+"""A [`query`](@ref) on a single slot of a register.
+
+```jldoctest
+julia> r = Register(5);
+
+julia> tag!(r[2], :symbol, 2, 3);
+
+julia> query(r[2], :symbol, 2, 3)
+(depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+
+julia> query(r[3], :symbol, 2, 3) === nothing
+true
+
+julia> queryall(r[2], :symbol, 2, 3)
+1-element Vector{NamedTuple{(:depth, :tag), Tuple{Int64, Tag}}}:
+ (depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+```
+"""
+function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}()) where {allB} # TODO there is a lot of code duplication here
+    find = allB ? findall : findfirst
+    i = find(==(tag), ref.reg.tags[ref.idx])
+    if allB
+        return NamedTuple{(:depth, :tag), Tuple{Int, Tag}}[(depth=i, tag=tag) for i in i]
+    else
+        isnothing(i) ? nothing : (;depth=i, tag=tag)
+    end
+end
+
 """A [`query`](@ref) for classical message buffers.
 
 You are advised to actually use [`querypop!`](@ref), not `query` when working with classical message buffers."""
@@ -187,6 +215,12 @@ function querypop!(mb::MessageBuffer, args...)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
+function querypop!(ref::RegRef, args...) # TODO there is a lot of code duplication here
+    r = query(ref, args...)
+    return isnothing(r) ? nothing : popat!(ref.reg.tags[ref.idx], r.depth)
+end
+
+
 _nothingor(l,r) = isnothing(l) || l==r
 _all() = true
 _all(a::Bool) = a
@@ -245,11 +279,23 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
                 end
             end
         end end
+        newmethod_rr = quote function query(ref::RegRef, $(argssig_wild...), ::Val{allB}=Val{false}()) where {allB}
+            res = NamedTuple{(:depth, :tag), Tuple{Int, Tag}}[]
+            for (depth, tag) in pairs(ref.reg.tags[ref.idx])
+                if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
+                    if _all($(nonwild_checks...)) && _all($(wild_checks...))
+                        allB ? push!(res, (;depth, tag)) : return (;depth, tag)
+                    end
+                end
+            end
+            allB ? res : nothing
+        end end
         #println(sig)
         #println(sig_wild)
         #println(newmethod_reg)
         eval(newmethod_reg)
         eval(newmethod_mb) # TODO there is a lot of code duplication here
+        eval(newmethod_rr) # TODO there is a lot of code duplication here
     end
 end
 
