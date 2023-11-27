@@ -31,7 +31,7 @@ display(fig)
 
 # record the simulation progress
 step_ts = range(0, 4, step=0.1)
-record(fig, "firstgenrepeater-02.entangler.mp4", step_ts, framerate=10, visible=true) do t
+record(fig, "firstgenrepeater_v2-01.entangler.mp4", step_ts, framerate=10, visible=true) do t
     run(sim, t)
     notify(obs)
     ax.title = "t=$(t)"

@@ -3,7 +3,8 @@ module CircuitZoo
 using QuantumSavory
 using DocStringExtensions
 
-export EntanglementSwap, Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
+export EntanglementSwap, LocalEntanglementSwap,
+    Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
     PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
     SDDecode, SDEncode
 
@@ -32,6 +33,18 @@ function (::EntanglementSwap)(localL, remoteL, lacalR, remoteR)
 end
 
 inputqubits(::EntanglementSwap) = 4
+
+struct LocalEntanglementSwap <: AbstractCircuit
+end
+
+function (::LocalEntanglementSwap)(localL, lacalR)
+    apply!((localL, lacalR), CNOT)
+    xmeas = project_traceout!(localL, σˣ)
+    zmeas = project_traceout!(lacalR, σᶻ)
+    xmeas, zmeas
+end
+
+inputqubits(::LocalEntanglementSwap) = 2
 
 
 """
