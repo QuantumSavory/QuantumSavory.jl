@@ -35,7 +35,7 @@ end
 Delete the given slot of the given register.
 
 `traceout!(reg, slot)` would reset (perform a partial trace) over the given subsystem.
-The Hilbert space of the register is automatically shrinked.
+The Hilbert space of the register gets automatically shrunk.
 """
 function traceout!(r::Register, i::Int)
     stateref = r.staterefs[i]
@@ -58,7 +58,7 @@ Perform a projective measurement on the given slot of the given register.
 `project_traceout!(reg, slot, [stateA, stateB])` performs a projective measurement,
 projecting on either `stateA` or `stateB`, returning the index of the subspace
 on which the projection happened. It assumes the list of possible states forms a basis
-for the Hilbert space. The Hilbert space of the register is automatically shrinked.
+for the Hilbert space. The Hilbert space of the register gets automatically shrunk.
 
 A basis object can be specified on its own as well, e.g.
 `project_traceout!(reg, slot, basis)`.

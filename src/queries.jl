@@ -10,12 +10,12 @@ end
 See also: [`query`](@ref), [`tag!`](@ref), [`tag_types`](@ref)"""
 struct Wildcard end
 
-"""A wilcard instance for use with the tag querying functionality.
+"""A wildcard instance for use with the tag querying functionality.
 
 See also: [`query`](@ref), [`tag!`](@ref), [`tag_types`](@ref), [`Wildcard`](@ref)"""
 const W = Wildcard()
 
-"""A wilcard instance for use with the tag querying functionality.
+"""A wildcard instance for use with the tag querying functionality.
 
 See also: [`query`](@ref), [`tag!`](@ref), [`tag_types`](@ref), [`Wildcard`](@ref)"""
 const ❓ = W

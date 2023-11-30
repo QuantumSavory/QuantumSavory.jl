@@ -38,7 +38,7 @@ stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*mixed_dm
 We then use that in the entangler setup (the same way we used a similar function when we were doing wavefunction simulations), simply by selecting the appropriate default representation type ([`CliffordRepr`](@ref) instead of [`QuantumOpticsRepr`](@ref)):
 
 ```julia
-# exerpt from `firstgenrepeater-firstgenrepeater-clifford.jl`
+# excerpt from `firstgenrepeater-firstgenrepeater-clifford.jl`
 sim, network = simulation_setup(sizes, T2; representation = CliffordRepr)
 noisy_pair = stab_noisy_pair_func(F)
 ```

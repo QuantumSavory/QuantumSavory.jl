@@ -5,7 +5,7 @@ Apply a given operation on the given set of register slots.
 
 `apply!([regA, regB], [slot1, slot2], Gates.CNOT)` would apply a CNOT gate
 on the content of the given registers at the given slots.
-The appropriate representatin of the gate is used,
+The appropriate representation of the gate is used,
 depending on the formalism under which a quantum state is stored in the given registers.
 The Hilbert spaces of the registers are automatically joined if necessary.
 """

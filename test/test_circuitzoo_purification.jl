@@ -187,7 +187,7 @@ end
                     @test ma == mb
                     @test observable(r[1:2], projector(bell)) ≈ 1.0
 
-                    # TODO: Should also taget qubits 1 and 2
+                    # TODO: Should also target qubits 1 and 2
                     for error in [:X, :Y, :Z], target in 3:6
                         r = Register(6, rep())
                         for i in 1:3
