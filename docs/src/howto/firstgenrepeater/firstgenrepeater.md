@@ -527,7 +527,7 @@ We will compute these correlators for the second pair on the extreme ends of the
 ```
 
 Notice how the `XX` observable drops due to the T₂ dephasing experienced by the qubits.
-And then it goes back up at the occurence of a successful purification
+And then it goes back up at the occurrence of a successful purification
 (or all the way to zero at failed purifications).
 Here is what it looks like if we do not perform purification:
 
@@ -548,7 +548,7 @@ Much of the analog dynamics was implicit through the use of [backgrounds,
 declaring the noise properties of various qubits](@ref Properties-and-Backgrounds).
 
 The digital-ish dynamics was implemented through the use of
-- [`initialize!`](@ref) for setting inital states to various qubits
+- [`initialize!`](@ref) for setting initial states to various qubits
 - [`apply!`](@ref) for the application of various gates
 - [`traceout!`](@ref) for deleting qubits
 - [`project_traceout!`](@ref) for projective measurements over qubits

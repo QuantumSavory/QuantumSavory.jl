@@ -102,7 +102,7 @@ landing = App() do
     - number of repeaters
     - number of qubits available as memories at each repeater
     - the mean time to successful generation of a raw Bell pair (governed by an exponential distribution)
-    - the time it takes to perform a swap at a reapeater
+    - the time it takes to perform a swap at a repeater
     - the fidelity of a raw Bell pair (assuming depolarization noise)
     - T₂ memory time (only dephasing is modeled)
 

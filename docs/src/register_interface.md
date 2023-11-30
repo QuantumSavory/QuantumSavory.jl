@@ -78,7 +78,7 @@ Applying an `operation` to the qubits referred to by the sequence of [`RegRef`](
 
 Calls [`uptotime!`](@ref) in order to update any [`AbstractBackground`](@ref) properties.
 
-Calls [`subsystemcompose`](@ref) in order to make one big state. Then goes to `apply!(state, subsystem_indices, operatin; time)`.
+Calls [`subsystemcompose`](@ref) in order to make one big state. Then goes to `apply!(state, subsystem_indices, operation; time)`.
 
 #### `apply!(state, subsystem_indices, operation; time)`
 
@@ -116,7 +116,7 @@ flowchart TB
 
 !!! warning "Limitations of symbolic-to-explicit conversion"
 
-    As mentioned above, converting from symbolic to explicit representation for the `operation` is dependent only on the type of `state`, i.e. by the time the conversion is done, no knowledge of the register and its properties are kept (in particular its prefered representation is not considered).
+    As mentioned above, converting from symbolic to explicit representation for the `operation` is dependent only on the type of `state`, i.e. by the time the conversion is done, no knowledge of the register and its properties are kept (in particular its preferred representation is not considered).
 
 !!! info "Short-circuiting the `express` dispatch"
 
