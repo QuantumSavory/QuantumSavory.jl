@@ -1,7 +1,7 @@
 name = "QuantumSavory"
 uuid = "2de2e421-972c-4cb5-a0c3-999c85908079"
 authors = ["Stefan Krastanov <stefan@krastanov.org>"]
-version = "0.3.3"
+version = "0.3.2"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
