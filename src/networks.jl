@@ -32,23 +32,26 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
 
     cchannels = Dict{Pair{Int,Int},DelayQueue{Tag}}()
     qchannels = Dict{Pair{Int,Int},Any}()
+    cbuffers = Dict{Int,MessageBuffer{Tag}}()
+    reverse_lookup = IdDict{Register,Int}()
+
+    rn = RegisterNet(graph, registers, vertex_metadata, edge_metadata, directed_edge_metadata, cchannels, cbuffers, qchannels, reverse_lookup)
+
     for (;src,dst) in edges(graph)
         cchannels[src=>dst] = DelayQueue{Tag}(env, 0)
         qchannels[src=>dst] = QuantumChannel(env, 0)
         cchannels[dst=>src] = DelayQueue{Tag}(env, 0)
         qchannels[dst=>src] = QuantumChannel(env, 0)
     end
-    cbuffers = Dict{Int,MessageBuffer{Tag}}()
     for (v,r) in zip(vertices(graph), registers)
         channels = [(;src=w, channel=cchannels[w=>v]) for w in neighbors(graph, v)]
-        cbuffers[v] = MessageBuffer(channels)
+        cbuffers[v] = MessageBuffer(rn, v, channels)
     end
-    reverse_lookup = IdDict{Register,Int}()
     for (v,r) in zip(vertices(graph), registers)
         reverse_lookup[r] = v
     end
 
-    RegisterNet(graph, registers, vertex_metadata, edge_metadata, directed_edge_metadata, cchannels, cbuffers, qchannels, reverse_lookup)
+    return rn
 end
 
 """
@@ -141,8 +144,8 @@ true
 
 See also: [`qchannel`](@ref), [`messagebuffer`](@ref)
 """
-function channel(net::RegisterNet, args...)
-    return achannel(net, args..., Val{:C}())
+function channel(net::RegisterNet, args...; permit_forward=false)
+    return achannel(net, args..., Val{:C}(); permit_forward)
 end
 
 """Get a handle to a quantum channel between two registers.
@@ -172,32 +175,39 @@ function messagebuffer(net::RegisterNet, dst::Int)
     return net.cbuffers[dst]
 end
 
-function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{Q}) where {Q}
-    if Q==:Q
-        return net.qchannels[src=>dst]
-    elseif Q==:C
-        return net.cchannels[src=>dst]
+function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{:C}; permit_forward=false)
+    pair = src=>dst
+    if permit_forward && !haskey(net.cchannels, pair)
+        return ChannelForwarder(net, src, dst)
+    elseif haskey(net.cchannels, pair)
+        return net.cchannels[pair]
+    else
+        error(lazy"There is no direct classical channel between the nodes in the request $(src)=>$(dst). Consider using `channel(...; permit_forward=true)` to instead encapsulate the message in a forwarder packet and send it to the first node in the shortest path.")
     end
 end
 
-function achannel(net::RegisterNet, fromreg::Register, to::Int, v::Val{Q}) where {Q}
-    achannel(net, net.reverse_lookup[fromreg], to, v)
+function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{:Q})
+    return net.qchannels[src=>dst]
 end
 
-function achannel(net::RegisterNet, from::Int, toreg::Register, v::Val{Q}) where {Q}
-    achannel(net, from, net.reverse_lookup[toreg], v)
+function achannel(net::RegisterNet, fromreg::Register, to::Int, v::Val{Q}; kw...) where {Q}
+    achannel(net, net.reverse_lookup[fromreg], to, v; kw...)
 end
 
-function achannel(net::RegisterNet, fromreg::Register, toreg::Register, v::Val{Q}) where {Q}
-    achannel(net, net.reverse_lookup[fromreg], net.reverse_lookup[toreg], v)
+function achannel(net::RegisterNet, from::Int, toreg::Register, v::Val{Q}; kw...) where {Q}
+    achannel(net, from, net.reverse_lookup[toreg], v; kw...)
 end
 
-function achannel(net::RegisterNet, fromto::Edge, v::Val{Q}) where {Q}
+function achannel(net::RegisterNet, fromreg::Register, toreg::Register, v::Val{Q}; kw...) where {Q}
+    achannel(net, net.reverse_lookup[fromreg], net.reverse_lookup[toreg], v; kw...)
+end
+
+function achannel(net::RegisterNet, fromto::Edge, v::Val{Q}; kw...) where {Q}
     (;src,dst) = fromto
-    achannel(net, src, dst, v)
+    achannel(net, src, dst, v; kw...)
 end
 
-function achannel(net::RegisterNet, fromto::Pair, v::Val{Q}) where {Q}
+function achannel(net::RegisterNet, fromto::Pair, v::Val{Q}; kw...) where {Q}
     (src,dst) = fromto
-    achannel(net, src, dst, v)
+    achannel(net, src, dst, v; kw...)
 end

@@ -156,12 +156,12 @@ end
         # send from here to new entanglement counterpart:
         # tag with :EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg1 = Tag(:EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
-        put!(channel(prot.net, prot.node=>tag1[2]), msg1)
+        put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
         #println("swapper @$(prot.node) send msg to $(tag1[2]): ", msg1)
         # send from here to new entanglement counterpart:
         # tag with :EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg2 = Tag(:EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
-        put!(channel(prot.net, prot.node=>tag2[2]), msg2)
+        put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
         #println("swapper @$(prot.node) send msg to $(tag2[2]): ", msg2)
         unlock(q1)
         unlock(q2)
@@ -244,7 +244,7 @@ end
                 if !isnothing(history)
                     _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history
                     msghist = Tag(updatetagsymbol, pastremotenode, swappedlocal_slotidx, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
-                    put!(channel(prot.net, prot.node=>whoweswappedwith_node), msghist)
+                    put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
                     #println("           history sends to $whoweswappedwith_node: ", msghist)
                     continue
                 end

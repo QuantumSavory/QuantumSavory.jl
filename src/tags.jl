@@ -12,6 +12,7 @@
     TypeSymbol(::DataType, ::Symbol)
     TypeSymbolInt(::DataType, ::Symbol, ::Int)
     TypeSymbolIntInt(::DataType, ::Symbol, ::Int, ::Int)
+    Forward(::Tag, ::Int)
 end
 
 """Tag types available in the taggging and tag-querying system.
