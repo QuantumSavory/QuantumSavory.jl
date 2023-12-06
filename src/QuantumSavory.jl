@@ -12,6 +12,7 @@ using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Resource,
 using ResumableFunctions
 using Printf
 using SumTypes: @sum_type, isvariant, @cases
+import SumTypes
 using Combinatorics: powerset
 
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,

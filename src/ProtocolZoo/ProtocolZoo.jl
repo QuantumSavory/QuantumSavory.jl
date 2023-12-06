@@ -1,9 +1,10 @@
 module ProtocolZoo
 
 using QuantumSavory
-import QuantumSavory: get_time_tracker
+import QuantumSavory: get_time_tracker, Tag
 using QuantumSavory: Wildcard
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
+
 using DocStringExtensions
 
 using Distributions: Geometric
@@ -11,6 +12,7 @@ using ConcurrentSim: Simulation, @yield, timeout, @process, now
 import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
+import SumTypes
 
 export EntanglerProt, SwapperProt, EntanglementTracker
 
@@ -19,6 +21,45 @@ abstract type AbstractProtocol end
 get_time_tracker(prot::AbstractProtocol) = prot.sim
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...,_prot=prot), get_time_tracker(prot), args...; kwargs...)
+
+@kwdef struct EntanglementCounterpart
+    remote_node::Int
+    remote_slot::Int
+end
+Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node)|$(tag.remote_slot)")
+Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot)
+
+@kwdef struct EntanglementHistory
+    remote_node::Int
+    remote_slot::Int
+    swap_remote_node::Int
+    swap_remote_slot::Int
+    swapped_local::Int
+end
+Base.show(io::IO, tag::EntanglementHistory) = print(io, "Was entangled to $(tag.remote_node)|$(tag.remote_slot), but swapped with |$(tag.swapped_local) which was entangled to $(tag.swap_remote_node)|$(tag.swap_remote_slot)")
+Tag(tag::EntanglementHistory) = Tag(EntanglementHistory, tag.remote_node, tag.remote_slot, tag.swap_remote_node, tag.swap_remote_slot, tag.swapped_local)
+
+@kwdef struct EntanglementUpdateX
+    past_local_node::Int
+    past_local_slot::Int
+    past_remote_slot::Int
+    new_remote_node::Int
+    new_remote_slot::Int
+    correction::Int
+end
+Base.show(io::IO, tag::EntanglementUpdateX) = print(io, "Update slot |$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node)|$(tag.past_local_slot) to be entangled to $(tag.new_remote_node)|$(tag.new_remote_slot) and apply correction X$(tag.correction)")
+Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
+
+@kwdef struct EntanglementUpdateZ
+    past_local_node::Int
+    past_local_slot::Int
+    past_remote_slot::Int
+    new_remote_node::Int
+    new_remote_slot::Int
+    correction::Int
+end
+Base.show(io::IO, tag::EntanglementUpdateZ) = print(io, "Update slot |$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node)|$(tag.past_local_slot) to be entangled to $(tag.new_remote_node)|$(tag.new_remote_slot) and apply correction Z$(tag.correction)")
+Tag(tag::EntanglementUpdateZ) = Tag(EntanglementUpdateZ, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
 
 """
 $TYPEDEF
@@ -84,10 +125,10 @@ end
         initialize!((a,b), prot.pairstate; time=now(prot.sim))
         @yield timeout(prot.sim, prot.local_busy_time_post)
 
-        # tag local node a with :EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-        tag!(a, :EntanglementCounterpart, prot.nodeB, b.idx)
-        # tag local node b with :EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-        tag!(b, :EntanglementCounterpart, prot.nodeA, a.idx)
+        # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
+        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
+        # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
+        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
 
         unlock(a)
         unlock(b)
@@ -144,25 +185,25 @@ end
 
         untag!(q1, tag1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q1, :EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
+        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
 
         untag!(q2, tag2)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q2, :EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
+        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
 
         uptotime!((q1, q2), now(prot.sim))
         swapcircuit = LocalEntanglementSwap()
         xmeas, zmeas = swapcircuit(q1, q2)
         # send from here to new entanglement counterpart:
-        # tag with :EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
-        msg1 = Tag(:EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
+        # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
+        msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
-        #println("swapper @$(prot.node) send msg to $(tag1[2]): ", msg1)
+        @debug "swapper @$(prot.node) send msg to $(tag1[2]): $msg1"
         # send from here to new entanglement counterpart:
-        # tag with :EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
-        msg2 = Tag(:EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
+        # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
+        msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
-        #println("swapper @$(prot.node) send msg to $(tag2[2]): ", msg2)
+        @debug "swapper @$(prot.node) send msg to $(tag2[2]): $msg2"
         unlock(q1)
         unlock(q2)
         rounds==-1 || (rounds -= 1)
@@ -172,8 +213,8 @@ end
 function findswapablequbits(net,node) # TODO parameterize the query predicates and the findmin/findmax
     reg = net[node]
 
-    leftnodes  = queryall(reg, :EntanglementCounterpart, <(node), ❓; locked=false, assigned=true)
-    rightnodes = queryall(reg, :EntanglementCounterpart, >(node), ❓; locked=false, assigned=true)
+    leftnodes  = queryall(reg, EntanglementCounterpart, <(node), ❓; locked=false, assigned=true)
+    rightnodes = queryall(reg, EntanglementCounterpart, >(node), ❓; locked=false, assigned=true)
 
     (isempty(leftnodes) || isempty(rightnodes)) && return nothing
     _, il = findmin(n->n.tag[2], leftnodes) # TODO make [2] into a nice named property
@@ -206,42 +247,40 @@ end
         workwasdone = true # waiting is not enough because we might have multiple rounds of work to do
         while workwasdone
             workwasdone = false
-            for (updatetagsymbol, updategate) in ((:EntanglementUpdateX, X), (:EntanglementUpdateZ, Z))
-                # look for :EntanglementUpdate? past_remote_slot_idx local_slot_idx, new_remote_node, new_remote_slot_idx correction
+            for (updatetagsymbol, updategate) in ((EntanglementUpdateX, X), (EntanglementUpdateZ, Z))
+                # look for EntanglementUpdate? past_remote_slot_idx local_slot_idx, new_remote_node, new_remote_slot_idx correction
                 msg = querypop!(mb, updatetagsymbol, ❓, ❓, ❓, ❓, ❓, ❓)
-                #println("tracker @$(prot.node) msg: ", msg)
-                #println("           tags: ", nodereg.tags)
                 isnothing(msg) && continue
+                @debug "tracker @$(prot.node) received from $(msg.src) msg: $(msg.tag)"
                 workwasdone = true
                 (src, (_, pastremotenode, pastremoteslotid, localslotid, newremotenode, newremoteslotid, correction)) = msg
                 localslot = nodereg[localslotid]
                 # Check if the local slot is still present and believed to be entangled.
                 # We will need to perform a correction operation due to the swap,
                 # but there will be no message forwarding necessary.
-                counterpart = querypop!(localslot, :EntanglementCounterpart, pastremotenode, pastremoteslotid)
-                #println("tracker @$(prot.node) counterpart: ", counterpart, " msg: ", msg)
+                counterpart = querypop!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
                 if !isnothing(counterpart)
-                    #println("tracker @$(prot.node) counterpart requesting lock at: ", now(prot.sim))
+                    @debug "tracker @$(prot.node) counterpart requesting lock at $(now(prot.sim))"
                     @yield lock(localslot)
-                    #println("tracker @$(prot.node) counterpart getting lock at: ", now(prot.sim))
+                    @debug "tracker @$(prot.node) counterpart getting lock at $(now(prot.sim))"
                     if !isassigned(localslot)
                         unlock(localslot)
-                        error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of the its part of the entangled state although it still keeps a `Tag` as a record of it being present.")
+                        error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.")
                     end
                     # TODO correction gate
-                    # tag local with updated :EntanglementCounterpart new_remote_node new_remote_slot_idx
-                    tag!(localslot, :EntanglementCounterpart, newremotenode, newremoteslotid)
+                    # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
+                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                     unlock(localslot)
                     continue
                 end
                 # If not, check if we have a record of the entanglement being swapped to a different remote node,
                 # and forward the message to that node.
-                history = querypop!(localslot, :EntanglementHistory,
+                history = querypop!(localslot, EntanglementHistory,
                                     pastremotenode, pastremoteslotid, # who we were entangled to (node, slot)
                                     ❓, ❓,                             # who we swapped with (node, slot)
                                     ❓)                                # which local slot used to be entangled with whom we swapped with
-                #println("tracker @$(prot.node) history: ", history, " msg: ", msg)
                 if !isnothing(history)
+                    @debug "tracker @$(prot.node) history: $(history) | msg: $msg"
                     _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history
                     msghist = Tag(updatetagsymbol, pastremotenode, swappedlocal_slotidx, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
                     put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)

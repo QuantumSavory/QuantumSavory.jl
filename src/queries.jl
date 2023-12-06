@@ -5,6 +5,8 @@ function tag!(ref::RegRef, tag::Tag)
     push!(ref.reg.tags[ref.idx], tag)
 end
 
+tag!(ref, tag) = tag!(ref, Tag(tag))
+
 function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See issue #74
     tags = ref.reg.tags[ref.idx]
     i = findfirst(==(tag), tags)
