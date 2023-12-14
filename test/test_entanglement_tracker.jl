@@ -7,9 +7,9 @@ using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, E
 using Graphs
 using Test
 
-using Logging
-logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
-global_logger(logger)
+# using Logging
+# logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
+# global_logger(logger)
 
 ##
 
@@ -71,30 +71,33 @@ using Graphs
 using Test
 using Random
 
-using Logging
-logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
-global_logger(logger)
+# using Logging
+# logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
+# global_logger(logger)
 # same but this time with an entanglement tracker
-n = 5 # works at <5
+
 for i in 1:1000
-    println("new =======================\n\n")
-    net = RegisterNet([Register(i+3) for i in 1:n])
+    n = rand(6:30)
+    net = RegisterNet([Register(j+3) for j in 1:n])
     sim = get_time_tracker(net)
-    for i in vertices(net)
-        tracker = EntanglementTracker(sim, net, i)
+    for j in vertices(net)
+        tracker = EntanglementTracker(sim, net, j)
         @process tracker()
     end
     for e in edges(net)
-        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=1)
+        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=1, randomize=true)
         @process eprot()
     end
-    for i in 2:n-1
-        swapper = SwapperProt(sim, net, i; rounds=1)
+    for j in 2:n-1
+        swapper = SwapperProt(sim, net, j; rounds=1)
         @process swapper()
     end
     run(sim, 200)
 
-    @test net[1].tags[1] == [Tag(EntanglementCounterpart, n, 1)]
-    @test net[n].tags[1] == [Tag(EntanglementCounterpart, 1, 1)]
-    #@test observable((net[1][1], net[n][1]), Z⊗Z) ≈ 1
+    @test query(net[1], EntanglementCounterpart, n, ❓).tag[2] == n
+    @test query(net[n], EntanglementCounterpart, 1, ❓).tag[2] == 1
+
+    # @test net[1].tags[1] == [Tag(EntanglementCounterpart, n, 1)]
+    # @test net[n].tags[1] == [Tag(EntanglementCounterpart, 1, 1)]
+    # @test observable((net[1][1], net[n][1]), Z⊗Z) ≈ 1
 end

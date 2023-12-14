@@ -9,10 +9,9 @@ env = get_time_tracker(net);
     while true
         mb = messagebuffer(net, 2)
         @yield wait(mb)
-        msg = querypop!(mb, :second_tag, ❓, ❓)
-        print("t=$(now(env)): query returns ")
+        msg = querydelete!(mb, :second_tag, ❓, ❓)
         if isnothing(msg)
-            #println("nothing")
+            # println("nothing")
         else
             #println("$(msg.tag) received from node $(msg.src)")
         end

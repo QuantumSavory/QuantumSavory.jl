@@ -30,5 +30,5 @@ tag!(r[5], Int, 4, 5)
 @test query(r[2], :symbol1, 4, ❓) == (depth=1, tag=Tag(:symbol1, 4, 5))
 @test queryall(r[2], :symbol1, 4, ❓) == [(depth=1, tag=Tag(:symbol1, 4, 5))]
 
-@test querypop!(r[2], :symbol1, 4, ❓) == Tag(:symbol1, 4, 5)
-@test querypop!(r[2], :symbol1, 4, ❓) === nothing
+@test querydelete!(r[2], :symbol1, 4, ❓) == Tag(:symbol1, 4, 5)
+@test querydelete!(r[2], :symbol1, 4, ❓) === nothing

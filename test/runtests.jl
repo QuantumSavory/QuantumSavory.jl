@@ -31,6 +31,7 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 @doset "noninstant_and_backgrounds_qumode"
 @doset "messagebuffer"
 @doset "tags_and_queries"
+@doset "entanglement_tracker"
 
 @doset "circuitzoo_api"
 @doset "circuitzoo_purification"

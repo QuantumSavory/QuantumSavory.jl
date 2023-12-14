@@ -212,12 +212,12 @@ t=1.0: query returns nothing
 t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node 3
 ```
 """
-function querypop!(mb::MessageBuffer, args...)
+function querydelete!(mb::MessageBuffer, args...)
     r = query(mb, args...)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
-function querypop!(ref::RegRef, args...) # TODO there is a lot of code duplication here
+function querydelete!(ref::RegRef, args...) # TODO there is a lot of code duplication here
     r = query(ref, args...)
     return isnothing(r) ? nothing : popat!(ref.reg.tags[ref.idx], r.depth)
 end
@@ -317,7 +317,13 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register)
+function findfreeslot(reg::Register; randomize=false)
+    if randomize
+        for i in randperm(length(reg.staterefs))
+            slot = reg[i]
+            islocked(slot) || isassigned(slot) || return slot
+        end
+    end
     for slot in reg
         islocked(slot) || isassigned(slot) || return slot
     end

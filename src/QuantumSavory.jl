@@ -4,6 +4,7 @@ using Reexport
 
 using IterTools
 using LinearAlgebra
+using Random: randperm
 using Graphs
 import ConcurrentSim
 using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Resource,
@@ -47,7 +48,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querypop!, findfreeslot,
+    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, findfreeslot,
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
