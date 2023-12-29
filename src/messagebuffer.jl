@@ -22,14 +22,14 @@ end
 
 @resumable function take_loop_mb(sim, ch, src, mb)
     while true
-        tag = @yield take!(ch)
+        _tag = @yield take!(ch) # TODO: The type assert is necessary due to a bug in ResumableFunctions. The bug was probably introduced in https://github.com/JuliaDynamics/ResumableFunctions.jl/pull/76 which introduces type inference for resumable functions in julia >=1.10. The type assert is not necessary on julia 1.9.
+        tag = _tag::Tag
         @cases tag begin
             Forward(innertag, enddestination) => begin # inefficient -- it recalculates the a_star at each hop TODO provide some caching mechanism
                 @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Forwarding message to node $(enddestination) | message=`$(tag)`"
                 put!(channel(mb.net, mb.node=>enddestination; permit_forward=true), innertag)
             end
             _ => begin
-                #println("from $src storing in mb: $tag at $(now(sim))")
                 @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
                 length(mb.waiters) == 0 && @debug "MessageBuffer @$(mb.node) received a message, but there is no one waiting on that message buffer. The message was `$(tag)`."
                 if length(mb.waiters) == 0
