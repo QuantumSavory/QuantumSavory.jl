@@ -14,7 +14,7 @@
         <td>Continuous integration</td>
         <td>
             <a href="https://github.com/QuantumSavory/QuantumSavory.jl/actions?query=workflow%3ACI+branch%3Amaster"><img src="https://github.com/QuantumSavory/QuantumSavory.jl/actions/workflows/ci.yml/badge.svg" alt="GitHub Workflow Status"></a>
-            <a href="https://buildkite.com/quantumsavory/quantumsavory"><img src="https://badge.buildkite.com/2713c9978db76235fbe98094b7cad9a05f04671fd442739c47.svg" alt="Buildkite Workflow Status"></a>
+            <a href="https://buildkite.com/quantumsavory/quantumsavory"><img src="https://badge.buildkite.com/2713c9978db76235fbe98094b7cad9a05f04671fd442739c47.svg?branch=master" alt="Buildkite Workflow Status"></a>
         </td>
     </tr><tr></tr>
     <tr>
