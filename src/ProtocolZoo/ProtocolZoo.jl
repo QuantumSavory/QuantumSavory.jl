@@ -47,7 +47,7 @@ Tag(tag::EntanglementHistory) = Tag(EntanglementHistory, tag.remote_node, tag.re
     new_remote_slot::Int
     correction::Int
 end
-Base.show(io::IO, tag::EntanglementUpdateX) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction X$(tag.correction)")
+Base.show(io::IO, tag::EntanglementUpdateX) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction Z$(tag.correction)")
 Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
 
 @kwdef struct EntanglementUpdateZ
@@ -58,7 +58,7 @@ Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.past_local_node, ta
     new_remote_slot::Int
     correction::Int
 end
-Base.show(io::IO, tag::EntanglementUpdateZ) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction Z$(tag.correction)")
+Base.show(io::IO, tag::EntanglementUpdateZ) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction X$(tag.correction)")
 Tag(tag::EntanglementUpdateZ) = Tag(EntanglementUpdateZ, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
 
 """
@@ -249,7 +249,7 @@ end
         workwasdone = true # waiting is not enough because we might have multiple rounds of work to do
         while workwasdone
             workwasdone = false
-            for (updatetagsymbol, updategate) in ((EntanglementUpdateX, X), (EntanglementUpdateZ, Z))
+            for (updatetagsymbol, updategate) in ((EntanglementUpdateX, Z), (EntanglementUpdateZ, X))
                 # look for EntanglementUpdate? past_remote_slot_idx local_slot_idx, new_remote_node, new_remote_slot_idx correction
                 msg = querydelete!(mb, updatetagsymbol, ❓, ❓, ❓, ❓, ❓, ❓)
                 isnothing(msg) && continue
@@ -272,7 +272,10 @@ end
                         unlock(localslot)
                         error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.")
                     end
-                    # TODO correction gate
+                    # Pauli frame correction gate
+                    if correction==2
+                        apply!(localslot, updategate)
+                    end
                     # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
                     tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                     unlock(localslot)
@@ -291,7 +294,6 @@ end
                     @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                     msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
                     put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
-                    #println("           history sends to $whoweswappedwith_node: ", msghist)
                     continue
                 end
                 error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` tags). This is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")

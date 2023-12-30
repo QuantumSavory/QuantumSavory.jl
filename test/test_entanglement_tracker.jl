@@ -16,51 +16,55 @@ end
 
 ##
 
-net = RegisterNet([Register(3), Register(4), Register(2), Register(3)])
-sim = get_time_tracker(net)
+# without an entanglement tracker
+
+for i in 1:10
+
+    net = RegisterNet([Register(3), Register(4), Register(2), Register(3)])
+    sim = get_time_tracker(net)
 
 
-entangler1 = EntanglerProt(sim, net, 1, 2; rounds=1)
-@process entangler1()
-run(sim, 20)
+    entangler1 = EntanglerProt(sim, net, 1, 2; rounds=1)
+    @process entangler1()
+    run(sim, 20)
 
-@test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
-
-
-entangler2 = EntanglerProt(sim, net, 2, 3; rounds=1)
-@process entangler2()
-run(sim, 40)
-entangler3 = EntanglerProt(sim, net, 4, 3; rounds=1)
-@process entangler3()
-run(sim, 60)
-
-@test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
-@test net[2].tags == [[Tag(EntanglementCounterpart, 1, 1)],[Tag(EntanglementCounterpart, 3, 1)],[],[]]
-@test net[3].tags == [[Tag(EntanglementCounterpart, 2, 2)],[Tag(EntanglementCounterpart, 4, 1)]]
-@test net[4].tags == [[Tag(EntanglementCounterpart, 3, 2)],[],[]]
-
-@test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
+    @test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
 
 
-swapper2 = SwapperProt(sim, net, 2; rounds=1)
-swapper3 = SwapperProt(sim, net, 3; rounds=1)
-@process swapper2()
-@process swapper3()
-run(sim, 80)
+    entangler2 = EntanglerProt(sim, net, 2, 3; rounds=1)
+    @process entangler2()
+    run(sim, 40)
+    entangler3 = EntanglerProt(sim, net, 4, 3; rounds=1)
+    @process entangler3()
+    run(sim, 60)
 
-# In the absence of an entanglement tracker the tags will not all be updated
-@test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
-@test net[2].tags == [[Tag(EntanglementHistory, 1, 1, 3, 1, 2)],[Tag(EntanglementHistory, 3, 1, 1, 1, 1)],[],[]]
-@test net[3].tags == [[Tag(EntanglementHistory, 2, 2, 4, 1, 2)],[Tag(EntanglementHistory, 4, 1, 2, 2, 1)]]
-@test net[4].tags == [[Tag(EntanglementCounterpart, 3, 2)],[],[]]
+    @test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
+    @test net[2].tags == [[Tag(EntanglementCounterpart, 1, 1)],[Tag(EntanglementCounterpart, 3, 1)],[],[]]
+    @test net[3].tags == [[Tag(EntanglementCounterpart, 2, 2)],[Tag(EntanglementCounterpart, 4, 1)]]
+    @test net[4].tags == [[Tag(EntanglementCounterpart, 3, 2)],[],[]]
 
-@test isassigned(net[1][1]) && isassigned(net[4][1])
-#@test observable((net[1][1], net[4][1]), Z⊗Z) ≈ 1
-@test !isassigned(net[2][1]) && !isassigned(net[3][1])
-@test !isassigned(net[2][2]) && !isassigned(net[3][2])
+    @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
-@test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
+    swapper2 = SwapperProt(sim, net, 2; rounds=1)
+    swapper3 = SwapperProt(sim, net, 3; rounds=1)
+    @process swapper2()
+    @process swapper3()
+    run(sim, 80)
+
+    # In the absence of an entanglement tracker the tags will not all be updated
+    @test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
+    @test net[2].tags == [[Tag(EntanglementHistory, 1, 1, 3, 1, 2)],[Tag(EntanglementHistory, 3, 1, 1, 1, 1)],[],[]]
+    @test net[3].tags == [[Tag(EntanglementHistory, 2, 2, 4, 1, 2)],[Tag(EntanglementHistory, 4, 1, 2, 2, 1)]]
+    @test net[4].tags == [[Tag(EntanglementCounterpart, 3, 2)],[],[]]
+
+    @test isassigned(net[1][1]) && isassigned(net[4][1])
+    @test !isassigned(net[2][1]) && !isassigned(net[3][1])
+    @test !isassigned(net[2][2]) && !isassigned(net[3][2])
+
+    @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
+
+end
 
 ##
 
@@ -76,15 +80,16 @@ using Random
 
 if isinteractive()
     using Logging
-    logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
+    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")
 end
 
-## same but this time with an entanglement tracker
+##
 
-for i in 1:1000
-    n = rand(2:30)
+# same but this time with an entanglement tracker
+
+for i in 1:30, n in 2:30
     #@show n, i
     net = RegisterNet([Register(j+3) for j in 1:n])
     sim = get_time_tracker(net)
@@ -102,7 +107,10 @@ for i in 1:1000
     end
     run(sim, 200)
 
-    @test query(net[1], EntanglementCounterpart, n, ❓).tag[2] == n
-    @test query(net[n], EntanglementCounterpart, 1, ❓).tag[2] == 1
-    # @test observable((net[1][1], net[n][1]), Z⊗Z) ≈ 1
+    q1 = query(net[1], EntanglementCounterpart, n, ❓)
+    q2 = query(net[n], EntanglementCounterpart, 1, ❓)
+    @test q1.tag[2] == n
+    @test q2.tag[2] == 1
+    @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1
+    @test observable((q1.slot, q2.slot), X⊗X) ≈ 1
 end
