@@ -1,5 +1,3 @@
-export AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution
-
 abstract type AbstractNoninstantOperation end
 
 """Represents an gate applied instantaneously followed by a waiting period. See also [`ConstantHamiltonianEvolution`](@ref)."""

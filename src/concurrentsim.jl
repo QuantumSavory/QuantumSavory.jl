@@ -1,8 +1,3 @@
-using ResumableFunctions
-import ConcurrentSim # Should be using
-using ConcurrentSim: Environment, request, release, now, active_process, timeout, Store, @process, Process, put, get
-using Printf
-
 export @simlog, nongreedymultilock, spinlock, get_time_tracker
 
 macro simlog(env, msg) # this should be part of @process or @resumable and just convert @info and company
@@ -47,7 +42,7 @@ function get_time_tracker(rn::RegisterNet)
     return get_time_tracker(rn.registers[1])
 end
 function get_time_tracker(r::Register)
-    r.env
+    r.locks[1].env
 end
 function get_time_tracker(r::RegRef)
     get_time_tracker(r.reg)

@@ -1,5 +1,3 @@
-export subsystemcompose, nsubsystems
-
 nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO this had to change because of references to "padded" states, but we probably still want to track more detailed information (e.g. how much have we overpadded)
 nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
 nsubsystems(r::Register) = length(r.staterefs)

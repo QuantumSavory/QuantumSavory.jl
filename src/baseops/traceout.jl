@@ -1,5 +1,3 @@
-import QuantumInterface: traceout!
-
 ispadded(::Nothing) = false # TODO consider removing this and reworking the functions that depend on it. E.g., a reason to have it when performing a project_traceout measurement on a state that contains only one subsystem
 
 function removebackref!(s::StateRef, i) # To be used only with something that updates s.state[]
@@ -58,7 +56,11 @@ Perform a projective measurement on the given slot of the given register.
 `project_traceout!(reg, slot, [stateA, stateB])` performs a projective measurement,
 projecting on either `stateA` or `stateB`, returning the index of the subspace
 on which the projection happened. It assumes the list of possible states forms a basis
+<<<<<<< HEAD
 for the Hilbert space. The Hilbert space of the register gets automatically shrunk.
+=======
+for the Hilbert space. The Hilbert space of the register is automatically shrunk.
+>>>>>>> 2285fd9 (spelling fixes)
 
 A basis object can be specified on its own as well, e.g.
 `project_traceout!(reg, slot, basis)`.

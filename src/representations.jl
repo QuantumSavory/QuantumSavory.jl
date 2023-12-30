@@ -1,5 +1,3 @@
-export express
-
 function apply!(state, indices, operation::Symbolic{AbstractOperator})
     repr = default_repr(state)
     apply!(state, indices, express(operation, repr, UseAsOperation()))

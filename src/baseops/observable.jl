@@ -1,5 +1,3 @@
-export observable
-
 """
 Calculate the expectation value of a quantum observable on the given register and slot.
 

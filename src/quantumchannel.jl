@@ -61,7 +61,7 @@ function Base.put!(qc::QuantumChannel, rref::RegRef)
     put!(qc.queue, channel_reg)
 end
 
-@resumable function post_take(env, take_event, rref)
+@resumable function post_take_qc(env, take_event, rref)
     channel_reg = @yield take_event
     if isassigned(rref)
         error("A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized).")
@@ -71,5 +71,5 @@ end
 
 function Base.take!(qc::QuantumChannel, rref::RegRef)
     take_event = take!(qc.queue)
-    @process post_take(qc.queue.store.env, take_event, rref)
+    @process post_take_qc(qc.queue.store.env, take_event, rref)
 end
