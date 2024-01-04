@@ -14,7 +14,7 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 
-export EntanglerProt, SwapperProt, EntanglementTracker
+export EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 
 abstract type AbstractProtocol end
 
@@ -116,6 +116,7 @@ end
         b = findfreeslot(prot.net[prot.nodeB], randomize=prot.randomize)
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
@@ -131,7 +132,8 @@ end
         tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
         # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
         tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
-
+        
+        @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB): Entangled .$(a.idx) and .$(b.idx)"
         unlock(a)
         unlock(b)
         rounds==-1 || (rounds -= 1)
@@ -302,6 +304,68 @@ end
         @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+    end
+end
+
+"""
+$TYPEDEF
+
+A protocol running between two nodes, checking periodically for any entangled pairs between the two nodes and consuming/emptying the qubit slots.
+
+$FIELDS
+"""
+@kwdef struct EntanglementConsumer <:AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of node A"""
+    nodeA::Int
+    """the vertex index of node B"""
+    nodeB::Int
+    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
+    log::Vector{Any}
+    """Time period between successive queries on the nodes"""
+    period::Float64
+end
+
+@resumable function (prot::EntanglementConsumer)(;_prot::EntanglementConsumer=prot)
+    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+    while true
+        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓)
+        if isnothing(query1)
+            push!(prot.log, (now(prot.sim), nothing, nothing))
+            @yield timeout(prot.sim, prot.period)
+            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query1 failed"
+            continue
+        else
+            query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx)
+
+            if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
+                push!(prot.log, (now(prot.sim), nothing, nothing))
+                @yield timeout(prot.sim, prot.period)
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query2 failed"
+                continue
+            end
+        end
+        
+        q1 = query1.slot 
+        q2 = query2.slot
+        @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement"
+        untag!(q1, query1.tag)
+        untag!(q2, query2.tag)
+        # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
+        # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
+        ob1 = observable((q1, q2), Z⊗Z)
+        ob2 = observable((q1, q2), X⊗X)
+
+        prot.net[prot.nodeA].staterefs[q1.idx] = nothing
+        prot.net[prot.nodeA].stateindices[q1.idx] = 0
+        prot.net[prot.nodeB].staterefs[q2.idx] = nothing
+        prot.net[prot.nodeB].stateindices[q2.idx] = 0
+        push!(prot.log, (now(prot.sim), ob1, ob2))
+        
+        @yield timeout(prot.sim, prot.period)
     end
 end
 
