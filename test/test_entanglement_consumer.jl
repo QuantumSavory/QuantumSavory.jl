@@ -34,4 +34,4 @@ econ = EntanglementConsumer(sim, net, 1, 3, [], 1.0)
 run(sim, 400)
 
 
-@test length([econ.log[i] for i in 1:400 if !isnothing(econ.log[i][2])]) > 100
+@test length([econ.log[i] for i in 1:400 if !isnothing(econ.log[i][2])]) > 300
