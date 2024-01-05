@@ -359,10 +359,12 @@ end
         ob1 = observable((q1, q2), Z⊗Z)
         ob2 = observable((q1, q2), X⊗X)
 
-        prot.net[prot.nodeA].staterefs[q1.idx] = nothing
-        prot.net[prot.nodeA].stateindices[q1.idx] = 0
-        prot.net[prot.nodeB].staterefs[q2.idx] = nothing
-        prot.net[prot.nodeB].stateindices[q2.idx] = 0
+        # prot.net[prot.nodeA].staterefs[q1.idx] = nothing
+        # prot.net[prot.nodeA].stateindices[q1.idx] = 0
+        # prot.net[prot.nodeB].staterefs[q2.idx] = nothing
+        # prot.net[prot.nodeB].stateindices[q2.idx] = 0
+        traceout!(prot.net[prot.nodeA][q1.idx])
+        traceout!(prot.net[prot.nodeB][q2.idx])
         push!(prot.log, (now(prot.sim), ob1, ob2))
         
         @yield timeout(prot.sim, prot.period)
