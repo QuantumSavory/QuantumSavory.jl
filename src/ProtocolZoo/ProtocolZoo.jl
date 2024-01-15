@@ -332,19 +332,19 @@ end
 @resumable function (prot::EntanglementConsumer)(;_prot::EntanglementConsumer=prot)
     prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
     while true
-        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓)
+        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here and then `untag!` below
         if isnothing(query1)
+            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query1 failed"
             push!(prot.log, (now(prot.sim), nothing, nothing))
             @yield timeout(prot.sim, prot.period)
-            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query1 failed"
             continue
         else
             query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx)
 
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query2 failed"
                 push!(prot.log, (now(prot.sim), nothing, nothing))
                 @yield timeout(prot.sim, prot.period)
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query2 failed"
                 continue
             end
         end
@@ -359,10 +359,6 @@ end
         ob1 = observable((q1, q2), Z⊗Z)
         ob2 = observable((q1, q2), X⊗X)
 
-        # prot.net[prot.nodeA].staterefs[q1.idx] = nothing
-        # prot.net[prot.nodeA].stateindices[q1.idx] = 0
-        # prot.net[prot.nodeB].staterefs[q2.idx] = nothing
-        # prot.net[prot.nodeB].stateindices[q2.idx] = 0
         traceout!(prot.net[prot.nodeA][q1.idx])
         traceout!(prot.net[prot.nodeB][q2.idx])
         push!(prot.log, (now(prot.sim), ob1, ob2))

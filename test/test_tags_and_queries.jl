@@ -32,3 +32,49 @@ tag!(r[5], Int, 4, 5)
 
 @test querydelete!(r[2], :symbol1, 4, ❓) == Tag(:symbol1, 4, 5)
 @test querydelete!(r[2], :symbol1, 4, ❓) === nothing
+
+
+# tests for fifo and filo order queries
+# for RegRefs
+reg = Register(5)
+tag!(reg[3], EntanglementCounterpart, 2, 3)
+tag!(reg[3], EntanglementCounterpart, 5, 1)
+tag!(reg[3], EntanglementCounterpart, 9, 3)
+tag!(reg[3], EntanglementCounterpart, 4, 3)
+tag!(reg[3], EntanglementCounterpart, 5, 1)
+tag!(reg[3], EntanglementCounterpart, 1, 9)
+tag!(reg[3], EntanglementCounterpart, 5, 1)
+
+queryall(reg[3], EntanglementCounterpart, 5, 1)
+@test queryall(reg[3], EntanglementCounterpart, 5, 1) == [(depth = 7, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 5, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 2, tag = Tag(EntanglementCounterpart, 5, 1))]
+@test queryall(reg[3], EntanglementCounterpart, 5, 1; fifo=false) == [(depth = 2, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 5, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 7, tag = Tag(EntanglementCounterpart, 5, 1))]
+
+# for Register
+
+reg = Register(5)
+tag!(reg[3], EntanglementCounterpart, 2, 3)
+tag!(reg[3], EntanglementCounterpart, 5, 1)
+tag!(reg[3], EntanglementCounterpart, 9, 3)
+tag!(reg[3], EntanglementCounterpart, 4, 3)
+tag!(reg[3], EntanglementCounterpart, 5, 1)
+tag!(reg[3], EntanglementCounterpart, 1, 9)
+tag!(reg[3], EntanglementCounterpart, 5, 1)
+
+tag!(reg[4], EntanglementCounterpart, 5, 1)
+tag!(reg[4], EntanglementCounterpart, 5, 1)
+tag!(reg[4], EntanglementCounterpart, 9, 3)
+tag!(reg[4], EntanglementCounterpart, 1, 9)
+tag!(reg[4], EntanglementCounterpart, 4, 3)
+tag!(reg[4], EntanglementCounterpart, 5, 1)
+tag!(reg[4], EntanglementCounterpart, 2, 3)
+
+tag!(reg[1], EntanglementCounterpart, 2, 3)
+tag!(reg[1], EntanglementCounterpart, 5, 1)
+tag!(reg[1], EntanglementCounterpart, 4, 3)
+tag!(reg[1], EntanglementCounterpart, 5, 1)
+tag!(reg[1], EntanglementCounterpart, 1, 9)
+tag!(reg[1], EntanglementCounterpart, 5, 1)
+tag!(reg[1], EntanglementCounterpart, 9, 3)
+
+@test queryall(reg, EntanglementCounterpart, 5, 1) == [(slot = reg[4], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 1))]
+@test queryall(reg, Tag(EntanglementCounterpart, 5, 1); fifo=false) ==  [(slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 5, 1))]
