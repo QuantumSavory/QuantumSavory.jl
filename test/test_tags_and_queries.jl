@@ -1,5 +1,6 @@
 using QuantumSavory
 using QuantumSavory: tag_types
+using QuantumSavory.ProtocolZoo: EntanglementCounterpart
 using Test
 
 @test tag_types.SymbolIntInt(:symbol1, 4, 5) == Tag(:symbol1, 4, 5)
