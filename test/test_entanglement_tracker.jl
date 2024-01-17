@@ -118,18 +118,6 @@ end
 
 # Tests with 2d Grid
 
-using Revise
-using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker
-using Graphs
-using Test
-using ResumableFunctions
-using ConcurrentSim
-
-using Logging
-logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black, "", ""))
-global_logger(logger)
-
 ## Custom Predicates
 function top_left(net, node, x)
     n = sqrt(size(net.graph)[1]) # grid size
