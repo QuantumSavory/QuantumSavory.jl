@@ -217,7 +217,7 @@ function findswapablequbits(net, node, pred_low, pred_high) # TODO parameterize 
     
     if typeof(pred_low) == Wildcard
         l = <(node)
-        r = >(node)
+        h = >(node)
     else
         l(x) = pred_low(net, node, x)
         h(x) = pred_high(net, node, x)
