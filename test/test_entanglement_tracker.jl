@@ -175,9 +175,12 @@ for i in 1:10
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
-
-    swapper2 = SwapperProt(sim, net, 6; nodeL=top_left, nodeR=bottom_right, rounds=1)
-    swapper3 = SwapperProt(sim, net, 11; nodeL=top_left, nodeR=bottom_right, rounds=1)
+    l1(x) = top_left(net, 6, x)
+    h1(x) = bottom_right(net, 6, x)
+    swapper2 = SwapperProt(sim, net, 6; nodeL=l1, nodeR=h1, rounds=1)
+    l2(x) = top_left(net, 11, x)
+    h2(x) = bottom_right(net, 11, x)
+    swapper3 = SwapperProt(sim, net, 11; nodeL=l2, nodeR=h2, rounds=1)
     @process swapper2()
     @process swapper3()
     run(sim, 80)
@@ -224,7 +227,9 @@ for n in 4:10
     end
 
     for i in 2:n-1
-        swapper = SwapperProt(sim, net, diag_nodes[i]; nodeL = top_left, nodeR = bottom_right, rounds = 1)
+        l(x) = top_left(net, diag_nodes[i], x)
+        h(x) = bottom_right(net, diag_nodes[i], x)
+        swapper = SwapperProt(sim, net, diag_nodes[i]; nodeL = l, nodeR = h, rounds = 1)
         @process swapper()
     end
 

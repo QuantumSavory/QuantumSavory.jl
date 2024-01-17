@@ -215,13 +215,8 @@ end
 function findswapablequbits(net, node, pred_low, pred_high) # TODO parameterize the query predicates and the findmin/findmax
     reg = net[node]
     
-    if typeof(pred_low) == Wildcard
-        l = <(node)
-        h = >(node)
-    else
-        l(x) = pred_low(net, node, x)
-        h(x) = pred_high(net, node, x)
-    end
+    l = typeof(pred_low) == Wildcard ? <(node) : pred_low
+    h = typeof(pred_high) == Wildcard ? >(node) : pred_high
 
     low_nodes  = queryall(reg, EntanglementCounterpart, l, ❓; locked=false, assigned=true)
     high_nodes = queryall(reg, EntanglementCounterpart, h, ❓; locked=false, assigned=true)
