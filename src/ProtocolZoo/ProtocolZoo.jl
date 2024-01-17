@@ -175,7 +175,7 @@ end
     rounds = prot.rounds
     while rounds != 0
         reg = prot.net[prot.node]
-        qubit_pair = findswapablequbits(prot.net,prot.node)
+        qubit_pair = findswapablequbits(prot.net,prot.node, prot.nodeL, prot.nodeR)
         if isnothing(qubit_pair)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @yield timeout(prot.sim, prot.retry_lock_time)
@@ -212,16 +212,24 @@ end
     end
 end
 
-function findswapablequbits(net,node) # TODO parameterize the query predicates and the findmin/findmax
+function findswapablequbits(net, node, pred_low, pred_high) # TODO parameterize the query predicates and the findmin/findmax
     reg = net[node]
+    
+    if typeof(pred_low) == Wildcard
+        l = <(node)
+        r = >(node)
+    else
+        l(x) = pred_low(net, node, x)
+        h(x) = pred_high(net, node, x)
+    end
 
-    leftnodes  = queryall(reg, EntanglementCounterpart, <(node), ❓; locked=false, assigned=true)
-    rightnodes = queryall(reg, EntanglementCounterpart, >(node), ❓; locked=false, assigned=true)
+    low_nodes  = queryall(reg, EntanglementCounterpart, l, ❓; locked=false, assigned=true)
+    high_nodes = queryall(reg, EntanglementCounterpart, h, ❓; locked=false, assigned=true)
 
-    (isempty(leftnodes) || isempty(rightnodes)) && return nothing
-    _, il = findmin(n->n.tag[2], leftnodes) # TODO make [2] into a nice named property
-    _, ir = findmax(n->n.tag[2], rightnodes)
-    return leftnodes[il], rightnodes[ir]
+    (isempty(low_nodes) || isempty(high_nodes)) && return nothing
+    _, il = findmin(n->n.tag[2], low_nodes) # TODO make [2] into a nice named property
+    _, ih = findmax(n->n.tag[2], high_nodes)
+    return low_nodes[il], high_nodes[ih]
 end
 
 
