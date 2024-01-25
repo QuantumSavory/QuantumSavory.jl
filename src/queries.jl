@@ -184,7 +184,7 @@ julia> @resumable function receive_tags(env)
            while true
                mb = messagebuffer(net, 2)
                @yield wait(mb)
-               msg = querypodelete!(mb, :second_tag, ❓, ❓)
+               msg = querydelete!(mb, :second_tag, ❓, ❓)
                print("t=$(now(env)): query returns ")
                if isnothing(msg)
                    println("nothing")
