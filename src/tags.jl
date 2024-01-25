@@ -24,9 +24,9 @@ end
 See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const tag_types = Tag'
 
-Base.getindex(tag::Tag, i::Int) = tag.data[i]
-Base.length(tag::Tag) = length(tag.data.data)
-Base.iterate(tag::Tag, state=1) = state > length(tag) ? nothing : (tag[state],state+1)
+Base.getindex(tag::Tag, i::Int) = SumTypes.unwrap(tag)[i]
+Base.length(tag::Tag) = length(SumTypes.unwrap(tag).data)
+Base.iterate(tag::Tag, state=1) = state > length(tag) ? nothing : (SumTypes.unwrap(tag)[state],state+1)
 
 function SumTypes.show_sumtype(io::IO, x::Tag)
     data = SumTypes.unwrap(x)

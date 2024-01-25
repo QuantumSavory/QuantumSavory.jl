@@ -257,8 +257,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         sig_wild = collect(sig)
         sig_wild[idx] .= Union{Wildcard,Function}
         argssig_wild = [:($a::$t) for (a,t) in zip(args, sig_wild)]
-        wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag.data[$i])) for i in idx]
-        nonwild_checks = [:(tag.data[$i]==$(args[i])) for i in complement_idx]
+        wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag[$i])) for i in idx]
+        nonwild_checks = [:(tag[$i]==$(args[i])) for i in complement_idx]
         newmethod_reg = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
             res = NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}[]
             for (reg_idx, tags) in enumerate(reg.tags)
