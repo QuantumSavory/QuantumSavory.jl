@@ -142,7 +142,7 @@ function query(mb::MessageBuffer, tag::Tag)
     return isnothing(i) ? nothing : (;depth=i, src=mb.buffer[i][1], tag=mb.buffer[i][2])
 end
 
-raw"""A [`query`](@ref) for classical message buffers that also pops the message out of the buffer.
+raw"""A [`query`](@ref) for classical message buffers that also deletes the message out of the buffer.
 
 ```jldoctest
 julia> net = RegisterNet([Register(3), Register(2)])
@@ -159,22 +159,22 @@ julia> run(get_time_tracker(net))
 julia> query(messagebuffer(net, 2), :my_tag)
 (depth = 1, src = 1, tag = Symbol(:my_tag)::Tag)
 
-julia> querypop!(messagebuffer(net, 2), :my_tag)
+julia> querydelete!(messagebuffer(net, 2), :my_tag)
 (src = 1, tag = Symbol(:my_tag)::Tag)
 
-julia> querypop!(messagebuffer(net, 2), :my_tag) === nothing
+julia> querydelete!(messagebuffer(net, 2), :my_tag) === nothing
 true
 
-julia> querypop!(messagebuffer(net, 2), :another_tag, ❓, ❓)
+julia> querydelete!(messagebuffer(net, 2), :another_tag, ❓, ❓)
 (src = 1, tag = SymbolIntInt(:another_tag, 123, 456)::Tag)
 
-julia> querypop!(messagebuffer(net, 2), :another_tag, ❓, ❓) === nothing
+julia> querydelete!(messagebuffer(net, 2), :another_tag, ❓, ❓) === nothing
 true
 ```
 
 You can also wait on a message buffer for a message to arrive before running a query:
 
-```jldoctes
+```jldoctest
 julia> net = RegisterNet([Register(3), Register(2), Register(3)])
 A network of 3 registers in a graph of 2 edges
 
@@ -184,7 +184,7 @@ julia> @resumable function receive_tags(env)
            while true
                mb = messagebuffer(net, 2)
                @yield wait(mb)
-               msg = querypop!(mb, :second_tag, ❓, ❓)
+               msg = querypodelete!(mb, :second_tag, ❓, ❓)
                print("t=$(now(env)): query returns ")
                if isnothing(msg)
                    println("nothing")

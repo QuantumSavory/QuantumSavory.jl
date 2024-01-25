@@ -30,6 +30,7 @@ function main()
         "Visualizations" => "visualizations.md",
         "Dev Documentation" => [
             "Register Interface" => "register_interface.md",
+            "Query Interface" => "query_interface.md",
         ],
     ],
     "How-To Guides" => [
