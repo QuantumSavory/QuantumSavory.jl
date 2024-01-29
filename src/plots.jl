@@ -1,9 +1,14 @@
-"""Draw the given registers on a given Makie axis.
+"""Draw the given register network.
 
 Requires a Makie backend be already imported."""
 function registernetplot end
 
-"""Draw the given registers on a given Makie axis.
+"""Draw the given register network on a given Makie axis.
+
+Requires a Makie backend be already imported."""
+function registernetplot! end
+
+"""Draw the given register network on a given Makie subfigure and modify the axis with numerous visualization enhancements.
 
 Requires a Makie backend be already imported."""
 function registernetplot_axis end
