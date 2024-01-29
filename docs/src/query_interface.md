@@ -8,7 +8,7 @@ end
 
 
 ## `Tag`
-Tags are identifiers which are used to represent classical information needed for a quantum information. The library allows the construction of custom tags following the format of one of the [`tag_types`](@ref) using the `Tag` constructor. The library implements the following tags for use in the networking protocols:
+Tags are used to represent classical metadata describing the state and history of the nodes. The library allows the construction of custom tags following the format of one of the [`tag_types`](@ref) using the `Tag` constructor. The library implements the following tags for use in the networking protocols:
 
 - `EntanglementCounterpart` 
     -`remote_node`
