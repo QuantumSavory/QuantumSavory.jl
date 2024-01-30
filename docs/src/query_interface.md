@@ -21,12 +21,12 @@ The tags are constructed using the `Tag` constructor
 where `tagvariants` are the extra arguments required by the specific `tagsymbol`, for instance the `tag_types.SymbolIntInt` require two `Int` values. It supports the use of predicate functions (`Int -> Bool`) and [`Wildcard`](@ref) (❓) in place of the `tagvariants` which allows the user to perform queries for tags fulfilling certain criteria.
 
 ## `tag!`
-```@docs
+```@autodocs
 Modules = [QuantumSavory.tag!]
 ```
 
 ## `untag!`
-```@docs
+```@autodocs
 Modules = [QuantumSavory.untag!]
 ```
 
@@ -46,22 +46,22 @@ The following features are supported:
 
 Following is a detailed description of each `query` methods
 
-```@docs
+```@autodocs
 query(::Register,::Tag,::Val{allB};locked,assigned)
 ```
 
-```@docs
+```@autodocs
 query(::RegRef,::Tag) 
 ```
 
-```@docs
+```@autodocs
 query(::QuantumSavory.MessageBuffer,::Tag)
 ```
 
 ## `querydelete!`
 A method on top of [`query`](@ref) which allows to query for tag in a [`RegRef`](@ref) and `MessageBuffer` returning the tag that satisfies the passed predicates and [`Wildcard`](@ref)s and deleting it from the list at the same time. It allows the same arguments to be passed to it as the corresponding [`query`](@ref) method on the data structure its called upon.
 
-```@docs
+```@autodocs
 querydelete!(::RegRef, args...)
 ```
 
@@ -76,7 +76,7 @@ flowchart TB
 </div>
 ```
 
-```@docs
+```@autodocs
 querydelete!(::QuantumSavory.MessageBuffer,args...)
 ```
 
@@ -94,7 +94,7 @@ flowchart TB
 ## `queryall`
 A method defined on top of [`query`](@ref) which allows to query for all tags in a [`RegRef`](@ref) or a [`Register`](@ref) that match the passed `Tag`, instead of just one matching instance.
 
-```@docs
+```@autodocs
 queryall(args...; kwargs...)
 ```
 
