@@ -2,6 +2,7 @@ module QuantumSavory
 
 using Reexport
 
+using DocStringExtensions
 using IterTools
 using LinearAlgebra
 using Random: randperm

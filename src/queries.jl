@@ -1,5 +1,7 @@
 """Assign a tag to a slot in a register.
 
+$TYPEDSIGNATURES
+
 See also: [`query`](@ref)"""
 function tag!(ref::RegRef, tag::Tag)
     push!(ref.reg.tags[ref.idx], tag)
@@ -7,6 +9,12 @@ end
 
 tag!(ref, tag) = tag!(ref, Tag(tag))
 
+"""Removes the first matching tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
+
+$TYPEDSIGNATURES
+
+See also: [`query`](@ref)
+"""
 function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See issue #74
     tags = ref.reg.tags[ref.idx]
     i = findfirst(==(tag), tags)
@@ -28,7 +36,10 @@ const W = Wildcard()
 See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const ❓ = W
 
-""" A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
+"""
+$TYPEDSIGNATURES
+
+A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
 
 ```jldoctest
 julia> r = Register(10);
@@ -51,7 +62,10 @@ julia> queryall(r, :symbol, ❓, >(5))
 queryall(args...; kwargs...) = query(args..., Val{true}(); kwargs...)
 
 
-""" A query function searching for the first slot in a register that has a given tag.
+"""
+$TYPEDSIGNATURES
+
+A query function searching for the first slot in a register that has a given tag.
 
 Wildcards are supported (instances of `Wildcard` also available as the constants [`W`](@ref) or the emoji [`❓`](@ref) which can be entered as `\\:question:` in the REPL).
 Predicate functions are also supported (they have to be `Int`↦`Bool` functions).
@@ -106,7 +120,10 @@ function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{
     end
 end
 
-"""A [`query`](@ref) on a single slot of a register.
+"""
+$TYPEDSIGNATURES
+
+A [`query`](@ref) on a single slot of a register.
 
 ```jldoctest
 julia> r = Register(5);
@@ -134,15 +151,21 @@ function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}()) where {allB} # T
     end
 end
 
-"""A [`query`](@ref) for classical message buffers.
+"""
+$TYPEDSIGNATURES
 
-You are advised to actually use [`querypop!`](@ref), not `query` when working with classical message buffers."""
+A [`query`](@ref) for classical message buffers.
+
+You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers."""
 function query(mb::MessageBuffer, tag::Tag)
     i = findfirst(t->t.tag==tag, mb.buffer)
     return isnothing(i) ? nothing : (;depth=i, src=mb.buffer[i][1], tag=mb.buffer[i][2])
 end
 
-raw"""A [`query`](@ref) for classical message buffers that also deletes the message out of the buffer.
+"""
+$TYPEDSIGNATURES
+
+A [`query`](@ref) for classical message buffers that also deletes the message out of the buffer.
 
 ```jldoctest
 julia> net = RegisterNet([Register(3), Register(2)])
@@ -185,11 +208,11 @@ julia> @resumable function receive_tags(env)
                mb = messagebuffer(net, 2)
                @yield wait(mb)
                msg = querydelete!(mb, :second_tag, ❓, ❓)
-               print("t=$(now(env)): query returns ")
+               print("t=\$(now(env)): query returns ")
                if isnothing(msg)
                    println("nothing")
                else
-                   println("$(msg.tag) received from node $(msg.src)")
+                   println("\$(msg.tag) received from node \$(msg.src)")
                end
            end
        end
@@ -217,6 +240,11 @@ function querydelete!(mb::MessageBuffer, args...)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
+"""
+$TYPEDSIGNATURES
+
+A [`query`](@ref) for [`RegRef`](@query) that also deletes the tag from the tag list for the [`RegRef`](@query).
+"""
 function querydelete!(ref::RegRef, args...) # TODO there is a lot of code duplication here
     r = query(ref, args...)
     return isnothing(r) ? nothing : popat!(ref.reg.tags[ref.idx], r.depth)

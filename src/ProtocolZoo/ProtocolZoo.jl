@@ -22,6 +22,14 @@ get_time_tracker(prot::AbstractProtocol) = prot.sim
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...,_prot=prot), get_time_tracker(prot), args...; kwargs...)
 
+"""
+$TYPEDEF
+
+$FIELDS
+
+Indicates the current entanglement status with a remote node's slot. Added when a new entanglement is generated through [`EntanglerProt`](@ref) or when a swap happens and
+ the [`EntanglementTracker`](@ref) receives an [`EntanglementUpdate`](@ref) message.
+"""
 @kwdef struct EntanglementCounterpart
     remote_node::Int
     remote_slot::Int
@@ -29,6 +37,17 @@ end
 Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot)
 
+"""
+$TYPEDEF
+
+$FIELDS
+
+This tag is used to store the outdated entanglement information after a
+swap. It helps to direct incoming entanglement update messages to the right node after a swap.
+It helps in situations when locally we have performed a swap, but we are now receiving a message 
+from a distant node that does not know yet that the swap has occurred (thus the distant node might 
+have outdated information about who is entangled to whom and we need to update that information).
+"""
 @kwdef struct EntanglementHistory
     remote_node::Int
     remote_slot::Int
@@ -39,6 +58,14 @@ end
 Base.show(io::IO, tag::EntanglementHistory) = print(io, "Was entangled to $(tag.remote_node).$(tag.remote_slot), but swapped with .$(tag.swapped_local) which was entangled to $(tag.swap_remote_node).$(tag.swap_remote_slot)")
 Tag(tag::EntanglementHistory) = Tag(EntanglementHistory, tag.remote_node, tag.remote_slot, tag.swap_remote_node, tag.swap_remote_slot, tag.swapped_local)
 
+"""
+$TYPEDEF
+
+$FIELDS
+
+This tag arrives as a message from a remote node to which the current node was entangled to update the 
+entanglement information and apply an `X` correction after the remote node performs an entanglement swap.
+"""
 @kwdef struct EntanglementUpdateX
     past_local_node::Int
     past_local_slot::Int
@@ -50,6 +77,14 @@ end
 Base.show(io::IO, tag::EntanglementUpdateX) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction Z$(tag.correction)")
 Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
 
+"""
+$TYPEDEF
+
+$FIELDS
+
+This tag arrives as a message from a remote node to which the current node was entangled to update the 
+entanglement information and apply a `Z` correction after the remote node performs an entanglement swap.
+"""
 @kwdef struct EntanglementUpdateZ
     past_local_node::Int
     past_local_slot::Int

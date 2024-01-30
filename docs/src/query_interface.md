@@ -5,57 +5,34 @@ DocTestSetup =  quote
     using QuantumSavory
 end
 ```
+The query interface allows us to use various quantum networking protocols defined in QuantumSavory together in a simulation. It provides composability between the various protocols where each protocol can operate independently of the other without knowing its internals. This is done by using various tags to communicate metadata between the network nodes running the protocols. This leads to greater flexibility when setting up different simulations since the information about how the nodes running the protocols should interact is generally defined in the protocols and the specifics at runtime are determined by the tags passed and received.
 
+The following lines explain in detail, the components of the query interface which make this possible.
 
 ## `Tag`
 Tags are used to represent classical metadata describing the state and history of the nodes. The library allows the construction of custom tags following the format of one of the [`tag_types`](@ref) using the `Tag` constructor. The library implements the following tags for use in the networking protocols:
 
-- `EntanglementCounterpart` 
-    -`remote_node`
-    -`remote_slot`
-    It indicates the current entanglement status with a remote node's slot.
-
-- `EntanglementHistory`
-    - `remote_node`
-    - `remote_slot`
-    - `swap_remote_node`
-    - `swap_remote_slot`
-    - `swapped_local`
-    This tag is used to store the outdated entanglement information after a swap. It helps to direct incoming entanglement update messages to the right node after a swap.
-
-- `EntanglementUpdateX`
-    - `past_local_node`
-    - `past_local_slot`
-    - `past_remote_slot`
-    - `new_remote_node`
-    - `new_remote_slot`
-    - `correction`
-    This tag arrives as a message from a remote node to which the current node was entangled to updat the entanglement information and apply an `X` correction after the remote node performs an entanglement swap.
-
-- `EntanglementUpdateZ`
-    - `past_local_node`
-    - `past_local_slot`
-    - `past_remote_slot`
-    - `new_remote_node`
-    - `new_remote_slot`
-    - `correction`
-    This tag arrives as a message from a remote node to which the current node was entangled to updat the entanglement information and apply a `Z` correction after the remote node performs an entanglement swap.
+```@autodocs
+Modules = [QuantumSavory.ProtocolZoo.EntanglementCounterpart, QuantumSavory.ProtocolZoo.EntanglementHistory, QuantumSavory.ProtocolZoo.EntanglementUpdateX, QuantumSavory.ProtocolZoo.EntanglementUpdateZ]
+```
 
 The tags are constructed using the `Tag` constructor
 #### Tag(tagsymbol::Symbol, tagvariants...)
 where `tagvariants` are the extra arguments required by the specific `tagsymbol`, for instance the `tag_types.SymbolIntInt` require two `Int` values. It supports the use of predicate functions (`Int -> Bool`) and [`Wildcard`](@ref) (❓) in place of the `tagvariants` which allows the user to perform queries for tags fulfilling certain criteria.
 
 ## `tag!`
-Adds a `Tag` to the list of tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
-#### `tag!(ref::RegRef, tag::Tag)`
+```@docs
+Modules = [QuantumSavory.tag!]
+```
 
 ## `untag!`
-Removes the first matching tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
-#### `untag!(ref::RegRef, tag::Tag)`
+```@docs
+Modules = [QuantumSavory.untag!]
+```
 
 ## [`query`](@ref)
 
-[`query`](@ref) methods allow the user to query for `Tag`(s) in three different cases:
+[`query`](@ref) function allow the user to query for `Tag`(s) in three different cases:
 - on a particular qubit slot([`RegRef`](@ref)) in a [`Register`](@ref) node;
 - on a [`Register`](@ref) to query for a slot that contains the passed `Tag`; and
 - on a `MessageBuffer` to query for a particular `Tag` received from another node in a network.
@@ -67,16 +44,26 @@ The following features are supported:
 
 - It can be specified that the target slot be locked(or unlocked) and assigned(or unassigned) using the `locked` and `assigned` keywords which take `Bool` values. By default, the [`query`](@ref) does not check for these properties. This is available for [`query`](@ref) methods defined on [`Register`](@ref) and [`RegRef`](@ref).
 
-#### `query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{fifo}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing)`
+Following is a detailed description of each `query` methods
 
-#### `query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{fifo}=Val{true}())`
+```@docs
+query(::Register,::Tag,::Val{allB};locked,assigned)
+```
 
-#### `query(mb::MessageBuffer, tag::Tag)`
+```@docs
+query(::RegRef,::Tag) 
+```
+
+```@docs
+query(::QuantumSavory.MessageBuffer,::Tag)
+```
 
 ## `querydelete!`
 A method on top of [`query`](@ref) which allows to query for tag in a [`RegRef`](@ref) and `MessageBuffer` returning the tag that satisfies the passed predicates and [`Wildcard`](@ref)s and deleting it from the list at the same time. It allows the same arguments to be passed to it as the corresponding [`query`](@ref) method on the data structure its called upon.
 
-#### `querydelete!(ref::RegRef, args...)`
+```@docs
+querydelete!(::RegRef, args...)
+```
 
 #### Interface Overview
 
@@ -89,7 +76,9 @@ flowchart TB
 </div>
 ```
 
-#### `querydelete!(mb::MessageBuffer, args...)`
+```@docs
+querydelete!(::QuantumSavory.MessageBuffer,args...)
+```
 
 #### Interface Overview
 
@@ -105,9 +94,9 @@ flowchart TB
 ## `queryall`
 A method defined on top of [`query`](@ref) which allows to query for all tags in a [`RegRef`](@ref) or a [`Register`](@ref) that match the passed `Tag`, instead of just one matching instance.
 
-#### `queryall(args...; kwargs...)`
-
-where `args...` and `kwargs...` correspond to the arguments and keyword arguments accepted by the [`query`](@ref) method on the particular data structure on which the method is called upon.
+```@docs
+queryall(args...; kwargs...)
+```
 
 #### Interface Overview
 
