@@ -146,17 +146,17 @@ A protocol, running at a given node, that finds swappable entangled pairs and pe
 
 $FIELDS
 """
-@kwdef struct SwapperProt{L,R,LT} <: AbstractProtocol where {L<:Union{Int,<:Function,Wildcard}, R<:Union{Int,<:Function,Wildcard}, LT<:Union{Float64,Nothing}}
+@kwdef struct SwapperProt{NL,NH,LT} <: AbstractProtocol where {NL<:Union{Int,<:Function,Wildcard}, NH<:Union{Int,<:Function,Wildcard}, LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
     net::RegisterNet
     """the vertex of the node where swapping is happening"""
     node::Int
-    """the vertex of one of the remote nodes (or a predicate function or a wildcard)"""
-    nodeL::L = ❓
-    """the vertex of the other remote node (or a predicate function or a wildcard)"""
-    nodeR::R = ❓
+    """the vertex of one of the remote nodes that is lower than the current node value (or a predicate function or a wildcard)"""
+    nodeL::NL = ❓
+    """the vertex of the other remote node that is higher than the current node value (or a predicate function or a wildcard)"""
+    nodeH::NH = ❓
     """fixed "busy time" duration immediately before starting entanglement generation attempts"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
@@ -175,7 +175,7 @@ end
     rounds = prot.rounds
     while rounds != 0
         reg = prot.net[prot.node]
-        qubit_pair = findswapablequbits(prot.net,prot.node, prot.nodeL, prot.nodeR)
+        qubit_pair = findswapablequbits(prot.net,prot.node, prot.nodeL, prot.nodeH)
         if isnothing(qubit_pair)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @yield timeout(prot.sim, prot.retry_lock_time)
@@ -214,12 +214,9 @@ end
 
 function findswapablequbits(net, node, pred_low, pred_high) # TODO parameterize the query predicates and the findmin/findmax
     reg = net[node]
-    
-    l = typeof(pred_low) == Wildcard ? <(node) : pred_low
-    h = typeof(pred_high) == Wildcard ? >(node) : pred_high
 
-    low_nodes  = queryall(reg, EntanglementCounterpart, l, ❓; locked=false, assigned=true)
-    high_nodes = queryall(reg, EntanglementCounterpart, h, ❓; locked=false, assigned=true)
+    low_nodes  = queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
+    high_nodes = queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
 
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
     _, il = findmin(n->n.tag[2], low_nodes) # TODO make [2] into a nice named property
