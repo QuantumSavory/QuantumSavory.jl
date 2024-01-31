@@ -12,8 +12,11 @@ The following lines explain in detail, the components of the query interface whi
 ## `Tag`
 Tags are used to represent classical metadata describing the state and history of the nodes. The library allows the construction of custom tags following the format of one of the [`tag_types`](@ref) using the `Tag` constructor. The library implements the following tags for use in the networking protocols:
 
-```@autodocs
-Modules = [QuantumSavory.ProtocolZoo.EntanglementCounterpart, QuantumSavory.ProtocolZoo.EntanglementHistory, QuantumSavory.ProtocolZoo.EntanglementUpdateX, QuantumSavory.ProtocolZoo.EntanglementUpdateZ]
+```@docs
+QuantumSavory.ProtocolZoo.EntanglementCounterpart
+QuantumSavory.ProtocolZoo.EntanglementHistory
+QuantumSavory.ProtocolZoo.EntanglementUpdateX
+QuantumSavory.ProtocolZoo.EntanglementUpdateZ
 ```
 
 The tags are constructed using the `Tag` constructor
@@ -21,13 +24,13 @@ The tags are constructed using the `Tag` constructor
 where `tagvariants` are the extra arguments required by the specific `tagsymbol`, for instance the `tag_types.SymbolIntInt` require two `Int` values. It supports the use of predicate functions (`Int -> Bool`) and [`Wildcard`](@ref) (❓) in place of the `tagvariants` which allows the user to perform queries for tags fulfilling certain criteria.
 
 ## `tag!`
-```@autodocs
-Modules = [QuantumSavory.tag!]
+```@docs
+QuantumSavory.tag!
 ```
 
 ## `untag!`
-```@autodocs
-Modules = [QuantumSavory.untag!]
+```@docs
+QuantumSavory.untag!
 ```
 
 ## [`query`](@ref)
@@ -46,22 +49,22 @@ The following features are supported:
 
 Following is a detailed description of each `query` methods
 
-```@autodocs
+```@docs
 query(::Register,::Tag,::Val{allB};locked,assigned)
 ```
 
-```@autodocs
+```@docs
 query(::RegRef,::Tag) 
 ```
 
-```@autodocs
+```@docs
 query(::QuantumSavory.MessageBuffer,::Tag)
 ```
 
 ## `querydelete!`
 A method on top of [`query`](@ref) which allows to query for tag in a [`RegRef`](@ref) and `MessageBuffer` returning the tag that satisfies the passed predicates and [`Wildcard`](@ref)s and deleting it from the list at the same time. It allows the same arguments to be passed to it as the corresponding [`query`](@ref) method on the data structure its called upon.
 
-```@autodocs
+```@docs
 querydelete!(::RegRef, args...)
 ```
 
@@ -76,7 +79,7 @@ flowchart TB
 </div>
 ```
 
-```@autodocs
+```@docs
 querydelete!(::QuantumSavory.MessageBuffer,args...)
 ```
 
@@ -94,7 +97,7 @@ flowchart TB
 ## `queryall`
 A method defined on top of [`query`](@ref) which allows to query for all tags in a [`RegRef`](@ref) or a [`Register`](@ref) that match the passed `Tag`, instead of just one matching instance.
 
-```@autodocs
+```@docs
 queryall(args...; kwargs...)
 ```
 

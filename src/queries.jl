@@ -198,6 +198,8 @@ true
 You can also wait on a message buffer for a message to arrive before running a query:
 
 ```jldoctest
+julia> using ResumableFunctions; using ConcurrentSim;
+
 julia> net = RegisterNet([Register(3), Register(2), Register(3)])
 A network of 3 registers in a graph of 2 edges
 
