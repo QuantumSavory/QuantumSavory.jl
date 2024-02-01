@@ -50,7 +50,7 @@ The following features are supported:
 Following is a detailed description of each `query` methods
 
 ```@docs
-query(::Register,::Tag,::Val{allB};locked,assigned)
+query(::Register,::Tag)
 ```
 
 ```@docs
