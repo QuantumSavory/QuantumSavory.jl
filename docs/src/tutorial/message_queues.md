@@ -148,7 +148,7 @@ end
     s = now(sim)
     reset_duration = 2.0
     @yield timeout(sim, reset_duration)
-    put(channel_ready, true)
+    put!(channel_ready, true)
     push!(global_log, (:reset_system, s, now(sim)))
 end
 
@@ -175,7 +175,7 @@ end
         end
         push!(global_log, (:node_2_meas_tx_rx, s, now(sim)))
         s2 = now(sim)
-        @yield get(channel_ready)
+        @yield take!(channel_ready)
         push!(global_log, (:node_2_wait_for_reset, s2, now(sim)))
     end
 end
