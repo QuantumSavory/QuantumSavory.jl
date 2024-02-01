@@ -9,6 +9,7 @@ end
 
 tag!(ref, tag) = tag!(ref, Tag(tag))
 
+
 """Removes the first matching tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
 
 $TYPEDSIGNATURES
@@ -21,20 +22,24 @@ function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See is
     isnothing(i) ? throw(KeyError(tag)) : deleteat!(tags, i) # TODO make sure there is a clear error message
 end
 
+
 """Wildcard for use with the tag querying functionality.
 
 See also: [`query`](@ref), [`tag!`](@ref)"""
 struct Wildcard end
+
 
 """A wildcard instance for use with the tag querying functionality.
 
 See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const W = Wildcard()
 
+
 """A wildcard instance for use with the tag querying functionality.
 
 See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const ❓ = W
+
 
 """
 $TYPEDSIGNATURES
@@ -120,6 +125,8 @@ function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{
     end
 end
 
+
+
 """
 $TYPEDSIGNATURES
 
@@ -151,6 +158,8 @@ function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}()) where {allB} # T
     end
 end
 
+
+
 """
 $TYPEDSIGNATURES
 
@@ -161,6 +170,8 @@ function query(mb::MessageBuffer, tag::Tag)
     i = findfirst(t->t.tag==tag, mb.buffer)
     return isnothing(i) ? nothing : (;depth=i, src=mb.buffer[i][1], tag=mb.buffer[i][2])
 end
+
+
 
 """
 $TYPEDSIGNATURES
@@ -241,6 +252,8 @@ function querydelete!(mb::MessageBuffer, args...)
     r = query(mb, args...)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
+
+
 
 """
 $TYPEDSIGNATURES
@@ -333,6 +346,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
     end
 end
 
+
+
 """Find an empty unlocked slot in a given [`Register`](@ref).
 
 ```jldoctest
@@ -358,6 +373,7 @@ function findfreeslot(reg::Register; randomize=false)
         islocked(slot) || isassigned(slot) || return slot
     end
 end
+
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
     r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent

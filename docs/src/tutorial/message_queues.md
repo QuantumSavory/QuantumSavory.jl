@@ -124,22 +124,22 @@ time_before_success = now(sim)
 
 ## Communication delay
 
-Classical communication delay might be important too. There are FILO storage stacks that can simulate that, e.g. `DelayChannel(sim, delay_time)` used instead of `Storage(sim)`. Below we augment the example from above with such a delay channel and we also add some crude instrumentation and plotting.
+Classical communication delay might be important too. There are FILO storage stacks that can simulate that, e.g. `DelayQueue(sim, delay_time)` used instead of `Storage(sim)`. Below we augment the example from above with such a delay channel and we also add some crude instrumentation and plotting.
 
 ```@example messagechannel
 sim = Simulation()
 communication_delay = 1.0
-channel_1to2 = DelayChannel{Bool}(sim, communication_delay)
-channel_2to1 = DelayChannel{Bool}(sim, communication_delay)
-channel_ready = DelayChannel{Bool}(sim, communication_delay)
+channel_1to2 = DelayQueue{Bool}(sim, communication_delay)
+channel_2to1 = DelayQueue{Bool}(sim, communication_delay)
+channel_ready = DelayQueue{Bool}(sim, communication_delay)
 
 global_log = []
 
 @resumable function do_random_measurement_transmit_receive_compare(sim, channel_out, channel_in)
     @yield timeout(sim, 2+rand())   # wait for the measurement to take place
     local_measurement = rand() < 0.4 # simulate a random measurement result
-    put(channel_out, local_measurement)
-    other_measurement = @yield get(channel_in)
+    put!(channel_out, local_measurement)
+    other_measurement = @yield take!(channel_in)
     succeeded = local_measurement == other_measurement == true
     return succeeded
 end

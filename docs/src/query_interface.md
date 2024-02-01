@@ -50,11 +50,11 @@ The following features are supported:
 Following is a detailed description of each `query` methods
 
 ```@docs
-query(::Register,::Tag)
+query(::Register,::Tag,::Val{Bool})
 ```
 
 ```@docs
-query(::RegRef,::Tag) 
+query(::RegRef,::Tag,::Val{Bool}) 
 ```
 
 ```@docs
@@ -63,21 +63,6 @@ query(::QuantumSavory.MessageBuffer,::Tag)
 
 ## `querydelete!`
 A method on top of [`query`](@ref) which allows to query for tag in a [`RegRef`](@ref) and `MessageBuffer` returning the tag that satisfies the passed predicates and [`Wildcard`](@ref)s and deleting it from the list at the same time. It allows the same arguments to be passed to it as the corresponding [`query`](@ref) method on the data structure its called upon.
-
-```@docs
-querydelete!(::RegRef, args...)
-```
-
-#### Interface Overview
-
-```@raw html
-<div class="mermaid">
-flowchart TB
-    A["<code>querydelete!(ref::RegRef, args...)</code>"]
-    B["<code>query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{fifo}=Val{true}())</code>"]
-    A --> B
-</div>
-```
 
 ```@docs
 querydelete!(::QuantumSavory.MessageBuffer,args...)
@@ -94,11 +79,27 @@ flowchart TB
 </div>
 ```
 
+```@docs
+querydelete!(::RegRef, args...)
+```
+
+#### Interface Overview
+
+```@raw html
+<div class="mermaid">
+flowchart TB
+    A["<code>querydelete!(ref::RegRef, args...)</code>"]
+    B["<code>query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{fifo}=Val{true}())</code>"]
+    A --> B
+</div>
+```
+
+
 ## `queryall`
 A method defined on top of [`query`](@ref) which allows to query for all tags in a [`RegRef`](@ref) or a [`Register`](@ref) that match the passed `Tag`, instead of just one matching instance.
 
 ```@docs
-queryall(args...; kwargs...)
+QuantumSavory.queryall
 ```
 
 #### Interface Overview
