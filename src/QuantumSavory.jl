@@ -56,7 +56,7 @@ export
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
     # plots.jl
-    registernetplot, registernetplot_axis, resourceplot_axis
+    registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis
 
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
