@@ -46,5 +46,5 @@ for i in 1:30, n in 3:30
 
 end
 # @test length([econ.log[i] for i in 1:400 if !isnothing(econ.log[i][2])]) > 300
-# length([net[2].tags[i][end] for i in 1:100 if net[2].tags[i][end][2]==4]) # almost all slots connnected to either 3, 4 or 5, so no room for swaps
+# length([net[2].tags[i][end] for i in 1:100 if net[2].tags[i][end][2]==4]) # almost all slots connected to either 3, 4 or 5, so no room for swaps
 # [net[2].tags[i][end] for i in 1:100]
