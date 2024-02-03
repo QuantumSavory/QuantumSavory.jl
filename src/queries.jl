@@ -159,14 +159,12 @@ function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}()) where {allB} # T
 end
 
 
-
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for classical message buffers.
-
-You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers."""
-function query(mb::MessageBuffer, tag::Tag)
+You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers.
+"""
+function query(mb::MessageBuffer, tag::Tag, ::Val{allB}=Val{false}()) where {allB}
     i = findfirst(t->t.tag==tag, mb.buffer)
     return isnothing(i) ? nothing : (;depth=i, src=mb.buffer[i][1], tag=mb.buffer[i][2])
 end

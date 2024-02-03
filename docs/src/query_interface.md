@@ -50,22 +50,22 @@ The following features are supported:
 Following is a detailed description of each `query` methods
 
 ```@docs
-query(::Register,::Tag,::Val{Bool})
+query(::Register,::Tag)
 ```
 
 ```@docs
-query(::RegRef,::Tag,::Val{Bool}) 
+query(::RegRef,::Tag) 
 ```
 
 ```@docs
-query(::QuantumSavory.MessageBuffer,::Tag)
+query(::MessageBuffer,::Tag)
 ```
 
 ## `querydelete!`
 A method on top of [`query`](@ref) which allows to query for tag in a [`RegRef`](@ref) and `MessageBuffer` returning the tag that satisfies the passed predicates and [`Wildcard`](@ref)s and deleting it from the list at the same time. It allows the same arguments to be passed to it as the corresponding [`query`](@ref) method on the data structure its called upon.
 
 ```@docs
-querydelete!(::QuantumSavory.MessageBuffer,args...)
+querydelete!(::MessageBuffer)
 ```
 
 #### Interface Overview
@@ -80,7 +80,7 @@ flowchart TB
 ```
 
 ```@docs
-querydelete!(::RegRef, args...)
+querydelete!(::RegRef)
 ```
 
 #### Interface Overview
@@ -109,5 +109,6 @@ QuantumSavory.queryall
 flowchart TB
     A["<code>queryall(args...; kwargs...)</code>"]
     B["<code>query(args..., ::Val{allB}=Val{true}(), ::Val{fifo}=Val{true}; kwargs...)</code>"]
+    A --> B
 </div>
 ```
