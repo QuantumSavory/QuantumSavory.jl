@@ -156,7 +156,7 @@ $FIELDS
     net::RegisterNet
     """the vertex of the node where swapping is happening"""
     node::Int
-    """the vertex of one of the remote nodes for the swap, arbitrarily refered to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
+    """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
     nodeL::NL = ❓
     """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
     nodeH::NH = ❓ # TODO consider changing the default to random
