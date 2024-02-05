@@ -95,6 +95,10 @@ $FIELDS
     rounds::Int = -1
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
+    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to make only a pre-determined fraction(0.0 - 1.0) of the total slots to be available for entanglement"""
+    marginA::Float64 = 1.0
+    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to make only a pre-determined fraction(0.0 - 1.0) of the total slots to be available for entanglement"""
+    marginB::Float64 = 1.0
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -112,8 +116,8 @@ end
     prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
     rounds = prot.rounds
     while rounds != 0
-        a = findfreeslot(prot.net[prot.nodeA], randomize=prot.randomize)
-        b = findfreeslot(prot.net[prot.nodeB], randomize=prot.randomize)
+        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=prot.marginA)
+        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=prot.marginB)
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."

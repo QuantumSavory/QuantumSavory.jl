@@ -324,19 +324,23 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register; randomize=false)
+function findfreeslot(reg::Register; randomize=false, margin=1.0)
+    
+    n_slots = length(reg.staterefs)
+    ind = Int(round(margin*n_slots))
+    
     if randomize
-        for i in randperm(length(reg.staterefs))
+        for i in randperm(ind)
             slot = reg[i]
             islocked(slot) || isassigned(slot) || return slot
         end
     end
-    for slot in reg
+    for slot in reg[1:ind]
         islocked(slot) || isassigned(slot) || return slot
     end
 end
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
-    r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent
+    r.stateindices[i] != 0 # TODO this also usually means r.staterefs[i] !== nothing - choose one and make things consistent
 end
 Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
