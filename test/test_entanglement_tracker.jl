@@ -46,8 +46,8 @@ for i in 1:10
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
 
-    swapper2 = SwapperProt(sim, net, 2; nodeL = <(2), nodeH = >(2), rounds = 1)
-    swapper3 = SwapperProt(sim, net, 3; nodeL = <(3), nodeH = >(3), rounds = 1)
+    swapper2 = SwapperProt(sim, net, 2; nodeL = <(2), nodeH = >(2), chooseL = argmin, chooseH = argmax, rounds = 1)
+    swapper3 = SwapperProt(sim, net, 3; nodeL = <(3), nodeH = >(3), chooseL = argmin, chooseH = argmax, rounds = 1)
     @process swapper2()
     @process swapper3()
     run(sim, 80)
@@ -102,7 +102,7 @@ for i in 1:30, n in 2:30
         @process eprot()
     end
     for j in 2:n-1
-        swapper = SwapperProt(sim, net, j; nodeL = <(j), nodeH = >(j), rounds = 1)
+        swapper = SwapperProt(sim, net, j; nodeL = <(j), nodeH = >(j), chooseL = argmin, chooseH = argmax, rounds = 1)
         @process swapper()
     end
     run(sim, 200)
