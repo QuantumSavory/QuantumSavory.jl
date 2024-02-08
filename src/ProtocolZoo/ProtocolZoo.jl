@@ -226,8 +226,8 @@ function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_h
     high_nodes = queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
 
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
-    _, il = choose_low(n->n.tag[2], low_nodes) # TODO make [2] into a nice named property
-    _, ih = choose_high(n->n.tag[2], high_nodes)
+    il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
+    ih = choose_high((n.tag[2] for n in high_nodes))
     return low_nodes[il], high_nodes[ih]
 end
 

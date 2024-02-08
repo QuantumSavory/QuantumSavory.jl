@@ -20,7 +20,7 @@ for (;src, dst) in edges(network)
     @process eprot()
 end
 for node in vertices(network)
-    sprot = SwapperProt(sim, network, node; nodeL = <(node), nodeH = >(node), chooseL = findmin, chooseH = findmax)
+    sprot = SwapperProt(sim, network, node; nodeL = <(node), nodeH = >(node), chooseL = argmin, chooseH = argmax)
     @process sprot()
 end
 
