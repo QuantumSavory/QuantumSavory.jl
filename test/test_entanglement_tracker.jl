@@ -18,7 +18,7 @@ end
 
 # without an entanglement tracker
 
-# for i in 1:10
+for i in 1:10
 
     net = RegisterNet([Register(3), Register(4), Register(2), Register(3)])
     sim = get_time_tracker(net)
@@ -64,7 +64,7 @@ end
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
-# end
+end
 
 ##
 

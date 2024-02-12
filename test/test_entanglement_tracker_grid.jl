@@ -14,7 +14,13 @@ if isinteractive()
     println("Logger set to debug")
 end
 
+##
+# Here we test entanglement tracker and swapper protocols on an arbitrary hardcoded path of long-range connection inside of what is otherwise a 2D grid
+# We do NOT test anything related to automatic routing on such a grid -- only the hardcoded path is tested
+##
+
 ## Custom Predicates
+
 function top_left(net, node, x)
     n = sqrt(size(net.graph)[1]) # grid size
     a = (node ÷ n) + 1 # row number
@@ -39,13 +45,13 @@ end
 
 ## Simulation
 
-#without entanglement tracker
+## without entanglement tracker - this is almost the same test as the one in test_entanglement_tracker.jl which tests a simple chain -- the only difference is that we have picked a few hardcoded arbitrary nodes through a grid (creating an ad-hoc chain)
 for i in 1:10
     graph = grid([4, 4])
     add_edge!(graph, 1, 6)
     add_edge!(graph, 6, 11)
     add_edge!(graph, 11, 16)
-    
+
     net = RegisterNet(graph, [Register(3) for i in 1:16])
     sim = get_time_tracker(net)
 
@@ -95,10 +101,10 @@ for i in 1:10
 
 end
 
-# with entanglement tracker
+## with entanglement tracker -- here we hardcode the diagonal of the grid as the path on which we are making connections
 for n in 4:10
     graph = grid([n,n])
-    
+
     diag_pairs = []
     diag_nodes = []
     reg_num = 1 # starting register

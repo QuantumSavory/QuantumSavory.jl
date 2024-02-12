@@ -159,7 +159,7 @@ $FIELDS
     """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
     nodeL::NL = ❓
     """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
-    nodeH::NH = ❓ # TODO consider changing the default to random
+    nodeH::NH = ❓
     """the `nodeL` predicate can return many positive candidates; `chooseL` picks one of them (by index into the array of filtered `nodeL` results), defaults to a random pick `arr->rand(keys(arr))`; if you are working on a repeater chain a good choice is `argmin`, i.e. the node furthest to the "left" """
     chooseL::CL = random_index
     """the `nodeH` counterpart for `chooseH`; if you are working on a repeater chain a good choice is `argmax`, i.e. the node furthest to the "right" """
@@ -219,7 +219,7 @@ end
     end
 end
 
-function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high) # TODO parameterize the query predicates and the findmin/findmax
+function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high)
     reg = net[node]
 
     low_nodes  = queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
