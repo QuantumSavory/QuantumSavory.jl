@@ -21,13 +21,7 @@ using CairoMakie # or GLMakie for interactive plots
 using QuantumSavory
 
 # create a network of qubit registers
-sizes = [2,3,2,5]
-registers = Register[]
-for s in sizes
-    traits = [Qubit() for _ in 1:s]
-    push!(registers, Register(traits))
-end
-network = RegisterNet(registers)
+network = RegisterNet([Register(2),Register(3),Register(2),Register(5)])
 
 # add some states, entangle a few slots, perform some gates
 initialize!(network[1,1])
@@ -39,6 +33,16 @@ apply!((network[2,3],network[3,1]), CNOT)
 fig = Figure(resolution=(400,400))
 _, _, plt, obs = registernetplot_axis(fig[1,1],network)
 fig
+```
+
+The tall rectangles are registers, the gray squares are the slots of these registers, and the (connected) black diamonds denote when a slot is occupied by some subsystem (of a potentially larger) quantum state.
+
+The visualization is capable of showing tooltips when hovering over different components of the plot, particularly valuable for debugging. Quantum observables can be directly calculated and plotted as well (through the `observables` keyword).
+
+Other configuration options are available as well (the ones ending on `plot` let you access the subplot objects used to create the visualization and the ones ending on `backref` provide convenient inverse mapping from graphical elements to the registers or states being visualized):
+
+```@example vis
+propertynames(plt)
 ```
 
 ## The state of locks and various metadata in the network

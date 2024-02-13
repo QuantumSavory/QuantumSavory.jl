@@ -17,6 +17,13 @@ end
     end
 end
 
+@safetestset "firstgenrepeater_v2" begin
+    if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
+        include("../examples/firstgenrepeater_v2/1_entangler_example.jl")
+        include("../examples/firstgenrepeater_v2/2_swapper_example.jl")
+    end
+end
+
 @safetestset "colorcentermodularcluster" begin
     include("../examples/colorcentermodularcluster/1_time_to_connected.jl")
     if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
