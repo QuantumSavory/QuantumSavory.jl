@@ -21,30 +21,30 @@ function main()
     modules = [QuantumSavory],
     authors = "Stefan Krastanov",
     pages = [
-    # "QuantumSavory.jl" => "index.md",
-    # "Getting Started Manual" => "manual.md",
+    "QuantumSavory.jl" => "index.md",
+    "Getting Started Manual" => "manual.md",
     "Explanations" => [
-        # "explanations.md",
-        # "Properties and Backgrounds" => "propbackgrounds.md",
-        # "Symbolic Expressions" => "symbolics.md",
-        # "Visualizations" => "visualizations.md",
+        "explanations.md",
+        "Properties and Backgrounds" => "propbackgrounds.md",
+        "Symbolic Expressions" => "symbolics.md",
+        "Visualizations" => "visualizations.md",
         "Dev Documentation" => [
             "Register Interface" => "register_interface.md",
             "Query Interface" => "query_interface.md",
         ],
     ],
-    # "How-To Guides" => [
-    #     "howto.md",
-    #     "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md",
-    #     "1st-gen Repeater (Clifford formalism)" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
-    #     "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
-    # ],
-    # "Tutorials" => [
-    #     "tutorial.md",
-    #     "Gate duration" => "tutorial/noninstantgate.md",
-    #     "Message queues" => "tutorial/message_queues.md",
-    #     #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
-    # ],
+    "How-To Guides" => [
+        "howto.md",
+        "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md",
+        "1st-gen Repeater (Clifford formalism)" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
+        "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
+    ],
+    "Tutorials" => [
+        "tutorial.md",
+        "Gate duration" => "tutorial/noninstantgate.md",
+        "Message queues" => "tutorial/message_queues.md",
+        #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
+    ],
     "References" => [
         "references.md",
         "API" => "API.md",
