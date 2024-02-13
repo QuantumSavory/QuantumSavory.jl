@@ -140,6 +140,9 @@ end
     end
 end
 
+function random_index(arr)
+    return rand(keys(arr))
+end
 
 """
 $TYPEDEF
@@ -148,17 +151,21 @@ A protocol, running at a given node, that finds swappable entangled pairs and pe
 
 $FIELDS
 """
-@kwdef struct SwapperProt{L,R,LT} <: AbstractProtocol where {L<:Union{Int,<:Function,Wildcard}, R<:Union{Int,<:Function,Wildcard}, LT<:Union{Float64,Nothing}}
+@kwdef struct SwapperProt{NL,NH,CL,CH,LT} <: AbstractProtocol where {NL<:Union{Int,<:Function,Wildcard}, NH<:Union{Int,<:Function,Wildcard}, CL<:Function, CH<:Function, LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
     net::RegisterNet
     """the vertex of the node where swapping is happening"""
     node::Int
-    """the vertex of one of the remote nodes (or a predicate function or a wildcard)"""
-    nodeL::L = ❓
-    """the vertex of the other remote node (or a predicate function or a wildcard)"""
-    nodeR::R = ❓
+    """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
+    nodeL::NL = ❓
+    """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
+    nodeH::NH = ❓
+    """the `nodeL` predicate can return many positive candidates; `chooseL` picks one of them (by index into the array of filtered `nodeL` results), defaults to a random pick `arr->rand(keys(arr))`; if you are working on a repeater chain a good choice is `argmin`, i.e. the node furthest to the "left" """
+    chooseL::CL = random_index
+    """the `nodeH` counterpart for `chooseH`; if you are working on a repeater chain a good choice is `argmax`, i.e. the node furthest to the "right" """
+    chooseH::CH = random_index
     """fixed "busy time" duration immediately before starting entanglement generation attempts"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
@@ -177,7 +184,7 @@ end
     rounds = prot.rounds
     while rounds != 0
         reg = prot.net[prot.node]
-        qubit_pair = findswapablequbits(prot.net,prot.node)
+        qubit_pair = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH)
         if isnothing(qubit_pair)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @yield timeout(prot.sim, prot.retry_lock_time)
@@ -214,16 +221,16 @@ end
     end
 end
 
-function findswapablequbits(net,node) # TODO parameterize the query predicates and the findmin/findmax
+function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high)
     reg = net[node]
 
-    leftnodes  = queryall(reg, EntanglementCounterpart, <(node), ❓; locked=false, assigned=true)
-    rightnodes = queryall(reg, EntanglementCounterpart, >(node), ❓; locked=false, assigned=true)
+    low_nodes  = queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
+    high_nodes = queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
 
-    (isempty(leftnodes) || isempty(rightnodes)) && return nothing
-    _, il = findmin(n->n.tag[2], leftnodes) # TODO make [2] into a nice named property
-    _, ir = findmax(n->n.tag[2], rightnodes)
-    return leftnodes[il], rightnodes[ir]
+    (isempty(low_nodes) || isempty(high_nodes)) && return nothing
+    il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
+    ih = choose_high((n.tag[2] for n in high_nodes))
+    return low_nodes[il], high_nodes[ih]
 end
 
 
