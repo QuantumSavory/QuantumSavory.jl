@@ -117,7 +117,7 @@ end
     rounds = prot.rounds
     while rounds != 0
         a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=prot.marginA)
-        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=prot.marginB)
+        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=prot.marginB, top=false)
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
@@ -194,10 +194,11 @@ end
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
+        
         (q1, tag1), (q2, tag2) = qubit_pair
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
-
+        @debug "Swapper @$(prot.node): Swapping $q1 having tag `$tag1` with $q2 having tag `$tag2`"
         untag!(q1, tag1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)

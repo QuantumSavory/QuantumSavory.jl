@@ -11,18 +11,19 @@ if isinteractive()
     println("Logger set to debug")
 end
 
-for i in 1:30, n in 3:30
-
+for n in 3:30
     net = RegisterNet([Register(10) for j in 1:n])
     sim = get_time_tracker(net)
 
     for e in edges(net)
-        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true)
+        ma = e.src == 1 ? 1.0 : 0.5
+        mb = e.dst == n ? 1.0 : 0.5
+        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true, marginA=ma, marginB=mb)
         @process eprot()
     end
 
     for v in 2:n-1
-        sprot = SwapperProt(sim, net, v; rounds=-1)
+        sprot = SwapperProt(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = -1)
         @process sprot()
     end
 
@@ -45,6 +46,3 @@ for i in 1:30, n in 3:30
     end
 
 end
-# @test length([econ.log[i] for i in 1:400 if !isnothing(econ.log[i][2])]) > 300
-# length([net[2].tags[i][end] for i in 1:100 if net[2].tags[i][end][2]==4]) # almost all slots connected to either 3, 4 or 5, so no room for swaps
-# [net[2].tags[i][end] for i in 1:100]
