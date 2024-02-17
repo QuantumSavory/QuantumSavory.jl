@@ -159,7 +159,9 @@ for n in 4:10
     graph = grid([n,n])
 
     for i in 1:(n^2 - n + 1) # add diagonal channels
-        add_edge!(graph, i, i + n + 1)
+        if !iszero(i%n) # no diagonal channel from last node in a row
+            add_edge!(graph, i, i + n + 1)
+        end
     end
 
     net = RegisterNet(graph, [Register(8) for i in 1:n^2])
