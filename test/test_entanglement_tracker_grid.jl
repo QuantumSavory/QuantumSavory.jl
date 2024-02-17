@@ -156,8 +156,11 @@ end
 
 ## with entanglement tracker -- here we hardcode the diagonal of the grid as the path on which we are making connections
 for n in 4:10
-    n = 4
     graph = grid([n,n])
+
+    for i in 1:(n^2 - n + 1) # add diagonal channels
+        add_edge!(graph, i, i + n + 1)
+    end
 
     net = RegisterNet(graph, [Register(8) for i in 1:n^2])
 
