@@ -344,7 +344,7 @@ end
 @resumable function (prot::EntanglementConsumer)(;_prot::EntanglementConsumer=prot)
     prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
     while true
-        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here and then `untag!` below
+        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
             @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query1 failed"
             push!(prot.log, (now(prot.sim), nothing, nothing))
@@ -363,6 +363,8 @@ end
         
         q1 = query1.slot 
         q2 = query2.slot
+        @yield lock(q1) & lock(q2)
+
         @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement"
         untag!(q1, query1.tag)
         untag!(q2, query2.tag)
@@ -374,7 +376,8 @@ end
         traceout!(prot.net[prot.nodeA][q1.idx])
         traceout!(prot.net[prot.nodeB][q2.idx])
         push!(prot.log, (now(prot.sim), ob1, ob2))
-        
+        unlock(q1)
+        unlock(q2)
         @yield timeout(prot.sim, prot.period)
     end
 end
