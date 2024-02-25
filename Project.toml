@@ -35,7 +35,7 @@ QuantumSavoryMakie = "Makie"
 [compat]
 Combinatorics = "1"
 ConcurrentSim = "1.4"
-Distributions = "0.25"
+Distributions = "0.25.90"
 DocStringExtensions = "0.9"
 Graphs = "1.9"
 IterTools = "1.4.0"
