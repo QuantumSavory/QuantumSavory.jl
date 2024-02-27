@@ -20,7 +20,7 @@ abstract type AbstractProtocol end
 
 get_time_tracker(prot::AbstractProtocol) = prot.sim
 
-Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...,_prot=prot), get_time_tracker(prot), args...; kwargs...)
+Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
 
 @kwdef struct EntanglementCounterpart
     remote_node::Int
@@ -108,8 +108,7 @@ end
 
 #TODO """Convenience constructor for specifying `fidelity` of generation instead of success probability and time"""
 
-@resumable function (prot::EntanglerProt)(;_prot::EntanglerProt=prot)
-    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+@resumable function (prot::EntanglerProt)()
     rounds = prot.rounds
     while rounds != 0
         a = findfreeslot(prot.net[prot.nodeA], randomize=prot.randomize)
@@ -177,8 +176,7 @@ function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return SwapperProt(;sim, net, node, kwargs...)
 end
 
-@resumable function (prot::SwapperProt)(;_prot::SwapperProt=prot)
-    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+@resumable function (prot::SwapperProt)()
     rounds = prot.rounds
     while rounds != 0
         reg = prot.net[prot.node]
@@ -248,8 +246,7 @@ $FIELDS
     node::Int
 end
 
-@resumable function (prot::EntanglementTracker)(;_prot::EntanglementTracker=prot)
-    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+@resumable function (prot::EntanglementTracker)()
     nodereg = prot.net[prot.node]
     mb = messagebuffer(prot.net, prot.node)
     while true
