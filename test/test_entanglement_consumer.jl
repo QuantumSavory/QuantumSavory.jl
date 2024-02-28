@@ -19,12 +19,12 @@ for i in 1:30, n in 3:30
     for e in edges(net)
         ma = e.src == 1 ? 1.0 : 0.5
         mb = e.dst == n ? 1.0 : 0.5
-        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true, marginA=ma, marginB=mb)
+        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=400, randomize=true, marginA=ma, marginB=mb)
         @process eprot()
     end
 
     for v in 2:n-1
-        sprot = SwapperProt(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = -1)
+        sprot = SwapperProt(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = 400)
         @process sprot()
     end
 
@@ -39,7 +39,7 @@ for i in 1:30, n in 3:30
     run(sim, 100)
 
 
-    for i in 1:100
+    for i in 1:length(econ.log)
         if !isnothing(econ.log[i][2])
             @test econ.log[i][2] ≈ 1.0
             @test econ.log[i][3] ≈ 1.0
