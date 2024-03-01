@@ -13,18 +13,19 @@ end
 
 
 for i in 1:30, n in 3:30
+    @show i, n
     net = RegisterNet([Register(10) for j in 1:n])
     sim = get_time_tracker(net)
 
     for e in edges(net)
         ma = e.src == 1 ? 1.0 : 0.5
         mb = e.dst == n ? 1.0 : 0.5
-        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=400, randomize=true, marginA=ma, marginB=mb)
+        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true, marginA=ma, marginB=mb)
         @process eprot()
     end
 
     for v in 2:n-1
-        sprot = SwapperProt(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = 400)
+        sprot = SwapperProt(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = -1)
         @process sprot()
     end
 
