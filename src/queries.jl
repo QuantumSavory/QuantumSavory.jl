@@ -1,8 +1,10 @@
-"""Assign a tag to a slot in a register.
+"""$TYPEDSIGNATURES
 
-$TYPEDSIGNATURES
+Assign a tag to a slot in a register.
 
-See also: [`query`](@ref)"""
+It returns the list of all currently present tags for that register.
+
+See also: [`query`](@ref), [`untag!`](@ref)"""
 function tag!(ref::RegRef, tag::Tag)
     push!(ref.reg.tags[ref.idx], tag)
 end
@@ -10,11 +12,13 @@ end
 tag!(ref, tag) = tag!(ref, Tag(tag))
 
 
-"""Removes the first matching tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
+"""$TYPEDSIGNATURES
 
-$TYPEDSIGNATURES
+Removes the first instance of tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
 
-See also: [`query`](@ref)
+It returns the list of all currently present tags for that register.
+
+See also: [`query`](@ref), [`tag!`](@ref)
 """
 function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See issue #74
     tags = ref.reg.tags[ref.idx]
@@ -23,7 +27,9 @@ function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See is
 end
 
 
-"""Wildcard for use with the tag querying functionality.
+"""Wildcard type for use with the tag querying functionality.
+
+Usually you simply want an instance of this type (available as the constant [`W`](@ref) or [`❓`](@ref)).
 
 See also: [`query`](@ref), [`tag!`](@ref)"""
 struct Wildcard end
@@ -31,13 +37,16 @@ struct Wildcard end
 
 """A wildcard instance for use with the tag querying functionality.
 
-See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
+See also: [`query`](@ref), [`tag!`](@ref), [`❓`](@ref)"""
 const W = Wildcard()
 
 
 """A wildcard instance for use with the tag querying functionality.
 
-See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
+This emoji can be inputted with the `\\:question:` emoji shortcut,
+or you can simply use the ASCII alternative [`W`](@ref).
+
+See also: [`query`](@ref), [`tag!`](@ref), [`W`](@ref)"""
 const ❓ = W
 
 
@@ -112,7 +121,7 @@ julia> query(r, Int, 4, <(7))
 (slot = Slot 5, tag = TypeIntInt(Int64, 4, 5)::Tag)
 ```
 
-See also: [`queryall`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)
+See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
 """
 function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB}
     find = allB ? findall : findfirst
@@ -256,7 +265,7 @@ end
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`RegRef`](@query) that also deletes the tag from the tag list for the [`RegRef`](@query).
+A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
 """
 function querydelete!(ref::RegRef, args...) # TODO there is a lot of code duplication here
     r = query(ref, args...)

@@ -1,3 +1,24 @@
+"""
+Tags are used to represent classical metadata describing the state (or even history) of nodes and their registers. The library allows the construction of custom tags using the `Tag` constructor. Currently tags are implemented as instances of a [sum type](https://github.com/MasonProtter/SumTypes.jl) and have fairly constrained structure. Most of them are contrained to contain only Symbol instances and integers.
+
+Here is an example of such a generic tag:
+
+```jldoctest
+julia> Tag(:sometagdescriptor, 1, 2, -3)
+SymbolIntIntInt(:sometagdescriptor, 1, 2, -3)::Tag
+```
+
+A tag can have a custom `DataType` as first argument, in which case additional customability in printing is available. E.g. consider the [`EntanglementHistory`] tag used to track how pairs were entangled before a swap happened.
+
+```jldoctest
+julia> using QuantumSavory.ProtocolZoo: EntanglementHistory
+
+julia> Tag(EntanglementHistory, 1, 2, 3, 4, 5)
+Was entangled to 1.2, but swapped with .5 which was entangled to 3.4
+```
+
+See also: [`tag!`](@ref), [`query`](@ref)
+"""
 @sum_type Tag :hidden begin
     Symbol(::Symbol)
     SymbolInt(::Symbol, ::Int)

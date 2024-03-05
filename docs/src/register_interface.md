@@ -12,6 +12,10 @@ A rather diverse set of simulation libraries is used under the hood. Long term t
 
 Initialize the state of a register to a known state.
 
+```@docs; canonical=false
+initialize!
+```
+
 #### `initialize!(refs::Vector{RegRef}, state; time)`
 
 Store a `state` in the given register slots.
@@ -65,6 +69,10 @@ flowchart TB
 ## `apply!`
 
 Apply a quantum operation to a register.
+
+```@docs; canonical=false
+apply!
+```
 
 #### `apply!(refs::Vector{RegRef}, operation; time)`
 
@@ -126,6 +134,10 @@ flowchart TB
 
 Measure a quantum observable. The dispatch down the call three is very similar to the one for `apply!`.
 
+```@docs; canonical=false
+observable
+```
+
 #### `observable(refs::Tuple{Vararg{RegRef, N}}, obs, something=nothing; time)`
 
 Calculate the value of an observable on the state in the sequence of [`RegRef`](@ref)s at a specified `time`. If these registers are not instantiated, return `something`.
@@ -180,6 +192,10 @@ flowchart TB
 
 ## `project_traceout!`
 
+```@docs; canonical=false
+project_traceout!
+```
+
 #### `project_traceout!(r::RegRef, basis; time)`
 
 Project the state in `RegRef` on `basis` at a specified `time`. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
@@ -228,6 +244,10 @@ flowchart TB
 
 ## `traceout!`
 
+```@docs; canonical=false
+traceout!
+```
+
 Perform a partial trace over a part of the system (i.e. discard a part of the system).
 
 #### `traceout!(r::RegRef)`
@@ -256,6 +276,10 @@ flowchart TB
 ```
 
 ## `uptotime!`
+
+```@docs; canonical=false
+uptotime!
+```
 
 #### `uptotime!(ref::RegRef, now)`
 
