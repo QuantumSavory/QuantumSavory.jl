@@ -20,42 +20,96 @@ abstract type AbstractProtocol end
 
 get_time_tracker(prot::AbstractProtocol) = prot.sim
 
-Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...,_prot=prot), get_time_tracker(prot), args...; kwargs...)
+Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
 
+"""
+$TYPEDEF
+
+Indicates the current entanglement status with a remote node's slot. Added when a new entanglement is generated through [`EntanglerProt`](@ref) or when a swap happens and
+ the [`EntanglementTracker`](@ref) receives an [`EntanglementUpdate`] message.
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementCounterpart
+    "the id of the remote node to which we are entangled"
     remote_node::Int
+    "the slot in the remote node containing the qubit we are entangled to"
     remote_slot::Int
 end
 Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot)
 
+"""
+$TYPEDEF
+
+This tag is used to store the outdated entanglement information after a
+swap. It helps to direct incoming entanglement update messages to the right node after a swap.
+It helps in situations when locally we have performed a swap, but we are now receiving a message
+from a distant node that does not know yet that the swap has occurred (thus the distant node might
+have outdated information about who is entangled to whom and we need to update that information).
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementHistory
+    "the id of the remote node we used to be entangled to"
     remote_node::Int
+    "the slot of the remote node we used to be entangled to"
     remote_slot::Int
+    "the id of remote node to which we are entangled after the swap"
     swap_remote_node::Int
+    "the slot of the remote node to which we are entangled after the swap"
     swap_remote_slot::Int
+    "the slot in this register with whom we performed a swap"
     swapped_local::Int
 end
 Base.show(io::IO, tag::EntanglementHistory) = print(io, "Was entangled to $(tag.remote_node).$(tag.remote_slot), but swapped with .$(tag.swapped_local) which was entangled to $(tag.swap_remote_node).$(tag.swap_remote_slot)")
 Tag(tag::EntanglementHistory) = Tag(EntanglementHistory, tag.remote_node, tag.remote_slot, tag.swap_remote_node, tag.swap_remote_slot, tag.swapped_local)
 
+"""
+$TYPEDEF
+
+This tag arrives as a message from a remote node to which the current node was entangled to update the
+entanglement information and apply an `X` correction after the remote node performs an entanglement swap.
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementUpdateX
+    "the id of the node to which you were entangled before the swap"
     past_local_node::Int
+    "the slot of the node to which you were entangled before the swap"
     past_local_slot::Int
+    "the slot of your node that we were entangled to"
     past_remote_slot::Int
+    "the id of the node to which you are now entangled after the swap"
     new_remote_node::Int
+    "the slot of the node to which you are now entangled after the swap"
     new_remote_slot::Int
+    "what Pauli correction you need to perform"
     correction::Int
 end
 Base.show(io::IO, tag::EntanglementUpdateX) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction Z$(tag.correction)")
 Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
 
+"""
+$TYPEDEF
+
+This tag arrives as a message from a remote node to which the current node was entangled to update the
+entanglement information and apply a `Z` correction after the remote node performs an entanglement swap.
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementUpdateZ
+    "the id of the node to which you were entangled before the swap"
     past_local_node::Int
+    "the slot of the node to which you were entangled before the swap"
     past_local_slot::Int
+    "the slot of your node that we were entangled to"
     past_remote_slot::Int
+    "the id of the node to which you are now entangled after the swap"
     new_remote_node::Int
+    "the slot of the node to which you are now entangled after the swap"
     new_remote_slot::Int
+    "what Pauli correction you need to perform"
     correction::Int
 end
 Base.show(io::IO, tag::EntanglementUpdateZ) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction X$(tag.correction)")
@@ -68,7 +122,7 @@ A protocol that generates entanglement between two nodes.
 Whenever a pair of empty slots is available, the protocol locks them
 and starts probabilistic attempts to establish entanglement.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct EntanglerProt{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -108,8 +162,7 @@ end
 
 #TODO """Convenience constructor for specifying `fidelity` of generation instead of success probability and time"""
 
-@resumable function (prot::EntanglerProt)(;_prot::EntanglerProt=prot)
-    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+@resumable function (prot::EntanglerProt)()
     rounds = prot.rounds
     round = 1
     while rounds != 0
@@ -151,7 +204,7 @@ $TYPEDEF
 
 A protocol, running at a given node, that finds swappable entangled pairs and performs the swap.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct SwapperProt{NL,NH,CL,CH,LT} <: AbstractProtocol where {NL<:Union{Int,<:Function,Wildcard}, NH<:Union{Int,<:Function,Wildcard}, CL<:Function, CH<:Function, LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -181,8 +234,7 @@ function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return SwapperProt(;sim, net, node, kwargs...)
 end
 
-@resumable function (prot::SwapperProt)(;_prot::SwapperProt=prot)
-    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+@resumable function (prot::SwapperProt)()
     rounds = prot.rounds
     round = 1
     while rounds != 0
@@ -243,7 +295,7 @@ $TYPEDEF
 
 A protocol, running at a given node, listening for messages that indicate something has happened to a remote qubit entangled with one of the local qubits.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct EntanglementTracker <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -254,8 +306,7 @@ $FIELDS
     node::Int
 end
 
-@resumable function (prot::EntanglementTracker)(;_prot::EntanglementTracker=prot)
-    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+@resumable function (prot::EntanglementTracker)()
     nodereg = prot.net[prot.node]
     mb = messagebuffer(prot.net, prot.node)
     while true

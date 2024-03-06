@@ -13,7 +13,7 @@ function main()
     plugins = [bib],
     doctest = false,
     clean = true,
-    warnonly = true, # TODO [:missing_docs],
+    warnonly = [:missing_docs],
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
         assets=["assets/init.js"]
@@ -25,12 +25,11 @@ function main()
     "Getting Started Manual" => "manual.md",
     "Explanations" => [
         "explanations.md",
+        "Register Interface" => "register_interface.md",
         "Properties and Backgrounds" => "propbackgrounds.md",
         "Symbolic Expressions" => "symbolics.md",
+        "Tagging and Querying" => "tag_query.md",
         "Visualizations" => "visualizations.md",
-        "Dev Documentation" => [
-            "Register Interface" => "register_interface.md",
-        ],
     ],
     "How-To Guides" => [
         "howto.md",
@@ -49,6 +48,7 @@ function main()
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",
+        "ProtocolZoo API" => "API_ProtocolZoo.md",
         "Bibliography" => "bibliography.md",
     ],
     ]
