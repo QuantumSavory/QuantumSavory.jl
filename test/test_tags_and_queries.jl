@@ -49,7 +49,7 @@ tag!(reg[3], EntanglementCounterpart, 5, 1)
 @test query(reg[3], EntanglementCounterpart, 5, 1) == (depth = 7, tag = Tag(EntanglementCounterpart, 5, 1))
 @test query(reg[3], EntanglementCounterpart, 5, 1, Val{false}(), Val{false}()) == (depth = 2, tag = Tag(EntanglementCounterpart, 5, 1))
 @test queryall(reg[3], EntanglementCounterpart, 5, 1) == [(depth = 7, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 5, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 2, tag = Tag(EntanglementCounterpart, 5, 1))]
-@test queryall(reg[3], EntanglementCounterpart, 5, 1; fifo=false) == [(depth = 2, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 5, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 7, tag = Tag(EntanglementCounterpart, 5, 1))]
+@test queryall(reg[3], EntanglementCounterpart, 5, 1; filo=false) == [(depth = 2, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 5, tag = Tag(EntanglementCounterpart, 5, 1)), (depth = 7, tag = Tag(EntanglementCounterpart, 5, 1))]
 
 # for Register
 
@@ -81,4 +81,4 @@ tag!(reg[1], EntanglementCounterpart, 9, 3)
 @test query(reg, EntanglementCounterpart, 5, 1) == (slot = reg[4], tag = Tag(EntanglementCounterpart, 5, 1))
 @test query(reg, EntanglementCounterpart, 5, 1, Val{false}(), Val{false}()) == (slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 1))
 @test queryall(reg, EntanglementCounterpart, 5, 1) == [(slot = reg[4], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 1))]
-@test queryall(reg, Tag(EntanglementCounterpart, 5, 1); fifo=false) ==  [(slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 5, 1))]
+@test queryall(reg, Tag(EntanglementCounterpart, 5, 1); filo=false) ==  [(slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 5, 1)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 5, 1))]

@@ -8,12 +8,9 @@ using Graphs
 using Test
 
 ##
-# Here we test entanglement tracker and swapper protocols on an arbitrary hardcoded path of long-range connection inside of what is otherwise a 2D grid
-# We do NOT test anything related to automatic routing on such a grid -- only the hardcoded path is tested
-##
 
 ## Custom Predicates
-
+#Choose any nodes that have a positive manhattan distance for "low nodes" and any nodes that have a negative manhattan distance for the "high nodes" case
 function check_nodes(net, c_node, node; low=true)
     n = Int(sqrt(size(net.graph)[1])) # grid size
     c_x = c_node%n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
@@ -39,8 +36,8 @@ function choose_node(net, node, arr; low=true)
 end
 
 ## Simulation
-
-## without entanglement tracker - this is almost the same test as the one in test_entanglement_tracker.jl which tests a simple chain -- the only difference is that we have picked a few hardcoded arbitrary nodes through a grid (creating an ad-hoc chain)
+## Here we test some paths that are possible on a grid manually before running the fully automated simulation using the entanglement tracker
+## without entanglement tracker
 paths = [
     [2, 3, 4, 8, 12],
     [2, 6, 7, 11, 15],
