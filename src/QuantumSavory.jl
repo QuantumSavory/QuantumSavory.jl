@@ -2,6 +2,7 @@ module QuantumSavory
 
 using Reexport
 
+using DocStringExtensions
 using IterTools
 using LinearAlgebra
 using Random: randperm
@@ -49,6 +50,8 @@ export
     uptotime!, overwritetime!,
     # tags.jl and queries.jl
     Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, findfreeslot,
+    #messagebuffer.jl
+    MessageBuffer,
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
