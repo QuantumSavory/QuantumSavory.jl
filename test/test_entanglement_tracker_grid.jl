@@ -151,7 +151,7 @@ if isinteractive()
     println("Logger set to debug")
 end
 
-## with entanglement tracker -- here we hardcode the diagonal of the grid as the path on which we are making connections
+## with entanglement tracker and diagonal paths
 for n in 4:10
     graph = grid([n,n])
 
@@ -187,8 +187,53 @@ for n in 4:10
     run(sim, 100)
 
     q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
-    # q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, ❓)
-    q2 = (slot=net[q1.tag[2]][q1.tag[3]], tag = net[q1.tag[2]].tags[q1.tag[3]][1])
+    q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
+    
+    @test q1.tag[2] == size(graph)[1]
+    @test q2.tag[2] == 1
+    @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1.0
+    @test observable((q1.slot, q2.slot), X⊗X) ≈ 1.0
+end
+
+if isinteractive()
+    using Logging
+    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
+    global_logger(logger)
+    println("Logger set to debug")
+end
+
+## with entanglement tracker without diagonal paths
+for n in 4:10
+    graph = grid([n,n])
+
+    net = RegisterNet(graph, [Register(8) for i in 1:n^2])
+
+    sim = get_time_tracker(net)
+
+    for (;src, dst) in edges(net)
+        eprot = EntanglerProt(sim, net, src, dst; rounds=5, randomize=true) # A single round doesn't always get the ends entangled, when number of nodes is high
+        @process eprot()
+    end
+
+    for i in 2:(size(graph)[1] - 1)
+        l(x) = check_nodes(net, i, x)
+        h(x) = check_nodes(net, i, x; low=false)
+        cL(arr) = choose_node(net, i, arr)
+        cH(arr) = choose_node(net, i, arr; low=false)
+        swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds = 5) # A single round doesn't always get the ends entangled, when number of nodes is high
+        @process swapper()
+    end
+
+    for v in vertices(net)
+        tracker = EntanglementTracker(sim, net, v)
+        @process tracker()
+    end
+
+    run(sim, 100)
+
+    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
+    q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
+
     @test q1.tag[2] == size(graph)[1]
     @test q2.tag[2] == 1
     @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1.0
