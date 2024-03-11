@@ -43,12 +43,6 @@ n = 6
 
 graph = grid([n,n])
 
-for i in 1:(n^2 - n + 1) # add diagonal channels
-    if !iszero(i%n) # no diagonal channel from last node in a row
-        add_edge!(graph, i, i + n + 1)
-    end
-end
-
 net = RegisterNet(graph, [Register(8) for i in 1:n^2])
 
 sim = get_time_tracker(net)
@@ -80,7 +74,7 @@ _, ax, _, obs = registernetplot_axis(fig[1,1], net;registercoords=layout)
 display(fig)
 
 step_ts = range(0, 10, step=0.1)
-record(fig, "grid_sim6x6.mp4", step_ts; framerate=10, visible=true) do t
+record(fig, "grid_sim6x6hv.mp4", step_ts; framerate=10, visible=true) do t
     run(sim, t)
     notify(obs)
 end
