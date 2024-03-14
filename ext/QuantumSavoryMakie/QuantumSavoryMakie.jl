@@ -10,7 +10,7 @@ import Makie: Theme, Figure, Axis,
     Point2, Point2f, Rect2f,
     scatter!, poly!, linesegments!,
     DataInspector
-import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot
+import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 
 ##
 
@@ -349,6 +349,13 @@ function resourceplot_axis(subfig, network, edgeresources, vertexresources; regi
     Makie.hidespines!(axis)
     Makie.autolimits!(axis)
     subfig, axis, baseplot, networkobs
+end
+
+##
+
+function showmetadata(fig, ax, p, reg, slot)
+    Makie.events(fig).mouseposition[] =
+    tuple(Makie.shift_project(ax.scene, p.registercoords[][reg].+(0,slot-1))...);
 end
 
 end
