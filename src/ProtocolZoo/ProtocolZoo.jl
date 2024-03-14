@@ -187,7 +187,7 @@ end
         # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
         tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
 
-        @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)| round $(round): Entangled .$(a.idx) and .$(b.idx)"
+        @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         unlock(a)
         unlock(b)
         rounds==-1 || (rounds -= 1)
