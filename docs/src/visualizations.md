@@ -45,11 +45,11 @@ Other configuration options are available as well (the ones ending on `plot` let
 propertynames(plt)
 ```
 
-## State and tag metada in interactive visualizations
+## State and tag metadata in interactive visualizations
 
 When working with interactive plots, you can also hover over different parts of the visualization and the state of the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying).
 
-Here is what the data pannels look like.
+Here is what the data panels look like.
 
 ```@example vis
 QuantumSavory.showmetadata(fig,ax,plt,1,1) # hide
