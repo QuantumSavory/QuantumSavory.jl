@@ -52,7 +52,7 @@ When working with interactive plots, you can also hover over different parts of 
 Here is what the data panels look like.
 
 ```@example vis
-QuantumSavory.showmetadata(fig,ax,plt,1,1) # hide
+QuantumSavory.showmetadata(fig,ax,plt,1,1) # you can use this command to force metadata panels to appear
 fig # hide
 ```
 
