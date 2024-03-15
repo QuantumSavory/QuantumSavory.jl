@@ -40,7 +40,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
   docs:
     name: Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install binary dependencies
@@ -50,13 +50,10 @@ jobs:
           version: '1'
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
-      #- uses: julia-actions/julia-docdeploy@v1
-      #  with:
-      #    prefix: xvfb-run
-      - name: Custom docdeploy
-        run: |
-          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --project=docs/ docs/make.jl
+      - uses: julia-actions/julia-docdeploy@v1
+        with:
+          prefix: xvfb-run
         env:
+          GKSwstype: nul # Fix for Plots with GR backend.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
