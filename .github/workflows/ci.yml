@@ -55,8 +55,8 @@ jobs:
       #    prefix: xvfb-run
       - name: Custom docdeploy
         run: |
-          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --code-coverage --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
-          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --code-coverage --project=docs/ docs/make.jl
+          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+          DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' julia --color=yes --project=docs/ docs/make.jl
         env:
           GKSwstype: nul # Fix for Plots with GR backend.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
