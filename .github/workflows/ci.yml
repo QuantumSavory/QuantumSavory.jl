@@ -52,7 +52,9 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-docdeploy@v1
         with:
-          prefix: xvfb-run -s '-screen 0 1024x768x24'
+          prefix: xvfb-run
+      #- name: Custom docdeploy
+      #  run: julia --color=yes --code-coverage --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
         env:
           GKSwstype: nul # Fix for Plots with GR backend.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
