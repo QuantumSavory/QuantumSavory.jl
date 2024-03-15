@@ -5,7 +5,9 @@ using QuantumSavory
 function doctests()
     @testset "Doctests" begin
         DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory; using QuantumSavory.CircuitZoo; using Graphs); recursive=true)
-        doctest(QuantumSavory)
+        doctest(QuantumSavory;
+            #fix=true
+        )
     end
 end
 

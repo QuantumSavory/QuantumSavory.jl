@@ -164,11 +164,13 @@ end
 
 @resumable function (prot::EntanglerProt)()
     rounds = prot.rounds
+    round = 1
     while rounds != 0
         a = findfreeslot(prot.net[prot.nodeA], randomize=prot.randomize)
         b = findfreeslot(prot.net[prot.nodeB], randomize=prot.randomize)
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
@@ -185,9 +187,11 @@ end
         # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
         tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
 
+        @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         unlock(a)
         unlock(b)
         rounds==-1 || (rounds -= 1)
+        round += 1
     end
 end
 
@@ -232,6 +236,7 @@ end
 
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
+    round = 1
     while rounds != 0
         reg = prot.net[prot.node]
         qubit_pair = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH)
@@ -240,10 +245,10 @@ end
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
-        (q1, tag1), (q2, tag2) = qubit_pair
+        (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
+        (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
-
         untag!(q1, tag1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
@@ -259,15 +264,16 @@ end
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
-        @debug "SwapperProt @$(prot.node): Send message to $(tag1[2]) | message=`$msg1`"
+        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1`"
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
-        @debug "SwapperProt @$(prot.node): Send message to $(tag2[2]) | message=`$msg2`"
+        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2`"
         unlock(q1)
         unlock(q2)
         rounds==-1 || (rounds -= 1)
+        round += 1
     end
 end
 
@@ -280,7 +286,7 @@ function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_h
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
     il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
     ih = choose_high((n.tag[2] for n in high_nodes))
-    return low_nodes[il], high_nodes[ih]
+    return (low_nodes[il], high_nodes[ih])
 end
 
 
