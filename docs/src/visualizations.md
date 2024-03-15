@@ -51,18 +51,15 @@ When working with interactive plots, you can also hover over different parts of 
 
 Here is what the data panels look like.
 
-```@example vis
-QuantumSavory.showmetadata(fig,ax,plt,1,1) # you can use this command to force metadata panels to appear
-fig # hide
-```
+
 
 And here with some extra tag metadata.
 
 ```@example vis
 tag!(net[2,3], :specialplace, 1, 2)
 tag!(net[2,3], :otherdata, 3, 4)
-QuantumSavory.showmetadata(fig,ax,plt,2,3) # hide
-fig # hide
+QuantumSavory.showmetadata(fig,ax,plt,2,3)
+fig
 ```
 
 ## The state of locks and various metadata in the network
