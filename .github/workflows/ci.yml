@@ -43,6 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install binary dependencies
+        run: sudo apt-get update && sudo apt-get install -y xorg-dev mesa-utils xvfb libgl1 freeglut3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
@@ -50,7 +52,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-docdeploy@v1
         with:
-          prefix: xvfb-run
+          prefix: DISPLAY=:0 xvfb-run -s '-screen 0 1024x768x24' xvfb-run
         env:
           GKSwstype: nul # Fix for Plots with GR backend.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
