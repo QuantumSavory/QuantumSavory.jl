@@ -134,14 +134,7 @@ function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=
     for i in 1:length(reg)
         if _nothingor(locked, islocked(reg[i])) && _nothingor(assigned, isassigned(reg[i]))
             for res in _query(reg[i], tag, Val{true}(), Val{filoB}())
-                @show res
-                if allB
-                    for r in res
-                        push!(result, (slot=reg[i],r...))
-                    end
-                else
-                    return (slot=reg[i],res...)
-                end
+                allB ? push!(result, (slot=reg[i],res...)) : return (slot=reg[i],res...)
             end
         end
     end
@@ -175,13 +168,14 @@ function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(); filo::Bool=true)
 end
 
 function _query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}()) where {allB, filoB} # TODO there is a lot of code duplication here
-    find = allB ? findall : filoB ? findlast : findfirst # findlast corresponds to filo because new tags are pushed at the end of the tags vector for a RegRef in `tag!`
-    i = find(==(tag), ref.reg.tags[ref.idx])
     if allB
-        i = filoB ? reverse(i) : i # findall still starts looking from the first index, so we reverse here
+        i = findall(==(tag), ref.reg.tags[ref.idx])
+        i = filoB ? reverse(i) : i
         return NamedTuple{(:depth, :tag), Tuple{Int, Tag}}[(depth=i, tag=tag) for i in i]
     else
-        isnothing(i) ? nothing : (;depth=i, tag=tag)
+        find = filoB ? findlast : findfirst
+        i = find(==(tag), ref.reg.tags[ref.idx])
+        return isnothing(i) ? nothing : (;depth=i, tag=tag)
     end
 end
 
