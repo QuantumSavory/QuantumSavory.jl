@@ -73,7 +73,7 @@ julia> queryall(r, :symbol, ❓, >(5))
 @NamedTuple{slot::RegRef, tag::Tag}[]
 ```
 """
-queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(), Val{filo}(); kwargs...)
+queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
 
 
 """
@@ -85,6 +85,8 @@ Wildcards are supported (instances of `Wildcard` also available as the constants
 Predicate functions are also supported (they have to be `Int`↦`Bool` functions).
 The keyword arguments `locked` and `assigned` can be used to check, respectively,
 whether the given slot is locked or whether it contains a quantum state.
+The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
+defaulting to `filo=true` (i.e. a stack-like behavior).
 
 ```jldoctest
 julia> r = Register(10);
@@ -123,18 +125,28 @@ julia> query(r, Int, 4, <(7))
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
 """
-function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filo}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filo}
-    find = allB ? findall : filo ? findlast : findfirst # findlast corresponds to filo because new tags are pushed at the end of the tags vector for a RegRef in `tag!`
-    i = find(i -> _nothingor(locked, islocked(reg[i])) && _nothingor(assigned, isassigned(reg[i])) && tag ∈ reg.tags[i],
-                  1:length(reg))
-    if allB
-        i = filo ? reverse(i) : i # findall still starts looking from the first index, so we reverse here
-        return NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}[(slot=reg[i], tag=tag) for i in i]
-    else
-        isnothing(i) ? nothing : (;slot=reg[i], tag=tag)
-    end
+function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
+    _query(reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned)
 end
 
+function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
+    result = NamedTuple{(:slot, :depth, :tag), Tuple{RegRef, Int, Tag}}[]
+    for i in 1:length(reg)
+        if _nothingor(locked, islocked(reg[i])) && _nothingor(assigned, isassigned(reg[i]))
+            for res in _query(reg[i], tag, Val{true}(), Val{filoB}())
+                @show res
+                if allB
+                    for r in res
+                        push!(result, (slot=reg[i],r...))
+                    end
+                else
+                    return (slot=reg[i],res...)
+                end
+            end
+        end
+    end
+    return allB ? result : nothing
+end
 
 
 """
@@ -158,11 +170,15 @@ julia> queryall(r[2], :symbol, 2, 3)
  (depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 ```
 """
-function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filo}=Val{true}()) where {allB, filo} # TODO there is a lot of code duplication here
-    find = allB ? findall : filo ? findlast : findfirst # findlast corresponds to filo because new tags are pushed at the end of the tags vector for a RegRef in `tag!`
+function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(); filo::Bool=true) where {allB} # TODO this should support locked and assigned like query(::Register)
+    _query(ref, tag, Val{allB}(), Val{filo}())
+end
+
+function _query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}()) where {allB, filoB} # TODO there is a lot of code duplication here
+    find = allB ? findall : filoB ? findlast : findfirst # findlast corresponds to filo because new tags are pushed at the end of the tags vector for a RegRef in `tag!`
     i = find(==(tag), ref.reg.tags[ref.idx])
     if allB
-        i = filo ? reverse(i) : i # findall still starts looking from the first index, so we reverse here
+        i = filoB ? reverse(i) : i # findall still starts looking from the first index, so we reverse here
         return NamedTuple{(:depth, :tag), Tuple{Int, Tag}}[(depth=i, tag=tag) for i in i]
     else
         isnothing(i) ? nothing : (;depth=i, tag=tag)
@@ -311,20 +327,21 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         argssig_wild = [:($a::$t) for (a,t) in zip(args, sig_wild)]
         wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag[$i])) for i in idx]
         nonwild_checks = [:(tag[$i]==$(args[i])) for i in complement_idx]
-        newmethod_reg = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(), ::Val{filo}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filo}
-            res = NamedTuple{(:slot, :tag), Tuple{RegRef, Tag}}[]
+        newmethod_reg = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
+            res = NamedTuple{(:slot, :depth, :tag), Tuple{RegRef, Int, Tag}}[]
             for (reg_idx, tags) in enumerate(reg.tags)
                 slot = reg[reg_idx]
-                for tag in (filo ? reverse(tags) : tags)
+                for depth in (filo ? reverse(keys(tags)) : keys(tags))
+                    tag = tags[depth]
                     if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
                         (_nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))) || continue
                         if _all($(nonwild_checks...)) && _all($(wild_checks...))
-                            allB ? push!(res, (;slot, tag)) : return (;slot, tag)
+                            allB ? push!(res, (;slot, depth, tag)) : return (;slot, depth, tag)
                         end
                     end
                 end
             end
-            allB ? res : nothing # do we need to reverse here?
+            allB ? res : nothing
         end end
         newmethod_mb = quote function query(mb::MessageBuffer, $(argssig_wild...))
             for (depth, (src, tag)) in pairs(mb.buffer)
@@ -335,11 +352,11 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
                 end
             end
         end end
-        newmethod_rr = quote function query(ref::RegRef, $(argssig_wild...), ::Val{allB}=Val{false}(), ::Val{filo}=Val{true}()) where {allB, filo}
+        newmethod_rr = quote function query(ref::RegRef, $(argssig_wild...), ::Val{allB}=Val{false}(); filo::Bool=true) where {allB}
             res = NamedTuple{(:depth, :tag), Tuple{Int, Tag}}[]
-            tags = filo ? reverse(ref.reg.tags[ref.idx]) : ref.reg.tags[ref.idx]
-            for (depth, tag) in pairs(tags) # no `reverse` dispatch on `Base.Pairs`, so we end up with the original depth but only the order of tags reversed
-                depth = filo ? length(ref.reg.tags[ref.idx]) + 1 - depth : depth # to adjust the depth
+            tags = ref.reg.tags[ref.idx]
+            for depth in (filo ? reverse(keys(tags)) : keys(tags))
+                tag = tags[depth]
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
                     if _all($(nonwild_checks...)) && _all($(wild_checks...))
                         allB ? push!(res, (;depth, tag)) : return (;depth, tag)
