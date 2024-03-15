@@ -7,9 +7,21 @@ using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, E
 using Graphs
 using Test
 
+if isinteractive()
+    using Logging
+    logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
+    global_logger(logger)
+    println("Logger set to debug")
+end
+
 ##
 
-## Custom Predicates
+# This set of tests ensures that the combination of entanglement genererator, tracker, and swapper works on what is basically a 1D chain of nodes that happen to be otherwise located in a grid.
+# This set of tests DOES NOT test anything related to 2D grid structure of a network.
+# It is little more than a copy of `test_entanglement_tracker` but with more complicated predicates for choosing who to swap in swapper protocol.
+
+# Custom Predicates
+
 #Choose any nodes that have a positive manhattan distance for "low nodes" and any nodes that have a negative manhattan distance for the "high nodes" case
 function check_nodes(net, c_node, node; low=true)
     n = Int(sqrt(size(net.graph)[1])) # grid size
@@ -20,7 +32,7 @@ function check_nodes(net, c_node, node; low=true)
     return low ? (c_x - x) >= 0 && (c_y - y) >= 0 : (c_x - x) <= 0 && (c_y - y) <= 0
 end
 
-## function for picking the furthest node
+# predicate for picking the furthest node
 function distance(n, a, b)
     x1 = a%n == 0 ? a ÷ n : (a ÷ n) + 1
     x2 = b%n == 0 ? b ÷ n : (b ÷ n) + 1
@@ -30,14 +42,17 @@ function distance(n, a, b)
     return x1 - x2 + y1 - y2
 end
 
+# filter for picking the furthest node
 function choose_node(net, node, arr; low=true)
     grid_size = Int(sqrt(size(net.graph)[1]))
     return low ? argmax((distance.(grid_size, node, arr))) : argmin((distance.(grid_size, node, arr)))
 end
 
-## Simulation
-## Here we test some paths that are possible on a grid manually before running the fully automated simulation using the entanglement tracker
-## without entanglement tracker
+##
+
+# Here we run a bunch of low-level correctness tests for EntanglementProt and SwapperProt
+# but we do not run a complete simulation that includes EntanglementTracker.
+# Some arbitrary possible 1D chains embedded in the 2D grid
 paths = [
     [2, 3, 4, 8, 12],
     [2, 6, 7, 11, 15],
@@ -46,7 +61,7 @@ paths = [
     [5, 6, 7, 8, 12],
     [5, 6, 10, 11, 12],
     [2, 3, 7, 11, 12]
-] # some possible hardcoded paths for 4x4 grid setup
+] # for 4x4 grid setup
 for path in paths
     graph = grid([4, 4])
 
@@ -61,6 +76,8 @@ for path in paths
     @test net[1].tags == [[Tag(EntanglementCounterpart, path[1], 1)],[],[]]
 
 
+    # For no particular reason we are starting the entangler protocols at different times
+    # and we run them for only one round
     entangler2 = EntanglerProt(sim, net, path[1], path[2]; rounds=1)
     @process entangler2()
     run(sim, 40)
@@ -87,41 +104,14 @@ for path in paths
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
-    l1(x) = check_nodes(net, path[1], x)
-    h1(x) = check_nodes(net, path[1], x; low=false)
-    cL1(arr) = choose_node(net, path[1], arr)
-    cH1(arr) = choose_node(net, path[1], arr; low=false)
-    swapper1 = SwapperProt(sim, net, path[1]; nodeL=l1, nodeH=h1, chooseL=cL1, chooseH=cH1, rounds=1)
-
-    l2(x) = check_nodes(net, path[2], x)
-    h2(x) = check_nodes(net, path[2], x; low=false)
-    cL2(arr) = choose_node(net, path[2], arr)
-    cH2(arr) = choose_node(net, path[2], arr; low=false)
-    swapper2 = SwapperProt(sim, net, path[2]; nodeL=l2, nodeH=h2, chooseL=cL2, chooseH=cH2, rounds=1)
-
-    l3(x) = check_nodes(net, path[3], x)
-    h3(x) = check_nodes(net, path[3], x; low=false)
-    cL3(arr) = choose_node(net, path[3], arr)
-    cH3(arr) = choose_node(net, path[3], arr; low=false)
-    swapper3 = SwapperProt(sim, net, path[3]; nodeL=l3, nodeH=h3, chooseL=cL3, chooseH=cH3, rounds=1)
-
-    l4(x) = check_nodes(net, path[4], x)
-    h4(x) = check_nodes(net, path[4], x; low=false)
-    cL4(arr) = choose_node(net, path[4], arr)
-    cH4(arr) = choose_node(net, path[4], arr; low=false)
-    swapper4 = SwapperProt(sim, net, path[4]; nodeL=l4, nodeH=h4, chooseL=cL4, chooseH=cH4, rounds=1)
-
-    l5(x) = check_nodes(net, path[5], x)
-    h5(x) = check_nodes(net, path[5], x; low=false)
-    cL5(arr) = choose_node(net, path[5], arr)
-    cH5(arr) = choose_node(net, path[5], arr; low=false)
-    swapper5 = SwapperProt(sim, net, path[5]; nodeL=l5, nodeH=h5, chooseL=cL5, chooseH=cH5, rounds=1)
-
-    @process swapper1()
-    @process swapper2()
-    @process swapper3()
-    @process swapper4()
-    @process swapper5()
+    for i in 1:5
+        l = x->check_nodes(net, path[i], x)
+        h = x->check_nodes(net, path[i], x; low=false)
+        cL = arr->choose_node(net, path[i], arr)
+        cH = arr->choose_node(net, path[i], arr; low=false)
+        swapper = SwapperProt(sim, net, path[i]; nodeL=l, nodeH=h, chooseL=cL, chooseH=cH, rounds=1)
+        @process swapper()
+    end
     run(sim, 200)
 
     # In the absence of an entanglement tracker the tags will not all be updated
@@ -141,17 +131,15 @@ for path in paths
     @test !isassigned(net[path[5]][1]) && !isassigned(net[path[5]][2])
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
-
 end
 
-if isinteractive()
-    using Logging
-    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
-    global_logger(logger)
-    println("Logger set to debug")
-end
+##
 
-## with entanglement tracker and diagonal paths
+# Finally, we run the complete simulation, with EntanglerProt, SwapperProt, and EntanglementTracker,
+# and we actually use a 2D grid of nodes.
+# In these tests, we still use only a finite number of rounds.
+
+# For this one, we have a square grid of nodes, and we add diagonal channels to the grid.
 for n in 4:10
     graph = grid([n,n])
 
@@ -188,21 +176,14 @@ for n in 4:10
 
     q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
     q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
-    
+
     @test q1.tag[2] == size(graph)[1]
     @test q2.tag[2] == 1
     @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1.0
     @test observable((q1.slot, q2.slot), X⊗X) ≈ 1.0
 end
 
-if isinteractive()
-    using Logging
-    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
-    global_logger(logger)
-    println("Logger set to debug")
-end
-
-## with entanglement tracker without diagonal paths
+# and here we test for a simple 2d rectangular grid
 for n in 4:10
     graph = grid([n,n])
 
@@ -239,3 +220,12 @@ for n in 4:10
     @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1.0
     @test observable((q1.slot, q2.slot), X⊗X) ≈ 1.0
 end
+
+
+##
+
+# More tests of 2D rectangular grids with the full stack of protocols,
+# but also now with an unlimited number of rounds and an entanglement consumer.
+
+#TODO
+@test_broken false

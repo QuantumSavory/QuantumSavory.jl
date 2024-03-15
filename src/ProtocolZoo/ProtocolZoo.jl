@@ -245,10 +245,10 @@ end
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
-        (q1, tag1), (q2, tag2) = qubit_pair
+        (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
+        (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
-
         untag!(q1, tag1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
@@ -286,7 +286,7 @@ function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_h
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
     il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
     ih = choose_high((n.tag[2] for n in high_nodes))
-    return low_nodes[il], high_nodes[ih]
+    return (low_nodes[il], high_nodes[ih])
 end
 
 
