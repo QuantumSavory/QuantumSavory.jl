@@ -52,6 +52,13 @@ When working with interactive plots, you can also hover over different parts of 
 Here is what the data panels look like. (`showmetada` is used to force-show the panel, but when working interactively you simply need to hover with the cursor)
 
 ```@example vis
+network = RegisterNet([Register(2),Register(3),Register(2),Register(5)]) # hide
+initialize!(network[1,1]) # hide
+initialize!(network[2,3], X₁) # hide
+initialize!((network[3,1],network[4,2]), X₁⊗Z₂) # hide
+apply!((network[2,3],network[3,1]), CNOT) # hide
+fig = Figure(resolution=(400,400)) # hide
+_, _, plt, obs = registernetplot_axis(fig[1,1],network) # hide
 QuantumSavory.showmetadata(fig,ax,plt,1,1)
 fig
 ```
