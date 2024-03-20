@@ -47,12 +47,12 @@ propertynames(plt)
 
 ## State and tag metadata in interactive visualizations
 
-When working with interactive plots, you can also hover over different parts of the visualization and the state of the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying).
+When working with interactive plots, you can also hover over different parts of the visualization to see the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying).
 
-Here is what the data panels look like.
+Here is what the data panels look like. (`showmetada` is used to force-show the panel, but when working interactively you simply need to hover with the cursor)
 
 ```@example vis
-QuantumSavory.showmetadata(fig,ax,plt,1,1) # you can use this command to force metadata panels to appear
+QuantumSavory.showmetadata(fig,ax,plt,1,1)
 fig
 ```
 
