@@ -10,10 +10,10 @@ end
 !!! warning
 
     This section is rather low-level, created before a lot of user-friendly tools were added.
-    The approach described here still functions well, however we now provide a more convenient interface and pre-build message passing channels.
-    In particular, the tagging & querying system (based on `tag!` and `query`), the [`messagebuffer`](@ref), and the available [`channel`](@ref), [`qchannel`](@ref) and [`QuantumChannel`](@ref)
+    The approach described here functions well, however we now provide a more convenient interface and pre-build message passing channels.
+    In particular, the tagging & querying system (based on [`tag!`](@ref) and [`query`](@ref)), the [`messagebuffer`](@ref), and the available [`channel`](@ref), [`qchannel`](@ref) and [`QuantumChannel`](@ref)
     probably cover all your needs.
-    You might still be interested in reading this section in order to learn some of the low-level tooling on which the more recent developments were built.
+    You might still be interested in reading this section in order to learn some of the low-level tooling on which the higher-level interfaces were built.
 
 In network simulations, a convenient synchronization primitive is the passing of messages between nodes.
 The `ResumableFunctions` and `ConcurrentSim` libraries provide such primitives, convenient to use with `QuatumSavory`.

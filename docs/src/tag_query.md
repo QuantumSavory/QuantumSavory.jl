@@ -1,4 +1,4 @@
-# Tagging and Querying
+# [Tagging and Querying](@id tagging-and-querying)
 
 ```@meta
 DocTestSetup =  quote

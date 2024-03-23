@@ -18,4 +18,7 @@ function registernetplot_axis end
 Requires a Makie backend be already imported."""
 function resourceplot_axis end
 
+"""Show the metadata tooltip for a given register slot."""
+function showmetadata end
+
 function showonplot end
