@@ -75,7 +75,6 @@ julia> queryall(r, :symbol, ❓, >(5))
 """
 queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
 
-
 """
 $TYPEDSIGNATURES
 
@@ -83,6 +82,7 @@ A query function searching for the first slot in a register that has a given tag
 
 Wildcards are supported (instances of `Wildcard` also available as the constants [`W`](@ref) or the emoji [`❓`](@ref) which can be entered as `\\:question:` in the REPL).
 Predicate functions are also supported (they have to be `Int`↦`Bool` functions).
+The order of query lookup can be specified in terms of FIFO or FILO and defaults to FIFO if not specified.
 The keyword arguments `locked` and `assigned` can be used to check, respectively,
 whether the given slot is locked or whether it contains a quantum state.
 The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
@@ -163,6 +163,7 @@ julia> queryall(r[2], :symbol, 2, 3)
  (depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 ```
 """
+
 function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(); filo::Bool=true) where {allB} # TODO this should support locked and assigned like query(::Register)
     _query(ref, tag, Val{allB}(), Val{filo}())
 end
@@ -384,20 +385,35 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register; randomize=false)
-    if randomize
-        for i in randperm(length(reg.staterefs))
-            slot = reg[i]
+function findfreeslot(reg::Register; randomize=false, margin=1.0, top=true)
+    
+    n_slots = length(reg.staterefs)
+    ind = top ? margin==1.0 ? n_slots : Int(round(margin*n_slots)) : margin==1.0 ? 1 : Int(round(margin*n_slots) + 1.0)
+    if top
+        if randomize
+            for i in randperm(ind)
+                slot = reg[i]
+                islocked(slot) || isassigned(slot) || return slot
+            end
+        end
+        for slot in reg[1:ind]
             islocked(slot) || isassigned(slot) || return slot
         end
-    end
-    for slot in reg
-        islocked(slot) || isassigned(slot) || return slot
+    else
+        if randomize
+            for i in randperm(n_slots-ind+1)
+                slot = reg[i+ind-1]
+                islocked(slot) || isassigned(slot) || return slot
+            end
+        end
+        for slot in reg[ind:n_slots]
+            islocked(slot) || isassigned(slot) || return slot
+        end
     end
 end
 
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
-    r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent
+    r.stateindices[i] != 0 # TODO this also usually means r.staterefs[i] !== nothing - choose one and make things consistent
 end
 Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
