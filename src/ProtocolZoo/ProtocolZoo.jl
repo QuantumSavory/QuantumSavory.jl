@@ -22,40 +22,94 @@ get_time_tracker(prot::AbstractProtocol) = prot.sim
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
 
+"""
+$TYPEDEF
+
+Indicates the current entanglement status with a remote node's slot. Added when a new entanglement is generated through [`EntanglerProt`](@ref) or when a swap happens and
+ the [`EntanglementTracker`](@ref) receives an [`EntanglementUpdate`] message.
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementCounterpart
+    "the id of the remote node to which we are entangled"
     remote_node::Int
+    "the slot in the remote node containing the qubit we are entangled to"
     remote_slot::Int
 end
 Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot)
 
+"""
+$TYPEDEF
+
+This tag is used to store the outdated entanglement information after a
+swap. It helps to direct incoming entanglement update messages to the right node after a swap.
+It helps in situations when locally we have performed a swap, but we are now receiving a message
+from a distant node that does not know yet that the swap has occurred (thus the distant node might
+have outdated information about who is entangled to whom and we need to update that information).
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementHistory
+    "the id of the remote node we used to be entangled to"
     remote_node::Int
+    "the slot of the remote node we used to be entangled to"
     remote_slot::Int
+    "the id of remote node to which we are entangled after the swap"
     swap_remote_node::Int
+    "the slot of the remote node to which we are entangled after the swap"
     swap_remote_slot::Int
+    "the slot in this register with whom we performed a swap"
     swapped_local::Int
 end
 Base.show(io::IO, tag::EntanglementHistory) = print(io, "Was entangled to $(tag.remote_node).$(tag.remote_slot), but swapped with .$(tag.swapped_local) which was entangled to $(tag.swap_remote_node).$(tag.swap_remote_slot)")
 Tag(tag::EntanglementHistory) = Tag(EntanglementHistory, tag.remote_node, tag.remote_slot, tag.swap_remote_node, tag.swap_remote_slot, tag.swapped_local)
 
+"""
+$TYPEDEF
+
+This tag arrives as a message from a remote node to which the current node was entangled to update the
+entanglement information and apply an `X` correction after the remote node performs an entanglement swap.
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementUpdateX
+    "the id of the node to which you were entangled before the swap"
     past_local_node::Int
+    "the slot of the node to which you were entangled before the swap"
     past_local_slot::Int
+    "the slot of your node that we were entangled to"
     past_remote_slot::Int
+    "the id of the node to which you are now entangled after the swap"
     new_remote_node::Int
+    "the slot of the node to which you are now entangled after the swap"
     new_remote_slot::Int
+    "what Pauli correction you need to perform"
     correction::Int
 end
 Base.show(io::IO, tag::EntanglementUpdateX) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction Z$(tag.correction)")
 Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
 
+"""
+$TYPEDEF
+
+This tag arrives as a message from a remote node to which the current node was entangled to update the
+entanglement information and apply a `Z` correction after the remote node performs an entanglement swap.
+
+$TYPEDFIELDS
+"""
 @kwdef struct EntanglementUpdateZ
+    "the id of the node to which you were entangled before the swap"
     past_local_node::Int
+    "the slot of the node to which you were entangled before the swap"
     past_local_slot::Int
+    "the slot of your node that we were entangled to"
     past_remote_slot::Int
+    "the id of the node to which you are now entangled after the swap"
     new_remote_node::Int
+    "the slot of the node to which you are now entangled after the swap"
     new_remote_slot::Int
+    "what Pauli correction you need to perform"
     correction::Int
 end
 Base.show(io::IO, tag::EntanglementUpdateZ) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction X$(tag.correction)")
@@ -68,7 +122,7 @@ A protocol that generates entanglement between two nodes.
 Whenever a pair of empty slots is available, the protocol locks them
 and starts probabilistic attempts to establish entanglement.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct EntanglerProt{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -114,12 +168,13 @@ end
 
 @resumable function (prot::EntanglerProt)()
     rounds = prot.rounds
+    round = 1
     while rounds != 0
         a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=prot.marginA)
         b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=prot.marginB, top=false)
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
@@ -135,11 +190,12 @@ end
         tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
         # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
         tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
-        
-        @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB): Entangled .$(a.idx) and .$(b.idx)"
+
+        @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         unlock(a)
         unlock(b)
         rounds==-1 || (rounds -= 1)
+        round += 1
     end
 end
 
@@ -152,7 +208,7 @@ $TYPEDEF
 
 A protocol, running at a given node, that finds swappable entangled pairs and performs the swap.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct SwapperProt{NL,NH,CL,CH,LT} <: AbstractProtocol where {NL<:Union{Int,<:Function,Wildcard}, NH<:Union{Int,<:Function,Wildcard}, CL<:Function, CH<:Function, LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -184,6 +240,7 @@ end
 
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
+    round = 1
     while rounds != 0
         reg = prot.net[prot.node]
         qubit_pair = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH)
@@ -192,11 +249,12 @@ end
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
-        
-        (q1, tag1), (q2, tag2) = qubit_pair
+
+        (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
+        (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
-        @debug "Swapper @$(prot.node): Swapping $q1 having tag `$tag1` with $q2 having tag `$tag2`"
+
         untag!(q1, tag1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
@@ -212,15 +270,16 @@ end
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
-        @debug "SwapperProt @$(prot.node): Send message to $(tag1[2]) | message=`$msg1`"
+        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1`"
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
-        @debug "SwapperProt @$(prot.node): Send message to $(tag2[2]) | message=`$msg2`"
+        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2`"
         unlock(q1)
         unlock(q2)
         rounds==-1 || (rounds -= 1)
+        round += 1
     end
 end
 
@@ -233,7 +292,7 @@ function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_h
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
     il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
     ih = choose_high((n.tag[2] for n in high_nodes))
-    return low_nodes[il], high_nodes[ih]
+    return (low_nodes[il], high_nodes[ih])
 end
 
 
@@ -242,7 +301,7 @@ $TYPEDEF
 
 A protocol, running at a given node, listening for messages that indicate something has happened to a remote qubit entangled with one of the local qubits.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct EntanglementTracker <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""

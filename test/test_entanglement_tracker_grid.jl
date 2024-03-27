@@ -15,137 +15,217 @@ if isinteractive()
 end
 
 ##
-# Here we test entanglement tracker and swapper protocols on an arbitrary hardcoded path of long-range connection inside of what is otherwise a 2D grid
-# We do NOT test anything related to automatic routing on such a grid -- only the hardcoded path is tested
+
+# This set of tests ensures that the combination of entanglement genererator, tracker, and swapper works on what is basically a 1D chain of nodes that happen to be otherwise located in a grid.
+# This set of tests DOES NOT test anything related to 2D grid structure of a network.
+# It is little more than a copy of `test_entanglement_tracker` but with more complicated predicates for choosing who to swap in swapper protocol.
+
+# Custom Predicates
+
+#Choose any nodes that have a positive manhattan distance for "low nodes" and any nodes that have a negative manhattan distance for the "high nodes" case
+function check_nodes(net, c_node, node; low=true)
+    n = Int(sqrt(size(net.graph)[1])) # grid size
+    c_x = c_node%n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
+    c_y = c_node - n*(c_x-1)
+    x = node%n == 0 ? node ÷ n : (node ÷ n) + 1
+    y = node - n*(x-1)
+    return low ? (c_x - x) >= 0 && (c_y - y) >= 0 : (c_x - x) <= 0 && (c_y - y) <= 0
+end
+
+# predicate for picking the furthest node
+function distance(n, a, b)
+    x1 = a%n == 0 ? a ÷ n : (a ÷ n) + 1
+    x2 = b%n == 0 ? b ÷ n : (b ÷ n) + 1
+    y1 = a - n*(x1-1)
+    y2 = b - n*(x2-1)
+
+    return x1 - x2 + y1 - y2
+end
+
+# filter for picking the furthest node
+function choose_node(net, node, arr; low=true)
+    grid_size = Int(sqrt(size(net.graph)[1]))
+    return low ? argmax((distance.(grid_size, node, arr))) : argmin((distance.(grid_size, node, arr)))
+end
+
 ##
 
-## Custom Predicates
-
-function top_left(net, node, x)
-    n = sqrt(size(net.graph)[1]) # grid size
-    a = (node ÷ n) + 1 # row number
-    for i in 1:a-1
-        if x == (i-1)*n + i
-            return true
-        end
-    end
-    return false
-end
-
-function bottom_right(net, node, x)
-    n = sqrt(size(net.graph)[1]) # grid size
-    a = (node ÷ n) + 1 # row number
-    for i in a+1:n
-        if x == (i-1)*n + i
-            return true
-        end
-    end
-    return false
-end
-
-## Simulation
-
-## without entanglement tracker - this is almost the same test as the one in test_entanglement_tracker.jl which tests a simple chain -- the only difference is that we have picked a few hardcoded arbitrary nodes through a grid (creating an ad-hoc chain)
-for i in 1:10
+# Here we run a bunch of low-level correctness tests for EntanglementProt and SwapperProt
+# but we do not run a complete simulation that includes EntanglementTracker.
+# Some arbitrary possible 1D chains embedded in the 2D grid
+paths = [
+    [2, 3, 4, 8, 12],
+    [2, 6, 7, 11, 15],
+    [5, 9, 13, 14, 15],
+    [2, 6, 10, 14, 15],
+    [5, 6, 7, 8, 12],
+    [5, 6, 10, 11, 12],
+    [2, 3, 7, 11, 12]
+] # for 4x4 grid setup
+for path in paths
     graph = grid([4, 4])
-    add_edge!(graph, 1, 6)
-    add_edge!(graph, 6, 11)
-    add_edge!(graph, 11, 16)
 
     net = RegisterNet(graph, [Register(3) for i in 1:16])
     sim = get_time_tracker(net)
 
 
-    entangler1 = EntanglerProt(sim, net, 1, 6; rounds=1)
+    entangler1 = EntanglerProt(sim, net, 1, path[1]; rounds=1)
     @process entangler1()
     run(sim, 20)
 
-    @test net[1].tags == [[Tag(EntanglementCounterpart, 6, 1)],[],[]]
+    @test net[1].tags == [[Tag(EntanglementCounterpart, path[1], 1)],[],[]]
 
 
-    entangler2 = EntanglerProt(sim, net, 6, 11; rounds=1)
+    # For no particular reason we are starting the entangler protocols at different times
+    # and we run them for only one round
+    entangler2 = EntanglerProt(sim, net, path[1], path[2]; rounds=1)
     @process entangler2()
     run(sim, 40)
-    entangler3 = EntanglerProt(sim, net, 11, 16; rounds=1)
+    entangler3 = EntanglerProt(sim, net, path[2], path[3]; rounds=1)
     @process entangler3()
     run(sim, 60)
+    entangler4 = EntanglerProt(sim, net, path[3], path[4]; rounds=1)
+    @process entangler4()
+    run(sim, 80)
+    entangler5 = EntanglerProt(sim, net, path[4], path[5];rounds=1)
+    @process entangler5()
+    run(sim, 100)
+    entangler6 = EntanglerProt(sim, net, path[5], 16; rounds=1)
+    @process entangler6()
+    run(sim, 120)
 
-    @test net[1].tags == [[Tag(EntanglementCounterpart, 6, 1)],[],[]]
-    @test net[6].tags == [[Tag(EntanglementCounterpart, 1, 1)],[Tag(EntanglementCounterpart, 11, 1)],[]]
-    @test net[11].tags == [[Tag(EntanglementCounterpart, 6, 2)],[Tag(EntanglementCounterpart, 16, 1)], []]
-    @test net[16].tags == [[Tag(EntanglementCounterpart, 11, 2)],[],[]]
+    @test net[1].tags == [[Tag(EntanglementCounterpart, path[1], 1)],[],[]]
+    @test net[path[1]].tags == [[Tag(EntanglementCounterpart, 1, 1)],[Tag(EntanglementCounterpart, path[2], 1)],[]]
+    @test net[path[2]].tags == [[Tag(EntanglementCounterpart, path[1], 2)],[Tag(EntanglementCounterpart, path[3], 1)], []]
+    @test net[path[3]].tags == [[Tag(EntanglementCounterpart, path[2], 2)],[Tag(EntanglementCounterpart, path[4], 1)], []]
+    @test net[path[4]].tags == [[Tag(EntanglementCounterpart, path[3], 2)],[Tag(EntanglementCounterpart, path[5], 1)], []]
+    @test net[path[5]].tags == [[Tag(EntanglementCounterpart, path[4], 2)],[Tag(EntanglementCounterpart, 16, 1)], []]
+    @test net[16].tags == [[Tag(EntanglementCounterpart, path[5], 2)],[],[]]
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
-    l1(x) = top_left(net, 6, x)
-    h1(x) = bottom_right(net, 6, x)
-    swapper2 = SwapperProt(sim, net, 6; nodeL=l1, nodeH=h1, rounds=1)
-    l2(x) = top_left(net, 11, x)
-    h2(x) = bottom_right(net, 11, x)
-    swapper3 = SwapperProt(sim, net, 11; nodeL=l2, nodeH=h2, rounds=1)
-    @process swapper2()
-    @process swapper3()
-    run(sim, 80)
+    for i in 1:5
+        l = x->check_nodes(net, path[i], x)
+        h = x->check_nodes(net, path[i], x; low=false)
+        cL = arr->choose_node(net, path[i], arr)
+        cH = arr->choose_node(net, path[i], arr; low=false)
+        swapper = SwapperProt(sim, net, path[i]; nodeL=l, nodeH=h, chooseL=cL, chooseH=cH, rounds=1)
+        @process swapper()
+    end
+    run(sim, 200)
 
     # In the absence of an entanglement tracker the tags will not all be updated
-    @test net[1].tags == [[Tag(EntanglementCounterpart, 6, 1)],[],[]]
-    @test net[6].tags == [[Tag(EntanglementHistory, 1, 1, 11, 1, 2)],[Tag(EntanglementHistory, 11, 1, 1, 1, 1)],[]]
-    @test net[11].tags == [[Tag(EntanglementHistory, 6, 2, 16, 1, 2)],[Tag(EntanglementHistory, 16, 1, 6, 2, 1)], []]
-    @test net[16].tags == [[Tag(EntanglementCounterpart, 11, 2)],[],[]]
+    @test net[1].tags == [[Tag(EntanglementCounterpart, path[1], 1)],[],[]]
+    @test net[path[1]].tags == [[Tag(EntanglementHistory, 1, 1, path[2], 1, 2)],[Tag(EntanglementHistory, path[2], 1, 1, 1, 1)],[]]
+    @test net[path[2]].tags == [[Tag(EntanglementHistory, path[1], 2, path[3], 1, 2)],[Tag(EntanglementHistory, path[3], 1, path[1], 2, 1)], []]
+    @test net[path[3]].tags == [[Tag(EntanglementHistory, path[2], 2, path[4], 1, 2)],[Tag(EntanglementHistory, path[4], 1, path[2], 2, 1)], []]
+    @test net[path[4]].tags == [[Tag(EntanglementHistory, path[3], 2, path[5], 1, 2)],[Tag(EntanglementHistory, path[5], 1, path[3], 2, 1)], []]
+    @test net[path[5]].tags == [[Tag(EntanglementHistory, path[4], 2, 16, 1, 2)],[Tag(EntanglementHistory, 16, 1, path[4], 2, 1)], []]
+    @test net[16].tags == [[Tag(EntanglementCounterpart, path[5], 2)],[],[]]
 
     @test isassigned(net[1][1]) && isassigned(net[16][1])
-    @test !isassigned(net[6][1]) && !isassigned(net[11][1])
-    @test !isassigned(net[6][2]) && !isassigned(net[11][2])
+    @test !isassigned(net[path[1]][1]) && !isassigned(net[path[2]][1])
+    @test !isassigned(net[path[1]][2]) && !isassigned(net[path[2]][2])
+    @test !isassigned(net[path[3]][1]) && !isassigned(net[path[4]][1])
+    @test !isassigned(net[path[3]][2]) && !isassigned(net[path[4]][2])
+    @test !isassigned(net[path[5]][1]) && !isassigned(net[path[5]][2])
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
-
 end
 
-## with entanglement tracker -- here we hardcode the diagonal of the grid as the path on which we are making connections
+##
+
+# Finally, we run the complete simulation, with EntanglerProt, SwapperProt, and EntanglementTracker,
+# and we actually use a 2D grid of nodes.
+# In these tests, we still use only a finite number of rounds.
+
+# For this one, we have a square grid of nodes, and we add diagonal channels to the grid.
 for n in 4:10
     graph = grid([n,n])
 
-    diag_pairs = []
-    diag_nodes = []
-    reg_num = 1 # starting register
-    for i in 1:n-1 # a grid with n nodes has n-1 pairs of diagonal nodes
-        push!(diag_pairs, (reg_num, reg_num+n+1))
-        push!(diag_nodes, reg_num)
-        reg_num += n + 1
-    end
-    push!(diag_nodes, n^2)
-
-    for (src, dst) in diag_pairs # need edges down the diagonal to establish cchannels and qchannels between the diagonal nodes
-        add_edge!(graph, src, dst)
+    for i in 1:(n^2 - n + 1) # add diagonal channels
+        if !iszero(i%n) # no diagonal channel from last node in a row
+            add_edge!(graph, i, i + n + 1)
+        end
     end
 
     net = RegisterNet(graph, [Register(8) for i in 1:n^2])
 
     sim = get_time_tracker(net)
 
-    for (src, dst) in diag_pairs
-        eprot = EntanglerProt(sim, net, src, dst; rounds=1, randomize=true)
+    for (;src, dst) in edges(net)
+        eprot = EntanglerProt(sim, net, src, dst; rounds=5, randomize=true) # A single round doesn't always get the ends entangled, when number of nodes is high
         @process eprot()
     end
 
-    for i in 2:n-1
-        l(x) = top_left(net, diag_nodes[i], x)
-        h(x) = bottom_right(net, diag_nodes[i], x)
-        swapper = SwapperProt(sim, net, diag_nodes[i]; nodeL = l, nodeH = h, rounds = 1)
+    for i in 2:(size(graph)[1] - 1)
+        l(x) = check_nodes(net, i, x)
+        h(x) = check_nodes(net, i, x; low=false)
+        cL(arr) = choose_node(net, i, arr)
+        cH(arr) = choose_node(net, i, arr; low=false)
+        swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds = 5) # A single round doesn't always get the ends entangled, when number of nodes is high
         @process swapper()
     end
 
-    for v in diag_nodes
+    for v in vertices(net)
         tracker = EntanglementTracker(sim, net, v)
         @process tracker()
     end
 
-    run(sim, 200)
+    run(sim, 100)
 
-    q1 = query(net[1], EntanglementCounterpart, diag_nodes[n], ❓)
-    q2 = query(net[diag_nodes[n]], EntanglementCounterpart, 1, ❓)
-    @test q1.tag[2] == diag_nodes[n]
+    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
+    q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
+
+    @test q1.tag[2] == size(graph)[1]
     @test q2.tag[2] == 1
-    @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1
-    @test observable((q1.slot, q2.slot), X⊗X) ≈ 1
+    @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1.0
+    @test observable((q1.slot, q2.slot), X⊗X) ≈ 1.0
 end
+
+# and here we test for a simple 2d rectangular grid
+for n in 4:10
+    graph = grid([n,n])
+
+    net = RegisterNet(graph, [Register(8) for i in 1:n^2])
+
+    sim = get_time_tracker(net)
+
+    for (;src, dst) in edges(net)
+        eprot = EntanglerProt(sim, net, src, dst; rounds=5, randomize=true) # A single round doesn't always get the ends entangled, when number of nodes is high
+        @process eprot()
+    end
+
+    for i in 2:(size(graph)[1] - 1)
+        l(x) = check_nodes(net, i, x)
+        h(x) = check_nodes(net, i, x; low=false)
+        cL(arr) = choose_node(net, i, arr)
+        cH(arr) = choose_node(net, i, arr; low=false)
+        swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds = 5) # A single round doesn't always get the ends entangled, when number of nodes is high
+        @process swapper()
+    end
+
+    for v in vertices(net)
+        tracker = EntanglementTracker(sim, net, v)
+        @process tracker()
+    end
+
+    run(sim, 100)
+
+    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
+    q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
+
+    @test q1.tag[2] == size(graph)[1]
+    @test q2.tag[2] == 1
+    @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1.0
+    @test observable((q1.slot, q2.slot), X⊗X) ≈ 1.0
+end
+
+
+##
+
+# More tests of 2D rectangular grids with the full stack of protocols,
+# but also now with an unlimited number of rounds and an entanglement consumer.
+
+#TODO
+@test_broken false
