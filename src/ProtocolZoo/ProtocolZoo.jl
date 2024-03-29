@@ -150,9 +150,9 @@ $TYPEDFIELDS
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
     """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to make only a pre-determined fraction(0.0 - 1.0) of the total slots to be available for entanglement"""
-    marginA::Float64 = 1.0
+    margin::Int = 0
     """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to make only a pre-determined fraction(0.0 - 1.0) of the total slots to be available for entanglement"""
-    marginB::Float64 = 1.0
+    hardmargin::Int = 0
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -170,8 +170,19 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=prot.marginA)
-        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=prot.marginB, top=false)
+        freeA = sum([!isassigned(prot.net[prot.nodeA][i]) for i in 1:length(prot.net[prot.nodeA].staterefs)])
+        freeB = sum([!isassigned(prot.net[prot.nodeB][i]) for i in 1:length(prot.net[prot.nodeB].staterefs)])
+        isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓;assigned=true))
+        margin = isentangled ? prot.margin : prot.hardmargin
+        if freeA >= prot.margin && freeB >= prot.margin
+            a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize)
+            b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize)
+        else
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|Skipping current iteration due to lack of free slots at one or both of the nodes"
+            @yield timeout(prot.sim, prot.retry_lock_time)
+            continue
+        end
+        
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."

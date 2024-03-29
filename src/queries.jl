@@ -385,30 +385,15 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register; randomize=false, margin=1.0, top=true)
-    
-    n_slots = length(reg.staterefs)
-    ind = top ? margin==1.0 ? n_slots : Int(round(margin*n_slots)) : margin==1.0 ? 1 : Int(round(margin*n_slots) + 1.0)
-    if top
-        if randomize
-            for i in randperm(ind)
-                slot = reg[i]
-                islocked(slot) || isassigned(slot) || return slot
-            end
-        end
-        for slot in reg[1:ind]
+function findfreeslot(reg::Register; randomize=false)
+    if randomize
+        for i in randperm(length(reg.staterefs))
+            slot = reg[i]
             islocked(slot) || isassigned(slot) || return slot
         end
-    else
-        if randomize
-            for i in randperm(n_slots-ind+1)
-                slot = reg[i+ind-1]
-                islocked(slot) || isassigned(slot) || return slot
-            end
-        end
-        for slot in reg[ind:n_slots]
-            islocked(slot) || isassigned(slot) || return slot
-        end
+    end
+    for slot in reg
+        islocked(slot) || isassigned(slot) || return slot
     end
 end
 
