@@ -149,9 +149,9 @@ $TYPEDFIELDS
     rounds::Int = -1
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
-    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to make only a pre-determined fraction(0.0 - 1.0) of the total slots to be available for entanglement"""
+    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to always leave a chosen number of slots out of all the available slots free for entanglement generation at the next edge, if there exists previous entanglement at the current edge"""
     margin::Int = 0
-    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to make only a pre-determined fraction(0.0 - 1.0) of the total slots to be available for entanglement"""
+    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to always leave a chosen number of slots out of all the available slots free for entanglement generation at the next edge, if there's no previous entanglement at the current edge"""
     hardmargin::Int = 0
 end
 
