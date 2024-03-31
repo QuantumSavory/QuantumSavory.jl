@@ -170,18 +170,10 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        freeA = sum([!isassigned(prot.net[prot.nodeA][i]) for i in 1:length(prot.net[prot.nodeA].staterefs)])
-        freeB = sum([!isassigned(prot.net[prot.nodeB][i]) for i in 1:length(prot.net[prot.nodeB].staterefs)])
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓;assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        if freeA >= prot.margin && freeB >= prot.margin
-            a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize)
-            b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize)
-        else
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|Skipping current iteration due to lack of free slots at one or both of the nodes"
-            @yield timeout(prot.sim, prot.retry_lock_time)
-            continue
-        end
+        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
+        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
         
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
