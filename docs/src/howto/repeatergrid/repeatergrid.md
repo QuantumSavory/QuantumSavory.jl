@@ -20,7 +20,7 @@ This employs functionality from the `ProtocolZoo` module of QuantumSavory to run
 
 - Entanglement Tracker protocol to keep track of/and update the local link state knowledge by querying for Entanglement update messages generated after a BSM is performed by the Swapper protocol
 
-All of the above protocols rely on the query and tagging functionality as described in the Tagging and Querying section in Expanations.
+All of the above protocols rely on the query and tagging functionality as described in the Tagging and Querying section in [Explanations](@ref Explanations).
 
 Other than that, `ConcurrentSim` and `ResumableFunctions` are used in the backend to run the discrete event simulation. `Graphs` helps with some functionality needed for `RegisterNet` datastructure that forms the grid. `GLMakie` and `NetworkLayout` are used for visualization along with the visualization functionality implemented in QuantumSavory.
 
