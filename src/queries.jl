@@ -163,7 +163,6 @@ julia> queryall(r[2], :symbol, 2, 3)
  (depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 ```
 """
-
 function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(); filo::Bool=true) where {allB} # TODO this should support locked and assigned like query(::Register)
     _query(ref, tag, Val{allB}(), Val{filo}())
 end
