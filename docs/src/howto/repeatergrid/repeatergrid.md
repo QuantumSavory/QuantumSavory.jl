@@ -201,5 +201,10 @@ record(fig, "grid_sim6x6hv.mp4", step_ts; framerate=10, visible=true) do t
     run(sim, t)
     notify(obs)
 end
+
+nothing # hide
 ```
 
+```@raw html
+<video src="../grid_sim6x6hv.mp4" autoplay loop muted></video>
+```

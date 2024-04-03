@@ -65,12 +65,6 @@ fig
 
 And here with some extra tag metadata.
 
-```@example vis
-tag!(net[2,3], :specialplace, 1, 2)
-tag!(net[2,3], :otherdata, 3, 4)
-QuantumSavory.showmetadata(fig,ax,plt,2,3)
-fig
-```
 
 ## The state of locks and various metadata in the network
 
