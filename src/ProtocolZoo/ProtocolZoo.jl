@@ -394,10 +394,10 @@ $FIELDS
     nodeA::Int
     """the vertex index of node B"""
     nodeB::Int
-    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
-    log::Vector{Tuple{Float64, Float64, Float64}}
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::LT = 0.1
+    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
+    log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
 end
 
 @resumable function (prot::EntanglementConsumer)()
