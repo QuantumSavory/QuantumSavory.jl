@@ -149,9 +149,9 @@ $TYPEDFIELDS
     rounds::Int = -1
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
-    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to always leave a chosen number of slots out of all the available slots free for entanglement generation at the next edge, if there exists previous entanglement at the current edge"""
+    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
     margin::Int = 0
-    """when we have the protocol set to run for infinite rounds, it may lead to a situation where all the slots of a node are entangled to node(s) on just one side in which case, no swaps can occur. Hence, this field can be used to always leave a chosen number of slots out of all the available slots free for entanglement generation at the next edge, if there's no previous entanglement at the current edge"""
+    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
     hardmargin::Int = 0
 end
 
@@ -170,7 +170,7 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓;assigned=true))
+        isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
         a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
         b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
@@ -385,7 +385,7 @@ A protocol running between two nodes, checking periodically for any entangled pa
 
 $FIELDS
 """
-@kwdef struct EntanglementConsumer <:AbstractProtocol
+@kwdef struct EntanglementConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -395,25 +395,27 @@ $FIELDS
     """the vertex index of node B"""
     nodeB::Int
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
-    log::Vector{Any}
-    """Time period between successive queries on the nodes"""
-    period::Float64
+    log::Vector{Tuple{Float64, Float64, Float64}}
+    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    period::LT = 0.1
 end
 
-@resumable function (prot::EntanglementConsumer)(;_prot::EntanglementConsumer=prot)
-    prot = _prot # weird workaround for no support for `struct A a::Int end; @resumable function (fa::A) return fa.a end`; see https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/77
+@resumable function (prot::EntanglementConsumer)()
+    if isnothing(prot.period)
+        error("In `EntanglementConsumer` we do not yet support waiting on register to make qubits available") # TODO
+    end
     while true
-        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓;locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
-            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query1 failed"
+            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
             push!(prot.log, (now(prot.sim), nothing, nothing))
             @yield timeout(prot.sim, prot.period)
             continue
         else
-            query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx;locked=false, assigned=true)
+            query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
 
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query2 failed"
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 push!(prot.log, (now(prot.sim), nothing, nothing))
                 @yield timeout(prot.sim, prot.period)
                 continue
@@ -429,8 +431,8 @@ end
         untag!(q2, query2.tag)
         # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
-        ob1 = observable((q1, q2), Z⊗Z)
-        ob2 = observable((q1, q2), X⊗X)
+        ob1 = real(observable((q1, q2), Z⊗Z))
+        ob2 = real(observable((q1, q2), X⊗X))
 
         traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
         push!(prot.log, (now(prot.sim), ob1, ob2))

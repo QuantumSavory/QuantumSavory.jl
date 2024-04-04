@@ -386,15 +386,11 @@ true
 """
 function findfreeslot(reg::Register; randomize=false, margin=0)
     n_slots = length(reg.staterefs)
-    freeslots = sum([!isassigned(reg[i]) for i in 1:n_slots])
+    freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
     if freeslots >= margin
-        if randomize
-            for i in randperm(n_slots)
-                slot = reg[i]
-                islocked(slot) || isassigned(slot) || return slot
-            end
-        end
-        for slot in reg
+        perm = randomize ? randperm : (x->1:x)
+        for i in perm(n_slots)
+            slot = reg[i]
             islocked(slot) || isassigned(slot) || return slot
         end
     end

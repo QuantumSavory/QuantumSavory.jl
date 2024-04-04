@@ -35,7 +35,6 @@ tag!(r[5], Int, 4, 5)
 @test querydelete!(r[2], :symbol1, 4, ❓) === nothing
 
 
-
 # tests for fifo and filo order queries (default is filo)
 # for RegRefs
 

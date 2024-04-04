@@ -35,7 +35,6 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 @doset "entanglement_consumer"
 @doset "entanglement_tracker_grid"
 
-
 @doset "circuitzoo_api"
 @doset "circuitzoo_ent_swap"
 @doset "circuitzoo_purification"
