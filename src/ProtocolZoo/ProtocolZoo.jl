@@ -400,6 +400,10 @@ $FIELDS
     log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
 end
 
+function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)
+end
+
 @resumable function (prot::EntanglementConsumer)()
     if isnothing(prot.period)
         error("In `EntanglementConsumer` we do not yet support waiting on register to make qubits available") # TODO
