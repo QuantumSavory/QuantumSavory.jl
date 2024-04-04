@@ -73,6 +73,7 @@ julia> queryall(r, :symbol, ❓, >(5))
 ```
 """
 queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
+queryall(::MessageBuffer, args...; kwargs...) = throw(ArgumentError("`queryall` does not currently support `MessageBuffer`, chiefly to encourage the use of `querydelete!` instead"))
 
 """
 $TYPEDSIGNATURES
