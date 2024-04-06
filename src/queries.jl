@@ -75,7 +75,6 @@ julia> queryall(r, :symbol, ❓, >(5))
 """
 queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
 
-
 """
 $TYPEDSIGNATURES
 
@@ -83,6 +82,7 @@ A query function searching for the first slot in a register that has a given tag
 
 Wildcards are supported (instances of `Wildcard` also available as the constants [`W`](@ref) or the emoji [`❓`](@ref) which can be entered as `\\:question:` in the REPL).
 Predicate functions are also supported (they have to be `Int`↦`Bool` functions).
+The order of query lookup can be specified in terms of FIFO or FILO and defaults to FILO if not specified.
 The keyword arguments `locked` and `assigned` can be used to check, respectively,
 whether the given slot is locked or whether it contains a quantum state.
 The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
@@ -384,20 +384,20 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register; randomize=false)
-    if randomize
-        for i in randperm(length(reg.staterefs))
+function findfreeslot(reg::Register; randomize=false, margin=0)
+    n_slots = length(reg.staterefs)
+    freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
+    if freeslots >= margin
+        perm = randomize ? randperm : (x->1:x)
+        for i in perm(n_slots)
             slot = reg[i]
             islocked(slot) || isassigned(slot) || return slot
         end
-    end
-    for slot in reg
-        islocked(slot) || isassigned(slot) || return slot
     end
 end
 
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
-    r.stateindices[i] != 0 # TODO this also usually means r.staterenfs[i] !== nothing - choose one and make things consistent
+    r.stateindices[i] != 0 # TODO this also usually means r.staterefs[i] !== nothing - choose one and make things consistent
 end
 Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
