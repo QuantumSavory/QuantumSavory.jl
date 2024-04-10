@@ -279,8 +279,8 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
 """
-function querydelete!(ref::RegRef, args...) # TODO there is a lot of code duplication here
-    r = query(ref, args...)
+function querydelete!(ref::RegRef, args...; filo::Bool=true) # TODO there is a lot of code duplication here
+    r = query(ref, args...;filo=filo)
     return isnothing(r) ? nothing : popat!(ref.reg.tags[ref.idx], r.depth)
 end
 
