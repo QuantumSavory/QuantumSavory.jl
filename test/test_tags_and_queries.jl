@@ -103,3 +103,17 @@ end
 @test queryall(reg, EntanglementCounterpart, 2, 22) == queryall(reg, EntanglementCounterpart, ==(2), ==(22)) == queryall(reg, Tag(EntanglementCounterpart, 2, 22))
 @test queryall(reg, Tag(EntanglementCounterpart, 2, 22); filo=false) == reverse([(slot = reg[2], depth = 7, tag = Tag(EntanglementCounterpart,2,22)), (slot = reg[2], depth = 2, tag = Tag(EntanglementCounterpart,2,22))])
 @test queryall(reg, EntanglementCounterpart, 2, 22; filo=false) == queryall(reg, EntanglementCounterpart, ==(2), ==(22); filo=false) == queryall(reg, Tag(EntanglementCounterpart, 2, 22); filo=false)
+
+reg = Register(4)
+tag!(reg[1], EntanglementCounterpart, 4, 9)
+tag!(reg[1], EntanglementCounterpart, 5, 2)
+tag!(reg[1], EntanglementCounterpart, 7, 7)
+tag!(reg[1], EntanglementCounterpart, 4, 9)
+tag!(reg[1], EntanglementCounterpart, 2, 3)
+tag!(reg[1], EntanglementCounterpart, 4, 9)
+
+@test reg.tags[1] == [Tag(EntanglementCounterpart, 4, 9), Tag(EntanglementCounterpart, 5, 2), Tag(EntanglementCounterpart, 7, 7), Tag(EntanglementCounterpart, 4, 9), Tag(EntanglementCounterpart, 2, 3), Tag(EntanglementCounterpart, 4, 9)]
+querydelete!(reg[1], EntanglementCounterpart, 4, 9)
+@test reg.tags[1] == [Tag(EntanglementCounterpart, 4, 9), Tag(EntanglementCounterpart, 5, 2), Tag(EntanglementCounterpart, 7, 7), Tag(EntanglementCounterpart, 4, 9), Tag(EntanglementCounterpart, 2, 3)]
+querydelete!(reg[1], EntanglementCounterpart, 4, 9;filo=false)
+@test reg.tags[1] == [Tag(EntanglementCounterpart, 5, 2), Tag(EntanglementCounterpart, 7, 7), Tag(EntanglementCounterpart, 4, 9), Tag(EntanglementCounterpart, 2, 3)]
