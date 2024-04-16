@@ -281,7 +281,7 @@ A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag li
 Allows the user to specify order of accessing tags to be FILO or FIFO.
 """
 function querydelete!(ref::RegRef, args...; filo::Bool=true) # TODO there is a lot of code duplication here
-    r = query(ref, args...;filo=filo)
+    r = query(ref, args...; filo)
     return isnothing(r) ? nothing : popat!(ref.reg.tags[ref.idx], r.depth)
 end
 
