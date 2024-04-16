@@ -19,10 +19,10 @@ function inputqubits end
 struct EntanglementSwap <: AbstractCircuit
 end
 
-function (::EntanglementSwap)(localL, remoteL, lacalR, remoteR)
-    apply!((localL, lacalR), CNOT)
+function (::EntanglementSwap)(localL, remoteL, localR, remoteR)
+    apply!((localL, localR), CNOT)
     xmeas = project_traceout!(localL, σˣ)
-    zmeas = project_traceout!(lacalR, σᶻ)
+    zmeas = project_traceout!(localR, σᶻ)
     if xmeas==2
         apply!(remoteL, Z)
     end
@@ -37,10 +37,10 @@ inputqubits(::EntanglementSwap) = 4
 struct LocalEntanglementSwap <: AbstractCircuit
 end
 
-function (::LocalEntanglementSwap)(localL, lacalR)
-    apply!((localL, lacalR), CNOT)
+function (::LocalEntanglementSwap)(localL, localR)
+    apply!((localL, localR), CNOT)
     xmeas = project_traceout!(localL, σˣ)
-    zmeas = project_traceout!(lacalR, σᶻ)
+    zmeas = project_traceout!(localR, σᶻ)
     xmeas, zmeas
 end
 

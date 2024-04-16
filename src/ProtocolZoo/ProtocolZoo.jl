@@ -14,7 +14,7 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 
-export EntanglerProt, SwapperProt, EntanglementTracker
+export EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 
 abstract type AbstractProtocol end
 
@@ -149,6 +149,10 @@ $TYPEDFIELDS
     rounds::Int = -1
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
+    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
+    margin::Int = 0
+    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
+    hardmargin::Int = 0
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -166,8 +170,11 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        a = findfreeslot(prot.net[prot.nodeA], randomize=prot.randomize)
-        b = findfreeslot(prot.net[prot.nodeB], randomize=prot.randomize)
+        isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
+        margin = isentangled ? prot.margin : prot.hardmargin
+        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
+        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
+        
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
@@ -245,10 +252,12 @@ end
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
+
         (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
         (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
+
         untag!(q1, tag1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
@@ -366,6 +375,72 @@ end
         @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+    end
+end
+
+"""
+$TYPEDEF
+
+A protocol running between two nodes, checking periodically for any entangled pairs between the two nodes and consuming/emptying the qubit slots.
+
+$FIELDS
+"""
+@kwdef struct EntanglementConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of node A"""
+    nodeA::Int
+    """the vertex index of node B"""
+    nodeB::Int
+    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    period::LT = 0.1
+    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
+    log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
+end
+
+function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)
+end
+
+@resumable function (prot::EntanglementConsumer)()
+    if isnothing(prot.period)
+        error("In `EntanglementConsumer` we do not yet support waiting on register to make qubits available") # TODO
+    end
+    while true
+        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        if isnothing(query1)
+            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
+            @yield timeout(prot.sim, prot.period)
+            continue
+        else
+            query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+
+            if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
+                @yield timeout(prot.sim, prot.period)
+                continue
+            end
+        end
+        
+        q1 = query1.slot 
+        q2 = query2.slot
+        @yield lock(q1) & lock(q2)
+
+        @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement"
+        untag!(q1, query1.tag)
+        untag!(q2, query2.tag)
+        # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
+        # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
+        ob1 = real(observable((q1, q2), Z⊗Z))
+        ob2 = real(observable((q1, q2), X⊗X))
+
+        traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
+        push!(prot.log, (now(prot.sim), ob1, ob2))
+        unlock(q1)
+        unlock(q2)
+        @yield timeout(prot.sim, prot.period)
     end
 end
 

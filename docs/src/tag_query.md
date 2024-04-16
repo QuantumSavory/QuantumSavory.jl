@@ -30,7 +30,7 @@ QuantumSavory.tag!
 QuantumSavory.untag!
 ```
 
-## Querying for the pressence of a tag
+## Querying for the presence of a tag
 
 The [`query`](@ref) function allows the user to query for [`Tag`](@ref)s in three different cases:
 - on a particular qubit slot ([`RegRef`](@ref)) in a [`Register`](@ref) node;
@@ -43,7 +43,7 @@ The queries can search in `FIFO` or `FILO` order (`FILO` by default). E.g., for 
 
 One can also query by "lock" and "assignment" status of a given slot, by using the `locked` and `assigned` boolean keywords. By default these keywords are set to `nothing` and these properties are not checked.
 
-Following is a detailed description of each `query` methods
+Following is a detailed description of each `query` method
 
 ```@docs; canonical=false
 query(::Register,::Tag)
