@@ -20,12 +20,12 @@ struct Register # TODO better type description
     stateindices::Vector{Int}
     accesstimes::Vector{Float64} # TODO do not hardcode the type
     locks::Vector{Any}
-    tags::Vector{Tag} # TODO this is a rather inefficient way to store tags, but at least it provides a FIFO ordering; see issue #74
+    tags::Vector{Vector{Tag}} # TODO this is a rather inefficient way to store tags, but at least it provides a FIFO ordering; see issue #74
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Vector{Tag}())
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], [Vector{Tag}() for _ in traits])
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
 Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),zeros(Int,length(traits)),zeros(length(traits)))
@@ -49,11 +49,6 @@ julia> r = Register(2)
 struct RegRef
     reg::Register
     idx::Int
-    tag_idx::Vector{Int}
-    tag_time::Vector{Float64}
 end
 
-function RegRef(r::Register, idx::Int)
-    RegRef(r, idx, [], [])
-end
 #Base.:(==)(r1::Register, r2::Register) =

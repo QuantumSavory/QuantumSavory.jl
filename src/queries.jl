@@ -5,10 +5,8 @@ Assign a tag to a slot in a register.
 It returns the list of all currently present tags for that register.
 
 See also: [`query`](@ref), [`untag!`](@ref)"""
-function tag!(ref::RegRef, tag::Tag, time=nothing)
-    push!(ref.reg.tags, tag)
-    push!(ref.tag_idx, size(ref.reg.tags)[1])
-    push!(ref.tag_time, time)
+function tag!(ref::RegRef, tag::Tag)
+    push!(ref.reg.tags[ref.idx], tag)
 end
 
 tag!(ref, tag) = tag!(ref, Tag(tag))
@@ -25,14 +23,7 @@ See also: [`query`](@ref), [`tag!`](@ref)
 function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See issue #74
     tags = ref.reg.tags[ref.idx]
     i = findfirst(==(tag), tags)
-    if isnothing(i)
-        throw(KeyError(tag))  # TODO make sure there is a clear error message
-    else
-        idx = findfirst(==(i), ref.tag_idx) # everytime a tag is untagged or `querydelete!` is called the `idx` is removed from ref.tag_idx, so we won't have any duplicates
-        deleteat!(tags, i)
-        deleteat!(ref.tag_idx, idx)
-        deleteat!(ref.tag_time, idx)
-    end
+    isnothing(i) ? throw(KeyError(tag)) : deleteat!(tags, i) # TODO make sure there is a clear error message
 end
 
 
