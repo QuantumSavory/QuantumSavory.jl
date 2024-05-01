@@ -280,7 +280,8 @@ end
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
+A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
+Allows the user to specify order of accessing tags to be FILO or FIFO.
 """
 function querydelete!(ref::RegRef, args...)
     querydelete!(ref.reg, args...;ref=ref)
