@@ -126,8 +126,8 @@ julia> query(r, Int, 4, <(7))
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
 """
-function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
-    _query(reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned)
+function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true, ref=nothing) where {allB}
+    _query(reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned, ref=ref)
 end
 
 function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, ref=nothing) where {allB, filoB}
@@ -282,7 +282,7 @@ end
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
+A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
 Allows the user to specify order of accessing tags to be FILO or FIFO.
 """
 function querydelete!(ref::RegRef, args...; filo=true, kwa...)

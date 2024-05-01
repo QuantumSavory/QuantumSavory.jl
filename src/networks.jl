@@ -14,6 +14,7 @@ struct RegisterNet
 end
 
 function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metadata, directed_edge_metadata)
+    glcnt[] = 0 # set the global counter of `guid`s to zero whenever a new network is initialized
     env = get_time_tracker(registers[1])
 
     all_are_at_zero = all(iszero(ConcurrentSim.now(get_time_tracker(r))) && isempty(get_time_tracker(r).heap) && isnothing(get_time_tracker(r).active_proc) for r in registers)
