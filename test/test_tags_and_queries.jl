@@ -62,7 +62,7 @@ tag!(reg[3], EntanglementCounterpart, 1, 10)
 @test queryall(reg, EntanglementCounterpart, 1, 11) == []
 @test queryall(reg[3], EntanglementCounterpart, 1, 10) == [(slot = reg[3], id = i, tag = Tag(EntanglementCounterpart,1,10)) for i in (12, 9, 5)]
 @test queryall(reg[3], EntanglementCounterpart, 1, 10; filo=false) == [(slot = reg[3], id = i, tag = Tag(EntanglementCounterpart,1,10)) for i in (5, 9, 12)]
-@test queryall(reg[3], EntanglementCounterpart, 1, 10; filo=true) == [(slot = reg[3], id = 12, tag = Tag(EntanglementCounterpart,1,10)) for i in (12, 9, 5)]
+@test queryall(reg[3], EntanglementCounterpart, 1, 10; filo=true) == [(slot = reg[3], id = i, tag = Tag(EntanglementCounterpart,1,10)) for i in (12, 9, 5)]
 
 @test queryall(reg[3], EntanglementCounterpart, 2, ❓) == [(slot = reg[3], id = i, tag = Tag(EntanglementCounterpart,2,20)) for i in (11, 8, 6)]
 @test queryall(reg[3], EntanglementCounterpart, 2, ❓; filo=false) == [(slot = reg[3], id = i, tag = Tag(EntanglementCounterpart,2,20)) for i in (6, 8, 11)]
