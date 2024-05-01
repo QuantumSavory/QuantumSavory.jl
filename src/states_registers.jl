@@ -20,12 +20,13 @@ struct Register # TODO better type description
     stateindices::Vector{Int}
     accesstimes::Vector{Float64} # TODO do not hardcode the type
     locks::Vector{Any}
-    tags::Vector{Vector{Tag}} # TODO this is a rather inefficient way to store tags, but at least it provides a FIFO ordering; see issue #74
+    tag_info::Dict{Int128, Tuple{Tag, Int64, Union{Float64, Nothing}}}
+    guids::Vector{Int128}
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], [Vector{Tag}() for _ in traits])
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [])
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
 Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),zeros(Int,length(traits)),zeros(length(traits)))

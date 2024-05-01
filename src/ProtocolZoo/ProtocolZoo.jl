@@ -1,7 +1,7 @@
 module ProtocolZoo
 
 using QuantumSavory
-import QuantumSavory: get_time_tracker, Tag
+import QuantumSavory: get_time_tracker, Tag, guid
 using QuantumSavory: Wildcard
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
@@ -190,9 +190,9 @@ end
         @yield timeout(prot.sim, prot.local_busy_time_post)
 
         # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
+        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx; tag_time = now(prot.sim), id = guid())
         # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
+        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx; tag_time = now(prot.sim), id = guid())
 
         @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         unlock(a)
@@ -253,18 +253,18 @@ end
             continue
         end
 
-        (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
-        (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
+        (q1, id1, tag1) = qubit_pair[1].slot, qubit_pair[1].id, qubit_pair[1].tag
+        (q2, id2, tag2) = qubit_pair[2].slot, qubit_pair[2].id, qubit_pair[2].tag
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
 
-        untag!(q1, tag1)
+        untag!(q1, id1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
+        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx; tag_time = now(prot.sim), id = guid())
 
-        untag!(q2, tag2)
+        untag!(q2, id2)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
+        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx; tag_time = now(prot.sim), id = guid())
 
         uptotime!((q1, q2), now(prot.sim))
         swapcircuit = LocalEntanglementSwap()
@@ -350,7 +350,7 @@ end
                         apply!(localslot, updategate)
                     end
                     # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
+                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid; tag_time=now(prot.sim), id = guid())
                     unlock(localslot)
                     continue
                 end
@@ -362,8 +362,8 @@ end
                                     ❓)                                # which local slot used to be entangled with whom we swapped with
                 if !isnothing(history)
                     # @debug "tracker @$(prot.node) history: $(history) | msg: $msg"
-                    _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history
-                    tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx)
+                    _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history[1]
+                    tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx; tag_time=now(prot.sim), id=guid())
                     @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                     msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
                     put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
@@ -429,8 +429,8 @@ end
         @yield lock(q1) & lock(q2)
 
         @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement"
-        untag!(q1, query1.tag)
-        untag!(q2, query2.tag)
+        untag!(q1, query1.id)
+        untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
         ob1 = real(observable((q1, q2), Z⊗Z))
