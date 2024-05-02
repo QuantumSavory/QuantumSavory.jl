@@ -260,8 +260,8 @@ t=1.0: query returns nothing
 t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node 3
 ```
 """
-function querydelete!(mb::MessageBuffer, args...)
-    r = query(mb, args...)
+function querydelete!(mb::MessageBuffer, args...;filo=true)
+    r = query(mb, args...;filo=filo)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
@@ -270,8 +270,8 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`Register`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
 """
-function querydelete!(reg::Register, args...;ref=nothing)
-    r = query(reg, args...;ref=ref)
+function querydelete!(reg::Register, args...;ref=nothing, filo=true)
+    r = query(reg, args...;ref=ref, filo=filo)
     ret = !isnothing(r) ? reg.tag_info[r.id] : return nothing
     untag!(r.slot, r.id)
     return ret
@@ -283,8 +283,8 @@ $TYPEDSIGNATURES
 A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
 Allows the user to specify order of accessing tags to be FILO or FIFO.
 """
-function querydelete!(ref::RegRef, args...)
-    querydelete!(ref.reg, args...;ref=ref)
+function querydelete!(ref::RegRef, args...;filo=true)
+    querydelete!(ref.reg, args...;ref=ref,filo=filo)
 end
 
 
