@@ -261,7 +261,7 @@ t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node
 ```
 """
 function querydelete!(mb::MessageBuffer, args...;filo=true)
-    r = query(mb, args...;filo=filo)
+    r = query(mb, args...)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
