@@ -79,7 +79,7 @@ consumer = EntanglementConsumer(sim, net, 1, n^2)
 
 # Visualization
 
-fig = Figure(size=(600, 600))
+fig = Figure(;size=(600, 600))
 
 # the network part of the visualization
 layout = SquareGrid(cols=:auto, dx=10.0, dy=-10.0)(graph) # provided by NetworkLayout, meant to simplify plotting of graphs in 2D
