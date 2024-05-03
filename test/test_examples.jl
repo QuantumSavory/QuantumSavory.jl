@@ -36,3 +36,9 @@ end
         include("../examples/congestionchain/1_visualization.jl")
     end
 end
+
+@safetestset "repeatergrid" begin
+    if get(ENV, "QUANTUMSAVORY_PLOT_TEST","")=="true"
+        include("../examples/repeatergrid/repeatergrid.jl")
+    end
+end
