@@ -60,16 +60,16 @@ julia> r = Register(10);
        tag!(r[2], :symbol, 4, 5);
 
 julia> queryall(r, :symbol, ❓, ❓)
-2-element Vector{@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}}:
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
  (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
  (slot = Slot 1, id = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(4))
-1-element Vector{@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}}:
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
  (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(5))
-@NamedTuple{slot::RegRef, id::128, tag::Tag}[]
+@NamedTuple{slot::RegRef, id::Int128, tag::Tag}[]
 ```
 """
 queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
@@ -160,7 +160,7 @@ julia> query(r[3], :symbol, 2, 3) === nothing
 true
 
 julia> queryall(r[2], :symbol, 2, 3)
-1-element Vector{@NamedTuple{depth::Int64, tag::Tag}}:
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
  (slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 ```
 """
