@@ -2,8 +2,6 @@
 
 Assign a tag to a slot in a register.
 
-It returns the list of all currently present tags for that register.
-
 See also: [`query`](@ref), [`untag!`](@ref)"""
 function tag!(ref::RegRef, tag::Tag; tag_time::Union{Float64, Nothing}=nothing, id::Union{Int128, Nothing}=nothing)
     id = isnothing(id) ? guid() : id
@@ -17,8 +15,6 @@ tag!(ref, tag; tag_time::Union{Float64, Nothing}=nothing, id::Union{Int128, Noth
 """$TYPEDSIGNATURES
 
 Removes the first instance of tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
-
-It returns the list of all currently present tags for that register.
 
 See also: [`query`](@ref), [`tag!`](@ref)
 """
@@ -65,15 +61,15 @@ julia> r = Register(10);
 
 julia> queryall(r, :symbol, ❓, ❓)
 2-element Vector{@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}}:
- (slot = Slot 1, depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
- (slot = Slot 2, depth = 1, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+ (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+ (slot = Slot 1, id = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(4))
 1-element Vector{@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}}:
- (slot = Slot 2, depth = 1, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+ (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(5))
-@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}[]
+@NamedTuple{slot::RegRef, id::128, tag::Tag}[]
 ```
 """
 queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
@@ -98,7 +94,7 @@ julia> r = Register(10);
 
 
 julia> query(r, :symbol, 4, 5)
-(slot = Slot 2, depth = 1, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+(slot = Slot 2, id = 4, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> lock(r[1]);
 
@@ -106,7 +102,7 @@ julia> query(r, :symbol, 4, 5; locked=false) |> isnothing
 false
 
 julia> query(r, :symbol, ❓, 3)
-(slot = Slot 1, depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = Slot 1, id = 3, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> query(r, :symbol, ❓, 3; assigned=true) |> isnothing
 true
@@ -123,7 +119,7 @@ julia> query(r, Int, 4, >(7)) |> isnothing
 true
 
 julia> query(r, Int, 4, <(7))
-(slot = Slot 5, depth = 1, tag = TypeIntInt(Int64, 4, 5)::Tag)
+(slot = Slot 5, id = 5, tag = TypeIntInt(Int64, 4, 5)::Tag)
 ```
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
@@ -134,8 +130,8 @@ end
 
 function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, ref=nothing) where {allB, filoB}
     result = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
-    f = filoB ? reverse : identity
-    for i in f(reg.guids)
+    op_guid = filoB ? reverse : identity
+    for i in op_guid(reg.guids)
         slot = reg[reg.tag_info[i][2]]
         if reg.tag_info[i][1] == tag && (isnothing(ref) || (ref == slot)) # Need to check slot when calling from `query` dispatch on RegRef
             if _nothingor(locked, islocked(slot) && _nothingor(assigned, isassigned(slot)))
@@ -158,14 +154,14 @@ julia> r = Register(5);
 julia> tag!(r[2], :symbol, 2, 3);
 
 julia> query(r[2], :symbol, 2, 3)
-(depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> query(r[3], :symbol, 2, 3) === nothing
 true
 
 julia> queryall(r[2], :symbol, 2, 3)
 1-element Vector{@NamedTuple{depth::Int64, tag::Tag}}:
- (depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+ (slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 ```
 """
 function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
