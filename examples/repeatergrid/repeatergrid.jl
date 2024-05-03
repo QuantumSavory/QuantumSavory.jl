@@ -8,7 +8,7 @@ using Graphs
 
 # For Plotting
 using GLMakie
-GLMakie.activate!(inline=false)
+GLMakie.activate!()
 using NetworkLayout
 
 ## Custom Predicates used for local decisions in the swapper protocol running at each node
