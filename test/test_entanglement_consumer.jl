@@ -13,7 +13,6 @@ end
 
 
 for i in 1:30, n in 3:30
-    @show i, n
     net = RegisterNet([Register(10) for j in 1:n])
     sim = get_time_tracker(net)
 

@@ -4,6 +4,7 @@ Assign a tag to a slot in a register.
 
 See also: [`query`](@ref), [`untag!`](@ref)"""
 function tag!(ref::RegRef, tag::Tag; tag_time::Union{Float64, Nothing}=nothing, id::Union{Int128, Nothing}=nothing)
+    tag_time = isnothing(tag_time) ? now(get_time_tracker(ref)) : tag_time
     id = isnothing(id) ? guid() : id
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (tag, ref.idx, tag_time) 
@@ -299,8 +300,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
     args = (:a, :b, :c, :d, :e, :f, :g)[1:length(sig)]
     argssig = [:($a::$t) for (a,t) in zip(args, sig)]
 
-    eval(quote function tag!(ref::RegRef, $(argssig...); tag_time::Union{Float64, Nothing}=nothing, id::Union{Int128, Nothing}=nothing)
-        tag!(ref, ($tagvariant)($(args...)); tag_time=tag_time, id=id)
+    eval(quote function tag!(ref::RegRef, $(argssig...); kwa...)
+        tag!(ref, ($tagvariant)($(args...)); kwa...)
     end end)
 
     eval(quote function Tag($(argssig...))

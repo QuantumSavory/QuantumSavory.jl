@@ -1,7 +1,7 @@
 module ProtocolZoo
 
 using QuantumSavory
-import QuantumSavory: get_time_tracker, Tag, guid
+import QuantumSavory: get_time_tracker, Tag
 using QuantumSavory: Wildcard
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
@@ -190,9 +190,9 @@ end
         @yield timeout(prot.sim, prot.local_busy_time_post)
 
         # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx; tag_time = now(prot.sim), id = guid())
+        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
         # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx; tag_time = now(prot.sim), id = guid())
+        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
 
         @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         unlock(a)
@@ -260,11 +260,11 @@ end
 
         untag!(q1, id1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx; tag_time = now(prot.sim), id = guid())
+        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
 
         untag!(q2, id2)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx; tag_time = now(prot.sim), id = guid())
+        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
 
         uptotime!((q1, q2), now(prot.sim))
         swapcircuit = LocalEntanglementSwap()
@@ -350,7 +350,7 @@ end
                         apply!(localslot, updategate)
                     end
                     # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid; tag_time=now(prot.sim), id = guid())
+                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                     unlock(localslot)
                     continue
                 end
@@ -363,7 +363,7 @@ end
                 if !isnothing(history)
                     # @debug "tracker @$(prot.node) history: $(history) | msg: $msg"
                     _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history[1]
-                    tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx; tag_time=now(prot.sim), id=guid())
+                    tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx)
                     @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                     msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
                     put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
