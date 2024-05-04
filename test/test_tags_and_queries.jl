@@ -32,9 +32,9 @@ tag!(r[5], Int, 4, 5)
 @test query(r[2], :symbol1, 4, ❓) == (slot=r[2], id=2, tag=Tag(:symbol1, 4, 5))
 @test queryall(r[2], :symbol1, 4, ❓) == [(slot=r[2], id=2, tag=Tag(:symbol1, 4, 5))]
 
-@test querydelete!(r[2], :symbol1, 4, ❓) == (Tag(:symbol1, 4, 5), 2, nothing)
+@test querydelete!(r[2], :symbol1, 4, ❓) == (Tag(:symbol1, 4, 5), 2, 0.0)
 @test querydelete!(r[2], :symbol1, 4, ❓) === nothing
-@test querydelete!(r[3], :symbol1, 4, ❓) == (Tag(:symbol1, 4, 1), 3, nothing)
+@test querydelete!(r[3], :symbol1, 4, ❓) == (Tag(:symbol1, 4, 1), 3, 0.0)
 
 
 # tests for fifo and filo order queries (default is filo)
