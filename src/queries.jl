@@ -125,8 +125,8 @@ julia> query(r, Int, 4, <(7))
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
 """
-function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true, ref=nothing) where {allB}
-    _query(reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned, ref=ref)
+function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
+    _query(reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned)
 end
 
 function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, ref=nothing) where {allB, filoB}
@@ -267,12 +267,12 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`Register`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
 """
-function querydelete!(reg::Register, args...; kwa...)
-    _querydelete(reg, args...; filo=filo)
+function querydelete!(reg::Register, args...; filo=true, kwa...)
+    _querydelete(reg, args...; filo=filo, kwa...)
 end
 
-function _querydelete!(reg::Register, args...; kwa...)
-    r = query(reg, args...; kwa...)
+function _querydelete!(reg::Register, args...; ref=nothing, kwa...)
+    r = isnothing(ref) ? query(reg, args..., Val{false}(); kwa...) : query(ref, args..., Val{false}(), ; kwa...)
     ret = !isnothing(r) ? reg.tag_info[r.id] : return nothing
     untag!(r.slot, r.id)
     return ret
@@ -284,8 +284,8 @@ $TYPEDSIGNATURES
 A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
 Allows the user to specify order of accessing tags to be FILO or FIFO.
 """
-function querydelete!(ref::RegRef, args...; filo=true)
-    _querydelete!(ref.reg, args...;ref=ref,filo=filo)
+function querydelete!(ref::RegRef, args...; filo=true, kwa...)
+    _querydelete!(ref.reg, args...;filo=filo, ref=ref, kwa...)
 end
 
 
@@ -325,7 +325,7 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         argssig_wild = [:($a::$t) for (a,t) in zip(args, sig_wild)]
         wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag[$i])) for i in idx]
         nonwild_checks = [:(tag[$i]==$(args[i])) for i in complement_idx]
-        newmethod_reg = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true, ref=nothing) where {allB}
+        newmethod_reg = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
             res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
             op_guid = filo ? reverse : identity
             for i in op_guid(reg.guids)
@@ -333,7 +333,7 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
                 slot = reg[reg.tag_info[i][2]]
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
                     (_nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))) || continue
-                    if _all($(nonwild_checks...)) && _all($(wild_checks...)) && (isnothing(ref) || (ref == slot))
+                    if _all($(nonwild_checks...)) && _all($(wild_checks...))
                         allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
                     end
                 end
