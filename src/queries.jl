@@ -267,8 +267,12 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`Register`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
 """
-function querydelete!(reg::Register, args...;ref=nothing, filo=true)
-    r = query(reg, args...;ref=ref, filo=filo)
+function querydelete!(reg::Register, args...; kwa...)
+    _querydelete(reg, args...; filo=filo)
+end
+
+function _querydelete!(reg::Register, args...; kwa...)
+    r = query(reg, args...; kwa...)
     ret = !isnothing(r) ? reg.tag_info[r.id] : return nothing
     untag!(r.slot, r.id)
     return ret
@@ -280,8 +284,8 @@ $TYPEDSIGNATURES
 A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
 Allows the user to specify order of accessing tags to be FILO or FIFO.
 """
-function querydelete!(ref::RegRef, args...;filo=true)
-    querydelete!(ref.reg, args...;ref=ref,filo=filo)
+function querydelete!(ref::RegRef, args...; filo=true)
+    _querydelete!(ref.reg, args...;ref=ref,filo=filo)
 end
 
 
