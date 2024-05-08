@@ -56,6 +56,7 @@ $TYPEDSIGNATURES
 A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
 
 ```jldoctest
+julia> QuantumSavory.glcnt[] = 0;
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
