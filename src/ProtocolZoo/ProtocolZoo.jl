@@ -14,7 +14,13 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 
-export EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
+export
+    # protocols
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer,
+    # tags
+    EntanglementCounterpart,
+    # from Switches
+    SimpleSwitchDiscreteProt, SwitchRequest
 
 abstract type AbstractProtocol end
 
@@ -179,7 +185,7 @@ end
 
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a \n2.\t $b \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
@@ -187,7 +193,11 @@ end
         @yield lock(a) & lock(b) # this yield is expected to return immediately
 
         @yield timeout(prot.sim, prot.local_busy_time_pre)
-        attempts = rand(Geometric(prot.success_prob))+1
+        attempts = if isone(prot.success_prob)
+            attempts = 1
+        else
+            rand(Geometric(prot.success_prob))+1
+        end
         if prot.attempts == -1 || prot.attempts >= attempts
             @yield timeout(prot.sim, attempts * prot.attempt_time)
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
@@ -411,6 +421,9 @@ end
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)
 end
+function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return EntanglementConsumer(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+end
 
 @resumable function (prot::EntanglementConsumer)()
     if isnothing(prot.period)
@@ -419,14 +432,14 @@ end
     while true
         query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
-            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
+            #@debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
             @yield timeout(prot.sim, prot.period)
             continue
         else
             query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
 
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
+                #@debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 @yield timeout(prot.sim, prot.period)
                 continue
             end
@@ -451,5 +464,9 @@ end
         @yield timeout(prot.sim, prot.period)
     end
 end
+
+
+include("switches.jl")
+using .Switches
 
 end # module

@@ -37,7 +37,7 @@ reg_gate_wait = deepcopy(reg) # copy the register
 apply!([reg_gate_wait[1],reg_gate_wait[2]], CNOT)
 pop_gate_wait = [observable(reg_gate_wait[2], pop; time) for time in ts]
 all_pop_gate_wait = real.([initial_pop, pop_gate_wait...])                           #hide
-fig = Figure(resolution=(600,300))                                                   #hide
+fig = Figure(size=(600,300))                                                   #hide
 axis = Axis(fig[1,1])                                                                #hide
 lines!([0,ts...], all_pop_gate_wait, color=Cycled(1), label="apply gate then wait")  #hide
 fig[1, 2] = Legend(fig, axis, "Implementation", framevisible = false)                #hide
@@ -54,7 +54,7 @@ pop_wait_gate = [observable(reg_wait_gate[2], pop; time) for time in ts]
 apply!([reg_wait_gate[1],reg_wait_gate[2]], CNOT)
 final_pop_wait_gate = observable(reg_wait_gate[2], pop)
 all_pop_wait_gate = real.([initial_pop, pop_wait_gate..., final_pop_wait_gate])             #hide
-fig = Figure(resolution=(600,300))                                                          #hide
+fig = Figure(size=(600,300))                                                          #hide
 axis = Axis(fig[1,1])                                                                       #hide
 lines!([0,ts...,ts[end]], all_pop_wait_gate, color=Cycled(2), label="wait then apply gate") #hide
 fig[1, 2] = Legend(fig, axis, "Implementation", framevisible = false)                       #hide
@@ -72,7 +72,7 @@ reg_slow_cnot = deepcopy(reg)
 gate = NonInstantGate(CNOT, 1.0)
 apply!([reg_slow_cnot[1],reg_slow_cnot[2]], CNOT)
 final_pop_slow_cnot = observable(reg_slow_cnot[2], pop)
-fig = Figure(resolution=(600,300))                                                #hide
+fig = Figure(size=(600,300))                                                #hide
 axis = Axis(fig[1,1])                                                             #hide
 scatter!([0,ts[end]], real.([initial_pop, final_pop_slow_cnot]), color=Cycled(3), label="NonInstantGate") #hide
 fig[1, 2] = Legend(fig, axis, "Implementation", framevisible = false)             #hide
@@ -107,7 +107,7 @@ pop_slow_ham_steps = [
     for _ in 2:STEPS
 ]
 all_pop_slow_ham_steps = real.([initial_pop, pop_slow_ham_steps...])              #hide
-fig = Figure(resolution=(600,300))                                                #hide
+fig = Figure(size=(600,300))                                                #hide
 axis = Axis(fig[1,1])                                                             #hide
 scatter!([0,ts[end]], real.([initial_pop, final_pop_slow_ham]), color=Cycled(4), label="Hamiltonian", marker='▴', markersize=18) #hide
 lines!(ts, all_pop_slow_ham_steps, color=Cycled(5), label="Hamiltonian (steps)")  #hide
@@ -123,7 +123,7 @@ Below we plot the results of each approach. As you can see, they are physically 
 all_pop_gate_wait = real.([initial_pop, pop_gate_wait...])
 all_pop_wait_gate = real.([initial_pop, pop_wait_gate..., final_pop_wait_gate])
 all_pop_slow_ham_steps = real.([initial_pop, pop_slow_ham_steps...])
-fig = Figure(resolution=(600,300))
+fig = Figure(size=(600,300))
 axis = Axis(fig[1,1])
 lines!([0,ts...], all_pop_gate_wait, color=Cycled(1), label="apply gate then wait")
 lines!([0,ts...,ts[end]], all_pop_wait_gate, color=Cycled(2), label="wait then apply gate")

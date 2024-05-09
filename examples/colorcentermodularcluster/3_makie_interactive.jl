@@ -135,7 +135,7 @@ ensemble = App() do
 
     # Plot the time to complete vs average fidelity
 
-    F = Figure(resolution=(1200,600))
+    F = Figure(size=(1200,600))
     F1 = F[1,1]
     ax = Axis(F1[2:5,1:4])
     ax_time = Axis(F1[1,1:4])
@@ -231,7 +231,7 @@ singletraj = App() do
     net, sim, observables, conf = prep_sim(root_conf)
     current_time = Observable(0.0)
 
-    F = Figure(resolution=(1200,800))
+    F = Figure(size=(1200,800))
 
     # Plot of the quantum states in the registers
     subfig_rg, ax_rg, p_rg, obs_rg = registernetplot_axis(F[1:4,1],net; interactions=false)

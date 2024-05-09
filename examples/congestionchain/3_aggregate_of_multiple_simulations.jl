@@ -64,7 +64,7 @@ avgt = [mean(res[1][]) for res in results]
 avgxx = [mean(res[2][]) for res in results]
 avgzz = [mean(res[3][]) for res in results]
 
-F = Figure(resolution=(600,600))
+F = Figure(size=(600,600))
 ax1 = Axis(F[1,1], ylabel="avg time to connection")
 scatter!(ax1, link_lengths, avgt)
 ylims!(ax1,0,nothing)
