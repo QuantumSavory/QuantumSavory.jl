@@ -186,7 +186,7 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
     reverseclientindex = Dict{Int,Int}(c=>i for (i,c) in enumerate(clientnodes))
 
     # start a process to delete unused switch-to-node entanglement at the end of each round
-    deleter = _SwitchSyncronizedDelete(prot)
+    deleter = _SwitchSynchronizedDelete(prot)
     @process deleter()
 
     while rounds != 0
@@ -226,11 +226,11 @@ end
 Private protocol used inside [`SimpleSwitchDiscreteProt`](@ref)
 to delete unused entanglement at the end of each round.
 """
-struct _SwitchSyncronizedDelete <: AbstractProtocol
+struct _SwitchSynchronizedDelete <: AbstractProtocol
     prot::SimpleSwitchDiscreteProt
 end
-QuantumSavory.get_time_tracker(deleter::_SwitchSyncronizedDelete) = get_time_tracker(deleter.prot)
-@resumable function (deleter::_SwitchSyncronizedDelete)()
+QuantumSavory.get_time_tracker(deleter::_SwitchSynchronizedDelete) = get_time_tracker(deleter.prot)
+@resumable function (deleter::_SwitchSynchronizedDelete)()
     prot = deleter.prot
     @yield timeout(prot.sim, eps(prot.ticktock)) # offset the start of the process infinitesimally
     while true
@@ -308,7 +308,7 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
 end
 
 """
-Assumming the pairs in `match` are entangled,
+Assuming the pairs in `match` are entangled,
 perform swaps to connect them and decrement the backlog counter.
 """
 function _switch_run_swaps(prot, match)
