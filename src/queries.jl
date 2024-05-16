@@ -3,14 +3,13 @@
 Assign a tag to a slot in a register.
 
 See also: [`query`](@ref), [`untag!`](@ref)"""
-function tag!(ref::RegRef, tag::Tag; tag_time::Union{Float64, Nothing}=nothing, id::Union{Int128, Nothing}=nothing)
-    tag_time = isnothing(tag_time) ? now(get_time_tracker(ref)) : tag_time
-    id = isnothing(id) ? guid() : id
+function tag!(ref::RegRef, tag::Tag)
+    id = guid()
     push!(ref.reg.guids, id)
-    ref.reg.tag_info[id] = (tag, ref.idx, tag_time) 
+    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref))) 
 end
 
-tag!(ref, tag; tag_time::Union{Float64, Nothing}=nothing, id::Union{Int128, Nothing}=nothing) = tag!(ref,Tag(tag); tag_time=tag_time, id=id)
+tag!(ref, tag) = tag!(ref,Tag(tag))
 
 
 """$TYPEDSIGNATURES
