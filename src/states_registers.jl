@@ -22,11 +22,13 @@ struct Register # TODO better type description
     locks::Vector{Any}
     tag_info::Dict{Int128, Tuple{Tag, Int64, Union{Float64, Nothing}}}
     guids::Vector{Int128}
+    retention_times::Vector{Float64}
+    slot_guid::Vector{Int128}
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [])
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [], fill(5.0, length(traits)), fill(-1, length(traits)))
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
 Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),zeros(Int,length(traits)),zeros(length(traits)))

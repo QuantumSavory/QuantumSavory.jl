@@ -51,7 +51,7 @@ sim = get_time_tracker(net)
 
 # each edge is capable of generating raw link-level entanglement
 for (;src, dst) in edges(net)
-    eprot = EntanglerProt(sim, net, src, dst; rounds=-1, randomize=true, margin=regsize÷2, hardmargin=regsize÷4)
+    eprot = EntanglerProt(sim, net, src, dst; rounds=-1, randomize=true)
     @process eprot()
 end
 

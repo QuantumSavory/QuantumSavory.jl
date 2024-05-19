@@ -6,7 +6,8 @@ See also: [`query`](@ref), [`untag!`](@ref)"""
 function tag!(ref::RegRef, tag::Tag)
     id = guid()
     push!(ref.reg.guids, id)
-    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref))) 
+    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref)))
+    ref.reg.slot_guid[ref.idx] = id
 end
 
 tag!(ref, tag) = tag!(ref,Tag(tag))
@@ -22,6 +23,7 @@ function untag!(ref::RegRef, id::Int128) # TODO rather slow implementation. See 
     i = findfirst(==(id), ref.reg.guids)
     isnothing(i) ? throw(KeyError(tag)) : deleteat!(ref.reg.guids, i) # TODO make sure there is a clear error message
     delete!(ref.reg.tag_info, id)
+    ref.reg.slot_guid[ref.idx] = -1
     nothing
 end
 
@@ -388,16 +390,27 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register; randomize=false, margin=0)
+function findfreeslot(reg::Register; randomize=false)
     n_slots = length(reg.staterefs)
-    freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
-    if freeslots >= margin
-        perm = randomize ? randperm : (x->1:x)
-        for i in perm(n_slots)
-            slot = reg[i]
-            islocked(slot) || isassigned(slot) || return slot
+    perm = randomize ? randperm : (x->1:x)
+    for i in perm(n_slots)
+        slot = reg[i]
+        if !islocked(slot)
+            if !isassigned(slot)
+                return slot
+            elseif !iscoherent(slot)
+                untag!(slot, reg.slot_guid[slot.idx])
+                traceout!(slot)
+                return slot
+            end
         end
     end
+end
+
+function iscoherent(slot::RegRef; buffer_time=0.0)
+    if !isassigned(slot) throw("Slot must be assigned with a quantum state before checking coherence") end
+    if slot.reg.slot_guid[slot.idx] == -1 throw("Slot hasn't been assigned yet or does not have any active entanglement") end
+    return (now(get_time_tracker(slot))) + buffer_time - slot.reg.tag_info[slot.reg.slot_guid[slot.idx]][3] < slot.reg.retention_times[slot.idx]
 end
 
 

@@ -1,7 +1,7 @@
 module ProtocolZoo
 
 using QuantumSavory
-import QuantumSavory: get_time_tracker, Tag, guid
+import QuantumSavory: get_time_tracker, Tag, iscoherent
 using QuantumSavory: Wildcard
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
@@ -149,10 +149,6 @@ $TYPEDFIELDS
     rounds::Int = -1
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
-    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
-    margin::Int = 0
-    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
-    hardmargin::Int = 0
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -170,10 +166,8 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
-        margin = isentangled ? prot.margin : prot.hardmargin
-        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
-        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
+        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize)
+        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize)
         
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
@@ -190,9 +184,9 @@ end
         @yield timeout(prot.sim, prot.local_busy_time_post)
 
         # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx; tag_time = now(prot.sim), id = guid())
+        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
         # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx; tag_time = now(prot.sim), id = guid())
+        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
 
         @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         unlock(a)
@@ -245,7 +239,6 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        reg = prot.net[prot.node]
         qubit_pair = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH)
         if isnothing(qubit_pair)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
@@ -260,11 +253,11 @@ end
 
         untag!(q1, id1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx; tag_time = now(prot.sim), id = guid())
+        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
 
         untag!(q2, id2)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx; tag_time = now(prot.sim), id = guid())
+        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
 
         uptotime!((q1, q2), now(prot.sim))
         swapcircuit = LocalEntanglementSwap()
@@ -288,9 +281,8 @@ end
 
 function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high)
     reg = net[node]
-
-    low_nodes  = queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
-    high_nodes = queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
+    low_nodes  = [n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true) if iscoherent(n.slot; buffer_time=2.0)]
+    high_nodes = [n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true) if iscoherent(n.slot; buffer_time=2.0)]
 
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
     il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
@@ -326,7 +318,7 @@ end
                 # look for EntanglementUpdate? past_remote_slot_idx local_slot_idx, new_remote_node, new_remote_slot_idx correction
                 msg = querydelete!(mb, updatetagsymbol, ❓, ❓, ❓, ❓, ❓, ❓)
                 isnothing(msg) && continue
-                @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(msg.tag[3]) | message=`$(msg.tag)`"
+                @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(msg.tag[3]) | message=`$(msg.tag)` | time=$(now(prot.sim))"
                 workwasdone = true
                 (src, (_, pastremotenode, pastremoteslotid, localslotid, newremotenode, newremoteslotid, correction)) = msg
                 localslot = nodereg[localslotid]
@@ -350,7 +342,7 @@ end
                         apply!(localslot, updategate)
                     end
                     # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid; tag_time=now(prot.sim), id = guid())
+                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                     unlock(localslot)
                     continue
                 end
@@ -410,14 +402,14 @@ end
     end
     while true
         query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
-        if isnothing(query1)
+        if isnothing(query1) || !iscoherent(query1.slot; buffer_time=0.5)
             @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
             @yield timeout(prot.sim, prot.period)
             continue
         else
             query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
-
-            if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
+            # don't really need to check `iscoherent` the second time, but just for safety
+            if isnothing(query2) || !iscoherent(query2.slot; buffer_time=0.5) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 @yield timeout(prot.sim, prot.period)
                 continue
@@ -427,8 +419,7 @@ end
         q1 = query1.slot 
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
-
-        @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement"
+        @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement @ $(now(prot.sim))"
         untag!(q1, query1.id)
         untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
