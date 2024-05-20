@@ -409,7 +409,7 @@ end
 
 function iscoherent(slot::RegRef; buffer_time=0.0)
     if !isassigned(slot) throw("Slot must be assigned with a quantum state before checking coherence") end
-    if slot.reg.slot_guid[slot.idx] == -1 throw("Slot hasn't been assigned yet or does not have any active entanglement") end
+    if slot.reg.slot_guid[slot.idx] == -1 return true end
     return (now(get_time_tracker(slot))) + buffer_time - slot.reg.tag_info[slot.reg.slot_guid[slot.idx]][3] < slot.reg.retention_times[slot.idx]
 end
 
