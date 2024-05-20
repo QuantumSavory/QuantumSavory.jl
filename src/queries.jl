@@ -267,9 +267,28 @@ end
 $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`Register`](@ref) that also deletes the tag.
+
+```jldoctest; filter = r"id = (\\d*), "
+julia> reg = Register(3)
+       tag!(reg[1], :tagA, 1, 2, 3)
+       tag!(reg[2], :tagA, 10, 20, 30)
+       tag!(reg[2], :tagB, 6, 7, 8);
+
+julia> queryall(reg, :tagA, ❓, ❓, ❓)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
+ (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+
+julia> querydelete!(reg, :tagA, ❓, ❓, ❓)
+(SymbolIntIntInt(:tagA, 10, 20, 30)::Tag, 2, 0.0)
+
+julia> queryall(reg, :tagA, ❓, ❓, ❓)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+```
 """
 function querydelete!(reg::Register, args...; filo=true, kwa...)
-    _querydelete(reg, args...; filo=filo, kwa...)
+    _querydelete!(reg, args...; filo=filo, kwa...)
 end
 
 function _querydelete!(reg::Register, args...; ref=nothing, kwa...)
