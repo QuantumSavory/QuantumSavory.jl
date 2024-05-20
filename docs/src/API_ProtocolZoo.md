@@ -15,12 +15,3 @@
 Modules = [QuantumSavory.ProtocolZoo]
 Private = false
 ```
-
-## Non-exported custom tags used by these protocols
-
-```@docs
-QuantumSavory.ProtocolZoo.EntanglementCounterpart
-QuantumSavory.ProtocolZoo.EntanglementHistory
-QuantumSavory.ProtocolZoo.EntanglementUpdateX
-QuantumSavory.ProtocolZoo.EntanglementUpdateZ
-```

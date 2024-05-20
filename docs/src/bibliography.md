@@ -7,7 +7,7 @@
 ## Quantum Circuits
 
 - [naomi2013topological](@cite)
-- [krastanov2019optimized](@cite)
+- [krastanov2019optimised](@cite)
 
 ## Network Protocols
 

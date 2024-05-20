@@ -18,7 +18,7 @@ export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer,
     # tags
-    EntanglementCounterpart,
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest
 
