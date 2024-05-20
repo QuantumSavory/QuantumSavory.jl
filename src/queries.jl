@@ -6,7 +6,7 @@ See also: [`query`](@ref), [`untag!`](@ref)"""
 function tag!(ref::RegRef, tag::Tag)
     id = guid()
     push!(ref.reg.guids, id)
-    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref))) 
+    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref)))
 end
 
 tag!(ref, tag) = tag!(ref,Tag(tag))
@@ -258,7 +258,7 @@ t=1.0: query returns nothing
 t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node 3
 ```
 """
-function querydelete!(mb::MessageBuffer, args...;filo=true)
+function querydelete!(mb::MessageBuffer, args...)
     r = query(mb, args...)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
