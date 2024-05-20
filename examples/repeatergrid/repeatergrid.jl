@@ -45,7 +45,7 @@ regsize = 8 # the size of the quantum registers at each node
 
 graph = grid([n,n])
 
-net = RegisterNet(graph, [Register(regsize) for i in 1:n^2])
+net = RegisterNet(graph, [Register(regsize, fill(5.0, regsize)) for i in 1:n^2])
 
 sim = get_time_tracker(net)
 
