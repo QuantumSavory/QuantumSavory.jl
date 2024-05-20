@@ -266,7 +266,7 @@ end
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`Register`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
+A [`query`](@ref) for [`Register`](@ref) that also deletes the tag.
 """
 function querydelete!(reg::Register, args...; filo=true, kwa...)
     _querydelete(reg, args...; filo=filo, kwa...)
