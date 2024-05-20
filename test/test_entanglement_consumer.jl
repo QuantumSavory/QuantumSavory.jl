@@ -6,19 +6,19 @@ using Test
 
 if isinteractive()
     using Logging
-    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
+    logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")
 end
 
 
 for i in 1:30, n in 3:30
-    @show i, n
-    net = RegisterNet([Register(10) for j in 1:n])
+    regsize = 10
+    net = RegisterNet([Register(regsize, fill(5.0, regsize)) for j in 1:n])
     sim = get_time_tracker(net)
 
     for e in edges(net)
-        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true, margin=5, hardmargin=3)
+        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true)
         @process eprot()
     end
 
