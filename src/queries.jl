@@ -264,7 +264,7 @@ end
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RefRef`](@ref)) that also deletes the tag.
+A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RegRef`](@ref)) that also deletes the tag.
 
 ```jldoctest; filter = r"id = (\\d*), "
 julia> reg = Register(3)
