@@ -87,7 +87,7 @@ whether the given slot is locked or whether it contains a quantum state.
 The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
 defaulting to `filo=true` (i.e. a stack-like behavior).
 
-```jldoctest
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
@@ -148,7 +148,7 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) on a single slot of a register.
 
-```jldoctest
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(5);
 
 julia> tag!(r[2], :symbol, 2, 3);
