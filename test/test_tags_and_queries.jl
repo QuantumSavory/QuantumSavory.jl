@@ -93,26 +93,34 @@ for i in 2:4
 end
 
 @test query(reg, EntanglementCounterpart, 1, 10) === nothing
-@test query(reg, EntanglementCounterpart, 1, 12) == (slot = reg[2], id = 13, tag = Tag(EntanglementCounterpart,1,12))
+@test strip_id(query(reg, EntanglementCounterpart, 1, 12)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
 @test query(reg, EntanglementCounterpart, 1, 12) == query(reg, EntanglementCounterpart, ==(1), ==(12))
 @test query(reg, Tag(EntanglementCounterpart, 1, 10)) === nothing
-@test query(reg, Tag(EntanglementCounterpart, 1, 12)) == (slot = reg[2], id = 13, tag = Tag(EntanglementCounterpart,1,12))
-@test query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=false) == (slot = reg[2], id = 13, tag = Tag(EntanglementCounterpart,1,12))
-@test query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=true) == (slot = reg[2], id = 13, tag = Tag(EntanglementCounterpart,1,12))
+@test strip_id(query(reg, Tag(EntanglementCounterpart, 1, 12))) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
+@test strip_id(query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=false)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
+@test strip_id(query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=true)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
 @test query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=false) == query(reg, EntanglementCounterpart, 1, ==(12), Val(false); filo=false)
 @test query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=true) == query(reg, EntanglementCounterpart, 1, ==(12), Val(false); filo=true)
-@test query(reg, EntanglementCounterpart, 1, ❓, Val(false); filo=false) == (slot = reg[2], id = 13, tag = Tag(EntanglementCounterpart,1,12))
-@test query(reg, EntanglementCounterpart, 1, ❓, Val(false); filo=true) == (slot = reg[4], id = 36, tag = Tag(EntanglementCounterpart,1,314))
+@test strip_id(query(reg, EntanglementCounterpart, 1, ❓, Val(false); filo=false)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
+@test strip_id(query(reg, EntanglementCounterpart, 1, ❓, Val(false); filo=true)) == (slot = reg[4], tag = Tag(EntanglementCounterpart,1,314))
 
-@test strip_id(queryall(reg, EntanglementCounterpart, 1, ❓)) == [(slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 314)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 114)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 14)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 313)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 113)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 13)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 312)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 112)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 12))]
-@test strip_id(queryall(reg, EntanglementCounterpart, 1, ❓; filo=true)) == [(slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 314)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 114)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 14)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 313)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 113)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 13)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 312)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 112)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 12))]
-@test strip_id(queryall(reg, EntanglementCounterpart, 1, ❓; filo=false)) == reverse([(slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 314)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 114)), (slot = reg[4], tag = Tag(EntanglementCounterpart, 1, 14)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 313)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 113)), (slot = reg[3], tag = Tag(EntanglementCounterpart, 1, 13)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 312)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 112)), (slot = reg[2], tag = Tag(EntanglementCounterpart, 1, 12))])
+default_res = queryall(reg, EntanglementCounterpart, 1, ❓)
+default_res_id = [r.id for r in default_res]
+@test strip_id.(default_res) == reverse([(slot = reg[i], tag = Tag(EntanglementCounterpart, 1, j+i)) for i in 2:4 for j in (10,110,310)])
+@test default_res_id == reverse(sort(default_res_id))
+filo_res = queryall(reg, EntanglementCounterpart, 1, ❓; filo=true)
+filo_res_id = [r.id for r in filo_res]
+@test strip_id.(filo_res) == strip_id.(default_res)
+@test filo_res_id == default_res_id
+fifo_res = queryall(reg, EntanglementCounterpart, 1, ❓; filo=false)
+fifo_res_id = [r.id for r in fifo_res]
+@test strip_id.(fifo_res) == reverse(strip_id.(default_res))
+@test fifo_res_id == sort(fifo_res_id)
 
-@test query(reg, EntanglementCounterpart, 2, 22) == (slot = reg[2], id = 19, tag = Tag(EntanglementCounterpart,2,22))
-@test strip_id(queryall(reg, EntanglementCounterpart, 2, 22)) == [(slot = reg[2], tag = Tag(EntanglementCounterpart,2,22)), (slot = reg[2], tag = Tag(EntanglementCounterpart,2,22))]
-@test strip_id(queryall(reg, Tag(EntanglementCounterpart, 2, 22))) == [(slot = reg[2], tag = Tag(EntanglementCounterpart,2,22)), (slot = reg[2], tag = Tag(EntanglementCounterpart,2,22))]
+@test strip_id.(queryall(reg, EntanglementCounterpart, 2, 22)) == [(slot = reg[2], tag = Tag(EntanglementCounterpart,2,22)), (slot = reg[2], tag = Tag(EntanglementCounterpart,2,22))]
+@test strip_id.(queryall(reg, Tag(EntanglementCounterpart, 2, 22))) == [(slot = reg[2], tag = Tag(EntanglementCounterpart,2,22)), (slot = reg[2], tag = Tag(EntanglementCounterpart,2,22))]
 @test queryall(reg, EntanglementCounterpart, 2, 22) == queryall(reg, EntanglementCounterpart, ==(2), ==(22)) == queryall(reg, Tag(EntanglementCounterpart, 2, 22))
-@test strip_id(queryall(reg, Tag(EntanglementCounterpart, 2, 22); filo=false)) == [(slot = reg[2], tag = Tag(EntanglementCounterpart,2,22)), (slot = reg[2], tag = Tag(EntanglementCounterpart,2,22))]
+@test strip_id.(queryall(reg, Tag(EntanglementCounterpart, 2, 22); filo=false)) == [(slot = reg[2], tag = Tag(EntanglementCounterpart,2,22)), (slot = reg[2], tag = Tag(EntanglementCounterpart,2,22))]
 @test queryall(reg, EntanglementCounterpart, 2, 22; filo=false) == queryall(reg, EntanglementCounterpart, ==(2), ==(22); filo=false) == queryall(reg, Tag(EntanglementCounterpart, 2, 22); filo=false)
 
 reg = Register(4)
