@@ -128,7 +128,7 @@ function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{
     _query(reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned)
 end
 
-function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, ref::Union{Nothing,Int}=nothing) where {allB, filoB}
+function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, ref=nothing) where {allB, filoB}
     result = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
     op_guid = filoB ? reverse : identity
     for i in op_guid(reg.guids)
