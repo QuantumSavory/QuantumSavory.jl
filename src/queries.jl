@@ -266,7 +266,7 @@ end
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`Register`](@ref) that also deletes the tag.
+A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RefRef`](@ref)) that also deletes the tag.
 
 ```jldoctest; filter = r"id = (\\d*), "
 julia> reg = Register(3)
@@ -280,32 +280,17 @@ julia> queryall(reg, :tagA, ❓, ❓, ❓)
  (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
 
 julia> querydelete!(reg, :tagA, ❓, ❓, ❓)
-(SymbolIntIntInt(:tagA, 10, 20, 30)::Tag, 2, 0.0)
+(slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
 
 julia> queryall(reg, :tagA, ❓, ❓, ❓)
 1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
  (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
 ```
 """
-function querydelete!(reg::Register, args...; filo=true, kwa...)
-    _querydelete!(reg, args...; filo=filo, kwa...)
-end
-
-function _querydelete!(reg::Register, args...; ref=nothing, kwa...)
-    r = isnothing(ref) ? query(reg, args..., Val{false}(); kwa...) : query(ref, args..., Val{false}(), ; kwa...)
-    ret = !isnothing(r) ? reg.tag_info[r.id] : return nothing
-    untag!(r.slot, r.id)
-    return ret
-end
-
-"""
-$TYPEDSIGNATURES
-
-A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
-Allows the user to specify order of accessing tags to be FILO or FIFO.
-"""
-function querydelete!(ref::RegRef, args...; filo=true, kwa...)
-    _querydelete!(ref.reg, args...;filo=filo, ref=ref, kwa...)
+function querydelete!(reg::Union{Register,RegRef}, args...; kwa...)
+    r = query(reg, args..., Val{false}(); kwa...)
+    isnothing(r) || untag!(r.slot, r.id)
+    return r
 end
 
 
