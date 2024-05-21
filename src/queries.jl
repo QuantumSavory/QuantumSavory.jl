@@ -307,8 +307,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
     args = (:a, :b, :c, :d, :e, :f, :g)[1:length(sig)]
     argssig = [:($a::$t) for (a,t) in zip(args, sig)]
 
-    eval(quote function tag!(ref::RegRef, $(argssig...); kwa...)
-        tag!(ref, ($tagvariant)($(args...)); kwa...)
+    eval(quote function tag!(ref::RegRef, $(argssig...))
+        tag!(ref, ($tagvariant)($(args...)))
     end end)
 
     eval(quote function Tag($(argssig...))
