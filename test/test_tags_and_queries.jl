@@ -5,9 +5,11 @@ using Test
 
 @test tag_types.SymbolIntInt(:symbol1, 4, 5) == Tag(:symbol1, 4, 5)
 
-function strip_id(info_vector)
-    return [(slot=n.slot, tag=n.tag) for n in info_vector]
+function strip_id(query_result)
+    return (;slot=query_result.slot, tag=query_result.tag)
 end
+
+strip_id(::Nothing) = nothing
 
 r = Register(10)
 tag!(r[1], :symbol1, 2, 3)
@@ -16,31 +18,31 @@ tag!(r[3], :symbol1, 4, 1)
 tag!(r[5], Int, 4, 5)
 
 @test Tag(:symbol1, 2, 3) == tag_types.SymbolIntInt(:symbol1, 2, 3)
-@test query(r, :symbol1, 4, ❓) == (slot=r[3], id=3, tag=tag_types.SymbolIntInt(:symbol1, 4, 1))
-@test query(r, :symbol1, 4, 5) == (slot=r[2], id=2, tag=tag_types.SymbolIntInt(:symbol1, 4, 5))
-@test query(r, :symbol1, ❓, ❓) == (slot=r[3], id=3, tag=tag_types.SymbolIntInt(:symbol1, 4, 1)) #returns latest tag in filo order
+@test strip_id(query(r, :symbol1, 4, ❓)) == (slot=r[3], tag=tag_types.SymbolIntInt(:symbol1, 4, 1))
+@test strip_id(query(r, :symbol1, 4, 5)) == (slot=r[2], tag=tag_types.SymbolIntInt(:symbol1, 4, 5))
+@test strip_id(query(r, :symbol1, ❓, ❓)) == (slot=r[3], tag=tag_types.SymbolIntInt(:symbol1, 4, 1)) #returns latest tag in filo order
 @test query(r, :symbol2, ❓, ❓) == nothing
-@test query(r, Int, 4, 5) == (slot=r[5], id=4, tag=tag_types.TypeIntInt(Int, 4, 5))
+@test strip_id(query(r, Int, 4, 5)) == (slot=r[5], tag=tag_types.TypeIntInt(Int, 4, 5))
 @test query(r, Float32, 4, 5) == nothing
 @test query(r, Int, 4, >(5)) == nothing
-@test query(r, Int, 4, <(6)) == (slot=r[5], id=4, tag=tag_types.TypeIntInt(Int, 4, 5))
+@test strip_id(query(r, Int, 4, <(6))) == (slot=r[5], tag=tag_types.TypeIntInt(Int, 4, 5))
 
-@test queryall(r, :symbol1, ❓, ❓) == [(slot=r[3], id=3, tag=tag_types.SymbolIntInt(:symbol1, 4, 1)), (slot=r[2], id=2, tag=tag_types.SymbolIntInt(:symbol1, 4, 5)), (slot=r[1], id=1, tag=tag_types.SymbolIntInt(:symbol1, 2, 3))] # filo by default
+@test strip_id.(queryall(r, :symbol1, ❓, ❓)) == [(slot=r[3], tag=Tag(:symbol1, 4, 1)), (slot=r[2], tag=Tag(:symbol1, 4, 5)), (slot=r[1], tag=Tag(:symbol1, 2, 3))] # filo by default
 @test isempty(queryall(r, :symbol2, ❓, ❓))
 
-@test query(r[2], Tag(:symbol1, 4, 5)) == (slot=r[2], id=2, tag=tag_types.SymbolIntInt(:symbol1, 4, 5))
-@test queryall(r[2], Tag(:symbol1, 4, 5)) == [(slot=r[2], id=2, tag=Tag(:symbol1, 4, 5))]
-@test query(r[2], :symbol1, 4, 5) == (slot=r[2], id=2, tag=Tag(:symbol1, 4, 5))
-@test queryall(r[2], :symbol1, 4, 5) == [(slot=r[2], id=2, tag=Tag(:symbol1, 4, 5))]
+@test strip_id(query(r[2], Tag(:symbol1, 4, 5))) == (slot=r[2], tag=Tag(:symbol1, 4, 5))
+@test strip_id.(queryall(r[2], Tag(:symbol1, 4, 5))) == [(slot=r[2], tag=Tag(:symbol1, 4, 5))]
+@test strip_id(query(r[2], :symbol1, 4, 5)) == (slot=r[2], tag=Tag(:symbol1, 4, 5))
+@test strip_id.(queryall(r[2], :symbol1, 4, 5)) == [(slot=r[2], tag=Tag(:symbol1, 4, 5))]
 
-@test query(r[2], :symbol1, 4, ❓) == (slot=r[2], id=2, tag=Tag(:symbol1, 4, 5))
-@test queryall(r[2], :symbol1, 4, ❓) == [(slot=r[2], id=2, tag=Tag(:symbol1, 4, 5))]
+@test strip_id(query(r[2], :symbol1, 4, ❓)) == (slot=r[2], tag=Tag(:symbol1, 4, 5))
+@test strip_id.(queryall(r[2], :symbol1, 4, ❓)) == [(slot=r[2], tag=Tag(:symbol1, 4, 5))]
 
-@test querydelete!(r[2], :symbol1, 4, ❓) == (Tag(:symbol1, 4, 5), 2, 0.0)
+@test strip_id(querydelete!(r[2], :symbol1, 4, ❓)) == (slot=r[2], tag=Tag(:symbol1, 4, 5))
 @test querydelete!(r[2], :symbol1, 4, ❓) === nothing
-@test querydelete!(r[3], :symbol1, 4, ❓) == (Tag(:symbol1, 4, 1), 3, 0.0)
+@test strip_id(querydelete!(r[3], :symbol1, 4, ❓)) == (slot=r[3], tag=Tag(:symbol1, 4, 1))
 
-
+##
 # tests for fifo and filo order queries (default is filo)
 # for RegRefs
 
