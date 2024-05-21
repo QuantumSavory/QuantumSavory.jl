@@ -7,6 +7,7 @@ function tag!(ref::RegRef, tag::Tag)
     id = guid()
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref)))
+
     ref.reg.slot_guid[ref.idx] = id
 end
 
@@ -19,12 +20,11 @@ Removes the first instance of tag from the list to tags associated with a [`RegR
 
 See also: [`query`](@ref), [`tag!`](@ref)
 """
-function untag!(ref::RegRef, id::Int128) # TODO rather slow implementation. See issue #74
+function untag!(ref::RegRef, id::Int128)
     i = findfirst(==(id), ref.reg.guids)
     isnothing(i) ? throw(KeyError(tag)) : deleteat!(ref.reg.guids, i) # TODO make sure there is a clear error message
     delete!(ref.reg.tag_info, id)
     ref.reg.slot_guid[ref.idx] = -1
-    nothing
 end
 
 
@@ -56,9 +56,8 @@ $TYPEDSIGNATURES
 
 A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
 
-```jldoctest
-julia> QuantumSavory.glcnt[] = 0;
 
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
@@ -91,7 +90,7 @@ whether the given slot is locked or whether it contains a quantum state.
 The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
 defaulting to `filo=true` (i.e. a stack-like behavior).
 
-```jldoctest
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
@@ -137,7 +136,7 @@ function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=
     op_guid = filoB ? reverse : identity
     for i in op_guid(reg.guids)
         slot = reg[reg.tag_info[i][2]]
-        if reg.tag_info[i][1] == tag && (isnothing(ref) || (ref == slot)) # Need to check slot when calling from `query` dispatch on RegRef
+        if reg.tag_info[i][1] == tag && _nothingor(ref, slot) # Need to check slot when calling from `query` dispatch on RegRef
             if _nothingor(locked, islocked(slot) && _nothingor(assigned, isassigned(slot)))
                 allB ? push!(result, (slot=slot, id=i, tag=reg.tag_info[i][1])) : return (slot=slot, id=i, tag=reg.tag_info[i][1])
             end
@@ -152,7 +151,7 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) on a single slot of a register.
 
-```jldoctest
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(5);
 
 julia> tag!(r[2], :symbol, 2, 3);
@@ -265,30 +264,35 @@ function querydelete!(mb::MessageBuffer, args...;filo=true)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
-"""
-$TYPEDSIGNATURES
-
-A [`query`](@ref) for [`Register`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
-"""
-function querydelete!(reg::Register, args...; filo=true, kwa...)
-    _querydelete(reg, args...; filo=filo, kwa...)
-end
-
-function _querydelete!(reg::Register, args...; ref=nothing, kwa...)
-    r = isnothing(ref) ? query(reg, args..., Val{false}(); kwa...) : query(ref, args..., Val{false}(), ; kwa...)
-    ret = !isnothing(r) ? reg.tag_info[r.id] : return nothing
-    untag!(r.slot, r.id)
-    return ret
-end
 
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag dictionary for the `Register`.
-Allows the user to specify order of accessing tags to be FILO or FIFO.
+A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RegRef`](@ref)) that also deletes the tag.
+
+```jldoctest; filter = r"id = (\\d*), "
+julia> reg = Register(3)
+       tag!(reg[1], :tagA, 1, 2, 3)
+       tag!(reg[2], :tagA, 10, 20, 30)
+       tag!(reg[2], :tagB, 6, 7, 8);
+
+julia> queryall(reg, :tagA, ❓, ❓, ❓)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
+ (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+
+julia> querydelete!(reg, :tagA, ❓, ❓, ❓)
+(slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
+
+julia> queryall(reg, :tagA, ❓, ❓, ❓)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+```
 """
-function querydelete!(ref::RegRef, args...; filo=true, kwa...)
-    _querydelete!(ref.reg, args...;filo=filo, ref=ref, kwa...)
+function querydelete!(reg::Union{Register,RegRef}, args...; kwa...)
+    r = query(reg, args..., Val{false}(); kwa...)
+    isnothing(r) || untag!(r.slot, r.id)
+    return r
 end
 
 

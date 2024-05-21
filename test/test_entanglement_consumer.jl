@@ -12,7 +12,8 @@ if isinteractive()
 end
 
 
-for i in 1:30, n in 3:30
+
+for n in 3:30
     regsize = 10
     net = RegisterNet([Register(regsize, fill(5.0, regsize)) for j in 1:n])
     sim = get_time_tracker(net)
