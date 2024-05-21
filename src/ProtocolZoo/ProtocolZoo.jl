@@ -174,7 +174,7 @@ end
         margin = isentangled ? prot.margin : prot.hardmargin
         a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
         b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
-        
+
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
@@ -362,7 +362,7 @@ end
                                     ❓)                                # which local slot used to be entangled with whom we swapped with
                 if !isnothing(history)
                     # @debug "tracker @$(prot.node) history: $(history) | msg: $msg"
-                    _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history[1]
+                    _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history.tag
                     tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx)
                     @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                     msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
@@ -423,8 +423,8 @@ end
                 continue
             end
         end
-        
-        q1 = query1.slot 
+
+        q1 = query1.slot
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
 
