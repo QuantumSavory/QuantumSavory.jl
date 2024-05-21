@@ -174,7 +174,7 @@ end
         margin = isentangled ? prot.margin : prot.hardmargin
         a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
         b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
-        
+
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
@@ -253,16 +253,16 @@ end
             continue
         end
 
-        (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
-        (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
+        (q1, id1, tag1) = qubit_pair[1].slot, qubit_pair[1].id, qubit_pair[1].tag
+        (q2, id2, tag2) = qubit_pair[2].slot, qubit_pair[2].id, qubit_pair[2].tag
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
 
-        untag!(q1, tag1)
+        untag!(q1, id1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
 
-        untag!(q2, tag2)
+        untag!(q2, id2)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
 
@@ -362,7 +362,7 @@ end
                                     ❓)                                # which local slot used to be entangled with whom we swapped with
                 if !isnothing(history)
                     # @debug "tracker @$(prot.node) history: $(history) | msg: $msg"
-                    _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history
+                    _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history.tag
                     tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx)
                     @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                     msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
@@ -423,14 +423,14 @@ end
                 continue
             end
         end
-        
-        q1 = query1.slot 
+
+        q1 = query1.slot
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
 
         @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement"
-        untag!(q1, query1.tag)
-        untag!(q2, query2.tag)
+        untag!(q1, query1.id)
+        untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
         ob1 = real(observable((q1, q2), Z⊗Z))

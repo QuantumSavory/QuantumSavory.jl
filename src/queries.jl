@@ -2,28 +2,27 @@
 
 Assign a tag to a slot in a register.
 
-It returns the list of all currently present tags for that register.
-
 See also: [`query`](@ref), [`untag!`](@ref)"""
 function tag!(ref::RegRef, tag::Tag)
-    push!(ref.reg.tags[ref.idx], tag)
+    id = guid()
+    push!(ref.reg.guids, id)
+    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref)))
 end
 
-tag!(ref, tag) = tag!(ref, Tag(tag))
+tag!(ref, tag) = tag!(ref,Tag(tag))
 
 
 """$TYPEDSIGNATURES
 
 Removes the first instance of tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
 
-It returns the list of all currently present tags for that register.
-
 See also: [`query`](@ref), [`tag!`](@ref)
 """
-function untag!(ref::RegRef, tag::Tag) # TODO rather slow implementation. See issue #74
-    tags = ref.reg.tags[ref.idx]
-    i = findfirst(==(tag), tags)
-    isnothing(i) ? throw(KeyError(tag)) : deleteat!(tags, i) # TODO make sure there is a clear error message
+function untag!(ref::RegRef, id::Int128)
+    i = findfirst(==(id), ref.reg.guids)
+    isnothing(i) ? throw(KeyError(tag)) : deleteat!(ref.reg.guids, i) # TODO make sure there is a clear error message
+    delete!(ref.reg.tag_info, id)
+    nothing
 end
 
 
@@ -55,22 +54,22 @@ $TYPEDSIGNATURES
 
 A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
 
-```jldoctest
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
 
 julia> queryall(r, :symbol, ❓, ❓)
-2-element Vector{@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}}:
- (slot = Slot 1, depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
- (slot = Slot 2, depth = 1, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+ (slot = Slot 1, id = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(4))
-1-element Vector{@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}}:
- (slot = Slot 2, depth = 1, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> queryall(r, :symbol, ❓, >(5))
-@NamedTuple{slot::RegRef, depth::Int64, tag::Tag}[]
+@NamedTuple{slot::RegRef, id::Int128, tag::Tag}[]
 ```
 """
 queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
@@ -88,14 +87,14 @@ whether the given slot is locked or whether it contains a quantum state.
 The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
 defaulting to `filo=true` (i.e. a stack-like behavior).
 
-```jldoctest
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
 
 
 julia> query(r, :symbol, 4, 5)
-(slot = Slot 2, depth = 1, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+(slot = Slot 2, id = 4, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
 
 julia> lock(r[1]);
 
@@ -103,7 +102,7 @@ julia> query(r, :symbol, 4, 5; locked=false) |> isnothing
 false
 
 julia> query(r, :symbol, ❓, 3)
-(slot = Slot 1, depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = Slot 1, id = 3, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> query(r, :symbol, ❓, 3; assigned=true) |> isnothing
 true
@@ -120,7 +119,7 @@ julia> query(r, Int, 4, >(7)) |> isnothing
 true
 
 julia> query(r, Int, 4, <(7))
-(slot = Slot 5, depth = 1, tag = TypeIntInt(Int64, 4, 5)::Tag)
+(slot = Slot 5, id = 5, tag = TypeIntInt(Int64, 4, 5)::Tag)
 ```
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
@@ -129,12 +128,14 @@ function query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{
     _query(reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned)
 end
 
-function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
-    result = NamedTuple{(:slot, :depth, :tag), Tuple{RegRef, Int, Tag}}[]
-    for i in 1:length(reg)
-        if _nothingor(locked, islocked(reg[i])) && _nothingor(assigned, isassigned(reg[i]))
-            for res in _query(reg[i], tag, Val{true}(), Val{filoB}())
-                allB ? push!(result, (slot=reg[i],res...)) : return (slot=reg[i],res...)
+function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, ref=nothing) where {allB, filoB}
+    result = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
+    op_guid = filoB ? reverse : identity
+    for i in op_guid(reg.guids)
+        slot = reg[reg.tag_info[i][2]]
+        if reg.tag_info[i][1] == tag && _nothingor(ref, slot) # Need to check slot when calling from `query` dispatch on RegRef
+            if _nothingor(locked, islocked(slot) && _nothingor(assigned, isassigned(slot)))
+                allB ? push!(result, (slot=slot, id=i, tag=reg.tag_info[i][1])) : return (slot=slot, id=i, tag=reg.tag_info[i][1])
             end
         end
     end
@@ -147,36 +148,24 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) on a single slot of a register.
 
-```jldoctest
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(5);
 
 julia> tag!(r[2], :symbol, 2, 3);
 
 julia> query(r[2], :symbol, 2, 3)
-(depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 
 julia> query(r[3], :symbol, 2, 3) === nothing
 true
 
 julia> queryall(r[2], :symbol, 2, 3)
-1-element Vector{@NamedTuple{depth::Int64, tag::Tag}}:
- (depth = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
 ```
 """
-function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(); filo::Bool=true) where {allB} # TODO this should support locked and assigned like query(::Register)
-    _query(ref, tag, Val{allB}(), Val{filo}())
-end
-
-function _query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}()) where {allB, filoB} # TODO there is a lot of code duplication here
-    if allB
-        i = findall(==(tag), ref.reg.tags[ref.idx])
-        i = filoB ? reverse(i) : i
-        return NamedTuple{(:depth, :tag), Tuple{Int, Tag}}[(depth=i, tag=tag) for i in i]
-    else
-        find = filoB ? findlast : findfirst
-        i = find(==(tag), ref.reg.tags[ref.idx])
-        return isnothing(i) ? nothing : (;depth=i, tag=tag)
-    end
+function query(ref::RegRef, tag::Tag, ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
+    _query(ref.reg, tag, Val{allB}(), Val{filo}(); locked=locked, assigned=assigned, ref=ref)
 end
 
 
@@ -272,17 +261,34 @@ function querydelete!(mb::MessageBuffer, args...)
     return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
 end
 
-
-
 """
 $TYPEDSIGNATURES
 
-A [`query`](@ref) for [`RegRef`](@ref) that also deletes the tag from the tag list for the `RegRef`.
-Allows the user to specify order of accessing tags to be FILO or FIFO.
+A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RegRef`](@ref)) that also deletes the tag.
+
+```jldoctest; filter = r"id = (\\d*), "
+julia> reg = Register(3)
+       tag!(reg[1], :tagA, 1, 2, 3)
+       tag!(reg[2], :tagA, 10, 20, 30)
+       tag!(reg[2], :tagB, 6, 7, 8);
+
+julia> queryall(reg, :tagA, ❓, ❓, ❓)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
+ (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+
+julia> querydelete!(reg, :tagA, ❓, ❓, ❓)
+(slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
+
+julia> queryall(reg, :tagA, ❓, ❓, ❓)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
+ (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+```
 """
-function querydelete!(ref::RegRef, args...; filo::Bool=true) # TODO there is a lot of code duplication here
-    r = query(ref, args...; filo)
-    return isnothing(r) ? nothing : popat!(ref.reg.tags[ref.idx], r.depth)
+function querydelete!(reg::Union{Register,RegRef}, args...; kwa...)
+    r = query(reg, args..., Val{false}(); kwa...)
+    isnothing(r) || untag!(r.slot, r.id)
+    return r
 end
 
 
@@ -323,16 +329,15 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
         wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag[$i])) for i in idx]
         nonwild_checks = [:(tag[$i]==$(args[i])) for i in complement_idx]
         newmethod_reg = quote function query(reg::Register, $(argssig_wild...), ::Val{allB}=Val{false}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {allB}
-            res = NamedTuple{(:slot, :depth, :tag), Tuple{RegRef, Int, Tag}}[]
-            for (reg_idx, tags) in enumerate(reg.tags)
-                slot = reg[reg_idx]
-                for depth in (filo ? reverse(keys(tags)) : keys(tags))
-                    tag = tags[depth]
-                    if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
-                        (_nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))) || continue
-                        if _all($(nonwild_checks...)) && _all($(wild_checks...))
-                            allB ? push!(res, (;slot, depth, tag)) : return (;slot, depth, tag)
-                        end
+            res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
+            op_guid = filo ? reverse : identity
+            for i in op_guid(reg.guids)
+                tag = reg.tag_info[i][1]
+                slot = reg[reg.tag_info[i][2]]
+                if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
+                    (_nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))) || continue
+                    if _all($(nonwild_checks...)) && _all($(wild_checks...))
+                        allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
                     end
                 end
             end
@@ -348,13 +353,13 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
             end
         end end
         newmethod_rr = quote function query(ref::RegRef, $(argssig_wild...), ::Val{allB}=Val{false}(); filo::Bool=true) where {allB}
-            res = NamedTuple{(:depth, :tag), Tuple{Int, Tag}}[]
-            tags = ref.reg.tags[ref.idx]
-            for depth in (filo ? reverse(keys(tags)) : keys(tags))
-                tag = tags[depth]
+            res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
+            op_guid = filo ? reverse : identity
+            for i in op_guid(ref.reg.guids)
+                tag = ref.reg.tag_info[i][1]
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
-                    if _all($(nonwild_checks...)) && _all($(wild_checks...))
-                        allB ? push!(res, (;depth, tag)) : return (;depth, tag)
+                    if _all($(nonwild_checks...)) && _all($(wild_checks...)) && (ref.reg[ref.reg.tag_info[i][2]] == ref)
+                        allB ? push!(res, (slot=ref, id=i, tag=tag)) : return (slot=ref, id=i, tag=tag)
                     end
                 end
             end

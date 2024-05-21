@@ -28,8 +28,7 @@ for i in 1:10
     @process entangler1()
     run(sim, 20)
 
-    @test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
-
+    @test [net[1].tag_info[i][1] for i in net[1].guids] == [Tag(EntanglementCounterpart, 2, 1)]
 
     entangler2 = EntanglerProt(sim, net, 2, 3; rounds=1)
     @process entangler2()
@@ -38,10 +37,10 @@ for i in 1:10
     @process entangler3()
     run(sim, 60)
 
-    @test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
-    @test net[2].tags == [[Tag(EntanglementCounterpart, 1, 1)],[Tag(EntanglementCounterpart, 3, 1)],[],[]]
-    @test net[3].tags == [[Tag(EntanglementCounterpart, 2, 2)],[Tag(EntanglementCounterpart, 4, 1)]]
-    @test net[4].tags == [[Tag(EntanglementCounterpart, 3, 2)],[],[]]
+    @test [net[1].tag_info[i][1] for i in net[1].guids] == [Tag(EntanglementCounterpart, 2, 1)]
+    @test [net[2].tag_info[i][1] for i in net[2].guids] == [Tag(EntanglementCounterpart, 1, 1), Tag(EntanglementCounterpart, 3, 1)]
+    @test [net[3].tag_info[i][1] for i in net[3].guids] == [Tag(EntanglementCounterpart, 2, 2), Tag(EntanglementCounterpart, 4, 1)]
+    @test [net[4].tag_info[i][1] for i in net[4].guids] == [Tag(EntanglementCounterpart, 3, 2)]
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
@@ -53,10 +52,10 @@ for i in 1:10
     run(sim, 80)
 
     # In the absence of an entanglement tracker the tags will not all be updated
-    @test net[1].tags == [[Tag(EntanglementCounterpart, 2, 1)],[],[]]
-    @test net[2].tags == [[Tag(EntanglementHistory, 1, 1, 3, 1, 2)],[Tag(EntanglementHistory, 3, 1, 1, 1, 1)],[],[]]
-    @test net[3].tags == [[Tag(EntanglementHistory, 2, 2, 4, 1, 2)],[Tag(EntanglementHistory, 4, 1, 2, 2, 1)]]
-    @test net[4].tags == [[Tag(EntanglementCounterpart, 3, 2)],[],[]]
+    @test [net[1].tag_info[i][1] for i in net[1].guids] == [Tag(EntanglementCounterpart, 2, 1)]
+    @test [net[2].tag_info[i][1] for i in net[2].guids] == [Tag(EntanglementHistory, 1, 1, 3, 1, 2),Tag(EntanglementHistory, 3, 1, 1, 1, 1)]
+    @test [net[3].tag_info[i][1] for i in net[3].guids] == [Tag(EntanglementHistory, 2, 2, 4, 1, 2), Tag(EntanglementHistory, 4, 1, 2, 2, 1)]
+    @test [net[4].tag_info[i][1] for i in net[4].guids] == [Tag(EntanglementCounterpart, 3, 2)]
 
     @test isassigned(net[1][1]) && isassigned(net[4][1])
     @test !isassigned(net[2][1]) && !isassigned(net[3][1])
@@ -90,7 +89,6 @@ end
 # same but this time with an entanglement tracker
 
 for i in 1:30, n in 2:30
-    #@show n, i
     net = RegisterNet([Register(j+3) for j in 1:n])
     sim = get_time_tracker(net)
     for j in vertices(net)
