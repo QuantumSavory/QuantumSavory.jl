@@ -18,7 +18,7 @@ Removes the first instance of tag from the list to tags associated with a [`RegR
 
 See also: [`query`](@ref), [`tag!`](@ref)
 """
-function untag!(ref::RegRef, id::Int128) # TODO rather slow implementation. See issue #74
+function untag!(ref::RegRef, id::Int128)
     i = findfirst(==(id), ref.reg.guids)
     isnothing(i) ? throw(KeyError(tag)) : deleteat!(ref.reg.guids, i) # TODO make sure there is a clear error message
     delete!(ref.reg.tag_info, id)
@@ -54,9 +54,7 @@ $TYPEDSIGNATURES
 
 A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
 
-```jldoctest
-julia> QuantumSavory.glcnt[] = 0;
-
+```jldoctest; filter = r"id = (\\d*), "
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
