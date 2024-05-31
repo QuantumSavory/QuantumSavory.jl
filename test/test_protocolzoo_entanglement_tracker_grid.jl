@@ -73,7 +73,7 @@ for path in paths
     @process entangler1()
     run(sim, 20)
 
-    @test [net[1].tag_info[i][1] for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
+    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
 
 
     # For no particular reason we are starting the entangler protocols at different times
@@ -94,13 +94,13 @@ for path in paths
     @process entangler6()
     run(sim, 120)
 
-    @test [net[1].tag_info[i][1] for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
-    @test [net[path[1]].tag_info[i][1] for i in net[path[1]].guids] == [Tag(EntanglementCounterpart, 1, 1), Tag(EntanglementCounterpart, path[2], 1)]
-    @test [net[path[2]].tag_info[i][1] for i in net[path[2]].guids] == [Tag(EntanglementCounterpart, path[1], 2), Tag(EntanglementCounterpart, path[3], 1)]
-    @test [net[path[3]].tag_info[i][1] for i in net[path[3]].guids] == [Tag(EntanglementCounterpart, path[2], 2), Tag(EntanglementCounterpart, path[4], 1)]
-    @test [net[path[4]].tag_info[i][1] for i in net[path[4]].guids] == [Tag(EntanglementCounterpart, path[3], 2), Tag(EntanglementCounterpart, path[5], 1)]
-    @test [net[path[5]].tag_info[i][1] for i in net[path[5]].guids] == [Tag(EntanglementCounterpart, path[4], 2), Tag(EntanglementCounterpart, 16, 1)]
-    @test [net[16].tag_info[i][1] for i in net[16].guids] == [Tag(EntanglementCounterpart, path[5], 2)]
+    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
+    @test [net[path[1]].tag_info[i].tag for i in net[path[1]].guids] == [Tag(EntanglementCounterpart, 1, 1), Tag(EntanglementCounterpart, path[2], 1)]
+    @test [net[path[2]].tag_info[i].tag for i in net[path[2]].guids] == [Tag(EntanglementCounterpart, path[1], 2), Tag(EntanglementCounterpart, path[3], 1)]
+    @test [net[path[3]].tag_info[i].tag for i in net[path[3]].guids] == [Tag(EntanglementCounterpart, path[2], 2), Tag(EntanglementCounterpart, path[4], 1)]
+    @test [net[path[4]].tag_info[i].tag for i in net[path[4]].guids] == [Tag(EntanglementCounterpart, path[3], 2), Tag(EntanglementCounterpart, path[5], 1)]
+    @test [net[path[5]].tag_info[i].tag for i in net[path[5]].guids] == [Tag(EntanglementCounterpart, path[4], 2), Tag(EntanglementCounterpart, 16, 1)]
+    @test [net[16].tag_info[i].tag for i in net[16].guids] == [Tag(EntanglementCounterpart, path[5], 2)]
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
@@ -115,13 +115,13 @@ for path in paths
     run(sim, 200)
 
     # In the absence of an entanglement tracker the tags will not all be updated
-    @test [net[1].tag_info[i][1] for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
-    @test [net[path[1]].tag_info[i][1] for i in net[path[1]].guids] == [Tag(EntanglementHistory, 1, 1, path[2], 1, 2), Tag(EntanglementHistory, path[2], 1, 1, 1, 1)]
-    @test [net[path[2]].tag_info[i][1] for i in net[path[2]].guids] == [Tag(EntanglementHistory, path[1], 2, path[3], 1, 2), Tag(EntanglementHistory, path[3], 1, path[1], 2, 1)]
-    @test [net[path[3]].tag_info[i][1] for i in net[path[3]].guids] == [Tag(EntanglementHistory, path[2], 2, path[4], 1, 2), Tag(EntanglementHistory, path[4], 1, path[2], 2, 1)]
-    @test [net[path[4]].tag_info[i][1] for i in net[path[4]].guids] == [Tag(EntanglementHistory, path[3], 2, path[5], 1, 2), Tag(EntanglementHistory, path[5], 1, path[3], 2, 1)]
-    @test [net[path[5]].tag_info[i][1] for i in net[path[5]].guids] == [Tag(EntanglementHistory, path[4], 2, 16, 1, 2), Tag(EntanglementHistory, 16, 1, path[4], 2, 1)]
-    @test [net[16].tag_info[i][1] for i in net[16].guids] == [Tag(EntanglementCounterpart, path[5], 2)]
+    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
+    @test [net[path[1]].tag_info[i].tag for i in net[path[1]].guids] == [Tag(EntanglementHistory, 1, 1, path[2], 1, 2), Tag(EntanglementHistory, path[2], 1, 1, 1, 1)]
+    @test [net[path[2]].tag_info[i].tag for i in net[path[2]].guids] == [Tag(EntanglementHistory, path[1], 2, path[3], 1, 2), Tag(EntanglementHistory, path[3], 1, path[1], 2, 1)]
+    @test [net[path[3]].tag_info[i].tag for i in net[path[3]].guids] == [Tag(EntanglementHistory, path[2], 2, path[4], 1, 2), Tag(EntanglementHistory, path[4], 1, path[2], 2, 1)]
+    @test [net[path[4]].tag_info[i].tag for i in net[path[4]].guids] == [Tag(EntanglementHistory, path[3], 2, path[5], 1, 2), Tag(EntanglementHistory, path[5], 1, path[3], 2, 1)]
+    @test [net[path[5]].tag_info[i].tag for i in net[path[5]].guids] == [Tag(EntanglementHistory, path[4], 2, 16, 1, 2), Tag(EntanglementHistory, 16, 1, path[4], 2, 1)]
+    @test [net[16].tag_info[i].tag for i in net[16].guids] == [Tag(EntanglementCounterpart, path[5], 2)]
 
     @test isassigned(net[1][1]) && isassigned(net[16][1])
     @test !isassigned(net[path[1]][1]) && !isassigned(net[path[2]][1])

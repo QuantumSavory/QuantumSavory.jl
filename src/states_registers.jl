@@ -20,7 +20,7 @@ struct Register # TODO better type description
     stateindices::Vector{Int}
     accesstimes::Vector{Float64} # TODO do not hardcode the type
     locks::Vector{Any}
-    tag_info::Dict{Int128, Tuple{Tag, Int64, Union{Float64, Nothing}}}
+    tag_info::Dict{Int128, @NamedTuple{tag::Tag, slot::Int, time::Float64}}
     guids::Vector{Int128}
 end
 

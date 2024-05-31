@@ -6,13 +6,13 @@ See also: [`query`](@ref), [`untag!`](@ref)"""
 function tag!(ref::RegRef, tag::Tag)
     id = guid()
     push!(ref.reg.guids, id)
-    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref)))
+    ref.reg.tag_info[id] = (;tag, slot=ref.idx, time=now(get_time_tracker(ref)))
 end
 
 tag!(ref, tag) = tag!(ref,Tag(tag))
 
 function peektags(ref::RegRef)
-    [ref.reg.tag_info[i][1] for i in ref.reg.guids if ref.reg.tag_info[i][2] == ref.idx] # TODO clear this up a bit so that we do not have so much hardcoded indexing
+    [ref.reg.tag_info[i].tag for i in ref.reg.guids if ref.reg.tag_info[i].slot == ref.idx] # TODO clear this up a bit so that we do not have so much hardcoded indexing
 end
 
 """$TYPEDSIGNATURES
@@ -136,10 +136,10 @@ function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=
     result = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
     op_guid = filoB ? reverse : identity
     for i in op_guid(reg.guids)
-        slot = reg[reg.tag_info[i][2]]
-        if reg.tag_info[i][1] == tag && _nothingor(ref, slot) # Need to check slot when calling from `query` dispatch on RegRef
+        slot = reg[reg.tag_info[i].slot]
+        if reg.tag_info[i].tag == tag && _nothingor(ref, slot) # Need to check slot when calling from `query` dispatch on RegRef
             if _nothingor(locked, islocked(slot) && _nothingor(assigned, isassigned(slot)))
-                allB ? push!(result, (slot=slot, id=i, tag=reg.tag_info[i][1])) : return (slot=slot, id=i, tag=reg.tag_info[i][1])
+                allB ? push!(result, (slot=slot, id=i, tag=reg.tag_info[i].tag)) : return (slot=slot, id=i, tag=reg.tag_info[i].tag)
             end
         end
     end
@@ -336,8 +336,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
             res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
             op_guid = filo ? reverse : identity
             for i in op_guid(reg.guids)
-                tag = reg.tag_info[i][1]
-                slot = reg[reg.tag_info[i][2]]
+                tag = reg.tag_info[i].tag
+                slot = reg[reg.tag_info[i].slot]
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
                     (_nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))) || continue
                     if _all($(nonwild_checks...)) && _all($(wild_checks...))
@@ -360,9 +360,9 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
             res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
             op_guid = filo ? reverse : identity
             for i in op_guid(ref.reg.guids)
-                tag = ref.reg.tag_info[i][1]
+                tag = ref.reg.tag_info[i].tag
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
-                    if _all($(nonwild_checks...)) && _all($(wild_checks...)) && (ref.reg[ref.reg.tag_info[i][2]] == ref)
+                    if _all($(nonwild_checks...)) && _all($(wild_checks...)) && (ref.reg[ref.reg.tag_info[i].slot] == ref)
                         allB ? push!(res, (slot=ref, id=i, tag=tag)) : return (slot=ref, id=i, tag=tag)
                     end
                 end
