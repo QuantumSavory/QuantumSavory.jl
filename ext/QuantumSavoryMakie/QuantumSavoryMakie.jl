@@ -229,7 +229,7 @@ end
 
 function get_slots_vis_string(backrefs, i)
     register, registeridx, slot = backrefs[i]
-    tags = register.tags[slot]
+    tags = QuantumSavory.peektags(register[slot])
     tags_str = if isempty(tags)
         "not tagged"
     else
