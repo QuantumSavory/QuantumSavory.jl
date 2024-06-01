@@ -144,7 +144,7 @@ end
 # Result
 
 ```@repl
-include("../../../../examples/repeatergrid/repeatergrid.jl") # hide
+include("../../../../examples/repeatergrid/repeatergrid_async.jl") # hide
 ```
 
 ```@raw html

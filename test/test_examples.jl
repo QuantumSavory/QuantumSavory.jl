@@ -39,6 +39,7 @@ end
 
 @safetestset "repeatergrid" begin
     if get(ENV, "QUANTUMSAVORY_PLOT_TEST","")=="true"
-        include("../examples/repeatergrid/repeatergrid.jl")
+        include("../examples/repeatergrid/repeatergrid_async.jl")
+        include("../examples/repeatergrid/repeatergrid_sync.jl")
     end
 end

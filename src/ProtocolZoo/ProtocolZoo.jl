@@ -250,6 +250,10 @@ $TYPEDFIELDS
     rounds::Int = -1
     """when synchronizing, the swapper will check the coherence of a swap candidate before commencing a swap, otherwise EntanglementTracker takes care of it through classical message passing"""
     sync::Bool = false
+    """what is the oldest a qubit should be to be picked for a swap"""
+    retention_time::Float64 = 5.0
+    """padding time so that we don't cross the `retention_time` while the asynchronous messaging takes place"""
+    buffer_time::Float64 = 0.5
 end
 
 #TODO "convenience constructor for the missing things and finish this docstring"
@@ -261,7 +265,7 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        qubit_pair = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; sync=prot.sync)
+        qubit_pair = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; sync=prot.sync, buffer_time=prot.buffer_time, retention_time=prot.retention_time)
         if isnothing(qubit_pair)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @yield timeout(prot.sim, prot.retry_lock_time)
@@ -301,10 +305,10 @@ end
     end
 end
 
-function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high; sync=false)
+function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high; sync=false, buffer_time=nothing, retention_time=nothing)
     reg = net[node]
-    low_nodes  = [n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true) if !(sync)||iscoherent(n.slot; buffer_time=2.0)]
-    high_nodes = [n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true) if !(sync)||iscoherent(n.slot; buffer_time=2.0)]
+    low_nodes  = [n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true) if !(sync)||iscoherent(n.slot, buffer_time, retention_time, n.id)]
+    high_nodes = [n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true) if !(sync)||iscoherent(n.slot, buffer_time, retention_time, n.id)]
 
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
     il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property

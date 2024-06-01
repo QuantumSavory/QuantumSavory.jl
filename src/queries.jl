@@ -402,9 +402,9 @@ function findfreeslot(reg::Register; randomize=false)
     end
 end
 
-function iscoherent(slot::RegRef, id::Int; buffer_time=0.0)
+function iscoherent(slot::RegRef, buffer_time, retention_time, id)
     if !isassigned(slot) throw("Slot must be assigned with a quantum state before checking coherence") end
-    return (now(get_time_tracker(slot))) + buffer_time - slot.reg.tag_info[slot.reg.slot_guid[slot.idx]][3] < slot.reg.retention_times[slot.idx]
+    return (now(get_time_tracker(slot))) + buffer_time - slot.reg.tag_info[id][3] < retention_time
 end
 
 
