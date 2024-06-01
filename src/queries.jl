@@ -7,8 +7,6 @@ function tag!(ref::RegRef, tag::Tag)
     id = guid()
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref)))
-
-    ref.reg.slot_guid[ref.idx] = id
 end
 
 tag!(ref, tag) = tag!(ref,Tag(tag))
@@ -24,7 +22,6 @@ function untag!(ref::RegRef, id::Int128)
     i = findfirst(==(id), ref.reg.guids)
     isnothing(i) ? throw(KeyError(tag)) : deleteat!(ref.reg.guids, i) # TODO make sure there is a clear error message
     delete!(ref.reg.tag_info, id)
-    ref.reg.slot_guid[ref.idx] = -1
 end
 
 
@@ -399,21 +396,14 @@ function findfreeslot(reg::Register; randomize=false)
     perm = randomize ? randperm : (x->1:x)
     for i in perm(n_slots)
         slot = reg[i]
-        if !islocked(slot)
-            if !isassigned(slot)
-                return slot
-            elseif !iscoherent(slot)
-                untag!(slot, reg.slot_guid[slot.idx])
-                traceout!(slot)
-                return slot
-            end
+        if !islocked(slot) && !isassigned(slot)
+            return slot
         end
     end
 end
 
-function iscoherent(slot::RegRef; buffer_time=0.0)
+function iscoherent(slot::RegRef, id::Int; buffer_time=0.0)
     if !isassigned(slot) throw("Slot must be assigned with a quantum state before checking coherence") end
-    if slot.reg.slot_guid[slot.idx] == -1 return true end
     return (now(get_time_tracker(slot))) + buffer_time - slot.reg.tag_info[slot.reg.slot_guid[slot.idx]][3] < slot.reg.retention_times[slot.idx]
 end
 

@@ -45,7 +45,7 @@ regsize = 8 # the size of the quantum registers at each node
 
 graph = grid([n,n])
 
-net = RegisterNet(graph, [Register(regsize, fill(5.0, regsize)) for i in 1:n^2])
+net = RegisterNet(graph, [Register(regsize) for i in 1:n^2])
 
 sim = get_time_tracker(net)
 
@@ -74,6 +74,12 @@ end
 # a mock entanglement consumer between the two corners of the grid
 consumer = EntanglementConsumer(sim, net, 1, n^2)
 @process consumer()
+
+# decoherence protocol runs at each node to free up slots that haven't been used past the retention time
+for v in vertices(net)
+    decprot = DecoherenceProt(sim, net, v)
+    @process decprot()
+end
 
 # By modifying the `period` of `EntanglementConsumer`, and `rate` of `EntanglerProt`, you can study the effect of different entanglement generation rates on the network
 

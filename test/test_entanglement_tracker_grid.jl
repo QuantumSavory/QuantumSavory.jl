@@ -9,7 +9,7 @@ using Test
 
 if isinteractive()
     using Logging
-    logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
+    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")
 end
