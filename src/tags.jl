@@ -62,3 +62,6 @@ function SumTypes.show_sumtype(io::IO, x::Tag)
         end
     end
 end
+
+Base.convert(::Type{Tag}, x::Tag) = x
+Base.convert(::Type{Tag}, x) = Tag(x)

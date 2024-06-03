@@ -27,7 +27,7 @@ end
 ##
 
 # set up a plot and save a handle to the plot observable
-fig = Figure(resolution=(400,400))
+fig = Figure(size=(400,400))
 _,ax,_,obs = registernetplot_axis(fig[1,1],network)
 display(fig)
 

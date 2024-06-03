@@ -32,7 +32,7 @@ fidXX = Observable(Float64[])
 fidZZ = Observable(Float64[])
 @process consumer(sim, network, 1, len, consume_wait_time,ts,fidXX,fidZZ)
 
-fig = Figure(resolution=(800,400))
+fig = Figure(size=(800,400))
 _,ax,_,obs = registernetplot_axis(fig[1,1],network)
 
 ax_fidXX = Axis(fig[1,2][1,1], xlabel="", ylabel="XX Stabilizer\nExpectation")

@@ -1,5 +1,6 @@
 using QuantumSavory
 using QuantumSavory: tag_types
+using QuantumSavory.ProtocolZoo
 using ResumableFunctions, ConcurrentSim
 using Test
 
@@ -29,3 +30,14 @@ run(env, 10)
 
 @test query(messagebuffer(net, 2), :second_tag, ❓, ❓) === nothing
 @test query(messagebuffer(net, 2), :my_tag).tag == Tag(:my_tag)
+
+##
+
+net = RegisterNet([Register(4), Register(4)])
+sim = get_time_tracker(net)
+proc1 = put!(channel(net, 2=>1), SwitchRequest(2,3))
+proc2 = put!(channel(net, 2=>1), Tag(SwitchRequest(2,3)))
+proc3 = put!(messagebuffer(net[1]), Tag(SwitchRequest(2,3)))
+proc4 = put!(messagebuffer(net[1]), SwitchRequest(2,3))
+run(sim, 10)
+@test QuantumSavory.peektags(messagebuffer(net,1)) == [Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3))]

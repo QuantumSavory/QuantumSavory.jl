@@ -6,7 +6,7 @@ GLMakie.activate!()
 
 net, sim, observables, conf = prep_sim(root_conf)
 
-F = Figure(resolution=(1500,800))
+F = Figure(size=(1500,800))
 
 # Plot of the quantum states in the registers
 subfig_rg, ax_rg, p_rg, obs_rg = registernetplot_axis(F[1:2,1],net)

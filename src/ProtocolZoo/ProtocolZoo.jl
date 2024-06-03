@@ -14,7 +14,13 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 
-export EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
+export
+    # protocols
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer,
+    # tags
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    # from Switches
+    SimpleSwitchDiscreteProt, SwitchRequest
 
 abstract type AbstractProtocol end
 
@@ -145,8 +151,10 @@ $TYPEDFIELDS
     local_busy_time_post::Float64 = 0.0
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up)"""
     retry_lock_time::LT = 0.1
-    """how many rounds of this protocol to run (`-1` for infinite))"""
+    """how many rounds of this protocol to run (`-1` for infinite)"""
     rounds::Int = -1
+    """maximum number of attempts to make per round (`-1` for infinite)"""
+    attempts::Int = -1
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
     """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
@@ -177,7 +185,7 @@ end
 
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \n Got:\n \t $a \n \t $b \n retrying..."
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a \n2.\t $b \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
@@ -185,16 +193,26 @@ end
         @yield lock(a) & lock(b) # this yield is expected to return immediately
 
         @yield timeout(prot.sim, prot.local_busy_time_pre)
-        @yield timeout(prot.sim, (rand(Geometric(prot.success_prob))+1) * prot.attempt_time)
-        initialize!((a,b), prot.pairstate; time=now(prot.sim))
-        @yield timeout(prot.sim, prot.local_busy_time_post)
+        attempts = if isone(prot.success_prob)
+            1
+        else
+            rand(Geometric(prot.success_prob))+1
+        end
+        if prot.attempts == -1 || prot.attempts >= attempts
+            @yield timeout(prot.sim, attempts * prot.attempt_time)
+            initialize!((a,b), prot.pairstate; time=now(prot.sim))
+            @yield timeout(prot.sim, prot.local_busy_time_post)
 
-        # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-        tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
-        # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-        tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
+            # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
+            tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
+            # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
+            tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
 
-        @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
+        else
+            @yield timeout(prot.sim, prot.attempts * prot.attempt_time)
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Performed the maximum number of attempts and gave up"
+        end
         unlock(a)
         unlock(b)
         rounds==-1 || (rounds -= 1)
@@ -403,6 +421,9 @@ end
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)
 end
+function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return EntanglementConsumer(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+end
 
 @resumable function (prot::EntanglementConsumer)()
     if isnothing(prot.period)
@@ -443,5 +464,9 @@ end
         @yield timeout(prot.sim, prot.period)
     end
 end
+
+
+include("switches.jl")
+using .Switches
 
 end # module

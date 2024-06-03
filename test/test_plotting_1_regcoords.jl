@@ -13,7 +13,7 @@ for s in sizes
 end
 network = RegisterNet(registers)
 
-fig = Figure(resolution=(400,400))
+fig = Figure(size=(400,400))
 _, _, plt, netobs = registernetplot_axis(fig[1,1],network)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
@@ -42,10 +42,10 @@ for e in edges(network)
     network[e,:bool] = true
     network[e,:bool2] = rand(Bool)
 end
-fig2 = Figure(resolution=(400,400))
+fig2 = Figure(size=(400,400))
 _,_,_,netobs2 = resourceplot_axis(fig2[1,1],network,[:bool,:bool2],[:bool,:resource]; registercoords=plt[:registercoords])
 display(fig2)
-fig3 = Figure(resolution=(400,400))
+fig3 = Figure(size=(400,400))
 _,_,_,netobs3 = resourceplot_axis(fig3[1,1],network,[:bool,:bool2],[:bool,:resource])
 display(fig3)
 

@@ -38,7 +38,7 @@ df = rename(DataFrame(r), [:time,:fid])
 ##
 # Plot the time to complete vs average fidelity
 
-F = Figure(resolution=(600,600))
+F = Figure(size=(600,600))
 F1 = F[1,1]
 ax = Axis(F1[2:5,1:4])
 ax_time = Axis(F1[1,1:4])
