@@ -12,4 +12,4 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
-JSServe = "2.2.7"
+Bonito = "3.1"
