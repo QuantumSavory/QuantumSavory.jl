@@ -223,7 +223,7 @@ end
 """
 $TYPEDEF
 
-A protocol, running at a given node, that finds swappable entangled pairs and performs the swap. If a decoherence protcol is used, then communications would be done with asynchronous messaging
+A protocol, running at a given node, that finds swappable entangled pairs and performs the swap. If a decoherence protocol is used, then communications would be done with asynchronous messaging
 through the `EntanglementTracker`. Keeps(considers) all the swap candidates without verifying there decoherence status
 
 $TYPEDFIELDS
