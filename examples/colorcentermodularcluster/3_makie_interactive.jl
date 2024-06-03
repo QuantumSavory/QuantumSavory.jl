@@ -1,12 +1,12 @@
 using Base.Threads
 using WGLMakie
 WGLMakie.activate!()
-using JSServe
+using Bonito
 using Markdown
 
 include("setup.jl");
 
-const custom_css = JSServe.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in JSServe https://github.com/SimonDanisch/JSServe.jl/issues/178
+const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in Bonito https://github.com/SimonDanisch/Bonito.jl/issues/178
 
 """Run a simulation until all links in the cluster state are established,
 then report time to completion and average link fidelity."""
@@ -118,7 +118,7 @@ landing = App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, custom_css, content)
+    return DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end;
 
 ##
@@ -135,7 +135,7 @@ ensemble = App() do
 
     # Plot the time to complete vs average fidelity
 
-    F = Figure(resolution=(1200,600))
+    F = Figure(size=(1200,600))
     F1 = F[1,1]
     ax = Axis(F1[2:5,1:4])
     ax_time = Axis(F1[1,1:4])
@@ -188,7 +188,7 @@ ensemble = App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, custom_css, content)
+    return DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end;
 
 ##
@@ -231,7 +231,7 @@ singletraj = App() do
     net, sim, observables, conf = prep_sim(root_conf)
     current_time = Observable(0.0)
 
-    F = Figure(resolution=(1200,800))
+    F = Figure(size=(1200,800))
 
     # Plot of the quantum states in the registers
     subfig_rg, ax_rg, p_rg, obs_rg = registernetplot_axis(F[1:4,1],net; interactions=false)
@@ -325,7 +325,7 @@ singletraj = App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, custom_css, content)
+    return DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end;
 
 ##
@@ -389,11 +389,11 @@ isdefined(Main, :server) && close(server);
 port = parse(Int, get(ENV, "QS_COLORCENTERMODCLUSTER_PORT", "8888"))
 interface = get(ENV, "QS_COLORCENTERMODCLUSTER_IP", "127.0.0.1")
 proxy_url = get(ENV, "QS_COLORCENTERMODCLUSTER_PROXY", "")
-server = JSServe.Server(interface, port; proxy_url);
-JSServe.HTTPServer.start(server)
-JSServe.route!(server, "/" => landing);
-JSServe.route!(server, "/ensemble" => ensemble);
-JSServe.route!(server, "/single-trajectory" => singletraj);
+server = Bonito.Server(interface, port; proxy_url);
+Bonito.HTTPServer.start(server)
+Bonito.route!(server, "/" => landing);
+Bonito.route!(server, "/ensemble" => ensemble);
+Bonito.route!(server, "/single-trajectory" => singletraj);
 
 ##
 

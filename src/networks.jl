@@ -38,6 +38,10 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
 
     rn = RegisterNet(graph, registers, vertex_metadata, edge_metadata, directed_edge_metadata, cchannels, cbuffers, qchannels, reverse_lookup)
 
+    for r in registers
+        r.netparent[] = rn
+    end
+
     for (;src,dst) in edges(graph)
         cchannels[src=>dst] = DelayQueue{Tag}(env, 0)
         qchannels[src=>dst] = QuantumChannel(env, 0)
@@ -168,12 +172,28 @@ function qchannel(net::RegisterNet, args...)
     return achannel(net, args..., Val{:Q}())
 end
 
-"""Get a handle to a classical message buffer corresponding to all channels sending to a given destination register.
+"""
+$TYPEDSIGNATURES
+
+Get a handle to a classical message buffer corresponding to all channels sending to a given destination register.
 
 See also: [`channel`](@ref)
 """
 function messagebuffer(net::RegisterNet, dst::Int)
     return net.cbuffers[dst]
+end
+
+"""
+$TYPEDSIGNATURES
+
+Get a handle to a classical message buffer corresponding to all channels sending to a given destination register.
+
+See also: [`channel`](@ref)
+"""
+function messagebuffer(ref::RegOrRegRef)
+    reg = get_register(ref)
+    net = reg.netparent[]
+    return messagebuffer(net, net.reverse_lookup[reg])
 end
 
 function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{:C}; permit_forward=false)

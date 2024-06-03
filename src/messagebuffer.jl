@@ -2,9 +2,13 @@ struct MessageBuffer{T}
     sim::Simulation
     net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
     node::Int
-    buffer::Vector{NamedTuple{(:src,:tag), Tuple{Int,T}}}
+    buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
     waiters::IdDict{Resource,Resource}
     no_wait::Ref{Int} # keeps track of the situation when something is pushed in the buffer and no waiters are present. In that case, when the waiters are available after it they would get locked while the code that was supposed to unlock them has already run. So, we keep track the number of times this happens and put no lock on the waiters in this situation.
+end
+
+function peektags(mb::MessageBuffer)
+    [b.tag for b in mb.buffer]
 end
 
 struct ChannelForwarder
@@ -13,11 +17,21 @@ struct ChannelForwarder
     dst::Int
 end
 
-function Base.put!(cf::ChannelForwarder, tag::Tag)
+function Base.put!(cf::ChannelForwarder, tag)
+    tag = convert(Tag, tag)
     # shortest path calculated by Graphs.a_star
     nexthop = first(a_star(cf.net.graph, cf.src, cf.dst))
     # @debug "ChannelForwarder: Forwarding message from node $(nexthop.src) to node $(nexthop.dst) | message=$(tag)| end destination=$(cf.dst)"
     put!(channel(cf.net, cf.src=>nexthop.dst; permit_forward=false), tag_types.Forward(tag, cf.dst))
+end
+
+function Base.put!(mb::MessageBuffer, tag)
+    push!(mb.buffer, (;src=nothing,tag=convert(Tag,tag)))
+    nothing
+end
+
+function Base.put!(reg::Register, tag)
+    put!(messagebuffer(reg), tag)
 end
 
 @resumable function take_loop_mb(sim, ch, src, mb)

@@ -1,29 +1,69 @@
+struct QueryError <: Exception
+    msg
+    f
+    q
+end
+
+function Base.showerror(io::IO, err::QueryError)
+    print(io, "QueryError: ")
+    println(io, err.msg)
+    print(io, "  in function `$(err.f)` with query `$(err.q)`")
+end
+
 """$TYPEDSIGNATURES
 
 Assign a tag to a slot in a register.
 
 See also: [`query`](@ref), [`untag!`](@ref)"""
-function tag!(ref::RegRef, tag::Tag)
+function tag!(ref::RegRef, tag)
+    tag = convert(Tag, tag)
     id = guid()
     push!(ref.reg.guids, id)
-    ref.reg.tag_info[id] = (tag, ref.idx, now(get_time_tracker(ref)))
+    ref.reg.tag_info[id] = (;tag, slot=ref.idx, time=now(get_time_tracker(ref)))
+    return id
 end
 
-tag!(ref, tag) = tag!(ref,Tag(tag))
-
+function peektags(ref::RegRef)
+    [ref.reg.tag_info[i].tag for i in ref.reg.guids if ref.reg.tag_info[i].slot == ref.idx]
+end
 
 """$TYPEDSIGNATURES
 
-Removes the first instance of tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
+Remove the tag with the given id from a [`RegRef`](@ref) or a [`Register`](@ref).
+
+To remove a tag based on a query, use [`querydelete!`](@ref) instead.
+
+See also: [`querydelete!`](@ref), [`query`](@ref), [`tag!`](@ref)
+"""
+function untag!(ref::RegOrRegRef, id::Integer)
+    reg = get_register(ref)
+    i = findfirst(==(id), reg.guids)
+    isnothing(i) ? throw(QueryError("Attempted to delete a nonexistent tag id", untag!, id)) : deleteat!(reg.guids, i) # TODO make sure there is a clear error message
+    to_be_deleted = reg.tag_info[id]
+    delete!(reg.tag_info, id)
+    return to_be_deleted
+end
+
+#= # Should not exist. Rather, `querydelete!` should be used.
+"""$TYPEDSIGNATURES
+
+Remove the unique tag matching the given query from a [`RegRef`](@ref) or a [`Register`](@ref).
 
 See also: [`query`](@ref), [`tag!`](@ref)
 """
-function untag!(ref::RegRef, id::Int128)
-    i = findfirst(==(id), ref.reg.guids)
-    isnothing(i) ? throw(KeyError(tag)) : deleteat!(ref.reg.guids, i) # TODO make sure there is a clear error message
-    delete!(ref.reg.tag_info, id)
+function untag!(ref::RegOrRegRef, args...)
+    matches = queryall(ref, args...)
+    if length(matches) == 0
+        throw(QueryError("Attempted to delete a tag matching a query, but no matching tag exists", untag!, args))
+    elseif length(matches) > 1
+        @show matches
+        @show length(matches)
+        throw(QueryError("Attempted to delete a tag matching a query, but there is no unique match to the query (consider manually using `queryall` and `untag!` instead)", untag!, args))
+    end
+    id = matches[1].id
+    untag!(ref, id)
 end
-
+=#
 
 """Wildcard type for use with the tag querying functionality.
 
@@ -73,6 +113,7 @@ julia> queryall(r, :symbol, ❓, >(5))
 ```
 """
 queryall(args...; filo=true, kwargs...) = query(args..., Val{true}(); filo, kwargs...)
+queryall(::MessageBuffer, args...; kwargs...) = throw(ArgumentError("`queryall` does not currently support `MessageBuffer`, chiefly to encourage the use of `querydelete!` instead"))
 
 """
 $TYPEDSIGNATURES
@@ -132,10 +173,10 @@ function _query(reg::Register, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=
     result = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
     op_guid = filoB ? reverse : identity
     for i in op_guid(reg.guids)
-        slot = reg[reg.tag_info[i][2]]
-        if reg.tag_info[i][1] == tag && _nothingor(ref, slot) # Need to check slot when calling from `query` dispatch on RegRef
+        slot = reg[reg.tag_info[i].slot]
+        if reg.tag_info[i].tag == tag && _nothingor(ref, slot) # Need to check slot when calling from `query` dispatch on RegRef
             if _nothingor(locked, islocked(slot) && _nothingor(assigned, isassigned(slot)))
-                allB ? push!(result, (slot=slot, id=i, tag=reg.tag_info[i][1])) : return (slot=slot, id=i, tag=reg.tag_info[i][1])
+                allB ? push!(result, (slot=slot, id=i, tag=reg.tag_info[i].tag)) : return (slot=slot, id=i, tag=reg.tag_info[i].tag)
             end
         end
     end
@@ -202,13 +243,13 @@ julia> query(messagebuffer(net, 2), :my_tag)
 (depth = 1, src = 1, tag = Symbol(:my_tag)::Tag)
 
 julia> querydelete!(messagebuffer(net, 2), :my_tag)
-(src = 1, tag = Symbol(:my_tag)::Tag)
+@NamedTuple{src::Union{Nothing, Int64}, tag::Tag}((1, Symbol(:my_tag)::Tag))
 
 julia> querydelete!(messagebuffer(net, 2), :my_tag) === nothing
 true
 
 julia> querydelete!(messagebuffer(net, 2), :another_tag, ❓, ❓)
-(src = 1, tag = SymbolIntInt(:another_tag, 123, 456)::Tag)
+@NamedTuple{src::Union{Nothing, Int64}, tag::Tag}((1, SymbolIntInt(:another_tag, 123, 456)::Tag))
 
 julia> querydelete!(messagebuffer(net, 2), :another_tag, ❓, ❓) === nothing
 true
@@ -286,7 +327,7 @@ julia> queryall(reg, :tagA, ❓, ❓, ❓)
  (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
 ```
 """
-function querydelete!(reg::Union{Register,RegRef}, args...; kwa...)
+function querydelete!(reg::RegOrRegRef, args...; kwa...)
     r = query(reg, args..., Val{false}(); kwa...)
     isnothing(r) || untag!(r.slot, r.id)
     return r
@@ -333,8 +374,8 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
             res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
             op_guid = filo ? reverse : identity
             for i in op_guid(reg.guids)
-                tag = reg.tag_info[i][1]
-                slot = reg[reg.tag_info[i][2]]
+                tag = reg.tag_info[i].tag
+                slot = reg[reg.tag_info[i].slot]
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
                     (_nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))) || continue
                     if _all($(nonwild_checks...)) && _all($(wild_checks...))
@@ -357,9 +398,9 @@ for (tagsymbol, tagvariant) in pairs(tag_types)
             res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
             op_guid = filo ? reverse : identity
             for i in op_guid(ref.reg.guids)
-                tag = ref.reg.tag_info[i][1]
+                tag = ref.reg.tag_info[i].tag
                 if isvariant(tag, ($(tagsymbol,))[1]) # a weird workaround for interpolating a symbol as a symbol
-                    if _all($(nonwild_checks...)) && _all($(wild_checks...)) && (ref.reg[ref.reg.tag_info[i][2]] == ref)
+                    if _all($(nonwild_checks...)) && _all($(wild_checks...)) && (ref.reg[ref.reg.tag_info[i].slot] == ref)
                         allB ? push!(res, (slot=ref, id=i, tag=tag)) : return (slot=ref, id=i, tag=tag)
                     end
                 end

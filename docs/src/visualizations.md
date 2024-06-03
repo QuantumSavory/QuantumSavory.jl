@@ -30,7 +30,7 @@ initialize!((net[3,1],net[4,2]), X₁⊗Z₂)
 apply!((net[2,3],net[3,1]), CNOT)
 
 # create the plot
-fig = Figure(resolution=(800,400))
+fig = Figure(size=(800,400))
 _, ax, plt, obs = registernetplot_axis(fig[1,1],net)
 fig
 ```
@@ -57,7 +57,7 @@ initialize!(network[1,1]) # hide
 initialize!(network[2,3], X₁) # hide
 initialize!((network[3,1],network[4,2]), X₁⊗Z₂) # hide
 apply!((network[2,3],network[3,1]), CNOT) # hide
-fig = Figure(resolution=(400,400)) # hide
+fig = Figure(size=(400,400)) # hide
 _, _, plt, obs = registernetplot_axis(fig[1,1],network) # hide
 QuantumSavory.showmetadata(fig,ax,plt,1,1)
 fig
@@ -89,7 +89,7 @@ end
 
 # plot the resources and metadata
 
-fig = Figure(resolution=(700,400))
+fig = Figure(size=(700,400))
 resourceplot_axis(fig[1,1],net,
     [:edge_bool,:another_bool], # list of edge metadata to plot
     [:bool,:resource],          # list of vertex metadata

@@ -33,7 +33,7 @@ for nodea in vertices(network)
     end
 end
 
-fig = Figure(resolution=(800,400))
+fig = Figure(size=(800,400))
 _,ax,_,obs = registernetplot_axis(fig[1,1],network)
 
 ts = Observable(Float64[0])

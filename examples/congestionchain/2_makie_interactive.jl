@@ -1,11 +1,11 @@
 using WGLMakie
 WGLMakie.activate!()
-using JSServe
+import Bonito
 using Markdown
 
 include("setup.jl")
 
-const custom_css = JSServe.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in JSServe https://github.com/SimonDanisch/JSServe.jl/issues/178
+const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in Bonito https://github.com/SimonDanisch/Bonito.jl/issues/178
 
 ##
 # Demo visualizations of the performance of the network
@@ -65,8 +65,8 @@ end
 
 ##
 
-landing = App() do
-    fig = Figure(resolution=(800,700))
+landing = Bonito.App() do
+    fig = Figure(size=(800,700))
 
     fig[1, 1] = buttongrid = GridLayout(tellwidth = false)
 
@@ -118,7 +118,7 @@ landing = App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/congestionchain)
     """
-    return DOM.div(JSServe.MarkdownCSS, JSServe.Styling, custom_css, content)
+    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end;
 
 
@@ -172,9 +172,9 @@ isdefined(Main, :server) && close(server);
 port = parse(Int, get(ENV, "QS_CONGESTIONCHAIN_PORT", "8888"))
 interface = get(ENV, "QS_CONGESTIONCHAIN_IP", "127.0.0.1")
 proxy_url = get(ENV, "QS_CONGESTIONCHAIN_PROXY", "")
-server = JSServe.Server(interface, port; proxy_url);
-JSServe.HTTPServer.start(server)
-JSServe.route!(server, "/" => landing);
+server = Bonito.Server(interface, port; proxy_url);
+Bonito.HTTPServer.start(server)
+Bonito.route!(server, "/" => landing);
 
 ##
 
