@@ -1,5 +1,5 @@
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperKeeper, EntanglementTracker, EntanglementConsumer
 using Graphs
 using ConcurrentSim
 using Test
@@ -24,7 +24,7 @@ for n in 3:30
     end
 
     for v in 2:n-1
-        sprot = SwapperProt(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = -1)
+        sprot = SwapperKeeper(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = -1)
         @process sprot()
     end
 

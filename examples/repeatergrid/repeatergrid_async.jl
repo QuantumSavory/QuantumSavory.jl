@@ -61,7 +61,7 @@ for i in 2:(n^2 - 1)
     h(x) = check_nodes(net, i, x; low=false)
     cL(arr) = choose_node(net, i, arr)
     cH(arr) = choose_node(net, i, arr; low=false)
-    swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds=-1)
+    swapper = SwapperKeeper(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds=-1)
     @process swapper()
 end
 

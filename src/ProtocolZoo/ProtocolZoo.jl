@@ -14,7 +14,7 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 
-export EntanglerProt, SwapperProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer, DecoherenceProt
+export EntanglerProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer, DecoherenceProt
 
 abstract type AbstractProtocol end
 
@@ -250,8 +250,6 @@ $TYPEDFIELDS
     """how many rounds of this protocol to run (`-1` for infinite))"""
     rounds::Int = -1
 end
-
-const SwapperProt = SwapperKeeper
 
 #TODO "convenience constructor for the missing things and finish this docstring"
 function SwapperKeeper(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
