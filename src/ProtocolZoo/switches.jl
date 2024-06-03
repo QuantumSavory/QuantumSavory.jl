@@ -244,12 +244,8 @@ QuantumSavory.get_time_tracker(deleter::_SwitchSynchronizedDelete) = get_time_tr
             @debug "Switch $(prot.switchnode).$(switchslot) deletes unused entanglement with client $(clientnode).$(clientslot)"
             traceout!(res.slot, prot.net[clientnode][clientslot])
             untag!(res.slot, res.id)
-            #untag!(prot.net[prot.switchnode], res.id) # TODO this should work
-            #untag!(..., EntanglementCounterpart, ..., ...) # TODO
-            #untag!(..., EntanglementCounterpart(..., ...)) # TODO
             res = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot)
             untag!(prot.net[clientnode][clientslot], res.id)
-            #untag!(prot.net[clientnode], Tag(EntanglementCounterpart(prot.switchnode, switchslot))) # TODO this should work
         end
     end
 end
@@ -260,8 +256,7 @@ and increment the corresponding entries in the `backlog` matrix.
 """
 function _switch_read_backlog(prot, reverseclientindex)
     while true
-        #switchrequest = querydelete!(messagebuffer(net[switchnode]), SwitchRequest, ❓, ❓) # TODO
-        switchrequest = querydelete!(messagebuffer(prot.net, prot.switchnode), SwitchRequest, ❓, ❓)
+        switchrequest = querydelete!(messagebuffer(prot.net[prot.switchnode]), SwitchRequest, ❓, ❓)
         isnothing(switchrequest) && break
         tag = switchrequest.tag
         i = reverseclientindex[tag[2]]

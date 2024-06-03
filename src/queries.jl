@@ -1,3 +1,15 @@
+struct QueryError <: Exception
+    msg
+    f
+    q
+end
+
+function Base.showerror(io::IO, err::QueryError)
+    print(io, "QueryError: ")
+    println(io, err.msg)
+    print(io, "  in function `$(err.f)` with query `$(err.q)`")
+end
+
 """$TYPEDSIGNATURES
 
 Assign a tag to a slot in a register.
@@ -7,6 +19,7 @@ function tag!(ref::RegRef, tag::Tag)
     id = guid()
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (;tag, slot=ref.idx, time=now(get_time_tracker(ref)))
+    return id
 end
 
 tag!(ref, tag) = tag!(ref,Tag(tag))
@@ -17,17 +30,41 @@ end
 
 """$TYPEDSIGNATURES
 
-Removes the first instance of tag from the list to tags associated with a [`RegRef`](@ref) in a [`Register`](@ref)
+Remove the tag with the given id from a [`RegRef`](@ref) or a [`Register`](@ref).
+
+To remove a tag based on a query, use [`querydelete!`](@ref) instead.
+
+See also: [`querydelete!`](@ref), [`query`](@ref), [`tag!`](@ref)
+"""
+function untag!(ref::RegOrRegRef, id::Integer)
+    reg = get_register(ref)
+    i = findfirst(==(id), reg.guids)
+    isnothing(i) ? throw(QueryError("Attempted to delete a nonexistant tag id", untag!, id)) : deleteat!(reg.guids, i) # TODO make sure there is a clear error message
+    to_be_deleted = reg.tag_info[id]
+    delete!(reg.tag_info, id)
+    return to_be_deleted
+end
+
+#= # Should not exist. Rather, `querydelete!` should be used.
+"""$TYPEDSIGNATURES
+
+Remove the unique tag matching the given query from a [`RegRef`](@ref) or a [`Register`](@ref).
 
 See also: [`query`](@ref), [`tag!`](@ref)
 """
-function untag!(ref::RegRef, id::Int128)
-    i = findfirst(==(id), ref.reg.guids)
-    isnothing(i) ? throw(KeyError(tag)) : deleteat!(ref.reg.guids, i) # TODO make sure there is a clear error message
-    delete!(ref.reg.tag_info, id)
-    nothing
+function untag!(ref::RegOrRegRef, args...)
+    matches = queryall(ref, args...)
+    if length(matches) == 0
+        throw(QueryError("Attempted to delete a tag matching a query, but no matching tag exists", untag!, args))
+    elseif length(matches) > 1
+        @show matches
+        @show length(matches)
+        throw(QueryError("Attempted to delete a tag matching a query, but there is no unique match to the query (consider manually using `queryall` and `untag!` instead)", untag!, args))
+    end
+    id = matches[1].id
+    untag!(ref, id)
 end
-
+=#
 
 """Wildcard type for use with the tag querying functionality.
 
@@ -289,7 +326,7 @@ julia> queryall(reg, :tagA, ❓, ❓, ❓)
  (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
 ```
 """
-function querydelete!(reg::Union{Register,RegRef}, args...; kwa...)
+function querydelete!(reg::RegOrRegRef, args...; kwa...)
     r = query(reg, args..., Val{false}(); kwa...)
     isnothing(r) || untag!(r.slot, r.id)
     return r

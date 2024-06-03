@@ -194,7 +194,7 @@ end
 
         @yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
-            attempts = 1
+            1
         else
             rand(Geometric(prot.success_prob))+1
         end

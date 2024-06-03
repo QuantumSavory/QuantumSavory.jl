@@ -7,6 +7,10 @@ struct MessageBuffer{T}
     no_wait::Ref{Int} # keeps track of the situation when something is pushed in the buffer and no waiters are present. In that case, when the waiters are available after it they would get locked while the code that was supposed to unlock them has already run. So, we keep track the number of times this happens and put no lock on the waiters in this situation.
 end
 
+function peektags(mb::MessageBuffer)
+    [b.tag for b in mb.buffer]
+end
+
 struct ChannelForwarder
     net # TODO type it as ::RegisterNet
     src::Int
