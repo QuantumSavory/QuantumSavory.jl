@@ -29,3 +29,9 @@ run(env, 10)
 
 @test query(messagebuffer(net, 2), :second_tag, ❓, ❓) === nothing
 @test query(messagebuffer(net, 2), :my_tag).tag == Tag(:my_tag)
+
+##
+
+net = RegisterNet([Register(4), Register(4)])
+@test_broken begin put!(channel(net, 2=>1), SwitchRequest(2,3)); true end # test that it automatically casts to Tag # TODO waiting on a fix in ConcurrentSim
+@test begin put!(channel(net, 2=>1), Tag(SwitchRequest(2,3))); true end

@@ -12,7 +12,7 @@ end
 tag!(ref, tag) = tag!(ref,Tag(tag))
 
 function peektags(ref::RegRef)
-    [ref.reg.tag_info[i].tag for i in ref.reg.guids if ref.reg.tag_info[i].slot == ref.idx] # TODO clear this up a bit so that we do not have so much hardcoded indexing
+    [ref.reg.tag_info[i].tag for i in ref.reg.guids if ref.reg.tag_info[i].slot == ref.idx]
 end
 
 """$TYPEDSIGNATURES
