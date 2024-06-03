@@ -172,8 +172,9 @@ for n in 4:10
         @process tracker()
     end
 
-    run(sim, 100)
+    run(sim, 200)
 
+    # has a small chance of failing due to the randomization of the entanglement protocols
     q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
     q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
 

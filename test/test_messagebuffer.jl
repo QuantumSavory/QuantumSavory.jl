@@ -35,7 +35,9 @@ run(env, 10)
 
 net = RegisterNet([Register(4), Register(4)])
 sim = get_time_tracker(net)
-proc1 =  put!(channel(net, 2=>1), SwitchRequest(2,3)) # test that it automatically casts to Tag # TODO waiting on a fix in ConcurrentSim
+proc1 = put!(channel(net, 2=>1), SwitchRequest(2,3))
 proc2 = put!(channel(net, 2=>1), Tag(SwitchRequest(2,3)))
+proc3 = put!(messagebuffer(net[1]), Tag(SwitchRequest(2,3)))
+proc4 = put!(messagebuffer(net[1]), SwitchRequest(2,3))
 run(sim, 10)
-@test QuantumSavory.peektags(messagebuffer(net,1)) == [Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3))]
+@test QuantumSavory.peektags(messagebuffer(net,1)) == [Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3))]

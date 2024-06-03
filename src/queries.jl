@@ -15,14 +15,13 @@ end
 Assign a tag to a slot in a register.
 
 See also: [`query`](@ref), [`untag!`](@ref)"""
-function tag!(ref::RegRef, tag::Tag)
+function tag!(ref::RegRef, tag)
+    tag = convert(Tag, tag)
     id = guid()
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (;tag, slot=ref.idx, time=now(get_time_tracker(ref)))
     return id
 end
-
-tag!(ref, tag) = tag!(ref,Tag(tag))
 
 function peektags(ref::RegRef)
     [ref.reg.tag_info[i].tag for i in ref.reg.guids if ref.reg.tag_info[i].slot == ref.idx]
@@ -39,7 +38,7 @@ See also: [`querydelete!`](@ref), [`query`](@ref), [`tag!`](@ref)
 function untag!(ref::RegOrRegRef, id::Integer)
     reg = get_register(ref)
     i = findfirst(==(id), reg.guids)
-    isnothing(i) ? throw(QueryError("Attempted to delete a nonexistant tag id", untag!, id)) : deleteat!(reg.guids, i) # TODO make sure there is a clear error message
+    isnothing(i) ? throw(QueryError("Attempted to delete a nonexistent tag id", untag!, id)) : deleteat!(reg.guids, i) # TODO make sure there is a clear error message
     to_be_deleted = reg.tag_info[id]
     delete!(reg.tag_info, id)
     return to_be_deleted
@@ -243,13 +242,13 @@ julia> query(messagebuffer(net, 2), :my_tag)
 (depth = 1, src = 1, tag = Symbol(:my_tag)::Tag)
 
 julia> querydelete!(messagebuffer(net, 2), :my_tag)
-(src = 1, tag = Symbol(:my_tag)::Tag)
+@NamedTuple{src::Union{Nothing, Int64}, tag::Tag}((1, Symbol(:my_tag)::Tag))
 
 julia> querydelete!(messagebuffer(net, 2), :my_tag) === nothing
 true
 
 julia> querydelete!(messagebuffer(net, 2), :another_tag, ❓, ❓)
-(src = 1, tag = SymbolIntInt(:another_tag, 123, 456)::Tag)
+@NamedTuple{src::Union{Nothing, Int64}, tag::Tag}((1, SymbolIntInt(:another_tag, 123, 456)::Tag))
 
 julia> querydelete!(messagebuffer(net, 2), :another_tag, ❓, ❓) === nothing
 true

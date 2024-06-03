@@ -22,9 +22,20 @@ end
     net = RegisterNet(graph, [switch_reg, node_regs...])
     sim = get_time_tracker(net)
     switch = SimpleSwitchDiscreteProt(net, 1, 2:n+1, fill(0.5, n))
-    #tag!(net[1], SwitchRequest(2,3)) # TODO this interface should be permitted
-    #put!(channel(net, 2=>1), SwitchRequest(2,3)) # TODO this interface should be permitted
-    put!(channel(net, 2=>1), Tag(SwitchRequest(2,3)))
+    c = rand(1:6)
+    if c==1 # a silly way to try out all three APIs
+        put!(net[1], SwitchRequest(2,3))
+    elseif c==2
+        put!(net[1], Tag(SwitchRequest(2,3)))
+    elseif c==3
+        put!(messagebuffer(net, 1), SwitchRequest(2,3))
+    elseif c==4
+        put!(messagebuffer(net[1]), Tag(SwitchRequest(2,3)))
+    elseif c==5
+        put!(channel(net, 2=>1), SwitchRequest(2,3))
+    elseif c==6
+        put!(channel(net, 2=>1), Tag(SwitchRequest(2,3)))
+    end
     @process switch()
     run(sim, 30)
     res = query(net[2], EntanglementCounterpart, ❓, ❓)

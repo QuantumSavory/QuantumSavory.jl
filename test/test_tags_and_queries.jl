@@ -147,7 +147,7 @@ id3 = tag!(reg[3], :symB, 3, 4)
 id3 = tag!(reg[4], :symB, 4, 5)
 @test untag!(reg[1], id1).tag == Tag(:symA, 1, 2)
 @test untag!(reg, id2).tag == Tag(:symB, 2, 3)
-@test_throws "Attempted to delete a nonexistant" untag!(reg, 100)
+@test_throws "Attempted to delete a nonexistent" untag!(reg, 100)
 #= # tests for commented out code -- better to stick to only `querydelete!` for untagging with queries
 @test_throws "Attempted to delete a tag matching a query, but no matching tag exists" untag!(reg, :symD, ❓, ❓)
 @test_throws "Attempted to delete a tag matching a query, but there is no unique match" untag!(reg, :symB, ❓, ❓)
