@@ -58,15 +58,15 @@ tag!(reg[3], EntanglementCounterpart, 1, 10)
 
 @test query(reg[3], EntanglementCounterpart, 1, 11) === nothing
 @test strip_id(query(reg[3], EntanglementCounterpart, 1, 10)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
-@test strip_id(query(reg[3], EntanglementCounterpart, 1, 10, Val(false); filo=false)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
-@test strip_id(query(reg[3], EntanglementCounterpart, 1, 10, Val(false); filo=true)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
+@test strip_id(query(reg[3], EntanglementCounterpart, 1, 10; filo=false)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
+@test strip_id(query(reg[3], EntanglementCounterpart, 1, 10; filo=true)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
 @test query(reg[3], EntanglementCounterpart, 1, 10; filo=true).id > query(reg[3], EntanglementCounterpart, 1, 10; filo=false).id
 @test query(reg[3], EntanglementCounterpart, 2, ❓; filo=true).tag[3] == 23
 @test query(reg[3], EntanglementCounterpart, 2, ❓; filo=false).tag[3] == 21
 
 @test strip_id(query(reg[3], EntanglementCounterpart, 2, ❓)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,2,23))
-@test strip_id(query(reg[3], EntanglementCounterpart, 2, ❓, Val(false); filo=false)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,2,21))
-@test strip_id(query(reg[3], EntanglementCounterpart, 2, ❓, Val(false); filo=true)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,2,23))
+@test strip_id(query(reg[3], EntanglementCounterpart, 2, ❓; filo=false)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,2,21))
+@test strip_id(query(reg[3], EntanglementCounterpart, 2, ❓; filo=true)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,2,23))
 
 @test queryall(reg, EntanglementCounterpart, 1, 11) == []
 default_ids = [r.id for r in queryall(reg[3], EntanglementCounterpart, 1, 10)]
@@ -97,12 +97,12 @@ end
 @test query(reg, EntanglementCounterpart, 1, 12) == query(reg, EntanglementCounterpart, ==(1), ==(12))
 @test query(reg, Tag(EntanglementCounterpart, 1, 10)) === nothing
 @test strip_id(query(reg, Tag(EntanglementCounterpart, 1, 12))) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
-@test strip_id(query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=false)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
-@test strip_id(query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=true)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
-@test query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=false) == query(reg, EntanglementCounterpart, 1, ==(12), Val(false); filo=false)
-@test query(reg, EntanglementCounterpart, 1, 12, Val(false); filo=true) == query(reg, EntanglementCounterpart, 1, ==(12), Val(false); filo=true)
-@test strip_id(query(reg, EntanglementCounterpart, 1, ❓, Val(false); filo=false)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
-@test strip_id(query(reg, EntanglementCounterpart, 1, ❓, Val(false); filo=true)) == (slot = reg[4], tag = Tag(EntanglementCounterpart,1,314))
+@test strip_id(query(reg, EntanglementCounterpart, 1, 12; filo=false)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
+@test strip_id(query(reg, EntanglementCounterpart, 1, 12; filo=true)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
+@test query(reg, EntanglementCounterpart, 1, 12; filo=false) == query(reg, EntanglementCounterpart, 1, ==(12); filo=false)
+@test query(reg, EntanglementCounterpart, 1, 12; filo=true) == query(reg, EntanglementCounterpart, 1, ==(12); filo=true)
+@test strip_id(query(reg, EntanglementCounterpart, 1, ❓; filo=false)) == (slot = reg[2], tag = Tag(EntanglementCounterpart,1,12))
+@test strip_id(query(reg, EntanglementCounterpart, 1, ❓; filo=true)) == (slot = reg[4], tag = Tag(EntanglementCounterpart,1,314))
 
 default_res = queryall(reg, EntanglementCounterpart, 1, ❓)
 default_res_id = [r.id for r in default_res]
