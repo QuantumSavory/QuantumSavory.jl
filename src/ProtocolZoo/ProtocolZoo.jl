@@ -14,7 +14,13 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 
-export EntanglerProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer, DecoherenceProt
+export
+    # protocols
+    EntanglerProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer,
+    # tags
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    # from Switches
+    SimpleSwitchDiscreteProt, SwitchRequest
 
 abstract type AbstractProtocol end
 
