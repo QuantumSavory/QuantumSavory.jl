@@ -65,3 +65,13 @@ end
 
 Base.convert(::Type{Tag}, x::Tag) = x
 Base.convert(::Type{Tag}, x) = Tag(x)
+
+# Create a constructor for each tag variant
+for (tagsymbol, tagvariant) in pairs(tag_types)
+    sig = methods(tagvariant)[1].sig.parameters[2:end]
+    args = (:a, :b, :c, :d, :e, :f, :g)[1:length(sig)]
+    argssig = [:($a::$t) for (a,t) in zip(args, sig)]
+    eval(quote function Tag($(argssig...))
+        ($tagvariant)($(args...))
+    end end)
+end

@@ -3,6 +3,7 @@ using QuantumSavory: tag_types
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart
 using Test
 
+function f()
 @test tag_types.SymbolIntInt(:symbol1, 4, 5) == Tag(:symbol1, 4, 5)
 
 function strip_id(query_result)
@@ -147,9 +148,55 @@ id3 = tag!(reg[3], :symB, 3, 4)
 id3 = tag!(reg[4], :symB, 4, 5)
 @test untag!(reg[1], id1).tag == Tag(:symA, 1, 2)
 @test untag!(reg, id2).tag == Tag(:symB, 2, 3)
-@test_throws "Attempted to delete a nonexistent" untag!(reg, 100)
+@test_throws "Attempted to delete a nonexistent" untag!(reg, -1)
 #= # tests for commented out code -- better to stick to only `querydelete!` for untagging with queries
 @test_throws "Attempted to delete a tag matching a query, but no matching tag exists" untag!(reg, :symD, ❓, ❓)
 @test_throws "Attempted to delete a tag matching a query, but there is no unique match" untag!(reg, :symB, ❓, ❓)
 @test untag!(reg, :symB, 3, ❓).tag == Tag(:symB, 3, 4)
+=#
+end
+
+f()
+#using BenchmarkTools
+#@benchmark f()
+
+#=
+## before any simplification
+
+BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range (min … max):  134.635 μs …   6.296 ms  ┊ GC (min … max): 0.00% … 95.01%
+ Time  (median):     142.902 μs               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   160.930 μs ± 240.887 μs  ┊ GC (mean ± σ):  8.04% ±  5.30%
+
+    ▂▇██▅▂
+  ▃▅███████▇▆▅▅▅▅▅▅▅▄▄▄▃▃▃▃▃▃▃▃▃▃▃▂▂▃▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▂▂▂▂ ▃
+  135 μs           Histogram: frequency by time          205 μs <
+
+ Memory estimate: 214.33 KiB, allocs estimate: 2649.
+
+## after first round of simplification
+
+BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range (min … max):  171.124 μs …  10.533 ms  ┊ GC (min … max): 0.00% … 96.97%
+ Time  (median):     182.391 μs               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   200.198 μs ± 291.337 μs  ┊ GC (mean ± σ):  6.32% ±  4.33%
+
+    ▁▆███▇▃▂
+  ▁▃██████████▇▇▆▅▄▄▄▃▃▃▂▂▂▂▂▂▂▂▂▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁ ▃
+  171 μs           Histogram: frequency by time          256 μs <
+
+ Memory estimate: 226.64 KiB, allocs estimate: 2848.
+
+## after second round of simplification
+
+BenchmarkTools.Trial: 10000 samples with 1 evaluation.
+ Range (min … max):  331.740 μs …   6.718 ms  ┊ GC (min … max): 0.00% … 91.94%
+ Time  (median):     344.995 μs               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   368.845 μs ± 261.286 μs  ┊ GC (mean ± σ):  5.52% ±  7.07%
+
+     ▅██▆▃▂
+  ▂▃▇███████▆▆▅▄▃▃▃▃▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▁▂▂▂▂▁▁▁▁▁▂▂▁▁▁▁▁▁▂▂▂▁▂ ▃
+  332 μs           Histogram: frequency by time          458 μs <
+
+ Memory estimate: 436.03 KiB, allocs estimate: 8666.
 =#

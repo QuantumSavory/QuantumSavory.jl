@@ -111,8 +111,8 @@ julia> queryall(r, :symbol, ❓, >(5))
 @NamedTuple{slot::RegRef, id::Int128, tag::Tag}[]
 ```
 """
-queryall(args...; filo=true, kwargs...) = _query(args..., Val{true}(), Val{filo}(); kwargs...)
-queryall(::MessageBuffer, args...; kwargs...) = throw(ArgumentError("`queryall` does not currently support `MessageBuffer`, chiefly to encourage the use of `querydelete!` instead"))
+queryall(container, queryargs...; filo=true, kwargs...) = _query(container, Val{true}(), Val{filo}(), queryargs...; kwargs...)
+queryall(::MessageBuffer, queryargs...; kwargs...) = throw(ArgumentError("`queryall` does not currently support `MessageBuffer`, chiefly to encourage the use of `querydelete!` instead"))
 
 """
 $TYPEDSIGNATURES
@@ -182,11 +182,11 @@ julia> queryall(r[2], :symbol, 2, 3)
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
 """
-function query(reg::RegOrRegRef, args...; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true)
-    _query(reg, args..., Val{false}(), Val{filo}(); locked=locked, assigned=assigned)
+function query(reg::RegOrRegRef, queryargs...; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true)
+    _query(reg, Val{false}(), Val{filo}(), queryargs...; locked=locked, assigned=assigned)
 end
 
-function _query(reg::RegOrRegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
+function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, tag::Tag; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
     ref = isa(reg, RegRef) ? reg : nothing
     reg = get_register(reg)
     result = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
@@ -200,6 +200,28 @@ function _query(reg::RegOrRegRef, tag::Tag, ::Val{allB}=Val{false}(), ::Val{filo
     return allB ? result : nothing
 end
 
+function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, queryargs...; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
+    ref = isa(reg, RegRef) ? reg : nothing
+    reg = get_register(reg)
+    res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
+    op_guid = filoB ? reverse : identity
+    for i in op_guid(reg.guids)
+        tag = reg.tag_info[i].tag
+        slot = reg[reg.tag_info[i].slot]
+        if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
+            good = length(queryargs)==length(tag)
+            if good
+                for (query_slot, tag_slot) in zip(queryargs, tag)
+                    good = good && query_check(query_slot, tag_slot)
+                end
+            end
+            if good
+                allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
+            end
+        end
+    end
+    allB ? res : nothing
+end
 
 """
 $TYPEDSIGNATURES
@@ -211,7 +233,25 @@ function query(mb::MessageBuffer, tag::Tag)
     return isnothing(i) ? nothing : (;depth=i, src=mb.buffer[i][1], tag=mb.buffer[i][2])
 end
 
+"""
+$TYPEDSIGNATURES
 
+You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers.
+"""
+function query(mb::MessageBuffer, queryargs...)
+    for (depth, (src, tag)) in pairs(mb.buffer)
+        for (query_slot, tag_slot) in zip(queryargs, tag)
+            query_check(query_slot, tag_slot) || return nothing
+        end
+        return (;depth, src, tag)
+    end
+    return nothing
+end
+
+_nothingor(l,r) = isnothing(l) || l==r
+query_check(q::Union{DataType,Int,Symbol}, t) = q==t
+query_check(q::Function, t) = q(t)
+query_check(_::Wildcard, _) = true
 
 """
 $TYPEDSIGNATURES
@@ -323,77 +363,10 @@ function querydelete!(reg::RegOrRegRef, args...; kwa...)
     return r
 end
 
-
-_nothingor(l,r) = isnothing(l) || l==r
-_all() = true
-_all(a::Bool) = a
-_all(a::Bool, b::Bool) = a && b
-_all(a::Bool, b::Bool, c::Bool) = a && b && c
-_all(a::Bool, b::Bool, c::Bool, d::Bool) = a && b && c && d
-_all(a::Bool, b::Bool, c::Bool, d::Bool, e::Bool) = a && b && c && d && e
-_all(a::Bool, b::Bool, c::Bool, d::Bool, e::Bool, f::Bool) = a && b && c && d && e && f
-
 tag!(tagcontainer, args...) = tag!(tagcontainer, Tag(args...))
 query(tagcontainer::RegRef, args::Union{DataType,Int,Symbol}...; kw...) = query(tagcontainer, Tag(args...); kw...)
 query(tagcontainer::Register, args::Union{DataType,Int,Symbol}...; kw...) = query(tagcontainer, Tag(args...); kw...)
 query(tagcontainer::MessageBuffer, args::Union{DataType,Int,Symbol}...) = query(tagcontainer, Tag(args...))
-
-# Create a query function for each combination of tag arguments and/or wildcard arguments
-for (tagsymbol, tagvariant) in pairs(tag_types)
-    sig = methods(tagvariant)[1].sig.parameters[2:end]
-    args = (:a, :b, :c, :d, :e, :f, :g)[1:length(sig)]
-    argssig = [:($a::$t) for (a,t) in zip(args, sig)]
-
-    eval(quote function Tag($(argssig...))
-        ($tagvariant)($(args...))
-    end end)
-
-    eval(quote function _query(tagcontainer, $(argssig...), ars...; kwa...)
-        _query(tagcontainer, ($tagvariant)($(args...)), ars...; kwa...)
-    end end)
-
-    int_idx_all = [i for (i,s) in enumerate(sig) if s == Int]
-    int_idx_combs = powerset(int_idx_all, 1)
-    for idx in int_idx_combs
-        complement_idx = tuple(setdiff(1:length(sig), idx)...)
-        sig_wild = collect(sig)
-        sig_wild[idx] .= Union{Wildcard,Function}
-        argssig_wild = [:($a::$t) for (a,t) in zip(args, sig_wild)]
-        wild_checks = [:(isa($(args[i]),Wildcard) || $(args[i])(tag[$i])) for i in idx]
-        nonwild_checks = [:(tag[$i]==$(args[i])) for i in complement_idx]
-        newmethod_reg = quote function _query(reg::RegOrRegRef, $(argssig_wild...), ::Val{allB}=Val{false}(), ::Val{filoB}=Val{true}(); locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
-            ref = isa(reg, RegRef) ? reg : nothing
-            reg = get_register(reg)
-            res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
-            op_guid = filoB ? reverse : identity
-            for i in op_guid(reg.guids)
-                tag = reg.tag_info[i].tag
-                slot = reg[reg.tag_info[i].slot]
-                if _nothingor(ref, slot) && isvariant(tag, ($(tagsymbol,))[1]) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
-                    if _all($(nonwild_checks...)) && _all($(wild_checks...))
-                        allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
-                    end
-                end
-            end
-            allB ? res : nothing
-        end end
-        newmethod_mb = quote function query(mb::MessageBuffer, $(argssig_wild...))
-            for (depth, (src, tag)) in pairs(mb.buffer)
-                if isvariant(tag, ($(tagsymbol,))[1])
-                    if _all($(nonwild_checks...)) && _all($(wild_checks...))
-                        return (;depth, src, tag)
-                    end
-                end
-            end
-        end end
-        #println(sig)
-        #println(sig_wild)
-        #println(newmethod_reg)
-        eval(newmethod_reg)
-        eval(newmethod_mb)
-    end
-end
-
 
 
 """Find an empty unlocked slot in a given [`Register`](@ref).
