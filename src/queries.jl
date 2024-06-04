@@ -200,19 +200,24 @@ function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, tag::Tag; locked::U
     return allB ? result : nothing
 end
 
-function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, queryargs...; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
+function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, queryargs::Vararg{<:Union{DataType,Function,Int,Symbol,Wildcard}, N};
+    locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing
+) where {allB, filoB, N} # queryargs is so specifically typed in order to trigger the compiler heuristics for specialization, leading to very significant performance improvements
     ref = isa(reg, RegRef) ? reg : nothing
     reg = get_register(reg)
     res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
-    op_guid = filoB ? reverse : identity
-    for i in op_guid(reg.guids)
+    l = length(reg.guids)
+    indices = filoB ? (l:-1:1) : (1:l)
+    for i in indices
+        i = reg.guids[i]
         tag = reg.tag_info[i].tag
         slot = reg[reg.tag_info[i].slot]
         if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
-            good = length(queryargs)==length(tag)
+            good = (N==length(tag))::Bool
             if good
-                for (query_slot, tag_slot) in zip(queryargs, tag)
-                    good = good && query_check(query_slot, tag_slot)
+                for i in 1:N
+                    good = good && (query_check(queryargs[i], tag[i]))::Bool
+                    good || break
                 end
             end
             if good
@@ -248,10 +253,11 @@ function query(mb::MessageBuffer, queryargs...)
     return nothing
 end
 
-_nothingor(l,r) = isnothing(l) || l==r
-query_check(q::Union{DataType,Int,Symbol}, t) = q==t
-query_check(q::Function, t) = q(t)
-query_check(_::Wildcard, _) = true
+@inline _nothingor(l,r) = isnothing(l) || l==r
+@inline query_check(q::T, t::T) where {T<:Union{DataType,Int,Symbol}} = (q==t)::Bool
+@inline query_check(q::Function, t) = q(t)::Bool
+@inline query_check(_::Wildcard, _) = true
+@inline query_check(_, _) = false
 
 """
 $TYPEDSIGNATURES

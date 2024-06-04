@@ -45,7 +45,7 @@ end
 See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const tag_types = Tag'
 
-Base.getindex(tag::Tag, i::Int) = SumTypes.unwrap(tag)[i]
+Base.@propagate_inbounds Base.getindex(tag::Tag, i::Int) = SumTypes.unwrap(tag).data[i]
 Base.length(tag::Tag) = length(SumTypes.unwrap(tag).data)
 Base.iterate(tag::Tag, state=1) = state > length(tag) ? nothing : (SumTypes.unwrap(tag)[state],state+1)
 
