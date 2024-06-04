@@ -16,7 +16,7 @@ import SumTypes
 
 export
     # protocols
-    EntanglerProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer,
+    EntanglerProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer, DecoherenceProt,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
