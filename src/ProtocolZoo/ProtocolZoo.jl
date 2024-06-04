@@ -305,12 +305,12 @@ end
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
-        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1` | time = $(now(prot.sim))"
+        @debug "SwapperKeeper @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1` | time = $(now(prot.sim))"
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
-        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
+        @debug "SwapperKeeper @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
         unlock(q1)
         unlock(q2)
         rounds==-1 || (rounds -= 1)
@@ -400,12 +400,12 @@ end
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
-        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1` | time = $(now(prot.sim))"
+        @debug "SwapperShedder @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1` | time = $(now(prot.sim))"
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
-        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
+        @debug "SwapperShedder @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
         unlock(q1)
         unlock(q2)
         rounds==-1 || (rounds -= 1)
@@ -576,7 +576,7 @@ end
         @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx) @ $(now(prot.sim))"
         untag!(q1, query1.id)
         untag!(q2, query2.id)
-        # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
+        # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for Swapper
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
         ob1 = real(observable((q1, q2), Z⊗Z))
         ob2 = real(observable((q1, q2), X⊗X))
