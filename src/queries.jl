@@ -213,13 +213,7 @@ function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, queryargs::Vararg{<
         tag = reg.tag_info[i].tag
         slot = reg[reg.tag_info[i].slot]
         if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
-            good = (N==length(tag))::Bool
-            if good
-                for i in 1:N
-                    good = good && (query_check(queryargs[i], tag[i]))::Bool
-                    good || break
-                end
-            end
+            good = query_good(tag, queryargs...)
             if good
                 allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
             end
@@ -258,6 +252,20 @@ end
 @inline query_check(q::Function, t) = q(t)::Bool
 @inline query_check(_::Wildcard, _) = true
 @inline query_check(_, _) = false
+
+for i in 1:10
+    args = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j, :k, :l)[1:i]
+    checks = [:(query_check($(args[i]), tag[$i])) for i in 1:i]
+    composite_check = reduce((l,r)->:($l && $r), checks)
+    query_good_expr = quote
+    @inline function query_good(tag::Tag, $(args...))
+        $i == length(tag) || return false
+        return $composite_check
+    end
+    end
+    #println(query_good_expr)
+    eval(query_good_expr)
+end
 
 """
 $TYPEDSIGNATURES
