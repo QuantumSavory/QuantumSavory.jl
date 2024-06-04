@@ -254,13 +254,30 @@ end
 @inline query_check(_, _) = false
 
 for i in 1:10
-    args = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j, :k, :l)[1:i]
-    checks = [:(query_check($(args[i]), tag[$i])) for i in 1:i]
+    vars = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j, :k, :l)
+    VARS = (:A, :B, :C, :D, :E, :F, :G, :H, :I, :J, :K, :L)
+    args = vars[1:i]
+    checks = [:(query_check($(args[i]), $(VARS[i]))) for i in 1:i]
     composite_check = reduce((l,r)->:($l && $r), checks)
+    cases = []
+    for (symbol, variant) in pairs(Tag')
+        signature = methods(variant)[1].sig.parameters[2:end]
+        l = length(signature)
+        sigargs = VARS[1:l]
+        if l==i
+            push!(cases, :($symbol($(sigargs...)) => $composite_check))
+        else
+        end
+    end
+    body_expr = isempty(cases) ? :(false) : quote
+        @cases tag begin
+            $(cases...)
+            _ => false
+        end
+    end
     query_good_expr = quote
     @inline function query_good(tag::Tag, $(args...))
-        $i == length(tag) || return false
-        return $composite_check
+        $body_expr
     end
     end
     #println(query_good_expr)
