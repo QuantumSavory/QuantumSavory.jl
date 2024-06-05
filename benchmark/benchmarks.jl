@@ -2,6 +2,7 @@ using BenchmarkTools
 using Pkg
 using StableRNGs
 using QuantumSavory
+using QuantumSavory.ProtocolZoo
 using QuantumSavory: tag_types
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
@@ -98,28 +99,55 @@ function tagquery_interfacetest()
     tag!(r[2], :symbol1, 4, 5)
     tag!(r[5], Int, 4, 5)
 
-    @assert Tag(:symbol1, 2, 3) == tag_types.SymbolIntInt(:symbol1, 2, 3)
-    @assert query(r, :symbol1, 4, ❓) == (slot=r[2], tag=tag_types.SymbolIntInt(:symbol1, 4, 5))
-    @assert query(r, :symbol1, 4, 5) == (slot=r[2], tag=tag_types.SymbolIntInt(:symbol1, 4, 5))
-    @assert query(r, :symbol1, ❓, ❓) == (slot=r[1], tag=tag_types.SymbolIntInt(:symbol1, 2, 3))
+    @assert Tag(:symbol1, 2, 3) == Tag(:symbol1, 2, 3)
+    @assert query(r, :symbol1, 4, ❓).tag == Tag(:symbol1, 4, 5)
+    @assert query(r, :symbol1, 4, 5).tag == Tag(:symbol1, 4, 5)
+    @assert query(r, :symbol1, ❓, ❓).tag == Tag(:symbol1, 4, 5)
     @assert query(r, :symbol2, ❓, ❓) == nothing
-    @assert query(r, Int, 4, 5) == (slot=r[5], tag=tag_types.TypeIntInt(Int, 4, 5))
+    @assert query(r, Int, 4, 5).tag == Tag(Int, 4, 5)
     @assert query(r, Float32, 4, 5) == nothing
     @assert query(r, Int, 4, >(5)) == nothing
-    @assert query(r, Int, 4, <(6)) == (slot=r[5], tag=tag_types.TypeIntInt(Int, 4, 5))
+    @assert query(r, Int, 4, <(6)).tag == Tag(Int, 4, 5)
 
-    @assert queryall(r, :symbol1, ❓, ❓) == [(slot=r[1], tag=tag_types.SymbolIntInt(:symbol1, 2, 3)), (slot=r[2], tag=tag_types.SymbolIntInt(:symbol1, 4, 5))]
+    @assert [r.tag for r in queryall(r, :symbol1, ❓, ❓)] == [Tag(:symbol1, 4, 5),Tag(:symbol1, 2, 3)]
     @assert isempty(queryall(r, :symbol2, ❓, ❓))
 
-    @assert query(r[2], Tag(:symbol1, 4, 5)) == (depth=1, tag=Tag(:symbol1, 4, 5))
-    @assert queryall(r[2], Tag(:symbol1, 4, 5)) == [(depth=1, tag=Tag(:symbol1, 4, 5))]
-    @assert query(r[2], :symbol1, 4, 5) == (depth=1, tag=Tag(:symbol1, 4, 5))
-    @assert queryall(r[2], :symbol1, 4, 5) == [(depth=1, tag=Tag(:symbol1, 4, 5))]
+    @assert query(r[2], Tag(:symbol1, 4, 5)).tag == Tag(:symbol1, 4, 5)
+    @assert [r.tag for r in queryall(r[2], Tag(:symbol1, 4, 5))] == [Tag(:symbol1, 4, 5)]
+    @assert query(r[2], :symbol1, 4, 5).tag == Tag(:symbol1, 4, 5)
+    @assert [r.tag for r in queryall(r[2], :symbol1, 4, 5)] == [Tag(:symbol1, 4, 5)]
 
-    @assert query(r[2], :symbol1, 4, ❓) == (depth=1, tag=Tag(:symbol1, 4, 5))
-    @assert queryall(r[2], :symbol1, 4, ❓) == [(depth=1, tag=Tag(:symbol1, 4, 5))]
+    @assert query(r[2], :symbol1, 4, ❓).tag == Tag(:symbol1, 4, 5)
+    @assert [r.tag for r in queryall(r[2], :symbol1, 4, ❓)] == [Tag(:symbol1, 4, 5)]
 
-    @assert querydelete!(r[2], :symbol1, 4, ❓) == Tag(:symbol1, 4, 5)
+    @assert querydelete!(r[2], :symbol1, 4, ❓).tag == Tag(:symbol1, 4, 5)
     @assert querydelete!(r[2], :symbol1, 4, ❓) === nothing
 end
 SUITE["tagquery"]["misc"]["from_tests"] = @benchmarkable tagquery_interfacetest()
+
+SUITE["tagquery"]["register"] = BenchmarkGroup(["register"])
+reg = Register(5)
+tag!(reg[3], EntanglementCounterpart, 1, 10)
+tag!(reg[3], EntanglementCounterpart, 2, 21)
+tag!(reg[3], EntanglementCounterpart, 3, 30)
+tag!(reg[3], EntanglementCounterpart, 2, 22)
+tag!(reg[3], EntanglementCounterpart, 1, 10)
+tag!(reg[3], EntanglementCounterpart, 6, 60)
+tag!(reg[3], EntanglementCounterpart, 2, 23)
+tag!(reg[3], EntanglementCounterpart, 1, 10)
+SUITE["tagquery"]["register"]["query"] = @benchmarkable @benchmark query(reg, EntanglementCounterpart, 6, ❓; filo=true)
+SUITE["tagquery"]["register"]["queryall"] = @benchmarkable @benchmark queryall(reg, EntanglementCounterpart, 6, ❓; filo=true)
+
+SUITE["tagquery"]["messagebuffer"] = BenchmarkGroup(["messagebuffer"])
+net = RegisterNet([Register(3), Register(2), Register(3)])
+mb = messagebuffer(net, 2)
+put!(mb, Tag(EntanglementCounterpart, 1, 10))
+put!(mb, Tag(EntanglementCounterpart, 2, 21))
+put!(mb, Tag(EntanglementCounterpart, 3, 30))
+put!(mb, Tag(EntanglementCounterpart, 2, 22))
+put!(mb, Tag(EntanglementCounterpart, 1, 10))
+put!(mb, Tag(EntanglementCounterpart, 6, 60))
+put!(mb, Tag(EntanglementCounterpart, 2, 23))
+put!(mb, Tag(EntanglementCounterpart, 1, 10))
+SUITE["tagquery"]["messagebuffer"]["query"] = @benchmarkable query(mb, EntanglementCounterpart, 6, ❓)
+SUITE["tagquery"]["messagebuffer"]["querydelete"] = @benchmarkable querydelete!(_mb, EntanglementCounterpart, 6, ❓) setup=(_mb = deepcopy(mb))  evals=1
