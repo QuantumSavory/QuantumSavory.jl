@@ -1,3 +1,5 @@
+const TagElementTypes = Union{Symbol, Int, DataType}
+
 """
 Tags are used to represent classical metadata describing the state (or even history) of nodes and their registers. The library allows the construction of custom tags using the `Tag` constructor. Currently tags are implemented as instances of a [sum type](https://github.com/MasonProtter/SumTypes.jl) and have fairly constrained structure. Most of them are constrained to contain only Symbol instances and integers.
 

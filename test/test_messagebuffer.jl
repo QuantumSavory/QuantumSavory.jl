@@ -41,3 +41,4 @@ proc3 = put!(messagebuffer(net[1]), Tag(SwitchRequest(2,3)))
 proc4 = put!(messagebuffer(net[1]), SwitchRequest(2,3))
 run(sim, 10)
 @test QuantumSavory.peektags(messagebuffer(net,1)) == [Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3))]
+@test_throws "does not support `tag!`" tag!(messagebuffer(net, 1), EntanglementCounterpart, 1, 10)

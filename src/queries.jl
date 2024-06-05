@@ -44,27 +44,6 @@ function untag!(ref::RegOrRegRef, id::Integer)
     return to_be_deleted
 end
 
-#= # Should not exist. Rather, `querydelete!` should be used.
-"""$TYPEDSIGNATURES
-
-Remove the unique tag matching the given query from a [`RegRef`](@ref) or a [`Register`](@ref).
-
-See also: [`query`](@ref), [`tag!`](@ref)
-"""
-function untag!(ref::RegOrRegRef, args...)
-    matches = queryall(ref, args...)
-    if length(matches) == 0
-        throw(QueryError("Attempted to delete a tag matching a query, but no matching tag exists", untag!, args))
-    elseif length(matches) > 1
-        @show matches
-        @show length(matches)
-        throw(QueryError("Attempted to delete a tag matching a query, but there is no unique match to the query (consider manually using `queryall` and `untag!` instead)", untag!, args))
-    end
-    id = matches[1].id
-    untag!(ref, id)
-end
-=#
-
 """Wildcard type for use with the tag querying functionality.
 
 Usually you simply want an instance of this type (available as the constant [`W`](@ref) or [`❓`](@ref)).
@@ -72,6 +51,7 @@ Usually you simply want an instance of this type (available as the constant [`W`
 See also: [`query`](@ref), [`tag!`](@ref)"""
 struct Wildcard end
 
+const QueryTypes = Union{Function,Wildcard,TagElementTypes}
 
 """A wildcard instance for use with the tag querying functionality.
 
@@ -111,7 +91,8 @@ julia> queryall(r, :symbol, ❓, >(5))
 @NamedTuple{slot::RegRef, id::Int128, tag::Tag}[]
 ```
 """
-queryall(container, queryargs...; filo=true, kwargs...) = _query(container, Val{true}(), Val{filo}(), queryargs...; kwargs...)
+queryall(reg::RegOrRegRef, queryargs::Vararg{QueryTypes,N}; filo=true, kwargs...) where {N} = _query(reg, Val{true}(), Val{filo}(), queryargs...; kwargs...)
+queryall(reg::RegOrRegRef, query::Tag; filo=true, kwargs...) = _query(reg, Val{true}(), Val{filo}(), query; kwargs...)
 queryall(::MessageBuffer, queryargs...; kwargs...) = throw(ArgumentError("`queryall` does not currently support `MessageBuffer`, chiefly to encourage the use of `querydelete!` instead"))
 
 """
@@ -182,76 +163,51 @@ julia> queryall(r[2], :symbol, 2, 3)
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
 """
-function query(reg::RegOrRegRef, queryargs...; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true)
+function query(reg::RegOrRegRef, queryargs::Vararg{QueryTypes,N}; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) where {N}
     _query(reg, Val{false}(), Val{filo}(), queryargs...; locked=locked, assigned=assigned)
 end
-
-function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, tag::Tag; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
-    ref = isa(reg, RegRef) ? reg : nothing
-    reg = get_register(reg)
-    result = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
-    op_guid = filoB ? reverse : identity
-    for i in op_guid(reg.guids)
-        slot = reg[reg.tag_info[i].slot]
-        if _nothingor(ref, slot) && reg.tag_info[i].tag == tag && _nothingor(locked, islocked(slot) && _nothingor(assigned, isassigned(slot)))
-            allB ? push!(result, (slot=slot, id=i, tag=reg.tag_info[i].tag)) : return (slot=slot, id=i, tag=reg.tag_info[i].tag)
-        end
-    end
-    return allB ? result : nothing
-end
-
-function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, queryargs::Vararg{<:Union{DataType,Function,Int,Symbol,Wildcard}, N};
-    locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing
-) where {allB, filoB, N} # queryargs is so specifically typed in order to trigger the compiler heuristics for specialization, leading to very significant performance improvements
-    ref = isa(reg, RegRef) ? reg : nothing
-    reg = get_register(reg)
-    res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
-    l = length(reg.guids)
-    indices = filoB ? (l:-1:1) : (1:l)
-    for i in indices
-        i = reg.guids[i]
-        tag = reg.tag_info[i].tag
-        slot = reg[reg.tag_info[i].slot]
-        if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
-            good = query_good(tag, queryargs...)
-            if good
-                allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
-            end
-        end
-    end
-    allB ? res : nothing
-end
+query(reg::RegOrRegRef, query::Tag; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing, filo::Bool=true) = _query(reg, Val{false}(), Val{filo}(), query; locked=locked, assigned=assigned)
 
 """
 $TYPEDSIGNATURES
 
 You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers.
 """
-function query(mb::MessageBuffer, tag::Tag)
-    i = findfirst(t->t.tag==tag, mb.buffer)
-    return isnothing(i) ? nothing : (;depth=i, src=mb.buffer[i][1], tag=mb.buffer[i][2])
-end
-
-"""
-$TYPEDSIGNATURES
-
-You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers.
-"""
-function query(mb::MessageBuffer, queryargs...)
+function query(mb::MessageBuffer, queryargs::Vararg{QueryTypes,N}) where {N}
     for (depth, (src, tag)) in pairs(mb.buffer)
-        for (query_slot, tag_slot) in zip(queryargs, tag)
-            query_check(query_slot, tag_slot) || return nothing
-        end
-        return (;depth, src, tag)
+        query_good(tag, queryargs...) && return (;depth, src, tag)
     end
     return nothing
 end
 
-@inline _nothingor(l,r) = isnothing(l) || l==r
-@inline query_check(q::T, t::T) where {T<:Union{DataType,Int,Symbol}} = (q==t)::Bool
-@inline query_check(q::Function, t) = q(t)::Bool
-@inline query_check(_::Wildcard, _) = true
-@inline query_check(_, _) = false
+for i in 1:10 # Vararg{Union{...}, N} does not specialize well, so we are explicitly making a method for each number of arguments
+    args = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j, :k, :l)[1:i]
+    query_expr = quote
+    function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, $(args...);
+        locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing
+    ) where {allB, filoB} # queryargs is so specifically typed in order to trigger the compiler heuristics for specialization, leading to very significant performance improvements
+        ref = isa(reg, RegRef) ? reg : nothing
+        reg = get_register(reg)
+        res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
+        l = length(reg.guids)
+        indices = filoB ? (l:-1:1) : (1:l)
+        for i in indices
+            i = reg.guids[i]
+            tag = reg.tag_info[i].tag
+            slot = reg[reg.tag_info[i].slot]
+            if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
+                good = query_good(tag, $(args...))
+                if good
+                    allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
+                end
+            end
+        end
+        allB ? res : nothing
+    end
+    end
+    #println(query_expr)
+    eval(query_expr)
+end
 
 for i in 1:10
     vars = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j, :k, :l)
@@ -283,6 +239,12 @@ for i in 1:10
     #println(query_good_expr)
     eval(query_good_expr)
 end
+
+@inline _nothingor(l,r) = isnothing(l) || l==r
+@inline query_check(q::T, t::T) where {T<:TagElementTypes} = (q==t)::Bool
+@inline query_check(q::Function, t) = q(t)::Bool
+@inline query_check(_::Wildcard, _) = true
+@inline query_check(_, _) = false
 
 """
 $TYPEDSIGNATURES
@@ -395,10 +357,29 @@ function querydelete!(reg::RegOrRegRef, args...; kwa...)
 end
 
 tag!(tagcontainer, args...) = tag!(tagcontainer, Tag(args...))
-query(tagcontainer::RegRef, args::Union{DataType,Int,Symbol}...; kw...) = query(tagcontainer, Tag(args...); kw...)
-query(tagcontainer::Register, args::Union{DataType,Int,Symbol}...; kw...) = query(tagcontainer, Tag(args...); kw...)
-query(tagcontainer::MessageBuffer, args::Union{DataType,Int,Symbol}...) = query(tagcontainer, Tag(args...))
 
+function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, query::Tag; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
+    ref = isa(reg, RegRef) ? reg : nothing
+    reg = get_register(reg)
+    res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
+    l = length(reg.guids)
+    indices = filoB ? (l:-1:1) : (1:l)
+    for i in indices
+        i = reg.guids[i]
+        tag = reg.tag_info[i].tag
+        slot = reg[reg.tag_info[i].slot]
+        if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot)) && tag==query
+            allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
+        end
+    end
+    allB ? res : nothing
+end
+function query(mb::MessageBuffer, query::Tag)
+    for (depth, (src, tag)) in pairs(mb.buffer)
+        tag==query && return (;depth, src, tag)
+    end
+    return nothing
+end
 
 """Find an empty unlocked slot in a given [`Register`](@ref).
 
