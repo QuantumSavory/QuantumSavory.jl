@@ -19,7 +19,7 @@ for n in 3:30
     sim = get_time_tracker(net)
 
     for e in edges(net)
-        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true)
+        eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true, margin=5, hardmargin=3)
         @process eprot()
     end
 

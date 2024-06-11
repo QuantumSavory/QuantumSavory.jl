@@ -178,6 +178,10 @@ $TYPEDFIELDS
     attempts::Int = -1
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
+    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
+    margin::Int = 0
+    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
+    hardmargin::Int = 0
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -195,8 +199,10 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize)
-        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize)
+        isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
+        margin = isentangled ? prot.margin : prot.hardmargin
+        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
+        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a \n2.\t $b \n retrying..."
@@ -241,8 +247,12 @@ end
 """
 $TYPEDEF
 
-A protocol, running at a given node, that finds swappable entangled pairs and performs the swap. If a decoherence protocol is used, then communications would be done with asynchronous messaging
-through the `EntanglementTracker`. Keeps(considers) all the swap candidates without verifying there decoherence status
+A protocol, running at a given node, that finds swappable entangled pairs and performs the swap. If the decoherence prtocol, [`DecoherenceProt`](@ref) is used, then communications about the 
+decoherence status of qubit would be done with asynchronous messaging through the [`EntanglementTracker`](@ref). Thus, `SwapperKeeper` keeps(considers) all the swap candidates
+without verifying their decoherence status, leaving it to the [`EntanglementTracker`](@ref) to handle deletions performed by the decoherence protocol and forwarding the deletion messages
+to the swapped nodes after the swap.
+
+See also: [`SwapperShedder`](@ref)
 
 $TYPEDFIELDS
 """
@@ -332,7 +342,11 @@ end
 """
 $TYPEDEF
 
-A protocol, running at a given node, that finds swappable entangled pairs and performs the swap. Rejects the swap candidates that are about to decohere.
+A protocol, running at a given node, that finds swappable entangled pairs and performs the swap.
+Rejects the swap candidates that are about to decohere by checking their time of creation, while the decoherence protocol, [`DecoherenceProt`](@ref) deletes such qubits independently.
+
+See also: [`SwapperKeeper`](@ref)
+
 
 $TYPEDFIELDS
 """
@@ -486,8 +500,8 @@ end
                 # and forward the message to that node.
                 history = querydelete!(localslot, EntanglementHistory,
                                     pastremotenode, pastremoteslotid, # who we were entangled to (node, slot)
-                                    ❓, ❓,                             # who we swapped with (node, slot)
-                                    ❓)                                # which local slot used to be entangled with whom we swapped with
+                                    ❓, ❓,                           # who we swapped with (node, slot)
+                                    ❓)                               # which local slot used to be entangled with whom we swapped with
                 if !isnothing(history)
                     # @debug "tracker @$(prot.node) history: $(history) | msg: $msg"
 
@@ -500,7 +514,7 @@ end
                     else # We have a delete message but the qubit was swapped so add a tag and forward to swapped node
                         @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                         msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx)
-                        tag!(localslot, updatetagsymbol, prot.node, localslot, whoweswappedwith_node, whoweswappedwith_slotidx)
+                        tag!(localslot, updatetagsymbol, prot.node, localslot.idx, whoweswappedwith_node, whoweswappedwith_slotidx)
                         put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
                     end
                     continue
@@ -561,7 +575,6 @@ end
             continue
         else
             query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
-            # don't really need to check `iscoherent` the second time, but just for safety
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 @yield timeout(prot.sim, prot.period)
@@ -592,7 +605,8 @@ end
 """
 $TYPEDEF
 
-A protocol running at a node, checking periodically for any decoherent entanglement and emptying such slots.
+A protocol running at a node, checking periodically for any qubits in the node that have remained unused for more than the retention period of the
+qubit and emptying such slots.
 
 $FIELDS
 """
@@ -619,6 +633,7 @@ end
     reg = prot.net[prot.node]
     while true
         for slot in reg
+            islocked(slot) && continue
             @yield lock(slot)
             info = query(slot, EntanglementCounterpart, ❓, ❓)
             if isnothing(info) unlock(slot);continue end

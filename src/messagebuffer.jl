@@ -21,7 +21,7 @@ function Base.put!(cf::ChannelForwarder, tag)
     tag = convert(Tag, tag)
     # shortest path calculated by Graphs.a_star
     nexthop = first(a_star(cf.net.graph, cf.src, cf.dst))
-    # @debug "ChannelForwarder: Forwarding message from node $(nexthop.src) to node $(nexthop.dst) | message=$(tag)| end destination=$(cf.dst)"
+    @debug "ChannelForwarder: Forwarding message from node $(nexthop.src) to node $(nexthop.dst) | message=$(tag)| end destination=$(cf.dst)"
     put!(channel(cf.net, cf.src=>nexthop.dst; permit_forward=false), tag_types.Forward(tag, cf.dst))
 end
 
