@@ -30,6 +30,8 @@ function Base.put!(mb::MessageBuffer, tag)
     nothing
 end
 
+tag!(::MessageBuffer, args...) = throw(ArgumentError("MessageBuffer does not support `tag!`. Use `put!(::MessageBuffer, Tag(...))` instead."))
+
 function Base.put!(reg::Register, tag)
     put!(messagebuffer(reg), tag)
 end

@@ -46,9 +46,7 @@ One can also query by "lock" and "assignment" status of a given slot, by using t
 Following is a detailed description of each `query` method
 
 ```@docs; canonical=false
-query(::Register,::Tag)
-query(::RegRef,::Tag) 
-query(::MessageBuffer,::Tag)
+query
 ```
 
 ### Wildcards
@@ -63,8 +61,7 @@ W
 A method on top of [`query`](@ref), which allows to query for tag in a [`RegRef`](@ref) or a [`messagebuffer`](@ref), returning the tag that satisfies the passed predicates and wildcars, **and deleting it from the list at the same time**. It otherwise has the same signature as [`query`](@ref).
 
 ```@docs; canonical=false
-querydelete!(::RegRef)
-querydelete!(::MessageBuffer)
+querydelete!
 ```
 
 ### `queryall`

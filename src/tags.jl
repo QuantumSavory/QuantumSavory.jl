@@ -1,3 +1,5 @@
+const TagElementTypes = Union{Symbol, Int, DataType}
+
 """
 Tags are used to represent classical metadata describing the state (or even history) of nodes and their registers. The library allows the construction of custom tags using the `Tag` constructor. Currently tags are implemented as instances of a [sum type](https://github.com/MasonProtter/SumTypes.jl) and have fairly constrained structure. Most of them are constrained to contain only Symbol instances and integers.
 
@@ -45,7 +47,7 @@ end
 See also: [`query`](@ref), [`tag!`](@ref), [`Wildcard`](@ref)"""
 const tag_types = Tag'
 
-Base.getindex(tag::Tag, i::Int) = SumTypes.unwrap(tag)[i]
+Base.@propagate_inbounds Base.getindex(tag::Tag, i::Int) = SumTypes.unwrap(tag).data[i]
 Base.length(tag::Tag) = length(SumTypes.unwrap(tag).data)
 Base.iterate(tag::Tag, state=1) = state > length(tag) ? nothing : (SumTypes.unwrap(tag)[state],state+1)
 
@@ -65,3 +67,13 @@ end
 
 Base.convert(::Type{Tag}, x::Tag) = x
 Base.convert(::Type{Tag}, x) = Tag(x)
+
+# Create a constructor for each tag variant
+for (tagsymbol, tagvariant) in pairs(tag_types)
+    sig = methods(tagvariant)[1].sig.parameters[2:end]
+    args = (:a, :b, :c, :d, :e, :f, :g)[1:length(sig)]
+    argssig = [:($a::$t) for (a,t) in zip(args, sig)]
+    eval(quote function Tag($(argssig...))
+        ($tagvariant)($(args...))
+    end end)
+end
