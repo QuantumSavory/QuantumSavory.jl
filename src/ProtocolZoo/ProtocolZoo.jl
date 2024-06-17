@@ -521,7 +521,12 @@ end
                 end
 
                 if !isnothing(querydelete!(localslot, EntanglementDelete, prot.node, localslot.idx, pastremotenode, pastremoteslotid)) #deletion from both sides of the swap, deletion msg when both qubits of a pair are deleted, or when EU arrives after ED at swap node with two simultaneous swaps and deletion on one side
-                    @debug "EntanglementTracker @$(prot.node): message=`$msg` for deleted qubit handled"
+                    if !(isnothing(updategate)) # EU message, hence to handle a possible delete-swap-swap case, we need to update the EntanglementDelete tag
+                        tag!(localslot, EntanglementDelete, prot.node, localslot.idx, newremotenode, newremoteslotid)
+                        @debug "EntanglementTracker @$(prot.node): message=`$msg` for deleted qubit handled and EntanglementDelete tag updated"
+                    else # when the message is EntanglementDelete and the slot also has an EntanglementDelete tag(both qubits were deleted), do nothing
+                        @debug "EntanglementTracker @$(prot.node): message=`$msg` for deleted qubit handled"
+                    end
                     continue
                 end
 
