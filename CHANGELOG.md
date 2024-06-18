@@ -1,5 +1,13 @@
 # News
 
+## v0.4.2 - 2024-00-00
+
+- Develop `DecoherenceProt` to deal with deadlocks in a simulation
+- Expand `SwapperProt` into `SwapperKeeper` and `SwapperShedder` to work with `DecoherenceProt` in asynchronous and synchronous mode
+- Tutorial for entanglement distribution on a grid
+- Interactive examples using `SwapperKeeper` and `SwapperShedder` for simulation and visualization
+- WebGL demos for the two ways of doing swapping and decoherence.
+
 ## v0.4.1 - 2024-06-05
 
 - Significant improvements to the performance of `query`.

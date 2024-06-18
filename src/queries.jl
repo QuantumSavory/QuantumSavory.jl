@@ -407,9 +407,22 @@ function findfreeslot(reg::Register; randomize=false, margin=0)
     end
 end
 
-function iscoherent(slot::RegRef, buffer_time, retention_time, id)
-    if !isassigned(slot) throw("Slot must be assigned with a quantum state before checking coherence") end
-    return (now(get_time_tracker(slot))) + buffer_time - slot.reg.tag_info[id][3] < retention_time
+struct NotAssignedError <: Exception
+    msg
+    f
+end
+
+function Base.showerror(io::IO, err::NotAssignedError)
+    print(io, "NotAssignedError: ")
+    println(io, err.msg)
+    println("In function: $(err.f)")
+end
+
+function isolderthan(slot::RegRef, time_left)
+    if !isassigned(slot) throw(NotAssignedError("Slot must be assigned with a quantum state before checking coherence.", isolderthan)) end
+    id = query(slot, QuantumSavory.ProtocolZoo.EntanglementCounterpart, ❓, ❓).id
+    slot_time  = slot.reg.tag_info[id][3]
+    return (now(get_time_tracker(slot))) - slot_time > time_left
 end
 
 
