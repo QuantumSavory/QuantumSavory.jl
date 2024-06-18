@@ -5,7 +5,7 @@ using Documenter
 using DocumenterCitations
 using QuantumSavory
 
-DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory); recursive=true)
+DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory; using QuantumSavory.ProtocolZoo); recursive=true)
 
 function main()
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
