@@ -1,3 +1,4 @@
+using Test
 using QuantumSavory, JET
 using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols
 
@@ -34,5 +35,7 @@ rep = report_package("QuantumSavory";
         AnyFrameModule(WignerSymbols),
         ))
 
+@show length(JET.get_reports(rep))
 @show rep
+@test length(JET.get_reports(rep)) <= 129
 @test_broken length(JET.get_reports(rep)) == 0
