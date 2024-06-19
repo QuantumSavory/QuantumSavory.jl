@@ -1,5 +1,9 @@
 # News
 
+## v0.4.2 - dev
+
+- Bump QuantumSymbolics compat bound and bump julia compat to 1.10.
+
 ## v0.4.1 - 2024-06-05
 
 - Significant improvements to the performance of `query`.
