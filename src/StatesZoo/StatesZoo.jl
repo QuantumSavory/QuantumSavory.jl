@@ -5,7 +5,7 @@ using QuantumSymbolics, QuantumOpticsBase
 using QuantumSymbolics: withmetadata, @withmetadata, Metadata
 import QuantumSymbolics: express_nolookup
 
-using LinearAlgebra
+import LinearAlgebra
 import LinearAlgebra: tr
 
 export SingleRailMidSwapBellW, SingleRailMidSwapBell, DualRailMidSwapBellW, DualRailMidSwapBell, ZALMSpinPairW, ZALMSpinPair, tr
@@ -52,7 +52,7 @@ const cascaded_source_basis = [0 0 0 0;
                                2 0 1 1;
                                2 0 2 0]
 
-    
+
 include("zalm_pair/zalm_pair.jl")
 include("zalm_pair/ret_cxy.jl")
 include("single_dual_rail_midswap/single_dual_rail_midswap.jl")

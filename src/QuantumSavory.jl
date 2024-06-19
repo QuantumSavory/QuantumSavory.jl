@@ -10,7 +10,9 @@ using Reexport
 
 using DocStringExtensions
 using IterTools
-using LinearAlgebra
+import LinearAlgebra
+using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot
+import Random
 using Random: randperm
 using Graphs
 import ConcurrentSim
@@ -19,8 +21,9 @@ using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Resource,
       request, release, now, active_process, timeout, put, get
 using ResumableFunctions
 using Printf
-using SumTypes: @sum_type, isvariant, @cases
 import SumTypes
+using SumTypes: @sum_type, isvariant, @cases
+import Combinatorics
 using Combinatorics: powerset
 
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,
@@ -29,7 +32,6 @@ import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,
 export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
 
-@reexport using QuantumSymbolics
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
@@ -37,6 +39,8 @@ using QuantumSymbolics:
     HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
     XBasisState, YBasisState, ZBasisState,
     STensorOperator, SScaledOperator, SAddOperator
+using QuantumSymbolics: I # to avoid ambiguity with LinearAlgebra.I
+@reexport using QuantumSymbolics
 
 export
     StateRef, RegRef, Register,
