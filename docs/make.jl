@@ -4,8 +4,9 @@ push!(LOAD_PATH,"../src/")
 using Documenter
 using DocumenterCitations
 using QuantumSavory
+using QuantumSavory.ProtocolZoo
 
-DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory; using QuantumSavory.ProtocolZoo); recursive=true)
+DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory); recursive=true)
 
 function main()
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
@@ -18,7 +19,7 @@ function main()
     format = Documenter.HTML(
         assets=["assets/init.js"]
     ),
-    modules = [QuantumSavory, QuantumSavory.ProtocolZoo],
+    modules = [QuantumSavory],
     authors = "Stefan Krastanov",
     pages = [
     "QuantumSavory.jl" => "index.md",
