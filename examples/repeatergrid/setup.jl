@@ -83,7 +83,7 @@ function prepare_simulation(;sync=false)
     # decoherence protocol runs at each node to free up slots that haven't been used past the retention time
     period_dec = Observable(0.1)
     for v in vertices(net)
-        decprot = DecoherenceProt(sim, net, v; sync=sync, period=period_dec[]) # TODO default and slider for retention_time
+        decprot = CutoffProt(sim, net, v; sync=sync, period=period_dec[]) # TODO default and slider for retention_time
         @process decprot()
     end
 

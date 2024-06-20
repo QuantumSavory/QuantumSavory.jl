@@ -6,7 +6,7 @@ qubit and emptying such slots.
 
 $FIELDS
 """
-@kwdef struct DecoherenceProt <: AbstractProtocol
+@kwdef struct CutoffProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -21,11 +21,11 @@ $FIELDS
     sync::Bool = false
 end
 
-function DecoherenceProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
-    return DecoherenceProt(;sim, net, node, kwargs...)
+function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
+    return CutoffProt(;sim, net, node, kwargs...)
 end
 
-@resumable function (prot::DecoherenceProt)()
+@resumable function (prot::CutoffProt)()
     reg = prot.net[prot.node]
     while true
         for slot in reg
@@ -39,7 +39,7 @@ end
                 msg = Tag(EntanglementDelete, prot.node, slot.idx, info.tag[2], info.tag[3])
                 tag!(slot, msg)
                 (prot.sync) || put!(channel(prot.net, prot.node=>msg[4]; permit_forward=true), msg)
-                @debug "DecoherenceProt @$(prot.node): Send message to $(msg[4]) | message=`$msg` | time=$(now(prot.sim))"
+                @debug "CutoffProt @$(prot.node): Send message to $(msg[4]) | message=`$msg` | time=$(now(prot.sim))"
             end
 
             #delete old history tags

@@ -5,9 +5,9 @@ end
 """
 $TYPEDEF
 
-A protocol, running at a given node, that finds swappable entangled pairs and performs the swap. If the decoherence prtocol, [`DecoherenceProt`](@ref) is used, then communications about the 
+A protocol, running at a given node, that finds swappable entangled pairs and performs the swap. If the cutoff prtocol, [`CutoffProt`](@ref) is used, then communications about the 
 decoherence status of qubit would be done with asynchronous messaging through the [`EntanglementTracker`](@ref). Thus, `SwapperKeeper` keeps(considers) all the swap candidates
-without verifying their decoherence status, leaving it to the [`EntanglementTracker`](@ref) to handle deletions performed by the decoherence protocol and forwarding the deletion messages
+without verifying their decoherence status, leaving it to the [`EntanglementTracker`](@ref) to handle deletions performed by the cutoff protocol and forwarding the deletion messages
 to the swapped nodes after the swap.
 
 See also: [`SwapperShedder`](@ref)
@@ -103,7 +103,7 @@ end
 $TYPEDEF
 
 A protocol, running at a given node, that finds swappable entangled pairs and performs the swap.
-Rejects the swap candidates that are about to decohere by checking their time of creation, while the decoherence protocol, [`DecoherenceProt`](@ref) deletes such qubits independently.
+Rejects the swap candidates that are about to go past their cutoff/retention time by checking their time of creation, while the cutoff protocol, [`CutoffProt`](@ref) deletes such qubits independently.
 
 See also: [`SwapperKeeper`](@ref)
 

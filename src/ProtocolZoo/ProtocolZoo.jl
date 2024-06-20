@@ -16,7 +16,7 @@ import SumTypes
 
 export
     # protocols
-    EntanglerProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer, DecoherenceProt,
+    EntanglerProt, SwapperKeeper, SwapperShedder, EntanglementTracker, EntanglementConsumer, CutoffProt,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
@@ -124,7 +124,7 @@ Tag(tag::EntanglementUpdateZ) = Tag(EntanglementUpdateZ, tag.past_local_node, ta
 """
 $TYPEDEF
 
-This tag arrives as a message from a remote node's Decoherence Protocol to which the current node used to be entangled, to
+This tag arrives as a message from a remote node's Cutoff Protocol to which the current node used to be entangled, to
 update the classical metadata of the entangled slot and empty it 
 
 $TYPEDFIELDS
@@ -421,7 +421,7 @@ end
 end
 
 
-include("decoherence.jl")
+include("cutoff.jl")
 include("swapping.jl")
 include("switches.jl")
 using .Switches

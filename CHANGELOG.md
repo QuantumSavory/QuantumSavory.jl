@@ -2,8 +2,8 @@
 
 
 ## v0.4.2 - dev
-- Develop `DecoherenceProt` to deal with deadlocks in a simulation
-- Expand `SwapperProt` into `SwapperKeeper` and `SwapperShedder` to work with `DecoherenceProt` in asynchronous and synchronous mode
+- Develop `CutoffProt` to deal with deadlocks in a simulation
+- Expand `SwapperProt` into `SwapperKeeper` and `SwapperShedder` to work with `CutoffProt` in asynchronous and synchronous mode
 - Tutorial for entanglement distribution on a grid
 - Interactive examples using `SwapperKeeper` and `SwapperShedder` for simulation and visualization
 - WebGL demos for the two ways of doing swapping and decoherence.
