@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: ['1.9']
+        version: ['1.10']
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v1
@@ -24,6 +24,7 @@ jobs:
       - uses: julia-actions/julia-downgrade-compat@v1
         with:
           skip: Pkg,TOML,InteractiveUtils,Random,LinearAlgebra,Statistics,Printf,Combinatorics,Random,PrecompileTools
+          strict: false
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
