@@ -2,7 +2,7 @@
 
 ## v0.4.2 - dev
 
-- Bump compat for QuantumOpticsBase to 0.5.0
+- Bump compat for QuantumOpticsBase to 0.5.0.
 - Bump QuantumSymbolics compat bound and bump julia compat to 1.10.
 
 ## v0.4.1 - 2024-06-05
