@@ -36,5 +36,7 @@ end
     end
 end
 
-import GLMakie
-GLMakie.closeall() # to avoid errors when running headless
+if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
+    import GLMakie
+    GLMakie.closeall() # to avoid errors when running headless
+end
