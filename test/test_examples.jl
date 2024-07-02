@@ -35,3 +35,6 @@ end
         include("../examples/simpleswitch/1_interactive_visualization.jl")
     end
 end
+
+import GLMakie
+GLMakie.closeall() # to avoid errors when running headless
