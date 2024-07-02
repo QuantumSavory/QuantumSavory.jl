@@ -21,7 +21,7 @@ end
 for i in 1:10
 
     net = RegisterNet([Register(3), Register(4), Register(2), Register(3)])
-    sim = get_time_tracker(net)
+    sim = get_time_tracker(net).sim
 
 
     entangler1 = EntanglerProt(sim, net, 1, 2; rounds=1)
@@ -90,7 +90,7 @@ end
 
 for i in 1:30, n in 2:30
     net = RegisterNet([Register(j+3) for j in 1:n])
-    sim = get_time_tracker(net)
+    sim = get_time_tracker(net).sim
     for j in vertices(net)
         tracker = EntanglementTracker(sim, net, j)
         @process tracker()

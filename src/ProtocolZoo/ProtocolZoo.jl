@@ -8,7 +8,7 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 using DocStringExtensions
 
 using Distributions: Geometric
-using ConcurrentSim: Simulation, @yield, timeout, @process, now
+using ConcurrentSim: Environment, @yield, timeout, @process, now
 import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
@@ -132,7 +132,7 @@ $TYPEDFIELDS
 """
 @kwdef struct EntanglerProt{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
-    sim::Simulation # TODO check that
+    sim::Environment # TODO check that
     """a network graph of registers"""
     net::RegisterNet
     """the vertex index of node A"""
@@ -164,7 +164,7 @@ $TYPEDFIELDS
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
-function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
+function EntanglerProt(sim::Environment, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
     if isnothing(rate)
         return EntanglerProt(;sim, net, nodeA, nodeB, kwargs...)
     else
@@ -233,7 +233,7 @@ $TYPEDFIELDS
 """
 @kwdef struct SwapperProt{NL,NH,CL,CH,LT} <: AbstractProtocol where {NL<:Union{Int,<:Function,Wildcard}, NH<:Union{Int,<:Function,Wildcard}, CL<:Function, CH<:Function, LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
-    sim::Simulation
+    sim::Environment
     """a network graph of registers"""
     net::RegisterNet
     """the vertex of the node where swapping is happening"""
@@ -255,7 +255,7 @@ $TYPEDFIELDS
 end
 
 #TODO "convenience constructor for the missing things and finish this docstring"
-function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
+function SwapperProt(sim::Environment, net::RegisterNet, node::Int; kwargs...)
     return SwapperProt(;sim, net, node, kwargs...)
 end
 
@@ -326,7 +326,7 @@ $TYPEDFIELDS
 """
 @kwdef struct EntanglementTracker <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
-    sim::Simulation
+    sim::Environment
     """a network graph of registers"""
     net::RegisterNet
     """the vertex of the node where the tracker is working"""
@@ -405,7 +405,7 @@ $FIELDS
 """
 @kwdef struct EntanglementConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
-    sim::Simulation
+    sim::Environment
     """a network graph of registers"""
     net::RegisterNet
     """the vertex index of node A"""
@@ -418,7 +418,7 @@ $FIELDS
     log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
 end
 
-function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+function EntanglementConsumer(sim::Environment, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)
 end
 function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)

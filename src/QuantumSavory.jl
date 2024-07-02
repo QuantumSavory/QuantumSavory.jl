@@ -1,7 +1,6 @@
 module QuantumSavory
 
-const glcnt = Ref{Int128}(0)
-
+glcnt = Ref{Int128}(0)
 function guid()
     glcnt[] += 1
 end

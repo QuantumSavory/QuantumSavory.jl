@@ -1,5 +1,5 @@
 struct MessageBuffer{T}
-    sim::Simulation
+    sim::Environment
     net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
     node::Int
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
@@ -61,7 +61,7 @@ end
 end
 
 function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
-    sim = get_time_tracker(net)
+    sim = get_time_tracker(net).sim
     signal = IdDict{Resource,Resource}()
     no_wait = Ref{Int}(0)
     mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], signal, no_wait)
