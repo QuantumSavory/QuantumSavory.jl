@@ -43,7 +43,7 @@ function prepare_simulation(;sync=false)
     # The graph of network connectivity
     graph = grid([n,n])
 
-    net = RegisterNet(graph, [Register(regsize) for i in 1:n^2])
+    net = RegisterNet(graph, [Register(regsize, T1Decay(10.0)) for i in 1:n^2])
     sim = get_time_tracker(net)
 
     ##Setup the networking protocols running between each of the nodes
