@@ -34,7 +34,7 @@ for (i,v) in enumerate(vertices(net))
         color=lift(x->fill(x[v],length(neighbors(net,v))),linkcolors),
         colormap = :Spectral,
         colorrange = (-1., 1.),
-        linewidth=3,markerspace=:data)
+        linewidth=3)
     v==1 && Colorbar(subfig_rg[2,1],ls,vertical=false,flipaxis=false,label="Entanglement Stabilizer Expectation")
 end
 

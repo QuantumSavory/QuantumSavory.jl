@@ -201,7 +201,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         inspector_label = (self, i, p) -> get_observables_vis_string(observables_backref[],i))
     observables_linesegments = linesegments!(
         rn, observables_links,
-        linewidth=rn[:observables_linewidth], markerspace=:data,
+        linewidth=rn[:observables_linewidth],
         color=observables_linkvals, colormap=rn[:colormap], colorrange=rn[:colorrange],
         inspector_label = (self, i, p) -> get_observables_vis_string(observables_links_backref[],i))
     state_scatterplot = scatter!(

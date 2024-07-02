@@ -42,3 +42,8 @@ end
         include("../examples/repeatergrid/2a_sync_interactive_visualization.jl")
     end
 end
+
+if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
+    import GLMakie
+    GLMakie.closeall() # to avoid errors when running headless
+end
