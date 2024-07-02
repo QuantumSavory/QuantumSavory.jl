@@ -2,6 +2,7 @@
 
 ## v0.4.2 - dev
 
+- Add a `NetworkSimulation` for accessing local entanglement id counter
 - Bump QuantumSymbolics compat bound and bump julia compat to 1.10.
 
 ## v0.4.1 - 2024-06-05
