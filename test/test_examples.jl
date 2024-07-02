@@ -35,3 +35,8 @@ end
         include("../examples/simpleswitch/1_interactive_visualization.jl")
     end
 end
+
+if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
+    import GLMakie
+    GLMakie.closeall() # to avoid errors when running headless
+end
