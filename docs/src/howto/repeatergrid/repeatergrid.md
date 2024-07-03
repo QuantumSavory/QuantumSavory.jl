@@ -11,7 +11,7 @@ This section provides a detailed walkthrough of how QuantumSavory.jl can be used
 For this example, we consider a square grid topology in which each node is connected to its nearest neighbors.
 The registers act as repeater nodes. The nodes on the diagonal corners are Alice and Bob, the two special nodes that the network is trying to entangle through generating link-level entanglement at each edge and performing appropriate swaps at each node.
 
-The goal is to establish entanglement between Alice and Bob by routing entanglement through any of the possible paths(horizontal or vertical) formed by local entanglement links and then swapping those links by performing entanglement swaps.
+The goal is to establish entanglement between Alice and Bob by routing entanglement through any of the possible paths (horizontal or vertical) formed by local entanglement links and then swapping those links by performing entanglement swaps.
 
 This employs functionality from the `ProtocolZoo` module of QuantumSavory to run the following Quantum Networking protocols:
 

@@ -5,8 +5,9 @@ using ConcurrentSim
 using ResumableFunctions
 using NetworkLayout
 
-# Predicate function for swap decisions
-"""A predicate function that checks if a remote node is in the appropriate quadrant with respect to the local node."""
+"""Predicate function for swap decisions
+
+Checks if a remote node is in the appropriate quadrant with respect to the local node."""
 function check_nodes(net, c_node, node; low=true)
     n = Int(sqrt(size(net.graph)[1])) # grid size
     c_x = c_node%n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
@@ -16,8 +17,9 @@ function check_nodes(net, c_node, node; low=true)
     return low ? (c_x - x) >= 0 && (c_y - y) >= 0 : (c_x - x) <= 0 && (c_y - y) <= 0
 end
 
-#Choosing function to pick from swap candidates
-"""A function that chooses the node in the appropriate quadrant that is furthest from the local node."""
+"""Choosing function to pick from swap candidates
+
+Chooses the node in the appropriate quadrant that is furthest from the local node."""
 function choose_node(net, node, arr; low=true)
     grid_size = Int(sqrt(size(net.graph)[1]))
     return low ? argmax((distance.(grid_size, node, arr))) : argmin((distance.(grid_size, node, arr)))

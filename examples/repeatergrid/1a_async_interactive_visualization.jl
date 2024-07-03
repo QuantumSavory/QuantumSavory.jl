@@ -1,10 +1,11 @@
 using GLMakie
+# TODO significant code duplication with the other examples
 
 include("setup.jl")
 
 sim, net, graph, consumer, params... = prepare_simulation()
 
-fig = Figure(;size=(800, 600))
+fig = Figure(;size=(1200, 850))
 
 # the network part of the visualization
 layout = SquareGrid(cols=:auto, dx=30.0, dy=-30.0)(graph) # provided by NetworkLayout, meant to simplify plotting of graphs in 2D
@@ -23,12 +24,12 @@ histaxis = Axis(fig[2,2], xlabel="ΔTime", title="Histogram of Time to Successes
 hist!(histaxis, Δts)
 
 #  sliders
-sg = SliderGrid(
+sg = SliderGrid( # TODO significant code duplication with the other examples
     fig[3,1],
     (label="Probability of success of Entanglement generation at each attempt",
-        range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
+        range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
     (label="Local busy time for swapper",
-        range=0.001:0.5:10.0, format="{:.2f}", startvalue=0.001),
+        range=0.001:0.5:10.0, format="{:.3f}", startvalue=0.001),
     (label="Wait time after failure to lock qubits for a swap",
         range=0.1:0.05:1.0, format="{:.2f}", startvalue=0.1),
     (label="Retention time for an unused qubit",
@@ -36,9 +37,9 @@ sg = SliderGrid(
     (label="Time before a qubit's retention time runs out (for `agelimit`)",
         range=0.1:0.5:10.0, format="{:.2f}", startvalue=0.5),
     (label="Period of time between subsequent queries at the consumer",
-        range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
+        range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
     (label="Period of time between subsequent queries at the DecoherenceProtocol",
-        range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
+        range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
 
     width = 600,
     tellheight = false)

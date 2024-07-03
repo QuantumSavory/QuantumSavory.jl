@@ -2,6 +2,7 @@ using WGLMakie
 WGLMakie.activate!()
 import Bonito
 using Markdown
+# TODO significant code duplication with the other examples
 
 include("setup.jl")
 
@@ -12,7 +13,7 @@ function prepare_singlerun()
     sim, net, graph, consumer, params... = prepare_simulation(;sync=true)
 
     # Prepare the main figure
-    fig = Figure(size=(1200, 800))
+    fig = Figure(;size=(1200, 850))
     # the network part of the visualization
     layout = SquareGrid(cols=:auto, dx=30.0, dy=-30.0)(graph) # provided by NetworkLayout, meant to simplify plotting of graphs in 2D
     _, ax, _, obs = registernetplot_axis(fig[1:2,1], net;registercoords=layout)
@@ -33,9 +34,9 @@ function prepare_singlerun()
     sg = SliderGrid(
         fig[3,1],
         (label="Probability of success of Entanglement generation at each attempt",
-            range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
+            range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
         (label="Local busy time for swapper",
-            range=0.001:0.5:10.0, format="{:.2f}", startvalue=0.001),
+            range=0.001:0.5:10.0, format="{:.3f}", startvalue=0.001),
         (label="Wait time after failure to lock qubits for a swap",
             range=0.1:0.05:1.0, format="{:.2f}", startvalue=0.1),
         (label="Retention time for an unused qubit",
@@ -43,9 +44,9 @@ function prepare_singlerun()
         (label="Time before a qubit's retention time runs out (for `agelimit`)",
             range=0.1:0.5:10.0, format="{:.2f}", startvalue=0.5),
         (label="Period of time between subsequent queries at the consumer",
-            range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
+            range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
         (label="Period of time between subsequent queries at the DecoherenceProtocol",
-            range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
+            range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
 
         width = 600,
         tellheight = false)
