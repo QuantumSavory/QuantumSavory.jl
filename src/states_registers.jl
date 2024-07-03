@@ -26,7 +26,7 @@ struct Register # TODO better type description
 end
 
 function Register(traits, reprs, bg, sr, si, at)
-    env = ConcurrentSim.Simulation()
+    env = NetworkSimulation()
     Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [], nothing)
 end
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))

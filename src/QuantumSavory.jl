@@ -1,7 +1,6 @@
 module QuantumSavory
 
-const glcnt = Ref{Int128}(0)
-
+glcnt = Ref{Int128}(0)
 function guid()
     glcnt[] += 1
 end
@@ -25,7 +24,7 @@ import SumTypes
 using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
 using Combinatorics: powerset
-
+import DataStructures
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,
     AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
 
