@@ -125,9 +125,11 @@ Tag(tag::EntanglementUpdateZ) = Tag(EntanglementUpdateZ, tag.past_local_node, ta
 $TYPEDEF
 
 This tag arrives as a message from a remote node's Cutoff Protocol to which the current node used to be entangled, to
-update the classical metadata of the entangled slot and empty it 
+update the classical metadata of the entangled slot and empty it.
 
 $TYPEDFIELDS
+
+See also: [`CutoffProt`](@ref)
 """
 @kwdef struct EntanglementDelete
     "The node that sent the deletion message"
@@ -203,6 +205,7 @@ end
         margin = isentangled ? prot.margin : prot.hardmargin
         a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
         b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
+
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a \n2.\t $b \n retrying..."
@@ -264,13 +267,13 @@ end
         workwasdone = true # waiting is not enough because we might have multiple rounds of work to do
         while workwasdone
             workwasdone = false
-            for (updatetagsymbol, updategate) in ((EntanglementUpdateX, Z), (EntanglementUpdateZ, X), (EntanglementDelete, nothing))
-                # look for EntanglementUpdate? past_remote_slot_idx local_slot_idx, new_remote_node, new_remote_slot_idx correction
-                if !isnothing(updategate)
+            for (updatetagsymbol, updategate) in ((EntanglementUpdateX, Z), (EntanglementUpdateZ, X), (EntanglementDelete, nothing)) # TODO this is getting ugly. Refactor EntanglementUpdateX and EntanglementUpdateZ to be the same parameterized tag
+                # look for EntanglementUpdate? or EntanglementDelete message sent to us
+                if !isnothing(updategate) # EntanglementUpdate
                     msg = querydelete!(mb, updatetagsymbol, ❓, ❓, ❓, ❓, ❓, ❓)
                     isnothing(msg) && continue
                     (src, (_, pastremotenode, pastremoteslotid, localslotid, newremotenode, newremoteslotid, correction)) = msg
-                else
+                else # EntanglementDelete
                     msg = querydelete!(mb, updatetagsymbol, ❓, ❓, ❓, ❓)
                     isnothing(msg) && continue
                     (src, (_, pastremotenode, pastremoteslotid, _, localslotid)) = msg
@@ -281,7 +284,7 @@ end
                 localslot = nodereg[localslotid]
 
                 # Check if the local slot is still present and believed to be entangled.
-                # We will need to perform a correction operation due to the swap,
+                # We will need to perform a correction operation due to the swap or a deletion due to the qubit being thrown out,
                 # but there will be no message forwarding necessary.
                 counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
                 if !isnothing(counterpart)
@@ -293,9 +296,9 @@ end
                     time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
                     if !isassigned(localslot)
                         unlock(localslot)
-                        error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.")
+                        error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
                     end
-                    if !isnothing(updategate) #EntanglementUpdate
+                    if !isnothing(updategate) # EntanglementUpdate
                         # Pauli frame correction gate
                         if correction==2
                             apply!(localslot, updategate)
@@ -309,22 +312,22 @@ end
                     continue
                 end
 
-                # If not, check if we have a record of the entanglement being swapped to a different remote node,
+                # If there is nothing still stored locally, check if we have a record of the entanglement being swapped to a different remote node,
                 # and forward the message to that node.
                 history = querydelete!(localslot, EntanglementHistory,
                                     pastremotenode, pastremoteslotid, # who we were entangled to (node, slot)
-                                    ❓, ❓,                           # who we swapped with (node, slot)
-                                    ❓)                               # which local slot used to be entangled with whom we swapped with
+                                    ❓, ❓,                             # who we swapped with (node, slot)
+                                    ❓)                                # which local slot used to be entangled with whom we swapped with
                 if !isnothing(history)
-                    # @debug "tracker @$(prot.node) history: $(history) | msg: $msg"
-
                     _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx = history.tag
-                    if !isnothing(updategate)
+                    if !isnothing(updategate) # EntanglementUpdate
+                        # Forward the update tag to the swapped node and store a new history tag so that we can forward the next update tag to the new node
                         tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx)
                         @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                         msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
                         put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
-                    else # We have a delete message but the qubit was swapped so add a tag and forward to swapped node
+                    else # EntanglementDelete
+                        # We have a delete message but the qubit was swapped so add a tag and forward to swapped node
                         @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                         msghist = Tag(updatetagsymbol, pastremotenode, pastremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx)
                         tag!(localslot, updatetagsymbol, prot.node, localslot.idx, whoweswappedwith_node, whoweswappedwith_slotidx)
@@ -333,12 +336,17 @@ end
                     continue
                 end
 
+                # Finally, if there the history of a swap is not present in the log anymore,
+                # it must be because a delete message was received, and forwarded,
+                # and the swap history was deleted, and replaced with a delete history.
                 if !isnothing(querydelete!(localslot, EntanglementDelete, prot.node, localslot.idx, pastremotenode, pastremoteslotid)) #deletion from both sides of the swap, deletion msg when both qubits of a pair are deleted, or when EU arrives after ED at swap node with two simultaneous swaps and deletion on one side
-                    if !(isnothing(updategate)) # EU message, hence to handle a possible delete-swap-swap case, we need to update the EntanglementDelete tag
+                    if !(isnothing(updategate)) # EntanglementUpdate
+                        # to handle a possible delete-swap-swap case, we need to update the EntanglementDelete tag
                         tag!(localslot, EntanglementDelete, prot.node, localslot.idx, newremotenode, newremoteslotid)
                         @debug "EntanglementTracker @$(prot.node): message=`$msg` for deleted qubit handled and EntanglementDelete tag updated"
-                    else # when the message is EntanglementDelete and the slot also has an EntanglementDelete tag(both qubits were deleted), do nothing
-                        @debug "EntanglementTracker @$(prot.node): message=`$msg` for deleted qubit handled"
+                    else # EntanglementDelete
+                        # when the message is EntanglementDelete and the slot history also has an EntanglementDelete tag (both qubits were deleted), do nothing
+                        @debug "EntanglementTracker @$(prot.node): message=`$msg` is for a deleted qubit and is thus dropped"
                     end
                     continue
                 end
@@ -407,7 +415,7 @@ end
         @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx) @ $(now(prot.sim))"
         untag!(q1, query1.id)
         untag!(q2, query2.id)
-        # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for Swapper
+        # TODO do we need to add EntanglementHistory or EntanglementDelete and should that be a different EntanglementHistory since the current one is specifically for Swapper
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
         ob1 = real(observable((q1, q2), Z⊗Z))
         ob2 = real(observable((q1, q2), X⊗X))
