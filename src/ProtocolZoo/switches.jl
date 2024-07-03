@@ -312,7 +312,7 @@ perform swaps to connect them and decrement the backlog counter.
 function _switch_run_swaps(prot, match)
     @debug "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])"
     for (i,j) in match
-        swapper = SwapperKeeper( # TODO be more careful about how much simulated time this takes
+        swapper = SwapperProt( # TODO be more careful about how much simulated time this takes
             sim=prot.sim, net=prot.net, node=prot.switchnode,
             nodeL=prot.clientnodes[i], nodeH=prot.clientnodes[j],
             rounds=1

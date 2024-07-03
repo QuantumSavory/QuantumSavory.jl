@@ -40,7 +40,7 @@ function prepare_singlerun()
             range=0.1:0.05:1.0, format="{:.2f}", startvalue=0.1),
         (label="Retention time for an unused qubit",
             range=0.1:0.1:10.0, format="{:.2f}", startvalue=5.0),
-        (label="Time before a qubit's retention time runs out(for `SwapperShedder`)",
+        (label="Time before a qubit's retention time runs out (for `agelimit`)",
             range=0.1:0.5:10.0, format="{:.2f}", startvalue=0.5),
         (label="Period of time between subsequent queries at the consumer",
             range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
@@ -114,8 +114,8 @@ landing = Bonito.App() do
     Both of these are presented in the top and bottom graphs on the right above respectively.
 
     All the classical information about the entanglement status of nodes after swaps or deletions(decoherence protocols) is communicated through
-    asynchronous messaging with the help of tags and queries and handled by the entanglement tracker. With this the swapper protocol(`SwapperKeeper`)
-    considers all the proposed candidates for a swap, relying on the messages sent by the decoherence protocol to the entanglement tracker to delete any qubits that might have taken part 
+    asynchronous messaging with the help of tags and queries and handled by the entanglement tracker. With this the swapper protocol(`SwapperProt`)
+    considers all the proposed candidates for a swap, relying on the messages sent by the decoherence protocol to the entanglement tracker to delete any qubits that might have taken part
     in a swap, while their entangled pair got deleted due to decoherence. If this happens all the qubits involved in the swap need to be discarded by forwarding the deletion message to the
     respective nodes.
 

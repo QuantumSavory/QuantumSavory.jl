@@ -14,7 +14,7 @@ using QuantumSavory
 
 # Predefined useful circuits
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperKeeper
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt
 
 ##
 # Create a handful of qubit registers in a chain

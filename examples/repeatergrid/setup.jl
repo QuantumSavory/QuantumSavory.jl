@@ -64,8 +64,13 @@ function prepare_simulation(;sync=false)
         h(x) = check_nodes(net, i, x; low=false)
         cL(arr) = choose_node(net, i, arr)
         cH(arr) = choose_node(net, i, arr; low=false)
-        swapper = if sync SwapperShedder(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds=-1, local_busy_time=local_busy_time[], retry_lock_time=retry_lock_time[], retention_time=retention_time[], buffer_time=buffer_time[])
-                  else SwapperKeeper(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds=-1, local_busy_time=local_busy_time[], retry_lock_time=retry_lock_time[]) end
+        swapper = SwapperProt(
+            sim, net, i;
+            nodeL = l, nodeH = h,
+            chooseL = cL, chooseH = cH,
+            rounds=-1, local_busy_time=local_busy_time[],
+            retry_lock_time=retry_lock_time[],
+            agelimit=sync ? retention_time[]-buffer_time[] : nothing)
         @process swapper()
     end
 

@@ -40,7 +40,7 @@ function prepare_singlerun()
             range=0.1:0.05:1.0, format="{:.2f}", startvalue=0.1),
         (label="Retention time for an unused qubit",
             range=0.1:0.1:10.0, format="{:.2f}", startvalue=5.0),
-        (label="Time before a qubit's retention time runs out(for `SwapperShedder`)",
+        (label="Time before a qubit's retention time runs out (for `agelimit`)",
             range=0.1:0.5:10.0, format="{:.2f}", startvalue=0.5),
         (label="Period of time between subsequent queries at the consumer",
             range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
@@ -115,7 +115,7 @@ landing = Bonito.App() do
 
     All the classical information about the entanglement status of nodes after swaps is communicated through
     asynchronous messaging with the help of tags and queries and handled by the entanglement tracker. The decoherence protocol doesn't generate
-    any messages here. Hence, the swapper protocol (SwapperShedder) checks every proposed candidate to be coherent before its used. Thus the swapper and decoherence protocol
+    any messages here. Hence, the swapper protocol (`SwapperProt` with `agelimit`) checks every proposed candidate to be coherent before its used. Thus the swapper and decoherence protocol
     interact in a synchronous manner here.
 
    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/repeatergrid/2b_sync_wglmakie_interactive.jl)

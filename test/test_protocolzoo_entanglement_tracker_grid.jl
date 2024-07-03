@@ -109,7 +109,7 @@ for path in paths
         h = x->check_nodes(net, path[i], x; low=false)
         cL = arr->choose_node(net, path[i], arr)
         cH = arr->choose_node(net, path[i], arr; low=false)
-        swapper = SwapperKeeper(sim, net, path[i]; nodeL=l, nodeH=h, chooseL=cL, chooseH=cH, rounds=1)
+        swapper = SwapperProt(sim, net, path[i]; nodeL=l, nodeH=h, chooseL=cL, chooseH=cH, rounds=1)
         @process swapper()
     end
     run(sim, 200)
@@ -163,7 +163,7 @@ for n in 4:10
         h(x) = check_nodes(net, i, x; low=false)
         cL(arr) = choose_node(net, i, arr)
         cH(arr) = choose_node(net, i, arr; low=false)
-        swapper = SwapperKeeper(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds = 5) # A single round doesn't always get the ends entangled, when number of nodes is high
+        swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds = 5) # A single round doesn't always get the ends entangled, when number of nodes is high
         @process swapper()
     end
 
@@ -202,7 +202,7 @@ for n in 4:10
         h(x) = check_nodes(net, i, x; low=false)
         cL(arr) = choose_node(net, i, arr)
         cH(arr) = choose_node(net, i, arr; low=false)
-        swapper = SwapperKeeper(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds = 5) # A single round doesn't always get the ends entangled, when number of nodes is high
+        swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds = 5) # A single round doesn't always get the ends entangled, when number of nodes is high
         @process swapper()
     end
 

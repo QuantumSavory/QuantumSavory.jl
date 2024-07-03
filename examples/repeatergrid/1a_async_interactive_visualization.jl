@@ -33,7 +33,7 @@ sg = SliderGrid(
         range=0.1:0.05:1.0, format="{:.2f}", startvalue=0.1),
     (label="Retention time for an unused qubit",
         range=0.1:0.1:10.0, format="{:.2f}", startvalue=5.0),
-    (label="Time before a qubit's retention time runs out(for `SwapperShedder`)",
+    (label="Time before a qubit's retention time runs out (for `agelimit`)",
         range=0.1:0.5:10.0, format="{:.2f}", startvalue=0.5),
     (label="Period of time between subsequent queries at the consumer",
         range=0.001:0.05:1.0, format="{:.2f}", startvalue=0.001),
