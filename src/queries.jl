@@ -407,7 +407,7 @@ function findfreeslot(reg::Register; randomize=false, margin=0)
     end
 end
 
-struct NotAssignedError <: Exception
+struct NotAssignedError <: Exception # TODO use this in all places where we are throwing something on isassigned (maybe rename to IsAssignedError and check whether we need to keep `f` as part of it (might already be provided by the stacktrace) and check it does not allocate even when the error is not triggered)
     msg
     f
 end
