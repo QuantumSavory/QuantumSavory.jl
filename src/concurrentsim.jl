@@ -77,22 +77,33 @@ function ConcurrentSim.now(env::NetworkSimulation)
     env.sim.time
 end
 
-# function ConcurrentSim.BaseEvent(env::NetworkSimulation)
-#     ConcurrentSim.BaseEvent(env.sim, env.sim.eid+=one(UInt), Vector{Function}(), ConcurrentSim.idle, nothing)
-# end
+function ConcurrentSim.put!(con::ConcurrentSim.Container{N, T}, amount::N; priority=zero(T)) where {N<:Real, T<:Number}
+    put_ev = ConcurrentSim.Put(con.env.sim)
+    con.put_queue[put_ev] = ConcurrentSim.ContainerKey{N,T}(con.seid+=one(UInt), amount, T(priority))
+    ConcurrentSim.@callback ConcurrentSim.trigger_get(put_ev, con)
+    ConcurrentSim.trigger_put(put_ev, con)
+    put_ev
+end
 
-# function ConcurrentSim.put!(con::ConcurrentSim.Container{N, T}, amount::N; priority=zero(T)) where {N<:Real, T<:Number}
-#     put_ev = ConcurrentSim.Put(con.env.sim)
-#     con.put_queue[put_ev] = ConcurrentSim.ContainerKey{N,T}(con.seid+=one(UInt), amount, T(priority))
-#     ConcurrentSim.@callback ConcurrentSim.trigger_get(put_ev, con)
-#     ConcurrentSim.trigger_put(put_ev, con)
-#     put_ev
-# end
+function ConcurrentSim.get(con::ConcurrentSim.Container{N, T}, amount::N; priority=zero(T)) where {N<:Real, T<:Number}
+    get_ev = ConcurrentSim.Get(con.env.sim)
+    con.get_queue[get_ev] = ConcurrentSim.ContainerKey(con.seid+=one(UInt), amount, T(priority))
+    ConcurrentSim.@callback ConcurrentSim.trigger_put(get_ev, con)
+    ConcurrentSim.trigger_get(get_ev, con)
+    get_ev
+end
 
-# function ConcurrentSim.get(con::ConcurrentSim.Container{N, T}, amount::N; priority=zero(T)) where {N<:Real, T<:Number}
-#     get_ev = ConcurrentSim.Get(con.env.sim)
-#     con.get_queue[get_ev] = ConcurrentSim.ContainerKey(con.seid+=one(UInt), amount, T(priority))
-#     ConcurrentSim.@callback ConcurrentSim.trigger_put(get_ev, con)
-#     ConcurrentSim.trigger_get(get_ev, con)
-#     get_ev
-# end  
+function ConcurrentSim.timeout(env::Environment, delay::Number=0; priority=0, value::Any=nothing)
+    ConcurrentSim.schedule(ConcurrentSim.Timeout(env.sim), delay; priority=Int(priority), value)
+end
+
+function ConcurrentSim.step(netsim::NetworkSimulation)
+    isempty(netsim.sim.heap) && throw(ConcurrentSim.EmptySchedule())
+    (bev, key) = DataStructures.peek(netsim.sim.heap)
+    DataStructures.dequeue!(netsim.sim.heap)
+    netsim.sim.time = key.time
+    bev.state = ConcurrentSim.processed
+    for callback in bev.callbacks
+      callback()
+    end
+end

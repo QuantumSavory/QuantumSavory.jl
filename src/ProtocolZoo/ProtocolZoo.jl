@@ -26,7 +26,7 @@ abstract type AbstractProtocol end
 
 get_time_tracker(prot::AbstractProtocol) = prot.sim
 
-Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
+Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot).sim, args...; kwargs...)
 
 """
 $TYPEDEF

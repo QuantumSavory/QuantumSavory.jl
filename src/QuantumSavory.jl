@@ -24,7 +24,7 @@ import SumTypes
 using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
 using Combinatorics: powerset
-
+import DataStructures
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,
     AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
 
