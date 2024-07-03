@@ -12,7 +12,6 @@ if isinteractive()
 end
 
 
-
 for n in 3:30
     regsize = 10
     net = RegisterNet([Register(regsize) for j in 1:n])

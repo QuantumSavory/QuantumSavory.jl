@@ -21,7 +21,6 @@ tag!(r[3], :symbol1, 4, 1)
 tag!(r[5], Int, 4, 5)
 
 @test Tag(:symbol1, 2, 3) == tag_types.SymbolIntInt(:symbol1, 2, 3)
-
 @test strip_id(query(r, :symbol1, 4, ❓)) == (slot=r[3], tag=tag_types.SymbolIntInt(:symbol1, 4, 1))
 @test strip_id(query(r, :symbol1, 4, 5)) == (slot=r[2], tag=tag_types.SymbolIntInt(:symbol1, 4, 5))
 @test strip_id(query(r, :symbol1, ❓, ❓)) == (slot=r[3], tag=tag_types.SymbolIntInt(:symbol1, 4, 1)) #returns latest tag in filo order
@@ -61,7 +60,6 @@ tag!(reg[3], EntanglementCounterpart, 2, 23)
 tag!(reg[3], EntanglementCounterpart, 1, 10)
 
 @test query(reg[3], EntanglementCounterpart, 1, 11) === nothing
-
 @test strip_id(query(reg[3], EntanglementCounterpart, 1, 10)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
 @test strip_id(query(reg[3], EntanglementCounterpart, 1, 10; filo=false)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
 @test strip_id(query(reg[3], EntanglementCounterpart, 1, 10; filo=true)) == (slot = reg[3], tag = Tag(EntanglementCounterpart,1,10))
