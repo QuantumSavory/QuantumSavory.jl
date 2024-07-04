@@ -124,8 +124,8 @@ Tag(tag::EntanglementUpdateZ) = Tag(EntanglementUpdateZ, tag.past_local_node, ta
 """
 $TYPEDEF
 
-This tag arrives as a message from a remote node's Cutoff Protocol to which the current node used to be entangled, to
-update the classical metadata of the entangled slot and empty it.
+This tag arrives as a message from a remote node's Cutoff Protocol to which the current node was entangled, to
+update the classical metadata of the entangled slot and empty it. It is also stored at a node to handle incoming `EntanglementUpdate` and `EntanglementDelete` messages.
 
 $TYPEDFIELDS
 
@@ -338,7 +338,7 @@ end
 
                 # Finally, if there the history of a swap is not present in the log anymore,
                 # it must be because a delete message was received, and forwarded,
-                # and the swap history was deleted, and replaced with a delete history.
+                # and the entanglement history was deleted, and replaced with an entanglement delete tag.
                 if !isnothing(querydelete!(localslot, EntanglementDelete, prot.node, localslot.idx, pastremotenode, pastremoteslotid)) #deletion from both sides of the swap, deletion msg when both qubits of a pair are deleted, or when EU arrives after ED at swap node with two simultaneous swaps and deletion on one side
                     if !(isnothing(updategate)) # EntanglementUpdate
                         # to handle a possible delete-swap-swap case, we need to update the EntanglementDelete tag
@@ -351,7 +351,7 @@ end
                     continue
                 end
 
-                error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might have happened due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retentian times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
+                error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might have happened due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retention times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise, this is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
             end
         end
         @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
