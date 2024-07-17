@@ -77,7 +77,6 @@ end
         (q2, id2, tag2) = qubit_pair[2].slot, qubit_pair[2].id, qubit_pair[2].tag
 
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
-        # @yield timeout(prot.sim, prot.local_busy_time)
         untag!(q1, id1)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
@@ -99,6 +98,7 @@ end
         msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
         @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
+        @yield timeout(prot.sim, prot.local_busy_time)
         unlock(q1)
         unlock(q2)
         rounds==-1 || (rounds -= 1)
