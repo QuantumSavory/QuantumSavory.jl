@@ -13,7 +13,7 @@ function prepare_singlerun()
     sim, net, graph, consumer, params... = prepare_simulation()
 
     # Prepare the main figure
-    fig = Figure(;size=(1200, 850))
+    fig = Figure(;size=(1200, 1100))
     # the network part of the visualization
     layout = SquareGrid(cols=:auto, dx=30.0, dy=-30.0)(graph) # provided by NetworkLayout, meant to simplify plotting of graphs in 2D
     _, ax, _, obs = registernetplot_axis(fig[1:2,1], net;registercoords=layout)
@@ -29,6 +29,16 @@ function prepare_singlerun()
     stem!(entlogaxis, tzzs)
     histaxis = Axis(fig[2,2], xlabel="ΔTime", title="Histogram of Time to Successes")
     hist!(histaxis, Δts)
+
+    avg_fids = @lift cumsum([e[3] for e in $entlog])./cumsum(ones(length($entlog))) #avg fidelity per unit time
+    fid_info = @lift [Point2f(t,f) for (t,f) in zip($ts, $avg_fids)]
+    fid_axis = Axis(fig[3,1], xlabel="Time", ylabel="Avg. Fidelity", title="Time evolution of Average Fidelity")
+    lines!(fid_axis, fid_info)
+
+    num_epr = @lift cumsum(ones(length($entlog)))./($ts) #avg number of pairs per unit time
+    num_epr_info = @lift [Point2f(t,n) for (t,n) in zip($ts, $num_epr)]
+    num_epr_axis = Axis(fig[3,2], xlabel="Time", title="Avg. Number of Entangled Pairs between Alice and Bob")
+    lines!(num_epr_axis, num_epr_info)
 
     #  sliders
     sg = SliderGrid( # TODO significant code duplication with the other examples
@@ -67,10 +77,14 @@ function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, run
     for t in step_ts
         run(sim, t)
         notify.((obs,entlog))
-        notify.(params)
+        notify.(params) 
         ylims!(entlogaxis, (-1.04,1.04))
         xlims!(entlogaxis, max(0,t-50), 1+t)
+        ylims!(fid_axis, (0, 1.04))
+        xlims!(fid_axis, max(0, t-50), 1+t)
         autolimits!(histaxis)
+        ylims!(num_epr_axis, (0, 4))
+        xlims!(num_epr_axis, max(0, t-50), 1+t)
     end
     running[] = nothing
 end

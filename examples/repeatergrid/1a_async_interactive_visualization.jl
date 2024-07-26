@@ -23,7 +23,7 @@ stem!(entlogaxis, txxs)
 histaxis = Axis(fig[2,2], xlabel="ΔTime", title="Histogram of Time to Successes")
 hist!(histaxis, Δts)
 
-avg_fids = @lift cumsum([e[3] for e in $entlog])./($ts) #avg fidelity per unit time
+avg_fids = @lift cumsum([e[3] for e in $entlog])./cumsum(ones(length($entlog))) #avg fidelity per unit time
 fid_info = @lift [Point2f(t,f) for (t,f) in zip($ts, $avg_fids)]
 fid_axis = Axis(fig[3,1], xlabel="Time", ylabel="Avg. Fidelity", title="Time evolution of Average Fidelity")
 lines!(fid_axis, fid_info)
