@@ -418,7 +418,7 @@ function Base.showerror(io::IO, err::NotAssignedError)
     println("In function: $(err.f)")
 end
 
-function isolderthan(slot::RegRef, time_left)
+function isolderthan(slot::RegRef, time_left::Float64)
     if !isassigned(slot) throw(NotAssignedError("Slot must be assigned with a quantum state before checking coherence.", isolderthan)) end
     id = query(slot, QuantumSavory.ProtocolZoo.EntanglementCounterpart, ❓, ❓).id
     slot_time  = slot.reg.tag_info[id][3]
