@@ -1,0 +1,13 @@
+[deps]
+Bonito = "824d6782-a2ef-11e9-3a09-e5662e0c26f8"
+ConcurrentSim = "6ed1e86c-fcaf-46a9-97e0-2b26a2cdb499"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
+NetworkLayout = "46757867-2c16-5918-afeb-47bfcb05e46a"
+QuantumSavory = "2de2e421-972c-4cb5-a0c3-999c85908079"
+ResumableFunctions = "c5292f4c-5179-55e1-98c5-05642aab7184"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
+
+[compat]
+Bonito = "3.1"

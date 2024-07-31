@@ -13,7 +13,8 @@ end
 
 
 for n in 3:30
-    net = RegisterNet([Register(10) for j in 1:n])
+    regsize = 10
+    net = RegisterNet([Register(regsize) for j in 1:n])
     sim = get_time_tracker(net)
 
     for e in edges(net)

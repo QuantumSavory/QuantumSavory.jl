@@ -10,7 +10,7 @@ julia> Tag(:sometagdescriptor, 1, 2, -3)
 SymbolIntIntInt(:sometagdescriptor, 1, 2, -3)::Tag
 ```
 
-A tag can have a custom `DataType` as first argument, in which case additional customability in printing is available. E.g. consider the [`EntanglementHistory`] tag used to track how pairs were entangled before a swap happened.
+A tag can have a custom `DataType` as first argument, in which case additional customizability in printing is available. E.g. consider the [`EntanglementHistory`] tag used to track how pairs were entangled before a swap happened.
 
 ```jldoctest
 julia> using QuantumSavory.ProtocolZoo: EntanglementHistory
