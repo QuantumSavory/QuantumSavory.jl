@@ -1,6 +1,6 @@
-using Test
-using QuantumSavory, JET
-using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols, GraphsMatching, JuMP, SumTypes
+@testitem "JET" tags=[:jet] begin
+    using JET
+    using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols
 
 rep = report_package("QuantumSavory";
     ignored_modules=(
@@ -26,3 +26,4 @@ rep = report_package("QuantumSavory";
 
 @test length(JET.get_reports(rep)) <= 33
 @test_broken length(JET.get_reports(rep)) == 0
+end
