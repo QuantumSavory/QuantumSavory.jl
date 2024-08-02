@@ -1,5 +1,6 @@
-using SafeTestsets
 using QuantumSavory
+using TestItems
+using TestItemRunner
 
 function doset(descr)
     if length(ARGS) == 0
@@ -23,28 +24,7 @@ end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
-@doset "quantumchannel"
-@doset "register_interface"
-@doset "project_traceout"
-@doset "observable"
-@doset "noninstant_and_backgrounds_qubit"
-@doset "noninstant_and_backgrounds_qumode"
-@doset "messagebuffer"
-@doset "tags_and_queries"
-
-@doset "protocolzoo_entanglement_tracker"
-@doset "protocolzoo_entanglement_consumer"
-@doset "protocolzoo_entanglement_tracker_grid"
-@doset "protocolzoo_switch"
-@doset "protocolzoo_throws"
-@doset "protocolzoo_cutoffprot"
-
-@doset "circuitzoo_api"
-@doset "circuitzoo_ent_swap"
-@doset "circuitzoo_purification"
-@doset "circuitzoo_superdense"
-
-@doset "stateszoo_api"
+@run_package_tests filter=ti->doset(ti.name)
 
 if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
     using Pkg
