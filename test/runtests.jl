@@ -1,5 +1,4 @@
 using QuantumSavory
-using TestItems
 using TestItemRunner
 
 function doset(tag)
