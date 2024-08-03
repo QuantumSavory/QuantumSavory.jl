@@ -15,7 +15,7 @@ set the state of the given slots in the given registers to `state`.
 e.g., kets or density matrices from `QuantumOptics.jl`
 or tableaux from `QuantumClifford.jl`.
 """
-function initialize!(regs::Vector{Register},indices::Vector{Int},state; time=nothing)
+function initialize!(regs::Vector{Register},indices::Base.AbstractVecOrTuple{Int},state; time=nothing)
     length(regs)==length(indices)==nsubsystems(state) || throw(DimensionMismatch(lazy"Attempting to initialize a set of registers with a state that does not have the correct number of subsystems."))
     stateref = StateRef(state, collect(regs), collect(indices))
     for (si,(reg,ri)) in enumerate(zip(regs,indices))
@@ -33,8 +33,3 @@ initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!
 initialize!(reg::Register,i::Int,state; time=nothing) = initialize!([reg],[i],state; time)
 initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
 initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(state,consistent_representation(r,i,state)); time)
-
-function QuantumSymbolics.consistent_representation(regs,idx,state)
-    reprs = Set([r.reprs[i] for (r,i) in zip(regs,idx)])
-    consistent_representation(reprs,state)
-end
