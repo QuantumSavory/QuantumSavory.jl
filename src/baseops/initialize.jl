@@ -33,3 +33,8 @@ initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!
 initialize!(reg::Register,i::Int,state; time=nothing) = initialize!([reg],[i],state; time)
 initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
 initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(state,consistent_representation(r,i,state)); time)
+
+function QuantumSymbolics.consistent_representation(regs::Base.AbstractVecOrTuple{Register},idx,state)
+    reprs = Set([r.reprs[i] for (r,i) in zip(regs,idx)])
+    consistent_representation(reprs,state)
+end
