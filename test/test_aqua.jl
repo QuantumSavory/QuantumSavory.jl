@@ -8,3 +8,5 @@ Aqua.test_all(QuantumSavory,
     piracies=(; treat_as_own=[QuantumSavory.Symbolic]),
     stale_deps=(; ignore=[:NetworkLayout]) # needed by package extension but not a condition of its loading
 )
+
+@test length(Aqua.Piracy.hunt(QuantumOpticsBase)) == 6
