@@ -4,10 +4,9 @@ _overlap(l::Symbolic{AbstractKet}, r::Operator) = _overlap(express(l, QOR), r)
 _project_and_drop(state::Ket, project_on::Symbolic{AbstractKet}, basis_index) = _project_and_drop(state, express(project_on, QOR), basis_index)
 _project_and_drop(state::Operator, project_on::Symbolic{AbstractKet}, basis_index) = _project_and_drop(state, express(project_on, QOR), basis_index)
 
-function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Symbolic{AbstractOperator})
+function project_traceout!(state::Union{Ket,Operator},stateindex::Int,basis::Symbolic{AbstractOperator})
     project_traceout!(state,stateindex,eigvecs(basis))
 end
-
-function project_traceout!(state::Union{Ket,Operator},stateindex,basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}})
+function project_traceout!(state::Union{Ket,Operator},stateindex::Int,basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}})
     project_traceout!(state,stateindex,express.(basis,(QOR,)))
 end

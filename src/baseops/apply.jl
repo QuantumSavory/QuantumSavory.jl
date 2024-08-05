@@ -7,7 +7,7 @@ The appropriate representation of the gate is used,
 depending on the formalism under which a quantum state is stored in the given registers.
 The Hilbert spaces of the registers are automatically joined if necessary.
 """
-function apply!(regs::Vector{Register}, indices::Vector{Int}, operation; time=nothing)
+function apply!(regs::Vector{Register}, indices::Base.AbstractVecOrTuple{Int}, operation; time=nothing)
     max_time = maximum((r.accesstimes[i] for (r,i) in zip(regs,indices)))
     if !isnothing(time)
         time<max_time && error("The simulation was commanded to apply $(operation) at time t=$(time) although the current simulation time is higher at t=$(max_time). Consider using locks around the offending operations.")

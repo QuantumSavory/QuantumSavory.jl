@@ -2,7 +2,6 @@ nsubsystems(s::StateRef) = length(s.registers) # nsubsystems(s.state[]) TODO thi
 nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
 nsubsystems(r::Register) = length(r.staterefs)
 nsubsystems(r::RegRef) = 1
-nsubsystems(::Nothing) = 1 # TODO consider removing this and reworking the functions that depend on it. E.g., a reason to have it when performing a project_traceout measurement on a state that contains only one subsystem
 
 function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int; time=nothing)
     if reg1===reg2 && i1==i2

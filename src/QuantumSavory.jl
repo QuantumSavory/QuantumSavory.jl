@@ -34,7 +34,7 @@ export project_traceout! #TODO should move to QuantumInterface
 
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
-    CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
+    CliffordRepr, consistent_representation, QuantumOpticsRepr, QuantumMCRepr,
     metadata, istree, operation, arguments, Symbolic, # from Symbolics
     HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
     XBasisState, YBasisState, ZBasisState,
@@ -101,6 +101,8 @@ include("noninstant.jl")
 
 include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
+
+include("ambiguity_fix.jl")
 
 include("concurrentsim.jl")
 

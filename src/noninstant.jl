@@ -6,7 +6,7 @@ struct NonInstantGate <: AbstractNoninstantOperation
     duration # TODO assert larger than zero
 end
 
-function apply!(regs::Vector{Register}, indices::Vector{Int}, operation::NonInstantGate; time=nothing)
+function apply!(regs::Vector{Register}, indices::Base.AbstractVecOrTuple{Int}, operation::NonInstantGate; time=nothing)
     _, new_time = apply!(regs, indices, operation.gate; time)
     uptotime!(regs, indices, new_time+operation.duration)
     regs, new_time+operation.duration
@@ -18,7 +18,7 @@ struct ConstantHamiltonianEvolution <: AbstractNoninstantOperation
     duration # TODO assert larger than zero
 end
 
-function apply!(regs::Vector{Register}, indices::Vector{Int}, operation::ConstantHamiltonianEvolution; time=nothing) # TODO very significant code repetition with the general purpose apply!
+function apply!(regs::Vector{Register}, indices::Base.AbstractVecOrTuple{Int}, operation::ConstantHamiltonianEvolution; time=nothing) # TODO very significant code repetition with the general purpose apply!
     max_time = maximum((r.accesstimes[i] for (r,i) in zip(regs,indices)))
     if !isnothing(time)
         time<max_time && error("The simulation was commanded to apply $(operation) at time t=$(time) although the current simulation time is higher at t=$(max_time). Consider using locks around the offending operations.")

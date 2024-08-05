@@ -47,8 +47,8 @@ function monte_carlo_trajectory(;
     for t in sampled_times
         run(sim, t)
 
-        fXX = real(observable(registers[[1,len]], [2,2], XX, 0.0; time=t))
-        fZZ = real(observable(registers[[1,len]], [2,2], ZZ, 0.0; time=t))
+        fXX = real(observable(registers[[1,len]], [2,2], XX; something=0.0, time=t))
+        fZZ = real(observable(registers[[1,len]], [2,2], ZZ; something=0.0, time=t))
         push!(fidXX,fXX)
         push!(fidZZ,fZZ)
     end
