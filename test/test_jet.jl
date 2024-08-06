@@ -1,5 +1,5 @@
 @testitem "JET" tags=[:jet] begin
-    using QuantumSavory, JET
+    using JET
     using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols
 
     using JET: ReportPass, BasicPass, InferenceErrorReport, UncaughtExceptionReport

@@ -30,9 +30,4 @@ end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
-if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-    using Pkg
-    Pkg.add("GLMakie")
-end
-
 @run_package_tests filter=ti->any([doset(tag) for tag in ti.tags])

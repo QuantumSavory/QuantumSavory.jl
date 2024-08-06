@@ -1,4 +1,5 @@
 @testitem "Plotting Cairo" tags=[:plotting_cairo] begin
+    using GLMakie
     using CairoMakie
     CairoMakie.activate!()
 
