@@ -1,8 +1,6 @@
-using Test
 #using CairoMakie
 #using GLMakie
 using FileIO
-using QuantumSavory
 
 sizes = [2,3,2,5,6,2,3]
 registers = Register[]
