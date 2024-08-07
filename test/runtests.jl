@@ -1,33 +1,22 @@
 using QuantumSavory
 using TestItemRunner
 
-function doset(tag)
-    if length(ARGS) == 0
-        return true
-    end
-    for a in ARGS
-        if occursin(lowercase(a), lowercase(String(tag)))
-            return true
+function testfilter(tags)
+    exclude = Symbol[]
+    # Only do the plotting tests if the ENV variable `QUANTUMSAVORY_PLOT_TEST` is set
+    if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
+        push!(exclude, :plotting_cairo)
+        push!(exclude, :plotting_gl)
+        if VERSION >= v"1.9"
+            push!(exclude, :doctests)
         end
     end
-    if get(ENV,"JET_TEST","")=="true" && tag == :jet
-        return true
+    if get(ENV,"JET_TEST","")!="true"
+        push!(exclude, :jet)
     end
-    if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-        if tag in [:plotting_gl, :plotting_cairo]
-            return true
-        end
-        if VERSION >= v"1.9" && tag == :doctests
-            return true
-        end
-    end
-    if tag in [:examples, :aqua]
-        return true
-    end
-
-    return false
+    return all(!in(exclude), tags)
 end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 
-@run_package_tests filter=ti->any([doset(tag) for tag in ti.tags])
+@run_package_tests filter=ti->testfilter(ti.tags)
