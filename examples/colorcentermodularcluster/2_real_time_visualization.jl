@@ -68,7 +68,7 @@ record(F, "colorcentermodularcluster-02.simdashboard.mp4", step_ts, framerate=FR
         l = length(neighs)
         obs = observables[l]
         regs = [net[i, 2] for i in [v, neighs...]]
-        real(observable(regs, obs, 0.0; time=now(sim)))
+        real(observable(regs, obs; something=0.0, time=now(sim)))
     end
     linkcolors[] .= fid
     push!(fids[],mean(fid))

@@ -1,7 +1,8 @@
 # News
 
-## v0.4.2 - dev
+## v0.5.0 - 2024-08-11
 
+- `observable` now takes a default value as a kwarg, i.e., you need to make the substitution `observable(regs, obs, 0.0; time)` ↦ `observable(regs, obs; something=0.0, time)`
 - Bump QuantumSymbolics and QuantumOpticsBase compat bound and bump julia compat to 1.10.
 
 ## v0.4.1 - 2024-06-05

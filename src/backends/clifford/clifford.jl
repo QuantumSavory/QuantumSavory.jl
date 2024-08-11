@@ -3,11 +3,7 @@ import QuantumClifford: MixedDestabilizer
 
 subsystemcompose(states::QuantumClifford.MixedDestabilizer...) = QuantumClifford.tensor(states...)
 
-nsubsystems(state::QuantumClifford.MixedDestabilizer) = QuantumClifford.nqubits(state)
-
 default_repr(::QuantumClifford.MixedDestabilizer) = CliffordRepr()
-
-apply!(state::QuantumClifford.MixedDestabilizer, indices, operation::Type{<:QuantumClifford.AbstractSymbolicOperator}) = QuantumClifford.apply!(state, operation, indices)
 
 ispadded(::QuantumClifford.MixedDestabilizer) = false
 
