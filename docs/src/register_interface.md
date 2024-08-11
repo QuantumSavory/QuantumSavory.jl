@@ -28,8 +28,7 @@ Store a `state` in the given register slots.
 
 The `accesstimes` attributes of the slots are reset to the given `time`.
 
-If `state<:Symbolic`, then [`consistent_representation`](@ref) is used to choose an appropriate representation based on the [`AbstractRepresentation`](@ref) properties of the
-register slots. Then an [`express`](@ref) call is made to transform the symbolic object into the appropriate representation.
+If `state<:Symbolic`, then [`consistent_representation`](@ref) is used to choose an appropriate representation based on the [`AbstractRepresentation`](@ref) properties of the register slots. Then an [`express`](@ref) call is made to transform the symbolic object into the appropriate representation.
 
 #### `initialize!(r::RegRef; time)` and `initialize!(reg::Register, i::Int64; time)`
 
