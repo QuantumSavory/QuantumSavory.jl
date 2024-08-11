@@ -56,8 +56,8 @@ step_ts = range(0, 100, step=0.1)
 record(fig, "firstgenrepeater-08.clifford.mp4", step_ts, framerate=10, visible=true) do t
     run(sim, t)
 
-    fXX = real(observable(registers[[1,last]], [2,2], XX, 0.0; time=t))
-    fZZ = real(observable(registers[[1,last]], [2,2], ZZ, 0.0; time=t))
+    fXX = real(observable(registers[[1,last]], [2,2], XX; something=0.0, time=t))
+    fZZ = real(observable(registers[[1,last]], [2,2], ZZ; something=0.0, time=t))
     push!(fidXX[],fXX)
     push!(fidZZ[],fZZ)
     push!(ts[],t)

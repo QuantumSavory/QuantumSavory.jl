@@ -46,9 +46,10 @@ struct QuantumChannel{T}
     trait::T
     queue::ConcurrentSim.DelayQueue{Register}
     background::Any
+    function QuantumChannel(queue::ConcurrentSim.DelayQueue{Register}, background=nothing, trait::T=Qubit()) where T
+        new{T}(trait, queue, background)
+    end
 end
-
-QuantumChannel(queue::ConcurrentSim.DelayQueue{Register}, background=nothing, trait=Qubit()) = QuantumChannel(trait, queue, background)
 
 QuantumChannel(env::ConcurrentSim.Simulation, delay, background=nothing, trait=Qubit()) = QuantumChannel(ConcurrentSim.DelayQueue{Register}(env, delay), background, trait)
 Register(qc::QuantumChannel) = Register([qc.trait], [qc.background])
