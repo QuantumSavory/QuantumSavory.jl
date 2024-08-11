@@ -167,8 +167,8 @@ If `operation<:Symbolic`, then an `express(obs, repr, ::UseAsObservable)` call i
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>observable(refs::Vector{RegRef}, obs, something=nothing; time)</code>"]
-  B["<code>observable(regs::Vector{Register}, indices, obs, something=nothing; time)</code>"]
+  A["<code>observable(refs::Vector{RegRef}, obs; something=nothing, time)</code>"]
+  B["<code>observable(regs::Vector{Register}, indices, obs; something=nothing, time)</code>"]
   subgraph TOP [lower from registers to states]
     direction LR
     B1["<code>uptotime!</code>"]
