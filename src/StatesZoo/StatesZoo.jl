@@ -2,7 +2,7 @@ module StatesZoo
 
 using DocStringExtensions
 using QuantumSymbolics, QuantumOpticsBase
-using QuantumSymbolics: withmetadata, @withmetadata, Metadata
+using QuantumSymbolics: @withmetadata, Metadata
 import QuantumSymbolics: express_nolookup
 
 import LinearAlgebra
