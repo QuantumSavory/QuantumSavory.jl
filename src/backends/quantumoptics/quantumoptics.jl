@@ -17,21 +17,17 @@ subsystemcompose(op::Operator, k::Ket) = tensor(op,dm(k)) # TODO this should be 
 default_repr(::StateVector) = QOR
 default_repr(::Operator) = QOR
 
-traceout!(s::StateVector, i) = ptrace(s,i)
-traceout!(s::Operator, i) = ptrace(s,i)
-
 ispadded(::StateVector) = false
 ispadded(::Operator) = false
 
-function observable(state::Union{<:Ket,<:Operator}, indices, operation)
+function observable(state::Union{<:Ket,<:Operator}, indices::Base.AbstractVecOrTuple{Int}, operation)
     operation = express(operation, QOR)
     e = basis(state)==basis(operation)
     op = e ? operation : embed(basis(state), indices, operation)
     expect(op, state)
 end
 
-
-function project_traceout!(state::Union{Ket,Operator},stateindex,psis::Base.AbstractVecOrTuple{<:Ket})
+function project_traceout!(state::Union{Ket,Operator},stateindex::Int,psis::Base.AbstractVecOrTuple{Ket})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of _overlap vs _project_and_drop
         _overlaps = [_overlap(psi,state) for psi in psis]
         branch_probs = cumsum(_overlaps)

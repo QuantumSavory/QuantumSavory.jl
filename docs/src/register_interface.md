@@ -138,13 +138,13 @@ Measure a quantum observable. The dispatch down the call three is very similar t
 observable
 ```
 
-#### `observable(refs::Tuple{Vararg{RegRef, N}}, obs, something=nothing; time)`
+#### `observable(refs::Tuple{Vararg{RegRef, N}}, obs; something=nothing, time=nothing)`
 
 Calculate the value of an observable on the state in the sequence of [`RegRef`](@ref)s at a specified `time`. If these registers are not instantiated, return `something`.
 
 `refs` can also be `Tuple{Vararg{RegRef, N}}` or a single [`RegRef`](@ref).
 
-#### `observable(regs::Vector{Register}, indices, obs, something=nothing; time)`
+#### `observable(regs::Vector{Register}, indices, obs; something=nothing, time=nothing)`
 
 `indices` refers to the slots inside of the given `regs`.
 
@@ -167,8 +167,8 @@ If `operation<:Symbolic`, then an `express(obs, repr, ::UseAsObservable)` call i
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>observable(refs::Vector{RegRef}, obs, something=nothing; time)</code>"]
-  B["<code>observable(regs::Vector{Register}, indices, obs, something=nothing; time)</code>"]
+  A["<code>observable(refs::Vector{RegRef}, obs; something=nothing, time)</code>"]
+  B["<code>observable(regs::Vector{Register}, indices, obs; something=nothing, time)</code>"]
   subgraph TOP [lower from registers to states]
     direction LR
     B1["<code>uptotime!</code>"]

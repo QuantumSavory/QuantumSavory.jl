@@ -191,8 +191,8 @@ end
         reg2 = network[node2]
         @yield request(reg1[q1]) & request(reg2[q2])
         uptotime!((reg1[q1], reg2[q2]), now(sim))
-        fXX = real(observable((reg1[q1],reg2[q2]), XX, 0.0; time=now(sim)))
-        fZZ = real(observable((reg1[q1],reg2[q2]), ZZ, 0.0; time=now(sim)))
+        fXX = real(observable((reg1[q1],reg2[q2]), XX; something=0.0, time=now(sim)))
+        fZZ = real(observable((reg1[q1],reg2[q2]), ZZ; something=0.0, time=now(sim)))
         push!(fidelityXXlog[], fXX)
         push!(fidelityZZlog[], fZZ)
         push!(timelog[], now(sim)-last_success)
