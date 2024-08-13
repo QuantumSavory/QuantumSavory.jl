@@ -25,7 +25,7 @@ end
         draw = (randperm(n_reg))[1:prot.n]
         for i in 1:prot.n #parallelize this
             path = paths[draw[i]]
-            @debug "Running Entanglement Distrubution on path $(path) @ $(now(prot.sim))"
+            @debug "Running Entanglement Distribution on path $(path) @ $(now(prot.sim))"
             for i in 1:length(path)-1
                 msg = Tag(EntanglementRequest, path[i], path[i+1], 1)
                 put!(channel(prot.net, prot.node=>msg[2]; permit_forward=true), msg)
