@@ -2,6 +2,8 @@
 
 
 ## v0.5.0 - 2024-08-11
+- Interactive examples for network controller
+- Implement a network control protocol and request tracker along with two new tags `EntanglementRequest` and `SwapRequest`
 - Develop `CutoffProt` to deal with deadlocks in a simulation
 - Expand `SwapperProt` with `agelimit` to permit cutoff policies (with `CutoffProt`)
 - Tutorial and interactive examples for entanglement distribution on a grid with local-only knowledge
