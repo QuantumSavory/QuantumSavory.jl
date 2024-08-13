@@ -13,15 +13,18 @@ import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
+using Graphs
+using Random
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, RequestTracker,
     # tags
-    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, EntanglementRequest, SwapRequest,
     # from Switches
-    SimpleSwitchDiscreteProt, SwitchRequest
-
+    SimpleSwitchDiscreteProt, SwitchRequest,
+    # controllers
+    NetController
 abstract type AbstractProtocol end
 
 get_time_tracker(prot::AbstractProtocol) = prot.sim
@@ -143,6 +146,45 @@ See also: [`CutoffProt`](@ref)
 end
 Base.show(io::IO, tag::EntanglementDelete) = print(io, "Deleted $(tag.send_node).$(tag.send_slot) which was entangled to $(tag.rec_node).$(tag.rec_slot)")
 Tag(tag::EntanglementDelete) = Tag(EntanglementDelete, tag.send_node, tag.send_slot, tag.rec_node, tag.rec_slot)
+
+"""
+$TYPEDEF
+
+A message sent from a controller to the [`EntanglementTracker`](@ref) requesting the generation of an entanglement link between the receiving node
+and one of its next-hop neighbors on the physical graph, as mentioned in the request
+
+$TYPEDFIELDS
+
+See also: [EntanglerProt](@ref), [`EntanglementTracker`](@ref), [`SwapRequest`](@ref)
+"""
+@kwdef struct EntanglementRequest
+    "The id of the node receiving the request"
+    receiver::Int
+    "The id of the node with which the entanglement link should be established"
+    neighbor::Int
+    "The number of rounds the Entangler should run for"
+    rounds::Int
+end
+Base.show(io::IO, tag::EntanglementRequest) = print(io, "$(tag.receiver) attempt entanglement generation with $(tag.neighbor)")
+Tag(tag::EntanglementRequest) = Tag(EntanglementRequest, tag.receiver, tag.neighbor, tag.rounds)
+
+"""
+$TYPEDEF
+
+A message sent from a controller to the [`EntanglementTracker`](@ref) requesting it to perform a swap
+
+$TYPEDFIELDS
+
+See also: [`SwapperProt`](@ref), [`EntanglementTracker`](@ref), [`EntanglementRequest`](@ref)
+"""
+@kwdef struct SwapRequest
+    """The id of the node instructed to perform a swap"""
+    swapping_node::Int
+    """The number of rounds the swapper should run for"""
+    rounds::Int
+end
+Base.show(io::IO, tag::SwapRequest) = print(io, "Node $(tag.swapping_node) perform a swap")
+Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds)
 
 """
 $TYPEDEF
@@ -430,10 +472,59 @@ end
     end
 end
 
+"""
+$TYPEDEF
+
+A protocol, running at a given node, listening for messages requesting entanglement generation or swaps.
+
+$TYPEDFIELDS
+"""
+@kwdef struct RequestTracker <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex of the node where the tracker is working"""
+    node::Int
+end
+
+@resumable function (prot::RequestTracker)()
+    mb = messagebuffer(prot.net, prot.node)
+    while true
+        workwasdone = true # waiting is not enough because we might have multiple rounds of work to do
+        while workwasdone
+            workwasdone = false # if there is nothing in the mb queue(querydelete returns nothing) we skip to waiting, otherwise we keep querying until the queue is empty
+            for requesttagsymbol in (EntanglementRequest, SwapRequest)
+                if requesttagsymbol == EntanglementRequest
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓)
+                    isnothing(msg) && continue
+                    workwasdone = true
+                    (src, (_, neighbor, rounds)) = msg
+                    @debug "RequestTracker @$(prot.node): Generating entanglement with $(neighbor)"
+                    entangler = EntanglerProt(prot.sim, prot.net, prot.node, neighbor; rounds=rounds, randomize=true)
+                    @process entangler()
+                else
+                    msg = querydelete!(mb, requesttagsymbol, ❓)
+                    isnothing(msg) && continue
+                    workwasdone = true
+                    (src, (_, rounds)) = msg
+                    @debug "RequestTracker @$(prot.node): Performing a swap"
+                    swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
+                    @process swapper()
+                end
+            end
+        end
+        @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        @yield wait(mb)
+        @debug "RequestTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+    end
+end
+
 
 include("cutoff.jl")
 include("swapping.jl")
 include("switches.jl")
+include("controllers.jl")
 using .Switches
 
 end # module
