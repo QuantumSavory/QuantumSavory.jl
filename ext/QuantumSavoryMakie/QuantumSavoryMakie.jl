@@ -150,7 +150,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         ## the colors and locations for various observables
         if !isnothing(rn[:observables][])
         for (O, rsidx, links) in rn[:observables][]
-            val = real(observable(tuple((network[rs...] for rs in rsidx)...), O, NaN))
+            val = real(observable(tuple((network[rs...] for rs in rsidx)...), O; something=NaN))
             # TODO issue a warning if val has (percentage-wise) significant imaginary component (here, for plotting, when we implicitly are taking the real part)
             for (iʳᵉᵍ, iˢˡᵒᵗ) in rsidx
                 xˢ = registercoords[iʳᵉᵍ][1]
