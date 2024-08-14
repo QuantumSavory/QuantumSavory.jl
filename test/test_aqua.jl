@@ -1,6 +1,10 @@
 using Aqua
 using QuantumSavory
 
+if get(ENV,"JET_TEST","")=="true"
+# JET generates new methods with ambiguities
+else
+
 @test Test.detect_ambiguities(QuantumSavory) == Tuple{Method, Method}[]
 
 Aqua.test_all(QuantumSavory,
@@ -10,3 +14,5 @@ Aqua.test_all(QuantumSavory,
 )
 
 @test length(Aqua.Piracy.hunt(QuantumSavory)) == 6
+
+end
