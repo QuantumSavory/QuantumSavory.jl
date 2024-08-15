@@ -4,14 +4,15 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, AbstractProtocol
 using Graphs: edges, complete_graph, neighbors
-using GraphsMatching: maximum_weight_matching
+#using GraphsMatching: maximum_weight_matching
 using Combinatorics: combinations
-using JuMP: MOI, optimizer_with_attributes
-import Cbc
+#using JuMP: MOI, optimizer_with_attributes
+#import Cbc
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS
 using ConcurrentSim: @process, timeout, Simulation, Process
 #using ResumableFunctions: @resumable, @yield # TODO serious bug that makes it not work without full `using`
 using ResumableFunctions
+using Random
 
 export SimpleSwitchDiscreteProt, SwitchRequest
 
@@ -65,30 +66,31 @@ julia> let
 ```
 """
 function promponas_bruteforce_choice(M,N,backlog,eprobs) # TODO mark as public but unexported
-    best_weight = 0.0
-    best_assignment = zeros(Int, M)
-    graphs = [complete_graph(i) for i in 1:M] # preallocating them to avoid expensive allocations in the inner loop
-    weights = [zeros(Int, i, i) for i in 1:M] # preallocating them to avoid expensive allocations in the inner loop
-    found = false
-    for assigned_nodes in combinations(1:N, M)
-        current_weight = 0.0
-        for entangled_pattern in combinations(assigned_nodes)
-            p = prod(@view eprobs[entangled_pattern])
-            i = length(entangled_pattern)
-            g = graphs[i]
-            w = weights[i]
-            (;weight, mate) = match_entangled_pattern(backlog, entangled_pattern, g, w)
-            # TODO above, is this a good choice for optimizer
-            # TODO above, can we preallocate model objects and optimizer objects to avoid allocations in the inner loop
-            current_weight += weight*p
-        end
-        if current_weight > best_weight
-            best_weight = current_weight
-            best_assignment .= assigned_nodes
-            found = true
-        end
-    end
-    return found ? best_assignment : nothing
+    return randperm(N)[1:M]
+    # best_weight = 0.0
+    # best_assignment = zeros(Int, M)
+    # graphs = [complete_graph(i) for i in 1:M] # preallocating them to avoid expensive allocations in the inner loop
+    # weights = [zeros(Int, i, i) for i in 1:M] # preallocating them to avoid expensive allocations in the inner loop
+    # found = false
+    # for assigned_nodes in combinations(1:N, M)
+    #     current_weight = 0.0
+    #     for entangled_pattern in combinations(assigned_nodes)
+    #         p = prod(@view eprobs[entangled_pattern])
+    #         i = length(entangled_pattern)
+    #         g = graphs[i]
+    #         w = weights[i]
+    #         (;weight, mate) = match_entangled_pattern(backlog, entangled_pattern, g, w)
+    #         # TODO above, is this a good choice for optimizer
+    #         # TODO above, can we preallocate model objects and optimizer objects to avoid allocations in the inner loop
+    #         current_weight += weight*p
+    #     end
+    #     if current_weight > best_weight
+    #         best_weight = current_weight
+    #         best_assignment .= assigned_nodes
+    #         found = true
+    #     end
+    # end
+    # return found ? best_assignment : nothing
 end
 
 """
@@ -298,9 +300,11 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     end
     # get the maximum match for the actually connected nodes
     ne = length(entangled_clients)
+    if ne < 2 return nothing end
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
     @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" # (indexed as $entangled_clients_revindex)"
-    (;weight, mate) = match_entangled_pattern(prot.backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
+    # (;weight, mate) = match_entangled_pattern(prot.backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
+    mate = collect(zip(entangled_clients_revindex[1:2:end], entangled_clients_revindex[2:2:end]))
     isempty(mate) && return nothing
     return mate
 end
@@ -310,7 +314,7 @@ Assuming the pairs in `match` are entangled,
 perform swaps to connect them and decrement the backlog counter.
 """
 function _switch_run_swaps(prot, match)
-    @debug "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])"
+    #@info "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])"
     for (i,j) in match
         swapper = SwapperProt( # TODO be more careful about how much simulated time this takes
             sim=prot.sim, net=prot.net, node=prot.switchnode,
