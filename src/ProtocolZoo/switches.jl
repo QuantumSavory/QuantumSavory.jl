@@ -4,14 +4,13 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, AbstractProtocol
 using Graphs: edges, complete_graph, neighbors
-using GraphsMatching: maximum_weight_matching
+#using GraphsMatching: maximum_weight_matching # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
 using Combinatorics: combinations
-using JuMP: MOI, optimizer_with_attributes
-import Cbc
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS
 using ConcurrentSim: @process, timeout, Simulation, Process
 #using ResumableFunctions: @resumable, @yield # TODO serious bug that makes it not work without full `using`
 using ResumableFunctions
+using Random
 
 export SimpleSwitchDiscreteProt, SwitchRequest
 
@@ -65,6 +64,9 @@ julia> let
 ```
 """
 function promponas_bruteforce_choice(M,N,backlog,eprobs) # TODO mark as public but unexported
+    @warn "The switch optimization routine is using a random placeholder optimization method due to issues with installing the BlossomV algorithm. Do not rely on this code to validate research results."
+    return randperm(N)[1:M]
+    # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
     best_weight = 0.0
     best_assignment = zeros(Int, M)
     graphs = [complete_graph(i) for i in 1:M] # preallocating them to avoid expensive allocations in the inner loop
@@ -298,9 +300,14 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     end
     # get the maximum match for the actually connected nodes
     ne = length(entangled_clients)
+    if ne < 2 return nothing end
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
     @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" # (indexed as $entangled_clients_revindex)"
-    (;weight, mate) = match_entangled_pattern(prot.backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
+
+    # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
+    # (;weight, mate) = match_entangled_pattern(prot.backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
+    mate = collect(zip(entangled_clients_revindex[1:2:end], entangled_clients_revindex[2:2:end]))
+
     isempty(mate) && return nothing
     return mate
 end
