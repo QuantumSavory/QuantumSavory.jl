@@ -24,10 +24,6 @@ regsize = 20
 net = RegisterNet(graph, [Register(regsize, T1Decay(10.0)) for i in 1:8])
 sim = get_time_tracker(net)
 
-using GraphPlot
-nodelabel = ["Alice", 2, 3, 4, 5, 6, 7, "Bob"]
-layout=(args...)->spring_layout(args...; C=20)
-
 function prepare_vis(consumer::EntanglementConsumer, params=nothing)
     ###
     fig = Figure(;size=(1200, 1100))
@@ -84,7 +80,7 @@ function prepare_vis(consumer::EntanglementConsumer, params=nothing)
     end
 
 
-    # display(fig)
+    display(fig)
 
     return consumer.sim, consumer.net, obs, entlog, entlogaxis, fid_axis, histaxis, num_epr_axis, fig
 end

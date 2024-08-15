@@ -7,14 +7,14 @@ include("setup.jl")
 
 const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in JSServe https://github.com/SimonDanisch/JSServe.jl/issues/178
 
-controller = NetController(sim, net, 3, 6, 0.1)
+controller = NetController(sim, net, 3, 6, 0.2)
 @process controller()
 
-consumer = EntanglementConsumer(sim, net, 1, 8; period=0.5)
+consumer = EntanglementConsumer(sim, net, 1, 8; period=0.2)
 @process consumer()
 
 for node in 1:7
-    tracker = RequestTracker(sim, net, node)
+    tracker = RequestTracker(sim, net, node, 0.3)
     @process tracker()
 end
 
@@ -81,9 +81,7 @@ landing = Bonito.App() do
     given by the adjacency matrix of the graph. The control plane architecture used for this simulation is connection-oriented,
     non-distributed and centralized. The node representing Alice is the node on the top left and the bottom right is Bob.
     The actual connectivity of the physical graph isn't fully captured by the visualization above as we use edges only to
-    show the virtual graph. The physical graph is shown below:
-
-    $(gplot(graph, layout=layout, nodelabel=nodelabel))
+    show the virtual graph.
 
    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/controlplane/2b_cnc_wglmakie.jl)
     """

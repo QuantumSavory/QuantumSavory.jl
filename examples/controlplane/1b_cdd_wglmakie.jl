@@ -92,9 +92,7 @@ landing = Bonito.App() do
     given by the adjacency matrix of the graph. The control plane architecture used for this simulation is connectionless,
     distributed and decentralized. The node representing Alice is the node on the top left and the bottom right is Bob.
     The actual connectivity of the physical graph isn't fully captured by the visualization above as we use edges only to
-    show the virtual graph. The physical graph is shown below:
-
-    $(gplot(graph, layout=layout, nodelabel=nodelabel))
+    show the virtual graph.
 
    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/controlplane/1b_cdd_wglmakie.jl)
     """

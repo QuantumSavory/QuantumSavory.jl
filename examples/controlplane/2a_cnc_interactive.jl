@@ -1,13 +1,13 @@
 include("setup.jl")
 
-controller = NetController(sim, net, 3, 6, 0.1)
+controller = NetController(sim, net, 3, 6, 0.2)
 @process controller()
 
-consumer = EntanglementConsumer(sim, net, 1, 8; period=0.5)
+consumer = EntanglementConsumer(sim, net, 1, 8; period=0.2)
 @process consumer()
 
 for node in 1:7
-    tracker = RequestTracker(sim, net, node)
+    tracker = RequestTracker(sim, net, node, 0.3)
     @process tracker()
 end
 

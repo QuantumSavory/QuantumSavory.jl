@@ -486,6 +486,8 @@ $TYPEDFIELDS
     net::RegisterNet
     """the vertex of the node where the tracker is working"""
     node::Int
+    """duration of request generation and processing"""
+    ticktock::Float64
 end
 
 @resumable function (prot::RequestTracker)()
@@ -496,22 +498,25 @@ end
             workwasdone = false # if there is nothing in the mb queue(querydelete returns nothing) we skip to waiting, otherwise we keep querying until the queue is empty
             for requesttagsymbol in (EntanglementRequest, SwapRequest)
                 if requesttagsymbol == EntanglementRequest
-                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓)
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓)
+                    @debug "RequestTracker @$(prot.node): Received $msg"
                     isnothing(msg) && continue
                     workwasdone = true
-                    (src, (_, neighbor, rounds)) = msg
+                    (src, (_, _, neighbor, rounds)) = msg
                     @debug "RequestTracker @$(prot.node): Generating entanglement with $(neighbor)"
                     entangler = EntanglerProt(prot.sim, prot.net, prot.node, neighbor; rounds=rounds, randomize=true)
                     @process entangler()
                 else
-                    msg = querydelete!(mb, requesttagsymbol, ❓)
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓)
+                    @debug "RequestTracker @$(prot.node): Received $msg"
                     isnothing(msg) && continue
                     workwasdone = true
-                    (src, (_, rounds)) = msg
+                    (src, (_, _, rounds)) = msg
                     @debug "RequestTracker @$(prot.node): Performing a swap"
                     swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
                     @process swapper()
                 end
+                @yield timeout(prot.sim, prot.ticktock)
             end
         end
         @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
