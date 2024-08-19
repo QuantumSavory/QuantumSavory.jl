@@ -228,5 +228,49 @@ end
 # More tests of 2D rectangular grids with the full stack of protocols,
 # but also now with an unlimited number of rounds and an entanglement consumer.
 
-#TODO
-@test_broken false
+
+n = 6 # the size of the square grid network (n × n)
+regsize = 20 # the size of the quantum registers at each node
+
+graph = grid([n,n])
+net = RegisterNet(graph, [Register(regsize) for i in 1:n^2])
+
+sim = get_time_tracker(net)
+
+# each edge is capable of generating raw link-level entanglement
+for (;src, dst) in edges(net)
+    eprot = EntanglerProt(sim, net, src, dst; rounds=-1, randomize=true)
+    @process eprot()
+end
+
+# each node except the corners on one of the diagonals is capable of swapping entanglement
+for i in 2:(n^2 - 1)
+    l(x) = check_nodes(net, i, x)
+    h(x) = check_nodes(net, i, x; low=false)
+    cL(arr) = choose_node(net, i, arr)
+    cH(arr) = choose_node(net, i, arr; low=false)
+    swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds=-1)
+    @process swapper()
+end
+
+# each node is running entanglement tracking to keep track of classical data about the entanglement
+for v in vertices(net)
+    tracker = EntanglementTracker(sim, net, v)
+    @process tracker()
+end
+
+# a mock entanglement consumer between the two corners of the grid
+consumer = EntanglementConsumer(sim, net, 1, n^2)
+@process consumer()
+
+# at each node we discard the qubits that have decohered after a certain cutoff time
+for v in vertices(net)
+    cutoffprot = CutoffProt(sim, net, v)
+    @process cutoffprot()
+end
+run(sim, 400)
+
+for i in 1:length(consumer.log)
+    @test consumer.log[i][2] ≈ 1.0
+    @test consumer.log[i][3] ≈ 1.0
+end

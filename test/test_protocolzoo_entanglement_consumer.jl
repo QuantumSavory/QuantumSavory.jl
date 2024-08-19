@@ -39,10 +39,8 @@ for n in 3:30
 
 
     for i in 1:length(econ.log)
-        if !isnothing(econ.log[i][2])
-            @test econ.log[i][2] ≈ 1.0
-            @test econ.log[i][3] ≈ 1.0
-        end
+        @test econ.log[i][2] ≈ 1.0
+        @test econ.log[i][3] ≈ 1.0
     end
 
 end
