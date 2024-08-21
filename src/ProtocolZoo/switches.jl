@@ -198,21 +198,29 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
         _switch_read_backlog(prot, reverseclientindex)
 
         # pick a set of client nodes to which to assign local memory slots
-        assignment = prot.assignment_algorithm(m,n,backlog,prot.success_probs)
-        if isnothing(assignment)
-            @debug "Switch $switchnode found no useful memory slot assignments"
-            @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
-            continue
+        if prot.assignment_algorithm == promponas_bruteforce_choice
+            assignment = prot.assignment_algorithm(m,n,backlog,prot.success_probs)
+            if isnothing(assignment)
+                @debug "Switch $switchnode found no useful memory slot assignments"
+                @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
+                continue
+            end
+            @debug "Switch $switchnode assigns memory slots to clients $([prot.clientnodes[a] for a in assignment])"
+            
+            # run entangler
+            _switch_entangler(prot, assignment)
+        else
+            # run entangler without requests (=no assignment)
+            println("RUN WITH NO ASSIGNMENTS")
+            _switch_entangler_all(prot)
         end
-        @debug "Switch $switchnode assigns memory slots to clients $([prot.clientnodes[a] for a in assignment])"
-
-        # run entangler
-        _switch_entangler(prot, assignment)
         @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
 
         # read which entanglements were successful
         # and pick an optimal matching given the backlog of requests
+        
         match = _switch_successful_entanglements_best_match(prot, reverseclientindex)
+        #match = _switch_successful_entanglements(prot, reverseclientindex)
         if isnothing(match)
             @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
             continue
@@ -220,6 +228,7 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
 
         # perform swaps
         _switch_run_swaps(prot, match)
+        #_switch_run_fusions(prot, match)
         @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
     end
 end
@@ -268,6 +277,22 @@ function _switch_read_backlog(prot, reverseclientindex)
 end
 
 """
+Run the entangler protocol between the switch and each client (no assignment).
+"""
+function _switch_entangler_all(prot)
+    @assert length(prot.clientnodes) == nsubsystems(prot.net[prot.switchnode])-1 "Number of clientnodes needs to equal the number of switch registers."
+    for (id, client) in enumerate(prot.clientnodes) 
+        entangler = EntanglerProt(
+            sim=prot.sim, net=prot.net,
+            nodeA=prot.switchnode, nodeB=client,
+            rounds=1, attempts=1, success_prob=prot.success_probs[id],
+            attempt_time=prot.ticktock/10 # TODO this is a pretty arbitrary value
+        )
+        @process entangler()
+    end
+end
+
+"""
 Run the entangler protocol between the switch and each client in the assignment.
 """
 function _switch_entangler(prot, assignment)
@@ -306,7 +331,24 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     # (;weight, mate) = match_entangled_pattern(prot.backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
     mate = collect(zip(entangled_clients_revindex[1:2:end], entangled_clients_revindex[2:2:end]))
     isempty(mate) && return nothing
+    # @show mate
     return mate
+end
+
+function _switch_successful_entanglements(prot, reverseclientindex)
+    switch = prot.net[prot.switchnode]
+    successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓)
+    entangled_clients = [r.tag[2] for r in successes]
+    if isempty(entangled_clients)
+        @debug "Switch $(prot.switchnode) failed to entangle with any clients"
+        return nothing
+    end
+    # get the maximum match for the actually connected nodes
+    ne = length(entangled_clients)
+    if ne < 1 return nothing end
+    entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
+    @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" 
+    return entangled_clients_revindex
 end
 
 """
@@ -323,6 +365,22 @@ function _switch_run_swaps(prot, match)
         )
         prot.backlog[i,j] -= 1
         @process swapper()
+    end
+end
+
+"""
+Assuming the clientnodes are entangled,
+perform fusion to connect them with piecemaker qubit (no backlog discounter yet!).
+"""
+function _switch_run_fusions(prot, match)
+    @info "Switch $(prot.switchnode) performs fusions for client $([i in match])"
+    for i in match
+        fusion = FusionProt( # TODO be more careful about how much simulated time this takes
+            sim=prot.sim, net=prot.net, node=prot.switchnode,
+            nodeC=prot.clientnodes[i],
+            rounds=1
+        )
+        @process fusion()
     end
 end
 

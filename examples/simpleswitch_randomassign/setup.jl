@@ -16,12 +16,12 @@ end
 
 function prepare_simulation()
     n = 10   # number of clients
-    m = n-2 # memory slots in switch
+    m = n+1 # memory slots in switch is equal to the number of clients + 1 slot for piecemaker qubit
 
     # The graph of network connectivity. Index 1 corresponds to the switch.
     graph = star_graph(n+1)
 
-    switch_register = Register(m)
+    switch_register = Register(m) # the first slot is reserved for the pivot qubit used as fusion qubit 
     client_registers = [Register(1) for _ in 1:n]
     net = RegisterNet(graph, [switch_register, client_registers...])
     sim = get_time_tracker(net)
@@ -48,8 +48,8 @@ function prepare_simulation()
         @process consumer()
     end
 
-    # Finally, set up the switch
-    switch_protocol = SimpleSwitchDiscreteProt(net, 1, 2:n+1, fill(0.4, n))
+    # Finally, set up the switch without assignments
+    switch_protocol = SimpleSwitchDiscreteProt(net, 1, 2:n+1, fill(0.4, n), assignment_algorithm=nothing)
     @process switch_protocol()
     
     return n, sim, net, switch_protocol, client_pairs, client_unordered_pairs, consumers, rates, rate_scale

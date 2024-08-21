@@ -227,6 +227,84 @@ end
 """
 $TYPEDEF
 
+A protocol, running at a given node, that finds fusable entangled pairs and performs entanglement fusion.
+
+$TYPEDFIELDS
+"""
+@kwdef struct FusionProt <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex of the node where fusion is happening"""
+    node::Int
+    """the query for fusable qubits can return many positive candidates; `choose` picks one of them, defaults to a random pick `arr->rand(keys(arr))`"""
+    choose = random_index
+    """the vertex of the remote node for the fusion"""
+    nodeC::Int
+    """fixed "busy time" duration immediately before starting entanglement generation attempts"""
+    local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
+    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
+    retry_lock_time::LT = 0.1
+    """how many rounds of this protocol to run (`-1` for infinite))"""
+    rounds::Int = -1
+end
+
+#TODO "convenience constructor for the missing things and finish this docstring"
+function FusionProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
+    return FusionProt(;sim, net, node, kwargs...)
+end
+
+@resumable function (prot::FusionProt)()
+    rounds = prot.rounds
+    round = 1
+    while rounds != 0
+        reg = prot.net[prot.node]
+        @show prot.node
+        fusable_qubit, piecemaker_qubit = findfusablequbit(prot.net, prot.node, prot.nodeC, prot.choose)
+        if isnothing(fusable_qubit)
+            isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
+            @yield timeout(prot.sim, prot.retry_lock_time)
+            continue
+        end
+
+        (q, id, tag) = fusable_qubit.slot, fusable_qubit.id, fusable_qubit.tag
+        (q_pm, id_pm, tag_pm) = piecemaker_qubit.slot, piecemaker_qubit.id, piecemaker_qubit.tag
+        @yield lock(q) & lock(q_pm) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
+        @yield timeout(prot.sim, prot.local_busy_time)
+
+        untag!(q, id)
+        # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, fus_node_idx, fus_slot_idx, local_fus_idx
+        tag!(q, EntanglementHistory, tag[2], tag[3], tag_pm[2], tag_pm[3], q.idx)
+
+        uptotime!((fusable_qubit, piecemaker_qubit), now(prot.sim))
+        fuscircuit = EntanglementFusion()
+        xmeas = fuscircuit(fusable_qubit, piecemaker_qubit) # TODO query piecemaker qubit in the |+> state and use it instead of the last qubit
+        # send from here to client node
+        # tag with EntanglementUpdateX past_local_node, past_local_slot_idx, past_remote_slot_idx, new_remote_node, new_remote_slot, correction
+        msg = Tag(EntanglementUpdateX, prot.node, q_pm.idx, tag_pm[3], tag[2], tag[3], xmeas)
+        put!(channel(prot.net, prot.node=>tag[2]; permit_forward=true), msg)
+        @debug "FusionProt @$(prot.node)|round $(round): Send message to $(tag[2]) | message=`$msg`"
+        unlock(fusable_qubit)
+        unlock(piecemaker_qubit)
+        rounds==-1 || (rounds -= 1)
+        round += 1
+    end
+end
+
+function findfusablequbit(net, node, pred_random, choose_random)
+    reg = net[node]
+
+    nodes  = queryall(reg, EntanglementCounterpart, pred_random, ❓; locked=false, assigned=true)
+
+    isempty(nodes) && return nothing
+    i = choose_random((n.tag[2] for n in nodes)) # TODO make [2] into a nice named property
+    return nodes[2:end][i], nodes[1]
+end
+
+"""
+$TYPEDEF
+
 A protocol, running at a given node, that finds swappable entangled pairs and performs the swap.
 
 $TYPEDFIELDS
@@ -264,6 +342,7 @@ end
     round = 1
     while rounds != 0
         reg = prot.net[prot.node]
+        @show prot.net
         qubit_pair = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH)
         if isnothing(qubit_pair)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
@@ -295,6 +374,8 @@ end
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
+        @show tag2
+        @show tag1
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
         @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2`"
         unlock(q1)
@@ -306,10 +387,13 @@ end
 
 function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high)
     reg = net[node]
+    @show pred_low
+    @show pred_high
 
     low_nodes  = queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
     high_nodes = queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
-
+    @show low_nodes
+    @show high_nodes
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
     il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
     ih = choose_high((n.tag[2] for n in high_nodes))
