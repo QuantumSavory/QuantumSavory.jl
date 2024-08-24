@@ -54,3 +54,34 @@ function prepare_simulation()
     
     return n, sim, net, switch_protocol, client_pairs, client_unordered_pairs, consumers, rates, rate_scale
 end
+
+function prepare_simulation_fusion()
+    n = 10   # number of clients
+    m = n+1 # memory slots in switch is equal to the number of clients + 1 slot for piecemaker qubit
+
+    # The graph of network connectivity. Index 1 corresponds to the switch.
+    graph = star_graph(n+1)
+
+    switch_register = Register(m) # the first slot is reserved for the pivot qubit used as fusion qubit = 'piecemaker
+    client_registers = [Register(1) for _ in 1:n]
+    net = RegisterNet(graph, [switch_register, client_registers...])
+    sim = get_time_tracker(net)
+
+
+    # Set up the entanglement trackers at each client
+    trackers = [EntanglementTracker(sim, net, k) for k in 2:n+1]
+    for tracker in trackers
+        @process tracker()
+    end
+
+    # Set up an GHZ state consumer for fused clients
+    consumer = GHZConsumer(net, switch_register[1])
+    @process consumer()
+
+
+    # Finally, set up the switch without assignments
+    #switch_protocol = FusionSwitchDiscreteProt(get_time_tracker(net))#, net, 1, collect(2:n+1), fill(1., n))
+    #@process switch_protocol()
+
+    return sim
+end

@@ -5,6 +5,7 @@ include("setup.jl")
 # Prepare all of the simulation components (while all visualization components are prepared in the rest of this file)
 n, sim, net, switch_protocol, client_pairs, client_unordered_pairs, consumers, rates, rate_scale = prepare_simulation()
 
+
 # Prepare the main figure
 fig = Figure(size=(1600,800))
 fig_plots = fig[1,1]
@@ -60,7 +61,7 @@ Label(sliderfig_[1,1], rich("Request Rate Controls:",fontsize=20), tellwidth=fal
 # display(fig)
 
 # ... and run the simulation while updating plots as needed
-step_ts = range(0, 1, step=0.1)
+step_ts = range(0, 2, step=0.1)
 for t in step_ts
     run(sim, t)
     ax.title = "t=$(t)"
