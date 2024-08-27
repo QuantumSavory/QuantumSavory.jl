@@ -51,11 +51,8 @@ end
 
 function (::EntanglementFusion)(localq,  piecemaker)
     apply!((piecemaker, localq), CNOT)
-    xmeas = project_traceout!(localq, σˣ)
-    if xmeas==2
-        apply!(piecemaker, X)
-    end
-    xmeas
+    zmeas = project_traceout!(localq, σᶻ)
+    zmeas
 end
 
 inputqubits(::EntanglementFusion) = 2

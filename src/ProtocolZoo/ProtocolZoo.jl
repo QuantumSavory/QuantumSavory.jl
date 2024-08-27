@@ -3,7 +3,9 @@ module ProtocolZoo
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag
 using QuantumSavory: Wildcard
-using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
+using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap, EntanglementFusion
+# using QuantumClifford
+# using QuantumOptics
 
 using DocStringExtensions
 
@@ -18,7 +20,7 @@ export
     # protocols
     EntanglerProt, SwapperProt, FusionProt, EntanglementTracker, EntanglementConsumer, GHZConsumer,
     # tags
-    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, Piecemaker,
     # from Switches
     SimpleSwitchDiscreteProt, FusionSwitchDiscreteProt, SwitchRequest
 
@@ -44,6 +46,23 @@ $TYPEDFIELDS
 end
 Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot)
+
+"""
+$TYPEDEF
+
+Indicates the current entanglement status with a remote node's slot. Added when a new qubit is fused into the GHZ state through [`FusionProt`](@ref).
+
+$TYPEDFIELDS
+"""
+@kwdef struct FusionCounterpart
+    "the id of the remote node to which we are entangled"
+    remote_node::Int
+    "the slot in the remote node containing the qubit we are entangled to"
+    remote_slot::Int
+end
+Base.show(io::IO, tag::FusionCounterpart) = print(io, "GHZ state shared with $(tag.remote_node).$(tag.remote_slot)")
+Tag(tag::FusionCounterpart) = Tag(FusionCounterpart, tag.remote_node, tag.remote_slot)
+
 
 """
 $TYPEDEF
@@ -124,6 +143,22 @@ Tag(tag::EntanglementUpdateZ) = Tag(EntanglementUpdateZ, tag.past_local_node, ta
 """
 $TYPEDEF
 
+Indicates the piecemaker responsible for fusions of a remote node's slot. 
+
+$TYPEDFIELDS
+"""
+@kwdef struct Piecemaker
+    "the id of the switch node"
+    node::Int
+    "the slot in the switch node containing piecemaker qubit"
+    slot::Int
+end
+Base.show(io::IO, tag::Piecemaker) = print(io, "Piecemaker slot at $(tag.node).$(tag.slot)")
+Tag(tag::Piecemaker) = Tag(Piecemaker, tag.node, tag.slot)
+
+"""
+$TYPEDEF
+
 A protocol that generates entanglement between two nodes.
 Whenever a pair of empty slots is available, the protocol locks them
 and starts probabilistic attempts to establish entanglement.
@@ -180,8 +215,8 @@ end
     while rounds != 0
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
-        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
+        a = prot.net[prot.nodeA][prot.nodeB-1] #findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin) #
+        b = prot.net[prot.nodeB][1]#findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin) #
 
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
@@ -191,7 +226,9 @@ end
         end
 
         @yield lock(a) & lock(b) # this yield is expected to return immediately
-
+        if isassigned(b)
+            traceout!(b) # TODO: why?
+        end
         @yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
             1
@@ -231,7 +268,7 @@ A protocol, running at a given node, that finds fusable entangled pairs and perf
 
 $TYPEDFIELDS
 """
-@kwdef struct FusionProt <: AbstractProtocol
+@kwdef struct FusionProt{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -259,9 +296,7 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        reg = prot.net[prot.node]
-        @show prot.node
-        fusable_qubit, piecemaker_qubit = findfusablequbit(prot.net, prot.node, prot.nodeC, prot.choose)
+        fusable_qubit, piecemaker = findfusablequbit(prot.net, prot.node, prot.nodeC, prot.choose)
         if isnothing(fusable_qubit)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @yield timeout(prot.sim, prot.retry_lock_time)
@@ -269,37 +304,37 @@ end
         end
 
         (q, id, tag) = fusable_qubit.slot, fusable_qubit.id, fusable_qubit.tag
-        (q_pm, id_pm, tag_pm) = piecemaker_qubit.slot, piecemaker_qubit.id, piecemaker_qubit.tag
+        (q_pm, id_pm, tag_pm) = piecemaker.slot, piecemaker.id, piecemaker.tag
         @yield lock(q) & lock(q_pm) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
         @yield timeout(prot.sim, prot.local_busy_time)
 
         untag!(q, id)
-        # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, fus_node_idx, fus_slot_idx, local_fus_idx
-        tag!(q, EntanglementHistory, tag[2], tag[3], tag_pm[2], tag_pm[3], q.idx)
+        # store a history of whom we were entangled to for both client slot and piecemaker
+        tag!(q, EntanglementHistory, tag[2], tag[3], prot.node, q_pm.idx, q.idx)
+        tag!(q_pm, FusionCounterpart, tag[2], tag[3])
 
-        uptotime!((fusable_qubit, piecemaker_qubit), now(prot.sim))
+        uptotime!((q, q_pm), now(prot.sim))
         fuscircuit = EntanglementFusion()
-        xmeas = fuscircuit(fusable_qubit, piecemaker_qubit) # TODO query piecemaker qubit in the |+> state and use it instead of the last qubit
+        zmeas = fuscircuit(q, q_pm) 
         # send from here to client node
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx, past_remote_slot_idx, new_remote_node, new_remote_slot, correction
-        msg = Tag(EntanglementUpdateX, prot.node, q.idx, tag[3], tag_pm[2], tag_pm[3], xmeas)
+        msg = Tag(EntanglementUpdateZ, prot.node, q.idx, tag[3], prot.node, q_pm.idx, zmeas)
         put!(channel(prot.net, prot.node=>tag[2]; permit_forward=true), msg)
         @debug "FusionProt @$(prot.node)|round $(round): Send message to $(tag[2]) | message=`$msg`"
-        unlock(fusable_qubit)
-        unlock(piecemaker_qubit)
+        unlock(q)
+        unlock(q_pm)
         rounds==-1 || (rounds -= 1)
         round += 1
     end
 end
 
-function findfusablequbit(net, node, pred_random, choose_random)
+function findfusablequbit(net, node, pred_client, choose_random)
     reg = net[node]
-
-    nodes  = queryall(reg, EntanglementCounterpart, pred_random, ❓; locked=false, assigned=true)
-
+    nodes  = queryall(reg, EntanglementCounterpart, pred_client, ❓; locked=false)
+    piecemaker = query(reg, Piecemaker, ❓, ❓)
     isempty(nodes) && return nothing
-    i = choose_random((n.tag[2] for n in nodes)) # TODO make [2] into a nice named property
-    return nodes[2:end][i], nodes[1]
+    @assert length(nodes) == 1 "Client seems to be entangled multiple times"
+    return nodes[1], piecemaker
 end
 
 """
@@ -424,11 +459,11 @@ end
         workwasdone = true # waiting is not enough because we might have multiple rounds of work to do
         while workwasdone
             workwasdone = false
-            for (updatetagsymbol, updategate) in ((EntanglementUpdateX, X), (EntanglementUpdateZ, Z))
+            for (updatetagsymbol, updategate) in ((EntanglementUpdateX, Z), (EntanglementUpdateZ, X))
                 # look for EntanglementUpdate? past_remote_slot_idx local_slot_idx, new_remote_node, new_remote_slot_idx correction
                 msg = querydelete!(mb, updatetagsymbol, ❓, ❓, ❓, ❓, ❓, ❓)
                 isnothing(msg) && continue
-                @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(msg.tag[3]) | message=`$(msg.tag)`"
+                @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(msg.tag[3]) applying $(updategate) from symbol $(updatetagsymbol) | message=`$(msg.tag)`"
                 workwasdone = true
                 (src, (_, pastremotenode, pastremoteslotid, localslotid, newremotenode, newremoteslotid, correction)) = msg
                 localslot = nodereg[localslotid]
@@ -480,63 +515,115 @@ end
     end
 end
 
-# """
-# $TYPEDEF
+"""
+$TYPEDEF
 
-# A protocol running between two nodes, checking periodically for any entangled states (GHZ states) between all nodes and consuming/emptying the qubit slots.
+A protocol running between two nodes, checking periodically for any entangled states (GHZ states) between all nodes and consuming/emptying the qubit slots.
 
-# $FIELDS
-# """
-# @kwdef struct GHZConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
-#     """time-and-schedule-tracking instance from `ConcurrentSim`"""
-#     sim::Simulation
-#     """a network graph of registers"""
-#     net::RegisterNet
-#     """the piecemaker qubit slot (RegRef)"""
-#     piecemaker::RegRef
-#     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
-#     period::LT = 0.1
-#     """stores the time and resulting observable from querying the piecemaker qubit for `EntanglementCounterpart`"""
-#     log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
-# end
+$FIELDS
+"""
+@kwdef struct GHZConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the piecemaker qubit slot (RegRef)"""
+    piecemaker::RegRef
+    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    period::LT = 0.1
+    """stores the time and resulting observable from querying the piecemaker qubit for `EntanglementCounterpart`"""
+    log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
+end
 
-# function GHZConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef; kwargs...)
-#     return GHZConsumer(;sim, net, piecemaker, kwargs...)
-# end
-# function GHZConsumer(net::RegisterNet, piecemaker::RegRef; kwargs...)
-#     return GHZConsumer(get_time_tracker(net), net, piecemaker; kwargs...)
-# end
+function GHZConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef; kwargs...)
+    return GHZConsumer(;sim, net, piecemaker, kwargs...)
+end
+function GHZConsumer(net::RegisterNet, piecemaker::RegRef; kwargs...)
+    return GHZConsumer(get_time_tracker(net), net, piecemaker; kwargs...)
+end
 
-# @resumable function (prot::GHZConsumer)()
-#     if isnothing(prot.period)
-#         error("In `GHZConsumer` we do not yet support waiting on register to make qubits available") # TODO
-#     end
-#     while true
-#         qparticipating = queryall(prot.piecemaker, EntanglementCounterpart, ❓, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
-#         println(qparticipating)
-#         if isnothing(qparticipating)
-#             @debug "GHZConsumer between $(prot.piecemaker): query on piecemaker slot found no entanglement"
-#             @yield timeout(prot.sim, prot.period)
-#             return
-#         end
-#         break
-#         # q = query.slot
-#         # @yield lock(q)
+@resumable function (prot::GHZConsumer)()
+    if isnothing(prot.period)
+        error("In `GHZConsumer` we do not yet support waiting on register to make qubits available") # TODO
+    end
+    while true
+        nclients = nsubsystems(prot.net[1])-1
+        @show nclients
+        qparticipating = queryall(prot.piecemaker, FusionCounterpart, ❓, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        if isnothing(qparticipating)
+            @debug "GHZConsumer between $(prot.piecemaker): query on piecemaker slot found no entanglement"
+            @yield timeout(prot.sim, prot.period)
+            return
+        elseif length(qparticipating) == nclients
+            @info "All clients are now part of the GHZ state."
+            client_slots = [prot.net[k][1] for k in 2:nclients+1]
+            
+            # Wait for all locks to complete
+            tasks = []
+            for resource in client_slots
+                push!(tasks, @async lock(resource))
+            end
+            push!(tasks, @async lock(prot.piecemaker))
+            for task in tasks
+                wait(task)
+            end
 
-#         # @debug "GHZConsumer of $(prot.node): queries successful, consuming entanglement"
-#         # untag!(q, query.id)
-#         # # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
-#         # # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
-#         # ob1 = real(observable((q1, q2), Z⊗Z))
-#         # ob2 = real(observable((q1, q2), X⊗X))
+            @debug "GHZConsumer of $(prot.piecemaker): queries successful, consuming entanglement"
+            for q in qparticipating 
+                untag!(prot.piecemaker, q.id)
+            end
 
-#         # traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
-#         # push!(prot.log, (now(prot.sim), ob1, ob2))
-#         # unlock(q1)
-#         # unlock(q2)
-#         # @yield timeout(prot.sim, prot.period)
-#     end
-# end
+            # when all qubits have arrived, we measure out the central qubit
+            zmeas = project_traceout!(prot.piecemaker, σˣ)
+            @show zmeas
+            if zmeas == 2
+                apply!(prot.net[2][1], Z) # apply correction on arbitrary client slot
+            end
+            pm = queryall(prot.piecemaker, ❓, ❓, ❓)
+            @assert length(pm) < 2 "More than one entry for piecemaker in database."
+            (slot, id, tag) = pm[1]
+            untag!(prot.piecemaker, id)
+            @show queryall(prot.piecemaker, ❓, ❓, ❓)
+
+            ob1 = real(observable(client_slots, tensor(collect(fill(Z, nclients))...)))
+            ob2 = real(observable(client_slots, tensor(collect(fill(X, nclients))...)))
+            # if nclients-GHZ state achieved both observables equal 1 
+            @show ob1, ob2
+            
+            # delete tags and free client slots
+            for k in 2:nclients+1
+                queries = queryall(prot.net[k], EntanglementCounterpart, ❓, ❓)
+                for q in queries
+                    untag!(q.slot, q.id)
+                end
+            end
+            
+            traceout!([prot.net[k][1] for k in 2:nclients+1]...)
+            push!(prot.log, (now(prot.sim), ob1, ob2))
+
+            @show [isassigned(prot.net[k][1]) for k in 2:nclients+1]
+
+            for k in 2:nclients+1
+                unlock(prot.net[k][1])
+            end
+            unlock(prot.piecemaker)
+            @show [islocked(prot.net[k][1]) for k in 2:nclients+1]
+            @yield timeout(prot.sim, prot.period)
+        end
+
+        # @debug "GHZConsumer of $(prot.node): queries successful, consuming entanglement"
+        # untag!(q, query.id)
+        # # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
+        # # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
+        # ob1 = real(observable((q1, q2), tensor(collect(fill(Z, nclients))...))
+        # ob2 = real(observable((q1, q2), X⊗X))
+
+        # traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
+        # push!(prot.log, (now(prot.sim), ob1, ob2))
+        @info "CONSUMER DONE"
+        @yield timeout(prot.sim, prot.period)
+    end
+end
 
 """
 $TYPEDEF

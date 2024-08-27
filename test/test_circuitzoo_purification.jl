@@ -1,7 +1,7 @@
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using Test
-using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
+using QuantumSavory.CircuitZoo: EntanglementSwap, EntanglementFusion, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
 
 
 const bell = StabilizerState("XX ZZ")

@@ -58,7 +58,7 @@ Label(sliderfig_override[1,1], "global rate override:")
 Label(sliderfig_[1,1], rich("Request Rate Controls:",fontsize=20), tellwidth=false)
 
 # Display the figure...
-# display(fig)
+display(fig)
 
 # ... and run the simulation while updating plots as needed
 step_ts = range(0, 2, step=0.1)
