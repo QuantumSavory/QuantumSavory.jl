@@ -280,7 +280,6 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
             _switch_entangler(prot, assignment)
         else
             # run entangler without requests (=no assignment)
-            println("RUN WITH NO ASSIGNMENTS")
             _switch_entangler_all(prot)
         end
         @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
@@ -290,7 +289,6 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
         
         #match = _switch_successful_entanglements_best_match(prot, reverseclientindex)
         match = _switch_successful_entanglements(prot, reverseclientindex)
-        @show match
         if isnothing(match)
             @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
             continue
@@ -407,9 +405,7 @@ end
 
 function _switch_successful_entanglements(prot, reverseclientindex)
     switch = prot.net[prot.switchnode]
-    @show prot.clientnodes
     successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓)
-    @show successes
     entangled_clients = [r.tag[2] for r in successes] # RegRef (qubit slot)
     if isempty(entangled_clients)
         @debug "Switch $(prot.switchnode) failed to entangle with any clients"
@@ -419,7 +415,7 @@ function _switch_successful_entanglements(prot, reverseclientindex)
     ne = length(entangled_clients)
     if ne < 1 return nothing end
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
-    @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" 
+    @info "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" 
     return entangled_clients_revindex
 end
 
@@ -445,10 +441,9 @@ Assuming the clientnodes are entangled,
 perform fusion to connect them with piecemaker qubit (no backlog discounter yet!).
 """
 function _switch_run_fusions(prot, match)
-    @info "Switch $(prot.switchnode) performs fusions for clients in $(match)"
+    @debug "Switch $(prot.switchnode) performs fusions for clients in $(match)"
     for i in match
-        @show i
-        @info "Enter fusion protocol with client $(i)"
+        @debug "Enter fusion protocol with client $(i)"
         fusion = FusionProt( # TODO be more careful about how much simulated time this takes
             sim=prot.sim, net=prot.net, node=prot.switchnode,
             nodeC=prot.clientnodes[i],

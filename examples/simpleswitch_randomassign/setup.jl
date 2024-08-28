@@ -19,7 +19,7 @@ end
         # init piecemaker slot in |+> 
         @yield lock(net[1][m])
         if !isassigned(net[1][m])
-            @info "Init piecemaker!"
+            #@info "Init piecemaker!"
             initialize!(net[1][m], X1)
             tag!(net[1][m], Piecemaker, 1, m)
             unlock(net[1][m])
@@ -28,13 +28,12 @@ end
             unlock(net[1][m])
             @yield timeout(sim, 0.1)
         end
-        @yield timeout(sim, 0.1)
     end
 end
         
 
 function prepare_simulation()
-    n = 10   # number of clients
+    n = 4   # number of clients
     m = n+1 # memory slots in switch is equal to the number of clients + 1 slot for piecemaker qubit
 
     # The graph of network connectivity. Index 1 corresponds to the switch.

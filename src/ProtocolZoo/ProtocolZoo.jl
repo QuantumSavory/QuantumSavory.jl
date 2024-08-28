@@ -224,17 +224,31 @@ end
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
-
-        @yield lock(a) & lock(b) # this yield is expected to return immediately
+        if isassigned(a)
+            traceout!(a) # TODO: why?
+        end
         if isassigned(b)
             traceout!(b) # TODO: why?
         end
+        
+        @info "EntanglerProt: Client $(prot.nodeB) STILL HERE 1"
+        if islocked(a)
+            @info "switchnode: $(a) is locked!"
+        end
+        if islocked(b)
+            @info "clientnode: $(b) is locked!"
+        end
+        @yield lock(a) & lock(b) # this yield is expected to return immediately
+        
+        @info "EntanglerProt: Client $(prot.nodeB) STILL HERE 2"
+
         @yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
             1
         else
             rand(Geometric(prot.success_prob))+1
         end
+
         if prot.attempts == -1 || prot.attempts >= attempts
             @yield timeout(prot.sim, attempts * prot.attempt_time)
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
@@ -252,6 +266,7 @@ end
         end
         unlock(a)
         unlock(b)
+        @yield timeout(prot.sim, prot.retry_lock_time)
         rounds==-1 || (rounds -= 1)
         round += 1
     end
@@ -487,7 +502,7 @@ end
                         apply!(localslot, updategate)
                     end
                     # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                    tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
+                    # tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                     unlock(localslot)
                     continue
                 end
@@ -548,7 +563,6 @@ end
     end
     while true
         nclients = nsubsystems(prot.net[1])-1
-        @show nclients
         qparticipating = queryall(prot.piecemaker, FusionCounterpart, ❓, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(qparticipating)
             @debug "GHZConsumer between $(prot.piecemaker): query on piecemaker slot found no entanglement"
@@ -561,12 +575,11 @@ end
             # Wait for all locks to complete
             tasks = []
             for resource in client_slots
-                push!(tasks, @async lock(resource))
+                push!(tasks, lock(resource))
             end
-            push!(tasks, @async lock(prot.piecemaker))
-            for task in tasks
-                wait(task)
-            end
+            push!(tasks, lock(prot.piecemaker))
+            all_locks = reduce(&, tasks)
+            @yield all_locks
 
             @debug "GHZConsumer of $(prot.piecemaker): queries successful, consuming entanglement"
             for q in qparticipating 
@@ -588,7 +601,7 @@ end
             ob1 = real(observable(client_slots, tensor(collect(fill(Z, nclients))...)))
             ob2 = real(observable(client_slots, tensor(collect(fill(X, nclients))...)))
             # if nclients-GHZ state achieved both observables equal 1 
-            @show ob1, ob2
+            @info "GHZConsumer: expectation values $(ob1) $(ob2)" 
             
             # delete tags and free client slots
             for k in 2:nclients+1
@@ -620,7 +633,6 @@ end
 
         # traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
         # push!(prot.log, (now(prot.sim), ob1, ob2))
-        @info "CONSUMER DONE"
         @yield timeout(prot.sim, prot.period)
     end
 end
