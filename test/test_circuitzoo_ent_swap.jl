@@ -1,7 +1,7 @@
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using Test
-using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
+using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap, EntanglementFusion
 
 const perfect_pair_stab = StabilizerState("XX ZZ")
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
