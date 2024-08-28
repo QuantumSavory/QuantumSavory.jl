@@ -224,23 +224,8 @@ end
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
-        if isassigned(a)
-            traceout!(a) # TODO: why?
-        end
-        if isassigned(b)
-            traceout!(b) # TODO: why?
-        end
-        
-        @info "EntanglerProt: Client $(prot.nodeB) STILL HERE 1"
-        if islocked(a)
-            @info "switchnode: $(a) is locked!"
-        end
-        if islocked(b)
-            @info "clientnode: $(b) is locked!"
-        end
+
         @yield lock(a) & lock(b) # this yield is expected to return immediately
-        
-        @info "EntanglerProt: Client $(prot.nodeB) STILL HERE 2"
 
         @yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
@@ -249,7 +234,7 @@ end
             rand(Geometric(prot.success_prob))+1
         end
 
-        if prot.attempts == -1 || prot.attempts >= attempts
+        if (prot.attempts == -1 || prot.attempts >= attempts) && !isassigned(b) && !isassigned(a)
             @yield timeout(prot.sim, attempts * prot.attempt_time)
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
             @yield timeout(prot.sim, prot.local_busy_time_post)

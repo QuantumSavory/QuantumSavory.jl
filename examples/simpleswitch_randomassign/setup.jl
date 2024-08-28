@@ -67,7 +67,7 @@ function prepare_simulation()
     @process consumer()
 
     # Finally, set up the switch without assignments
-    switch_protocol = SimpleSwitchDiscreteProt(net, 1, 2:n+1, fill(1, n), assignment_algorithm=nothing)
+    switch_protocol = SimpleSwitchDiscreteProt(net, 1, 2:n+1, fill(0.7, n), assignment_algorithm=nothing)
     @process switch_protocol()
     
     return n, sim
