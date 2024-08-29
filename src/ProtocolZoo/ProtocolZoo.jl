@@ -409,7 +409,7 @@ $TYPEDEF
 
 A protocol running between two nodes, checking periodically for any entangled pairs between the two nodes and consuming/emptying the qubit slots.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct EntanglementConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -475,7 +475,7 @@ end
 """
 $TYPEDEF
 
-A protocol, running at a given node, listening for messages requesting entanglement generation or swaps.
+A protocol running at a node, listening for incoming entanglement generation and swap requests
 
 $TYPEDFIELDS
 """
@@ -528,8 +528,9 @@ end
 
 include("cutoff.jl")
 include("swapping.jl")
-include("switches.jl")
 include("controllers.jl")
+include("utils.jl")
+include("switches.jl")
 using .Switches
 
 end # module
