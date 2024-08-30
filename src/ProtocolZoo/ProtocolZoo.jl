@@ -7,7 +7,7 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
 
-using Distributions: Geometric
+using Distributions: Geometric, Exponential
 using ConcurrentSim: Simulation, @yield, timeout, @process, now
 import ConcurrentSim: Process
 import ResumableFunctions
@@ -150,7 +150,7 @@ Tag(tag::EntanglementDelete) = Tag(EntanglementDelete, tag.send_node, tag.send_s
 """
 $TYPEDEF
 
-A message sent from a controller to the [`EntanglementTracker`](@ref) requesting the generation of an entanglement link between the receiving node
+A message sent from a controller to the [`RequestTracker`](@ref) at a node requesting the generation of an entanglement link between the receiving node
 and one of its next-hop neighbors on the physical graph, as mentioned in the request
 
 $TYPEDFIELDS
@@ -171,7 +171,7 @@ Tag(tag::EntanglementRequest) = Tag(EntanglementRequest, tag.receiver, tag.neigh
 """
 $TYPEDEF
 
-A message sent from a controller to the [`EntanglementTracker`](@ref) requesting it to perform a swap
+A message sent from a controller to the [`RequestTracker`](@ref) at a node requesting it to perform a swap
 
 $TYPEDFIELDS
 
@@ -185,6 +185,44 @@ See also: [`SwapperProt`](@ref), [`EntanglementTracker`](@ref), [`EntanglementRe
 end
 Base.show(io::IO, tag::SwapRequest) = print(io, "Node $(tag.swapping_node) perform a swap")
 Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds)
+
+"""
+$TYPEDEF
+
+A message sent from a node to a control protocol requesting bipartite entanglement with a remote destination node through entanglement distribution. 
+
+$TYPEDFIELDS
+
+See also: [`EntanglementRequest`](@ref), [`SwapRequest`]
+"""
+@kwdef struct DistributionRequest
+    """The node generating the request"""
+    src::Int
+    """The node with which entanglement is to be generated"""
+    dst::Int
+    """Index of the path to be taken for the entanglement generation"""
+    path::Int
+end
+Base.show(io::IO, tag::DistributionRequest) = print(io, "Node $(tag.src) requesting entanglement with $(tag.dst)")
+Tag(tag::DistributionRequest) = Tag(DistributionRequest, tag.src, tag.dst, tag.path)
+
+
+"""
+$TYPEDEF
+
+A message sent from the controller to a request generating node after its request has been served. 
+
+$TYPEDFIELDS
+
+See also: [`EntanglementRequest`](@ref), [`SwapRequest`]
+"""
+@kwdef struct RequestCompletion
+    path_id::Int
+end
+Base.show(io::IO, tag::RequestCompletion) = print(io, "Request on path id $(tag.path_id) served")
+Tag(tag::RequestCompletion) = Tag(RequestCompletion, tag.path_id)
+
+
 
 """
 $TYPEDEF
@@ -522,6 +560,50 @@ end
         @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "RequestTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+    end
+end
+
+"""
+$TYPEDEF
+
+Protocol for the simulation of request traffic for a controller in a connection-oriented network for bipartite entanglement distribution. The requests are considered to be arriving according to the Poisson model with rate λ, hence the inter-arrival time is
+sampled from an exponential distribution. Physically, the request is generated at the source node(Alice) and is classically communicated to the node where the controller is located. Multiple `RequestGenerator`s can be instantiated for simulation with multiple
+user pairs in the same network.
+
+$TYPEDFIELDS
+"""
+@kwdef struct RequestGenerator <: AbstractProtocol # TODO Should path_selection be a parameter here, so that it can be customized by the user?
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """The source node(and the node where this protocol runs) of the user pair, commonly called Alice"""
+    src::Int
+    """The destination node, commonly called Bob"""
+    dst::Int
+    """The node at which the controller is located"""
+    controller::Int
+    """The object containing physical graph metadata for the network"""
+    phys_graph::PhysicalGraph
+    """rate of arrival of requests/number of requests sent unit time"""
+    λ::Int = 4
+end
+
+@resumable function (prot::RequestGenerator)()
+    d = Exponential(inv(λ)) # Parametrized with the scale which is inverse of the rate
+    mb = messagebuffer(prot.net, prot.src)
+    while true
+        path_index = path_selection(prot.phys_graph)
+        msg = Tag(DistributionRequest, prot.src, prot.dst, path_index)
+        put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
+        @yield timeout(prot.sim, rand(d))
+
+        # incoming message from the controller after a request has been served
+        in_msg = querydelete!(RequestCompletion, ❓)
+        if !isnothing(in_msg)
+            (src, (_, path_id)) = in_msg
+            prot.phys_graph.workloads[path_id] -= 1
+        end 
     end
 end
 
