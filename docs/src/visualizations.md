@@ -18,6 +18,7 @@ The [`registernetplot_axis`](@ref) function can be used to draw a given set of r
 
 ```@example vis
 using GLMakie
+GLMakie.activate!()
 using QuantumSavory
 
 # create a network of qubit registers
@@ -57,8 +58,12 @@ initialize!(network[1,1]) # hide
 initialize!(network[2,3], X₁) # hide
 initialize!((network[3,1],network[4,2]), X₁⊗Z₂) # hide
 apply!((network[2,3],network[3,1]), CNOT) # hide
-fig = Figure(size=(400,400)) # hide
-_, _, plt, obs = registernetplot_axis(fig[1,1],network) # hide
+fig = Figure(size=(700,400)) # hide
+_, ax, plt, obs = registernetplot_axis(fig[1,1],network) # hide
+fig
+```
+
+```@example vis
 QuantumSavory.showmetadata(fig,ax,plt,1,1)
 fig
 ```
@@ -66,8 +71,8 @@ fig
 And here with some extra tag metadata.
 
 ```@example vis
-tag!(net[2,3], :specialplace, 1, 2)
-tag!(net[2,3], :otherdata, 3, 4)
+tag!(network[2,3], :specialplace, 1, 2)
+tag!(network[2,3], :otherdata, 3, 4)
 QuantumSavory.showmetadata(fig,ax,plt,2,3)
 fig
 ```

@@ -240,7 +240,7 @@ end
 
 function get_state_vis_string(backrefs, i)
     state, register, registeridx, slot, subsystem = backrefs[i]
-    tags = register.tags[slot]
+    tags = [ti.tag for ti in values(register.tag_info) if ti.slot==slot]
     tags_str = if isempty(tags)
         "not tagged"
     else
