@@ -124,21 +124,22 @@ Tag(tag::EntanglementUpdateZ) = Tag(EntanglementUpdateZ, tag.past_local_node, ta
 """
 $TYPEDEF
 
-This tag arrives as a message from a remote node's Cutoff Protocol to which the current node was entangled, to
-update the classical metadata of the entangled slot and empty it. It is also stored at a node to handle incoming `EntanglementUpdate` and `EntanglementDelete` messages.
+This tag arrives as a message from a remote node's Cutoff Protocol to which the current node was entangled,
+to update the classical metadata of the entangled slot and empty it.
+It is also stored at a node to handle incoming `EntanglementUpdate` and `EntanglementDelete` messages.
 
 $TYPEDFIELDS
 
 See also: [`CutoffProt`](@ref)
 """
 @kwdef struct EntanglementDelete
-    "The node that sent the deletion message"
+    "the node that sent the deletion announcement message after they delete their local qubit"
     send_node::Int
-    "The sender's slot containing the decoherent qubit"
+    "the sender's slot containing the decohered qubit"
     send_slot::Int
-    "The node receiving the message for qubit deletion"
+    "the node receiving the message for qubit deletion"
     rec_node::Int
-    "The slot containing decoherent qubit"
+    "the slot containing decohered qubit"
     rec_slot::Int
 end
 Base.show(io::IO, tag::EntanglementDelete) = print(io, "Deleted $(tag.send_node).$(tag.send_slot) which was entangled to $(tag.rec_node).$(tag.rec_slot)")

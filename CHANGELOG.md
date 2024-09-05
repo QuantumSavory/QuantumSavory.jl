@@ -1,7 +1,7 @@
 # News
 
 
-## v0.5.0 - 2024-08-11
+## v0.5.0 - 2024-09-05
 
 - Develop `CutoffProt` to deal with deadlocks in a simulation
 - Expand `SwapperProt` with `agelimit` to permit cutoff policies (with `CutoffProt`)

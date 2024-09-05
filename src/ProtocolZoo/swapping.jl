@@ -7,11 +7,11 @@ function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_h
     reg = net[node]
     low_nodes  = [
         n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
-        if isnothing(agelimit) || !isolderthan(n.slot, agelimit)
+        if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
     high_nodes = [
         n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
-        if isnothing(agelimit) || !isolderthan(n.slot, agelimit)
+        if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
 
     (isempty(low_nodes) || isempty(high_nodes)) && return nothing
@@ -84,7 +84,7 @@ end
         untag!(q2, id2)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
-        
+
         uptotime!((q1, q2), now(prot.sim))
         swapcircuit = LocalEntanglementSwap()
         xmeas, zmeas = swapcircuit(q1, q2)

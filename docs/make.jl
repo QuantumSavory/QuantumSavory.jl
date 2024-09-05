@@ -4,7 +4,7 @@ push!(LOAD_PATH,"../src/")
 using Documenter
 using DocumenterCitations
 using QuantumSavory
-using QuantumSavory.ProtocolZoo
+using QuantumSavory.ProtocolZoo # TODO is this the correct place to place this to ensure cross_references work
 
 DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory); recursive=true)
 
