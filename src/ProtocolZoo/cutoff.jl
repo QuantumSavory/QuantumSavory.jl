@@ -7,7 +7,7 @@ have remained unused for more than the retention period of the qubit
 and emptying such slots.
 
 If coordination messages are exchanged during deletions
-(instances of the type [`EntanglementDelete`](@ref)),
+(instances of the type `EntanglementDelete`),
 then a [`EntanglementTracker`](@ref) protocol needs to also run,
 to act on such messages.
 
