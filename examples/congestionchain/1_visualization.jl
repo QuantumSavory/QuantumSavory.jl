@@ -49,10 +49,12 @@ step_ts = range(0, 1000, step=0.1)
 record(fig, "congestionchain.mp4", step_ts; framerate=50, visible=true) do t
     run(sim, t)
     ax.title = "t=$(t)"
-    notify(obs)
-    notify(ts)
-    autolimits!(ax_fidXX)
-    autolimits!(ax_fidZZ)
+    if length(ts[])>2 # to avoid failing autolimits on empty plots
+        notify(obs)
+        notify(ts)
+        autolimits!(ax_fidXX)
+        autolimits!(ax_fidZZ)
+    end
 end
 
 ##
