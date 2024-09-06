@@ -264,15 +264,15 @@ function Makie.process_interaction(handler::RNHandler, event::Makie.MouseEvent, 
     #else
     if plot===rn[:register_slots_scatterplot][]
         register, registeridx, slot = rn[:register_slots_coords_backref][][index]
-        run(`clear`)
+        try run(`clear`) catch end
         println("Register $registeridx | Slot $(slot)\n Details: $(register)")
     elseif plot===rn[:state_scatterplot][]
         state, reg, registeridx, slot, subsystem = rn[:state_coords_backref][][index]
-        run(`clear`)
+        try run(`clear`) catch end
         println("Subsystem stored in Register $(registeridx) | Slot $(slot)\n Subsystem $(subsystem) of $(state)")
     elseif plot===rn[:observables_scatterplot][]
         o, val = rn[:observables_backref][][index]
-        run(`clear`)
+        try run(`clear`) catch end
         println("Observable $(o) has value $(val)")
     end
     false
