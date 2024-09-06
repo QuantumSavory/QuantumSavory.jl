@@ -143,9 +143,9 @@ end;
 # Serve the Makie app
 
 isdefined(Main, :server) && close(server);
-port = parse(Int, get(ENV, "ASYNC_GRID_PORT", "8888"))
-interface = get(ENV, "ASYNC_GRID_IP", "127.0.0.1")
-proxy_url = get(ENV, "ASYNC_GRID_PROXY", "")
+port = parse(Int, get(ENV, "QS_ASYNC_REPEATERGRID_PORT", "8888"))
+interface = get(ENV, "QS_ASYNC_REPEATERGRID_IP", "127.0.0.1")
+proxy_url = get(ENV, "QS_ASYNC_REPEATERGRID_PROXY", "")
 server = Bonito.Server(interface, port; proxy_url);
 Bonito.HTTPServer.start(server)
 Bonito.route!(server, "/" => landing);
