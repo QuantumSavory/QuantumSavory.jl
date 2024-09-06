@@ -13,7 +13,8 @@ end
 
 
 for n in 3:30
-    net = RegisterNet([Register(10) for j in 1:n])
+    regsize = 10
+    net = RegisterNet([Register(regsize) for j in 1:n])
     sim = get_time_tracker(net)
 
     for e in edges(net)
@@ -38,10 +39,8 @@ for n in 3:30
 
 
     for i in 1:length(econ.log)
-        if !isnothing(econ.log[i][2])
-            @test econ.log[i][2] ≈ 1.0
-            @test econ.log[i][3] ≈ 1.0
-        end
+        @test econ.log[i][2] ≈ 1.0
+        @test econ.log[i][3] ≈ 1.0
     end
 
 end

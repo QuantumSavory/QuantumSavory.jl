@@ -407,6 +407,24 @@ function findfreeslot(reg::Register; randomize=false, margin=0)
     end
 end
 
+struct NotAssignedError <: Exception # TODO use this in all places where we are throwing something on isassigned (maybe rename to IsAssignedError and check whether we need to keep `f` as part of it (might already be provided by the stacktrace) and check it does not allocate even when the error is not triggered)
+    msg
+    f
+end
+
+function Base.showerror(io::IO, err::NotAssignedError)
+    print(io, "NotAssignedError: ")
+    println(io, err.msg)
+    println("In function: $(err.f)")
+end
+
+function isolderthan(slot::RegRef, age::Float64)
+    if !isassigned(slot) throw(NotAssignedError("Slot must be assigned with a quantum state before checking coherence.", isolderthan)) end
+    id = query(slot, QuantumSavory.ProtocolZoo.EntanglementCounterpart, ❓, ❓).id
+    slot_time  = slot.reg.tag_info[id][3]
+    return (now(get_time_tracker(slot))) - slot_time > age
+end
+
 
 function Base.isassigned(r::Register,i::Int) # TODO erase
     r.stateindices[i] != 0 # TODO this also usually means r.staterefs[i] !== nothing - choose one and make things consistent
