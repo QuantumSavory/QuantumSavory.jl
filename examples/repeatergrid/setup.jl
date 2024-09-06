@@ -36,7 +36,7 @@ end
 
 # Simulation setup
 
-function prepare_simulation(;sync=false)
+function prepare_simulation(;announce=true)
     n = 6  # number of nodes on each row and column for a 6x6 grid
     regsize = 20 # memory slots in each node
 
@@ -72,7 +72,7 @@ function prepare_simulation(;sync=false)
             chooseL = cL, chooseH = cH,
             rounds=-1, local_busy_time=local_busy_time[],
             retry_lock_time=retry_lock_time[],
-            agelimit=sync ? retention_time[]-buffer_time[] : nothing)
+            agelimit=announce ? nothing : retention_time[]-buffer_time[])
         @process swapper()
     end
 
@@ -90,7 +90,7 @@ function prepare_simulation(;sync=false)
     # decoherence protocol runs at each node to free up slots that haven't been used past the retention time
     period_dec = Observable(0.1)
     for v in vertices(net)
-        decprot = CutoffProt(sim, net, v; sync=sync, period=period_dec[]) # TODO default and slider for retention_time
+        decprot = CutoffProt(sim, net, v; announce, period=period_dec[]) # TODO default and slider for retention_time
         @process decprot()
     end
 

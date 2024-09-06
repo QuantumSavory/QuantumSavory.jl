@@ -10,7 +10,7 @@ const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TOD
 
 function prepare_singlerun()
     # Prepare all of the simulation components (while all visualization components are prepared in the rest of this function)
-    sim, net, graph, consumer, params... = prepare_simulation(;sync=true)
+    sim, net, graph, consumer, params... = prepare_simulation(;announce=false)
 
     # Prepare the main figure
     fig = Figure(;size=(1200, 1100))
@@ -42,7 +42,7 @@ function prepare_singlerun()
 
     #  sliders
     sg = SliderGrid(
-        fig[3,1],
+        fig[4,:],
         (label="Probability of success of Entanglement generation at each attempt",
             range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
         (label="Local busy time for swapper",
@@ -77,7 +77,7 @@ function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, run
     for t in step_ts
         run(sim, t)
         notify.((obs,entlog))
-        notify.(params) 
+        notify.(params)
         ylims!(entlogaxis, (-1.04,1.04))
         xlims!(entlogaxis, max(0,t-50), 1+t)
         ylims!(fid_axis, (0, 1.04))

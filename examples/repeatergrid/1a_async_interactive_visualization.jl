@@ -36,7 +36,7 @@ lines!(num_epr_axis, num_epr_info)
 
 #  sliders
 sg = SliderGrid( # TODO significant code duplication with the other examples
-    fig[4,1],
+    fig[4,:],
     (label="Probability of success of Entanglement generation at each attempt",
         range=0.001:0.05:1.0, format="{:.3f}", startvalue=0.001),
     (label="Local busy time for swapper",
@@ -68,7 +68,7 @@ step_ts = range(0, 1000, step=0.1)
 record(fig, "grid_sim6x6hv.mp4", step_ts; framerate=10, visible=true) do t
     run(sim, t)
     notify.((obs,entlog))
-    notify.(params) 
+    notify.(params)
     ylims!(entlogaxis, (-1.04,1.04))
     xlims!(entlogaxis, max(0,t-50), 1+t)
     ylims!(fid_axis, (0, 1.04))
