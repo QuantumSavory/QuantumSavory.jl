@@ -1,6 +1,6 @@
 using Test
 using QuantumSavory, JET
-using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols, GraphsMatching
+using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols, GraphsMatching, JuMP
 
 rep = report_package("QuantumSavory";
     ignored_modules=(
@@ -17,10 +17,11 @@ rep = report_package("QuantumSavory";
         AnyFrameModule(ConcurrentSim),
         AnyFrameModule(WignerSymbols),
         AnyFrameModule(GraphsMatching),
+        AnyFrameModule(JuMP.Containers),
     ))
 
 @show length(JET.get_reports(rep))
 @show rep
 
-@test length(JET.get_reports(rep)) <= 69
+@test length(JET.get_reports(rep)) <= 59
 @test_broken length(JET.get_reports(rep)) == 0
