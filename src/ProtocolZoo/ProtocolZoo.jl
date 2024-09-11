@@ -204,15 +204,19 @@ end
     while rounds != 0
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        a = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
-        b = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
+        a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
+        b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
-        if isnothing(a) || isnothing(b)
+        if isnothing(a_) || isnothing(b_)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a \n2.\t $b \n retrying..."
+            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
+        # we are now certain that a_ and b_ are not nothing. The compiler is not smart enough to figure this out
+        # on its own, so we need to tell it explicitly. A new variable name is needed due to @resumable.
+        a = a_::RegRef
+        b = b_::RegRef
 
         @yield lock(a) & lock(b) # this yield is expected to return immediately
 
