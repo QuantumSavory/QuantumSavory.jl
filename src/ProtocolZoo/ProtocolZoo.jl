@@ -24,7 +24,7 @@ export
 
 abstract type AbstractProtocol end
 
-get_time_tracker(prot::AbstractProtocol) = prot.sim
+get_time_tracker(prot::AbstractProtocol) = prot.sim::Simulation
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
 
