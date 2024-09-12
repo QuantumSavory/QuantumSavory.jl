@@ -66,7 +66,7 @@ function project_traceout! end
 function project_traceout!(reg::Register, i::Int, basis; time=nothing)
     project_traceout!(identity, reg, i, basis; time=time)
 end
-project_traceout!(r::RegRef, basis; time=nothing) = project_traceout!(r.reg, r.idx, basis; time=nothing)
+project_traceout!(r::RegRef, basis; time=nothing) = project_traceout!(r.reg, r.idx, basis; time)
 
 function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
     !isnothing(time) && uptotime!([reg], [i], time)
@@ -79,4 +79,4 @@ function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
     removebackref!(stateref, stateindex)
     f(j)
 end
-project_traceout!(f, r::RegRef, basis; time=nothing) = project_traceout!(f, r.reg, r.idx, basis; time=nothing)
+project_traceout!(f, r::RegRef, basis; time=nothing) = project_traceout!(f, r.reg, r.idx, basis; time)
