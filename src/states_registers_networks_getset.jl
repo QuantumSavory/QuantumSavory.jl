@@ -8,7 +8,7 @@ Base.iterate(r::Register, state=1) = state > length(r) ? nothing : (r[state],sta
 ## Networks
 
 # Graph interface
-Graphs.add_vertex!(net::RegisterNet, a, b) = add_vertex!(net.graph, a, b)
+Graphs.add_vertex!(net::RegisterNet) = add_vertex!(net.graph)
 Graphs.vertices(net::RegisterNet) = vertices(net.graph)
 Graphs.edges(net::RegisterNet) = edges(net.graph)
 Graphs.neighbors(net::RegisterNet, v) = neighbors(net.graph, v)

@@ -24,5 +24,5 @@ rep = report_package("QuantumSavory";
 @show length(JET.get_reports(rep))
 @show rep
 
-@test length(JET.get_reports(rep)) <= 34
+@test length(JET.get_reports(rep)) <= 33
 @test_broken length(JET.get_reports(rep)) == 0
