@@ -379,16 +379,11 @@ function (circuit::Purify3to1Node)(purified,sacrificed1,sacrificed2)
     (measa1, measa2)
 end
 
-function coin(basis, pair::Array, parity=0) # TODO rename to coincidence and remove the parity argument (it does not seem to be used)
+function coincidence(basis, pair::Array)
     measa = project_traceout!(pair[1], basis)
     measb = project_traceout!(pair[2], basis)
-    success = (measa ⊻ measb == parity)
+    success = (measa ⊻ measb == 0)
     success
-end
-
-function coinnode(basis, pair::Array, parity=0) # TODO remove this function altogether, it is just a call to project_traceout! which would be more legible and semantically meaningful
-    measa = project_traceout!(pair[1], basis)
-    measa
 end
 
 """
@@ -442,8 +437,8 @@ function (circuit::StringentHead)(purifiedL, purifiedR, sacrificed...)
     apply!((sacrificedR[1], sacrificedR[2]), ZCZ)
     apply!((sacrificedL[1], sacrificedL[2]), ZCZ)
 
-    success = success & coin(σˣ, [sacrificedL[1], sacrificedR[1]])
-    success = success & coin(σˣ, [sacrificedL[2], sacrificedR[2]])
+    success = success & coincidence(σˣ, [sacrificedL[1], sacrificedR[1]])
+    success = success & coincidence(σˣ, [sacrificedL[2], sacrificedR[2]])
 
     success
 end
@@ -498,8 +493,8 @@ function (circuit::StringentHeadNode)(purified, sacrificed...)
     apply!((purified, sacrificedarr[1]), gate)
     apply!((sacrificedarr[1], sacrificedarr[2]), ZCZ)
 
-    alfa = coinnode(σˣ, [sacrificedarr[1]])
-    beta = coinnode(σˣ, [sacrificedarr[2]])
+    alfa = project_traceout!(sacrificedarr[1], σˣ)
+    beta = project_traceout!(sacrificedarr[2], σˣ)
 
     (alfa, beta)
 end
@@ -566,12 +561,12 @@ function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
 
     apply!((sacrificedL1[i1], sacrificedL2[i2]), XCZ)
     apply!((sacrificedR1[i1], sacrificedR2[i2]), XCZ)
-    success = success & coin(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
+    success = success & coincidence(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
     i2 = i2 + 1
 
     apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
     apply!((sacrificedR1[i1], sacrificedR2[i2]), ZCZ)
-    success = success & coin(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
+    success = success & coincidence(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
 
     apply!((purifiedL, sacrificedL1[i1]), gate)
     apply!((purifiedR, sacrificedR1[i1]), gate)
@@ -581,10 +576,10 @@ function (circuit::StringentBody)(purifiedL, purifiedR, sacrificed...)
         apply!((sacrificedL1[i1], sacrificedL2[i2]), ZCZ)
         apply!((sacrificedR1[i1], sacrificedR2[i2]), ZCZ)
 
-        success = success & coin(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
+        success = success & coincidence(σˣ, [sacrificedL2[i2], sacrificedR2[i2]])
     end
 
-    success = success & coin(σˣ, [sacrificedL1[i1], sacrificedR1[i1]])
+    success = success & coincidence(σˣ, [sacrificedL1[i1], sacrificedR1[i1]])
 
     success
 
@@ -646,19 +641,19 @@ function (circuit::StringentBodyNode)(purified, sacrificed...)
     sacrificed2 = circuit.expedient ? [sacrificed[2:3]...] : [sacrificed[2:4]...]
 
     apply!((sacrificed1[i1], sacrificed2[i2]), XCZ)
-    alfa = coinnode(σˣ, [sacrificed2[i2]])
+    alfa = project_traceout!(sacrificed2[i2], σˣ)
     i2 = i2 + 1
 
     apply!((sacrificed1[i1], sacrificed2[i2]), ZCZ)
-    beta = coinnode(σˣ, [sacrificed2[i2]])
+    beta = project_traceout!(sacrificed2[i2], σˣ)
     apply!((purified, sacrificed1[i1]), gate)
 
     if !circuit.expedient
         i2 = i2 + 1
         apply!((sacrificed1[i1], sacrificed2[i2]), ZCZ)
-        gamma = coinnode(σˣ, [sacrificed2[i2]])
+        gamma = project_traceout!(sacrificed2[i2], σˣ)
     end
-    delta = coinnode(σˣ, [sacrificed1[i1]])
+    delta = project_traceout!(sacrificed1[i1], σˣ)
     (alfa)
 end
 
