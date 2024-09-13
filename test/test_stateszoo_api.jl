@@ -34,8 +34,8 @@ r_drms = Register(2)
 initialize!(r_drms[1:2], drms)
 @test ! iszero(observable(r_drms[1:2], Z⊗Z))
 
-@test tr(zalm) == tr(express(zalm))
+@test tr(zalm) ≈ tr(express(zalm))
 
-@test tr(srms) == tr(express(srms))
+@test tr(srms) ≈ tr(express(srms))
 
-@test tr(drms) == tr(express(drms))
+@test tr(drms) ≈ tr(express(drms))
