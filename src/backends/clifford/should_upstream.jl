@@ -3,7 +3,7 @@ struct QCGateSequence <: QuantumClifford.AbstractSymbolicOperator
     gates # TODO constructor that flattens nested QCGateSequence
 end
 function QuantumClifford.apply!(state::QuantumClifford.MixedDestabilizer, gseq::QCGateSequence, indices)
-    for g in gseq[end:-1:begin]
+    for g in gseq.gates[end:-1:begin]
         apply_popindex!(state, g, indices)
     end
     state

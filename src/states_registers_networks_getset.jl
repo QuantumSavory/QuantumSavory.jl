@@ -8,7 +8,7 @@ Base.iterate(r::Register, state=1) = state > length(r) ? nothing : (r[state],sta
 ## Networks
 
 # Graph interface
-Graphs.add_vertex!(net::RegisterNet, a, b) = add_vertex!(net.graph, a, b)
+Graphs.add_vertex!(net::RegisterNet) = add_vertex!(net.graph)
 Graphs.vertices(net::RegisterNet) = vertices(net.graph)
 Graphs.edges(net::RegisterNet) = edges(net.graph)
 Graphs.neighbors(net::RegisterNet, v) = neighbors(net.graph, v)
@@ -43,8 +43,8 @@ Base.setindex!(net::RegisterNet, val, ij::Graphs.SimpleEdge, k::Symbol) = begin 
 Base.getindex(net::RegisterNet, ::Colon) = net.registers
 Base.getindex(net::RegisterNet, ::Colon, j::Int) = [r[j] for r in net.registers]
 Base.getindex(net::RegisterNet, ::Colon, k::Symbol) = [m[k] for m in net.vertex_metadata]
-Base.getindex(net::RegisterNet, ::Tuple{Colon,Colon}, k::Symbol) = [net.edge_metadata[minmax(ij)...][k] for ij in edges(net)]
-Base.getindex(net::RegisterNet, ::Pair{Colon,Colon}, k::Symbol) = [net.directed_edge_metadata[ij][k] for ij in edges(net)]
+Base.getindex(net::RegisterNet, ::Tuple{Colon,Colon}, k::Symbol) = [net.edge_metadata[minmax(Tuple(ij)...)][k] for ij in edges(net)]
+Base.getindex(net::RegisterNet, ::Pair{Colon,Colon}, k::Symbol) = [net.directed_edge_metadata[Pair(ij)][k] for ij in edges(net)]
 
 function Base.setindex!(net::RegisterNet, v, ::Colon, k::Symbol)
     for m in net.vertex_metadata

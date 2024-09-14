@@ -42,7 +42,7 @@ function get_time_tracker(rn::RegisterNet)
     return get_time_tracker(rn.registers[1])
 end
 function get_time_tracker(r::Register)
-    r.locks[1].env
+    r.locks[1].env::Simulation
 end
 function get_time_tracker(r::RegRef)
     get_time_tracker(r.reg)
