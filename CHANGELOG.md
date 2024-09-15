@@ -1,5 +1,8 @@
 # News
 
+## v0.6.0 - 2024-09-13
+
+- Simplify one of the switch protocols to avoid dependence on GraphMatching.jl which does not install well on non-linux systems. Do not rely on the default `SimpleSwitchDiscreteProt` for the time being.
 
 ## v0.5.0 - 2024-09-05
 
