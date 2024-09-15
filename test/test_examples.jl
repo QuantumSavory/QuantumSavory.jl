@@ -32,7 +32,8 @@ end
 
 @safetestset "simpleswitch" begin
     if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-        include("../examples/simpleswitch/1_interactive_visualization.jl")
+        # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
+        #include("../examples/simpleswitch/1_interactive_visualization.jl")
     end
 end
 
