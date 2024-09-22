@@ -1,4 +1,4 @@
- """
+"""
 $TYPEDEF
 
 A network control protocol that is connection oriented, non-distributed and centralized. The generation of 
@@ -86,7 +86,7 @@ end
             msg = querydelete!(mb, DistributionRequest, ❓, ❓, ❓)
             if !isnothing(msg)
                 (msg_src, (_, src, dst, path_ind)) = msg
-                path = phys_graph.paths[path_ind]
+                path = prot.phys_graph.paths[path_ind]
                 @debug "Running Entanglement Distribution on path $(path) @ $(now(prot.sim))"
                 for i in 1:length(path)-1
                     msg = Tag(EntanglementRequest, path[i], path[i+1], 1)

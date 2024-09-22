@@ -38,6 +38,7 @@ Register(traits) = Register(traits,default_repr.(traits))
 Register(nqubits::Int) = Register([Qubit() for _ in 1:nqubits])
 Register(nqubits::Int,repr::AbstractRepresentation) = Register(fill(Qubit(),nqubits),fill(repr,nqubits))
 Register(nqubits::Int,bg::AbstractBackground) = Register(fill(Qubit(),nqubits),fill(bg,nqubits))
+Register(nqubits::Int,repr::AbstractRepresentation,bg::AbstractBackground) = Register(fill(Qubit(),nqubits),fill(repr,nqubits),fill(bg, nqubits))
 
 """
 A reference to a [`Register`](@ref) slot, convenient for use with functions like [`apply!`](@ref), etc.

@@ -18,13 +18,16 @@ using Random
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, RequestTracker,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, RequestTracker, RequestGenerator,
     # tags
-    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, EntanglementRequest, SwapRequest,
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, EntanglementRequest, SwapRequest, DistributionRequest, RequestCompletion,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # controllers
-    NetController
+    NetController, Controller,
+    # utils
+    PhysicalGraph, path_selection
+
 abstract type AbstractProtocol end
 
 get_time_tracker(prot::AbstractProtocol) = prot.sim
@@ -563,6 +566,8 @@ end
     end
 end
 
+include("utils.jl")
+
 """
 $TYPEDEF
 
@@ -589,17 +594,25 @@ $TYPEDFIELDS
     λ::Int = 4
 end
 
+function RequestGenerator(sim, net, src, dst, controller, phys_graph; kwargs...)
+    return RequestGenerator(;sim, net, src, dst, controller, phys_graph, kwargs...)
+end
+
 @resumable function (prot::RequestGenerator)()
-    d = Exponential(inv(λ)) # Parametrized with the scale which is inverse of the rate
+    d = Exponential(inv(prot.λ)) # Parametrized with the scale which is inverse of the rate
     mb = messagebuffer(prot.net, prot.src)
     while true
         path_index = path_selection(prot.phys_graph)
+        if isnothing(path_index)
+            prot.phys_graph.failures[] += 1
+            continue
+        end
         msg = Tag(DistributionRequest, prot.src, prot.dst, path_index)
         put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
         @yield timeout(prot.sim, rand(d))
 
         # incoming message from the controller after a request has been served
-        in_msg = querydelete!(RequestCompletion, ❓)
+        in_msg = querydelete!(mb, RequestCompletion, ❓)
         if !isnothing(in_msg)
             (src, (_, path_id)) = in_msg
             prot.phys_graph.workloads[path_id] -= 1
@@ -611,7 +624,6 @@ end
 include("cutoff.jl")
 include("swapping.jl")
 include("controllers.jl")
-include("utils.jl")
 include("switches.jl")
 using .Switches
 
