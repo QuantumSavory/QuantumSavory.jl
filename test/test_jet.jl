@@ -1,6 +1,6 @@
 @testitem "JET" tags=[:jet] begin
-    using JET
-    using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols
+using JET
+using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols
 
 rep = report_package("QuantumSavory";
     ignored_modules=(
