@@ -16,7 +16,6 @@ rep = report_package("QuantumSavory";
         AnyFrameModule(ResumableFunctions),
         AnyFrameModule(ConcurrentSim),
         AnyFrameModule(WignerSymbols),
-        AnyFrameModule(JuMP.Containers),
         AnyFrameModule(SumTypes),
     ))
 
