@@ -1,6 +1,6 @@
 @testitem "Circuit Zoo Entanglement Swap" tags=[:circuitzoo_ent_swap] begin
 using QuantumSavory.CircuitZoo
-using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwapusing QuantumSavory
+using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 const perfect_pair_stab = StabilizerState("XX ZZ")
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
