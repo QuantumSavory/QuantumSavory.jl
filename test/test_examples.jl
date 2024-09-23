@@ -44,6 +44,13 @@ end
     end
 end
 
+@safetestset "controlplane" begin
+    if get(ENV, "QUANTUMSAVORY_PLOT_TEST","")=="true"
+        include("../examples/controlplane/1a_cdd_interactive.jl")
+        include("../examples/controlplane/2a_cnc_interactive.jl")
+    end
+end
+
 if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
     import GLMakie
     GLMakie.closeall() # to avoid errors when running headless
