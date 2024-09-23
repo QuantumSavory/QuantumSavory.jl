@@ -3,6 +3,8 @@
 ## v0.6.0 - 2024-09-13
 
 - Simplify one of the switch protocols to avoid dependence on GraphMatching.jl which does not install well on non-linux systems. Do not rely on the default `SimpleSwitchDiscreteProt` for the time being.
+- Interactive examples for network controller
+- Implement a network control protocol, a request generator and a request tracker along with new tags `EntanglementRequest`,`SwapRequest` and `DistributionRequest`
 
 ## v0.5.0 - 2024-09-05
 
