@@ -7,14 +7,18 @@ include("setup.jl")
 
 const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in JSServe https://github.com/SimonDanisch/JSServe.jl/issues/178
 
-controller = NetController(sim, net, 3, 6, 0.2)
+phys_graph = PhysicalGraph(graph, 1, 8, regsize)
+controller = Controller(sim, net, 6, phys_graph, 0.1)
 @process controller()
 
-consumer = EntanglementConsumer(sim, net, 1, 8; period=0.2)
+req_gen = RequestGenerator(sim, net, 1, 8, 6, phys_graph)
+@process req_gen()
+
+consumer = EntanglementConsumer(sim, net, 1, 8)
 @process consumer()
 
 for node in 1:7
-    tracker = RequestTracker(sim, net, node, 0.3)
+    tracker = RequestTracker(sim, net, node, 0.1)
     @process tracker()
 end
 
