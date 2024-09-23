@@ -208,9 +208,14 @@ end
         b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
-            isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
-            @yield timeout(prot.sim, prot.retry_lock_time)
+            if isnothing(prot.retry_lock_time)
+                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting..."
+                @yield lock(prot.nodeA.stateindices.waiter)
+                @yield lock(prot.nodeB.stateindices.waiter)
+            else
+                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
+                @yield timeout(prot.sim, prot.retry_lock_time)
+            end
             continue
         end
         # we are now certain that a_ and b_ are not nothing. The compiler is not smart enough to figure this out
@@ -397,14 +402,12 @@ function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs..
 end
 
 @resumable function (prot::EntanglementConsumer)()
-    if isnothing(prot.period)
-        error("In `EntanglementConsumer` we do not yet support waiting on register to make qubits available") # TODO
-    end
     while true
         query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
             @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
             if isnothing(prot.period)
+                @debug "Waiting on changes in $(prot.nodeA)"
                 @yield lock(prot.nodeA.tag_waiter)
             else
                 @yield timeout(prot.sim, prot.period)
@@ -415,6 +418,7 @@ end
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 if isnothing(prot.period)
+                    @debug "Waiting on changes in $(prot.nodeB)"
                     @yield lock(prot.nodeB.tag_waiter)
                 else
                     @yield timeout(prot.sim, prot.period)

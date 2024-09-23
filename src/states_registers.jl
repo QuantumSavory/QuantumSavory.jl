@@ -1,5 +1,58 @@
+#using QuantumSavory: AsymmetricSemaphore
 # TODO better constructors
 # TODO am I overusing Ref
+
+using ConcurrentSim
+using ResumableFunctions
+import Base: unlock, lock
+import Base: getindex, setindex!
+
+"""Multiple processes can wait on this semaphore for a permission to run given by another process"""
+struct AsymmetricSemaphore
+    nbwaiters::Ref{Int}
+    lock::Resource
+end
+AsymmetricSemaphore(sim) = AsymmetricSemaphore(Ref(0), Resource(sim,1,level=1)) # start locked
+
+function Base.lock(s::AsymmetricSemaphore)
+    return @process _lock(s.lock.env, s)
+end
+
+@resumable function _lock(sim, s::AsymmetricSemaphore)
+    s.nbwaiters[] += 1
+    @yield lock(s.lock)
+    s.nbwaiters[] -= 1
+    if s.nbwaiters[] > 0
+        unlock(s.lock)
+    end
+end
+
+function unlock(s::AsymmetricSemaphore)
+    if s.nbwaiters[] > 0
+        unlock(s.lock)
+    end
+end
+
+"""Vector with a semaphore where processes can wait on until there's a change in the vector"""
+struct StateIndexVector
+    data::Vector{Int}
+    waiter::AsymmetricSemaphore
+end
+
+function StateIndexVector(data::Vector{Int})
+    env = ConcurrentSim.Simulation()
+    return StateIndexVector(data, AsymmetricSemaphore(env))
+end
+
+function getindex(vec::StateIndexVector, index::Int)
+    return vec.data[index]
+end
+
+function setindex!(vec::StateIndexVector, value::Int, index::Int)
+    vec.data[index] = value
+    unlock(vec.waiter)
+end
+
 struct StateRef
     state::Base.RefValue{Any} # TODO it would be nice if this was not abstract but `uptotime!` converts between types... maybe make StateRef{T} state::RefValue{T} and a new function that swaps away the backpointers in the appropriate registers
     registers::Vector{Any} # TODO Should be Vector{Register}, but right now we occasionally set it to nothing to deal with padded storage
@@ -32,7 +85,7 @@ function Register(traits, reprs, bg, sr, si, at)
 end
 
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
-Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),zeros(Int,length(traits)),zeros(length(traits)))
+Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),StateIndexVector(zeros(Int,length(traits))),zeros(length(traits)))
 Register(traits,bg::Base.AbstractVecOrTuple{<:Union{Nothing,<:AbstractBackground}}) = Register(traits,default_repr.(traits),bg)
 Register(traits,reprs::Base.AbstractVecOrTuple{<:AbstractRepresentation}) = Register(traits,reprs,fill(nothing,length(traits)))
 Register(traits) = Register(traits,default_repr.(traits))

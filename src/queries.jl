@@ -42,7 +42,7 @@ function untag!(ref::RegOrRegRef, id::Integer)
     isnothing(i) ? throw(QueryError("Attempted to delete a nonexistent tag id", untag!, id)) : deleteat!(reg.guids, i) # TODO make sure there is a clear error message
     to_be_deleted = reg.tag_info[id]
     delete!(reg.tag_info, id)
-    unlock(ref.reg.tag_waiter)
+    unlock(reg.tag_waiter)
     return to_be_deleted
 end
 
