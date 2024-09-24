@@ -2,39 +2,10 @@
 # TODO better constructors
 # TODO am I overusing Ref
 
-using ConcurrentSim
-using ResumableFunctions
-import Base: unlock, lock
-import Base: getindex, setindex!
-
-"""Multiple processes can wait on this semaphore for a permission to run given by another process"""
-struct AsymmetricSemaphore
-    nbwaiters::Ref{Int}
-    lock::Resource
-end
-AsymmetricSemaphore(sim) = AsymmetricSemaphore(Ref(0), Resource(sim,1,level=1)) # start locked
-
-function Base.lock(s::AsymmetricSemaphore)
-    return @process _lock(s.lock.env, s)
-end
-
-@resumable function _lock(sim, s::AsymmetricSemaphore)
-    s.nbwaiters[] += 1
-    @yield lock(s.lock)
-    s.nbwaiters[] -= 1
-    if s.nbwaiters[] > 0
-        unlock(s.lock)
-    end
-end
-
-function unlock(s::AsymmetricSemaphore)
-    if s.nbwaiters[] > 0
-        unlock(s.lock)
-    end
-end
+import Base: getindex, setindex!, size, length, eltype
 
 """Vector with a semaphore where processes can wait on until there's a change in the vector"""
-struct StateIndexVector
+struct StateIndexVector <: AbstractVector{Int64}
     data::Vector{Int}
     waiter::AsymmetricSemaphore
 end
@@ -51,6 +22,18 @@ end
 function setindex!(vec::StateIndexVector, value::Int, index::Int)
     vec.data[index] = value
     unlock(vec.waiter)
+end
+
+function size(vec::StateIndexVector)
+    return size(vec.data)
+end
+
+function length(vec::StateIndexVector)
+    return length(vec.data)
+end
+
+function eltype(::Type{StateIndexVector})
+    return Int64
 end
 
 struct StateRef
