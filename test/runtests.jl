@@ -18,5 +18,4 @@ function testfilter(tags)
 end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
-
-@run_package_tests filter=ti->testfilter(ti.tags)
+@run_package_tests filter=ti->testfilter(ti.tags) verbose=true
