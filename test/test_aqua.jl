@@ -15,3 +15,4 @@ Aqua.test_all(QuantumSavory,
 
 @test length(Aqua.Piracy.hunt(QuantumSavory)) == 6
 end
+end
