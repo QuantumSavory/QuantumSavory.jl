@@ -210,7 +210,7 @@ end
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting..."
-                @yield lock(prot.nodeA.tag_waiter) | lock(prot.nodeB.tag_waiter)
+                @yield lock(prot.net[prot.nodeA]tag_waiter) | lock(prot.net[prot.nodeB].tag_waiter)
             else
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
                 @yield timeout(prot.sim, prot.retry_lock_time)
@@ -407,7 +407,7 @@ end
             @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
             if isnothing(prot.period)
                 @debug "Waiting on changes in $(prot.nodeA)"
-                @yield lock(prot.nodeA.tag_waiter)
+                @yield lock(prot.net[prot.nodeA].tag_waiter)
             else
                 @yield timeout(prot.sim, prot.period)
             end
@@ -418,7 +418,7 @@ end
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 if isnothing(prot.period)
                     @debug "Waiting on changes in $(prot.nodeB)"
-                    @yield lock(prot.nodeB.tag_waiter)
+                    @yield lock(prot.net[prot.nodeB].tag_waiter)
                 else
                     @yield timeout(prot.sim, prot.period)
                 end
@@ -442,7 +442,10 @@ end
         push!(prot.log, (now(prot.sim), ob1, ob2))
         unlock(q1)
         unlock(q2)
-        @yield timeout(prot.sim, prot.period)
+        @yield timeout(prot.sim, 0.1)
+        if !isnothing(prot.period)
+            @yield timeout(prot.sim, prot.period)
+        end
     end
 end
 
