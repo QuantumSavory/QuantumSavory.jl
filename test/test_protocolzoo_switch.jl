@@ -1,16 +1,16 @@
 @testitem "ProtocolZoo Switch - SimpleSwitchDiscreteProt" tags=[:protocolzoo_switch] begin
-    using Revise
-    using ResumableFunctions
-    using ConcurrentSim
-    using QuantumSavory.ProtocolZoo
-    using Graphs
+using Revise
+using ResumableFunctions
+using ConcurrentSim
+using QuantumSavory.ProtocolZoo
+using Graphs
 
-    if isinteractive()
-        using Logging
-        logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
-        global_logger(logger)
-        println("Logger set to debug")
-    end
+if isinteractive()
+    using Logging
+    logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
+    global_logger(logger)
+    println("Logger set to debug")
+end
 
     n = 5 # number of clients
     m = n-2 # memory slots in switch
@@ -41,5 +41,4 @@
     # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
     #@test abs(observable([res.slot, net[3][res.tag[3]]], X⊗X)) ≈ 1.0 # we are not running an EntanglementTracker so Pauli corrections are not applied
     #@test abs(observable([res.slot, net[3][res.tag[3]]], Z⊗Z)) ≈ 1.0 # we are not running an EntanglementTracker so Pauli corrections are not applied
-end
 end
