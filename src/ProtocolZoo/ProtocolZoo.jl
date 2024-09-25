@@ -210,8 +210,7 @@ end
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting..."
-                @yield lock(prot.nodeA.stateindices.waiter)
-                @yield lock(prot.nodeB.stateindices.waiter)
+                @yield lock(prot.nodeA.tag_waiter) | lock(prot.nodeB.tag_waiter)
             else
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
                 @yield timeout(prot.sim, prot.retry_lock_time)

@@ -2,40 +2,6 @@
 # TODO better constructors
 # TODO am I overusing Ref
 
-import Base: getindex, setindex!, size, length, eltype
-
-"""Vector with a semaphore where processes can wait on until there's a change in the vector"""
-struct StateIndexVector <: AbstractVector{Int64}
-    data::Vector{Int}
-    waiter::AsymmetricSemaphore
-end
-
-function StateIndexVector(data::Vector{Int})
-    env = ConcurrentSim.Simulation()
-    return StateIndexVector(data, AsymmetricSemaphore(env))
-end
-
-function getindex(vec::StateIndexVector, index::Int)
-    return vec.data[index]
-end
-
-function setindex!(vec::StateIndexVector, value::Int, index::Int)
-    vec.data[index] = value
-    unlock(vec.waiter)
-end
-
-function size(vec::StateIndexVector)
-    return size(vec.data)
-end
-
-function length(vec::StateIndexVector)
-    return length(vec.data)
-end
-
-function eltype(::Type{StateIndexVector})
-    return Int64
-end
-
 struct StateRef
     state::Base.RefValue{Any} # TODO it would be nice if this was not abstract but `uptotime!` converts between types... maybe make StateRef{T} state::RefValue{T} and a new function that swaps away the backpointers in the appropriate registers
     registers::Vector{Any} # TODO Should be Vector{Register}, but right now we occasionally set it to nothing to deal with padded storage
@@ -68,7 +34,7 @@ function Register(traits, reprs, bg, sr, si, at)
 end
 
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
-Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),StateIndexVector(zeros(Int,length(traits))),zeros(length(traits)))
+Register(traits,reprs,bg) = Register(traits,reprs,bg,fill(nothing,length(traits)),zeros(Int,length(traits)),zeros(length(traits)))
 Register(traits,bg::Base.AbstractVecOrTuple{<:Union{Nothing,<:AbstractBackground}}) = Register(traits,default_repr.(traits),bg)
 Register(traits,reprs::Base.AbstractVecOrTuple{<:AbstractRepresentation}) = Register(traits,reprs,fill(nothing,length(traits)))
 Register(traits) = Register(traits,default_repr.(traits))
