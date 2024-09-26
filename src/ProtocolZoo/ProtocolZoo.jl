@@ -442,7 +442,6 @@ end
         push!(prot.log, (now(prot.sim), ob1, ob2))
         unlock(q1)
         unlock(q2)
-        @yield timeout(prot.sim, 0.1)
         if !isnothing(prot.period)
             @yield timeout(prot.sim, prot.period)
         end
