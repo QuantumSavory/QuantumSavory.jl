@@ -1,5 +1,7 @@
+#using QuantumSavory: AsymmetricSemaphore
 # TODO better constructors
 # TODO am I overusing Ref
+
 struct StateRef
     state::Base.RefValue{Any} # TODO it would be nice if this was not abstract but `uptotime!` converts between types... maybe make StateRef{T} state::RefValue{T} and a new function that swaps away the backpointers in the appropriate registers
     registers::Vector{Any} # TODO Should be Vector{Register}, but right now we occasionally set it to nothing to deal with padded storage
@@ -23,11 +25,12 @@ struct Register # TODO better type description
     tag_info::Dict{Int128, @NamedTuple{tag::Tag, slot::Int, time::Float64}}
     guids::Vector{Int128}
     netparent::Ref{Any}
+    tag_waiter::AsymmetricSemaphore
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [], nothing)
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [], nothing, AsymmetricSemaphore(env))
 end
 
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))

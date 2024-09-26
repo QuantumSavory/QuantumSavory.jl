@@ -46,6 +46,8 @@ println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREA
 
 @doset "stateszoo_api"
 
+@doset "semaphore"
+
 if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
     using Pkg
     Pkg.add("GLMakie")
