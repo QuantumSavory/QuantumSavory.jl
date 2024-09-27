@@ -7,9 +7,7 @@ function testfilter(tags)
     if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
         push!(exclude, :plotting_cairo)
         push!(exclude, :plotting_gl)
-        if VERSION >= v"1.9"
-            push!(exclude, :doctests)
-        end
+        push!(exclude, :doctests)
     end
     if get(ENV,"JET_TEST","")!="true"
         push!(exclude, :jet)
