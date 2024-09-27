@@ -1,5 +1,4 @@
-using Test
-using QuantumSavory
+@testitem "Register Interface" tags=[:register_interface] begin
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
 
@@ -77,3 +76,4 @@ initialize!(net[i,3],X1, time=2.0)
 apply!([net[i,2], net[i,3]], CNOT, time=3.0)
 @test_broken net[i].staterefs[2].state[] isa Ket
 @test nsubsystems(net[i].staterefs[2]) == 2
+end

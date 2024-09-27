@@ -1,6 +1,5 @@
-using QuantumSavory
+@testitem "Circuit Zoo API" tags=[:circuitzoo_api] begin
 using QuantumSavory.CircuitZoo
-using Test
 using QuantumSavory.CircuitZoo: AbstractCircuit, inputqubits
 using InteractiveUtils
 
@@ -12,4 +11,5 @@ for T in subtypes(AbstractCircuit)
     if hasmethod(inputqubits, Tuple{T}) # TODO should all of them have this method?
         @test m.isva || inputqubits(circ) == m.nargs-1
     end
+end
 end
