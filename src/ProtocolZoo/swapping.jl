@@ -69,7 +69,9 @@ end
         qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; agelimit=prot.agelimit)
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
+                println("started waiting on ", prot.node)
                 @yield lock(prot.net[prot.node].tag_waiter)
+                println("triggered")
             else
                 @yield timeout(prot.sim, prot.retry_lock_time)
             end

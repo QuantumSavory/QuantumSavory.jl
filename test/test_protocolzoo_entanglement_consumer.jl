@@ -74,7 +74,7 @@ for n in 3:30
     @process econ()
     @process delayedProts(sim)
     
-    run(sim, 1000) 
+    run(sim, 5000) 
     
     @test econ.log[1][1] > 10 #the process should start after 10
     for i in 1:length(econ.log)

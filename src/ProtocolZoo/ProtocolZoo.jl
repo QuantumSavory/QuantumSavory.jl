@@ -236,8 +236,10 @@ end
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
+            println("calling tag on ", prot.nodeA)
             tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
+            println("calling tag on ", prot.nodeB)
             tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
 
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"

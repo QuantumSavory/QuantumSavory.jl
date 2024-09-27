@@ -20,7 +20,9 @@ function tag!(ref::RegRef, tag)
     id = guid()
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (;tag, slot=ref.idx, time=now(get_time_tracker(ref)))
+    println("tagged, # of processes waiting: ", ref.reg.tag_waiter.nbwaiters)
     unlock(ref.reg.tag_waiter)
+    println("unlocked")
     return id
 end
 
