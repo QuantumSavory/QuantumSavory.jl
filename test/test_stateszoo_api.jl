@@ -1,7 +1,6 @@
-using QuantumSavory
+@testitem "StatesZoo API" tags=[:stateszoo_api] begin
 using QuantumSavory.StatesZoo: ZALMSpinPairW, ZALMSpinPair, SingleRailMidSwapBellW, SingleRailMidSwapBell, DualRailMidSwapBellW, DualRailMidSwapBell
 using QuantumOpticsBase
-using Test
 
 zalmW = ZALMSpinPairW(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
 zalm = ZALMSpinPair(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
@@ -39,3 +38,4 @@ initialize!(r_drms[1:2], drms)
 @test tr(srms) ≈ tr(express(srms))
 
 @test tr(drms) ≈ tr(express(drms))
+end

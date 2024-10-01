@@ -1,8 +1,7 @@
-using QuantumSavory
+@testitem "Message Buffer" tags=[:messagebuffer] begin
 using QuantumSavory: tag_types
 using QuantumSavory.ProtocolZoo
 using ResumableFunctions, ConcurrentSim
-using Test
 
 net = RegisterNet([Register(3), Register(2), Register(3)])
 env = get_time_tracker(net);
@@ -42,3 +41,4 @@ proc4 = put!(messagebuffer(net[1]), SwitchRequest(2,3))
 run(sim, 10)
 @test QuantumSavory.peektags(messagebuffer(net,1)) == [Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3))]
 @test_throws "does not support `tag!`" tag!(messagebuffer(net, 1), EntanglementCounterpart, 1, 10)
+end

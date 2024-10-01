@@ -1,10 +1,9 @@
+@testitem "ProtocolZoo Switch - SimpleSwitchDiscreteProt" tags=[:protocolzoo_switch] begin
 using Revise
-using QuantumSavory
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using Graphs
-using Test
 
 if isinteractive()
     using Logging
@@ -13,7 +12,6 @@ if isinteractive()
     println("Logger set to debug")
 end
 
-@testset "SimpleSwitchDiscreteProt" begin
     n = 5 # number of clients
     m = n-2 # memory slots in switch
     graph = star_graph(n+1) # index 1 corresponds to the switch

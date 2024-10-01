@@ -1,7 +1,6 @@
-using QuantumSavory
-using QuantumSavory: tag_types
-using QuantumSavory.ProtocolZoo: EntanglementCounterpart
-using Test
+@testitem "Tags and Queries" tags=[:tags_and_queries] begin
+    using QuantumSavory: tag_types
+    using QuantumSavory.ProtocolZoo: EntanglementCounterpart
 
 function strip_id(query_result)
     return (;slot=query_result.slot, tag=query_result.tag)
@@ -156,3 +155,4 @@ end
 f()
 #using BenchmarkTools
 #@benchmark f()
+end

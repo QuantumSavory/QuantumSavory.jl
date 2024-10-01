@@ -1,6 +1,5 @@
-using Test
+@testitem "RegisterNet Interface" tags=[:registernet_interface] begin
 using Graphs
-using QuantumSavory
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
 
@@ -17,3 +16,4 @@ net = RegisterNet([r1, r2, r3])
 
 net[1,:label] = "lala"
 @test net[1,:label] == "lala"
+end

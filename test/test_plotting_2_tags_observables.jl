@@ -1,4 +1,3 @@
-using QuantumSavory
 #using CairoMakie
 #using GLMakie
 using Graphs

@@ -66,7 +66,7 @@ julia> let
 function promponas_bruteforce_choice(M,N,backlog,eprobs) # TODO mark as public but unexported
     @warn "The switch optimization routine is using a random placeholder optimization method due to issues with installing the BlossomV algorithm. Do not rely on this code to validate research results."
     return randperm(N)[1:M]
-    # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
+    #= TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
     best_weight = 0.0
     best_assignment = zeros(Int, M)
     graphs = [complete_graph(i) for i in 1:M] # preallocating them to avoid expensive allocations in the inner loop
@@ -91,8 +91,10 @@ function promponas_bruteforce_choice(M,N,backlog,eprobs) # TODO mark as public b
         end
     end
     return found ? best_assignment : nothing
+    =#
 end
 
+#= TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
 """
 Perform the match of clients in `entangled_nodes` based on matching weights from `backlog`.
 `g` and `w` are just preallocated buffers.
@@ -111,6 +113,7 @@ function match_entangled_pattern(backlog, entangled_nodes, g, w)
     mate = [(entangled_nodes[i],entangled_nodes[j]) for (i,j) in enumerate(match.mate) if i<j]
     return (;weight, mate)
 end
+=#
 
 """Some of the external optimizers we use create a ton of junk console output. This function redirects stdout to hide the junk."""
 function capture_stdout(f)

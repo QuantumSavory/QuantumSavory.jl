@@ -1,6 +1,5 @@
-using QuantumSavory
+@testitem "Circuit Zoo Super Dense" tags=[:circuitzoo_superdense] begin
 using QuantumSavory.CircuitZoo: SDEncode, SDDecode
-using Test
 
 for i in 1:8
     ## Set up an entangled bell pair
@@ -21,4 +20,5 @@ for i in 1:8
     rec = SDDecode()(ra[1], rb[1])
 
     @test message == rec
+end
 end

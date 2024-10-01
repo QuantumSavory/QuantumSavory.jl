@@ -1,27 +1,6 @@
-using QuantumSavory
+@testitem "Circuit Zoo Purification - throws" tags=[:circuitzoo_purification] begin
 using QuantumSavory.CircuitZoo
-using Test
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
-
-
-const bell = StabilizerState("XX ZZ")
-# or equivalently `const bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2`,
-# however converting to stabilizer state for Clifford simulations
-# is not implemented (and can not be done efficiently).
-
-
-# QOptics repr
-const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
-const perfect_pair_dm = SProjector(perfect_pair)
-const mixed_dm = MixedState(perfect_pair_dm)
-noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolarization helper
-
-
-# Qclifford repr
-const stab_perfect_pair = StabilizerState("XX ZZ")
-const stab_perfect_pair_dm = SProjector(stab_perfect_pair)
-const stab_mixed_dm = MixedState(stab_perfect_pair_dm)
-stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*stab_mixed_dm
 
 @test_throws ArgumentError Purify2to1(:lalala)
 @test_throws ArgumentError Purify3to1(:lalala, :X)
@@ -36,9 +15,11 @@ for i in 1:30
 end
 @test_throws ArgumentError PurifyExpedient()(r[1], r[2], r[3:2:21]...)
 @test_throws ArgumentError PurifyStringent()(r[1], r[2], r[3:2:21]...)
+end
 
+@testitem "Circuit Zoo Purification - 2to1" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
 
-@testset "2to1" begin
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
             # test that pure state gets mapped to pure state
@@ -64,7 +45,9 @@ end
     end
 end
 
-@testset "2to1 - Node" begin
+@testitem "Circuit Zoo Purification - 2to1 - Node" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
             # test that pure state gets mapped to pure state
@@ -95,7 +78,9 @@ end
     end
 end
 
-@testset "3to1" begin
+@testitem "Circuit Zoo Purification - 3to1" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
@@ -134,7 +119,9 @@ end
     end
 end
 
-@testset "3to1 - Fidelity - QuantumOpticsRepr" begin
+@testitem "Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
@@ -154,7 +141,9 @@ end
     end
 end
 
-@testset "3to1 - Fidelity - CliffordRepr" begin
+@testitem "Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
@@ -174,7 +163,9 @@ end
 end
 
 
-@testset "3to1 - Node" begin
+@testitem "Circuit Zoo Purification - 3to1 -- Node" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
@@ -223,7 +214,9 @@ end
     end
 end
 
-@testset "3to1 - Node - Fidelity - QuantumOpticsRepr" begin
+@testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
@@ -245,7 +238,9 @@ end
     end
 end
 
-@testset "3to1 - Node - Fidelity - CliffordRepr" begin
+@testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
@@ -266,7 +261,9 @@ end
     end
 end
 
-@testset "Stringent" begin
+@testitem "Circuit Zoo Purification - Stringent" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(26, rep())
         for i in 1:13
@@ -275,9 +272,11 @@ end
         @test PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...) == true
         @test observable(r[1:2], projector(bell)) ≈ 1.0
     end
-end
+    end
 
-@testset "Stringent - Fidelity - QuantumOpticsRepr" begin
+    @testitem "Circuit Zoo Purification - Stringent - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [QuantumOpticsRepr]
         r = Register(26, rep())
         rnd = rand() / 4 + 0.5
@@ -291,7 +290,9 @@ end
     end
 end
 
-@testset "Stringent - Fidelity - CliffordRepr" begin
+@testitem "Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [CliffordRepr]
         r = Register(26, rep())
         noisy_pair = stab_noisy_pair_func(0)
@@ -304,7 +305,9 @@ end
     end
 end
 
-@testset "Expedient" begin
+@testitem "Circuit Zoo Purification - Expedient" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(22, rep())
         for i in 1:11
@@ -315,7 +318,9 @@ end
     end
 end
 
-@testset "Expedient - Fidelity - QuantumOpticsRepr" begin
+@testitem "Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [QuantumOpticsRepr]
         r = Register(22, rep())
         rnd = rand() / 4 + 0.5
@@ -329,7 +334,9 @@ end
     end
 end
 
-@testset "Expedient - Fidelity - CliffordRepr" begin
+@testitem "Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+    include("setup_circuitzoo_purification.jl")
+
     for rep in [CliffordRepr]
         r = Register(22, rep())
         noisy_pair = stab_noisy_pair_func(0)

@@ -1,7 +1,6 @@
-using QuantumSavory
+@testitem "Quantum Channel" tags=[:quantumchannel] begin
 using ResumableFunctions
 using ConcurrentSim
-using Test
 
 bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
@@ -109,3 +108,4 @@ initialize!(regC[1], Z1)
 put!(qc, regC[1])
 take!(qc, regB[1])
 @test_throws "A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized)." run(sim)
+end
