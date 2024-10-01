@@ -536,10 +536,13 @@ end
             (slot, id, tag) = pm[1]
             untag!(prot.piecemaker, id)
 
-            ob1 = real(observable(client_slots, tensor(collect(fill(Z, nclients))...)))
-            ob2 = real(observable(client_slots, tensor(collect(fill(X, nclients))...)))
+            result = observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z1,nclients)...]) + reduce(⊗,[fill(Z2,nclients)...]))))
+            @info result
+
+            # ob1 = real(observable(client_slots, tensor(collect(fill(Z, nclients))...)))
+            # ob2 = real(observable(client_slots, tensor(collect(fill(X, nclients))...)))
             # if nclients-GHZ state achieved both observables equal 1 
-            @info "GHZConsumer: expectation values $(ob1) $(ob2)" 
+            @info "GHZConsumer: expectation value $(result)" 
             
             # delete tags and free client slots
             for k in 2:nclients+1
@@ -550,7 +553,8 @@ end
             end
             
             traceout!([prot.net[k][1] for k in 2:nclients+1]...)
-            push!(prot.log, (now(prot.sim), ob1, ob2))
+            push!(prot.log, (now(prot.sim), result, 0.))
+            @info prot.log
 
             for k in 2:nclients+1
                 unlock(prot.net[k][1])

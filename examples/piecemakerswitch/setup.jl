@@ -22,14 +22,15 @@ end
         
 
 function prepare_simulation()
-    n = 4   # number of clients
+    n = 5   # number of clients
     m = n+1 # memory slots in switch is equal to the number of clients + 1 slot for piecemaker qubit
+    r_depol = 0#1e-5 # depolarization rate
 
     # The graph of network connectivity. Index 1 corresponds to the switch.
     graph = star_graph(n+1)
 
-    switch_register = Register(m) # the first slot is reserved for the 'piecemaker' qubit used as fusion qubit 
-    client_registers = [Register(1) for _ in 1:n]
+    switch_register = Register(m, Depolarization(1/r_depol)) # the first slot is reserved for the 'piecemaker' qubit used as fusion qubit 
+    client_registers = [Register(1, Depolarization(1/r_depol)) for _ in 1:n]
     net = RegisterNet(graph, [switch_register, client_registers...])
     sim = get_time_tracker(net)
 
@@ -47,7 +48,7 @@ function prepare_simulation()
     @process consumer()
 
     # Finally, set up the switch without assignments
-    switch_protocol = FusionSwitchDiscreteProt(net, 1, 2:n+1, fill(0.7, n))
+    switch_protocol = FusionSwitchDiscreteProt(net, 1, 2:n+1, fill(0.1, n))
     @process switch_protocol()
     
     return n, sim
