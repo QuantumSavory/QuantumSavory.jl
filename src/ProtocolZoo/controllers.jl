@@ -73,8 +73,6 @@ See also [`RequestGenerator`](@ref), [`RequestTracker`](@ref)
     node::Int
     """The object containing physical graph metadata for the network"""
     phys_graph::PhysicalGraph
-    """duration of a single full cycle of entanglement generation and swapping along a specific path"""
-    ticktock::Float64
 end
 
 @resumable function (prot::Controller)()
@@ -98,16 +96,14 @@ end
                 end
                 
                 for i in 2:length(path)-1
-                    msg = Tag(SwapRequest, path[i], 1)
+                    last = i == length(path) - 1 ? 1 : 0
+                    msg = Tag(SwapRequest, path[i], 1, last, path_ind, src)
                     if prot.node == path[i]
                         put!(mb, msg)
                     else
                         put!(channel(prot.net, prot.node=>msg[2];permit_forward=true), msg)
                     end
                 end
-                out_msg = Tag(RequestCompletion, path_ind)
-                put!(channel(prot.net, prot.node=>src;permit_forward=true), out_msg)
-                @yield timeout(prot.sim, prot.ticktock)
             end
             @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
             @yield wait(mb)
