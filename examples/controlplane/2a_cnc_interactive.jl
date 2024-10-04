@@ -1,7 +1,7 @@
 include("setup.jl")
 
 phys_graph = PhysicalGraph(graph, 1, 8, regsize)
-controller = Controller(sim, net, 6, phys_graph, 0.1)
+controller = Controller(sim, net, 6, phys_graph)
 @process controller()
 
 req_gen = RequestGenerator(sim, net, 1, 8, 6, phys_graph)
@@ -11,7 +11,7 @@ consumer = EntanglementConsumer(sim, net, 1, 8)
 @process consumer()
 
 for node in 1:7
-    tracker = RequestTracker(sim, net, node, 0.1)
+    tracker = RequestTracker(sim, net, node)
     @process tracker()
 end
 
