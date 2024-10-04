@@ -2,7 +2,8 @@
 $TYPEDEF
 
 A struct containing the physical graph metadata for a network. The latest workload data is only available
-at the node where the [`RequestGenerator`](@ref) runs, but every node has access to a copy for referencing paths based on indices.
+at the node where the [`RequestGenerator`](@ref) runs, but every node has access to a copy for referencing paths based on indices
+passed through the `DistributionRequest` tag/message.
 
 $TYPEDFIELDS
 """
