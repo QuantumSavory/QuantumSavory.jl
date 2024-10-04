@@ -150,9 +150,6 @@ $TYPEDFIELDS
     ticktock::Float64 = 1
     """how many rounds of this protocol to run (`-1` for infinite)"""
     rounds::Int = -1
-    """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
-    #assignment_algorithm::AA = promponas_bruteforce_choice # TODO: not needed in the fusion protocol -- how to delete without breaking anything?
-    #backlog::SymMatrix{Matrix{Int}}
     function FusionSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
         all(in(neighbors(net, switchnode)), clientnodes) || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be directly connected to the `switchnode`!"))
@@ -179,18 +176,18 @@ FusionSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
 
         # run entangler without requests (=no assignment)
         _switch_entangler_all_selected(prot)
-        @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
+        @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
 
         # read which entanglements were successful
         matches = _switch_successful_entanglements(prot, reverseclientindex)
         if isnothing(matches)
-            @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
+            matches = []
             continue
         end
 
         # perform fusions
         _switch_run_fusions(prot, matches)
-        @yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
+        #@yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
     end
 end
 
@@ -380,7 +377,7 @@ function _switch_entangler_all_selected(prot)
             sim=prot.sim, net=prot.net,
             nodeA=prot.switchnode, nodeB=client,
             rounds=1, attempts=1, success_prob=prot.success_probs[id],
-            attempt_time=prot.ticktock/10 # TODO this is a pretty arbitrary value
+            attempt_time=prot.ticktock
         )
         @process entangler()
     end
@@ -401,9 +398,9 @@ function _switch_successful_entanglements(prot, reverseclientindex)
     end
     # get the maximum match for the actually connected nodes
     ne = length(entangled_clients)
+    @info "Switch $(prot.switchnode) successfully entangled with $ne clients" 
     if ne < 1 return nothing end
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
-    @info "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" 
     return entangled_clients_revindex
 end
 

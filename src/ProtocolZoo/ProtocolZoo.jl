@@ -8,7 +8,7 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap, Entangl
 using DocStringExtensions
 
 using Distributions: Geometric
-using ConcurrentSim: Simulation, @yield, timeout, @process, now
+using ConcurrentSim: Simulation, @yield, timeout, @process, now, Event, succeed, state, idle, StopSimulation
 import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
@@ -396,9 +396,9 @@ end
                 error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might have happened due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retention times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise, this is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
             end
         end
-        @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        @info "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
-        @debug "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+        @info "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
     end
 end
 
@@ -482,22 +482,25 @@ $FIELDS
     sim::Simulation
     """a network graph of registers"""
     net::RegisterNet
-    """the piecemaker qubit slot (RegRef)"""
+    """the piecemaker qubit slot"""
     piecemaker::RegRef
+    """event when all users are sharing a ghz state"""
+    event_ghz_state::Event
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
-    period::LT = 0.1
+    period::LT = 1e-6
     """stores the time and resulting observable from querying the piecemaker qubit for `EntanglementCounterpart`"""
     log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
 end
 
-function GHZConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef; kwargs...)
-    return GHZConsumer(;sim, net, piecemaker, kwargs...)
+function GHZConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
+    return GHZConsumer(;sim, net, piecemaker,  event_ghz_state, kwargs...)
 end
-function GHZConsumer(net::RegisterNet, piecemaker::RegRef; kwargs...)
-    return GHZConsumer(get_time_tracker(net), net, piecemaker; kwargs...)
+function GHZConsumer(net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
+    return GHZConsumer(get_time_tracker(net), net, piecemaker, event_ghz_state; kwargs...)
 end
 
 @resumable function (prot::GHZConsumer)()
+    t_now = 0
     if isnothing(prot.period)
         error("In `GHZConsumer` we do not yet support waiting on register to make qubits available") # TODO
     end
@@ -537,12 +540,11 @@ end
             untag!(prot.piecemaker, id)
 
             result = observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z1,nclients)...]) + reduce(⊗,[fill(Z2,nclients)...]))))
-            @info result
 
             # ob1 = real(observable(client_slots, tensor(collect(fill(Z, nclients))...)))
             # ob2 = real(observable(client_slots, tensor(collect(fill(X, nclients))...)))
             # if nclients-GHZ state achieved both observables equal 1 
-            @info "GHZConsumer: expectation value $(result)" 
+            @debug "GHZConsumer: expectation value $(result)" 
             
             # delete tags and free client slots
             for k in 2:nclients+1
@@ -552,26 +554,26 @@ end
                 end
             end
             
+
             traceout!([prot.net[k][1] for k in 2:nclients+1]...)
-            push!(prot.log, (now(prot.sim), result, 0.))
-            @info prot.log
+            if t_now == 0
+                push!(prot.log, (now(prot.sim), result, 0.))
+            else
+                t_elapsed = now(prot.sim) - t_now
+                push!(prot.log, (t_elapsed, result, 0.))
+            end
+            t_now = now(prot.sim)
 
             for k in 2:nclients+1
                 unlock(prot.net[k][1])
             end
             unlock(prot.piecemaker)
-            @yield timeout(prot.sim, prot.period)
+            
+            succeed(prot.event_ghz_state)
+            if state(prot.event_ghz_state) != idle
+                throw(StopSimulation("GHZ state shared among all users!"))
+            end
         end
-
-        # @debug "GHZConsumer of $(prot.node): queries successful, consuming entanglement"
-        # untag!(q, query.id)
-        # # TODO do we need to add EntanglementHistory and should that be a different EntanglementHistory since the current one is specifically for SwapperProt
-        # # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
-        # ob1 = real(observable((q1, q2), tensor(collect(fill(Z, nclients))...))
-        # ob2 = real(observable((q1, q2), X⊗X))
-
-        # traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
-        # push!(prot.log, (now(prot.sim), ob1, ob2))
         @yield timeout(prot.sim, prot.period)
     end
 end
@@ -609,7 +611,7 @@ $TYPEDFIELDS
     """fixed "busy time" duration immediately before starting entanglement generation attempts"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
-    retry_lock_time::LT = 0.1
+    retry_lock_time::LT = 0.0
     """how many rounds of this protocol to run (`-1` for infinite))"""
     rounds::Int = -1
 end
@@ -722,20 +724,19 @@ end
     round = 1
     while rounds != 0
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
-        #margin = isentangled ? prot.margin : prot.hardmargin
-        a = prot.net[prot.nodeA][prot.nodeB-1] #findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin) #
-        b = prot.net[prot.nodeB][1]#findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin) #
+        a = prot.net[prot.nodeA][prot.nodeB-1] 
+        b = prot.net[prot.nodeB][1]
 
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a \n2.\t $b \n retrying..."
-            @yield timeout(prot.sim, prot.retry_lock_time)
+            #@yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
 
         @yield lock(a) & lock(b) # this yield is expected to return immediately
 
-        @yield timeout(prot.sim, prot.local_busy_time_pre)
+        #@yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
             1
         else
@@ -745,7 +746,7 @@ end
         if (prot.attempts == -1 || prot.attempts >= attempts) && !isassigned(b) && !isassigned(a)
             @yield timeout(prot.sim, attempts * prot.attempt_time)
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
-            @yield timeout(prot.sim, prot.local_busy_time_post)
+            #@yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
             tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
@@ -759,7 +760,7 @@ end
         end
         unlock(a)
         unlock(b)
-        @yield timeout(prot.sim, prot.retry_lock_time)
+        #@yield timeout(prot.sim, prot.retry_lock_time)
         rounds==-1 || (rounds -= 1)
         round += 1
     end
