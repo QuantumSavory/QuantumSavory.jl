@@ -3,8 +3,10 @@
 ## v0.6.0 - 2024-09-13
 
 - Simplify one of the switch protocols to avoid dependence on GraphMatching.jl which does not install well on non-linux systems. Do not rely on the default `SimpleSwitchDiscreteProt` for the time being.
-- Interactive examples for network controller
-- Implement a network control protocol, a request generator and a request tracker along with new tags `EntanglementRequest`,`SwapRequest` and `DistributionRequest`
+- Implement a network control protocol that is connection-oriented, centralized and non-distributed
+- Implement protocols: request generator and request tracker for simulation with the above control protocol in an asynchronous way.
+- Add `PhysicalGraph` struct for storing network metadata as the simulation evolves.
+- New tags: `EntanglementRequest`,`SwapRequest`, `DistributionRequest` and `RequestCompletion`
 
 ## v0.5.0 - 2024-09-05
 

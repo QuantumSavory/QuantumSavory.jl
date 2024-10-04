@@ -525,7 +525,8 @@ end
 """
 $TYPEDEF
 
-A protocol running at a node, listening for incoming entanglement generation and swap requests
+A protocol running at a node, listening for incoming entanglement generation and swap requests and serving
+them in an asynchronous way, without waiting for the completion of the instantiated entanglement generation or swapping processes to complete
 
 $TYPEDFIELDS
 """
@@ -581,7 +582,7 @@ include("utils.jl")
 """
 $TYPEDEF
 
-Protocol for the simulation of request traffic for a controller in a connection-oriented network for bipartite entanglement distribution. The requests are considered to be arriving according to the Poisson model with rate λ, hence the inter-arrival time is
+Protocol for the simulation of request traffic for a controller in a connection-oriented network for bipartite entanglement distribution. The requests are considered to be generated according to the Poisson model with rate λ, hence the inter-arrival time is
 sampled from an exponential distribution. Physically, the request is generated at the source node(Alice) and is classically communicated to the node where the controller is located. Multiple `RequestGenerator`s can be instantiated for simulation with multiple
 user pairs in the same network.
 

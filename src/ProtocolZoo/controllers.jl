@@ -58,7 +58,7 @@ end
 $TYPEDEF
 
 A network control protocol that is connection oriented, non-distributed and centralized. The controller is located at one of the nodes in the network from where it messages all
-the other nodes when it receives an entanglement distribution request from the [`RequestGenerator`](@ref).
+the other nodes' [`RequestTracker`](@ref) protocols when it receives [`DistributionRequest`](@ref) from the [`RequestGenerator`](@ref).
 
 $TYPEDFIELDS
 
