@@ -185,9 +185,15 @@ See also: [`SwapperProt`](@ref), [`EntanglementTracker`](@ref), [`EntanglementRe
     swapping_node::Int
     """The number of rounds the swapper should run for"""
     rounds::Int
+    """Whether the swap request is the final request on a path, hence signaling the request being served"""
+    last::Int
+    """path id for which the request was generated"""
+    id::Int
+    """the source node that generated the request"""
+    src::Int
 end
 Base.show(io::IO, tag::SwapRequest) = print(io, "Node $(tag.swapping_node) perform a swap")
-Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds)
+Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds, tag.last, tag.id, tag.src)
 
 """
 $TYPEDEF
@@ -530,8 +536,6 @@ $TYPEDFIELDS
     net::RegisterNet
     """the vertex of the node where the tracker is working"""
     node::Int
-    """duration of request generation and processing"""
-    ticktock::Float64
 end
 
 @resumable function (prot::RequestTracker)()
@@ -551,16 +555,19 @@ end
                     entangler = EntanglerProt(prot.sim, prot.net, prot.node, neighbor; rounds=rounds, randomize=true)
                     @process entangler()
                 else
-                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓)
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓, ❓, ❓)
                     @debug "RequestTracker @$(prot.node): Received $msg"
                     isnothing(msg) && continue
                     workwasdone = true
-                    (src, (_, _, rounds)) = msg
+                    (msg_src, (_, _, rounds, last, path_id, src)) = msg
                     @debug "RequestTracker @$(prot.node): Performing a swap"
                     swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
                     @process swapper()
+                    if last == 1
+                        comp_msg = Tag(RequestCompletion, path_id)
+                        put!(channel(prot.net, prot.node=>src; permit_forward=true), comp_msg)
+                    end
                 end
-                @yield timeout(prot.sim, prot.ticktock)
             end
         end
         @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
@@ -594,7 +601,7 @@ $TYPEDFIELDS
     """The object containing physical graph metadata for the network"""
     phys_graph::PhysicalGraph
     """rate of arrival of requests/number of requests sent unit time"""
-    λ::Int = 4
+    λ::Int = 3
 end
 
 function RequestGenerator(sim, net, src, dst, controller, phys_graph; kwargs...)
@@ -608,11 +615,11 @@ end
         path_index = path_selection(prot.phys_graph)
         if isnothing(path_index)
             prot.phys_graph.failures[] += 1
+            @yield timeout(prot.sim, rand(d))
             continue
         end
         msg = Tag(DistributionRequest, prot.src, prot.dst, path_index)
         put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
-        @yield timeout(prot.sim, rand(d))
 
         # incoming message from the controller after a request has been served
         in_msg = querydelete!(mb, RequestCompletion, ❓)
@@ -620,6 +627,7 @@ end
             (src, (_, path_id)) = in_msg
             prot.phys_graph.workloads[path_id] -= 1
         end 
+        @yield timeout(prot.sim, rand(d))
     end
 end
 
