@@ -41,7 +41,7 @@ end
     end
 end
 
-@safetestset "repeatergrid" begin
+@testitem "Examples - repeatergrid" tags=[:examples] begin
     if get(ENV, "QUANTUMSAVORY_PLOT_TEST","")=="true"
         include("setup_plotting.jl")
         include("../examples/repeatergrid/1a_async_interactive_visualization.jl")
@@ -49,7 +49,7 @@ end
     end
 end
 
-@safetestset "controlplane" begin
+@testitem "Examples - controlplane" tags=[:examples] begin
     if get(ENV, "QUANTUMSAVORY_PLOT_TEST","")=="true"
         include("../examples/controlplane/1a_cdd_interactive.jl")
         include("../examples/controlplane/2a_cnc_interactive.jl")
