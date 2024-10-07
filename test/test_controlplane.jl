@@ -25,7 +25,7 @@ adjm = [0 1 0 0 1 0 0 0
 graph = SimpleGraph(adjm)
 
 regsize = 20
-net = RegisterNet(graph, [Register(regsize, CliffordRepr()) for i in 1:8])
+net = RegisterNet(graph, [Register(regsize) for i in 1:8])
 sim = get_time_tracker(net)
 
 # PhysicalGraph
