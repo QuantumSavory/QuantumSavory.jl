@@ -72,3 +72,8 @@ function krausops(d::AmplitudeDamping, Δt, basis) # https://quantumcomputing.st
 end
 
 # TODO add an amplitude damping example of transduction
+
+function krausops(Depol::Depolarization, Δt)
+    p = 1-exp(-Δt/Depol.τ) # TODO check this
+    [√(1-3*p/4) * _id, √(p/4) * _x, √(p/4) * _y, √(p/4) * _z]
+end
