@@ -627,8 +627,8 @@ end
 
         (q, id, tag) = fusable_qubit.slot, fusable_qubit.id, fusable_qubit.tag
         (q_pm, id_pm, tag_pm) = piecemaker.slot, piecemaker.id, piecemaker.tag
-        @yield lock(q) & lock(q_pm) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
-        @yield timeout(prot.sim, prot.local_busy_time)
+        #@yield lock(q) & lock(q_pm) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
+        #@yield timeout(prot.sim, prot.local_busy_time)
 
         untag!(q, id)
         # store a history of whom we were entangled to for both client slot and piecemaker
