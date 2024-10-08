@@ -396,9 +396,9 @@ end
                 error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might have happened due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retention times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise, this is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
             end
         end
-        @info "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
-        @info "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+        @debug "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
     end
 end
 
@@ -487,9 +487,9 @@ $FIELDS
     """event when all users are sharing a ghz state"""
     event_ghz_state::Event
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
-    period::LT = 1e-6
+    period::LT = 0.1
     """stores the time and resulting observable from querying the piecemaker qubit for `EntanglementCounterpart`"""
-    log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
+    log::Vector{Tuple{Float64, Float64}} = Tuple{Float64, Float64}[]
 end
 
 function GHZConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
@@ -539,11 +539,7 @@ end
             (slot, id, tag) = pm[1]
             untag!(prot.piecemaker, id)
 
-            result = observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z1,nclients)...]) + reduce(⊗,[fill(Z2,nclients)...]))))
-
-            # ob1 = real(observable(client_slots, tensor(collect(fill(Z, nclients))...)))
-            # ob2 = real(observable(client_slots, tensor(collect(fill(X, nclients))...)))
-            # if nclients-GHZ state achieved both observables equal 1 
+            result = real(observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z1,nclients)...]) + reduce(⊗,[fill(Z2,nclients)...])))))
             @debug "GHZConsumer: expectation value $(result)" 
             
             # delete tags and free client slots
@@ -554,13 +550,12 @@ end
                 end
             end
             
-
             traceout!([prot.net[k][1] for k in 2:nclients+1]...)
             if t_now == 0
-                push!(prot.log, (now(prot.sim), result, 0.))
+                push!(prot.log, (now(prot.sim), result,))
             else
                 t_elapsed = now(prot.sim) - t_now
-                push!(prot.log, (t_elapsed, result, 0.))
+                push!(prot.log, (t_elapsed, result,))
             end
             t_now = now(prot.sim)
 
@@ -604,14 +599,12 @@ $TYPEDFIELDS
     net::RegisterNet
     """the vertex of the node where fusion is happening"""
     node::Int
-    """the query for fusable qubits can return many positive candidates; `choose` picks one of them, defaults to a random pick `arr->rand(keys(arr))`"""
-    choose = random_index
     """the vertex of the remote node for the fusion"""
     nodeC::Int
     """fixed "busy time" duration immediately before starting entanglement generation attempts"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
-    retry_lock_time::LT = 0.0
+    retry_lock_time::LT = 0.1
     """how many rounds of this protocol to run (`-1` for infinite))"""
     rounds::Int = -1
 end
@@ -625,7 +618,7 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        fusable_qubit, piecemaker = findfusablequbit(prot.net, prot.node, prot.nodeC, prot.choose) # request client slot on switch node
+        fusable_qubit, piecemaker = findfusablequbit(prot.net, prot.node, prot.nodeC) # request client slots on switch node
         if isnothing(fusable_qubit)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @yield timeout(prot.sim, prot.retry_lock_time)
@@ -657,7 +650,7 @@ end
     end
 end
 
-function findfusablequbit(net, node, pred_client, choose_random)
+function findfusablequbit(net, node, pred_client)
     reg = net[node]
     nodes  = queryall(reg, EntanglementCounterpart, pred_client, ❓; locked=false)
     piecemaker = query(reg, Piecemaker, ❓, ❓)

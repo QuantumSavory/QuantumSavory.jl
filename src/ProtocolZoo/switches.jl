@@ -187,7 +187,6 @@ FusionSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
 
         # perform fusions
         _switch_run_fusions(prot, matches)
-        #@yield timeout(prot.sim, prot.ticktock/2) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
     end
 end
 

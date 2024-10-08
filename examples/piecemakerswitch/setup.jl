@@ -33,7 +33,6 @@ function prepare_simulation()
 
     switch_register = Register(m, Depolarization(1/r_depol)) # the first slot is reserved for the 'piecemaker' qubit used as fusion qubit 
     client_registers = [Register(1,  Depolarization(1/r_depol)) for _ in 1:n]
-    @info switch_register.reprs[1]
     net = RegisterNet(graph, [switch_register, client_registers...])
     sim = get_time_tracker(net)
 
