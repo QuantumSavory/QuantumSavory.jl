@@ -185,15 +185,9 @@ See also: [`SwapperProt`](@ref), [`EntanglementTracker`](@ref), [`EntanglementRe
     swapping_node::Int
     """The number of rounds the swapper should run for"""
     rounds::Int
-    """Whether the swap request is the final request on a path, hence signaling the request being served"""
-    last::Int
-    """path id for which the request was generated"""
-    id::Int
-    """the source node that generated the request"""
-    src::Int
 end
 Base.show(io::IO, tag::SwapRequest) = print(io, "Node $(tag.swapping_node) perform a swap")
-Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds, tag.last, tag.id, tag.src)
+Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds)
 
 """
 $TYPEDEF
@@ -556,18 +550,14 @@ end
                     entangler = EntanglerProt(prot.sim, prot.net, prot.node, neighbor; rounds=rounds, randomize=true)
                     @process entangler()
                 else
-                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓, ❓, ❓)
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓)
                     @debug "RequestTracker @$(prot.node): Received $msg"
                     isnothing(msg) && continue
                     workwasdone = true
-                    (msg_src, (_, _, rounds, last, path_id, src)) = msg
+                    (msg_src, (_, _, rounds)) = msg
                     @debug "RequestTracker @$(prot.node): Performing a swap"
                     swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
                     @process swapper()
-                    if last == 1
-                        comp_msg = Tag(RequestCompletion, path_id)
-                        put!(channel(prot.net, prot.node=>src; permit_forward=true), comp_msg)
-                    end
                 end
             end
         end

@@ -97,13 +97,15 @@ end
                 
                 for i in 2:length(path)-1
                     last = i == length(path) - 1 ? 1 : 0
-                    msg = Tag(SwapRequest, path[i], 1, last, path_ind, src)
+                    msg = Tag(SwapRequest, path[i], 1)
                     if prot.node == path[i]
                         put!(mb, msg)
                     else
                         put!(channel(prot.net, prot.node=>msg[2];permit_forward=true), msg)
                     end
                 end
+                comp_msg = Tag(RequestCompletion, path_ind)
+                put!(channel(prot.net, prot.node=>src; permit_forward=true), comp_msg)
             end
             @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
             @yield wait(mb)
