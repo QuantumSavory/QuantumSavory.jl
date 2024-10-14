@@ -10,7 +10,8 @@ Different control plane architectures with arbitrary network topologies can be s
 
 The control protocol is illustrated at a high level by the sequence diagram below:
 
-```mermaid sequenceDiagram
+```mermaid 
+sequenceDiagram
 Alice(Request Generator)->>+Controller: DistributionRequest(path_id)
 Controller-->>+RequestTracker1: EntanglementRequest
 Controller-->>+RequestTracker2: EntanglementRequest
