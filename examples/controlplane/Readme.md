@@ -7,3 +7,19 @@ Different control plane architectures with arbitrary network topologies can be s
 2a. A simulation that generates an interactive visualization for a connection-oriented, non-distributed and centralized entanglement distribution network
 
 2b. An interactive web app with the same simulation as 2a
+
+The control protocol is illustrated at a high level by the sequence diagram below:
+
+```mermaid sequenceDiagram
+Alice(Request Generator)->>+Controller: DistributionRequest(path_id)
+Controller-->>+RequestTracker1: EntanglementRequest
+Controller-->>+RequestTracker2: EntanglementRequest
+Controller-->>+RequestTrackerN: EntanglementRequest
+Controller-->>+RequestTracker1: SwapRequest
+Controller-->>+RequestTracker2: SwapRequest
+Controller-->>+RequestTrackerN: SwapRequest
+Controller-->>-Alice(Request Generator): RequestCompletion(path_id)
+```
+
+The `RequestGenerator` (Alice) sends a message to the controller, requesting entanglement generation with an end node (Bob).
+The message contains index of the path selected by Alice and the controller sends `EntanglementRequest`s to the nodes on the path followed by `SwapRequest`s
