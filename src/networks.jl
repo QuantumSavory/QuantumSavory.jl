@@ -94,7 +94,7 @@ julia> neighbors(net, 1) # from Graphs.jl
 """
 function RegisterNet(graph::SimpleGraph, registers; classical_delay=0, quantum_delay=0)
     size(graph, 1) == length(registers) || ArgumentError(lazy"You attempted to construct a `RegisterNet` with a graph of $(size(graph, 1)) vertices but provided a list of $(length(registers)) `Registers`. These two numbers have to match.")
-    RegisterNet(graph, registers, empty_vmd(length(registers)), empty_emd(), empty_demd(); classical_delay=classical_delay, quantum_delay=quantum_delay)
+    RegisterNet(graph, registers, empty_vmd(length(registers)), empty_emd(), empty_demd(); classical_delay, quantum_delay)
 end
 
 empty_vmd(n) = [Dict{Symbol,Any}() for _ in 1:n]
@@ -115,7 +115,7 @@ julia> neighbors(net,2) # from Graphs.jl
 """
 function RegisterNet(registers::Vector{Register}; classical_delay=0, quantum_delay=0)
     graph = grid([length(registers)])
-    RegisterNet(graph, registers;classical_delay=classical_delay, quantum_delay=quantum_delay)
+    RegisterNet(graph, registers; classical_delay, quantum_delay)
 end
 
 function add_register!(net::RegisterNet, r::Register)
