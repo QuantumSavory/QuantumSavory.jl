@@ -1,5 +1,9 @@
 # News
 
+## v0.5.1-dev
+
+- Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
+
 ## v0.5.0 - 2024-10-16
 
 - Develop `CutoffProt` to deal with deadlocks in a simulation
