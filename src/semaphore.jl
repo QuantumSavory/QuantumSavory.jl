@@ -15,7 +15,7 @@ function Base.lock(s::AsymmetricSemaphore)
 end
 
 @resumable function _lock(sim, s::AsymmetricSemaphore)
-    println("S locking") # Step 2: This is not reached
+    println("S locking")
     s.nbwaiters[] += 1
     @yield lock(s.lock)
     s.nbwaiters[] -= 1
