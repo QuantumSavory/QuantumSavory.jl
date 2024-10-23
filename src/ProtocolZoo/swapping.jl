@@ -67,9 +67,15 @@ end
     round = 1
     while rounds != 0
         qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; agelimit=prot.agelimit)
+        println("===")
+        println(get_time_tracker(prot.net)===prot.net[prot.node].tag_waiter[].lock.env) # during debugging I actually used the line below, but after my changes that line does not work anymore
+        # println(get_time_tracker(prot.net)===prot.net[prot.node].tag_waiter.lock.env) # Step 3: This should be true, but it is false... If the lock is never reached, it must be because the corresponding simulation environment is not running... but why would there be multiple independent sim environments
+        println(Main.peekalltags(prot.net[prot.node]))
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
-                @yield lock(prot.net[prot.node].tag_waiter)
+                println("locked")
+                @yield lock(prot.net[prot.node].tag_waiter[])
+                println("proceeding") # Step 1: this is not reached
             else
                 @yield timeout(prot.sim, prot.retry_lock_time)
             end

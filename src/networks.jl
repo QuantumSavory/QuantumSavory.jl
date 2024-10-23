@@ -21,6 +21,7 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
     if !all_are_same
         if all_are_at_zero
             for r in registers
+                r.tag_waiter[] = AsymmetricSemaphore(env)
                 for i in eachindex(r.locks)
                     r.locks[i] = ConcurrentSim.Resource(env,1)
                 end

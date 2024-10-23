@@ -210,7 +210,7 @@ end
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting..."
-                @yield lock(prot.net[prot.nodeA].tag_waiter) | lock(prot.net[prot.nodeB].tag_waiter)
+                @yield lock(prot.net[prot.nodeA].tag_waiter[]) | lock(prot.net[prot.nodeB].tag_waiter[]) # TODO instead of lock(...) it should be a neater API like `onchange_tag(prot.net[prot.nodeB])` or some similar new public function
             else
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
                 @yield timeout(prot.sim, prot.retry_lock_time)
@@ -407,7 +407,7 @@ end
             @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
             if isnothing(prot.period)
                 @debug "Waiting on changes in $(prot.nodeA)"
-                @yield lock(prot.net[prot.nodeA].tag_waiter)
+                @yield lock(prot.net[prot.nodeA].tag_waiter[])
             else
                 @yield timeout(prot.sim, prot.period)
             end
@@ -418,7 +418,7 @@ end
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 if isnothing(prot.period)
                     @debug "Waiting on changes in $(prot.nodeB)"
-                    @yield lock(prot.net[prot.nodeB].tag_waiter)
+                    @yield lock(prot.net[prot.nodeB].tag_waiter[])
                 else
                     @yield timeout(prot.sim, prot.period)
                 end
