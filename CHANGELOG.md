@@ -7,6 +7,7 @@
 - Implement protocols: request generator and request tracker for simulation with the above control protocol in an asynchronous way.
 - Add `PhysicalGraph` struct for storing network metadata as the simulation evolves.
 - New tags: `EntanglementRequest`,`SwapRequest`, `DistributionRequest` and `RequestCompletion`
+- Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
 
 ## v0.5.0 - 2024-09-05
 
