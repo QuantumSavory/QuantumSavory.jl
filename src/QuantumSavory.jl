@@ -48,6 +48,7 @@ export
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
+    onchange_tag,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer,
     # initialize.jl

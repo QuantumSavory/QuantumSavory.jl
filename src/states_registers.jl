@@ -63,3 +63,8 @@ get_register(r::RegRef) = r.reg
 get_register(r::Register) = r
 
 #Base.:(==)(r1::Register, r2::Register) =
+
+function onchange_tag(r::RegOrRegRef)
+    register = get_register(r)
+    return lock(register.tag_waiter[])
+end
