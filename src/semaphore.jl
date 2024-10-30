@@ -10,12 +10,10 @@ end
 AsymmetricSemaphore(sim) = AsymmetricSemaphore(Ref(0), Resource(sim,1,level=1)) # start locked
 
 function Base.lock(s::AsymmetricSemaphore)
-    println("calling the lock")
     return @process _lock(s.lock.env, s)
 end
 
 @resumable function _lock(sim, s::AsymmetricSemaphore)
-    println("S locking")
     s.nbwaiters[] += 1
     @yield lock(s.lock)
     s.nbwaiters[] -= 1
@@ -25,7 +23,6 @@ end
 end
 
 function unlock(s::AsymmetricSemaphore)
-    println("S unlocking")
     if s.nbwaiters[] > 0
         unlock(s.lock)
     end

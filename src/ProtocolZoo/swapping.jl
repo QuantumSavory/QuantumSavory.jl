@@ -67,8 +67,6 @@ end
     round = 1
     while rounds != 0
         qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; agelimit=prot.agelimit)
-        println("===", qubit_pair_)
-        println(Main.peekalltags(prot.net[prot.node]))
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
                 @debug "SwapperProt: no swappable qubits found. waiting..."
