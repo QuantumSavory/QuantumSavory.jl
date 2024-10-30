@@ -1,5 +1,4 @@
-using Test
-using QuantumSavory
+@testitem "Project Traceout" tags=[:project_traceout] begin
 
 const bell = StabilizerState("XX ZZ")
 # or equivalently `const bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2`,
@@ -31,3 +30,4 @@ end
 r = Register(1)
 initialize!(r[1], Z)
 @test_throws "State not normalized. Could be due to passing wrong state to `initialize!`" project_traceout!(r[1], (L0, L1))
+end

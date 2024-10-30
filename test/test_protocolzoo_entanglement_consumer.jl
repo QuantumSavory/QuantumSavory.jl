@@ -1,9 +1,8 @@
-using QuantumSavory
+@testitem "ProtocolZoo Entanglement Consumer" tags=[:protocolzoo_entanglement_consumer] begin
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 using Graphs
 using ConcurrentSim
 using ResumableFunctions
-using Test
 
 if isinteractive()
     using Logging
@@ -43,7 +42,6 @@ for n in 3:30
         @test econ.log[i][2] ≈ 1.0
         @test econ.log[i][3] ≈ 1.0
     end
-
 end
 
 # test for period=nothing
@@ -80,5 +78,5 @@ for n in 3:30
         @test econ.log[i][2] ≈ 1.0
         @test econ.log[i][3] ≈ 1.0
     end
-
+end
 end

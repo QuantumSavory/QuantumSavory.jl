@@ -1,11 +1,10 @@
+@testitem "ProtocolZoo Entanglement Tracker Grid" tags=[:protocolzoo_entanglement_tracker_grid] begin
 using Revise
-using QuantumSavory
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
-using Test
 
 if isinteractive()
     using Logging
@@ -273,4 +272,5 @@ run(sim, 400)
 for i in 1:length(consumer.log)
     @test consumer.log[i][2] ≈ 1.0
     @test consumer.log[i][3] ≈ 1.0
+end
 end

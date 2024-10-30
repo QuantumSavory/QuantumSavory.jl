@@ -1,10 +1,8 @@
-using QuantumSavory
+@testitem "ProtocolZoo CutoffProt" tags=[:protocolzoo_cutoffprot] begin
 using QuantumSavory.ProtocolZoo
 
 using ConcurrentSim
 using ResumableFunctions
-
-using Test 
 
 if isinteractive()
     using Logging
@@ -29,3 +27,4 @@ run(sim, 2.0)
 run(sim, 6.0)
 @test !isassigned(net[1][1])
 @test isassigned(net[2][1])
+end

@@ -1,5 +1,4 @@
-using Test
-using QuantumSavory
+@testitem "Noninstant and Backgrounds Qubit" tags=[:noninstant_and_backgrounds_qubit] begin
 using QuantumSavory: NonInstantGate
 
 ##
@@ -54,3 +53,4 @@ kraus_lindblad_test(T2Dephasing(1.0),Z1)
 kraus_lindblad_test(T2Dephasing(1.0),Z2)
 kraus_lindblad_test(T2Dephasing(1.0),X1)
 kraus_lindblad_test(T2Dephasing(1.0),X2)
+end

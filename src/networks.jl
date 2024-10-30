@@ -13,7 +13,7 @@ struct RegisterNet
     reverse_lookup::IdDict{Register,Int}
 end
 
-function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metadata, directed_edge_metadata)
+function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metadata, directed_edge_metadata; classical_delay=0, quantum_delay=0)
     env = get_time_tracker(registers[1])
 
     all_are_at_zero = all(iszero(ConcurrentSim.now(get_time_tracker(r))) && isempty(get_time_tracker(r).heap) && isnothing(get_time_tracker(r).active_proc) for r in registers)
@@ -43,10 +43,10 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
     end
 
     for (;src,dst) in edges(graph)
-        cchannels[src=>dst] = DelayQueue{Tag}(env, 0)
-        qchannels[src=>dst] = QuantumChannel(env, 0)
-        cchannels[dst=>src] = DelayQueue{Tag}(env, 0)
-        qchannels[dst=>src] = QuantumChannel(env, 0)
+        cchannels[src=>dst] = DelayQueue{Tag}(env, classical_delay)
+        qchannels[src=>dst] = QuantumChannel(env, quantum_delay)
+        cchannels[dst=>src] = DelayQueue{Tag}(env, classical_delay)
+        qchannels[dst=>src] = QuantumChannel(env, quantum_delay)
     end
     for (v,r) in zip(vertices(graph), registers)
         channels = [(;src=w, channel=cchannels[w=>v]) for w in neighbors(graph, v)]
@@ -93,9 +93,9 @@ julia> neighbors(net, 1) # from Graphs.jl
  3
 ```
 """
-function RegisterNet(graph::SimpleGraph, registers)
+function RegisterNet(graph::SimpleGraph, registers; classical_delay=0, quantum_delay=0)
     size(graph, 1) == length(registers) || ArgumentError(lazy"You attempted to construct a `RegisterNet` with a graph of $(size(graph, 1)) vertices but provided a list of $(length(registers)) `Registers`. These two numbers have to match.")
-    RegisterNet(graph, registers, empty_vmd(length(registers)), empty_emd(), empty_demd())
+    RegisterNet(graph, registers, empty_vmd(length(registers)), empty_emd(), empty_demd(); classical_delay, quantum_delay)
 end
 
 empty_vmd(n) = [Dict{Symbol,Any}() for _ in 1:n]
@@ -114,9 +114,9 @@ julia> neighbors(net,2) # from Graphs.jl
  3
 ```
 """
-function RegisterNet(registers::Vector{Register})
+function RegisterNet(registers::Vector{Register}; classical_delay=0, quantum_delay=0)
     graph = grid([length(registers)])
-    RegisterNet(graph, registers)
+    RegisterNet(graph, registers; classical_delay, quantum_delay)
 end
 
 function add_register!(net::RegisterNet, r::Register)

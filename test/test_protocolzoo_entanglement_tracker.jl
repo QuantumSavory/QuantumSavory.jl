@@ -1,11 +1,10 @@
+@testitem "ProtocolZoo Entanglement Tracker" tags=[:protocolzoo_entanglement_tracker] begin
 using Revise
-using QuantumSavory
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
-using Test
 
 if isinteractive()
     using Logging
@@ -68,13 +67,11 @@ end
 ##
 
 using Revise
-using QuantumSavory
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
-using Test
 using Random
 
 if isinteractive()
@@ -111,4 +108,5 @@ for i in 1:30, n in 2:30
     @test q2.tag[2] == 1
     @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1
     @test observable((q1.slot, q2.slot), X⊗X) ≈ 1
+end
 end
