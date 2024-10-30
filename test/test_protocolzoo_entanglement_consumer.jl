@@ -33,7 +33,7 @@ for n in 3:30
         @process etracker()
     end
 
-    econ = EntanglementConsumer(sim, net, 1, n; period=1.0)
+    econ = EntanglementConsumer(sim, net, 1, n; period=0.1)
     @process econ()
 
     run(sim, 100)
@@ -48,13 +48,12 @@ end
 
 # test for period=nothing
 for n in 3:30
-    println(n)
     regsize = 10
     net = RegisterNet([Register(regsize) for j in 1:n])
     sim = get_time_tracker(net)
     
     @resumable function delayedProts(sim)
-        @yield timeout(sim, 10)
+        @yield timeout(sim, 5)
         for e in edges(net)
             eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true, margin=5, hardmargin=3)
             @process eprot()
@@ -74,21 +73,12 @@ for n in 3:30
     @process econ()
     @process delayedProts(sim)
     
-    run(sim, 1000) 
+    run(sim, 100) 
     
-    @test econ.log[1][1] > 10 #the process should start after 10
+    @test econ.log[1][1] > 5 # the process should start after 5
     for i in 1:length(econ.log)
         @test econ.log[i][2] ≈ 1.0
         @test econ.log[i][3] ≈ 1.0
     end
 
-end
-
-
-
-
-@test econ.log[1][1] > 10 #the process should start after 10
-for i in 1:length(econ.log)
-    @test econ.log[i][2] ≈ 1.0
-    @test econ.log[i][3] ≈ 1.0
 end

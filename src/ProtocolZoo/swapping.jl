@@ -71,9 +71,8 @@ end
         println(Main.peekalltags(prot.net[prot.node]))
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
-                println("IN ", now(get_time_tracker(prot.net)))
-                @yield lock(prot.net[prot.node].tag_waiter[])
-                println("OUT ", now(get_time_tracker(prot.net))) # TODO why is this released instantly the second time... is there a problem with entering the AsymmetricSemaphore a second time?
+                @debug "SwapperProt: no swappable qubits found. waiting..."
+                @yield onchange_tag(prot.net[prot.node])
             else
                 @yield timeout(prot.sim, prot.retry_lock_time)
             end
