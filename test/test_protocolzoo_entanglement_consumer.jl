@@ -33,7 +33,7 @@ for n in 3:30
         @process etracker()
     end
 
-    econ = EntanglementConsumer(sim, net, 1, n; period=0.1)
+    econ = EntanglementConsumer(sim, net, 1, n; period=1.0)
     @process econ()
 
     run(sim, 100)
