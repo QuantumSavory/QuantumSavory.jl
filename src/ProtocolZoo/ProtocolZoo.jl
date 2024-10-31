@@ -332,15 +332,17 @@ end
                 counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
                 unlock(localslot)
                 if !isnothing(counterpart)
-                    # time_before_lock = now(prot.sim)
+                    time_before_lock = now(prot.sim)
                     @yield lock(localslot)
-                    # time_after_lock = now(prot.sim)
-                    # time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
+                    time_after_lock = now(prot.sim)
+                    time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
                     if !isassigned(localslot)
                         unlock(localslot)
                         error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
                     end
+                    @debug "EntanglementTracker @$(prot.node): updategate = $(updategate)"
                     if !isnothing(updategate) # EntanglementUpdate
+                        @debug "Entanglement updated for $(prot.node).$(localslot.idx) 2"
                         # Pauli frame correction gate
                         if correction==2
                             apply!(localslot, updategate)
@@ -348,6 +350,7 @@ end
                         # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
                         tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                     else # EntanglementDelete
+                        @debug "Entanglement deleted"
                         traceout!(localslot)
                     end
                     unlock(localslot)
@@ -487,7 +490,7 @@ $FIELDS
     """event when all users are sharing a ghz state"""
     event_ghz_state::Event
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
-    period::LT = 0.1
+    period::LT = 0.00001
     """stores the time and resulting observable from querying the piecemaker qubit for `EntanglementCounterpart`"""
     log::Vector{Tuple{Float64, Float64}} = Tuple{Float64, Float64}[]
 end
@@ -500,7 +503,6 @@ function GHZConsumer(net::RegisterNet, piecemaker::RegRef, event_ghz_state::Even
 end
 
 @resumable function (prot::GHZConsumer)()
-    t_now = 0
     if isnothing(prot.period)
         error("In `GHZConsumer` we do not yet support waiting on register to make qubits available") # TODO
     end
@@ -509,10 +511,11 @@ end
         qparticipating = queryall(prot.piecemaker, FusionCounterpart, ❓, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(qparticipating)
             @debug "GHZConsumer between $(prot.piecemaker): query on piecemaker slot found no entanglement"
-            @yield timeout(prot.sim, prot.period)
+            #@yield timeout(prot.sim, prot.period)
+            continue
             return
         elseif length(qparticipating) == nclients
-            @info "All clients are now part of the GHZ state."
+            @debug "All clients are now part of the GHZ state."
             client_slots = [prot.net[k][1] for k in 2:nclients+1]
             
             # Wait for all locks to complete
@@ -534,13 +537,14 @@ end
             if zmeas == 2
                 apply!(prot.net[2][1], Z) # apply correction on arbitrary client slot
             end
+            result = real(observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z2,nclients)...]) + reduce(⊗,[fill(Z1,nclients)...])))))
+            @debug "GHZConsumer: expectation value $(result)" 
+            
             pm = queryall(prot.piecemaker, ❓, ❓, ❓)
             @assert length(pm) < 2 "More than one entry for piecemaker in database."
             (slot, id, tag) = pm[1]
+            @debug "GHZConsumer: piecemaker qubit state real($(observable(slot, X1)))"
             untag!(prot.piecemaker, id)
-
-            result = real(observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z1,nclients)...]) + reduce(⊗,[fill(Z2,nclients)...])))))
-            @debug "GHZConsumer: expectation value $(result)" 
             
             # delete tags and free client slots
             for k in 2:nclients+1
@@ -551,23 +555,15 @@ end
             end
             
             traceout!([prot.net[k][1] for k in 2:nclients+1]...)
-            if t_now == 0
-                push!(prot.log, (now(prot.sim), result,))
-            else
-                t_elapsed = now(prot.sim) - t_now
-                push!(prot.log, (t_elapsed, result,))
-            end
-            t_now = now(prot.sim)
-
             for k in 2:nclients+1
                 unlock(prot.net[k][1])
             end
             unlock(prot.piecemaker)
-            
-            succeed(prot.event_ghz_state)
-            if state(prot.event_ghz_state) != idle
-                throw(StopSimulation("GHZ state shared among all users!"))
-            end
+
+            # log results
+            push!(prot.log, (now(prot.sim), result,))
+            throw(StopSimulation("GHZ state shared among all users!"))
+            @yield timeout(prot.sim, prot.period)
         end
         @yield timeout(prot.sim, prot.period)
     end
@@ -635,9 +631,10 @@ end
         tag!(q, EntanglementHistory, tag[2], tag[3], prot.node, q_pm.idx, q.idx)
         tag!(q_pm, FusionCounterpart, tag[2], tag[3])
 
-        uptotime!((q, q_pm), now(prot.sim))
+        @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(q_pm.idx) @ $(now(prot.sim))"
         fuscircuit = EntanglementFusion()
         zmeas = fuscircuit(q, q_pm) 
+        @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(q_pm.idx) @ $(now(prot.sim))"
         # send from here to client node
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx, past_remote_slot_idx, new_remote_node, new_remote_slot, correction
         msg = Tag(EntanglementUpdateZ, prot.node, q.idx, tag[3], prot.node, q_pm.idx, zmeas)
@@ -668,7 +665,7 @@ and starts probabilistic attempts to establish entanglement.
 
 $TYPEDFIELDS
 """
-@kwdef struct SelectedEntanglerProt{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
+@kwdef struct SelectedEntanglerProt <: AbstractProtocol 
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation # TODO check that
     """a network graph of registers"""
@@ -683,22 +680,10 @@ $TYPEDFIELDS
     success_prob::Float64 = 0.001
     """duration of single entanglement attempt"""
     attempt_time::Float64 = 0.001
-    """fixed "busy time" duration immediately before starting entanglement generation attempts"""
-    local_busy_time_pre::Float64 = 0.0
-    """fixed "busy time" duration immediately after the a successful entanglement generation attempt"""
-    local_busy_time_post::Float64 = 0.0
-    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up)"""
-    retry_lock_time::LT = 0.1
     """how many rounds of this protocol to run (`-1` for infinite)"""
     rounds::Int = -1
     """maximum number of attempts to make per round (`-1` for infinite)"""
     attempts::Int = -1
-    """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
-    randomize::Bool = false
-    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
-    margin::Int = 0
-    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
-    hardmargin::Int = 0
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -723,13 +708,10 @@ end
         if isnothing(a) || isnothing(b)
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a \n2.\t $b \n retrying..."
-            #@yield timeout(prot.sim, prot.retry_lock_time)
             continue
         end
 
         @yield lock(a) & lock(b) # this yield is expected to return immediately
-
-        #@yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
             1
         else
@@ -737,9 +719,9 @@ end
         end
 
         if (prot.attempts == -1 || prot.attempts >= attempts) && !isassigned(b) && !isassigned(a)
-            @yield timeout(prot.sim, attempts * prot.attempt_time)
+            
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
-            #@yield timeout(prot.sim, prot.local_busy_time_post)
+            @yield timeout(prot.sim, attempts * prot.attempt_time) 
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
             tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
@@ -748,12 +730,12 @@ end
 
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         else
+            uptotime!((a,b),  now(prot.sim))
             @yield timeout(prot.sim, prot.attempts * prot.attempt_time)
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Performed the maximum number of attempts and gave up"
         end
         unlock(a)
         unlock(b)
-        #@yield timeout(prot.sim, prot.retry_lock_time)
         rounds==-1 || (rounds -= 1)
         round += 1
     end

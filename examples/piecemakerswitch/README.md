@@ -10,7 +10,43 @@ The fusion operation consists of applying a **CNOT** gate followed by a measurem
 # Noise 
 The memories residing the nodes' `Register`s suffer from depolarizing noise. The latter is modelled via Kraus operators applied to the current state's density matrix.
 
-### Troubleshooting
-In the current implementation, sending and receiving classical measurement messages is achieved via a `DelayQueue` channel connected to `MessageBuffer`s at the nodes. The `MessageBuffer` acts as a buffer that holds incoming messages and manages processes waiting for messages.
+### Protocol flow
 
-Important Note: By design, message passing should not involve simulated time delays by default. Messages are expected to be delivered instantaneously in simulation time unless explicitly specified otherwise. However, during simulation, the following debug output from the EntanglementTracker indicates that a delay is being introduced unexpectedly: `@debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"` in the `EntanglementTracker`. This results in distribution times > # rounds of entanglement attempts, which should not be the case.
+```mermaid
+sequenceDiagram
+    participant Client1
+    participant ClientN
+
+    participant SwitchNode
+    participant Log
+
+    Note over Client1,SwitchNode: Round 1 (1 unit time)
+    par Entanglement Generation
+        Client1->>+SwitchNode: Try to generate entanglement
+        ClientN->>+SwitchNode: Try to generate entanglement
+    end
+
+    SwitchNode->>SwitchNode: Run fusions with successful clients
+
+    par Send Measurement Outcomes
+        SwitchNode-->>-Client1: Send measurement outcomes
+        SwitchNode-->>-ClientN: Send measurement outcomes
+    end
+
+    par Apply Corrections (No time cost)
+        Client1->>Client1: Apply correction gates
+        ClientN->>ClientN: Apply correction gates
+    end
+
+    loop Check Fusion Status (No time cost)
+        SwitchNode->>SwitchNode: Check if all clients are fused
+        alt All clients fused
+            SwitchNode->>SwitchNode: Measure piecemaker
+            SwitchNode->>SwitchNode: Compute fidelity to GHZ state
+            SwitchNode->>Log: Log fidelity and time
+            SwitchNode->>SwitchNode: Trigger STOP
+        else
+            SwitchNode->>SwitchNode: Keep checking
+        end
+    end
+```

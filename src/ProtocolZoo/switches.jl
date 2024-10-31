@@ -7,7 +7,7 @@ using Graphs: edges, complete_graph, neighbors
 #using GraphsMatching: maximum_weight_matching # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
 using Combinatorics: combinations
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS
-using ConcurrentSim: @process, timeout, Simulation, Process
+using ConcurrentSim: @process, timeout, Simulation, Process, now
 #using ResumableFunctions: @resumable, @yield # TODO serious bug that makes it not work without full `using`
 using ResumableFunctions
 using Random
@@ -174,19 +174,22 @@ FusionSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
     while rounds != 0
         rounds==-1 || (rounds -= 1)
 
+        @debug "Node $(prot.switchnode) starts a new entanglement round at time $(now(prot.sim))"
         # run entangler without requests (=no assignment)
         _switch_entangler_all_selected(prot)
-        @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
-
+        @yield timeout(prot.sim, prot.ticktock/2) 
+        @debug "Node $(prot.switchnode) stops at time $(now(prot.sim))"
         # read which entanglements were successful
         matches = _switch_successful_entanglements(prot, reverseclientindex)
         if isnothing(matches)
-            matches = []
+            @yield timeout(prot.sim, prot.ticktock/2)
             continue
         end
-
+        @debug "Node $(prot.switchnode) performs fusions at time $(now(prot.sim))"
         # perform fusions
         _switch_run_fusions(prot, matches)
+        @yield timeout(prot.sim, prot.ticktock/2)
+        @debug "Node $(prot.switchnode) is done with fusions at time $(now(prot.sim))"
     end
 end
 
@@ -369,14 +372,15 @@ end
 """
 Run the entangler protocol between the switch and all clients (no assignment) where there is one respective client slot selected at the switch node.
 """
-function _switch_entangler_all_selected(prot)
+function _switch_entangler_all_selected(prot, initial_round=false)
     @assert length(prot.clientnodes) == nsubsystems(prot.net[prot.switchnode])-1 "Number of clientnodes needs to equal the number of switch registers."
+    
     for (id, client) in enumerate(prot.clientnodes) 
         entangler = SelectedEntanglerProt(
             sim=prot.sim, net=prot.net,
             nodeA=prot.switchnode, nodeB=client,
             rounds=1, attempts=1, success_prob=prot.success_probs[id],
-            attempt_time=prot.ticktock
+            attempt_time=prot.ticktock/2-0.00001;
         )
         @process entangler()
     end
@@ -385,6 +389,8 @@ end
 """
 Run `queryall(switch, EntanglemetnCounterpart, ...)`
 to find out which clients the switch has successfully entangled with. 
+Then returns returns a list of indices corresponding to the successful clients.
+We use this list of indices e.g., in `FusionSwitchDiscreteProt` to perform fusions with currently entangled client slots.
 """
 
 function _switch_successful_entanglements(prot, reverseclientindex)
@@ -397,7 +403,7 @@ function _switch_successful_entanglements(prot, reverseclientindex)
     end
     # get the maximum match for the actually connected nodes
     ne = length(entangled_clients)
-    @info "Switch $(prot.switchnode) successfully entangled with $ne clients" 
+    @debug "Switch $(prot.switchnode) successfully entangled with $ne clients" 
     if ne < 1 return nothing end
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
     return entangled_clients_revindex
