@@ -19,7 +19,7 @@ export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, RequestTracker, RequestGenerator,
     # tags
-    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, EntanglementRequest, SwapRequest, DistributionRequest, RequestCompletion,
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, EntanglementRequest, SwapRequest, DistributionRequest,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # controllers
