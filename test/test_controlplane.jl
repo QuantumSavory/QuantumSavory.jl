@@ -28,15 +28,12 @@ regsize = 20
 net = RegisterNet(graph, [Register(regsize) for i in 1:8])
 sim = get_time_tracker(net)
 
-# PhysicalGraph
-phys_graph = PhysicalGraph(graph, 1, 8, regsize)
-
 # controller
-controller = Controller(sim, net, 6, phys_graph)
+controller = Controller(sim, net, 6, zeros(8,8))
 @process controller()
 
 # RequestGenerator for the user pair (1,8)
-req_gen = RequestGenerator(sim, net, 1, 8, 6, phys_graph)
+req_gen = RequestGenerator(sim, net, 1, 8, 6)
 @process req_gen()
 
 # consumer
