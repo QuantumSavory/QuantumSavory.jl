@@ -25,7 +25,7 @@ export
     # controllers
     NetController, Controller,
     #utils
-    PhysicalGraph, path_selection
+    PathMetadata, path_selection
 
 abstract type AbstractProtocol end
 
@@ -203,27 +203,9 @@ See also: [`EntanglementRequest`](@ref), [`SwapRequest`]
     src::Int
     """The node with which entanglement is to be generated"""
     dst::Int
-    """Index of the path to be taken for the entanglement generation"""
-    path::Int
 end
 Base.show(io::IO, tag::DistributionRequest) = print(io, "Node $(tag.src) requesting entanglement with $(tag.dst)")
-Tag(tag::DistributionRequest) = Tag(DistributionRequest, tag.src, tag.dst, tag.path)
-
-
-"""
-$TYPEDEF
-
-A message sent from the controller to a request generating node after its request has been served. 
-
-$TYPEDFIELDS
-
-See also: [`EntanglementRequest`](@ref), [`SwapRequest`]
-"""
-@kwdef struct RequestCompletion
-    path_id::Int
-end
-Base.show(io::IO, tag::RequestCompletion) = print(io, "Request on path id $(tag.path_id) served")
-Tag(tag::RequestCompletion) = Tag(RequestCompletion, tag.path_id)
+Tag(tag::DistributionRequest) = Tag(DistributionRequest, tag.src, tag.dst)
 
 
 """
@@ -442,7 +424,7 @@ end
                 error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might have happened due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retention times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise, this is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
             end
         end
-        @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        # @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
     end
@@ -561,7 +543,7 @@ end
                 end
             end
         end
-        @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        # @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "RequestTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
     end
@@ -589,35 +571,21 @@ $TYPEDFIELDS
     dst::Int
     """The node at which the controller is located"""
     controller::Int
-    """The object containing physical graph metadata for the network"""
-    phys_graph::PhysicalGraph
     """rate of arrival of requests/number of requests sent unit time"""
     λ::Int = 3
 end
 
-function RequestGenerator(sim, net, src, dst, controller, phys_graph; kwargs...)
-    return RequestGenerator(;sim, net, src, dst, controller, phys_graph, kwargs...)
+function RequestGenerator(sim, net, src, dst, controller; kwargs...)
+    return RequestGenerator(;sim, net, src, dst, controller, kwargs...)
 end
 
 @resumable function (prot::RequestGenerator)()
     d = Exponential(inv(prot.λ)) # Parametrized with the scale which is inverse of the rate
     mb = messagebuffer(prot.net, prot.src)
     while true
-        path_index = path_selection(prot.phys_graph)
-        if isnothing(path_index)
-            prot.phys_graph.failures[] += 1
-            @yield timeout(prot.sim, rand(d))
-            continue
-        end
-        msg = Tag(DistributionRequest, prot.src, prot.dst, path_index)
+        msg = Tag(DistributionRequest, prot.src, prot.dst)
         put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
 
-        # incoming message from the controller after a request has been served
-        in_msg = querydelete!(mb, RequestCompletion, ❓)
-        if !isnothing(in_msg)
-            (src, (_, path_id)) = in_msg
-            prot.phys_graph.workloads[path_id] -= 1
-        end 
         @yield timeout(prot.sim, rand(d))
     end
 end

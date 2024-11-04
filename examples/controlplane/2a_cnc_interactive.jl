@@ -1,10 +1,9 @@
 include("setup.jl")
 
-phys_graph = PhysicalGraph(graph, 1, 8, regsize)
-controller = Controller(sim, net, 6, phys_graph)
+controller = Controller(sim, net, 6, zeros(8,8))
 @process controller()
 
-req_gen = RequestGenerator(sim, net, 1, 8, 6, phys_graph)
+req_gen = RequestGenerator(sim, net, 1, 8, 6)
 @process req_gen()
 
 consumer = EntanglementConsumer(sim, net, 1, 8)

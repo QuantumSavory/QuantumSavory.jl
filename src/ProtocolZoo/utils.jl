@@ -7,7 +7,7 @@ passed through the `DistributionRequest` tag/message.
 
 $TYPEDFIELDS
 """
-@kwdef struct PhysicalGraph
+@kwdef struct PathMetadata
     """The vector of paths between the user pair"""
     paths::Vector{Vector{Int}}
     """The vector containing the workload information of a path"""
@@ -18,24 +18,33 @@ $TYPEDFIELDS
     failures::Ref{Int}
 end
 
-function PhysicalGraph(graph::SimpleGraph{Int64}, src::Int, dst::Int, caps::Union{Vector{Int}, Int}; failures=Ref{Int}(0))
+function PathMetadata(graph::SimpleGraph{Int64}, src::Int, dst::Int, caps::Union{Vector{Int}, Int}; failures=Ref{Int}(0))
     paths = sort(collect(all_simple_paths(graph, src, dst)); by = x->length(x))
     workloads = zeros(length(paths))
-    PhysicalGraph(paths, workloads, caps, failures)
+    PathMetadata(paths, workloads, caps, failures)
 end
 
 
 """
 A simple path selection algorithm for connection oriented networks.
 """
-function path_selection(phys_graph::PhysicalGraph) 
-    for i in 1:length(phys_graph.paths)
-        capacity = isa(phys_graph.capacity, Number) ? phys_graph.capacity : phys_graph.capacity[i]
-        if phys_graph.workloads[i]<capacity
-            phys_graph.workloads[i] += 1
+function path_selection(sim, pathobj::PathMetadata) 
+    for i in 1:length(pathobj.paths)
+        capacity = isa(pathobj.capacity, Number) ? pathobj.capacity : pathobj.capacity[i]
+        if pathobj.workloads[i]<capacity
+            pathobj.workloads[i] += 1
+            @process unreserve_path(sim, pathobj, i)
             return i
         end
     end
+    pathobj.failures +=1
+    return nothing
+end
+
+@resumable function unreserve_path(sim, pathobj::PathMetadata, i)
+    @yield timeout(sim, 0.5)
+    @debug "Path $(pathobj.paths[i]) workload reduced"
+    pathobj.workloads[i] -= 1
 end
 
 

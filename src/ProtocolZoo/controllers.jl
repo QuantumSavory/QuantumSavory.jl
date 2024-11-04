@@ -71,8 +71,8 @@ See also [`RequestGenerator`](@ref), [`RequestTracker`](@ref)
     net::RegisterNet
     """The node in the network where the control protocol is physically located, ideally a centrally located node"""
     node::Int
-    """The object containing physical graph metadata for the network"""
-    phys_graph::PhysicalGraph
+    """A matrix for the object containing physical graph metadata for the network"""
+    path_mat::Matrix{Union{Float64, PathMetadata}}
 end
 
 @resumable function (prot::Controller)()
@@ -81,10 +81,18 @@ end
         workwasdone = true
         while workwasdone
             workwasdone = false
-            msg = querydelete!(mb, DistributionRequest, ❓, ❓, ❓)
+            msg = querydelete!(mb, DistributionRequest, ❓, ❓)
             if !isnothing(msg)
-                (msg_src, (_, src, dst, path_ind)) = msg
-                path = prot.phys_graph.paths[path_ind]
+                (msg_src, (_, src, dst)) = msg
+                if typeof(prot.path_mat[src, dst]) <: Number
+                    prot.path_mat[src, dst] = PathMetadata(prot.net.graph, src, dst, Int(length(prot.net[1].staterefs)/2))
+                end
+                path_id = path_selection(prot.sim, prot.path_mat[src, dst])
+                path = prot.path_mat[src, dst].paths[path_id]
+                if isnothing(path_id)
+                    @debug "Request failed, all paths reserved"
+                end
+
                 @debug "Running Entanglement Distribution on path $(path) @ $(now(prot.sim))"
                 for i in 1:length(path)-1
                     msg = Tag(EntanglementRequest, path[i], path[i+1], 1)
@@ -104,10 +112,8 @@ end
                         put!(channel(prot.net, prot.node=>msg[2];permit_forward=true), msg)
                     end
                 end
-                comp_msg = Tag(RequestCompletion, path_ind)
-                put!(channel(prot.net, prot.node=>src; permit_forward=true), comp_msg)
             end
-            @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+            # @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
             @yield wait(mb)
             @debug "Controller @$(prot.node): Message wait ends at $(now(prot.sim))"
         end
