@@ -2,6 +2,8 @@ include("setup.jl")
 using DataFrames
 using CSV
 
+
+# Set up the simulation parameters
 name = "qs_piecemeal"
 nruns = 1000
 mem_depolar_prob = 0.1
