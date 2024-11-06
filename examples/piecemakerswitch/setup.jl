@@ -24,7 +24,6 @@ function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_pro
 
     # Set up the initial |+> state of the piecemaker qubit
     initialize!(net[1][m], X1)
-    tag!(net[1][m], Piecemaker, 1, m)
 
     event_ghz_state = Event(sim)
 
@@ -34,13 +33,13 @@ function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_pro
         @process tracker()
     end
 
-    # Set up an entanglement consumer between each unordered pair of clients
-    consumer = FusionConsumer(net, net[1][m], event_ghz_state; period=1)
-    @process consumer()
-
     # Finally, set up the switch without assignments
     switch_protocol = FusionSwitchDiscreteProt(net, 1, 2:nclients+1, fill(link_success_prob, nclients); ticktock=1)
     @process switch_protocol()
+
+    # Set up an entanglement consumer between each unordered pair of clients
+    consumer = FusionConsumer(net, net[1][m], event_ghz_state; period=1)
+    @process consumer()
     
     return sim, consumer
 end

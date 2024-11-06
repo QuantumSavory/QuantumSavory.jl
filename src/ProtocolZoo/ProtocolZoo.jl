@@ -18,7 +18,7 @@ export
     # protocols
     EntanglerProt, SelectedEntanglerProt, SwapperProt, FusionProt, EntanglementTracker, EntanglementConsumer, FusionConsumer, CutoffProt,
     # tags
-    EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, Piecemaker,
+    EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
     SimpleSwitchDiscreteProt, FusionSwitchDiscreteProt, SwitchRequest
 
@@ -61,23 +61,6 @@ $TYPEDFIELDS
 end
 Base.show(io::IO, tag::FusionCounterpart) = print(io, "GHZ state shared with $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::FusionCounterpart) = Tag(FusionCounterpart, tag.remote_node, tag.remote_slot)
-
-"""
-$TYPEDEF
-
-Indicates the piecemaker responsible for fusions of a remote node's slot. 
-
-$TYPEDFIELDS
-"""
-@kwdef struct Piecemaker
-    "the id of the switch node"
-    node::Int
-    "the slot in the switch node containing piecemaker qubit"
-    slot::Int
-end
-Base.show(io::IO, tag::Piecemaker) = print(io, "Piecemaker slot at $(tag.node).$(tag.slot)")
-Tag(tag::Piecemaker) = Tag(Piecemaker, tag.node, tag.slot)
-
 
 
 """
@@ -540,12 +523,6 @@ end
             result = real(observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z2,nclients)...]) + reduce(⊗,[fill(Z1,nclients)...])))))
             @debug "FusionConsumer: expectation value $(result)" 
             
-            pm = queryall(prot.piecemaker, ❓, ❓, ❓)
-            @assert length(pm) < 2 "More than one entry for piecemaker in database."
-            (slot, id, tag) = pm[1]
-            @debug "FusionConsumer: piecemaker qubit state real($(observable(slot, X1)))"
-            untag!(prot.piecemaker, id)
-            
             # delete tags and free client slots
             for k in 2:nclients+1
                 queries = queryall(prot.net[k], EntanglementCounterpart, ❓, ❓)
@@ -622,26 +599,25 @@ end
         end
 
         (q, id, tag) = fusable_qubit.slot, fusable_qubit.id, fusable_qubit.tag
-        (q_pm, id_pm, tag_pm) = piecemaker.slot, piecemaker.id, piecemaker.tag
-        #@yield lock(q) & lock(q_pm) # this should not really need a yield thanks to `findswapablequbits`, but it is better to be defensive
-        #@yield timeout(prot.sim, prot.local_busy_time)
+        @yield lock(q) & lock(piecemaker) # this should not really need a yield thanks to `findfusablequbit`, but it is better to be defensive
+        @yield timeout(prot.sim, prot.local_busy_time)
 
         untag!(q, id)
         # store a history of whom we were entangled to for both client slot and piecemaker
-        tag!(q, EntanglementHistory, tag[2], tag[3], prot.node, q_pm.idx, q.idx)
-        tag!(q_pm, FusionCounterpart, tag[2], tag[3])
+        tag!(q, EntanglementHistory, tag[2], tag[3], prot.node, piecemaker.idx, q.idx)
+        tag!(piecemaker, FusionCounterpart, tag[2], tag[3])
 
-        @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(q_pm.idx) @ $(now(prot.sim))"
+        @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(piecemaker.idx) @ $(now(prot.sim))"
         fuscircuit = EntanglementFusion()
-        zmeas = fuscircuit(q, q_pm) 
-        @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(q_pm.idx) @ $(now(prot.sim))"
+        zmeas = fuscircuit(q, piecemaker) 
+        @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(piecemaker.idx) @ $(now(prot.sim))"
         # send from here to client node
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx, past_remote_slot_idx, new_remote_node, new_remote_slot, correction
-        msg = Tag(EntanglementUpdateZ, prot.node, q.idx, tag[3], prot.node, q_pm.idx, zmeas)
+        msg = Tag(EntanglementUpdateZ, prot.node, q.idx, tag[3], prot.node, piecemaker.idx, zmeas)
         put!(channel(prot.net, prot.node=>tag[2]; permit_forward=true), msg)
         @debug "FusionProt @$(prot.node)|round $(round): Send message to $(tag[2]) | message=`$msg`"
         unlock(q)
-        unlock(q_pm)
+        unlock(piecemaker)
         rounds==-1 || (rounds -= 1)
         round += 1
     end
@@ -650,7 +626,8 @@ end
 function findfusablequbit(net, node, pred_client)
     reg = net[node]
     nodes  = queryall(reg, EntanglementCounterpart, pred_client, ❓; locked=false)
-    piecemaker = query(reg, Piecemaker, ❓, ❓)
+    index_piecemaker = nsubsystems(net[1])
+    piecemaker = net[1][index_piecemaker]
     isempty(nodes) && return nothing
     @assert length(nodes) == 1 "Client seems to be entangled multiple times"
     return nodes[1], piecemaker
