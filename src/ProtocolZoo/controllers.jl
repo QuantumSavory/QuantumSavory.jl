@@ -104,7 +104,6 @@ end
                 end
                 
                 for i in 2:length(path)-1
-                    last = i == length(path) - 1 ? 1 : 0
                     msg = Tag(SwapRequest, path[i], 1)
                     if prot.node == path[i]
                         put!(mb, msg)
@@ -113,7 +112,54 @@ end
                     end
                 end
             end
-            # @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+            @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+            @yield wait(mb)
+            @debug "Controller @$(prot.node): Message wait ends at $(now(prot.sim))"
+        end
+    end
+end
+
+
+"""
+$TYPEDEF
+
+A network control protocol that is connection less, non-distributed and centralized. The controller is located at one of the nodes in the network from where it messages all
+the other nodes' [`RequestTracker`](@ref) protocols when it receives [`DistributionRequest`](@ref) from the [`RequestGenerator`](@ref).
+
+$TYPEDFIELDS
+
+See also [`RequestGenerator`](@ref), [`RequestTracker`](@ref)
+"""
+@kwdef struct CLController <: AbstractProtocol
+    """Time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """A network graph of registers"""
+    net::RegisterNet
+    """The node in the network where the control protocol is physically located, ideally a centrally located node"""
+    node::Int
+end
+
+@resumable function (prot::CLController)()
+    mb = messagebuffer(prot.net, prot.node)
+    while true
+        workwasdone = true
+        while workwasdone
+            workwasdone = false
+            msg = querydelete!(mb, DistributionRequest, ❓, ❓)
+            if !isnothing(msg)
+                (msg_src, (_, req_src, req_dst)) = msg
+                for v in vertices(prot.net)
+                    if v != req_src && v != req_dst
+                        msg = Tag(SwapRequest, v, 1)
+                        if prot.node == v
+                            put!(mb, msg)
+                        else
+                            put!(channel(prot.net, prot.node=>msg[2];permit_forward=true), msg)
+                        end
+                    end
+                end
+            end
+            @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
             @yield wait(mb)
             @debug "Controller @$(prot.node): Message wait ends at $(now(prot.sim))"
         end

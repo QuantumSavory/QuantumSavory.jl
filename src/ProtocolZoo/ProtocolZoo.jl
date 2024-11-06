@@ -23,7 +23,7 @@ export
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # controllers
-    NetController, Controller,
+    NetController, Controller, CLController,
     #utils
     PathMetadata, path_selection
 
@@ -424,7 +424,7 @@ end
                 error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might have happened due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retention times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise, this is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
             end
         end
-        # @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
     end
@@ -543,7 +543,7 @@ end
                 end
             end
         end
-        # @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "RequestTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
     end
