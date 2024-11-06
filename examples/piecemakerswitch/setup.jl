@@ -35,7 +35,7 @@ function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_pro
     end
 
     # Set up an entanglement consumer between each unordered pair of clients
-    consumer = GHZConsumer(net, net[1][m], event_ghz_state; period=1)
+    consumer = FusionConsumer(net, net[1][m], event_ghz_state; period=1)
     @process consumer()
 
     # Finally, set up the switch without assignments

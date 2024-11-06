@@ -16,7 +16,7 @@ import SumTypes
 
 export
     # protocols
-    EntanglerProt, SelectedEntanglerProt, SwapperProt, FusionProt, EntanglementTracker, EntanglementConsumer, GHZConsumer, CutoffProt,
+    EntanglerProt, SelectedEntanglerProt, SwapperProt, FusionProt, EntanglementTracker, EntanglementConsumer, FusionConsumer, CutoffProt,
     # tags
     EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, Piecemaker,
     # from Switches
@@ -480,7 +480,7 @@ A protocol running between two nodes, checking periodically for any entangled st
 
 $FIELDS
 """
-@kwdef struct GHZConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
+@kwdef struct FusionConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -495,22 +495,22 @@ $FIELDS
     log::Vector{Tuple{Float64, Float64}} = Tuple{Float64, Float64}[]
 end
 
-function GHZConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
-    return GHZConsumer(;sim, net, piecemaker,  event_ghz_state, kwargs...)
+function FusionConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
+    return FusionConsumer(;sim, net, piecemaker,  event_ghz_state, kwargs...)
 end
-function GHZConsumer(net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
-    return GHZConsumer(get_time_tracker(net), net, piecemaker, event_ghz_state; kwargs...)
+function FusionConsumer(net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
+    return FusionConsumer(get_time_tracker(net), net, piecemaker, event_ghz_state; kwargs...)
 end
 
-@resumable function (prot::GHZConsumer)()
+@resumable function (prot::FusionConsumer)()
     if isnothing(prot.period)
-        error("In `GHZConsumer` we do not yet support waiting on register to make qubits available") # TODO
+        error("In `FusionConsumer` we do not yet support waiting on register to make qubits available") # TODO
     end
     while true
         nclients = nsubsystems(prot.net[1])-1
         qparticipating = queryall(prot.piecemaker, FusionCounterpart, ❓, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(qparticipating)
-            @debug "GHZConsumer between $(prot.piecemaker): query on piecemaker slot found no entanglement"
+            @debug "FusionConsumer between $(prot.piecemaker): query on piecemaker slot found no entanglement"
             #@yield timeout(prot.sim, prot.period)
             continue
             return
@@ -527,7 +527,7 @@ end
             all_locks = reduce(&, tasks)
             @yield all_locks
 
-            @debug "GHZConsumer of $(prot.piecemaker): queries successful, consuming entanglement"
+            @debug "FusionConsumer of $(prot.piecemaker): queries successful, consuming entanglement"
             for q in qparticipating 
                 untag!(prot.piecemaker, q.id)
             end
@@ -538,12 +538,12 @@ end
                 apply!(prot.net[2][1], Z) # apply correction on arbitrary client slot
             end
             result = real(observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z2,nclients)...]) + reduce(⊗,[fill(Z1,nclients)...])))))
-            @debug "GHZConsumer: expectation value $(result)" 
+            @debug "FusionConsumer: expectation value $(result)" 
             
             pm = queryall(prot.piecemaker, ❓, ❓, ❓)
             @assert length(pm) < 2 "More than one entry for piecemaker in database."
             (slot, id, tag) = pm[1]
-            @debug "GHZConsumer: piecemaker qubit state real($(observable(slot, X1)))"
+            @debug "FusionConsumer: piecemaker qubit state real($(observable(slot, X1)))"
             untag!(prot.piecemaker, id)
             
             # delete tags and free client slots
