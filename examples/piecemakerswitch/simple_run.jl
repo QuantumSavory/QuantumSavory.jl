@@ -2,16 +2,20 @@ include("setup.jl")
 using DataFrames
 using CSV
 
+name = "qs_piecemeal"
+nruns = 1000
+mem_depolar_prob = 0.1
+link_success_prob = 0.5
+
 results_per_client = DataFrame[]
 for nclients in 2:3
     # Prepare simulation components
-    type, nruns, n, link_success_prob, mem_depolar_prob, _, _ = prepare_simulation(nclients)  # Assuming `n` is consistent across runs
     distribution_times = Float64[]
     fidelities = Float64[]
     elapsed_times = Float64[]
 
     for i in 1:nruns
-        sim, consumer = prepare_simulation(nclients)[end-1:end]
+        sim, consumer = prepare_simulation(nclients, mem_depolar_prob, link_success_prob)
         elapsed_time = @elapsed run(sim)
 
         # Extract data from consumer.log
@@ -28,10 +32,10 @@ for nclients in 2:3
         fidelities = fidelities,
         elapsed_times = elapsed_times
     )
-    results.num_remote_nodes .= n
+    results.num_remote_nodes .= nclients
     results.link_success_prob .= link_success_prob
     results.mem_depolar_prob .= mem_depolar_prob
-    results.type .= type
+    results.type .= name
 
     push!(results_per_client, results)
     @info "Clients $nclients completed"
