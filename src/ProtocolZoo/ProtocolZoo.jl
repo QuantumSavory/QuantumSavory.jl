@@ -470,19 +470,17 @@ $FIELDS
     net::RegisterNet
     """the piecemaker qubit slot"""
     piecemaker::RegRef
-    """event when all users are sharing a ghz state"""
-    event_ghz_state::Event
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::LT = 0.00001
     """stores the time and resulting observable from querying the piecemaker qubit for `EntanglementCounterpart`"""
     log::Vector{Tuple{Float64, Float64}} = Tuple{Float64, Float64}[]
 end
 
-function FusionConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
-    return FusionConsumer(;sim, net, piecemaker,  event_ghz_state, kwargs...)
+function FusionConsumer(sim::Simulation, net::RegisterNet, piecemaker::RegRef; kwargs...)
+    return FusionConsumer(;sim, net, piecemaker, kwargs...)
 end
-function FusionConsumer(net::RegisterNet, piecemaker::RegRef, event_ghz_state::Event; kwargs...)
-    return FusionConsumer(get_time_tracker(net), net, piecemaker, event_ghz_state; kwargs...)
+function FusionConsumer(net::RegisterNet, piecemaker::RegRef; kwargs...)
+    return FusionConsumer(get_time_tracker(net), net, piecemaker; kwargs...)
 end
 
 @resumable function (prot::FusionConsumer)()
@@ -699,7 +697,8 @@ end
             
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
             @yield timeout(prot.sim, attempts * prot.attempt_time) 
-
+            
+            @info "test"
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
             tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a

@@ -6,7 +6,6 @@ using ResumableFunctions
 using Distributions
 using DataFrames
 using CSV
-using StatsPlots
         
 
 function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_prob = 0.5)
@@ -25,8 +24,6 @@ function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_pro
     # Set up the initial |+> state of the piecemaker qubit
     initialize!(net[1][m], X1)
 
-    event_ghz_state = Event(sim)
-
     # Set up the entanglement trackers at each client
     trackers = [EntanglementTracker(sim, net, k) for k in 2:nclients+1]
     for tracker in trackers
@@ -38,7 +35,7 @@ function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_pro
     @process switch_protocol()
 
     # Set up an entanglement consumer between each unordered pair of clients
-    consumer = FusionConsumer(net, net[1][m], event_ghz_state; period=1)
+    consumer = FusionConsumer(net, net[1][m]; period=1)
     @process consumer()
     
     return sim, consumer
