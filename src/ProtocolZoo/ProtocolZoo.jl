@@ -698,7 +698,6 @@ end
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
             @yield timeout(prot.sim, attempts * prot.attempt_time) 
             
-            @info "test"
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
             tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a

@@ -8,7 +8,7 @@ At each clock tick, the switch initiates entanglement attempts with each of the 
 The fusion operation consists of applying a **CNOT** gate followed by a measurement in the computational basis. This procedure allows the merging of two GHZ states into a single GHZ state, modulo any required Pauli corrections. We iterate over all existing entangled states with the switch node: in each iteration, the piecemaker qubit (initialized in the state \(|+\rangle\)) is fused with one of the existing entangled states. 
 
 # Noise 
-The memories residing the nodes' `Register`s suffer from depolarizing noise. The latter is modelled via Kraus operators applied to the current state's density matrix.
+The memories residing the nodes' `Register`s suffer from depolarizing noise. 
 
 ### Protocol flow
 
