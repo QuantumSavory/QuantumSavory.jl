@@ -4,12 +4,13 @@ using QuantumSavory
 using Graphs
 using NetworkLayout
 import ConcurrentSim
-import Makie
+import Makie, GeoMakie
 import Makie: Theme, Figure, Axis,
     @recipe, lift, Observable,
     Point2, Point2f, Rect2f,
     scatter!, poly!, linesegments!,
-    DataInspector
+    DataInspector, GeometryBasics
+using NaturalEarth
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 
 ##
@@ -285,12 +286,30 @@ end
 It returns a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates
 the plot with the current state of the network."""
-function registernetplot_axis(subfig, registersobservable; infocli=true, datainspector=true, kwargs...)
-    ax = Makie.Axis(subfig)
+function registernetplot_axis(subfig, registersobservable; infocli=true, datainspector=true, map=false, kwargs...)
+    if map
+        registercoords = kwargs[:registercoords]
+        latitudes = [p[1] for p in registercoords]
+        longitudes = [p[2] for p in registercoords]
+        pad = 10f0 # TODO: Don't fix this value
+        ax = GeoAxis(subfig; limits=((minimum(latitudes) - pad, maximum(latitudes) + pad), (minimum(longitudes) - pad, maximum(longitudes) + pad)), dest="+proj=longlat +datum=WGS84")
+        image!(ax, -180..180, -90..90, GeoMakie.earth() |> rotr90; interpolate=false, inspectable=false)
+        poly!(ax, GeoMakie.land(); color=:lightyellow, strokecolor=:black, strokewidth=1, inspectable=false)
+        
+        # TODO: make this customizable (might be better if a completed map gets passed in)
+        countries = naturalearth("admin_0_countries", 110)
+        states = naturalearth("admin_1_states_provinces_lines", 110)
+        poly!(ax, GeoMakie.to_multipoly.(countries.geometry), color=:transparent, strokecolor=:black, strokewidth=1, inspectable=false)
+        lines!(ax, GeoMakie.to_multilinestring.(states.geometry); color=:gray, inspectable=false)
+    else
+        ax = Makie.Axis(subfig)
+    end
     p = registernetplot!(ax, registersobservable; kwargs...)
     ax.aspect = Makie.DataAspect()
     Makie.hidedecorations!(ax)
-    Makie.hidespines!(ax)
+    if !map
+        Makie.hidespines!(ax)
+    end
     Makie.deregister_interaction!(ax, :rectanglezoom)
     if infocli
         rnh = RNHandler(p)
@@ -299,7 +318,9 @@ function registernetplot_axis(subfig, registersobservable; infocli=true, datains
     if datainspector
         DataInspector(subfig)
     end
-    Makie.autolimits!(ax)
+    if !map
+        Makie.autolimits!(ax)
+    end
     subfig, ax, p, p[1]
 end
 
