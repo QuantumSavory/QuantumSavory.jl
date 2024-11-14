@@ -71,3 +71,19 @@ function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_h
     ih = choose_high((n.tag[2] for n in high_nodes))
     return (low_nodes[il], high_nodes[ih])
 end
+
+"""
+A generic predicate function for any arbitrary topology and entanglement flow
+"""
+function predicate(graph, src, dst, node; low=true)
+    d_src = length(a_star(graph, src, node))
+    d_dst = length(a_star(graph, dst, node))
+    return low ? d_src <= d_dst : d_src > d_dst
+end
+
+"""
+A generic choosing function for any arbitrary topology and entanglement flow
+"""
+function choose(graph, target_node, arr)
+    return argmin(length.([a_star(graph, node, target_node) for node in arr]))
+end

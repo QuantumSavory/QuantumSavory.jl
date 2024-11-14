@@ -185,9 +185,13 @@ See also: [`SwapperProt`](@ref), [`EntanglementTracker`](@ref), [`EntanglementRe
     swapping_node::Int
     """The number of rounds the swapper should run for"""
     rounds::Int
+    """source node for the `DistributionRequest`"""
+    src::Int
+    """destination node for the `DistributionRequest`"""
+    dst::Int
 end
 Base.show(io::IO, tag::SwapRequest) = print(io, "Node $(tag.swapping_node) perform a swap")
-Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds)
+Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds, tag.src, tag.dst)
 
 """
 $TYPEDEF
@@ -532,14 +536,21 @@ end
                     entangler = EntanglerProt(prot.sim, prot.net, prot.node, neighbor; rounds=rounds, randomize=true)
                     @process entangler()
                 else
-                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓)
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓, ❓)
                     @debug "RequestTracker @$(prot.node): Received $msg"
                     isnothing(msg) && continue
                     workwasdone = true
-                    (msg_src, (_, _, rounds)) = msg
+                    (msg_src, (_, _, rounds, req_src, req_dst)) = msg
                     @debug "RequestTracker @$(prot.node): Performing a swap"
-                    swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
-                    @process swapper()
+                    if req_src == 0
+                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
+                        @process swapper()
+                    else
+                        ###instantiate predicate 
+                        ### instantiate choosing function
+                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
+                        @process swapper()
+                    end
                 end
             end
         end

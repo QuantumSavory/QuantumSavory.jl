@@ -83,12 +83,12 @@ end
             workwasdone = false
             msg = querydelete!(mb, DistributionRequest, ❓, ❓)
             if !isnothing(msg)
-                (msg_src, (_, src, dst)) = msg
-                if typeof(prot.path_mat[src, dst]) <: Number
-                    prot.path_mat[src, dst] = PathMetadata(prot.net.graph, src, dst, Int(length(prot.net[1].staterefs)/2))
+                (msg_src, (_, req_src, req_dst)) = msg
+                if typeof(prot.path_mat[req_src, req_dst]) <: Number
+                    prot.path_mat[req_src, req_dst] = PathMetadata(prot.net.graph, req_src, req_dst, Int(length(prot.net[1].staterefs)/2))
                 end
-                path_id = path_selection(prot.sim, prot.path_mat[src, dst])
-                path = prot.path_mat[src, dst].paths[path_id]
+                path_id = path_selection(prot.sim, prot.path_mat[req_src, req_dst])
+                path = prot.path_mat[req_src, req_dst].paths[path_id]
                 if isnothing(path_id)
                     @debug "Request failed, all paths reserved"
                 end
@@ -104,7 +104,7 @@ end
                 end
                 
                 for i in 2:length(path)-1
-                    msg = Tag(SwapRequest, path[i], 1)
+                    msg = Tag(SwapRequest, path[i], 1, 0, 0)
                     if prot.node == path[i]
                         put!(mb, msg)
                     else
@@ -150,7 +150,7 @@ end
                 (msg_src, (_, req_src, req_dst)) = msg
                 for v in vertices(prot.net)
                     if v != req_src && v != req_dst
-                        msg = Tag(SwapRequest, v, 1)
+                        msg = Tag(SwapRequest, v, 1, req_src, req_dst)
                         if prot.node == v
                             put!(mb, msg)
                         else
