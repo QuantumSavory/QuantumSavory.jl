@@ -8,7 +8,7 @@ function registernetplot end
 Requires a Makie backend be already imported."""
 function registernetplot! end
 
-"""Draw the given register network on a given Makie subfigure and modify the axis with numerous visualization enhancements.
+"""Draw the given register network on a given Makie axis or subfigure and modify the axis with numerous visualization enhancements.
 
 Requires a Makie backend be already imported."""
 function registernetplot_axis end
@@ -22,3 +22,6 @@ function resourceplot_axis end
 function showmetadata end
 
 function showonplot end
+
+"""Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for registernetplot_axis."""
+function generate_map end

@@ -312,28 +312,23 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
     ax.parent, ax, p, p[1]
 end
 
-function registernetplot_axis_map(subfig::Makie.GridPosition, registersobservable; infocli=true, datainspector=true, kwargs...)
+function registernetplot_axis(subfig::Makie.GridPosition, registersobservable; infocli=true, datainspector=true, kwargs...)
     registernetplot_axis(Makie.Axis(subfig), registersobservable; infocli, datainspector, kwargs...)
 end
 
-""" Draw registers at given (latitude, longitude) coordinates using `registernetplot_axis`. This function generates a default map, including country and state boundaries.
 
-For a custom map, use `registernetplot_axis` with an axis from a pre-drawn map. """
-function registernetplot_map(subfig::Makie.GridPosition, registersobservable; infocli=true, datainspector=true, kwargs...)
-    if !haskey(kwargs, :registercoords)
-        error("`registercoords` is missing")
-    else
-        # default map
-        ax = GeoAxis(subfig; limits=((-180, 180), (-90, 90)), dest="+proj=longlat +datum=WGS84")
-        countries = naturalearth("admin_0_countries", 110)
-        states = naturalearth("admin_1_states_provinces_lakes", 110)
-        image!(ax, -180..180, -90..90, GeoMakie.earth() |> rotr90; interpolate=false, inspectable=false)
-        poly!(ax, GeoMakie.land(); color=:lightyellow, strokecolor=:black, strokewidth=1, inspectable=false)
-        poly!(ax, GeoMakie.to_multipoly.(countries.geometry), color=:transparent, strokecolor=:black, strokewidth=1, inspectable=false)
-        poly!(ax, GeoMakie.to_multipoly.(states.geometry); color=:transparent, strokecolor=:grey, strokewidth=0.7, inspectable=false)
-        registernetplot_axis(ax, registersobservable; infocli, datainspector, kwargs...)
-    end
+"""Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for registernetplot_axis."""
+function generate_map(subfig::Makie.GridPosition)
+    ax = GeoAxis(subfig; limits=((-180, 180), (-90, 90)), dest="+proj=longlat +datum=WGS84")
+    countries = naturalearth("admin_0_countries", 110)
+    states = naturalearth("admin_1_states_provinces_lakes", 110)
+    image!(ax, -180..180, -90..90, GeoMakie.earth() |> rotr90; interpolate=false, inspectable=false)
+    poly!(ax, GeoMakie.land(); color=:lightyellow, strokecolor=:black, strokewidth=1, inspectable=false)
+    poly!(ax, GeoMakie.to_multipoly.(countries.geometry), color=:transparent, strokecolor=:black, strokewidth=1, inspectable=false)
+    poly!(ax, GeoMakie.to_multipoly.(states.geometry); color=:transparent, strokecolor=:grey, strokewidth=0.7, inspectable=false)
+    return ax
 end
+
 ##
 
 showonplot(r::ConcurrentSim.Resource) = islocked(r)
