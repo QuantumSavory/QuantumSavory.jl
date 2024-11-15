@@ -57,6 +57,9 @@ end
 uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now) = uptotime!(map(r->r.reg, refs), map(r->r.idx, refs), now)
 uptotime!(ref::RegRef, now) = uptotime!([ref.reg], [ref.idx], now)
 
+"""
+Overwrite the time of the simulation for given register slot(s) to `now`.
+"""
 function overwritetime!(registers, indices, now)
     for (i,r) in zip(indices, registers)
         r.accesstimes[i] = now

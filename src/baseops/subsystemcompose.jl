@@ -3,6 +3,9 @@ nsubsystems_padded(s::StateRef) = nsubsystems(s.state[])
 nsubsystems(r::Register) = length(r.staterefs)
 nsubsystems(r::RegRef) = 1
 
+"""
+Swaps the states of two registers at specified slots or register references.
+"""
 function swap!(reg1::Register, reg2::Register, i1::Int, i2::Int; time=nothing)
     if reg1===reg2 && i1==i2
         return

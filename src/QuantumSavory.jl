@@ -53,7 +53,7 @@ export
     # initialize.jl
     initialize!, newstate,
     # subsystemcompose.jl
-    subsystemcompose,
+    swap!, subsystemcompose,
     # observable.jl
     observable,
     # uptotime.jl
