@@ -2,7 +2,6 @@ module QuantumSavoryGeoMakie
 
 import Makie, GeoMakie
 using GeoMakie: GeoAxis, image!, poly!, naturalearth
-using NaturalEarth
 
 """Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for registernetplot_axis."""
 function generate_map(subfig::Makie.GridPosition)
