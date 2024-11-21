@@ -146,7 +146,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 iˢ == 1 || iˢ == nsubsystems(s) || push!(state_links[], pˢ)
             end
         end
- 
+
         ## the colors and locations for various observables
         if !isnothing(rn[:observables][])
         for (O, rsidx, links) in rn[:observables][]

@@ -42,9 +42,7 @@ function resourceplot_axis(args...; kwargs...)
     return ext.resourceplot_axis(args...; kwargs...)
 end
 
-"""Show the metadata tooltip for a given register slot.
-
-Requires a Makie backend be already imported."""
+"""Show the metadata tooltip for a given register slot."""
 function showmetadata end
 
 function showonplot end
