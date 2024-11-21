@@ -35,6 +35,7 @@ end
 
 Requires a Makie backend be already imported."""
 function resourceplot_axis(args...; kwargs...)
+    ext = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
     if isnothing(ext)
         throw("`resourceplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
     end
@@ -44,12 +45,7 @@ end
 """Show the metadata tooltip for a given register slot.
 
 Requires a Makie backend be already imported."""
-function showmetadata(args...; kwargs...) 
-    if isnothing(ext)
-        throw("`showmetadata` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
-    end
-    return ext.showmetadata(args...; kwargs...)
-end
+function showmetadata end
 
 function showonplot end
 
