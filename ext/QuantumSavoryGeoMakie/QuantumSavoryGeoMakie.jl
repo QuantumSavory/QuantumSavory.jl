@@ -3,20 +3,27 @@ module QuantumSavoryGeoMakie
 import Makie, GeoMakie
 using GeoMakie: GeoAxis, image!, poly!, naturalearth
 
-"""Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for registernetplot_axis."""
-function generate_map(subfig::Makie.GridPosition)
+"""
+Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for registernetplot_axis.
+
+For borders, the optional `scale` parameter can be set to 10, 50, or 110, corresponding to Natural Earth resolutions of 1:10m, 1:50m, and 1:110m.
+"""
+function generate_map(subfig::Makie.GridPosition, scale::Int=110)
+    if scale ∉ (10, 50, 110)
+        error("Invalid scale value: scale must be 10, 50, or 110.")
+    end
     ax = GeoAxis(subfig; limits=((-180, 180), (-90, 90)), dest="+proj=longlat +datum=WGS84")
-    countries = naturalearth("admin_0_countries", 50)
-    states = naturalearth("admin_1_states_provinces_lakes", 50)
+    countries = naturalearth("admin_0_countries", scale)
+    states = naturalearth("admin_1_states_provinces_lakes", scale)
     image!(ax, (-180, 180), (-90, 90), GeoMakie.earth() |> rotr90; interpolate=false, inspectable=false)
-    poly!(ax, GeoMakie.land(); color=:lightyellow, strokecolor=:black, strokewidth=1, inspectable=false)
+    poly!(ax, GeoMakie.land(); color=:lightyellow, strokecolor=:transparent, inspectable=false)
     poly!(ax, GeoMakie.to_multipoly.(countries.geometry), color=:transparent, strokecolor=:black, strokewidth=1, inspectable=false)
     poly!(ax, GeoMakie.to_multipoly.(states.geometry); color=:transparent, strokecolor=:grey, strokewidth=0.7, inspectable=false)
     return ax
 end
 
 function generate_map()
-    fig = Makie.Figure(size=(800,400))
+    fig = Makie.Figure()
     generate_map(fig[1, 1])
 end
 

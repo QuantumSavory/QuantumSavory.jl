@@ -315,7 +315,7 @@ function registernetplot_axis(subfig::Makie.GridPosition, registersobservable; i
 end
 
 function registernetplot_axis(registersobservable; infocli=true, datainspector=true, kwargs...)
-    fig = Figure(size=(800,400))
+    fig = Figure()
     ax = Axis(fig[1, 1])
     registernetplot_axis(ax, registersobservable; infocli, datainspector, kwargs...)
 end
