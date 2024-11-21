@@ -6,7 +6,41 @@ using ResumableFunctions
 using Distributions
 using DataFrames
 using CSV
-        
+using Profile
+using NetworkLayout
+
+@resumable function entangle_and_fuse(sim, net, client, link_success_prob)
+
+    # Set up the entanglement trackers at each client
+    tracker = EntanglementTracker(sim, net, client) 
+    @process tracker()
+
+    # Set up the entangler and fuser protocols at each client
+    entangler = EntanglerProt(
+        sim=sim, net=net, nodeA=1, slotA=client-1, nodeB=client,
+        success_prob=link_success_prob, rounds=1, attempts=-1,
+        start_timer_after_first_attempt=true, # TODO: for some reason attempt_timeout=1 is not working, hardcoded in constructor for now
+        )
+    @yield @process entangler()
+    
+    fuser = FusionProt(
+            sim=sim, net=net, node=1,
+            nodeC=client,
+            rounds=1
+        )
+    @yield @process fuser()
+end
+
+
+@resumable function run_protocols(sim, net, nclients, link_success_prob)
+    # Run entangler and fusion for each client and wait for all to finish
+    procs_succeeded = []
+    for k in 2:nclients+1    
+        proc_succeeded = @process entangle_and_fuse(sim, net, k, link_success_prob)
+        push!(procs_succeeded, proc_succeeded)
+    end
+    @yield reduce(&, procs_succeeded)
+end
 
 function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_prob = 0.5)
 
@@ -23,20 +57,14 @@ function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_pro
 
     # Set up the initial |+> state of the piecemaker qubit
     initialize!(net[1][m], X1)
+    
+    # Run entangler and fusion for each client and wait for all to finish
+    @process run_protocols(sim, net, nclients, link_success_prob)
 
-    # Set up the entanglement trackers at each client
-    trackers = [EntanglementTracker(sim, net, k) for k in 2:nclients+1]
-    for tracker in trackers
-        @process tracker()
-    end
-
-    # Finally, set up the switch without assignments
-    switch_protocol = FusionSwitchDiscreteProt(net, 1, 2:nclients+1, fill(link_success_prob, nclients); ticktock=1)
-    @process switch_protocol()
-
-    # Set up an entanglement consumer between each unordered pair of clients
+    # Set up the consumer to measure final entangled state
     consumer = FusionConsumer(net, net[1][m]; period=1)
     @process consumer()
-    
+
     return sim, consumer
 end
+

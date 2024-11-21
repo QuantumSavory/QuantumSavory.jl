@@ -1,10 +1,11 @@
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 ConcurrentSim = "6ed1e86c-fcaf-46a9-97e0-2b26a2cdb499"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 NetworkLayout = "46757867-2c16-5918-afeb-47bfcb05e46a"
 QuantumSavory = "2de2e421-972c-4cb5-a0c3-999c85908079"
 ResumableFunctions = "c5292f4c-5179-55e1-98c5-05642aab7184"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

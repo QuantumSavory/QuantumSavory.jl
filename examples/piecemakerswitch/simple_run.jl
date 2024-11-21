@@ -10,16 +10,16 @@ mem_depolar_prob = 0.1
 link_success_prob = 0.5
 
 results_per_client = DataFrame[]
-for nclients in 2:3
-    # Prepare simulation components
+for nclients in 2:9
+    # Prepare simulation data storage
     distribution_times = Float64[]
     fidelities = Float64[]
     elapsed_times = Float64[]
 
+    # Run the simulation nruns times
     for i in 1:nruns
         sim, consumer = prepare_simulation(nclients, mem_depolar_prob, link_success_prob)
-        elapsed_time = @elapsed run(sim)
-
+        elapsed_time = @elapsed run(sim) 
         # Extract data from consumer.log
         distribution_time, fidelity = consumer.log[1]
         append!(distribution_times, distribution_time)
@@ -28,7 +28,7 @@ for nclients in 2:3
         @info "Run $i completed"
     end
 
-    # Initialize results DataFrame
+    # Fill the results DataFrame
     results = DataFrame(
         distribution_times = distribution_times,
         fidelities = fidelities,
@@ -55,5 +55,6 @@ summary_df = combine(
 @info summary_df
 
 # Write results to CSV
-# CSV.write("examples/piecemakerswitch/output/piecemaker2-9.csv", results_total)
-# CSV.write("examples/piecemakerswitch/output/piecemaker2-9_summary.csv", summary_df)
+# CSV.write("examples/piecemakerswitch/output/piecemaker-eventdriven.csv", results_total)
+# CSV.write("examples/piecemakerswitch/output/piecemaker-eventdriven_summary.csv", summary_df)
+
