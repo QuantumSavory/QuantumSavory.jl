@@ -105,7 +105,7 @@ end
                 
                 for i in 2:length(path)-1
                     last = i == length(path) - 1 ? 1 : 0
-                    msg = Tag(SwapRequest, path[i], 1)
+                    msg = Tag(SwapRequest, path[i], 1, path[i-1], path[i+1])
                     if prot.node == path[i]
                         put!(mb, msg)
                     else
