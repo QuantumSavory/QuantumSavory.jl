@@ -14,6 +14,7 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 using Graphs
+using Memoize
 
 export
     # protocols
@@ -25,7 +26,7 @@ export
     # controllers
     NetController, Controller, CLController,
     #utils
-    PathMetadata, path_selection
+    PathMetadata, path_selection, swap_predicate, swap_choose
 
 abstract type AbstractProtocol end
 
@@ -189,6 +190,8 @@ See also: [`SwapperProt`](@ref), [`EntanglementTracker`](@ref), [`EntanglementRe
     src::Int
     """destination node for the `DistributionRequest`"""
     dst::Int
+    """whether the request is from a connection-oriented(0) or connection-less controller(1)"""
+    conn::Int
 end
 Base.show(io::IO, tag::SwapRequest) = print(io, "Node $(tag.swapping_node) perform a swap")
 Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds, tag.src, tag.dst)
@@ -536,19 +539,21 @@ end
                     entangler = EntanglerProt(prot.sim, prot.net, prot.node, neighbor; rounds=rounds, randomize=true)
                     @process entangler()
                 else
-                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓, ❓)
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓, ❓, ❓)
                     @debug "RequestTracker @$(prot.node): Received $msg"
                     isnothing(msg) && continue
                     workwasdone = true
-                    (msg_src, (_, _, rounds, req_src, req_dst)) = msg
+                    (msg_src, (_, _, rounds, req_src, req_dst, conn)) = msg
                     @debug "RequestTracker @$(prot.node): Performing a swap"
-                    if req_src == 0
-                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
+                    if conn == 0 # connection-oriented
+                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = req_src, nodeH = req_dst, rounds=rounds)
                         @process swapper()
-                    else
-                        ###instantiate predicate 
-                        ### instantiate choosing function
-                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = <(prot.node), nodeH = >(prot.node), chooseL=argmin, chooseH=argmax, rounds=rounds)
+                    else # connection-less
+                        pred_low = swap_predicate(prot.net.graph, req_src, req_dst, prot.node)
+                        pred_high = swap_predicate(prot.net.graph, req_src, req_dst, prot.node; low=false)
+                        choose_low = swap_choose(prot.net.graph, req_src)
+                        choose_high = swap_choose(prot.net.graph, req_dst)
+                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = pred_low, nodeH = pred_high, chooseL=choose_low, chooseH=choose_high, rounds=rounds)
                         @process swapper()
                     end
                 end

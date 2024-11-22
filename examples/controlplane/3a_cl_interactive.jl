@@ -32,7 +32,7 @@ end
 sim, net, obs, entlog, entlogaxis, fid_axis, histaxis, num_epr_axis, fig = prepare_vis(consumer)
 
 step_ts = range(0.0, 1000.0, step=0.1)
-record(fig, "sim.mp4", step_ts; framerate=10, visible=true) do t
+record(fig, "sim2.mp4", step_ts; framerate=10, visible=true) do t
     run(sim, t)
     notify.((obs,entlog))
     ylims!(entlogaxis, (-1.04,1.04))

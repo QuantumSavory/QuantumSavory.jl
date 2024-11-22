@@ -73,17 +73,27 @@ function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_h
 end
 
 """
-A generic predicate function for any arbitrary topology and entanglement flow
+A generic predicate function for any arbitrary topology and entanglement flow used by [`SwapperProt`](@ref) and `findswapablequbits`
+Returns a predicate function indicating whether a node is closer to Alice(source) or Bob(destination)
 """
-function predicate(graph, src, dst, node; low=true)
-    d_src = length(a_star(graph, src, node))
-    d_dst = length(a_star(graph, dst, node))
-    return low ? d_src <= d_dst : d_src > d_dst
+function swap_predicate(graph, src, dst, curr_node; low=true)
+    return node -> begin
+                    d_src = get_distance(graph, src, node)
+                    d_dst = get_distance(graph, dst, node)
+                    is_closer = low ? d_src < get_distance(graph, src, curr_node) : d_dst < get_distance(graph, dst, curr_node)
+                    res = d_src <= d_dst
+                    low ? res & is_closer : !res & is_closer
+                end
 end
 
 """
-A generic choosing function for any arbitrary topology and entanglement flow
+A generic choosing function for any arbitrary topology and entanglement flow. Returns the index of the node closest to `target_node`
+for performing a swap.
 """
-function choose(graph, target_node, arr)
-    return argmin(length.([a_star(graph, node, target_node) for node in arr]))
+function swap_choose(graph, target_node)
+    return arr -> argmin([get_distance(graph, target_node, node) for node in arr])
+end
+
+@memoize function get_distance(graph, nodeA, nodeB)
+    return length(a_star(graph, nodeA, nodeB))
 end

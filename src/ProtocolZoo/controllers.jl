@@ -104,7 +104,7 @@ end
                 end
                 
                 for i in 2:length(path)-1
-                    msg = Tag(SwapRequest, path[i], 1, 0, 0)
+                    msg = Tag(SwapRequest, path[i], 1, path[i-1], path[i+1], 0)
                     if prot.node == path[i]
                         put!(mb, msg)
                     else
@@ -150,7 +150,7 @@ end
                 (msg_src, (_, req_src, req_dst)) = msg
                 for v in vertices(prot.net)
                     if v != req_src && v != req_dst
-                        msg = Tag(SwapRequest, v, 1, req_src, req_dst)
+                        msg = Tag(SwapRequest, v, 1, req_src, req_dst, 1)
                         if prot.node == v
                             put!(mb, msg)
                         else
