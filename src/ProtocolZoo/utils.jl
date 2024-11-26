@@ -11,17 +11,28 @@ $TYPEDFIELDS
     """The vector of paths between the user pair"""
     paths::Vector{Vector{Int}}
     """The vector containing the workload information of a path"""
-    workloads::Vector{Int}
-    """The number of slots available at each node. Scalar if all are same, vector otherwise."""
-    capacity::Union{Vector{Int}, Int}
+    workloads::Dict{Int, Int}
+    """The number of slots available at each node. Scalar if all are same, otherwise a dictionary."""
+    capacity::Union{Dict{Int, Int}}
     """Number of failed requests due to high request traffic"""
     failures::Ref{Int}
 end
 
-function PathMetadata(graph::SimpleGraph{Int64}, src::Int, dst::Int, caps::Union{Vector{Int}, Int}; failures=Ref{Int}(0))
+function PathMetadata(graph::SimpleGraph{Int64}, src::Int, dst::Int, caps::Union{Dict{Int, Int}, Int}; failures=Ref{Int}(0))
     paths = sort(collect(all_simple_paths(graph, src, dst)); by = x->length(x))
-    workloads = zeros(length(paths))
-    PathMetadata(paths, workloads, caps, failures)
+    src = paths[1][1]
+    dst = paths[1][end]
+    workloads = Dict{Int, Int}()
+    capacity = isa(caps, Number) ? Dict{Int, Int}() : caps
+    for node in 1:size(graph)[1]
+        if !(node == src || node == dst)
+            workloads[node] = 0
+            if isa(caps, Number)
+                capacity[node] = caps
+            end
+        end
+    end
+    PathMetadata(paths, workloads, capacity, failures)
 end
 
 
@@ -29,12 +40,13 @@ end
 A simple path selection algorithm for connection oriented networks.
 """
 function path_selection(sim, pathobj::PathMetadata) 
-    for i in 1:length(pathobj.paths)
-        capacity = isa(pathobj.capacity, Number) ? pathobj.capacity : pathobj.capacity[i]
-        if pathobj.workloads[i]<capacity
-            pathobj.workloads[i] += 1
-            @process unreserve_path(sim, pathobj, i)
-            return i
+    for (ind, path) in pairs(pathobj.paths)
+        if all([pathobj.workloads[node] < pathobj.capacity[node] for node in path[2:end-1]])
+            for node in path[2:end-1]
+                pathobj.capacity[node] += 1
+            end
+            @process unreserve_path(sim, pathobj, ind)
+            return ind
         end
     end
     pathobj.failures +=1
@@ -44,7 +56,9 @@ end
 @resumable function unreserve_path(sim, pathobj::PathMetadata, i)
     @yield timeout(sim, 0.5)
     @debug "Path $(pathobj.paths[i]) workload reduced"
-    pathobj.workloads[i] -= 1
+    for node in pathobj.paths[i][2:end-1]
+        pathobj.capacity[node] -= 1
+    end
 end
 
 
