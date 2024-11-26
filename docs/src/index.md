@@ -8,7 +8,7 @@ end
 
 A multi-formalism simulator for noisy quantum communication and computation hardware with support for symbolic algebra, multiple simulation backends, a variety of noise models, discrete event simulation, optimization, and visualization.
 
-We are also preparing a [getting started manual](@ref manual).
+To install QuantumSavory, see: [getting started manual](@ref manual).
 
 The rest of the documentation is [structured](https://diataxis.fr/) as follows:
 
@@ -19,7 +19,17 @@ The rest of the documentation is [structured](https://diataxis.fr/) as follows:
 
 Depending on your learning style, you might prefer to start at different locations in the above documentation.
 
-Below we demo some of the results of the How-To guides.
+
+### Capabilities
+
+QuantumSavory offers advanced features such as:
+
+- **Hardware Parameter Database**: Detailed records of quantum hardware metrics, enabling realistic simulations and performance benchmarking.
+- **Noise Processes Zoo**: A collection of noise models for simulating quantum systems under realistic and complex conditions.
+- **Protocols and Circuits Compendium**: Pre-designed quantum circuits and protocols for rapid prototyping and optimization of applications.
+
+
+Below we show some of the results of the How-To guides.
 
 #### A simulation of a quantum repeater:
 
@@ -43,3 +53,6 @@ Below we demo some of the results of the How-To guides.
 
 A good place to start is the How-To pages.
 For instance, the [implementation of a first generation repeater](@ref First-Generation-Quantum-Repeater).
+
+### Get Involved
+We welcome contributions from experts and students alike, whether by improving the codebase or suggesting new useful features. Your input will help us refine QuantumSavory and support better quantum simulations.
