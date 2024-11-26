@@ -72,7 +72,7 @@ See also [`RequestGenerator`](@ref), [`RequestTracker`](@ref)
     """The node in the network where the control protocol is physically located, ideally a centrally located node"""
     node::Int
     """A matrix for the object containing physical graph metadata for the network"""
-    path_mat::Matrix{Union{Float64, PathMetadata}}
+    path_mat::Matrix{Union{Nothing, PathMetadata}}
 end
 
 @resumable function (prot::Controller)()
@@ -84,7 +84,7 @@ end
             msg = querydelete!(mb, DistributionRequest, ❓, ❓)
             if !isnothing(msg)
                 (msg_src, (_, src, dst)) = msg
-                if typeof(prot.path_mat[src, dst]) <: Number
+                if isnothing(prot.path_mat[src, dst])
                     prot.path_mat[src, dst] = PathMetadata(prot.net.graph, src, dst, Int(length(prot.net[1].staterefs)/2))
                 end
                 path_id = path_selection(prot.sim, prot.path_mat[src, dst])
@@ -113,7 +113,7 @@ end
                     end
                 end
             end
-            # @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+            @debug "Controller @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
             @yield wait(mb)
             @debug "Controller @$(prot.node): Message wait ends at $(now(prot.sim))"
         end

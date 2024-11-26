@@ -1,6 +1,6 @@
 include("setup.jl")
 
-controller = Controller(sim, net, 6, zeros(8,8))
+controller = Controller(sim, net, 6, fill(nothing, 8, 8))
 @process controller()
 
 req_gen = RequestGenerator(sim, net, 1, 8, 6)
