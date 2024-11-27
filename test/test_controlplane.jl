@@ -29,7 +29,7 @@ net = RegisterNet(graph, [Register(regsize) for i in 1:8])
 sim = get_time_tracker(net)
 
 # controller
-controller = Controller(sim, net, 6, zeros(8,8))
+controller = Controller(sim, net, 6, fill(nothing, 8, 8))
 @process controller()
 
 # RequestGenerator for the user pair (1,8)
