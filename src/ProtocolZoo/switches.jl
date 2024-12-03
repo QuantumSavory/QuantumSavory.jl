@@ -288,7 +288,6 @@ end
 Run `queryall(switch, EntanglemetnCounterpart, ...)`
 to find out which clients the switch has successfully entangled with. 
 Then returns returns a list of indices corresponding to the successful clients.
-We use this list of indices e.g., in `FusionSwitchDiscreteProt` to perform fusions with currently entangled client slots.
 """
 
 function _switch_successful_entanglements(prot, reverseclientindex)

@@ -49,8 +49,8 @@ Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node
 """
 $TYPEDEF
 
-Indicates the current entanglement status with a remote node's slot. Added when a new qubit is fused into the GHZ state through [`FusionProt`](@ref).
-The [`EntanglementTracker`](@ref) receives an [`EntanglementUpdate`] message: the receives the tag pointing to a client slot it has already performed fusion with.
+Indicates the current entanglement status with a remote node's slot. Added when a new qubit is fused into the multipartide state through [`FusionProt`](@ref).
+The [`EntanglementTracker`](@ref) receives an [`EntanglementUpdate`] message: a tag pointing to a remote node slot it has performed fusion with. For example, in the `piecemakerswitch` setup the piecemaker slot in the central node is taged with all the client nodes it is fused with.
 
 $TYPEDFIELDS
 """
@@ -60,7 +60,7 @@ $TYPEDFIELDS
     "the slot in the remote node containing the qubit we are entangled to"
     remote_slot::Int
 end
-Base.show(io::IO, tag::FusionCounterpart) = print(io, "GHZ state shared with $(tag.remote_node).$(tag.remote_slot)")
+Base.show(io::IO, tag::FusionCounterpart) = print(io, "Fused with $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::FusionCounterpart) = Tag(FusionCounterpart, tag.remote_node, tag.remote_slot)
 
 
@@ -257,7 +257,7 @@ end
         if prot.attempts == -1 || prot.attempts >= attempts
     
             @yield timeout(prot.sim, attempts * prot.attempt_time)
-            initialize!((a,b), prot.pairstate; time=now(prot.sim)) 
+            initialize!((a,b), prot.pairstate; time=now(prot.sim))
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
