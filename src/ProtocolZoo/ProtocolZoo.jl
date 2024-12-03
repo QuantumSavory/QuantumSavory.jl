@@ -255,10 +255,9 @@ end
             rand(Geometric(prot.success_prob))+1
         end
         if prot.attempts == -1 || prot.attempts >= attempts
-            
+    
             @yield timeout(prot.sim, attempts * prot.attempt_time)
-            initialize!((a,b), prot.pairstate; time=now(prot.sim))
-            
+            initialize!((a,b), prot.pairstate; time=now(prot.sim)) 
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b

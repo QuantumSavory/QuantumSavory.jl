@@ -285,39 +285,6 @@ function _switch_entangler(prot, assignment)
 end
 
 """
-Run the entangler protocol between the switch and all clients (no assignment).
-"""
-function _switch_entangler_all(prot)
-    @assert length(prot.clientnodes) == nsubsystems(prot.net[prot.switchnode])-1 "Number of clientnodes needs to equal the number of switch registers."
-    for (id, client) in enumerate(prot.clientnodes) 
-        entangler = EntanglerProt(
-            sim=prot.sim, net=prot.net,
-            nodeA=prot.switchnode, nodeB=client,
-            rounds=1, attempts=1, success_prob=prot.success_probs[id],
-            attempt_time=prot.ticktock/10 # TODO this is a pretty arbitrary value
-        )
-        @process entangler()
-    end
-end
-
-"""
-Run the entangler protocol between the switch and all clients (no assignment) where there is one respective client slot selected at the switch node.
-"""
-function _switch_entangler_all_selected(prot, initial_round=false)
-    @assert length(prot.clientnodes) == nsubsystems(prot.net[prot.switchnode])-1 "Number of clientnodes needs to equal the number of switch registers."
-    
-    for (id, client) in enumerate(prot.clientnodes) 
-        entangler = SelectedEntanglerProt(
-            sim=prot.sim, net=prot.net,
-            nodeA=prot.switchnode, nodeB=client,
-            rounds=1, attempts=1, success_prob=prot.success_probs[id],
-            attempt_time=prot.ticktock/2-0.00001;
-        )
-        @process entangler()
-    end
-end
-
-"""
 Run `queryall(switch, EntanglemetnCounterpart, ...)`
 to find out which clients the switch has successfully entangled with. 
 Then returns returns a list of indices corresponding to the successful clients.
@@ -382,23 +349,6 @@ function _switch_run_swaps(prot, match)
         )
         prot.backlog[i,j] -= 1
         @process swapper()
-    end
-end
-
-"""
-Assuming the clientnodes are entangled,
-perform fusion to connect them with piecemaker qubit (no backlog discounter yet!).
-"""
-function _switch_run_fusions(prot, matches)
-    @debug "Switch $(prot.switchnode) performs fusions for clients in $(match)"
-    for i in matches
-        @debug "Enter fusion protocol with client $(i)"
-        fusion = FusionProt( # TODO be more careful about how much simulated time this takes
-            sim=prot.sim, net=prot.net, node=prot.switchnode,
-            nodeC=prot.clientnodes[i],
-            rounds=1
-        )
-        @process fusion()
     end
 end
 
