@@ -76,7 +76,6 @@ julia> if correction==2 apply!(b[2], X) end # Apply correction.
 julia> real(observable((a[1], b[2]), projector(bell))) # Now bell pair is fused into a.
 1.0
 ```
-
 """
 struct EntanglementFusion <: AbstractCircuit
 end
