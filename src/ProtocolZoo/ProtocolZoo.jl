@@ -618,7 +618,7 @@ end
 
         @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(piecemaker.idx) @ $(now(prot.sim))"
         fuscircuit = EntanglementFusion()
-        zmeas = fuscircuit(q, piecemaker) 
+        zmeas = fuscircuit(piecemaker, q) 
         #uptotime!((q, piecemaker), now(prot.sim))
         @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(piecemaker.idx) @ $(now(prot.sim))"
         # send from here to client node

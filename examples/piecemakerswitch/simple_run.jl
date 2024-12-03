@@ -11,7 +11,7 @@ mem_depolar_prob = 0.1
 link_success_prob = 0.5
 
 results_per_client = DataFrame[]
-for nclients in 2:9
+for nclients in 2:2
     # Prepare simulation data storage
     distribution_times = Float64[]
     fidelities = Float64[]
