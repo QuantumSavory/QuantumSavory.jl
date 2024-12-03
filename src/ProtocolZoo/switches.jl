@@ -7,12 +7,12 @@ using Graphs: edges, complete_graph, neighbors
 #using GraphsMatching: maximum_weight_matching # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
 using Combinatorics: combinations
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS
-using ConcurrentSim: @process, timeout, Simulation, Process, now
+using ConcurrentSim: @process, timeout, Simulation, Process
 #using ResumableFunctions: @resumable, @yield # TODO serious bug that makes it not work without full `using`
 using ResumableFunctions
 using Random
 
-export SimpleSwitchDiscreteProt, FusionSwitchDiscreteProt, SwitchRequest
+export SimpleSwitchDiscreteProt, SwitchRequest
 
 """
 A wrapper around a matrix, ensuring that it is symmetric.
@@ -122,75 +122,6 @@ function capture_stdout(f)
     close(wr)
     redirect_stdout(stdout_orig)
     return r
-end
-
-"""
-$TYPEDEF
-
-A switch protocol running on a given switch node, and attempting to serve n neighboring clients by executing fusion operations
-with each of them to generate a shared n-GHZ state. The protocol proceeds in discrete time intervals.
-First, clients attempt link-level entanglement with the switch. Next, successful clients undergo a fusion operation. 
-It merges two GHZ states into a single GHZ state (modulo Pauli corrections).
-
-
-$TYPEDFIELDS
-"""
-@kwdef struct FusionSwitchDiscreteProt <: AbstractProtocol 
-    """time-and-schedule-tracking instance from `ConcurrentSim`"""
-    sim::Simulation # TODO check that
-    """a network graph of registers"""
-    net::RegisterNet
-    """the vertex index of the switch"""
-    switchnode::Int
-    """the vertex indices of the clients"""
-    clientnodes::Vector{Int}
-    """best-guess about success of establishing raw entanglement between client and switch"""
-    success_probs::Vector{Float64}
-    """duration of a single full cycle of the switching decision algorithm"""
-    ticktock::Float64 = 1
-    """how many rounds of this protocol to run (`-1` for infinite)"""
-    rounds::Int = -1
-    function FusionSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds)
-        length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
-        all(in(neighbors(net, switchnode)), clientnodes) || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be directly connected to the `switchnode`!"))
-        0 < ticktock || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested protocol period `ticktock` must be positive!"))
-        0 < rounds || rounds == -1 || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested number of rounds `rounds` must be positive or `-1` for infinite!"))
-        length(clientnodes) == length(success_probs) || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested `success_probs` must have the same length as `clientnodes`!"))
-        all(0 .<= success_probs .<= 1) || throw(ArgumentError("In the preparation of `FusionSwitchDiscreteProt` switch protocol, the requested `success_probs` must be in the range [0,1]!"))
-        new(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds)
-    end
-end
-
-function FusionSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs; kwrags...)
-    FusionSwitchDiscreteProt(;sim, net, switchnode, clientnodes=collect(clientnodes), success_probs=collect(success_probs), kwrags...)
-end
-FusionSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...) = FusionSwitchDiscreteProt(get_time_tracker(net), net, switchnode, clientnodes, success_probs; kwrags...)
-
-@resumable function (prot::FusionSwitchDiscreteProt)()
-    rounds = prot.rounds
-    clientnodes = prot.clientnodes
-    reverseclientindex = Dict{Int,Int}(c=>i for (i,c) in enumerate(clientnodes))
-
-    while rounds != 0
-        rounds==-1 || (rounds -= 1)
-
-        @debug "Node $(prot.switchnode) starts a new entanglement round at time $(now(prot.sim))"
-        # run entangler without requests (=no assignment)
-        _switch_entangler_all_selected(prot)
-        @yield timeout(prot.sim, prot.ticktock/2) 
-        @debug "Node $(prot.switchnode) stops at time $(now(prot.sim))"
-        # read which entanglements were successful
-        matches = _switch_successful_entanglements(prot, reverseclientindex)
-        if isnothing(matches)
-            @yield timeout(prot.sim, prot.ticktock/2)
-            continue
-        end
-        @debug "Node $(prot.switchnode) performs fusions at time $(now(prot.sim))"
-        # perform fusions
-        _switch_run_fusions(prot, matches)
-        @yield timeout(prot.sim, prot.ticktock/2)
-        @debug "Node $(prot.switchnode) is done with fusions at time $(now(prot.sim))"
-    end
 end
 
 

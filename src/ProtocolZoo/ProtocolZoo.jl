@@ -8,7 +8,7 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap, Entangl
 using DocStringExtensions
 
 using Distributions: Geometric
-using ConcurrentSim: Simulation, @yield, timeout, @process, now, Event, succeed, state, idle, StopSimulation
+using ConcurrentSim: Simulation, @yield, timeout, @process, now, StopSimulation
 import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
@@ -20,7 +20,7 @@ export
     # tags
     EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
-    SimpleSwitchDiscreteProt, FusionSwitchDiscreteProt, SwitchRequest
+    SimpleSwitchDiscreteProt, SwitchRequest
 
 abstract type AbstractProtocol end
 
@@ -50,6 +50,7 @@ Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node
 $TYPEDEF
 
 Indicates the current entanglement status with a remote node's slot. Added when a new qubit is fused into the GHZ state through [`FusionProt`](@ref).
+The [`EntanglementTracker`](@ref) receives an [`EntanglementUpdate`] message: the receives the tag pointing to a client slot it has already performed fusion with.
 
 $TYPEDFIELDS
 """
@@ -190,7 +191,7 @@ $TYPEDFIELDS
     """success probability of one attempt of entanglement generation"""
     success_prob::Float64 = 0.001
     """duration of single entanglement attempt"""
-    attempt_time::Float64 = 1.0
+    attempt_time::Float64 = 0.001
     """fixed "busy time" duration immediately before starting entanglement generation attempts"""
     local_busy_time_pre::Float64 = 0.0
     """fixed "busy time" duration immediately after the a successful entanglement generation attempt"""
@@ -207,8 +208,6 @@ $TYPEDFIELDS
     margin::Int = 0
     """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
     hardmargin::Int = 0
-    """It might be useful to start the simulation time after the first round of attempt."""
-    start_timer_after_first_attempt::Bool = false
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -233,7 +232,7 @@ end
         a_ = (prot.slotA == ❓) ? findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin) : prot.net[prot.nodeA][prot.slotA]
         b_ = (prot.slotB == ❓) ? findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin) : prot.net[prot.nodeB][prot.slotB]
 
-        # a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
+        # a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin) # TODO: old version, delete before merge
         # b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
@@ -252,15 +251,14 @@ end
         @yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
             1
-        elseif prot.start_timer_after_first_attempt
-            rand(Geometric(prot.success_prob))
         else
             rand(Geometric(prot.success_prob))+1
         end
         if prot.attempts == -1 || prot.attempts >= attempts
-            initialize!((a,b), prot.pairstate; time=now(prot.sim))
+            
             @yield timeout(prot.sim, attempts * prot.attempt_time)
-            #uptotime!((a,b),  now(prot.sim))
+            initialize!((a,b), prot.pairstate; time=now(prot.sim))
+            
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
@@ -473,7 +471,7 @@ end
 """
 $TYPEDEF
 
-A protocol running between two nodes, checking periodically for any entangled states (GHZ states) between all nodes and consuming/emptying the qubit slots.
+A protocol running on a (switch) node with a dedicated 'piecemaker' qubit state. Queries periodically how many nodes have undergone fusion with the latter. When all nodes are fused with the piecemaker qubit it is measured out and the correction gate is performed at a slot of one of the entangled nodes.
 
 $FIELDS
 """
@@ -504,14 +502,15 @@ end
     end
     while true
         nclients = nsubsystems(prot.net[1])-1
-        qparticipating = queryall(prot.piecemaker, FusionCounterpart, ❓, ❓) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        qparticipating = queryall(prot.piecemaker, FusionCounterpart, ❓, ❓) 
         if isnothing(qparticipating)
             @debug "FusionConsumer between $(prot.piecemaker): query on piecemaker slot found no entanglement"
             continue
             return
         elseif length(qparticipating) == nclients
             @debug "All clients are now part of the GHZ state."
-            client_slots = [prot.net[k][1] for k in 2:nclients+1]
+            # use query tag "remote_node.remote_slot" to access the clients that have been fused with the piecemaker 
+            client_slots = [prot.net[q.tag[2]][q.tag[3]] for q in qparticipating] #[prot.net[k][1] for k in 2:nclients+1]
             
             # Wait for all locks to complete
             tasks = []
@@ -532,7 +531,7 @@ end
             if zmeas == 2
                 apply!(prot.net[2][1], Z) # apply correction on arbitrary client slot
             end
-            result = real(observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z2,nclients)...]) + reduce(⊗,[fill(Z1,nclients)...])))))
+            result = real(observable(client_slots, projector(1/sqrt(2)*(reduce(⊗, [fill(Z2,nclients)...]) + reduce(⊗,[fill(Z1,nclients)...]))); time=now(prot.sim)))
             @debug "FusionConsumer: expectation value $(result)" 
             
             # delete tags and free client slots
@@ -550,9 +549,8 @@ end
             unlock(prot.piecemaker)
 
             # log results
-            push!(prot.log, (now(prot.sim), result,))
+            push!(prot.log, (floor(now(prot.sim)), result,))
             throw(StopSimulation("GHZ state shared among all users!"))
-            @yield timeout(prot.sim, prot.period)
         end
         @yield timeout(prot.sim, prot.period)
     end
@@ -622,7 +620,7 @@ end
         @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(piecemaker.idx) @ $(now(prot.sim))"
         fuscircuit = EntanglementFusion()
         zmeas = fuscircuit(q, piecemaker) 
-        uptotime!((q, piecemaker), now(prot.sim))
+        #uptotime!((q, piecemaker), now(prot.sim))
         @debug "FusionProt @$(prot.node): Entangled .$(q.idx) and .$(piecemaker.idx) @ $(now(prot.sim))"
         # send from here to client node
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx, past_remote_slot_idx, new_remote_node, new_remote_slot, correction

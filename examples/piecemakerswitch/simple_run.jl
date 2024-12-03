@@ -5,7 +5,8 @@ using CSV
 
 # Set up the simulation parameters
 name = "qs_piecemeal"
-nruns = 1000
+
+nruns = 10
 mem_depolar_prob = 0.1
 link_success_prob = 0.5
 
@@ -54,7 +55,6 @@ summary_df = combine(
 
 @info summary_df
 
-# Write results to CSV
+# Uncomment to write results to CSV
 # CSV.write("examples/piecemakerswitch/output/piecemaker-eventdriven.csv", results_total)
 # CSV.write("examples/piecemakerswitch/output/piecemaker-eventdriven_summary.csv", summary_df)
-
