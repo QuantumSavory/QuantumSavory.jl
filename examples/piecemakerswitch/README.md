@@ -1,14 +1,16 @@
 # System Overview
-A central switch node connects to $n$ clients. The switch possesses $m = n + 1$ qubit slots, while each client has a single qubit slot.
+The goal is to share a GHZ state among multiple users. To do so, the clients connect to a central switch node, which then produces the GHZ state for them.
+
+In this setup, a number of clients connect to a central hub, which we call the switch node. Each of the $n$ clients can store one memory qubit in its memory buffer and one qubit at the switch side. This makes up for $n$ memory qubits on the switch node. However, the switch contains an additional qubit, $n+1$ which we call the 'piecemaker' slot - a qubit in the $|+\rangle$ state, which is needed in the GHZ generation process.
 
 # Entanglement Initiation
-At each clock tick, the switch initiates entanglement attempts with each of the $n$ clients, resulting in $n$ entanglement processes per cycle. Successful entanglement links are then merged into a GHZ (Greenberger–Horne–Zeilinger) state using an additional "piecemaker" qubit located in the $(n + 1)$th slot of the switch node. This fusion process is assumed to occur instantaneously. Once all clients went through the fusion operation, the piecemaker qubit is measured out. This completes the fusing process and all nodes are sharing an n-GHZ state.
+At each clock tick, the switch initiates entanglement attempts with each of the $n$ clients. So we have $n$ entanglement processes running in parallel per cycle. Successful entanglement links are immediately fused with the piecemaker qubit. Once all clients went through this fusion operation, we measure the piecemaker qubit. The latter projects the state back to the clients, resulting in the desired shared GHZ state.
 
 # Fusion Operation
-The fusion operation consists of applying a `CNOT` gate followed by a measurement in the computational basis. This procedure allows the merging of two GHZ states into a single GHZ state, modulo any required Pauli corrections. We iterate over all existing entangled states with the switch node: in each iteration, the piecemaker qubit (initialized in the state $|+\rangle$) is fused with one of the existing entangled states. 
+The fusion operation is performed on the switch node. Let's take a client who just managed to generate a bipartide entangled state between its storage qubit and the associated qubit at the switch. The switch then executes a `CNOT` on the a client's qubit and the piecemaker. Then the switch measures the client qubit in the computational basis and sends the outcome to the client where the correction gate is applied. This procedure merges the bipartide state into the (entangled) state that the piecemaker qubit is currently part of, modulo any required Pauli corrections.
 
 # Noise 
-The memories residing the nodes' `Register`s suffer from depolarizing noise. 
+The memories residing in the nodes' `Register`s suffer from depolarizing noise. 
 
 ### Protocol flow
 
