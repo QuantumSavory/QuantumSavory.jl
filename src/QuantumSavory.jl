@@ -48,6 +48,7 @@ export
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
+    onchange_tag,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer,
     # initialize.jl
@@ -71,13 +72,14 @@ export
     # plots.jl
     registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis
 
-
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
 include("traits_and_defaults.jl")
 
 include("tags.jl")
+
+include("semaphore.jl")
 
 include("states_registers.jl")
 include("quantumchannel.jl")
@@ -115,5 +117,6 @@ include("StatesZoo/StatesZoo.jl")
 include("ProtocolZoo/ProtocolZoo.jl")
 
 include("precompile.jl")
+
 
 end # module

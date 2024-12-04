@@ -1,5 +1,7 @@
+#using QuantumSavory: AsymmetricSemaphore
 # TODO better constructors
 # TODO am I overusing Ref
+
 struct StateRef
     state::Base.RefValue{Any} # TODO it would be nice if this was not abstract but `uptotime!` converts between types... maybe make StateRef{T} state::RefValue{T} and a new function that swaps away the backpointers in the appropriate registers
     registers::Vector{Any} # TODO Should be Vector{Register}, but right now we occasionally set it to nothing to deal with padded storage
@@ -23,11 +25,12 @@ struct Register # TODO better type description
     tag_info::Dict{Int128, @NamedTuple{tag::Tag, slot::Int, time::Float64}}
     guids::Vector{Int128}
     netparent::Ref{Any}
+    tag_waiter::Ref{AsymmetricSemaphore} # TODO This being a ref is a bit of code smell... but we also want to be able to have registers that are not linked to a net so we need to be able to have this field un-initialized
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [], nothing)
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [], nothing, Ref(AsymmetricSemaphore(env)))
 end
 
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
@@ -60,3 +63,8 @@ get_register(r::RegRef) = r.reg
 get_register(r::Register) = r
 
 #Base.:(==)(r1::Register, r2::Register) =
+
+function onchange_tag(r::RegOrRegRef)
+    register = get_register(r)
+    return lock(register.tag_waiter[])
+end

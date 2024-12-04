@@ -33,9 +33,6 @@ function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
 end
 
 @resumable function (prot::CutoffProt)()
-    if isnothing(prot.period)
-        error("In `CutoffProt` we do not yet support quing up and waiting on register") # TODO
-    end
     reg = prot.net[prot.node]
     while true
         for slot in reg # TODO these should be done in parallel, otherwise we will be waiting on each slot, greatly slowing down the cutoffs
@@ -72,6 +69,8 @@ end
 
             unlock(slot)
         end
-        @yield timeout(prot.sim, prot.period)
+        if !isnothing(prot.period)
+            @yield timeout(prot.sim, prot.period)
+        end
     end
 end
