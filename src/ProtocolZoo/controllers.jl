@@ -81,9 +81,9 @@ end
         workwasdone = true
         while workwasdone
             workwasdone = false
-            msg = querydelete!(mb, DistributionRequest, ❓, ❓)
+            msg = querydelete!(mb, DistributionRequest, ❓, ❓, ❓)
             if !isnothing(msg)
-                (msg_src, (_, req_src, req_dst)) = msg
+                (msg_src, (_, req_src, req_dst, rounds)) = msg
                 if typeof(prot.path_mat[req_src, req_dst]) <: Number
                     prot.path_mat[req_src, req_dst] = PathMetadata(prot.net.graph, req_src, req_dst, Int(length(prot.net[1].staterefs)/2))
                 end
@@ -104,7 +104,7 @@ end
                 end
                 
                 for i in 2:length(path)-1
-                    msg = Tag(SwapRequest, path[i], 1, path[i-1], path[i+1], 0)
+                    msg = Tag(SwapRequest, path[i], rounds, path[i-1], path[i+1], 0)
                     if prot.node == path[i]
                         put!(mb, msg)
                     else
@@ -145,12 +145,12 @@ end
         workwasdone = true
         while workwasdone
             workwasdone = false
-            msg = querydelete!(mb, DistributionRequest, ❓, ❓)
+            msg = querydelete!(mb, DistributionRequest, ❓, ❓, ❓)
             if !isnothing(msg)
-                (msg_src, (_, req_src, req_dst)) = msg
+                (msg_src, (_, req_src, req_dst, rounds)) = msg
                 for v in vertices(prot.net)
                     if v != req_src && v != req_dst
-                        msg = Tag(SwapRequest, v, 1, req_src, req_dst, 1)
+                        msg = Tag(SwapRequest, v, rounds, req_src, req_dst, 1)
                         if prot.node == v
                             put!(mb, msg)
                         else

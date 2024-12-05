@@ -18,7 +18,7 @@ using Memoize
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, RequestTracker, RequestGenerator,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, RequestTracker, RequestGeneratorCO, RequestGeneratorCL,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, EntanglementRequest, SwapRequest, DistributionRequest,
     # from Switches
@@ -210,9 +210,11 @@ See also: [`EntanglementRequest`](@ref), [`SwapRequest`]
     src::Int
     """The node with which entanglement is to be generated"""
     dst::Int
+    """The number of rounds of swaps requested"""
+    rounds::Int = 1
 end
 Base.show(io::IO, tag::DistributionRequest) = print(io, "Node $(tag.src) requesting entanglement with $(tag.dst)")
-Tag(tag::DistributionRequest) = Tag(DistributionRequest, tag.src, tag.dst)
+Tag(tag::DistributionRequest) = Tag(DistributionRequest, tag.src, tag.dst, tag.rounds)
 
 
 """
@@ -576,7 +578,7 @@ user pairs in the same network.
 
 $TYPEDFIELDS
 """
-@kwdef struct RequestGenerator <: AbstractProtocol # TODO Should path_selection be a parameter here, so that it can be customized by the user?
+@kwdef struct RequestGeneratorCO <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -591,19 +593,54 @@ $TYPEDFIELDS
     λ::Int = 3
 end
 
-function RequestGenerator(sim, net, src, dst, controller; kwargs...)
-    return RequestGenerator(;sim, net, src, dst, controller, kwargs...)
+function RequestGeneratorCO(sim, net, src, dst, controller; kwargs...)
+    return RequestGeneratorCO(;sim, net, src, dst, controller, kwargs...)
 end
 
-@resumable function (prot::RequestGenerator)()
+@resumable function (prot::RequestGeneratorCO)()
     d = Exponential(inv(prot.λ)) # Parametrized with the scale which is inverse of the rate
     mb = messagebuffer(prot.net, prot.src)
     while true
-        msg = Tag(DistributionRequest, prot.src, prot.dst)
+        msg = Tag(DistributionRequest, prot.src, prot.dst, 1)
         put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
 
         @yield timeout(prot.sim, rand(d))
     end
+end
+
+
+"""
+$TYPEDEF
+
+Protocol for the simulation of request traffic for a controller in a connection-oriented network for bipartite entanglement distribution. The requests are considered to be generated according to the Poisson model with rate λ, hence the inter-arrival time is
+sampled from an exponential distribution. Physically, the request is generated at the source node(Alice) and is classically communicated to the node where the controller is located. Multiple `RequestGenerator`s can be instantiated for simulation with multiple
+user pairs in the same network.
+
+$TYPEDFIELDS
+"""
+@kwdef struct RequestGeneratorCL <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """The source node(and the node where this protocol runs) of the user pair, commonly called Alice"""
+    src::Int
+    """The destination node, commonly called Bob"""
+    dst::Int
+    """The node at which the controller is located"""
+    controller::Int
+    """The number of rounds of swaps to be requested, -1 for infinite"""
+    rounds::Int = -1
+end
+
+function RequestGeneratorCL(sim, net, src, dst, controller; kwargs...)
+    return RequestGeneratorCL(;sim, net, src, dst, controller, kwargs...)
+end
+
+@resumable function (prot::RequestGeneratorCL)()
+    mb = messagebuffer(prot.net, prot.src)
+    msg = Tag(DistributionRequest, prot.src, prot.dst, prot.rounds)
+    put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
 end
 
 

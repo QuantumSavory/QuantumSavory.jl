@@ -8,7 +8,7 @@ end
 controller = CLController(sim, net, 6)
 @process controller()
 
-req_gen = RequestGenerator(sim, net, 1, 8, 6)
+req_gen = RequestGeneratorCL(sim, net, 1, 8, 6)
 @process req_gen()
 
 consumer = EntanglementConsumer(sim, net, 1, 8)
