@@ -33,7 +33,7 @@ controller = Controller(sim, net, 6, zeros(8,8))
 @process controller()
 
 # RequestGenerator for the user pair (1,8)
-req_gen = RequestGenerator(sim, net, 1, 8, 6)
+req_gen = RequestGeneratorCO(sim, net, 1, 8, 6)
 @process req_gen()
 
 # consumer
@@ -67,7 +67,7 @@ controller = CLController(sim, net, 6)
 @process controller()
 
 # RequestGenerator for the user pair (1,8)
-req_gen = RequestGenerator(sim, net, 1, 8, 6)
+req_gen = RequestGeneratorCL(sim, net, 1, 8, 6)
 @process req_gen()
 
 # consumer
