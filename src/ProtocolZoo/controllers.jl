@@ -58,11 +58,11 @@ end
 $TYPEDEF
 
 A network control protocol that is connection oriented, non-distributed and centralized. The controller is located at one of the nodes in the network from where it messages all
-the other nodes' [`RequestTracker`](@ref) protocols when it receives [`DistributionRequest`](@ref) from the [`RequestGenerator`](@ref).
+the other nodes' [`RequestTracker`](@ref) protocols when it receives [`DistributionRequest`](@ref) from [`RequestGeneratorCO`](@ref).
 
 $TYPEDFIELDS
 
-See also [`RequestGenerator`](@ref), [`RequestTracker`](@ref)
+See also [`RequestGeneratorCO`](@ref), [`RequestGeneratorCL`](@ref), [`RequestTracker`](@ref)
 """
 @kwdef struct Controller <: AbstractProtocol
     """Time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -124,11 +124,11 @@ end
 $TYPEDEF
 
 A network control protocol that is connection less, non-distributed and centralized. The controller is located at one of the nodes in the network from where it messages all
-the other nodes' [`RequestTracker`](@ref) protocols when it receives [`DistributionRequest`](@ref) from the [`RequestGenerator`](@ref).
+the other nodes' [`RequestTracker`](@ref) protocols when it receives [`DistributionRequest`](@ref) from the [`RequestGeneratorCL`](@ref).
 
 $TYPEDFIELDS
 
-See also [`RequestGenerator`](@ref), [`RequestTracker`](@ref)
+See also [`RequestGeneratorCO`](@ref), [`RequestGeneratorCL`](@ref), [`RequestTracker`](@ref)
 """
 @kwdef struct CLController <: AbstractProtocol
     """Time-and-schedule-tracking instance from `ConcurrentSim`"""
