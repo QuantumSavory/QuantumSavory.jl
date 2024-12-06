@@ -41,11 +41,19 @@ end
     end
 end
 
-@safetestset "repeatergrid" begin
+@testitem "Examples - repeatergrid" tags=[:examples] begin
     if get(ENV, "QUANTUMSAVORY_PLOT_TEST","")=="true"
         include("setup_plotting.jl")
         include("../examples/repeatergrid/1a_async_interactive_visualization.jl")
         include("../examples/repeatergrid/2a_sync_interactive_visualization.jl")
+    end
+end
+
+@testitem "Examples - controlplane" tags=[:examples] begin
+    if get(ENV, "QUANTUMSAVORY_PLOT_TEST","")=="true"
+        include("../examples/controlplane/1a_cdd_interactive.jl")
+        include("../examples/controlplane/2a_cnc_interactive.jl")
+        include("../examples/controlplane/3a_cl_interactive.jl")
     end
 end
 

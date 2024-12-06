@@ -7,20 +7,26 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
 
-using Distributions: Geometric
+using Distributions: Geometric, Exponential
 using ConcurrentSim: Simulation, @yield, timeout, @process, now
 import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
+using Graphs
+using Memoize
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, RequestTracker, RequestGeneratorCO, RequestGeneratorCL,
     # tags
-    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, EntanglementRequest, SwapRequest, DistributionRequest,
     # from Switches
-    SimpleSwitchDiscreteProt, SwitchRequest
+    SimpleSwitchDiscreteProt, SwitchRequest,
+    # controllers
+    NetController, Controller, CLController,
+    #utils
+    PathMetadata, path_selection, swap_predicate, swap_choose
 
 abstract type AbstractProtocol end
 
@@ -144,6 +150,72 @@ See also: [`CutoffProt`](@ref)
 end
 Base.show(io::IO, tag::EntanglementDelete) = print(io, "Deleted $(tag.send_node).$(tag.send_slot) which was entangled to $(tag.rec_node).$(tag.rec_slot)")
 Tag(tag::EntanglementDelete) = Tag(EntanglementDelete, tag.send_node, tag.send_slot, tag.rec_node, tag.rec_slot)
+
+"""
+$TYPEDEF
+
+A message sent from a controller to the [`RequestTracker`](@ref) at a node requesting the generation of an entanglement link between the receiving node
+and one of its next-hop neighbors on the physical graph, as mentioned in the request
+
+$TYPEDFIELDS
+
+See also: [EntanglerProt](@ref), [`EntanglementTracker`](@ref), [`SwapRequest`](@ref)
+"""
+@kwdef struct EntanglementRequest
+    "The id of the node receiving the request"
+    receiver::Int
+    "The id of the node with which the entanglement link should be established"
+    neighbor::Int
+    "The number of rounds the Entangler should run for"
+    rounds::Int
+end
+Base.show(io::IO, tag::EntanglementRequest) = print(io, "$(tag.receiver) attempt entanglement generation with $(tag.neighbor)")
+Tag(tag::EntanglementRequest) = Tag(EntanglementRequest, tag.receiver, tag.neighbor, tag.rounds)
+
+"""
+$TYPEDEF
+
+A message sent from a controller to the [`RequestTracker`](@ref) at a node requesting it to perform a swap
+
+$TYPEDFIELDS
+
+See also: [`SwapperProt`](@ref), [`EntanglementTracker`](@ref), [`EntanglementRequest`](@ref)
+"""
+@kwdef struct SwapRequest
+    """The id of the node instructed to perform a swap"""
+    swapping_node::Int
+    """The number of rounds the swapper should run for"""
+    rounds::Int
+    """source node for the `DistributionRequest`"""
+    src::Int
+    """destination node for the `DistributionRequest`"""
+    dst::Int
+    """whether the request is from a connection-oriented(0) or connection-less controller(1)"""
+    conn::Int
+end
+Base.show(io::IO, tag::SwapRequest) = print(io, "Node $(tag.swapping_node) perform a swap")
+Tag(tag::SwapRequest) = Tag(SwapRequest, tag.swapping_node, tag.rounds, tag.src, tag.dst)
+
+"""
+$TYPEDEF
+
+A message sent from a node to a control protocol requesting bipartite entanglement with a remote destination node through entanglement distribution. 
+
+$TYPEDFIELDS
+
+See also: [`EntanglementRequest`](@ref), [`SwapRequest`]
+"""
+@kwdef struct DistributionRequest
+    """The node generating the request"""
+    src::Int
+    """The node with which entanglement is to be generated"""
+    dst::Int
+    """The number of rounds of swaps requested"""
+    rounds::Int = 1
+end
+Base.show(io::IO, tag::DistributionRequest) = print(io, "Node $(tag.src) requesting entanglement with $(tag.dst)")
+Tag(tag::DistributionRequest) = Tag(DistributionRequest, tag.src, tag.dst, tag.rounds)
+
 
 """
 $TYPEDEF
@@ -372,7 +444,7 @@ $TYPEDEF
 
 A protocol running between two nodes, checking periodically for any entangled pairs between the two nodes and consuming/emptying the qubit slots.
 
-$FIELDS
+$TYPEDFIELDS
 """
 @kwdef struct EntanglementConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -435,9 +507,146 @@ end
     end
 end
 
+"""
+$TYPEDEF
+
+A protocol running at a node, listening for incoming entanglement generation and swap requests and serving
+them in an asynchronous way, without waiting for the completion of the instantiated entanglement generation or swapping processes to complete
+
+$TYPEDFIELDS
+"""
+@kwdef struct RequestTracker <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex of the node where the tracker is working"""
+    node::Int
+end
+
+@resumable function (prot::RequestTracker)()
+    mb = messagebuffer(prot.net, prot.node)
+    while true
+        workwasdone = true # waiting is not enough because we might have multiple rounds of work to do
+        while workwasdone
+            workwasdone = false # if there is nothing in the mb queue(querydelete returns nothing) we skip to waiting, otherwise we keep querying until the queue is empty
+            for requesttagsymbol in (EntanglementRequest, SwapRequest)
+                if requesttagsymbol == EntanglementRequest
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓)
+                    @debug "RequestTracker @$(prot.node): Received $msg"
+                    isnothing(msg) && continue
+                    workwasdone = true
+                    (src, (_, _, neighbor, rounds)) = msg
+                    @debug "RequestTracker @$(prot.node): Generating entanglement with $(neighbor)"
+                    entangler = EntanglerProt(prot.sim, prot.net, prot.node, neighbor; rounds=rounds, randomize=true)
+                    @process entangler()
+                else
+                    msg = querydelete!(mb, requesttagsymbol, ❓, ❓, ❓, ❓, ❓)
+                    @debug "RequestTracker @$(prot.node): Received $msg"
+                    isnothing(msg) && continue
+                    workwasdone = true
+                    (msg_src, (_, _, rounds, req_src, req_dst, conn)) = msg
+                    @debug "RequestTracker @$(prot.node): Performing a swap"
+                    if conn == 0 # connection-oriented
+                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = req_src, nodeH = req_dst, rounds=rounds)
+                        @process swapper()
+                    else # connection-less
+                        pred_low = swap_predicate(prot.net.graph, req_src, req_dst, prot.node)
+                        pred_high = swap_predicate(prot.net.graph, req_src, req_dst, prot.node; low=false)
+                        choose_low = swap_choose(prot.net.graph, req_src)
+                        choose_high = swap_choose(prot.net.graph, req_dst)
+                        swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = pred_low, nodeH = pred_high, chooseL=choose_low, chooseH=choose_high, rounds=rounds)
+                        @process swapper()
+                    end
+                end
+            end
+        end
+        @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        @yield wait(mb)
+        @debug "RequestTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+    end
+end
+
+include("utils.jl")
+
+"""
+$TYPEDEF
+
+Protocol for the simulation of request traffic for a controller in a connection-oriented network for bipartite entanglement distribution. The requests are considered to be generated according to the Poisson model with rate λ, hence the inter-arrival time is
+sampled from an exponential distribution. Physically, the request is generated at the source node(Alice) and is classically communicated to the node where the controller is located. Multiple `RequestGenerator`s can be instantiated for simulation with multiple
+user pairs in the same network.
+
+$TYPEDFIELDS
+"""
+@kwdef struct RequestGeneratorCO <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """The source node(and the node where this protocol runs) of the user pair, commonly called Alice"""
+    src::Int
+    """The destination node, commonly called Bob"""
+    dst::Int
+    """The node at which the controller is located"""
+    controller::Int
+    """rate of arrival of requests/number of requests sent unit time"""
+    λ::Int = 3
+end
+
+function RequestGeneratorCO(sim, net, src, dst, controller; kwargs...)
+    return RequestGeneratorCO(;sim, net, src, dst, controller, kwargs...)
+end
+
+@resumable function (prot::RequestGeneratorCO)()
+    d = Exponential(inv(prot.λ)) # Parametrized with the scale which is inverse of the rate
+    mb = messagebuffer(prot.net, prot.src)
+    while true
+        msg = Tag(DistributionRequest, prot.src, prot.dst, 1)
+        put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
+
+        @yield timeout(prot.sim, rand(d))
+    end
+end
+
+
+"""
+$TYPEDEF
+
+Protocol for the simulation of request traffic for a controller in a connection-oriented network for bipartite entanglement distribution. The requests are considered to be generated according to the Poisson model with rate λ, hence the inter-arrival time is
+sampled from an exponential distribution. Physically, the request is generated at the source node(Alice) and is classically communicated to the node where the controller is located. Multiple `RequestGenerator`s can be instantiated for simulation with multiple
+user pairs in the same network.
+
+$TYPEDFIELDS
+"""
+@kwdef struct RequestGeneratorCL <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """The source node(and the node where this protocol runs) of the user pair, commonly called Alice"""
+    src::Int
+    """The destination node, commonly called Bob"""
+    dst::Int
+    """The node at which the controller is located"""
+    controller::Int
+    """The number of rounds of swaps to be requested, -1 for infinite"""
+    rounds::Int = -1
+end
+
+function RequestGeneratorCL(sim, net, src, dst, controller; kwargs...)
+    return RequestGeneratorCL(;sim, net, src, dst, controller, kwargs...)
+end
+
+@resumable function (prot::RequestGeneratorCL)()
+    mb = messagebuffer(prot.net, prot.src)
+    msg = Tag(DistributionRequest, prot.src, prot.dst, prot.rounds)
+    put!(channel(prot.net, prot.src=>prot.controller; permit_forward=true), msg)
+end
+
 
 include("cutoff.jl")
 include("swapping.jl")
+include("controllers.jl")
 include("switches.jl")
 using .Switches
 
