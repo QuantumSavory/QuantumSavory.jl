@@ -1,4 +1,5 @@
 using FileIO
+using GeoMakie
 
 sizes = [2,3,5]
 registers = Register[]
