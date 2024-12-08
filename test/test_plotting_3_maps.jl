@@ -11,7 +11,7 @@ end
 network = RegisterNet(registers)
 map_axis = generate_map()
 coords = [Point2f(-71, 42), Point2f(-111, 34), Point2f(-122, 37)]
-_, _, plt, netobs = registernetplot_axis(map_axis, net, registercoords=coords)
+_, _, plt, netobs = registernetplot_axis(map_axis, network, registercoords=coords)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 initialize!(network[1,1])
@@ -27,5 +27,5 @@ display(fig)
 
 fig = Figure()
 map_axis = generate_map(fig[1, 1])
-_, _, plt, netobs = registernetplot_axis(map_axis , net, registercoords=coords)
+_, _, plt, netobs = registernetplot_axis(map_axis, network, registercoords=coords)
 save(File{format"PNG"}(mktemp()[1]), fig)
