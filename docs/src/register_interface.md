@@ -39,16 +39,16 @@ When a `state` is not provided, a default one is calculated from `newstate`, dep
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>initialize!(refs::Vector{RegRef}, state; time)</code>"]
-  B["<code>initialize!(r::Vector{Register}, i, state; time)</code>"]
+  A["initialize!(refs::Vector{RegRef}, state; time)"]
+  B["initialize!(r::Vector{Register}, i, state; time)"]
   subgraph TOP [lower from registers to states]
     direction LR
   end
-  D{{"<code>state<:Symbolic</code>"}}
+  D{{"state<:Symbolic"}}
   subgraph D1 [express state]
     direction LR
-    d11["<code>consistent_representation(r,i,state)</code>"]
-    d12["<code>express(state,repr)</code>"]
+    d11["consistent_representation(r,i,state)"]
+    d12["express(state,repr)"]
     d11 --> d12
   end
   D2([Store a state reference\nin the register slots])
@@ -56,9 +56,9 @@ flowchart TB
   D --Yes--> D1
   D --No--> D2
   D1 --> D2
-  Ap["<code>initialize!(::RegRef; time)</code>"]
-  Bp["<code>initialize!(::Register, i; time)</code>"]
-  Cp["<code>newstate(::QuantumStateTrait, ::AbstractRepresentation)</code>"]
+  Ap["initialize!(::RegRef; time)"]
+  Bp["initialize!(::Register, i; time)"]
+  Cp["newstate(::QuantumStateTrait, ::AbstractRepresentation)"]
   subgraph TOPp [lower from registers to states]
     direction LR
   end
@@ -103,17 +103,17 @@ If `operation<:Symbolic`, then `express(operation, repr, ::UseAsOperation)` is u
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>apply!(refs::Vector{RegRef}, operation; time)</code>"]
-  B["<code>apply!(regs::Vector{Register}, indices, operation; time)</code>"]
+  A["apply!(refs::Vector{RegRef}, operation; time)"]
+  B["apply!(regs::Vector{Register}, indices, operation; time)"]
   subgraph TOP [lower from registers to states]
     direction LR
-    B1["<code>uptotime!</code>"]
-    B2["<code>subsystemcompose</code>"]
+    B1["uptotime!"]
+    B2["subsystemcompose"]
     B1 --> B2
   end
-  C["<code>apply!(state, subsystem_indices, operation; time)</code>"]
-  D{{"<code>operation<:Symbolic</code>"}}
-  D1["<code>express(operation, repr, ::UseAsOperation)</code>"]
+  C["apply!(state, subsystem_indices, operation; time)"]
+  D{{"operation<:Symbolic"}}
+  D1["express(operation, repr, ::UseAsOperation)"]
   D2([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> TOP --> C --> D
   D --Yes--> D1
@@ -167,17 +167,17 @@ If `operation<:Symbolic`, then an `express(obs, repr, ::UseAsObservable)` call i
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>observable(refs::Vector{RegRef}, obs; something=nothing, time)</code>"]
-  B["<code>observable(regs::Vector{Register}, indices, obs; something=nothing, time)</code>"]
+  A["observable(refs::Vector{RegRef}, obs; something=nothing, time)"]
+  B["observable(regs::Vector{Register}, indices, obs; something=nothing, time)"]
   subgraph TOP [lower from registers to states]
     direction LR
-    B1["<code>uptotime!</code>"]
-    B2["<code>subsystemcompose</code>"]
+    B1["uptotime!"]
+    B2["subsystemcompose"]
     B1 --> B2
   end
-  C["<code>observable(state, subsystem_indices, obs; time)</code>"]
-  D{{"<code>obs<:Symbolic</code>"}}
-  D1["<code>express(obs, repr, ::UseAsObservable)</code>"]
+  C["observable(state, subsystem_indices, obs; time)"]
+  D{{"obs<:Symbolic"}}
+  D1["express(obs, repr, ::UseAsObservable)"]
   D2([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> TOP --> C --> D
   D --Yes--> D1
@@ -224,17 +224,17 @@ If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` t
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>project_traceout!(r::RegRef, basis; time)</code>"]
-  B["<code>project_traceout!(reg::Register, i::Int, basis; time)</code>"]
+  A["project_traceout!(r::RegRef, basis; time)"]
+  B["project_traceout!(reg::Register, i::Int, basis; time)"]
   subgraph TOP [lower from registers to states]
     direction LR
-    D1["<code>reg.staterefs[i].state[]</code>"]
-    D2["<code>reg.stateindices[i]</code>"]
+    D1["reg.staterefs[i].state[]"]
+    D2["reg.stateindices[i]"]
   end
-  E1["<code>basis::Symbolic{AbstractOperator}</code>"]
-  F1["<code>eigvecs(basis)</code>"]
-  E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
-  F2["<code>express.(basis)</code>"]
+  E1["basis::Symbolic{AbstractOperator}"]
+  F1["eigvecs(basis)"]
+  E2["basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}"]
+  F2["express.(basis)"]
   G([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> TOP
   TOP --> E1 --> F1 --> G
@@ -267,9 +267,9 @@ Partial trace over subsystem `i` of state referenced by `s`.
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>traceout!(r::RegRef)</code>"]
-  B["<code>traceout!(r::Register, i::Int)</code>"]
-  C["<code>traceout!(r::StateRef, i::Int)</code>"]
+  A["traceout!(r::RegRef)"]
+  B["traceout!(r::Register, i::Int)"]
+  C["traceout!(r::StateRef, i::Int)"]
   D([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> C --> D
 </div>
@@ -318,12 +318,12 @@ Low level implementation to compute the result of `uptotime!` for `Operator`
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>uptotime!(ref::RegRef, now)</code>"]
-  B["<code>uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
-  C["<code>uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)</code>"]
+  A["uptotime!(ref::RegRef, now)"]
+  B["uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)"]
+  C["uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)"]
   C1["lower from registers to states"]
-  D["<code>uptotime!(stateref::StateRef, idx::Int, background, Δt)</code>"]
-  E["<code>uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt)</code>"]
+  D["uptotime!(stateref::StateRef, idx::Int, background, Δt)"]
+  E["uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt)"]
   A --> C
   B --> C
   C --> C1
@@ -348,8 +348,8 @@ Swap the state stored in the two `Registers` at slots `i1` and `i2` respectively
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>swap!(r1::RegRef, r2::RegRef)</code>"]
-  B["<code>swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)</code>"]
+  A["swap!(r1::RegRef, r2::RegRef)"]
+  B["swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)"]
   A --> B
 </div>
 ```
@@ -369,8 +369,8 @@ Overwrite the time of the simulation for the given `registers` at `indices` to `
 ```@raw html
 <div class="mermaid">
 flowchart TB
-  A["<code>overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
-  B["<code>overwritetime!(registers, indices, now)</code>"]
+  A["overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now)"]
+  B["overwritetime!(registers, indices, now)"]
   A --> B
 </div>
 ```
