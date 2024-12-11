@@ -526,6 +526,7 @@ end
 
 @resumable function (prot::RequestTracker)()
     mb = messagebuffer(prot.net, prot.node)
+    isinf = false
     while true
         workwasdone = true # waiting is not enough because we might have multiple rounds of work to do
         while workwasdone
@@ -551,6 +552,11 @@ end
                         swapper = SwapperProt(prot.sim, prot.net, prot.node; nodeL = req_src, nodeH = req_dst, rounds=rounds)
                         @process swapper()
                     else # connection-less
+                        if rounds == -1
+                            isinf = true
+                        else
+                            isinf = false
+                        end
                         pred_low = swap_predicate(prot.net.graph, req_src, req_dst, prot.node)
                         pred_high = swap_predicate(prot.net.graph, req_src, req_dst, prot.node; low=false)
                         choose_low = swap_choose(prot.net.graph, req_src)
@@ -561,6 +567,7 @@ end
                 end
             end
         end
+        if isinf @yield timeout(prot.sim, 5.0) end
         @debug "RequestTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
         @yield wait(mb)
         @debug "RequestTracker @$(prot.node): Message wait ends at $(now(prot.sim))"

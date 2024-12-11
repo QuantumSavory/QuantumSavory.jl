@@ -34,7 +34,7 @@ end
 
 @resumable function (prot::CutoffProt)()
     if isnothing(prot.period)
-        error("In `CutoffProt` we do not yet support quing up and waiting on register") # TODO
+        error("In `CutoffProt` we do not yet support queuing up and waiting on register") # TODO
     end
     reg = prot.net[prot.node]
     while true
