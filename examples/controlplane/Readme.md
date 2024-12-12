@@ -8,7 +8,7 @@ Different control plane architectures with arbitrary network topologies can be s
 
 2b. An interactive web app with the same simulation as 2a
 
-The control protocol is illustrated at a high level by the sequence diagram below:
+The connection-oriented control protocol is illustrated at a high level by the sequence diagram below:
 
 ```mermaid 
 sequenceDiagram
@@ -19,7 +19,16 @@ Controller-->>+RequestTrackerN: EntanglementRequest
 Controller-->>+RequestTracker1: SwapRequest
 Controller-->>+RequestTracker2: SwapRequest
 Controller-->>+RequestTrackerN: SwapRequest
-Controller-->>-Alice(Request Generator): RequestCompletion(path_id)
+```
+
+For the connection-less protocol we have pre=emptive entanglement generation and swaps are performed when a request is received at the controller
+
+```mermaid 
+sequenceDiagram
+Alice(Request Generator)->>+Controller: DistributionRequest(path_id)
+Controller-->>+RequestTracker1: SwapRequest
+Controller-->>+RequestTracker2: SwapRequest
+Controller-->>+RequestTrackerN: SwapRequest
 ```
 
 The `RequestGenerator` (Alice) sends a message to the controller, requesting entanglement generation with an end node (Bob).
