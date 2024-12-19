@@ -72,6 +72,7 @@ export
     # plots.jl
     registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis
 
+
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
@@ -117,6 +118,5 @@ include("StatesZoo/StatesZoo.jl")
 include("ProtocolZoo/ProtocolZoo.jl")
 
 include("precompile.jl")
-
 
 end # module

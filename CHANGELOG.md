@@ -3,7 +3,7 @@
 ## v0.5.1-dev
 
 - Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
-- Implement `AsymmetricSemaphore`, a resource object that allows multiple processes to wait for an update.
+- `onchange_tag` now permits a protocol to wait for any change to the tag metadata. Implemented thanks to the new `AsymmetricSemaphore`, a resource object that allows multiple processes to wait for an update.
 
 ## v0.5.0 - 2024-10-16
 
