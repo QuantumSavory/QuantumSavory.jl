@@ -30,7 +30,7 @@ function main()
         "Properties and Backgrounds" => "propbackgrounds.md",
         "Symbolic Expressions" => "symbolics.md",
         "Tagging and Querying" => "tag_query.md",
-        "Backend Simulatiors" => "backendsimulator.md",
+        "Backend Simulators" => "backendsimulator.md",
         "Discrete Event Simulator" => "discreteeventsimulator.md",
         "Visualizations" => "visualizations.md",
     ],

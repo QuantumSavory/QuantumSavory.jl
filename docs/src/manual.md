@@ -7,7 +7,9 @@ end
 ```
 
 ## Getting Started
+
 ### Installation
+
 To use QuantumSavory, make sure you have Julia version 1.10 installed. You can download and install Julia from [the official Julia website](https://julialang.org/downloads/).
 
 Once Julia is setup, QuantumSavory can be installed with the following command in your in your Julia REPL:
@@ -16,14 +18,16 @@ $ julia
 julia> ]
 pkg> add QuantumSavory
 ```
+
 #### Optional Dependencies
+
 There are optional packages that you need to install to use the full plotting feature.
 - **Makie**: For plotting of registers and processes.
 - **GeoMakie**: Enables plotting on a real-world map as a background.
 
 ## Basic Demo
-Here’s a simple example to demonstrate how you can set up a simulation to generate a set of registers with qubit slots. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
 
+Here’s a simple example to demonstrate how you can set up a simulation to generate a set of registers with qubit slots. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
 
 ```
 using QuantumSavory
