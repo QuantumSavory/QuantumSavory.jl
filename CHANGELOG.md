@@ -2,6 +2,11 @@
 
 ## v0.5.1-dev
 
+- Simplify one of the switch protocols to avoid dependence on GraphMatching.jl which does not install well on non-linux systems. Do not rely on the default `SimpleSwitchDiscreteProt` for the time being.
+- Implement a network control protocol that is connection-oriented, centralized and non-distributed
+- Implement protocols: request generator and request tracker for simulation with the above control protocol in an asynchronous way.
+- Add `PhysicalGraph` struct for storing network metadata as the simulation evolves.
+- New tags: `EntanglementRequest`,`SwapRequest`, `DistributionRequest` and `RequestCompletion`
 - Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
 
 ## v0.5.0 - 2024-10-16
