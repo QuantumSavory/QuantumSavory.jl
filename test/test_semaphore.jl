@@ -1,4 +1,5 @@
 @testitem "AsymmetricSemaphore functionality" tags=[:AsymmetricSemaphore] begin
+
 using QuantumSavory: AsymmetricSemaphore
 using ConcurrentSim
 using ResumableFunctions
@@ -33,7 +34,7 @@ end
     push!(log, (now(sim), "proc1: second lock"))
     @yield timeout(sim, 10)
     push!(log, (now(sim), "proc1: waited 10"))
-    @yield lock(waiter) 
+    @yield lock(waiter)
     push!(log, (now(sim), "proc1: third lock"))
     push!(log, (now(sim), "proc1: end"))
 end
@@ -72,7 +73,7 @@ expected_log = [
     (45.0, "t: waited 15"),
     (45.0, "t: third trigger"),
     (45.0, "t: end"),
-    (45.0, "proc2: second lock"),  
+    (45.0, "proc2: second lock"),
     (45.0, "proc2: end"),
     (45.0, "proc1: third lock"),
     (45.0, "proc1: end")
@@ -83,8 +84,6 @@ expected_log = [
 
 for i in 1:length(log)
     @test log[i] == expected_log[i]
-end
-
 end
 
 @testset "Multiple AsymmetricSemaphores" begin
@@ -106,7 +105,7 @@ log = []
     push!(log, (now(sim), "t: end"))
 end
 
-@resumable function proc1(sim) 
+@resumable function proc1(sim)
     push!(log, (now(sim), "proc1: start"))
     @yield lock(waiter1) | lock(waiter2)
     push!(log, (now(sim), "proc1: got a lock"))
@@ -145,4 +144,7 @@ expected_log = [
 for i in 1:length(log)
     @test log[i] == expected_log[i]
 end
+
+end
+
 end
