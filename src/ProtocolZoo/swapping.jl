@@ -1,26 +1,3 @@
-function random_index(arr)
-    return rand(keys(arr))
-end
-
-
-function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high; agelimit=nothing)
-    reg = net[node]
-    low_nodes  = [
-        n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
-        if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
-    ]
-    high_nodes = [
-        n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
-        if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
-    ]
-
-    (isempty(low_nodes) || isempty(high_nodes)) && return nothing
-    il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
-    ih = choose_high((n.tag[2] for n in high_nodes))
-    return (low_nodes[il], high_nodes[ih])
-end
-
-
 """
 $TYPEDEF
 
