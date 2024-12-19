@@ -1,4 +1,5 @@
 @testitem "ProtocolZoo Entanglement Consumer" tags=[:protocolzoo_entanglement_consumer] begin
+using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 using Graphs
 using ConcurrentSim
@@ -49,19 +50,19 @@ for n in 3:30
     regsize = 10
     net = RegisterNet([Register(regsize) for j in 1:n])
     sim = get_time_tracker(net)
-    
+
     @resumable function delayedProts(sim)
         @yield timeout(sim, 5)
         for e in edges(net)
             eprot = EntanglerProt(sim, net, e.src, e.dst; rounds=-1, randomize=true, margin=5, hardmargin=3)
             @process eprot()
         end
-    
+
         for v in 2:n-1
             sprot = SwapperProt(sim, net, v; nodeL = <(v), nodeH = >(v), chooseL = argmin, chooseH = argmax, rounds = -1)
             @process sprot()
         end
-    
+
         for v in vertices(net)
             etracker = EntanglementTracker(sim, net, v)
             @process etracker()
@@ -70,9 +71,9 @@ for n in 3:30
     econ = EntanglementConsumer(sim, net, 1, n; period=nothing)
     @process econ()
     @process delayedProts(sim)
-    
-    run(sim, 100) 
-    
+
+    run(sim, 100)
+
     @test econ.log[1][1] > 5 # the process should start after 5
     for i in 1:length(econ.log)
         @test econ.log[i][2] ≈ 1.0
