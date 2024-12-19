@@ -280,27 +280,44 @@ end
 
 ##
 
-"""Draw the given registers on a given Makie axis.
+"""Draw the given registers on a given Makie axis or a subfigure.
 
 It returns a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates
 the plot with the current state of the network."""
-function registernetplot_axis(subfig, registersobservable; infocli=true, datainspector=true, kwargs...)
-    ax = Makie.Axis(subfig)
+function registernetplot_axis end
+
+function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infocli=true, datainspector=true, map=false, kwargs...)
     p = registernetplot!(ax, registersobservable; kwargs...)
     ax.aspect = Makie.DataAspect()
-    Makie.hidedecorations!(ax)
-    Makie.hidespines!(ax)
+    if hasmethod(Makie.hidedecorations!, Tuple{typeof(ax)})
+        Makie.hidedecorations!(ax)
+    end
+    if hasmethod(Makie.hidespines!, Tuple{typeof(ax)})
+        Makie.hidespines!(ax)
+    end
     Makie.deregister_interaction!(ax, :rectanglezoom)
     if infocli
         rnh = RNHandler(p)
         Makie.register_interaction!(ax, :registernet, rnh)
     end
     if datainspector
-        DataInspector(subfig)
+        DataInspector(ax.parent)
     end
-    Makie.autolimits!(ax)
-    subfig, ax, p, p[1]
+    if hasmethod(Makie.autolimits!, Tuple{typeof(ax)})
+        Makie.autolimits!(ax)
+    end
+    ax.parent, ax, p, p[1]
+end
+
+function registernetplot_axis(subfig::Makie.GridPosition, registersobservable; infocli=true, datainspector=true, kwargs...)
+    registernetplot_axis(Makie.Axis(subfig), registersobservable; infocli, datainspector, kwargs...)
+end
+
+function registernetplot_axis(registersobservable; infocli=true, datainspector=true, kwargs...)
+    fig = Figure()
+    ax = Axis(fig[1, 1])
+    registernetplot_axis(ax, registersobservable; infocli, datainspector, kwargs...)
 end
 
 ##
