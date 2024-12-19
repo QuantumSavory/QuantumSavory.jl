@@ -209,10 +209,10 @@ end
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
-                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting..."
+                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting for changes to tags..."
                 @yield onchange_tag(prot.net[prot.nodeA]) | onchange_tag(prot.net[prot.nodeB])
             else
-                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
+                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting a fixed amount of time..."
                 @yield timeout(prot.sim, prot.retry_lock_time)
             end
             continue
@@ -404,22 +404,22 @@ end
     while true
         query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
-            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
             if isnothing(prot.period)
-                @debug "Waiting on changes in $(prot.nodeA)"
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting on tag updates in $(prot.nodeA)."
                 @yield onchange_tag(prot.net[prot.nodeA])
             else
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting a fixed amount of time."
                 @yield timeout(prot.sim, prot.period)
             end
             continue
         else
             query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
                 if isnothing(prot.period)
-                    @debug "Waiting on changes in $(prot.nodeB)"
+                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting on tag updates in $(prot.nodeB)."
                     @yield onchange_tag(prot.net[prot.nodeB])
                 else
+                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
                     @yield timeout(prot.sim, prot.period)
                 end
                 continue
