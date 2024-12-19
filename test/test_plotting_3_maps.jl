@@ -1,5 +1,6 @@
 using FileIO
 using GeoMakie
+using QuantumSavory
 
 sizes = [2,3,5]
 registers = Register[]

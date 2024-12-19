@@ -3,7 +3,7 @@
 ## v0.5.1-dev
 
 - Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
-- Implement a feature to include a map as a background for plotting (`generate_map`).
+- Plots of networks can now overlay real-world maps (see `generate_map`).
 
 ## v0.5.0 - 2024-10-16
 

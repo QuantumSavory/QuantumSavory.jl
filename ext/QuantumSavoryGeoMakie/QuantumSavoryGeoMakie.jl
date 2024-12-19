@@ -4,7 +4,7 @@ import Makie, GeoMakie
 using GeoMakie: GeoAxis, image!, poly!, naturalearth
 
 """
-Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for registernetplot_axis.
+Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for `registernetplot_axis`.
 
 For borders, the optional `scale` parameter can be set to 10, 50, or 110, corresponding to Natural Earth resolutions of 1:10m, 1:50m, and 1:110m.
 """

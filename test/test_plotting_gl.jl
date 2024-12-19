@@ -12,6 +12,7 @@ end
 @testset "background map" begin
     include("test_plotting_3_maps.jl")
 end
+
 @testset "data inspectors" begin # only available in GLMakie
     # create a network of qubit registers
     net = RegisterNet([Register(2),Register(3),Register(2),Register(5)])
