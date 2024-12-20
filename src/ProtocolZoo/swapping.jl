@@ -68,8 +68,13 @@ end
     while rounds != 0
         qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; agelimit=prot.agelimit)
         if isnothing(qubit_pair_)
-            isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @yield timeout(prot.sim, prot.retry_lock_time)
+            if isnothing(prot.retry_lock_time)
+                @debug "SwapperProt: no swappable qubits found. Waiting for tag change..."
+                @yield onchange_tag(prot.net[prot.node])
+            else
+                @debug "SwapperProt: no swappable qubits found. Waiting a fixed amount of time..."
+                @yield timeout(prot.sim, prot.retry_lock_time)
+            end
             continue
         end
         # The compiler is not smart enough to figure out that qubit_pair_ is not nothing, so we need to tell it explicitly. A new variable name is needed due to @resumable.
