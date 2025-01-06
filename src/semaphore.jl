@@ -1,6 +1,6 @@
 using ConcurrentSim
 using ResumableFunctions
-import Base: unlock, lock
+import Base: unlock, lock, islocked
 
 """Multiple processes can wait on this semaphore for a permission to run given by another process"""
 struct AsymmetricSemaphore
@@ -26,4 +26,8 @@ function unlock(s::AsymmetricSemaphore)
     if s.nbwaiters[] > 0
         unlock(s.lock)
     end
+end
+
+function islocked(s::AsymmetricSemaphore)
+    return islocked(s.lock)
 end

@@ -69,7 +69,9 @@ end
 
             unlock(slot)
         end
-        if !isnothing(prot.period)
+        if isnothing(prot.period)
+            @yield onchange_tag(reg)
+        else
             @yield timeout(prot.sim, prot.period)
         end
     end
