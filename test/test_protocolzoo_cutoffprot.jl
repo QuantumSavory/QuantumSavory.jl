@@ -57,6 +57,6 @@ run(sim, 4.0)
 
 run(sim, 6.0)
 @test !isassigned(net[1][1])
-@test !isassigned(net[1][1])
+@test !isassigned(net[2][1])
 
 end
