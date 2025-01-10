@@ -3,7 +3,7 @@ using CSV
 using Graphs, GraphRecipes, Plots
 import QuantumClifford: graphstate, Stabilizer
 using PyCall
-include("setup.jl")
+include("setup_one_clientregister.jl")
 
 @pyimport pickle
 @pyimport networkx
@@ -56,15 +56,29 @@ end
 
 nclients = 5
 path_to_graph_data = "examples/graphstateswitch/input/7.pickle" # Graph state data (No. 7 of Fig. 11 in https://quantum-journal.org/papers/q-2020-08-07-305/pdf/)
-link_success_prob = 0.5
+link_success_prob = 1.
 nruns = 1
 
 graphdata, operations, graphstates = get_graphdata_from_pickle(path_to_graph_data, nclients)
-for (key, value) in graphdata
-    @info "The lc quivalent graph with vertex cover $(key) has $(nv(value)) vertices and $(ne(value)) edges"
-    #@info "The transition gates are $(operations[key])"
-    @info "The stabilizer state is $(graphstates[key])"
-end
+# for (key, value) in graphdata
+#     @info "The lc quivalent graph with vertex cover $(key) has $(nv(value)) vertices and $(ne(value)) edges"
+#     #@info "The transition gates are $(operations[key])"
+#     @info "The stabilizer state is $(graphstates[key])"
+# end
+
+# simple graph
+# nclients = 3
+# a = Register(3)
+# g = Graph(3)
+# add_edge!(g, 1, 2)
+# add_edge!(g, 2, 3)
+# graphdata = Dict( (2,) => g )
+# initialize!((a[1],a[2],a[3]), X1⊗X1⊗X1)  # Initialize a in |+⟩ state
+
+# apply!((a[1],a[2]), ZCZ)  
+# apply!((a[2],a[3]), ZCZ)
+# refstate = copy(a.staterefs[1].state[])
+# graphstates = Dict( (2,) => refstate )
 
 # Prepare simulation data storage
 results_per_client = DataFrame[]
@@ -112,5 +126,10 @@ end
 # Uncomment to write results to CSV
 # CSV.write("examples/piecemakerswitch/output/piecemaker-eventdriven.csv", results_total)
 # CSV.write("examples/piecemakerswitch/output/piecemaker-eventdriven_summary.csv", summary_df)
-# viewgraph(graphdata[(2,4)]
+# viewgraph(graphdata[(2,4)
 # viewgraph(SimpleGraph{Int64}(6, [[3, 5], [3, 5], [1, 2, 5], [5], [1, 2, 3, 4]]))
+
+# (3,4) -> 0.25
+# (2,4) -> 1 / 0.5
+# (2,5) -> 0
+# (1,3) -> 0
