@@ -39,9 +39,11 @@ end
 ##
 
 function get_time_tracker(rn::RegisterNet)
+    # TODO assert they are all the same
     return get_time_tracker(rn.registers[1])
 end
 function get_time_tracker(r::Register)
+    # TODO assert all locks and tag_waiters and similar have the same env
     r.locks[1].env::Simulation
 end
 function get_time_tracker(r::RegRef)

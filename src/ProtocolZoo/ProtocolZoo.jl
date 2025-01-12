@@ -1,7 +1,7 @@
 module ProtocolZoo
 
 using QuantumSavory
-import QuantumSavory: get_time_tracker, Tag, isolderthan
+import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange_tag
 using QuantumSavory: Wildcard
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
@@ -208,9 +208,13 @@ end
         b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
-            isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
-            @yield timeout(prot.sim, prot.retry_lock_time)
+            if isnothing(prot.retry_lock_time)
+                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting for changes to tags..."
+                @yield onchange_tag(prot.net[prot.nodeA]) | onchange_tag(prot.net[prot.nodeB])
+            else
+                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting a fixed amount of time..."
+                @yield timeout(prot.sim, prot.retry_lock_time)
+            end
             continue
         end
         # we are now certain that a_ and b_ are not nothing. The compiler is not smart enough to figure this out
@@ -397,20 +401,27 @@ function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs..
 end
 
 @resumable function (prot::EntanglementConsumer)()
-    if isnothing(prot.period)
-        error("In `EntanglementConsumer` we do not yet support waiting on register to make qubits available") # TODO
-    end
     while true
         query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
-            @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement"
-            @yield timeout(prot.sim, prot.period)
+            if isnothing(prot.period)
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting on tag updates in $(prot.nodeA)."
+                @yield onchange_tag(prot.net[prot.nodeA])
+            else
+                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting a fixed amount of time."
+                @yield timeout(prot.sim, prot.period)
+            end
             continue
         else
             query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...)"
-                @yield timeout(prot.sim, prot.period)
+                if isnothing(prot.period)
+                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting on tag updates in $(prot.nodeB)."
+                    @yield onchange_tag(prot.net[prot.nodeB])
+                else
+                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
+                    @yield timeout(prot.sim, prot.period)
+                end
                 continue
             end
         end
@@ -431,7 +442,9 @@ end
         push!(prot.log, (now(prot.sim), ob1, ob2))
         unlock(q1)
         unlock(q2)
-        @yield timeout(prot.sim, prot.period)
+        if !isnothing(prot.period)
+            @yield timeout(prot.sim, prot.period)
+        end
     end
 end
 

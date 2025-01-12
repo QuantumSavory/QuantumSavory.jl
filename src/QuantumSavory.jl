@@ -48,6 +48,7 @@ export
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
+    onchange_tag,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer,
     # initialize.jl
@@ -78,6 +79,8 @@ export
 include("traits_and_defaults.jl")
 
 include("tags.jl")
+
+include("semaphore.jl")
 
 include("states_registers.jl")
 include("quantumchannel.jl")
