@@ -18,7 +18,7 @@ export
     # protocols
     EntanglerProt, SwapperProt, FusionProt, EntanglementTracker, EntanglementConsumer, FusionConsumer, CutoffProt,
     # tags
-    EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ, TeleportUpdate,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest
 
@@ -114,7 +114,6 @@ $TYPEDFIELDS
 end
 Base.show(io::IO, tag::EntanglementUpdateX) = print(io, "Update slot .$(tag.past_remote_slot) which used to be entangled to $(tag.past_local_node).$(tag.past_local_slot) to be entangled to $(tag.new_remote_node).$(tag.new_remote_slot) and apply correction Z$(tag.correction)")
 Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.past_local_node, tag.past_local_slot, tag.past_remote_slot, tag.new_remote_node, tag.new_remote_slot, tag.correction)
-
 """
 $TYPEDEF
 
@@ -163,6 +162,32 @@ See also: [`CutoffProt`](@ref)
 end
 Base.show(io::IO, tag::EntanglementDelete) = print(io, "Deleted $(tag.send_node).$(tag.send_slot) which was entangled to $(tag.rec_node).$(tag.rec_slot)")
 Tag(tag::EntanglementDelete) = Tag(EntanglementDelete, tag.send_node, tag.send_slot, tag.rec_node, tag.rec_slot)
+
+"""
+$TYPEDEF
+
+This tag arrives as a message from a remote node's teleport protocol from which a qubit is sent to the current node,
+to update the classical metadata of the entangled slot and empty it.
+It is also stored at a node to handle incoming `EntanglementUpdate` messages.
+
+$TYPEDFIELDS
+"""
+@kwdef struct TeleportUpdate
+    "node idx where the qubit is teleported from"
+    past_node::Int
+    "slot idx where the qubit is teleported from"
+    past_slot::Int
+    "local node idx where the qubit is teleported to"
+    local_node::Int
+    "local slot idx"
+    local_slot::Int
+    "what Pauli correction you need to perform after first Z measurement"
+    zcorrection1::Int
+    "what Pauli correction you need to perform after second Z measurement"
+    zcorrection2::Int
+end
+Base.show(io::IO, tag::TeleportUpdate) = print(io, "Update $(tag.local_node).$(tag.local_slot) which received the state from $(tag.past_node).$(tag.past_slot) via teleportation and apply correction X$(tag.zcorrection1) and Z$(tag.zcorrection2)")
+Tag(tag::TeleportUpdate) = Tag(TeleportUpdate, tag.past_node, tag.past_slot, tag.local_node, tag.local_slot, tag.zcorrection1, tag.zcorrection2)
 
 """
 $TYPEDEF
