@@ -65,10 +65,10 @@ nologging = ConsoleLogger(stderr, Logging.Warn)
 # Run sims
 replicates = 100
 sampled_times = 0.:0.4:25.
-@time qo_res = with_logger(nologging) do
+qo_res = with_logger(nologging) do
     [monte_carlo_trajectory(; sampled_times) for _ in 1:replicates]
 end;
-@time qc_res = with_logger(nologging) do
+qc_res = with_logger(nologging) do
     [monte_carlo_trajectory(; sampled_times, representation=CliffordRepr) for _ in 1:replicates]
 end;
 
