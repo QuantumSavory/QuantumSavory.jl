@@ -179,8 +179,10 @@ $TYPEDFIELDS
     rounds::Int = -1
     """maximum number of attempts to make per round (`-1` for infinite)"""
     attempts::Int = -1
-    """function or index of the slot to choose an available free slot in the nodes to be entangled"""
-    choose_slot::Union{Int,<:Function} = argmin
+    """function or index of the slot to choose an available free slot in node A"""
+    chooseA::Union{Int,<:Function} = argmin
+    """function or index of the slot to choose an available free slot in node B"""
+    chooseB::Union{Int,<:Function} = argmin
     #"""whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     #randomize::Bool = false
     """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
@@ -206,8 +208,8 @@ end
     while rounds != 0
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        a_ = findfreeslot_filter(prot.net[prot.nodeA]; filter=prot.choose_slot, margin=margin)
-        b_ = findfreeslot_filter(prot.net[prot.nodeB]; filter=prot.choose_slot, margin=margin)
+        a_ = findfreeslot_filter(prot.net[prot.nodeA]; filter=prot.chooseA, margin=margin)
+        b_ = findfreeslot_filter(prot.net[prot.nodeB]; filter=prot.chooseB, margin=margin)
         #a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
         #b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
