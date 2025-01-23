@@ -409,6 +409,22 @@ function findfreeslot(reg::Register; randomize=false, margin=0)
     end
 end
 
+
+function findfreeslot_filter(reg::Register; filter=argmin::Union{Int,<:Function}, margin=0)
+    n_slots = length(reg.staterefs)
+    freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
+    slots = [i for i in 1:n_slots if !isassigned(reg[i]) || isassigned(slot)]
+    if freeslots >= margin
+        if filter isa Int
+            return filter in slots ? reg[filter] : nothing
+        else
+            i = filter(slots)
+            return reg[i]
+        end
+    end
+end
+
+
 struct NotAssignedError <: Exception # TODO use this in all places where we are throwing something on isassigned (maybe rename to IsAssignedError and check whether we need to keep `f` as part of it (might already be provided by the stacktrace) and check it does not allocate even when the error is not triggered)
     msg
     f
