@@ -208,8 +208,8 @@ end
     while rounds != 0
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        a_ = findfreeslot_filter(prot.net[prot.nodeA]; filter=prot.chooseA, randomize=prot.randomize, margin=margin)
-        b_ = findfreeslot_filter(prot.net[prot.nodeB]; filter=prot.chooseB, randomize=prot.randomize, margin=margin)
+        a_ = findfreeslot(prot.net[prot.nodeA]; filter=prot.chooseA, randomize=prot.randomize, margin=margin)
+        b_ = findfreeslot(prot.net[prot.nodeB]; filter=prot.chooseB, randomize=prot.randomize, margin=margin)
         #a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
         #b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
