@@ -383,7 +383,7 @@ function query(mb::MessageBuffer, query::Tag)
     return nothing
 end
 
-"""Find an empty unlocked slot in a given [`Register`](@ref).
+"""Find an empty unlocked slot in a given [`Register`](@ref), with optional array index filter for the slot.
 
 ```jldoctest
 julia> reg = Register(3); initialize!(reg[1], X); lock(reg[2]);
@@ -397,29 +397,25 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register; randomize=false, margin=0)
+function findfreeslot(reg::Register; filter=minimum::Union{Int,<:Function}, randomize=false, margin=0)
     n_slots = length(reg.staterefs)
-    freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
-    if freeslots >= margin
-        perm = randomize ? randperm : (x->1:x)
-        for i in perm(n_slots)
-            slot = reg[i]
-            islocked(slot) || isassigned(slot) || return slot
-        end
-    end
-end
-
-
-function findfreeslot_filter(reg::Register; filter=argmin::Union{Int,<:Function}, margin=0)
-    n_slots = length(reg.staterefs)
-    freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
-    slots = [i for i in 1:n_slots if !isassigned(reg[i]) || isassigned(slot)]
-    if freeslots >= margin
+    n_freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots)) # check for locked here?
+    if n_freeslots >= margin
+        freeslots = [i for i in 1:n_slots if !islocked(reg[i]) && !isassigned(reg[i])]
         if filter isa Int
-            return filter in slots ? reg[filter] : nothing
+            return filter in freeslots ? reg[filter] : nothing
         else
-            i = filter(slots)
-            return reg[i]
+            filtered_slots = filter(freeslots)
+            if isa(filtered_slots, Integer)  # in case the function returns an integer
+                filtered_slots = [filtered_slots]
+            end
+            if length(filtered_slots) > 1 && randomize
+                return reg[rand(filtered_slots)]
+            elseif !isempty(filtered_slots)
+                return reg[filtered_slots[1]]
+            else
+                return nothing
+            end
         end
     end
 end
