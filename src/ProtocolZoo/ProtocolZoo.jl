@@ -297,7 +297,6 @@ end
                 @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(msg.tag[3]) | message=`$(msg.tag)` | time=$(now(prot.sim))"
                 workwasdone = true
                 localslot = nodereg[localslotid]
-
                 # Check if the local slot is still present and believed to be entangled.
                 # We will need to perform a correction operation due to the swap or a deletion due to the qubit being thrown out,
                 # but there will be no message forwarding necessary.
@@ -320,8 +319,10 @@ end
                         if correction==2
                             apply!(localslot, updategate)
                         end
-                        # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                        tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
+                        if newremotenode != -1 #TODO: this is a bit hacky, also add tracking for GHZ state
+                            # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
+                            tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
+                        end
                     else # EntanglementDelete
                         traceout!(localslot)
                     end
@@ -395,6 +396,8 @@ $FIELDS
     nodeB::Int
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::LT = 0.1
+    """tag for which the consumer is consuming"""
+    tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
     log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
 end
@@ -408,7 +411,7 @@ end
 
 @resumable function (prot::EntanglementConsumer)()
     while true
-        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        query1 = query(prot.net[prot.nodeA], tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
             if isnothing(prot.period)
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting on tag updates in $(prot.nodeA)."
@@ -419,7 +422,7 @@ end
             end
             continue
         else
-            query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+            query2 = query(prot.net[prot.nodeB], tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 if isnothing(prot.period)
                     @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting on tag updates in $(prot.nodeB)."
@@ -444,6 +447,7 @@ end
         ob1 = real(observable((q1, q2), Z⊗Z))
         ob2 = real(observable((q1, q2), X⊗X))
 
+        
         traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
         push!(prot.log, (now(prot.sim), ob1, ob2))
         unlock(q1)
