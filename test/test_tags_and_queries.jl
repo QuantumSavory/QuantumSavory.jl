@@ -152,6 +152,17 @@ id3 = tag!(reg[4], :symB, 4, 5)
 @test_throws "Attempted to delete a nonexistent" untag!(reg, -1)
 end
 
+##
+# findfreeslot tests
+reg = Register(5)
+initialize!(reg[1], X)
+lock(reg[3])
+
+@test findfreeslot(reg).idx == 2
+@test findfreeslot(reg, filter=maximum).idx == 5
+@test findfreeslot(reg, filter=1) == nothing
+@test findfreeslot(reg, filter=2).idx == 2
+
 f()
 #using BenchmarkTools
 #@benchmark f()
