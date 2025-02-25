@@ -399,23 +399,28 @@ true
 """
 function findfreeslot(reg::Register; filter=minimum::Union{Int,<:Function}, randomize=false, margin=0)
     n_slots = length(reg.staterefs)
-    n_freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots)) # check for locked here?
-    if n_freeslots >= margin
-        freeslots = [i for i in 1:n_slots if !islocked(reg[i]) && !isassigned(reg[i])]
-        if filter isa Int
-            return filter in freeslots ? reg[filter] : nothing
+    n_freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
+    if n_freeslots < margin
+        return nothing
+    end
+    freeslots = [i for i in 1:n_slots if !islocked(reg[i]) && !isassigned(reg[i])]
+    if isempty(freeslots)
+        return nothing
+    end
+    if filter isa Int
+        return filter in freeslots ? reg[filter] : nothing
+    else
+        filtered_slots = filter(freeslots)
+        if filtered_slots === nothing || isempty(filtered_slots)
+            return nothing
+        end       
+        if isa(filtered_slots, Integer)
+            filtered_slots = [filtered_slots]
+        end
+        if randomize
+            return reg[rand(filtered_slots)]
         else
-            filtered_slots = filter(freeslots)
-            if isa(filtered_slots, Integer)  # in case the function returns an integer
-                filtered_slots = [filtered_slots]
-            end
-            if length(filtered_slots) > 1 && randomize
-                return reg[rand(filtered_slots)]
-            elseif !isempty(filtered_slots)
-                return reg[filtered_slots[1]]
-            else
-                return nothing
-            end
+            return reg[filtered_slots[1]]
         end
     end
 end
