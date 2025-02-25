@@ -1,5 +1,4 @@
 @testitem "Plotting GL" tags=[:plotting_gl] begin
-    include("setup_plotting.jl")
     using GLMakie
     GLMakie.activate!()
 

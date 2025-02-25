@@ -1,5 +1,4 @@
 @testitem "Plotting Cairo" tags=[:plotting_cairo] begin
-include("setup_plotting.jl")
 using CairoMakie
 CairoMakie.activate!()
 

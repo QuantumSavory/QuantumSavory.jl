@@ -3,3 +3,4 @@ build
 .gitignore
 ROADMAP.md
 coverage
+*.cov
