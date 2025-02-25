@@ -27,8 +27,10 @@ SumTypes = "8e1ec7a9-0e02-4297-b0fe-6433085c89f2"
 
 [weakdeps]
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+GeoMakie = "db073c08-6b98-4ee5-b6a4-5efafb3259c6"
 
 [extensions]
+QuantumSavoryGeoMakie = "GeoMakie"
 QuantumSavoryMakie = "Makie"
 
 [compat]
@@ -36,6 +38,7 @@ Combinatorics = "1"
 ConcurrentSim = "1.5"
 Distributions = "0.25.90"
 DocStringExtensions = "0.9"
+GeoMakie = "0.7.8"
 Graphs = "1.9"
 IterTools = "1.4.0"
 LinearAlgebra = "1"

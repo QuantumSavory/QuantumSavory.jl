@@ -45,7 +45,26 @@ Other configuration options are available as well (the ones ending on `plot` let
 ```@example vis
 propertynames(plt)
 ```
+## Plotting Registers on a Background Map
+If your registers have latitude and longitude coordinates (ranging from -180 to 180), you can plot them directly on a map. One way is to use `generate_map` function to create the map as a plotting axis using the package 'GeoMakie'. Here's how you can do this with the registers defined earlier:
 
+```@example vis
+using GLMakie # hide
+GLMakie.activate!() # hide
+net = RegisterNet([Register(2),Register(3),Register(2),Register(5)]) # hide
+initialize!(net[1,1]) # hide
+initialize!(net[2,3], X₁) # hide
+initialize!((net[3,1],net[4,2]), X₁⊗Z₂) # hide
+apply!((net[2,3],net[3,1]), CNOT) # hide
+using GeoMakie
+fig = Figure(size=(800,400))
+ax = generate_map(fig[1, 1])
+_, ax, plt, obs = registernetplot_axis(ax, net, registercoords=[Point2f(-118, 34), Point2f(-71, 42), Point2f(-111, 34), Point2f(-96, 32)], state_linecolor=:black)
+xlims!(ax, -125, -65) 
+ylims!(ax, 25, 50)
+fig
+```
+In general, if you have a custom background axis, you can use it as the axis parameter in `registerplot_axis`.
 ## State and tag metadata in interactive visualizations
 
 When working with interactive plots, you can also hover over different parts of the visualization to see the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying).

@@ -4,6 +4,7 @@
 
 - Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
 - `onchange_tag` now permits a protocol to wait for any change to the tag metadata. Implemented thanks to the new `AsymmetricSemaphore`, a resource object that allows multiple processes to wait for an update.
+- Plots of networks can now overlay real-world maps (see `generate_map`).
 
 ## v0.5.0 - 2024-10-16
 
