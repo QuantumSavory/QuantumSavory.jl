@@ -147,7 +147,7 @@ sim = get_time_tracker(net)
 
 # entangle 1 to 1 and 2 to 2
 entangler1 = EntanglerProt(sim, net, 1, 2; pairstate=noisy_pair, chooseA=1, chooseB=1, success_prob=1.0, rounds=1)
-entangler2 = EntanglerProt(sim, net, 1, 2, pairstate=noisy_pair, chooseA=2, chooseB=2, success_prob=1.0, rounds=1)
+entangler2 = EntanglerProt(sim, net, 1, 2; pairstate=noisy_pair, chooseA=2, chooseB=2, success_prob=1.0, rounds=1)
 @process entangler1()
 @process entangler2()
 
