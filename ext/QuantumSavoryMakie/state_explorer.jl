@@ -45,6 +45,8 @@ function stateexplorer!(fig,S)
 
         af = Axis(fparamsF[1,i] , xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, ylabel = i==1 ? "F" : "")
         at = Axis(fparamsTr[1,i], xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, xlabel=string(param), ylabel= i==1 ? "tr(ρ)" : "")
+        xlims!(af, min, max)
+        xlims!(at, min, max)
         push!(aparamsF, af)
         push!(aparamsTr, at)
     end
@@ -94,6 +96,10 @@ function stateexplorer!(fig,S)
         xlabel="", ylabel="", zlabel="",
         title="ρ (Bell basis)"
     )
+    xlims!(a3dρ,1-0.1,5)
+    ylims!(a3dρ,5,1-0.1)
+    xlims!(a3dρB,1-0.1,5)
+    ylims!(a3dρB,5,1-0.1)
 
     if isempty(params) # TODO fix the code repetition on both sides
         ρdata = S.data
