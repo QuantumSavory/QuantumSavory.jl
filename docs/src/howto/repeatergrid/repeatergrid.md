@@ -43,7 +43,7 @@ The Swapper Protocol is initialized with a custom predicate function which is th
 
 This predicate function encodes most of the "logic" a local node will be performing.
 
-The custom predicate function shown above is parametrized with `net` and `c_node` along with the keyword argument `low`, when initializing the Swapper Protocol. This predicate function `Int->Bool` selects the target remote nodes for which a swap is appropriate. The arguments are:
+The custom predicate function shown above is parameterized with `net` and `c_node` along with the keyword argument `low`, when initializing the Swapper Protocol. This predicate function `Int->Bool` selects the target remote nodes for which a swap is appropriate. The arguments are:
 
 - `net`: The network of register nodes representing the graph structure, an instance of `RegisterNet`.
 
