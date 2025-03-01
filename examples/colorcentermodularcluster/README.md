@@ -1,5 +1,7 @@
 # Simulations of the generation of GHZ and 3×2 cluster states in Tin-vacancy color centers
 
+Live version is at [areweentangledyet.com/colorcentermodularcluster/](https://areweentangledyet.com/colorcentermodularcluster/).
+
 Cluster states are highly entangled state of qubits useful as a computational resource. The cluster state is also a graph state where the graph has a 2D grid topology.
 
 **Importantly, you probably do not want to use this setup directly if all you want is to model entanglement generation between neighbors!!!** This is a very low-level implementation. You would be better of using already implemented reusable protocols in [`QuantumSavory.ProtocolZoo`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/) and the [tagging/querying capabilities for tracking of classical metadata and messages](https://qs.quantumsavory.org/dev/tag_query/). On the other hand, the setup here is a simple way to learn about how such protocols are implemented without using these higher-level capabilities.

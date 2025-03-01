@@ -18,7 +18,7 @@ function main()
     warnonly = [:missing_docs],
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
-        assets=["assets/init.js"]
+        assets=["assets/init.js","assets/custom.css"]
     ),
     modules = [QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumInterface],
     authors = "Stefan Krastanov",

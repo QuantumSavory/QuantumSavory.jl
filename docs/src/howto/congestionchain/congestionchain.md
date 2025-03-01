@@ -11,7 +11,7 @@ A simple example to study congestion on a chain of quantum repeaters.
 Below we embed a live version of the simulation (hosted at [areweentangledyet.com/congestionchain/](https://areweentangledyet.com/congestionchain/)):
 
 ```@raw html
-<iframe src="https://areweentangledyet.com/congestionchain/" style="height:800px;width:850px;"></iframe>
+<iframe class="liveexample" src="https://areweentangledyet.com/congestionchain/" style="height:800px;width:850px;"></iframe>
 ```
 
 The source code is in the [`examples/congestionchain`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/congestionchain) folder.
