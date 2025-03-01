@@ -11,7 +11,7 @@ stateexplorer!(fig, BarrettKokBellPairW)
 Below we embed a live version of this state explorer (hosted at [areweentangledyet.com/state_explorer/](https://areweentangledyet.com/state_explorer/)):
 
 ```@raw html
-<iframe src="https://areweentangledyet.com/state_explorer/" style="height:600px;width:850px;"></iframe>
+<iframe class="liveexample" src="https://areweentangledyet.com/state_explorer/" style="height:600px;width:850px;"></iframe>
 ```
 
 The source code is in the [`examples/state_explorer`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/state_explorer) folder.

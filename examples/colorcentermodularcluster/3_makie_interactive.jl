@@ -186,7 +186,7 @@ ensemble = App() do
     Drag over the plot to select manual region to zoom in.
     `Ctrl`+click resets the view.
 
-    Back at the [landing page](./..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
+    Back at the [landing page](./) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
@@ -323,7 +323,7 @@ singletraj = App() do
 
     $(config_str)
 
-    Back at the [landing page](./..) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
+    Back at the [landing page](./) you can view multiple other ways to simulate and visualize this cluster state preparation experiment.
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """

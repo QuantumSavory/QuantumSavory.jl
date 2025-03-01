@@ -58,8 +58,7 @@ nothing # hide
 
 Last step of the setup is to write the event loops for each of the nodes. As a flowchart they look like the following:
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
   subgraph Node 2
     direction LR
@@ -85,7 +84,7 @@ graph LR
 
     A --> B --> C --> D --Yes--> E
     D --No--> F --> G --> A
-  end</div>
+  end
 ```
 
 And below we implement them in code:

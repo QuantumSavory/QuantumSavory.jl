@@ -44,7 +44,7 @@ The user does not need to know much about these libraries, but if they wish, it 
 Below we embed a live version of the simulation (hosted at [areweentangledyet.com/colorcentermodularcluster/](https://areweentangledyet.com/colorcentermodularcluster/)):
 
 ```@raw html
-<iframe src="https://areweentangledyet.com/colorcentermodularcluster/" style="height:850px;width:1250px;"></iframe>
+<iframe class="liveexample" src="https://areweentangledyet.com/colorcentermodularcluster/" style="height:850px;width:1250px;"></iframe>
 ```
 
 The source code is in the [`examples/colorcentermodularcluster`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster) folder.

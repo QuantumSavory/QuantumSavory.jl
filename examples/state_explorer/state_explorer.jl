@@ -29,7 +29,7 @@ landing = Bonito.App() do
 
     [See the documentation for `BarrettKokBellPairW`](http://qs.quantumsavory.org/dev/API_StatesZoo/#QuantumSavory.StatesZoo.BarrettKokBellPairW)
 
-    [See and modify the code for this app on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/state_explorer.jl)
+    [See and modify the code for this app on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/state_explorer)
     """
     return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end
