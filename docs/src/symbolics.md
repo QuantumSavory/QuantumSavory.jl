@@ -1,11 +1,5 @@
 # Symbolic Expressions
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 `QuantumSavory` supports symbolic expressions for the quantum states and operations being simulated thanks to the `QuantumSymbolics` library. It serves two purposes:
 
 - It provides for algebraic manipulation of mathematical expressions related to your models. Particularly helpful when having to automatically generate or simplify expressions of significant complexity.

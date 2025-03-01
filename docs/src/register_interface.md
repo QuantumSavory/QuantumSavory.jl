@@ -1,11 +1,5 @@
 # Register Interface
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 A rather diverse set of simulation libraries is used under the hood. Long term the Julia Quantum Science community might be able to converge to a common interface that would slightly simplify work between the libraries, but in the interim the Julia multimethod paradigm is sufficient. Below we describe the interface that enables us to operate with many distinct underlying simulators.
 
 ## `initialize!`

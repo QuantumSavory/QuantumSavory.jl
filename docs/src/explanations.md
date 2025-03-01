@@ -1,11 +1,5 @@
 # Explanations
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 This section covers how is the library structured, what are its conventions, and why were they decided upon.
 
 You probably want to cover the:
