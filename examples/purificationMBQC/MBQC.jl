@@ -6,6 +6,9 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 import QuantumSavory: Tag
 
+using GLMakie
+using GeoMakie
+GLMakie.activate!()
 
 using Logging
 global_logger(ConsoleLogger(stderr, Logging.Debug))
@@ -88,8 +91,23 @@ end
         @debug "Setup starting at node $(node)."
         initialize!(net[node, 3], X1)
         initialize!(net[node, 4], X1)
+        apply!((net[node, 3], net[node, 4]), CPHASE)
+        @yield timeout(sim, duration)
         tag!(net[node][4], MBQCSetUp, node)
         @debug "Setup done at node $(node)."
+    end
+end
+@resumable function entangler(sim, net; pairstate=noisy_pair, period=0.1)
+    while true
+        # entangle 1 to 1 and 2 to 2
+        entangler1 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=1, chooseB=1, rounds=1)
+        entangler2 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=2, chooseB=2, rounds=1)
+        @process entangler1()
+        query1 = query(net[1], EntanglementCounterpart, 2, 1)
+        if !isnothing(query1)
+            @process entangler2()
+        end
+        @yield timeout(sim, period)
     end
 end
 
@@ -97,7 +115,7 @@ end
     while true
         query1 = queryall(net[node], EntanglementCounterpart, ❓, ❓; locked=false, assigned=true) 
         query2 = query(net[node], MBQCSetUp, node)
-        if length(query1) || !isnothing(query2)
+        if length(query1) < 2 || isnothing(query2)
             if isnothing(period)
                 @yield onchange_tag(net[node])
             else
@@ -105,6 +123,7 @@ end
             end
             continue
         end
+        println(query1)
         @debug "Purification starting at node $(node)."
 
         apply!((net[node, 3], net[node, 1]), CPHASE)
@@ -120,7 +139,8 @@ end
         if m2 == 2
             apply!(net[node, 4], X)
         end
-
+        untag!(query1[1].slot, query1[1].id)
+        untag!(query1[2].slot, query1[2].id)
         m = project_traceout!(net[node, 2], X) 
         tag!(net[node][4], MBQCMeasurement, node, m)
         
@@ -129,8 +149,9 @@ end
         else
             other = 1
         end
-        put!(channel(net, node=>other), Tag(MBQCMeasurement, node, m))
         @debug "Purification done at node $(node)."
+        put!(channel(net, node=>other), Tag(MBQCMeasurement, node, m))
+        @yield timeout(sim, duration)
     end
 end
 
@@ -142,14 +163,11 @@ regR = Register(4)
 net = RegisterNet([regL, regR])
 sim = get_time_tracker(net)
 
+@process entangler(sim, net)
 @process MBQC_tracker(sim, net, 1)
 @process MBQC_tracker(sim, net, 2)
 
-# entangle 1 to 1 and 2 to 2
-entangler1 = EntanglerProt(sim, net, 1, 2; pairstate=noisy_pair, chooseA=1, chooseB=1, success_prob=1.0, rounds=1)
-entangler2 = EntanglerProt(sim, net, 1, 2; pairstate=noisy_pair, chooseA=2, chooseB=2, success_prob=1.0, rounds=1)
-@process entangler1()
-@process entangler2()
+
 
 @process MBQC_setup(sim, net, 1)
 @process MBQC_setup(sim, net, 2)
@@ -162,9 +180,15 @@ purified_consumer = EntanglementConsumer(sim, net, 1, 2; period=3, tag=PurifiedE
 
 run(sim, 2)
 
+observable([net[1], net[2]], [1, 1], projector(perfect_pair))
+observable([net[1], net[2]], [2, 2], projector(perfect_pair))
+
+# has not been consumed yet
 observable([net[1], net[2]], [4, 4], projector(perfect_pair))
 
 
 run(sim, 4)
 
+# should be consumed and return nothing
 observable([net[1], net[2]], [4, 4], projector(perfect_pair))
+
