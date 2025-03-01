@@ -1,3 +1,4 @@
+end
 @testitem "Quantum Channel" tags=[:quantumchannel] begin
 using ResumableFunctions
 using ConcurrentSim
@@ -32,6 +33,14 @@ sref = regB.staterefs[1]
 @test sref.registers[1] == sref.registers[2]
 @test !isassigned(regA, 1)
 
+end
+
+@testitem "Quantum Channel - alternative constructor" tags=[:quantumchannel] begin
+using ResumableFunctions
+using ConcurrentSim
+
+bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
+
 ## Test with the second constructor
 
 regA = Register(1)
@@ -51,6 +60,14 @@ run(sim)
 sref = regB.staterefs[1]
 @test sref.registers[1] == sref.registers[2]
 @test !isassigned(regA, 1)
+
+end
+
+@testitem "Quantum Channel with T1 decay" tags=[:quantumchannel] begin
+using ResumableFunctions
+using ConcurrentSim
+
+bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
 ## Test with T1Decay
 
@@ -75,6 +92,14 @@ initialize!(reg[1:2], bell)
 uptotime!(reg[1], 10.0)
 
 @test observable(reg[1:2], projector(bell)) ≈ observable(regB[1:2], projector(bell))
+
+end
+
+@testitem "Quantum Channel with T2 dephasing" tags=[:quantumchannel] begin
+using ResumableFunctions
+using ConcurrentSim
+
+bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
 ## Test with T2Dephasing
 

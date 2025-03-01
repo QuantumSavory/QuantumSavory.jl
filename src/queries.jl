@@ -20,6 +20,7 @@ function tag!(ref::RegRef, tag)
     id = guid()
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (;tag, slot=ref.idx, time=now(get_time_tracker(ref)))
+    unlock(ref.reg.tag_waiter[])
     return id
 end
 
@@ -41,6 +42,7 @@ function untag!(ref::RegOrRegRef, id::Integer)
     isnothing(i) ? throw(QueryError("Attempted to delete a nonexistent tag id", untag!, id)) : deleteat!(reg.guids, i) # TODO make sure there is a clear error message
     to_be_deleted = reg.tag_info[id]
     delete!(reg.tag_info, id)
+    unlock(reg.tag_waiter[])
     return to_be_deleted
 end
 

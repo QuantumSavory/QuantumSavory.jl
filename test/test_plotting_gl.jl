@@ -1,5 +1,4 @@
 @testitem "Plotting GL" tags=[:plotting_gl] begin
-    include("setup_plotting.jl")
     using GLMakie
     GLMakie.activate!()
 
@@ -8,6 +7,9 @@
 end
 @testset "arguments and observables and tags" begin
     include("test_plotting_2_tags_observables.jl")
+end
+@testset "background map" begin
+    include("test_plotting_3_maps.jl")
 end
 
 @testset "data inspectors" begin # only available in GLMakie

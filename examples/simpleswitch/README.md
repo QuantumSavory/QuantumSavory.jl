@@ -1,4 +1,4 @@
-# A Simulation of a Simple Entanglement Switch
+# A Simple Entanglement Switch
 
 Here we have one switch connected to n clients.
 The switch has m qubit slots and the clients have a single qubit slot.
@@ -11,3 +11,8 @@ The `setup.jl` file implements all necessary base functionality.
 The other files run the simulation and generate visuals in a number of different circumstances:
 1. An interactive simulation with GLMakie visualization;
 2. A web-app version of the simulation.
+
+Documentation:
+
+- [`QuantumSavory.ProtocolZoo.SimpleSwitchDiscreteProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.SimpleSwitchDiscreteProt)
+- [The "How To" doc page on setting up a simple switch](https://qs.quantumsavory.org/dev/howto/simpleswitch/simpleswitch)

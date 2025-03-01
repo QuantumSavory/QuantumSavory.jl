@@ -1,11 +1,5 @@
 # Clifford Simulations of First Generation Quantum Repeater
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 Here we will simulate a quantum repeater by employing a noisy Clifford circuit simulator.
 
 Be sure to check out the more detailed tutorial on [wavefunction simulations of First Generation Quantum Repeater](@ref First-Generation-Quantum-Repeater) before proceeding with this one.
@@ -63,7 +57,5 @@ We can run the either simulation multiple times in order to compare the results 
 
 ![Comparison Against a Wavefunction-based Simulations](./firstgenrepeater-09.formalisms.png)
 
-## Full Code
 
-The entirety of the code necessary for reproducing these results is in the
-[examples folder of the `QuantumSavory.jl` repository](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater).
+The source code is in the [`examples/firstgenrepeater`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater) folder.

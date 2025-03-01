@@ -6,6 +6,8 @@ using Markdown
 
 include("setup.jl");
 
+@info "all library imports are complete"
+
 const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in Bonito https://github.com/SimonDanisch/Bonito.jl/issues/178
 
 """Run a simulation until all links in the cluster state are established,
@@ -262,7 +264,7 @@ singletraj = App() do
             colormap = :Spectral,
             colorrange = (-1., 1.),
             linewidth=3)
-        v==1 && Colorbar(subfig_rg[2,1],ls,vertical=false,flipaxis=false,label="Entanglement Stabilizer Expectation")
+        v==1 && Colorbar(F[1:4,1][2,1],ls,vertical=false,flipaxis=false,label="Entanglement Stabilizer Expectation")
     end
 
     # Plot of the evolving mean fidelity with respect to time
@@ -382,6 +384,8 @@ function add_conf_sliders(fig,conf_obs,root_conf; same_dict=false)
     end
 end
 
+@info "app definition is complete"
+
 ##
 # Serve the Makie app
 
@@ -396,5 +400,7 @@ Bonito.route!(server, "/ensemble" => ensemble);
 Bonito.route!(server, "/single-trajectory" => singletraj);
 
 ##
+
+@info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
 
 wait(server)
