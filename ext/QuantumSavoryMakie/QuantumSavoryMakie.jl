@@ -69,7 +69,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         rn[:registercoords] = registercoordsobs
     else
         adj_matrix = adjacency_matrix(networkobs[].graph)
-        registercoords = spring(adj_matrix, iterations=40, C=2*maximum(nsubsystems.(registers)))
+        registercoords = spring(adj_matrix, iterations=400, C=2*maximum(nsubsystems.(registers)))
         rn[:registercoords] = Observable(registercoords)
     end
     ## slotcolor -- updates handled implicitly (used only in a single `scatter` call)
@@ -313,8 +313,9 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
     ax.parent, ax, p, p[1]
 end
 
-function registernetplot_axis(subfig::Makie.GridPosition, registersobservable; infocli=true, datainspector=true, kwargs...)
-    registernetplot_axis(Makie.Axis(subfig), registersobservable; infocli, datainspector, kwargs...)
+# subfig::Union{GridPosition, GridSubposition} but maybe other as well, so leave it unspecified
+function registernetplot_axis(subfig, registersobservable; infocli=true, datainspector=true, kwargs...)
+    registernetplot_axis(Makie.Axis(subfig[1,1]), registersobservable; infocli, datainspector, kwargs...)
 end
 
 function registernetplot_axis(registersobservable; infocli=true, datainspector=true, kwargs...)

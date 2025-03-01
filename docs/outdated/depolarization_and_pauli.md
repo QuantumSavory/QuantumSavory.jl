@@ -1,12 +1,5 @@
 # Depolarization and Pauli Noise
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-    using CairoMakie
-end
-```
-
 TODO not finished and not included
 
 Multi-qubit partial depolarization is the same as multi-qubit Pauli noise where each multi-qubit Pauli error has equal probability independent of its (Hamming) weight.

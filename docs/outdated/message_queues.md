@@ -1,12 +1,5 @@
 # Message passing and queues
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-    using CairoMakie
-end
-```
-
 !!! warning
 
     This section is rather low-level, created before a lot of user-friendly tools were added.
@@ -219,4 +212,3 @@ The horizontal axis is simulation time. We plot the periods during which one of 
 - node 2 is waiting to receive a message that the system reset happened.
 
 As you can see, node 1 can start measurements before node 2 has heard that the system reset has happened, due to the communication delay.
-
