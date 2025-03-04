@@ -413,7 +413,7 @@ function findfreeslot(reg::Register; filter=minimum::Union{Int,<:Function}, rand
         filtered_slots = filter(freeslots)
         if filtered_slots === nothing || isempty(filtered_slots)
             return nothing
-        end       
+        end
         if isa(filtered_slots, Integer)
             filtered_slots = [filtered_slots]
         end
