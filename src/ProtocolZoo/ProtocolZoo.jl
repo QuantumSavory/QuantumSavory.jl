@@ -318,7 +318,7 @@ end
                         if correction==2
                             apply!(localslot, updategate)
                         end
-                        if newremotenode != -1 #TODO: this is a bit hacky, also add tracking for GHZ state
+                        if newremotenode != -1 #TODO: this is a bit hacky
                             # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
                             tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                         end
