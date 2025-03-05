@@ -179,10 +179,10 @@ $TYPEDFIELDS
     rounds::Int = -1
     """maximum number of attempts to make per round (`-1` for infinite)"""
     attempts::Int = -1
-    """function or index of the slot to choose an available free slot in node A"""
-    chooseA::Union{Int,<:Function} = minimum
-    """function or index of the slot to choose an available free slot in node B"""
-    chooseB::Union{Int,<:Function} = minimum
+    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node A"""
+    chooseA::Union{Int,<:Function} = identity
+    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node B"""
+    chooseB::Union{Int,<:Function} = identity
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
     """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
@@ -210,8 +210,6 @@ end
         margin = isentangled ? prot.margin : prot.hardmargin
         a_ = findfreeslot(prot.net[prot.nodeA]; filter=prot.chooseA, randomize=prot.randomize, margin=margin)
         b_ = findfreeslot(prot.net[prot.nodeB]; filter=prot.chooseB, randomize=prot.randomize, margin=margin)
-        #a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
-        #b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
@@ -396,7 +394,7 @@ $FIELDS
     nodeB::Int
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::LT = 0.1
-    """tag for which the consumer is consuming"""
+    """tag type which the consumer is looking for -- the consumer query will be `query(node, EntanglementConsumer.tag, remote_node)` and it will be expected that `remote_node` possesses the symmetric reciprocal tag; defaults to `EntanglementCounterpart`"""
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
     log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
@@ -447,7 +445,7 @@ end
         ob1 = real(observable((q1, q2), Z⊗Z))
         ob2 = real(observable((q1, q2), X⊗X))
 
-        
+
         traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
         push!(prot.log, (now(prot.sim), ob1, ob2))
         unlock(q1)
