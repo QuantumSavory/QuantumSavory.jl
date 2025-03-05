@@ -444,4 +444,3 @@ end
 function Base.isassigned(r::Register,i::Int) # TODO erase
     r.stateindices[i] != 0 # TODO this also usually means r.staterefs[i] !== nothing - choose one and make things consistent
 end
-Base.isassigned(r::RegRef) = isassigned(r.reg, r.idx)
