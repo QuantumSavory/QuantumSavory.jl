@@ -76,7 +76,7 @@ export
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
-# warnings for
+# warnings for not having Ext packages
 function __init__()
     if isdefined(Base.Experimental, :register_error_hint)
         Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, kwargs
