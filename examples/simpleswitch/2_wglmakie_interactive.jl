@@ -5,6 +5,8 @@ using Markdown
 
 include("setup.jl")
 
+@info "all library imports are complete"
+
 const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in JSServe https://github.com/SimonDanisch/JSServe.jl/issues/178
 
 # Mostly a copy of the 1_interactive_visualization.jl file, encapsulated here for convenient serving from inside a WGLMakie app
@@ -142,6 +144,8 @@ landing = Bonito.App() do
     return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end;
 
+@info "app definition is complete"
+
 #
 # Serve the Makie app
 
@@ -154,5 +158,7 @@ Bonito.HTTPServer.start(server)
 Bonito.route!(server, "/" => landing);
 
 ##
+
+@info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
 
 wait(server)

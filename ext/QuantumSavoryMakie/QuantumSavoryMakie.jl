@@ -5,11 +5,14 @@ using Graphs
 using NetworkLayout
 import ConcurrentSim
 import Makie
-import Makie: Theme, Figure, Axis,
-    @recipe, lift, Observable,
-    Point2, Point2f, Rect2f,
-    scatter!, poly!, linesegments!,
-    DataInspector
+import Makie: Theme, Figure, Axis, Axis3,
+    @recipe, lift, @lift, Observable,
+    Point2, Point2f, Rect2f, Rect3f,
+    scatter!, poly!, linesegments!, lines!, vlines!, mesh!,
+    xlims!, ylims!, zlims!,
+    deregister_interaction!, interactions,
+    DataInspector, Slider, Colorbar
+
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 
 ##
@@ -67,7 +70,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         rn[:registercoords] = registercoordsobs
     else
         adj_matrix = adjacency_matrix(networkobs[].graph)
-        registercoords = spring(adj_matrix, iterations=40, C=2*maximum(nsubsystems.(registers)))
+        registercoords = spring(adj_matrix, iterations=400, C=2*maximum(nsubsystems.(registers)))
         rn[:registercoords] = Observable(registercoords)
     end
     ## slotcolor -- updates handled implicitly (used only in a single `scatter` call)
@@ -313,8 +316,9 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
     ax.parent, ax, p, p[1]
 end
 
-function registernetplot_axis(subfig::Makie.GridPosition, registersobservable; infocli=true, datainspector=true, kwargs...)
-    registernetplot_axis(Makie.Axis(subfig), registersobservable; infocli, datainspector, kwargs...)
+# subfig::Union{GridPosition, GridSubposition} but maybe other as well, so leave it unspecified
+function registernetplot_axis(subfig, registersobservable; infocli=true, datainspector=true, kwargs...)
+    registernetplot_axis(Makie.Axis(subfig[1,1]), registersobservable; infocli, datainspector, kwargs...)
 end
 
 function registernetplot_axis(registersobservable; infocli=true, datainspector=true, kwargs...)
@@ -377,5 +381,9 @@ function showmetadata(fig, ax, p, reg, slot)
     Makie.events(fig).mouseposition[] =
     tuple(Makie.shift_project(ax.scene, p.registercoords[][reg].+(0,slot-1))...);
 end
+
+##
+
+include("state_explorer.jl")
 
 end

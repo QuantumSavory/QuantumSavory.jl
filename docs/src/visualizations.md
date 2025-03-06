@@ -1,11 +1,5 @@
 # [Visualizations](@id Visualizations)
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 We provide many visualization tools build on top of the [Makie.jl](https://docs.makie.org/stable/) framework for interactive visualizations.
 
 The plotting functions generally return a tuple of (subfigure, axis, plot, observable).
@@ -60,7 +54,7 @@ using GeoMakie
 fig = Figure(size=(800,400))
 ax = generate_map(fig[1, 1])
 _, ax, plt, obs = registernetplot_axis(ax, net, registercoords=[Point2f(-118, 34), Point2f(-71, 42), Point2f(-111, 34), Point2f(-96, 32)], state_linecolor=:black)
-xlims!(ax, -125, -65) 
+xlims!(ax, -125, -65)
 ylims!(ax, 25, 50)
 fig
 ```
