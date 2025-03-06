@@ -123,7 +123,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         for (iʳᵉᵍ,reg) in enumerate(registers)
             xʳᵉᵍ  = registercoords[iʳᵉᵍ][1]-0.3*rn[:scale][]
             yʳᵉᵍ  = registercoords[iʳᵉᵍ][2]-0.3*rn[:scale][]
-            Δxʳᵉᵍ = 0.6 * rn[:scale][]
+            Δxʳᵉᵍ = 0.6*rn[:scale][]
             Δyʳᵉᵍ = (nsubsystems(reg)-0.4)*rn[:scale][]
             push!(register_rectangles[], Rect2f(xʳᵉᵍ, yʳᵉᵍ, Δxʳᵉᵍ, Δyʳᵉᵍ))
             for iˢˡᵒᵗ in 1:nsubsystems(reg)
