@@ -1,41 +1,38 @@
-@testitem "StatesZoo API" tags=[:stateszoo_api] begin
-using QuantumSavory.StatesZoo: ZALMSpinPairW, ZALMSpinPair, SingleRailMidSwapBellW, SingleRailMidSwapBell, DualRailMidSwapBellW, DualRailMidSwapBell
+@testitem "StatesZoo API" begin
+using QuantumSavory.StatesZoo
 using QuantumOpticsBase
+using LinearAlgebra
 
-zalmW = ZALMSpinPairW(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
-zalm = ZALMSpinPair(1e-3, 0.5, 0.5, 1, 1, 1, 1, 0.9, 1e-8, 1e-8, 1e-8, 0.99)
-srmsW = SingleRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
-srms = SingleRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
-drmsW = DualRailMidSwapBellW(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
-drms = DualRailMidSwapBell(0.9, 0.9, 0.5, 0.5, 1e-8, 0.99)
+onlyon112 = if VERSION >= v"1.12.0-DEV.2047"
+    [MultiplexedCascadedBellPair, MultiplexedCascadedBellPairW]
+else
+    []
+end
 
-r_zalmW = Register(2)
-initialize!(r_zalmW[1:2], zalmW)
-@test ! iszero(observable(r_zalmW[1:2], Z⊗Z))
+onlyon112normed = if VERSION >= v"1.12.0-DEV.2047"
+    [MultiplexedCascadedBellPair]
+else
+    []
+end
 
-r_zalm = Register(2)
-initialize!(r_zalm[1:2], zalm)
-@test ! iszero(observable(r_zalm[1:2], Z⊗Z))
+for S in [BarrettKokBellPair, BarrettKokBellPairW,
+    onlyon112...
+    ] # TODO use some abstract supertype to automatically get all of these
+    params = QuantumSavory.StatesZoo.stateparameters(S)
+    paramdict = QuantumSavory.StatesZoo.stateparametersrange(S)
+    state = S((paramdict[p].good for p in params)...)
 
-r_srmsW = Register(2)
-initialize!(r_srmsW[1:2], srmsW)
-@test ! iszero(observable(r_srmsW[1:2], Z⊗Z))
+    reg = Register(2)
+    initialize!(reg[1:2], state)
+    @test ! iszero(observable(r_zalmW[1:2], Z⊗Z))
+    @test tr(state) ≈ tr(express(state))
+end
 
-r_srms = Register(2)
-initialize!(r_srms[1:2], srms)
-@test ! iszero(observable(r_srms[1:2], Z⊗Z))
+for S in [BarrettKokBellPair, onlyon112normed...] # TODO use some abstract supertype
+    params = QuantumSavory.StatesZoo.stateparameters(S)
+    paramdict = QuantumSavory.StatesZoo.stateparametersrange(S)
+    state = S((paramdict[p].good for p in params)...)
+    @test tr(state) ≈ 1
+end
 
-r_drmsW = Register(2)
-initialize!(r_drmsW[1:2], drmsW)
-@test ! iszero(observable(r_drmsW[1:2], Z⊗Z))
-
-r_drms = Register(2)
-initialize!(r_drms[1:2], drms)
-@test ! iszero(observable(r_drms[1:2], Z⊗Z))
-
-@test tr(zalm) ≈ tr(express(zalm))
-
-@test tr(srms) ≈ tr(express(srms))
-
-@test tr(drms) ≈ tr(express(drms))
 end
