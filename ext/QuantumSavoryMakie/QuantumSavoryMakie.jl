@@ -57,7 +57,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     rn[:state_coords_backref] = state_coords_backref
     rn[:observables_backref] = observables_backref
     rn[:observables_links_backref] = observables_links_backref
-    
+
     # Optional arguments
     ## registercoords -- updates handled explicitly by an `onany` call below
     if haskey(rn, :registercoords) && !isnothing(rn[:registercoords][])
@@ -193,11 +193,11 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     register_slots_scatterplot = scatter!(
         rn, register_slots_coords,
         marker=rn[:slotmarker], markersize=rn[:slotsize][]*rn[:scale][], color=rn[:slotcolor],
-        markerspace=:data, #data
+        markerspace=:data,
         inspector_label = (self, i, p) -> get_slots_vis_string(register_slots_coords_backref[],i))
     observables_scatterplot = scatter!(
         rn, observables_coords,
-        marker=rn[:observables_marker], markersize=rn[:observables_markersize][]*rn[:scale][], markerspace=:data, #data,
+        marker=rn[:observables_marker], markersize=rn[:observables_markersize][]*rn[:scale][], markerspace=:data,
         color=observables_vals, colormap=rn[:colormap], colorrange=rn[:colorrange],
         inspector_label = (self, i, p) -> get_observables_vis_string(observables_backref[],i))
     observables_linesegments = linesegments!(
@@ -208,7 +208,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     state_scatterplot = scatter!(
         rn, state_coords,
         marker=rn[:state_marker], markersize=rn[:state_markersize][]*rn[:scale][], color=rn[:state_markercolor],
-        markerspace=:data, #data,
+        markerspace=:data,
         inspector_label = (self, i, p) -> get_state_vis_string(state_coords_backref[],i))
     state_linesegmentsplot = linesegments!(rn, state_links, color=rn[:state_linecolor])
     state_linesegmentsplot.inspectable[] = false
@@ -288,7 +288,7 @@ The observable can be used to issue a `notify` call that updates
 the plot with the current state of the network."""
 function registernetplot_axis end
 
-function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infocli=true, datainspector=true, kwargs...)
+function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infocli=true, datainspector=true, autolimits=false, kwargs...)
     p = registernetplot!(ax, registersobservable; kwargs...)
     ax.aspect = Makie.DataAspect()
     if hasmethod(Makie.hidedecorations!, Tuple{typeof(ax)})
@@ -305,9 +305,11 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
     if datainspector
         DataInspector(ax.parent)
     end
-    #if hasmethod(Makie.autolimits!, Tuple{typeof(ax)})
-    #    Makie.autolimits!(ax)
-    #end
+    if autolimits
+        if hasmethod(Makie.autolimits!, Tuple{typeof(ax)})
+            Makie.autolimits!(ax)
+        end
+    end
     ax.parent, ax, p, p[1]
 end
 
