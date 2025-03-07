@@ -1,5 +1,5 @@
 using FileIO
-using GeoMakie
+using Tyler
 using QuantumSavory
 
 sizes = [2,3,5]

@@ -25,6 +25,5 @@ function showonplot end
 
 """Generates a default map with country and state boundaries and returns a GeoAxis. The returned GeoAxis can be used as an input for registernetplot_axis.
 
-The `GeoMakie` package must be installed and imported."""
+The `Tyler` package must be installed and imported."""
 function generate_map end
-
