@@ -179,6 +179,10 @@ $TYPEDFIELDS
     rounds::Int = -1
     """maximum number of attempts to make per round (`-1` for infinite)"""
     attempts::Int = -1
+    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node A"""
+    chooseA::Union{Int,<:Function} = identity
+    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node B"""
+    chooseB::Union{Int,<:Function} = identity
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
     """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
@@ -204,8 +208,8 @@ end
     while rounds != 0
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin)
-        b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
+        a_ = findfreeslot(prot.net[prot.nodeA]; filter=prot.chooseA, randomize=prot.randomize, margin=margin)
+        b_ = findfreeslot(prot.net[prot.nodeB]; filter=prot.chooseB, randomize=prot.randomize, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
@@ -314,8 +318,10 @@ end
                         if correction==2
                             apply!(localslot, updategate)
                         end
-                        # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                        tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
+                        if newremotenode != -1 #TODO: this is a bit hacky
+                            # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
+                            tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
+                        end
                     else # EntanglementDelete
                         traceout!(localslot)
                     end
@@ -389,6 +395,8 @@ $FIELDS
     nodeB::Int
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::LT = 0.1
+    """tag type which the consumer is looking for -- the consumer query will be `query(node, EntanglementConsumer.tag, remote_node)` and it will be expected that `remote_node` possesses the symmetric reciprocal tag; defaults to `EntanglementCounterpart`"""
+    tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
     log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
 end
@@ -402,7 +410,7 @@ end
 
 @resumable function (prot::EntanglementConsumer)()
     while true
-        query1 = query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        query1 = query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
             if isnothing(prot.period)
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting on tag updates in $(prot.nodeA)."
@@ -413,7 +421,7 @@ end
             end
             continue
         else
-            query2 = query(prot.net[prot.nodeB], EntanglementCounterpart, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+            query2 = query(prot.net[prot.nodeB], prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 if isnothing(prot.period)
                     @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting on tag updates in $(prot.nodeB)."
