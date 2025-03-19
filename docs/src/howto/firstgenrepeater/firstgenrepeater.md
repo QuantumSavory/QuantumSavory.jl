@@ -57,7 +57,7 @@ The `RegisterNet` would contain, on each node:
     To see how to visualize these data structures as the simulation is proceeding, consult the [Visualizations](@ref Visualizations) page.
 
 !!! note
-    To see how to define imperfections, noise processes, and background events, consult the [Sub-system Properties](@ref Properties-and-Backgrounds) page.
+    To see how to define imperfections, noise processes, and background events, consult the [Sub-system Background Noise](@ref "Background Noise Processes") page.
 
 ```@raw html
 <details><summary>Click to expand and see code used to set up the meta-graph and registers</summary>
@@ -536,7 +536,7 @@ We used the [`Register`](@ref) data structure to automatically track the quantum
 describing our mixed analog-digital quantum dynamics.
 
 Much of the analog dynamics was implicit through the use of [backgrounds,
-declaring the noise properties of various qubits](@ref Properties-and-Backgrounds).
+declaring the noise properties of various qubits](@ref "Background Noise Processes").
 
 The digital-ish dynamics was implemented through the use of
 - [`initialize!`](@ref) for setting initial states to various qubits
