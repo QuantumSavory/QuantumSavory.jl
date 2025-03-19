@@ -260,10 +260,13 @@ end
         # a_ = findfreeslot(prot.net[prot.nodeA]; randomize=prot.randomize, margin=margin) # TODO: old version, delete before merge
         # b_ = findfreeslot(prot.net[prot.nodeB]; randomize=prot.randomize, margin=margin)
 
-        if isnothing(a_) || isnothing(b_)
+        if isnothing(a_) || isnothing(b_) 
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
+
+            rounds==-1 || (rounds -= 1)
+            round += 1
             continue
         end
         # we are now certain that a_ and b_ are not nothing. The compiler is not smart enough to figure this out
@@ -280,7 +283,6 @@ end
             rand(Geometric(prot.success_prob))+1
         end
         if prot.attempts == -1 || prot.attempts >= attempts
-    
             @yield timeout(prot.sim, attempts * prot.attempt_time)
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
             @yield timeout(prot.sim, prot.local_busy_time_post)

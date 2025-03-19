@@ -1,12 +1,11 @@
 using CSV, DataFrames, StatsPlots
 
-dfsequential = CSV.read("examples/graphstateswitch/output/sequential.csv", DataFrame)
+dfsequential = CSV.read("examples/graphstateswitch/output/canonical_clifford.csv", DataFrame)
 dfcanonical  = CSV.read("examples/graphstateswitch/output/canonical.csv", DataFrame)
 
 # Tag each row
-dfsequential[!, :name] .= "Piecemaker"
-dfcanonical[!, :name]  .= "Canonical"
-dfcanonical[!, :chosen_core]  .= ""
+dfsequential[!, :name] .= "Canonical"
+dfcanonical[!, :name]  .= "Canonical_clifford"
 
 # Append to get a combined DataFrame
 df = vcat(dfsequential, dfcanonical)
@@ -33,4 +32,4 @@ plotd = @df df groupedboxplot(
     seriestype = :scatter,  # or :line, :scatter, etc.
     #yscale  = :log10,       # log scale for x-axis
 )
-savefig(plotd, "examples/graphstateswitch/output/sequential_vs_canonical.pdf")
+savefig(plotd, "examples/graphstateswitch/output/canonical_vs_canonical_clifford.pdf")
