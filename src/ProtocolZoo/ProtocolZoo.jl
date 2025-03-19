@@ -232,7 +232,6 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-
         isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, prot.slotB; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
 
@@ -246,9 +245,6 @@ end
             isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n retrying..."
             @yield timeout(prot.sim, prot.retry_lock_time)
-
-            # rounds==-1 || (rounds -= 1)
-            # round += 1
             continue
         end
         # we are now certain that a_ and b_ are not nothing. The compiler is not smart enough to figure this out
@@ -335,17 +331,15 @@ end
                 counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
                 unlock(localslot)
                 if !isnothing(counterpart)
-                    time_before_lock = now(prot.sim)
+                    # time_before_lock = now(prot.sim)
                     @yield lock(localslot)
-                    time_after_lock = now(prot.sim)
-                    time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
+                    # time_after_lock = now(prot.sim)
+                    # time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
                     if !isassigned(localslot)
                         unlock(localslot)
                         error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
                     end
-                    @debug "EntanglementTracker @$(prot.node): updategate = $(updategate)"
                     if !isnothing(updategate) # EntanglementUpdate
-                        @debug "Entanglement updated for $(prot.node).$(localslot.idx) 2"
                         # Pauli frame correction gate
                         if correction==2
                             apply!(localslot, updategate)
@@ -353,7 +347,6 @@ end
                         # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
                         tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                     else # EntanglementDelete
-                        @debug "Entanglement deleted"
                         traceout!(localslot)
                     end
                     unlock(localslot)
@@ -475,6 +468,7 @@ end
         @yield timeout(prot.sim, prot.period)
     end
 end
+
 
 include("cutoff.jl")
 include("swapping.jl")

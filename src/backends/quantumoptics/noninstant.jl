@@ -3,24 +3,13 @@ export lindbladop
 function apply_noninstant!(state::Operator, state_indices::Vector{Int}, operation::ConstantHamiltonianEvolution, backgrounds)
     Δt = operation.duration
     base = basis(state)
-    e = isa(base, CompositeBasis)
-    lindbladians = []
-    for (i, bg) in zip(state_indices, backgrounds)
-        if !isnothing(bg)
-            ops = lindbladop(bg, base)
-            # Ensure ops is always a list
-            ops = typeof(ops) <: AbstractArray ? ops : [ops]
-            # Embed if necessary
-            ops = e ? [embed(base, [i], op) for op in ops] : ops
-            append!(lindbladians, ops)
-        end
-    end
+    e = isa(base,CompositeBasis)
+    lindbladians = [e ? embed(base,[i],lindbladop(bg)) : lindbladop(bg) for (i,bg) in zip(state_indices,backgrounds) if !isnothing(bg)]
     ham = express(operation.hamiltonian, QOR)
-    ham = e ? embed(base, state_indices, ham) : ham
-    _, sol = timeevolution.master([0, Δt], state, ham, lindbladians)
+    ham = e ? embed(base,state_indices,ham) : ham
+    _, sol = timeevolution.master([0,Δt], state, ham, lindbladians)
     sol[end]
 end
-
 
 function apply_noninstant!(state::Ket, state_indices::Vector{Int}, operation::ConstantHamiltonianEvolution, backgrounds)
     apply_noninstant!(dm(state), state_indices, operation, backgrounds)
@@ -43,7 +32,7 @@ function lindbladop(T2::T2Dephasing) # TODO pay attention to the √2 necessary 
 end
 
 function lindbladop(D::Depolarization)
-    1/√D.τ .* (0.5 * [_x, _y, _z])
+    # TODO
 end
 
 function lindbladop(P::PauliNoise)

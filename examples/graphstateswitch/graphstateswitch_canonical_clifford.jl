@@ -291,7 +291,7 @@ all_runs = DataFrame()
 for (f, link_success_prob) in enumerate(range(0.1,1,10))
 
     # Graph state data
-    path_to_graph_data = "examples/graphstateswitch/input/18.pickle"
+    path_to_graph_data = "/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_data_project_piecemaker/graphstateswitch/input/18.pickle"
     graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
     ref_core = first(keys(graphdata))
     n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
@@ -319,4 +319,4 @@ for (f, link_success_prob) in enumerate(range(0.1,1,10))
     @info "Link success probability: $(link_success_prob) | Time: $(timed)"
 end
 @info all_runs
-CSV.write("examples/graphstateswitch/output/canonical_clifford_noisy.csv", all_runs)
+CSV.write("/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_data_project_piecemaker/graphstateswitch/output/canonical_clifford_noisy.csv", all_runs)
