@@ -28,7 +28,8 @@ function main()
     "Explanations" => [
         "explanations.md",
         "Register Interface" => "register_interface.md",
-        "Properties and Backgrounds" => "propbackgrounds.md",
+        "Properties" => "properties.md",
+        "Background Noise" => "backgrounds.md",
         "Symbolic Expressions" => "symbolics.md",
         "Tagging and Querying" => "tag_query.md",
         "Visualizations" => "visualizations.md",
