@@ -12,7 +12,7 @@ const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TOD
 #
 
 const permitted_queries = Dict(
-    "MultiplexedCascadedBellPairW" => MultiplexedCascadedBellPairW,
+    #"MultiplexedCascadedBellPairW" => MultiplexedCascadedBellPairW,
     "BarrettKokBellPairW" => BarrettKokBellPairW,
 )
 
@@ -26,7 +26,8 @@ landing = Bonito.App(; title="State Explorer") do
     Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end
 
-vis = (statekey) -> Bonito.App(; title="State Explorer") do
+vis = Bonito.App(; title="State Explorer") do request::Bonito.HTTP.Request
+    statekey = string(split(request.target, "/")[end])
     state = get(permitted_queries, statekey, nothing)
     if isnothing(state)
         content = md"""
@@ -34,7 +35,8 @@ vis = (statekey) -> Bonito.App(; title="State Explorer") do
         """
     else
         fig = stateexplorer(state)
-        stringagain =
+        link = "https://qs.quantumsavory.org/dev/API_StatesZoo/#QuantumSavory.StatesZoo.$(statekey)"
+        doc = Markdown.Paragraph(Markdown.Link("See the documentation for implemented states.",link))
         content = md"""
         # $(statekey)
 
@@ -44,7 +46,7 @@ vis = (statekey) -> Bonito.App(; title="State Explorer") do
 
         The sliders let you modify various state parameters. For ease of exploration, figures of merit for modifying one parameter while keeping all others constant are also plotted. The first row corresponds to fidelity (with respect to perfect state) and the second row is the trace of the state (i.e. the probability of successful generation).
 
-        [See the documentation for implemented states.](http://qs.quantumsavory.org/dev/API_StatesZoo/)
+        $doc
 
         [See and modify the code for this app on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/state_explorer)
         """
@@ -64,8 +66,7 @@ proxy_url = get(ENV, "QS_SIMPLESWITCH_PROXY", "")
 server = Bonito.Server(interface, port; proxy_url);
 Bonito.HTTPServer.start(server)
 Bonito.route!(server, "/" => landing);
-Bonito.route!(server, "/vis/MultiplexedCascadedBellPairW" => vis("MultiplexedCascadedBellPairW"));
-Bonito.route!(server, "/vis/BarrettKokBellPairW" => vis("BarrettKokBellPairW"));
+Bonito.route!(server, r"/vis/.*" => vis);
 
 ##
 
