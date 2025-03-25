@@ -23,7 +23,7 @@ pkg> add QuantumSavory
 
 There are optional packages that you need to install to use the full plotting feature.
 - **Makie**: For plotting of registers and processes.
-- **GeoMakie**: Enables plotting on a real-world map as a background.
+- **Tyler**: Enables plotting on a real-world map as a background.
 
 ## Basic Demo
 
