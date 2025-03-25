@@ -2,11 +2,12 @@ using Revise # for interactive work on docs
 push!(LOAD_PATH,"../src/")
 
 using Documenter
-using DocumenterCitations
+using DocumenterCitations, DocumenterMermaid
 using QuantumSavory
-using QuantumSavory.ProtocolZoo # TODO is this the correct place to place this to ensure cross_references work
+using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
+using QuantumInterface
 
-DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory); recursive=true)
+DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo); recursive=true)
 
 function main()
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
@@ -17,9 +18,9 @@ function main()
     warnonly = [:missing_docs],
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
-        assets=["assets/init.js"]
+        assets=["assets/custom.css"]
     ),
-    modules = [QuantumSavory],
+    modules = [QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumInterface],
     authors = "Stefan Krastanov",
     pages = [
     "QuantumSavory.jl" => "index.md",
@@ -34,13 +35,17 @@ function main()
     ],
     "How-To Guides" => [
         "howto.md",
-        "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md",
-        "1st-gen Repeater (Clifford formalism)" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
+        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater/firstgenrepeater.md",
+        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
+        "1st-gen Repeater - simpler implementation" => "howto/firstgenrepeater_v2/firstgenrepeater_v2.md",
+        "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
+        "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
     ],
     "Tutorials" => [
         "tutorial.md",
-        "Gate duration" => "tutorial/noninstantgate.md",
+        "Gate Duration" => "tutorial/noninstantgate.md",
+        "State Explorer" => "tutorial/state_explorer.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
         #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
     ],

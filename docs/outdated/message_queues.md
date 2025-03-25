@@ -1,12 +1,5 @@
 # Message passing and queues
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-    using CairoMakie
-end
-```
-
 !!! warning
 
     This section is rather low-level, created before a lot of user-friendly tools were added.
@@ -65,8 +58,7 @@ nothing # hide
 
 Last step of the setup is to write the event loops for each of the nodes. As a flowchart they look like the following:
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
   subgraph Node 2
     direction LR
@@ -92,7 +84,7 @@ graph LR
 
     A --> B --> C --> D --Yes--> E
     D --No--> F --> G --> A
-  end</div>
+  end
 ```
 
 And below we implement them in code:
@@ -219,4 +211,3 @@ The horizontal axis is simulation time. We plot the periods during which one of 
 - node 2 is waiting to receive a message that the system reset happened.
 
 As you can see, node 1 can start measurements before node 2 has heard that the system reset has happened, due to the communication delay.
-
