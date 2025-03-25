@@ -1,12 +1,6 @@
 # [Tagging and Querying](@id tagging-and-querying)
 
-```@meta
-DocTestSetup =  quote
-    using QuantumSavory
-end
-```
-
-The [`query`](@ref) and [`tag!`](@ref) interface lets you manage "classical state" metadata in your simulations. In particular, this interface enables the creation of modular interoperable [control protocols](@ref "Available Protocols"). Each protocol can operate independently of others without knowledge of each others' internals. This is done by using various "tags" to communicate metadata between the network nodes running the protocols, and by the protocols querying for the presence of such tags, leading to greater flexibility when setting up different simulations.
+The [`query`](@ref) and [`tag!`](@ref) interface lets you manage "classical state" metadata in your simulations. In particular, this interface enables the creation of modular interoperable [control protocols](@ref "Predefined Networking Protocols"). Each protocol can operate independently of others without knowledge of each others' internals. This is done by using various "tags" to communicate metadata between the network nodes running the protocols, and by the protocols querying for the presence of such tags, leading to greater flexibility when setting up different simulations.
 
 The components of the query interface which make this possible are described below.
 

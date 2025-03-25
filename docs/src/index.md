@@ -1,11 +1,5 @@
 # QuantumSavory.jl
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 A multi-formalism simulator for noisy quantum communication and computation hardware with support for symbolic algebra, multiple simulation backends, a variety of noise models, discrete event simulation, optimization, and visualization.
 
 The rest of the documentation is [structured](https://diataxis.fr/) as follows:
@@ -60,7 +54,7 @@ Below we show some of the results of the How-To guides.
     This is a limited public demo of a fraction of some internal research code. Full code is slowly being documented and released.
 
 !!! danger
-    
+
     This is software is still in a fairly unstable alpha state! The documentation is extremely barebones and current users are expected to read the source code.
 
 A good place to start is the How-To pages.

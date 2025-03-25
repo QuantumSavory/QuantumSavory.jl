@@ -1,11 +1,5 @@
 # [Entanglement Generation On A Repeater Grid](@id Entanglement-Generation-On-A-Repeater-Grid)
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 This section provides a detailed walkthrough of how QuantumSavory.jl can be used to simulate entanglement generation on a network of repeaters where each repeater relies only on local knowledge of the network.
 This is only one of many ways in which such a network can be set up, focusing on one particular "no global knowledge" approach.
 
@@ -49,7 +43,7 @@ The Swapper Protocol is initialized with a custom predicate function which is th
 
 This predicate function encodes most of the "logic" a local node will be performing.
 
-The custom predicate function shown above is parametrized with `net` and `c_node` along with the keyword argument `low`, when initializing the Swapper Protocol. This predicate function `Int->Bool` selects the target remote nodes for which a swap is appropriate. The arguments are:
+The custom predicate function shown above is parameterized with `net` and `c_node` along with the keyword argument `low`, when initializing the Swapper Protocol. This predicate function `Int->Bool` selects the target remote nodes for which a swap is appropriate. The arguments are:
 
 - `net`: The network of register nodes representing the graph structure, an instance of `RegisterNet`.
 

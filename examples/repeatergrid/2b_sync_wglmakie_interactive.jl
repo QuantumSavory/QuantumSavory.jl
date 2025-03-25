@@ -74,17 +74,25 @@ end
 # encapsulated here so that we can conveniently pause the simulation from the WGLMakie app.
 function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, running)
     step_ts = range(0, 1000, step=0.1)
+    println("in!")
     for t in step_ts
+        println(t)
         run(sim, t)
+        println("1")
         notify.((obs,entlog))
+        println("2")
         notify.(params)
+        println("3")
         ylims!(entlogaxis, (-1.04,1.04))
         xlims!(entlogaxis, max(0,t-50), 1+t)
+        println("4")
         ylims!(fid_axis, (0, 1.04))
         xlims!(fid_axis, max(0, t-50), 1+t)
+        println("5")
         autolimits!(histaxis)
         ylims!(num_epr_axis, (0, 4))
         xlims!(num_epr_axis, max(0, t-50), 1+t)
+        println("6")
     end
     running[] = nothing
 end
@@ -95,17 +103,19 @@ landing = Bonito.App() do
     sim, net, obs, entlog, entlogaxis, histaxis, fig, params = prepare_singlerun()
 
     running = Observable{Any}(false)
-    fig[4,1] = buttongrid = GridLayout(tellwidth = false)
+    fig[5,:] = buttongrid = GridLayout(tellwidth = false)
     buttongrid[1,1] = b = Makie.Button(fig, label = @lift(isnothing($running) ? "Done" : $running ? "Running..." : "Run once"), height=30, tellwidth=false)
 
     on(b.clicks) do _
+        println("click")
         if !running[]
             running[] = true
         end
     end
     on(running) do r
+        println("running")
         if r
-            Threads.@spawn begin
+            @async begin
                 continue_singlerun!(
                     sim, obs, entlog, params, entlogaxis, histaxis, running)
             end
@@ -133,7 +143,7 @@ landing = Bonito.App() do
     any messages here. Hence, the swapper protocol (`SwapperProt` with `agelimit`) checks every proposed candidate to be coherent before its used. Thus the swapper and decoherence protocol
     interact in a synchronous manner here.
 
-   [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/repeatergrid/2b_sync_wglmakie_interactive.jl)
+    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/repeatergrid/2b_sync_wglmakie_interactive.jl)
     """
     return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end;

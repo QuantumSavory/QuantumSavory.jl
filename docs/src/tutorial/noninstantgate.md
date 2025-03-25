@@ -1,12 +1,5 @@
 # Gate duration, i.e. gates that are not instant
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-    using CairoMakie
-end
-```
-
 There are a number of different ways to represent a gate that is not instantaneous in `QuantumSavory`. They are not necessarily equivalent. Here we show a couple of typical approaches.
 
 We start with a quick initial setup of a register with two qubits and an observable `pop` representing the population in the excited state in the Z basis. The gate duration will be set to `1.0` (as given in `ts`) and the qubits will have decay time `T1 = 2.0` so that we can more clearly demonstrate effects due to the non-instant nature of the gate.
