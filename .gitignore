@@ -5,3 +5,4 @@ ROADMAP.md
 coverage
 .DS_Store
 .vscode
+*.cov

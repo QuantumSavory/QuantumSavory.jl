@@ -68,8 +68,13 @@ end
     while rounds != 0
         qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; agelimit=prot.agelimit)
         if isnothing(qubit_pair_)
-            isnothing(prot.retry_lock_time) && error("We do not yet support waiting on register to make qubits available") # TODO
-            @yield timeout(prot.sim, prot.retry_lock_time)
+            if isnothing(prot.retry_lock_time)
+                @debug "SwapperProt: no swappable qubits found. Waiting for tag change..."
+                @yield onchange_tag(prot.net[prot.node])
+            else
+                @debug "SwapperProt: no swappable qubits found. Waiting a fixed amount of time..."
+                @yield timeout(prot.sim, prot.retry_lock_time)
+            end
             continue
         end
         # The compiler is not smart enough to figure out that qubit_pair_ is not nothing, so we need to tell it explicitly. A new variable name is needed due to @resumable.
@@ -92,12 +97,12 @@ end
         xmeas, zmeas = swapcircuit(q1, q2)
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
-        msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], xmeas)
+        msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], Int(xmeas))
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
         @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1` | time = $(now(prot.sim))"
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
-        msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], zmeas)
+        msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], Int(zmeas))
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
         @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
         @yield timeout(prot.sim, prot.local_busy_time)

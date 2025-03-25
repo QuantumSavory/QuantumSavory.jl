@@ -1,11 +1,5 @@
 # Register Interface
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 A rather diverse set of simulation libraries is used under the hood. Long term the Julia Quantum Science community might be able to converge to a common interface that would slightly simplify work between the libraries, but in the interim the Julia multimethod paradigm is sufficient. Below we describe the interface that enables us to operate with many distinct underlying simulators.
 
 ## `initialize!`
@@ -36,8 +30,7 @@ When a `state` is not provided, a default one is calculated from `newstate`, dep
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>initialize!(refs::Vector{RegRef}, state; time)</code>"]
   B["<code>initialize!(r::Vector{Register}, i, state; time)</code>"]
@@ -63,7 +56,6 @@ flowchart TB
     direction LR
   end
   Ap --> Bp --> TOPp --> Cp ---> D2
-</div>
 ```
 
 ## `apply!`
@@ -100,8 +92,7 @@ If `operation<:Symbolic`, then `express(operation, repr, ::UseAsOperation)` is u
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>apply!(refs::Vector{RegRef}, operation; time)</code>"]
   B["<code>apply!(regs::Vector{Register}, indices, operation; time)</code>"]
@@ -119,7 +110,6 @@ flowchart TB
   D --Yes--> D1
   D --No--> D2
   D1 --> D2
-</div>
 ```
 
 !!! warning "Limitations of symbolic-to-explicit conversion"
@@ -164,8 +154,7 @@ If `operation<:Symbolic`, then an `express(obs, repr, ::UseAsObservable)` call i
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>observable(refs::Vector{RegRef}, obs; something=nothing, time)</code>"]
   B["<code>observable(regs::Vector{Register}, indices, obs; something=nothing, time)</code>"]
@@ -183,7 +172,6 @@ flowchart TB
   D --Yes--> D1
   D --No--> D2
   D1 --> D2
-</div>
 ```
 
 !!! info "Short-circuiting the `express` dispatch"
@@ -221,8 +209,7 @@ If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` t
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>project_traceout!(r::RegRef, basis; time)</code>"]
   B["<code>project_traceout!(reg::Register, i::Int, basis; time)</code>"]
@@ -239,7 +226,6 @@ flowchart TB
   A --> B --> TOP
   TOP --> E1 --> F1 --> G
   TOP --> E2 --> F2 --> G
-</div>
 ```
 
 ## `traceout!`
@@ -264,15 +250,13 @@ Partial trace over subsystem `i` of state referenced by `s`.
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>traceout!(r::RegRef)</code>"]
   B["<code>traceout!(r::Register, i::Int)</code>"]
   C["<code>traceout!(r::StateRef, i::Int)</code>"]
   D([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> C --> D
-</div>
 ```
 
 ## `uptotime!`
@@ -315,8 +299,7 @@ Low level implementation to compute the result of `uptotime!` for `Operator`
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>uptotime!(ref::RegRef, now)</code>"]
   B["<code>uptotime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
@@ -331,7 +314,6 @@ flowchart TB
   D --> E
   F([Dispatch on state to low level implementation<br>in an independent library])
   E --> F
-</div>
 ```
 
 ## `swap!`
@@ -345,13 +327,11 @@ Swap the state stored in the two `Registers` at slots `i1` and `i2` respectively
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>swap!(r1::RegRef, r2::RegRef)</code>"]
   B["<code>swap!(reg1::Register, reg2::Register, i1::Int, i2::Int)</code>"]
   A --> B
-</div>
 ```
 
 ## `overwritetime!`
@@ -366,11 +346,9 @@ Overwrite the time of the simulation for the given `registers` at `indices` to `
 
 #### Interface Overview
 
-```@raw html
-<div class="mermaid">
+```mermaid
 flowchart TB
   A["<code>overwritetime!(refs::Base.AbstractVecOrTuple{RegRef}, now)</code>"]
   B["<code>overwritetime!(registers, indices, now)</code>"]
   A --> B
-</div>
 ```

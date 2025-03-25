@@ -1,4 +1,4 @@
-using Test
+@testitem "Plotting Cairo" tags=[:plotting_cairo] begin
 using CairoMakie
 CairoMakie.activate!()
 
@@ -7,4 +7,8 @@ CairoMakie.activate!()
 end
 @testset "arguments and observables and tags" begin
     include("test_plotting_2_tags_observables.jl")
+end
+@testset "background map" begin
+    include("test_plotting_3_maps.jl")
+end
 end

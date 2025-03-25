@@ -1,5 +1,4 @@
-using Test
-using QuantumSavory
+@testitem "Observable" tags=[:observable] begin
 
 const bell = StabilizerState("XX ZZ")
 # or equivalently `const bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2`,
@@ -14,4 +13,5 @@ for rep in [QuantumOpticsRepr(), CliffordRepr()]
     apply!(a[1], σʸ)
     @test observable(a[1:2], SProjector(bell)) ≈ 0.0
     @test observable(a[1:2], σˣ⊗σˣ) ≈ -1.0
+end
 end

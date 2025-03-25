@@ -26,13 +26,13 @@ end
 
 # Run a quick check that the simulation works.
 # The first run will be slow as the code has to first compile.
-@time run_until_connected(root_conf)
+run_until_connected(root_conf)
 
 ##
 # Run a hundred simulations in multiple parallel threads
 # and store the results in a dataframe.
 
-@time r = tmap((_)->run_until_connected(root_conf), 1:100);
+r = tmap((_)->run_until_connected(root_conf), 1:100);
 df = rename(DataFrame(r), [:time,:fid])
 
 ##

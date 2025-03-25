@@ -1,6 +1,6 @@
-using Test
-using GLMakie
-GLMakie.activate!()
+@testitem "Plotting GL" tags=[:plotting_gl] begin
+    using GLMakie
+    GLMakie.activate!()
 
 @testset "register coordinates" begin
     include("test_plotting_1_regcoords.jl")
@@ -8,8 +8,9 @@ end
 @testset "arguments and observables and tags" begin
     include("test_plotting_2_tags_observables.jl")
 end
-
-using QuantumSavory
+@testset "background map" begin
+    include("test_plotting_3_maps.jl")
+end
 
 @testset "data inspectors" begin # only available in GLMakie
     # create a network of qubit registers
@@ -27,4 +28,5 @@ using QuantumSavory
 
     # check the data inspector tooltip functionality
     @test Base.get_extension(QuantumSavory, :QuantumSavoryMakie).get_state_vis_string(plt.state_coords_backref[],1) == "Subsystem 1 of a state of 1 subsystems, stored in\nRegister 1 | Slot 1\n not tagged"
+end
 end
