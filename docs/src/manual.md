@@ -27,31 +27,45 @@ There are optional packages that you need to install to use the full plotting fe
 
 ## Basic Demo
 
-Here’s a simple example to demonstrate how you can set up a simulation to generate a set of registers with qubit slots. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
+Here’s a simple example to demonstrate how superdense coding can be implemented. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
 
 ```
 using QuantumSavory
+using ResumableFunctions
+using ConcurrentSim
 
-# This is a network of three registers, each with 2, 3, and 4 Qubit slots.
-net = RegisterNet([Register(2), Register(3), Register(4)])
+sim = Simulation()
 
-# initialize slots and entangle them
-initialize!(net[1,1])
-initialize!(net[2,3], X₁)
-initialize!((net[3,1],net[4,2]), X₁⊗Z₂)
+# regA for Alice and regB for Bob
+regA = Register(1)
+regB = Register(2)
 
-# apply CNOT gate
-apply!((net[2,3],net[3,1]), CNOT)
-```
+# Entangle Alice's and Bob's first qubits
+bell_state = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2.0)
+initialize!((regA[1], regB[1]), bell_state)
 
-If you have `Makie` and `GeoMakie` installed, you can plot the above network:
-```
-using GLMakie
-GLMakie.activate!()
+# Channel with delay
+qc = QuantumChannel(sim, 10.0)
 
-# generate background map
-map_axis = generate_map()
+# Alice wants to send "10"
+@resumable function alice(env, qc)
+    println("Alice: Encoding 10")
+    apply!(regA[1], Z)
+    put!(qc, regA[1])
+end
 
-fig, ax, plt, obs = registernetplot_axis(map_axis, net, registercoords=[Point2f(-71, 42), Point2f(-111, 34), Point2f(-122, 37)])
-fig
+# Bob receives the qubit and decodes it
+@resumable function bob(env, qc)
+    @yield take!(qc, regB[2])  # Wait for the qubit from Alice
+    apply!((regB[2], regB[1]), CNOT)
+    apply!(regB[2], H)
+
+    bit1 = project_traceout!(regB, 2, Z) - 1
+    bit2 = project_traceout!(regB, 1, Z) - 1
+    println("Bob decoded the bits: ", bit1, bit2)
+end
+
+@process alice(sim, qc)
+@process bob(sim, qc)
+run(sim)
 ```

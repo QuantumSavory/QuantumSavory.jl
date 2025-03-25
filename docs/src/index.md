@@ -1,6 +1,20 @@
 # QuantumSavory.jl
 
+```@meta
+DocTestSetup = quote
+    using QuantumSavory
+end
+```
+
 A multi-formalism simulator for noisy quantum communication and computation hardware with support for symbolic algebra, multiple simulation backends, a variety of noise models, discrete event simulation, optimization, and visualization.
+
+### Capabilities
+
+QuantumSavory offers features such as:
+
+- **State, Circuit, and Protocols Zoos**: Collections of pre-built quantum states, circuits, and protocols to support rapid prototyping and application optimization.
+- **Realistic Quantum Network Simulation**: : Support for simulating noise and decoherence effects.
+- **Visualization**: Tools for visualizing register states and experiment metadata, with support for background maps.
 
 The rest of the documentation is [structured](https://diataxis.fr/) as follows:
 
@@ -24,16 +38,13 @@ pkg> add QuantumSavory
 #### Optional Dependencies
 There are optional packages that you need to install to use the full plotting feature.
 - **Makie**: For plotting of registers and processes.
-- **GeoMakie**: Enables plotting on a real-world map as a background.
+- **Tyler**: Enables plotting on a real-world map as a background.
 
 
-### Capabilities
+### Basic Demo
+Here’s a simple example to demonstrate how you can set up a simulation to generate a set of registers with qubit slots. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
 
-QuantumSavory offers advanced features such as:
 
-- **Hardware Parameter Database**: Detailed records of quantum hardware metrics, enabling realistic simulations and performance benchmarking.
-- **Noise Processes Zoo**: A collection of noise models for simulating quantum systems under realistic and complex conditions.
-- **Protocols and Circuits Compendium**: Pre-designed quantum circuits and protocols for rapid prototyping and optimization of applications.
 
 Below we show some of the results of the How-To guides.
 
@@ -62,10 +73,3 @@ For instance, the [implementation of a first generation repeater](@ref First-Gen
 
 ### Get Involved
 We welcome contributions from experts and students alike, whether by improving the codebase or suggesting new useful features. Your input will help us refine QuantumSavory and support better quantum simulations. One way to get involved is through our bug bounty program — see [Bug Bounties Guide](https://github.com/QuantumSavory/.github/blob/main/BUG_BOUNTIES.md) for details.
-
-
-
-
-
-
-
