@@ -6,3 +6,5 @@ coverage
 .DS_Store
 .vscode
 *.cov
+**/input
+**/output

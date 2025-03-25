@@ -38,7 +38,7 @@ function get_graphdata_from_pickle(path)
             add_edge!(graph_jl, edgejl) 
         end
 
-        # Initialize a reference register using the graph
+        # Initialize a perfect reference register using the graph
         r = Register(n, CliffordRepr())
         initialize!(r[1:n], SProjector(StabilizerState(Stabilizer(graph_jl))))
 
@@ -296,7 +296,7 @@ end
             verts = sort([v, neighs...])
             obs = reduce(⊗,[ (i == v) ? σˣ : σᶻ for i in verts ]) # X for the central vertex v, Z for neighbors, Kronecker them together       
             regs = helperreg[sort([v, neighs...])] 
-            real(observable(regs, obs)) # calculate the value of the observable
+            real(observable(regs, obs; time=now(sim))) # calculate the value of the observable
         end
         
         for q in b

@@ -39,7 +39,7 @@ function get_graphdata_from_pickle(path)
 
         # Initialize a perfect reference register using the graph
         r = Register(n, CliffordRepr())
-        initialize!(r[1:n], StabilizerState(Stabilizer(graph_jl)))
+        initialize!(r[1:n], SProjector(StabilizerState(Stabilizer(graph_jl))))
 
         # The core represents the key
         key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
@@ -221,16 +221,18 @@ end
         refstate_stabilizers = graphdata[ref_core][2].staterefs[1].state[]
         coincide = graphstate(refstate_stabilizers)[1] == resultgraph # compare if graphs are equivalent
 
-        # for flip in flips_idx
-        #     apply!(b.staterefs[1].state[], sZ(flip), phases=true)
-        # end
-
-        # Calculate fidelity
-        helperreg = Register(n)
-        initialize!(helperreg[1:n], Ket(b.staterefs[1].state[]))# 
+        # Calculate fidelity using a helper register in the QuantumOpticsRepr
+        client_ketstate = Ket(b.staterefs[1].state[]) # get the client state as a ket
+        reference_ketstate = Ket(refstate_stabilizers) # get the reference state as a ket
         
+        helperreg = Register(n)
+        initialize!(helperreg[1:n], client_ketstate)
+
+        #fidelity = real(observable(helperreg[1:n], projector(reference_ketstate); time=now(sim))) # calculate the fidelity
+
+        # Calculate the expecation values of stabilizers individually
         refgraph = graphdata[ref_core][1]
-        fid = map(vertices(refgraph)) do v
+        exps = map(vertices(refgraph)) do v
             neighs = neighbors(refgraph, v)
             verts = sort([v, neighs...])
             obs = reduce(⊗,[ (i == v) ? σˣ : σᶻ for i in verts ]) # X for the central vertex v, Z for neighbors, Kronecker them together       
@@ -252,14 +254,14 @@ end
         push!(
             logging,
             (
-                ref_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fid...
+                ref_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, exps...
             )
         )
         rounds -= 1
     end
 end
 
-function prepare_sim(graphdata, link_success_prob, seed, logging, rounds)
+function prepare_sim(graphdata, link_success_prob, T2, seed, logging, rounds)
     
     # Set a random seed
     Random.seed!(seed)
@@ -268,7 +270,7 @@ function prepare_sim(graphdata, link_success_prob, seed, logging, rounds)
     n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
     @info n
     qubits = [Qubit() for _ in 1:n]
-    bg = [T2Dephasing(0.1) for _ in 1:n]
+    bg = [T2Dephasing(T2) for _ in 1:n]
     reprs = [CliffordRepr() for _ in 1:n]
 
 
@@ -287,36 +289,44 @@ end
 
 rounds = 1000
 seed = 42
-all_runs = DataFrame()
-for (f, link_success_prob) in enumerate(range(0.1,1,10))
 
-    # Graph state data
-    path_to_graph_data = "/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_data_project_piecemaker/graphstateswitch/input/18.pickle"
-    graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
-    ref_core = first(keys(graphdata))
-    n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
-    @info ref_core
 
-    logging = DataFrame(
-        chosen_core = Tuple[],
-        sim_time    = Float64[],
-        coincide    = Float64[],
-        H_idx = Any[],
-        S_idx = Any[],
-        Z_idx = Any[],
-    )
-    for i in 1:n
-        logging[!, Symbol("eig", i)] = Float64[]
+for nr in ["cycle9"] # Graph identifier 
+    for T2 in [10.0^i for i in -1:3]
+
+        all_runs = DataFrame()
+        for (f, link_success_prob) in enumerate(range(0.1,1,10))
+
+            # Graph state data
+            path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
+            graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
+            ref_core = first(keys(graphdata))
+            n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
+            @info ref_core
+
+            logging = DataFrame(
+                chosen_core = Tuple[],
+                sim_time    = Float64[],
+                coincide    = Float64[],
+                H_idx = Any[],
+                S_idx = Any[],
+                Z_idx = Any[],
+                # fidelity    = Float64[]
+            )
+            for i in 1:n
+                logging[!, Symbol("eig", i)] = Float64[]
+            end
+
+            sim = prepare_sim(graphdata, link_success_prob, T2, seed, logging, rounds)
+            timed = @elapsed run(sim)
+
+            logging[!, :elapsed_time]       .= timed
+            logging[!, :link_success_prob]  .= link_success_prob
+            logging[!, :seed]               .= seed
+            append!(all_runs, logging)
+            @info "Link success probability: $(link_success_prob) | Time: $(timed)"
+        end
+        # @info all_runs
+        CSV.write("examples/graphstateswitch/output/canonical_clifford_noisy_nr$(nr)_T$(T2).csv", all_runs)
     end
-
-    sim = prepare_sim(graphdata, link_success_prob, seed, logging, rounds)
-    timed = @elapsed run(sim)
-
-    logging[!, :elapsed_time]       .= timed
-    logging[!, :link_success_prob]  .= link_success_prob
-    logging[!, :seed]               .= seed
-    append!(all_runs, logging)
-    @info "Link success probability: $(link_success_prob) | Time: $(timed)"
 end
-@info all_runs
-CSV.write("/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_data_project_piecemaker/graphstateswitch/output/canonical_clifford_noisy.csv", all_runs)
