@@ -1,4 +1,4 @@
-@testitem "Noninstant and Backgrounds Qumode" tags=[:noninstant_and_backgrounds_qumode] begin
+@testitem "Noninstant and Backgrounds - Qumode" begin
 
 ##
 # Time of application and gate durations

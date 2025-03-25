@@ -70,13 +70,17 @@ export
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
     # plots.jl
-    registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, generate_map
+    registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, generate_map,
+    # backends/quantumoptics
+    krausops, lindbladop,
+    # backends/quantumclifford
+    paulinoise
 
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
-# warnings for 
+# warnings for not having Ext packages
 function __init__()
     if isdefined(Base.Experimental, :register_error_hint)
         Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, kwargs
@@ -87,11 +91,11 @@ function __init__()
             elseif exc.f === registernetplot_axis
                 println(io, "\n`registernetplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
             elseif exc.f === resourceplot_axis
-                println(io, "\n`resourceplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.") 
+                println(io, "\n`resourceplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
             elseif exc.f === generate_map
-                println(io, "\n`generate_map` requires the package `GeoMakie`; please make sure `GeoMakie` is installed and imported first.")
+                println(io, "\n`generate_map` requires the package `Tyler`; please make sure `Tyler` is installed and imported first.")
             end
-        end    
+        end
     end
 end
 

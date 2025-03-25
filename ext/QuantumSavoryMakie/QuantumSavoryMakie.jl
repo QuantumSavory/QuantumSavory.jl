@@ -24,6 +24,7 @@ import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, r
         register_color = :gray90,
         slotcolor = :gray60,
         slotmarker = :rect,
+        scale = 1.0,
         slotsize = 0.8,
         observables_marker = :circle,
         observables_markersize = 0.55,
@@ -120,14 +121,14 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
 
         # the location of the registers and the slots inside of the registers
         for (iʳᵉᵍ,reg) in enumerate(registers)
-            xʳᵉᵍ  = registercoords[iʳᵉᵍ][1]-0.3
-            yʳᵉᵍ  = registercoords[iʳᵉᵍ][2]+0.7-1
-            Δxʳᵉᵍ = 0.6
-            Δyʳᵉᵍ = nsubsystems(reg)-0.4
+            xʳᵉᵍ  = registercoords[iʳᵉᵍ][1]-0.3*rn[:scale][]
+            yʳᵉᵍ  = registercoords[iʳᵉᵍ][2]-0.3*rn[:scale][]
+            Δxʳᵉᵍ = 0.6*rn[:scale][]
+            Δyʳᵉᵍ = (nsubsystems(reg)-0.4)*rn[:scale][]
             push!(register_rectangles[], Rect2f(xʳᵉᵍ, yʳᵉᵍ, Δxʳᵉᵍ, Δyʳᵉᵍ))
             for iˢˡᵒᵗ in 1:nsubsystems(reg)
                 xˢˡᵒᵗ = registercoords[iʳᵉᵍ][1]
-                yˢˡᵒᵗ = registercoords[iʳᵉᵍ][2]+iˢˡᵒᵗ-1
+                yˢˡᵒᵗ = registercoords[iʳᵉᵍ][2]+(iˢˡᵒᵗ-1)*rn[:scale][]
                 push!(register_slots_coords[], Point2f(xˢˡᵒᵗ,yˢˡᵒᵗ))
                 push!(register_slots_coords_backref[], (reg,iʳᵉᵍ,iˢˡᵒᵗ))
             end
@@ -141,7 +142,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 whichreg = findfirst(o->===(reg,o),registers) # TODO -- some form of caching or a backref would be valuable to significantly optimize this (skip the need for a O(n) search)
                 isnothing(whichreg) && continue # TODO -- the state does not belong to a register in the network... maybe it is in a temporary message buffer register?
                 xˢ = registercoords[whichreg][1]
-                yˢ = registercoords[whichreg][2]+iˢˡᵒᵗ-1
+                yˢ = registercoords[whichreg][2]+(iˢˡᵒᵗ-1)*rn[:scale][]
                 pˢ = Point2f(xˢ, yˢ)
                 push!(state_coords[], pˢ)
                 push!(state_coords_backref[], (s, network[whichreg], whichreg, iˢˡᵒᵗ, iˢ))
@@ -157,7 +158,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
             # TODO issue a warning if val has (percentage-wise) significant imaginary component (here, for plotting, when we implicitly are taking the real part)
             for (iʳᵉᵍ, iˢˡᵒᵗ) in rsidx
                 xˢ = registercoords[iʳᵉᵍ][1]
-                yˢ = registercoords[iʳᵉᵍ][2]+iˢˡᵒᵗ-1
+                yˢ = registercoords[iʳᵉᵍ][2]+(iˢˡᵒᵗ-1)*rn[:scale][]
                 pˢ = Point2f(xˢ, yˢ)
                 push!(observables_coords[], pˢ)
                 push!(observables_vals[], val)
@@ -165,7 +166,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
             end
             for (iʳᵉᵍ, iˢˡᵒᵗ) in links
                 xˢ = registercoords[iʳᵉᵍ][1]
-                yˢ = registercoords[iʳᵉᵍ][2]+iˢˡᵒᵗ-1
+                yˢ = registercoords[iʳᵉᵍ][2]+(iˢˡᵒᵗ-1)*rn[:scale][]
                 pˢ = Point2f(xˢ, yˢ)
                 push!(observables_links[], pˢ)
                 push!(observables_linkvals[], val)
@@ -194,22 +195,22 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     register_polyplot.inspectable[] = false # TODO this `Poly` plot does not seem to be properly inspectable
     register_slots_scatterplot = scatter!(
         rn, register_slots_coords,
-        marker=rn[:slotmarker], markersize=rn[:slotsize], color=rn[:slotcolor],
+        marker=rn[:slotmarker], markersize=rn[:slotsize][]*rn[:scale][], color=rn[:slotcolor],
         markerspace=:data,
         inspector_label = (self, i, p) -> get_slots_vis_string(register_slots_coords_backref[],i))
     observables_scatterplot = scatter!(
         rn, observables_coords,
-        marker=rn[:observables_marker], markersize=rn[:observables_markersize], markerspace=:data,
+        marker=rn[:observables_marker], markersize=rn[:observables_markersize][]*rn[:scale][], markerspace=:data,
         color=observables_vals, colormap=rn[:colormap], colorrange=rn[:colorrange],
         inspector_label = (self, i, p) -> get_observables_vis_string(observables_backref[],i))
     observables_linesegments = linesegments!(
         rn, observables_links,
-        linewidth=rn[:observables_linewidth],
+        linewidth=rn[:observables_linewidth][]*rn[:scale][],
         color=observables_linkvals, colormap=rn[:colormap], colorrange=rn[:colorrange],
         inspector_label = (self, i, p) -> get_observables_vis_string(observables_links_backref[],i))
     state_scatterplot = scatter!(
         rn, state_coords,
-        marker=rn[:state_marker], markersize=rn[:state_markersize], color=rn[:state_markercolor],
+        marker=rn[:state_marker], markersize=rn[:state_markersize][]*rn[:scale][], color=rn[:state_markercolor],
         markerspace=:data,
         inspector_label = (self, i, p) -> get_state_vis_string(state_coords_backref[],i))
     state_linesegmentsplot = linesegments!(rn, state_links, color=rn[:state_linecolor])
@@ -290,7 +291,7 @@ The observable can be used to issue a `notify` call that updates
 the plot with the current state of the network."""
 function registernetplot_axis end
 
-function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infocli=true, datainspector=true, map=false, kwargs...)
+function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infocli=true, datainspector=true, autolimits=false, kwargs...)
     p = registernetplot!(ax, registersobservable; kwargs...)
     ax.aspect = Makie.DataAspect()
     if hasmethod(Makie.hidedecorations!, Tuple{typeof(ax)})
@@ -307,8 +308,10 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
     if datainspector
         DataInspector(ax.parent)
     end
-    if hasmethod(Makie.autolimits!, Tuple{typeof(ax)})
-        Makie.autolimits!(ax)
+    if autolimits
+        if hasmethod(Makie.autolimits!, Tuple{typeof(ax)})
+            Makie.autolimits!(ax)
+        end
     end
     ax.parent, ax, p, p[1]
 end

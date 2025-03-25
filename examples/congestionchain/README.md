@@ -1,6 +1,6 @@
 # A Simulation of Congestion on a Quantum Repeater Chain
 
-Live version is at [areweentangledyet.com/state_explorer/](https://areweentangledyet.com/congestionchain/).
+Live version is at [areweentangledyet.com/congestionchain/](https://areweentangledyet.com/congestionchain/).
 
 A simple example to study congestion on a chain of quantum repeaters.
 

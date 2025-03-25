@@ -57,7 +57,7 @@ The `RegisterNet` would contain, on each node:
     To see how to visualize these data structures as the simulation is proceeding, consult the [Visualizations](@ref Visualizations) page.
 
 !!! note
-    To see how to define imperfections, noise processes, and background events, consult the [Sub-system Properties](@ref Properties-and-Backgrounds) page.
+    To see how to define imperfections, noise processes, and background events, consult the [Sub-system Background Noise](@ref "Background Noise Processes") page.
 
 ```@raw html
 <details><summary>Click to expand and see code used to set up the meta-graph and registers</summary>
@@ -124,8 +124,7 @@ end
 
 As seen in the following flow chart, the entangler repeatedly checks for available pairs of unused qubit slots and attempts to entangle them.
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
     A[Entangler starts<br>on node A and B]
     B{Are there<br>unused qubits on<br>node A and B?}
@@ -137,7 +136,6 @@ graph LR
     E --> F[Write down<br>who was entangled]
     F --> G([Unlock the<br>qubits])
     G --> B
-</div>
 ```
 
 ```@raw html
@@ -217,8 +215,7 @@ The Swapper working on a given node simply checks whether there are any qubits o
 that are entangled with other nodes, both on the left and right of the current node.
 If such qubits are found, the entanglement swap operation is performed on them, as seen in this flowchart.
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
     A[Swapper starts<br>on node A]
     B{Are there<br>qubits entangled with A<br>both on the left and right<br>of A?}
@@ -230,7 +227,6 @@ graph LR
     E --> F[Write down<br>how the entanglement<br>was redistributed]
     F --> G([Unlock and erase<br>the local qubits])
     G --> B
-</div>
 ```
 
 The entanglement swap operation is performed through the following simple circuit, which entangles the two local qubits belonging to two separate Bell pairs, and then measures them:
@@ -379,8 +375,7 @@ end
 
 The overall structure of this process is similar to the Entangler and Swapper: repeatedly trying to lock four qubits belonging to two pairs shared by the same nodes, followed by performing the purification procedure.
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
     A[Purifier starts<br>on nodes A and B]
     B{Are there<br>two Bell pairs shared<br>between A and B?}
@@ -395,7 +390,6 @@ graph LR
     F1 --> G([Unlock<br>the qubits])
     F2 --> G([Unlock<br>the qubits])
     G --> B
-</div>
 ```
 
 Purification processes are started on all pairs of nodes with an invocation like:
@@ -542,7 +536,7 @@ We used the [`Register`](@ref) data structure to automatically track the quantum
 describing our mixed analog-digital quantum dynamics.
 
 Much of the analog dynamics was implicit through the use of [backgrounds,
-declaring the noise properties of various qubits](@ref Properties-and-Backgrounds).
+declaring the noise properties of various qubits](@ref "Background Noise Processes").
 
 The digital-ish dynamics was implemented through the use of
 - [`initialize!`](@ref) for setting initial states to various qubits
