@@ -5,6 +5,8 @@ using Markdown
 
 include("setup.jl")
 
+@info "all library imports are complete"
+
 const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TODO remove after fix of bug in Bonito https://github.com/SimonDanisch/Bonito.jl/issues/178
 
 ##
@@ -165,6 +167,8 @@ function add_conf_sliders(fig)
     conf_obs
 end
 
+@info "app definition is complete"
+
 ##
 # Serve the Makie app
 
@@ -177,5 +181,7 @@ Bonito.HTTPServer.start(server)
 Bonito.route!(server, "/" => landing);
 
 ##
+
+@info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
 
 wait(server)

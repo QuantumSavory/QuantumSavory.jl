@@ -1,11 +1,5 @@
 # [First Generation Quantum Repeater](@id First-Generation-Quantum-Repeater)
 
-```@meta
-DocTestSetup = quote
-    using QuantumSavory
-end
-```
-
 There is a convenient classification of quantum repeaters by their logical capabilities[^1].
 The first, simplest, generation of quantum repeaters involves the generation of physical (unencoded) entangled qubits between neighboring nodes,
 followed by entanglement swap and entanglement purification operation.
@@ -36,6 +30,9 @@ The user does not need to know much about these libraries, but if they wish, it 
 
 The full simulation script is available at the bottom.
 
+!!! info "Low Level Implementation"
+    This is a very low-level implementation. You would be better of using already implemented reusable protocols like [`EntanglerProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt) like done in the second version of this example [`firstgenrepeater_v2`](https://qs.quantumsavory.org/dev/howto/firstgenrepeater_v2/firstgenrepeater_v2). On the other hand, the setup here is a simple way to learn about making discrete event simulations without depending on a lot of extra library functionality and opaque black boxes.
+
 ## The Underlying Data Structures
 
 While the quantum dynamics would be encapsulated in a [`Register`](@ref) data structure,
@@ -46,7 +43,7 @@ While this is not required for using `QuantumSavory.jl`, it is convenient,
 and we provide a lot of debugging tools that assume the use of this structure.
 
 Given an array of register sizes, e.g. `sizes = [2,3,4,3,2]`, we will create a linear graph,
-where each node has the prescribed number of qubits, e.g.: 
+where each node has the prescribed number of qubits, e.g.:
 
 ![An image of 5 quantum registers](./firstgenrepeater-01.graph.png)
 
@@ -127,8 +124,7 @@ end
 
 As seen in the following flow chart, the entangler repeatedly checks for available pairs of unused qubit slots and attempts to entangle them.
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
     A[Entangler starts<br>on node A and B]
     B{Are there<br>unused qubits on<br>node A and B?}
@@ -140,7 +136,6 @@ graph LR
     E --> F[Write down<br>who was entangled]
     F --> G([Unlock the<br>qubits])
     G --> B
-</div>
 ```
 
 ```@raw html
@@ -220,8 +215,7 @@ The Swapper working on a given node simply checks whether there are any qubits o
 that are entangled with other nodes, both on the left and right of the current node.
 If such qubits are found, the entanglement swap operation is performed on them, as seen in this flowchart.
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
     A[Swapper starts<br>on node A]
     B{Are there<br>qubits entangled with A<br>both on the left and right<br>of A?}
@@ -233,7 +227,6 @@ graph LR
     E --> F[Write down<br>how the entanglement<br>was redistributed]
     F --> G([Unlock and erase<br>the local qubits])
     G --> B
-</div>
 ```
 
 The entanglement swap operation is performed through the following simple circuit, which entangles the two local qubits belonging to two separate Bell pairs, and then measures them:
@@ -382,8 +375,7 @@ end
 
 The overall structure of this process is similar to the Entangler and Swapper: repeatedly trying to lock four qubits belonging to two pairs shared by the same nodes, followed by performing the purification procedure.
 
-```@raw html
-<div class="mermaid">
+```mermaid
 graph LR
     A[Purifier starts<br>on nodes A and B]
     B{Are there<br>two Bell pairs shared<br>between A and B?}
@@ -398,7 +390,6 @@ graph LR
     F1 --> G([Unlock<br>the qubits])
     F2 --> G([Unlock<br>the qubits])
     G --> B
-</div>
 ```
 
 Purification processes are started on all pairs of nodes with an invocation like:
@@ -563,14 +554,12 @@ Of note is that we also used
 and `QuantumOptics.jl` for convenient master equation integration.
 Many of these tools were used under the hood without being invoked directly.
 
-## Full Code
-
-The entirety of the code necessary for reproducing these results is in the
-[examples folder of the `QuantumSavory.jl` repository](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater).
-
 ## Suggested Improvements
 
 - The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available.
 - Calibrating when to perform a purification versus a swap would be important for the performance of the network.
 - Balancing what types of entanglement purification is performed, depending on the type of noise experienced, can drastically lower resource requirements.
 - Implementing more sophisticated purification schemes can greatly improve the quality of entanglement.
+
+
+The source code is in the [`examples/firstgenrepeater`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater) folder.
