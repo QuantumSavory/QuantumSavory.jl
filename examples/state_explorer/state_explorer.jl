@@ -11,46 +11,26 @@ const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TOD
 
 #
 
-const permitted_queries = Dict(
-    #"MultiplexedCascadedBellPairW" => MultiplexedCascadedBellPairW,
-    "BarrettKokBellPairW" => BarrettKokBellPairW,
-)
+landing = Bonito.App() do
+    fig = Figure(size=(800,500))
+    stateexplorer!(fig, BarrettKokBellPairW)
 
-landing = Bonito.App(; title="State Explorer") do
     content = md"""
-    Please select one of the following:
+    # The Barrett-Kok Bell Pair
 
-    - [Barrett-Kok Bell Pair](/vis/BarrettKokBellPairW)
-    - [ZALM Bell Pair](/vis/MultiplexedCascadedBellPairW)
+    ### As parameterized in "Entangling Quantum Memories via Heralded Photonic Bell Measurement"
+
+    $(fig.scene)
+
+    The normalized Barret-Kok Bell pair (after two successful rounds of the Barrett-Kok style attempts are done) is shown in the bar plots (both in the Z and in the Bell bases).
+    This Bell pair creation protocol is also referred to as a Bell pair heralded through a "dual rail photonic qubit based swap".
+
+    The sliders let you modify various state parameters. For ease of exploration, figures of merit for modifying one parameter while keeping all others constant are also plotted. The first row corresponds to fidelity (with respect to perfect state) and the second row is the trace of the state (i.e. the probability of successful generation).
+
+    [See the documentation for `BarrettKokBellPairW`](http://qs.quantumsavory.org/dev/API_StatesZoo/#QuantumSavory.StatesZoo.BarrettKokBellPairW)
+
+    [See and modify the code for this app on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/state_explorer)
     """
-    Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
-end
-
-vis = Bonito.App(; title="State Explorer") do request::Bonito.HTTP.Request
-    statekey = string(split(request.target, "/")[end])
-    state = get(permitted_queries, statekey, nothing)
-    if isnothing(state)
-        content = md"""
-            Unrecognized state...
-        """
-    else
-        fig = stateexplorer(state)
-        link = "https://qs.quantumsavory.org/dev/API_StatesZoo/#QuantumSavory.StatesZoo.$(statekey)"
-        doc = Markdown.Paragraph(Markdown.Link("See the documentation for implemented states.",link))
-        content = md"""
-        # $(statekey)
-
-        $(fig.scene)
-
-        The Bell pair is shown in the bar plots (both in the Z and in the Bell bases).
-
-        The sliders let you modify various state parameters. For ease of exploration, figures of merit for modifying one parameter while keeping all others constant are also plotted. The first row corresponds to fidelity (with respect to perfect state) and the second row is the trace of the state (i.e. the probability of successful generation).
-
-        $doc
-
-        [See and modify the code for this app on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/state_explorer)
-        """
-    end
     return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end
 
@@ -66,7 +46,6 @@ proxy_url = get(ENV, "QS_SIMPLESWITCH_PROXY", "")
 server = Bonito.Server(interface, port; proxy_url);
 Bonito.HTTPServer.start(server)
 Bonito.route!(server, "/" => landing);
-Bonito.route!(server, r"/vis/.*" => vis);
 
 ##
 

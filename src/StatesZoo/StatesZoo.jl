@@ -9,8 +9,12 @@ import LinearAlgebra
 import LinearAlgebra: tr
 
 export BarrettKokBellPair, BarrettKokBellPairW,
-    MultiplexedCascadedBellPair, MultiplexedCascadedBellPairW,
     stateexplorer, stateexplorer!, stateparameters, stateparametersrange
+
+if VERSION >= v"1.12.0-DEV.2047"
+    export MultiplexedCascadedBellPair, MultiplexedCascadedBellPairW
+end
+
 
 # TODO this abstract type should specify isexpr()==false
 abstract type AbstractTwoQubitState <: QuantumSymbolics.AbstractTwoQubitOp end #For representing density matrices

@@ -24,7 +24,7 @@ for S in [BarrettKokBellPair, BarrettKokBellPairW,
 
     reg = Register(2)
     initialize!(reg[1:2], state)
-    @test ! iszero(observable(r_zalmW[1:2], Z⊗Z))
+    @test ! iszero(observable(reg[1:2], Z⊗Z))
     @test tr(state) ≈ tr(express(state))
 end
 
