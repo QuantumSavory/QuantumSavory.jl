@@ -20,8 +20,8 @@ landing = Bonito.App(; title="State Explorer") do
     content = md"""
     Please select one of the following:
 
-    - [Barrett-Kok Bell Pair](/vis/BarrettKokBellPairW)
-    - [ZALM Bell Pair](/vis/MultiplexedCascadedBellPairW)
+    - [Barrett-Kok Bell Pair](./vis/BarrettKokBellPairW)
+    - [ZALM Bell Pair](./vis/MultiplexedCascadedBellPairW)
     """
     Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end
