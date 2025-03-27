@@ -295,6 +295,7 @@ end
                 @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(msg.tag[3]) | message=`$(msg.tag)` | time=$(now(prot.sim))"
                 workwasdone = true
                 localslot = nodereg[localslotid]
+
                 # Check if the local slot is still present and believed to be entangled.
                 # We will need to perform a correction operation due to the swap or a deletion due to the qubit being thrown out,
                 # but there will be no message forwarding necessary.
@@ -444,7 +445,6 @@ end
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
         ob1 = real(observable((q1, q2), Z⊗Z))
         ob2 = real(observable((q1, q2), X⊗X))
-
 
         traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
         push!(prot.log, (now(prot.sim), ob1, ob2))
