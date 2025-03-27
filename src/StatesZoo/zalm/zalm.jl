@@ -186,7 +186,7 @@ end
     hmcs::MultiplexedCascadedBellPairW
 end
 MultiplexedCascadedBellPair(ηᴬᵐ, ηᴮᵐ, ηᴬˢ, ηᴮˢ, ηᶜ¹, ηᶜ², N, Pᵈ, Pᴬᵈ, Pᴮᵈ, vis, gᴬ, gᴮ) = MultiplexedCascadedBellPair(MultiplexedCascadedBellPairW(ηᴬᵐ, ηᴮᵐ, ηᴬˢ, ηᴮˢ, ηᶜ¹, ηᶜ², N, Pᵈ, Pᴬᵈ, Pᴮᵈ, vis, gᴬ, gᴮ))
-"Symetric noiseless perfectly mode-matched well-initializated case ηᵐ=ηᴬᵐ=ηᴮᵐ, ηˢ=ηᴬˢ=ηᴮˢ, ηᶜ=ηᶜ¹=ηᶜ², Pᵈ=Pᴬᵈ=Pᴮᵈ, vis=1, gᴬ=gᴮ=½"
+"Symmetric noiseless perfectly mode-matched well-initialized case ηᵐ=ηᴬᵐ=ηᴮᵐ, ηˢ=ηᴬˢ=ηᴮˢ, ηᶜ=ηᶜ¹=ηᶜ², Pᵈ=Pᴬᵈ=Pᴮᵈ, vis=1, gᴬ=gᴮ=½"
 MultiplexedCascadedBellPairW(ηᵐ, ηˢ, ηᶜ, N) = MultiplexedCascadedBellPairW(ηᵐ, ηᵐ, ηˢ, ηˢ, ηᶜ, ηᶜ, N, 0, 0, 0, 1, 0.5, 0.5)
 MultiplexedCascadedBellPair(ηᵐ, ηˢ, ηᶜ, N) = MultiplexedCascadedBellPair(ηᵐ, ηᵐ, ηˢ, ηˢ, ηᶜ, ηᶜ, N, 0, 0, 0, 1, 0.5, 0.5)
 
