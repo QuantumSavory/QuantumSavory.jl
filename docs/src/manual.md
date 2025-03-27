@@ -29,7 +29,7 @@ There are optional packages that you need to install to use the full plotting fe
 
 Here’s a simple example to demonstrate how superdense coding can be implemented. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
 
-```
+```@example
 using QuantumSavory
 using ResumableFunctions
 using ConcurrentSim
@@ -49,7 +49,7 @@ qc = QuantumChannel(sim, 10.0)
 
 # Alice wants to send "10"
 @resumable function alice(env, qc)
-    println("Alice: Encoding 10")
+    println("Alice: Encoding 10 at $(now(env))")
     apply!(regA[1], Z)
     put!(qc, regA[1])
 end
@@ -62,7 +62,7 @@ end
 
     bit1 = project_traceout!(regB, 2, Z) - 1
     bit2 = project_traceout!(regB, 1, Z) - 1
-    println("Bob decoded the bits: ", bit1, bit2)
+    println("Bob decoded the bits at $(now(env)): ", bit1, bit2)
 end
 
 @process alice(sim, qc)

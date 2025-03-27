@@ -73,3 +73,6 @@ For instance, the [implementation of a first generation repeater](@ref First-Gen
 
 ### Get Involved
 We welcome contributions from experts and students alike, whether by improving the codebase or suggesting new useful features. Your input will help us refine QuantumSavory and support better quantum simulations. One way to get involved is through our bug bounty program — see [Bug Bounties Guide](https://github.com/QuantumSavory/.github/blob/main/BUG_BOUNTIES.md) for details.
+
+### Office Hours
+Office hours are held every Friday from 12:30 – 1:30 PM Eastern Time via [Zoom](https://umass-amherst.zoom.us/j/95986275946?pwd=6h7Wbai1bXIai0XQsatNRWaVbQlTDr.1). Before joining, make sure to check the [Julia community events calendar](https://julialang.org/community/#events) to confirm whether office hours are happening, rescheduled, or canceled for the week. Feel free to bring any questions or suggestions!
