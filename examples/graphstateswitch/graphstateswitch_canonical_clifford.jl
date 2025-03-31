@@ -221,16 +221,15 @@ end
         refstate_stabilizers = graphdata[ref_core][2].staterefs[1].state[]
         coincide = graphstate(refstate_stabilizers)[1] == resultgraph # compare if graphs are equivalent
 
-        # Calculate fidelity using a helper register in the QuantumOpticsRepr
+        # Calculate fidelity
         client_ketstate = Ket(b.staterefs[1].state[]) # get the client state as a ket
-        reference_ketstate = Ket(refstate_stabilizers) # get the reference state as a ket
-        
+        reference_ketstate = Ket(refstate_stabilizers)' # get the reference state as a bra
+        fidelity =  real(reference_ketstate * client_ketstate) # calculate the fidelity of state shared by clients and reference state
+
+        # Calculate the expecation values of stabilizers individually using a helper register
         helperreg = Register(n)
         initialize!(helperreg[1:n], client_ketstate)
 
-        #fidelity = real(observable(helperreg[1:n], projector(reference_ketstate); time=now(sim))) # calculate the fidelity
-
-        # Calculate the expecation values of stabilizers individually
         refgraph = graphdata[ref_core][1]
         exps = map(vertices(refgraph)) do v
             neighs = neighbors(refgraph, v)
@@ -254,7 +253,7 @@ end
         push!(
             logging,
             (
-                ref_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, exps...
+                ref_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, exps...
             )
         )
         rounds -= 1
@@ -291,11 +290,11 @@ rounds = 1000
 seed = 42
 
 
-for nr in ["cycle9"] # Graph identifier 
-    for T2 in [10.0^i for i in -1:3]
+for nr in [2, 4, 7, 8, 9, 18, 40, 100] # Graph identifier 
+    for T2 in [10.0^i for i in 0:3]
 
         all_runs = DataFrame()
-        for (f, link_success_prob) in enumerate(range(0.1,1,10))
+        for (f, link_success_prob) in enumerate(range(0.01,1,10))
 
             # Graph state data
             path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
@@ -311,7 +310,7 @@ for nr in ["cycle9"] # Graph identifier
                 H_idx = Any[],
                 S_idx = Any[],
                 Z_idx = Any[],
-                # fidelity    = Float64[]
+                fidelity    = Float64[]
             )
             for i in 1:n
                 logging[!, Symbol("eig", i)] = Float64[]
@@ -323,6 +322,7 @@ for nr in ["cycle9"] # Graph identifier
             logging[!, :elapsed_time]       .= timed
             logging[!, :link_success_prob]  .= link_success_prob
             logging[!, :seed]               .= seed
+            logging[!, :nqubits]                 .= n
             append!(all_runs, logging)
             @info "Link success probability: $(link_success_prob) | Time: $(timed)"
         end

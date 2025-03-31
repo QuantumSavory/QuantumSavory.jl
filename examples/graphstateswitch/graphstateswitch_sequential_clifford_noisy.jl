@@ -125,7 +125,7 @@ end
     # Set up the entangler protocols at a client
     entangler = EntanglerProt(
         sim=sim, net=net, nodeA=1, slotA=client, nodeB=2, slotB=client,
-        success_prob=link_success_prob, rounds=1, attempts=-1, attempt_time=1.0, pairstate=StabilizerState("XX ZZ")
+        success_prob=link_success_prob, rounds=1, attempts=-1, attempt_time=1.0,
         )
     @yield @process entangler()
 end
@@ -217,7 +217,7 @@ end
             
             if isempty(activeclients)
                 @debug "No active clients, waiting for entanglement"
-                @yield timeout(sim, 1.0+ε)
+                @yield timeout(sim, 1.0+ε) # TODO: is there a better way to do this?
                 continue
             end
             # Collect active clients
@@ -287,11 +287,16 @@ end
         coincide = graphstate(refstate_stabilizers)[1] == resultgraph # compare if graphs are equivalent
 
         # Calculate fidelity
+        client_ketstate = Ket(b.staterefs[1].state[]) # get the client state as a ket
+        reference_ketstate = Ket(refstate_stabilizers)' # get the reference state as a bra
+        fidelity =  real(reference_ketstate * client_ketstate) # calculate the fidelity of state shared by clients and reference state
+
+        # Calculate the expecation values of stabilizers individually using a helper register
         helperreg = Register(n)
-        initialize!(helperreg[1:n], Ket(b.staterefs[1].state[]))
-        
+        initialize!(helperreg[1:n], client_ketstate)
+
         refgraph = graphdata[chosen_core][1]
-        fid = map(vertices(refgraph)) do v
+        exps = map(vertices(refgraph)) do v
             neighs = neighbors(refgraph, v)
             verts = sort([v, neighs...])
             obs = reduce(⊗,[ (i == v) ? σˣ : σᶻ for i in verts ]) # X for the central vertex v, Z for neighbors, Kronecker them together       
@@ -313,21 +318,20 @@ end
         push!(
             logging,
             (
-                chosen_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fid...
+                chosen_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, exps...
             )
         )
         rounds -= 1
     end
 end
 
-function prepare_sim(graphdata, operationdata, link_success_prob, seed, logging, rounds)
+function prepare_sim(T2, n, graphdata, operationdata, link_success_prob, seed, logging, rounds)
     
     # Set a random seed
     Random.seed!(seed)
-
-    n = nv(graphdata[(2,4)][1]) # number of clients taken from one example graph
-    switch = Register(fill(Qubit(), 2*n), fill(CliffordRepr(), 2*n), fill(T2Dephasing(1.0), 2*n)  ) # storage and communication qubits at the switch # fill(T2Dephasing(1.0), 2*n)
-    clients = Register(fill(Qubit(), n),  fill(CliffordRepr(), n), fill(T2Dephasing(1.0), n)) # client qubits
+    
+    switch = Register(fill(Qubit(), 2*n), fill(CliffordRepr(), 2*n), fill(T2Dephasing(T2), 2*n)) # storage and communication qubits at the switch # fill(T2Dephasing(1.0), 2*n)
+    clients = Register(fill(Qubit(), n),  fill(CliffordRepr(), n), fill(T2Dephasing(T2), n)) # client qubits
     net = RegisterNet([switch, clients])
     sim = get_time_tracker(net)
 
@@ -341,34 +345,45 @@ end
 
 rounds = 1000
 seed = 42
-all_runs = DataFrame()
-for (f, link_success_prob) in enumerate(range(0.5,1,10))
 
-    # Graph state data
-    path_to_graph_data = "examples/graphstateswitch/input/7_20250127.pickle"
-    graphdata, operationdata = get_graphdata_from_pickle(path_to_graph_data)
-    n = nv(graphdata[(2,4)][1]) # number of clients taken from one example graph
+for nr in [2, 4, 7, 8, 9, 18, 40, 100] # Graph identifier 
+    for T2 in [10.0^i for i in 0:3]
 
-    logging = DataFrame(
-        chosen_core = Tuple[],
-        sim_time    = Float64[],
-        coincide    = Float64[],
-        H_idx = Any[],
-        S_idx = Any[],
-        Z_idx = Any[],
-    )
-    for i in 1:n
-        logging[!, Symbol("eig", i)] = Float64[]
+        all_runs = DataFrame()
+        for (f, link_success_prob) in enumerate(range(0.01,1,10))
+
+            # Graph state data
+            path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
+            graphdata, operationdata = get_graphdata_from_pickle(path_to_graph_data)
+            
+            ref_core = first(keys(graphdata))
+            n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
+            @info n
+
+            logging = DataFrame(
+                chosen_core = Tuple[],
+                sim_time    = Float64[],
+                coincide    = Float64[],
+                H_idx = Any[],
+                S_idx = Any[],
+                Z_idx = Any[],
+                fidelity    = Float64[]
+            )
+            for i in 1:n
+                logging[!, Symbol("eig", i)] = Float64[]
+            end
+
+            sim = prepare_sim(T2, n, graphdata, operationdata, link_success_prob, seed, logging, rounds)
+            timed = @elapsed run(sim)
+
+            logging[!, :elapsed_time]       .= timed
+            logging[!, :link_success_prob]  .= link_success_prob
+            logging[!, :seed]               .= seed
+            logging[!, :nqubits]                 .= n
+            append!(all_runs, logging)
+            @info "Link success probability: $(link_success_prob) | Time: $(timed)"
+        end
+        # @info all_runs
+        CSV.write("examples/graphstateswitch/output/sequential_clifford_noisy_nr$(nr)_T$(T2).csv", all_runs)
     end
-
-    sim = prepare_sim(graphdata, operationdata, link_success_prob, seed, logging, rounds)
-    timed = @elapsed run(sim)
-
-    logging[!, :elapsed_time]       .= timed
-    logging[!, :link_success_prob]  .= link_success_prob
-    logging[!, :seed]               .= seed
-    append!(all_runs, logging)
-    @info "Link success probability: $(link_success_prob) | Time: $(timed)"
 end
-#@info all_runs
-CSV.write("examples/graphstateswitch/output/sequential_clifford_noisy.csv", all_runs)

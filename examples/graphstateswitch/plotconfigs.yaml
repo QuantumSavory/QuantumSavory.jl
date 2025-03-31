@@ -1,0 +1,12 @@
+input_file_pattern : "$(protocol)_clifford_noisy_nr$(nr)_T$(T2).csv"
+
+protocol:
+  - canonical
+  - sequential
+
+T2:
+  - 1.0
+  - 10.0
+  - 100.0
+  - 1000.0
+
