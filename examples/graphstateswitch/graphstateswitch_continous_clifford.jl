@@ -151,7 +151,6 @@ end
 
 function order_state!(state::AbstractStabilizer, orderlist::Vector{Int})
 
-    #orderlist = deepcopy(orderlist)
     # Loop over each index i
     for i in 1:length(orderlist)
         # If the qubit at position i isn't i, swap it with wherever qubit i lives
@@ -159,8 +158,8 @@ function order_state!(state::AbstractStabilizer, orderlist::Vector{Int})
             # Find which position holds the qubit i
             correct_index = findfirst(==(i), orderlist)
 
-            # Swap the register qubits physically
-            apply!(state, sSWAP(i, correct_index); phases=true)
+            # Swap the qubits
+            apply!(state, sSWAP(i, correct_index); phases=false)
 
             # Swap the entries in orderlist
             orderlist[i], orderlist[correct_index] = orderlist[correct_index], orderlist[i]
