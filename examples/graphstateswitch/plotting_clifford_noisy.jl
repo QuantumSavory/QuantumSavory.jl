@@ -8,7 +8,7 @@ Computes stats (an array of statistical functions e.g., `mean`, `sem`) for given
 grouped by given other columns `splits` `[:link_success_prob]`. The result is a DataFrame with the computed statistics.
 The columns of the DataFrame are named as `statistic_column` (`mean_eig1`, `sem_eig2`).
 """
-function get_statistics(df::DataFrame, splits::Array{Symbol}, cols::Array{Any}, stats::Array{Function})
+function get_statistics(df::DataFrame, splits::Array{Symbol}, cols::Array{String}, stats::Array{Function})
 
     stats_to_combine = []
     for col in cols
@@ -31,18 +31,21 @@ end
 Get the DataFrame for plotting. If there are more granular statistics, one can use `overall=true` to calculate a row-wise mean of the latter.
 Uses the `get_statistics` function to compute the mean and sem of the stabilizer eigenvalues.
 """
-function get_plot_df(graph_id::Int, splits::Array{Symbol}, cols::Array{String}; overall::Bool=true, path_config::String="examples/graphstateswitch/plotconfigs.yaml", stats::Array{Function}=[mean, sem])
-    
+function get_plot_df(graph_id::Int, noise::String, splits::Array{Symbol}, cols::Array{String}; overall::Bool=true, path_config::String="examples/graphstateswitch/plotconfigs.yaml", stats::Array{Function}=[mean, sem])
+    yaml_mapping = Dict(
+        "τ" => "depol",
+        "T" => "dephasing",
+    )
     configs = YAML.load_file(path_config)
     protocols = configs["protocol"]
-    T2s = configs["T2"]
+    noise_times = configs[yaml_mapping[noise]]
 
     dfs = DataFrame[]
-    for T2 in T2s
+    for noise_time in noise_times
         for protocol in protocols
         # Read the raw data
-            input_file_pattern = "$(protocol)_clifford_noisy_nr$(graph_id)_T$(T2).csv"
-            df = CSV.read("examples/graphstateswitch/output/raw/T2dephasing_canonical_vs_sequential/"*input_file_pattern, DataFrame)
+            input_file_pattern = "$(protocol)_clifford_noisy_nr$(graph_id)_$(noise)$(noise_time).csv"
+            df = CSV.read("examples/graphstateswitch/output/raw/$(yaml_mapping[noise])_canonical_vs_sequential/"*input_file_pattern, DataFrame)
         
             # Count how many unique measures there are
             cnames = []
@@ -60,22 +63,22 @@ function get_plot_df(graph_id::Int, splits::Array{Symbol}, cols::Array{String}; 
         
             if overall
                 for (col, c) in zip(cols, cnames)
-                    # Only do something if there is more than one “granular” column
+                    # Only do if there is more than one column
                     if length(c) > 1
                         for stat in stats
                             # d will be the list of “stat_*” columns that correspond to c
                             d = (string(stat) * "_") .* c
                             
-                            # Now create a new column in df_stats that’s the per-row result of “stat”
+                            # Create a new column in df_stats that’s the per-row result of “stat”
                             df_stats[!, Symbol(stat, "_", col)] =
-                                map(stat, eachrow(select(df_stats, d...)))
+                                map(mean, eachrow(select(df_stats, d...)))
                         end
                     end
                 end
             end
 
             df_stats[!, :graph_id] .= graph_id
-            df_stats[!, :T2] .= T2
+            df_stats[!, Symbol(noise)] .= noise_time
             df_stats[!, :type] .= protocol
             df_stats[!, :nqubits] .= n
         
@@ -89,19 +92,19 @@ function get_plot_df(graph_id::Int, splits::Array{Symbol}, cols::Array{String}; 
 end
 
 """
-    Plot mean of stabilizer eigenvalues for different T2 times. 
+    Plot mean of stabilizer eigenvalues for different noise_time times. 
 """
 function plot_data(data::DataFrame; disp::Bool=true, saveplot::Bool=false)
     graph_id = unique(data.graph_id)[1]
     n = unique(data.nqubits)[1]
-    t2_values = unique(data.T2)
-    n_subplots = length(t2_values)
+    noise_time_values = unique(data[!, Symbol(noise)])
+    n_subplots = length(noise_time_values)
     
     plt = plot(layout = (div(n_subplots,2), 2), size = (1000, 700), left_margin = 10Plots.mm)
     plt[:plot_title] = "Graph nr. $(graph_id) ($(n) qubits)"
-    for (i, t) in enumerate(t2_values)
-        # Subset the data for T2 == t and id_graph
-        df_sub = data[(data.T2 .== t), :]
+    for (i, t) in enumerate(noise_time_values)
+        # Subset the data for noise_time == t and id_graph
+        df_sub = data[(data[!, Symbol(noise)] .== t) .& (data[!, :type] .== "sequential"), :]
 
         mean_cols = [Symbol("mean_eig", i) for i in 1:n]
         sem_cols  = [Symbol("sem_eig", i) for i in 1:n]
@@ -113,7 +116,7 @@ function plot_data(data::DataFrame; disp::Bool=true, saveplot::Bool=false)
             subplot = i,           # tell Plots.jl which subplot to draw on
             xlabel = "Link Success Probability",
             ylabel = "Stabilizer eigenvalues +/- SEM",
-            title = "T2 = $t",
+            title = "noise_time = $t",
             legend = :right,
             ylim = (0, 1),
             yerr = cols(sem_cols),  # sem_eig or sem_fidelity
@@ -123,7 +126,7 @@ function plot_data(data::DataFrame; disp::Bool=true, saveplot::Bool=false)
         display(plt)
     end
     if saveplot
-        savefig(plt, "examples/graphstateswitch/output/stabeigenvalues_different_T2_$(id_graph).pdf")
+        savefig(plt, "examples/graphstateswitch/output/stabeigenvalues_different_$(noise)_$(graph_id).pdf")
     end
 end
 
@@ -133,14 +136,14 @@ end
 function plot_data(data::DataFrame, take_meas::String; disp::Bool=true, saveplot::Bool=false)
     graph_id = unique(data.graph_id)[1]
     n = unique(data.nqubits)[1]
-    t2_values = unique(data.T2)
-    n_subplots = length(t2_values)
+    noise_time_values = unique(data[!, Symbol(noise)])
+    n_subplots = length(noise_time_values)
     
     plt = plot(layout = (div(n_subplots,2), 2), size = (1000, 700), left_margin = 10Plots.mm)
     plt[:plot_title] = "Graph nr. $(graph_id) ($(n) qubits)"
-    for (i, t) in enumerate(t2_values)
-        # Subset the data for T2 == t and id_graph
-        df_sub = data[(data.T2 .== t), :]
+    for (i, t) in enumerate(noise_time_values)
+        # Subset the data for noise_time == t and id_graph
+        df_sub = data[(data[!, Symbol(noise)] .== t), :]
 
         columns = collect(names(df_sub))
         @df df_sub plot!(plt,
@@ -149,8 +152,8 @@ function plot_data(data::DataFrame, take_meas::String; disp::Bool=true, saveplot
             group = :type,           # color by canonical or sequential
             subplot = i,           # tell Plots.jl which subplot to draw on
             xlabel = "Link Success Probability",
-            ylabel = take_meas*"_mean +/- SEM",
-            title = "T2 = $t",
+            ylabel = take_meas*" mean +/- SEM",
+            title = "$(noise) = $t",
             legend = :right,
             ylim = (0, 1),
             yerr = cols(findfirst(columns.=="sem_"*take_meas)),  # sem_eig or sem_fidelity
@@ -160,14 +163,23 @@ function plot_data(data::DataFrame, take_meas::String; disp::Bool=true, saveplot
         display(plt)
     end
     if saveplot
-        savefig(plt, "examples/graphstateswitch/output/$(take_meas)_different_T2_$(id_graph)_comparison.pdf")
+        savefig(plt, "examples/graphstateswitch/output/$(take_meas)_different_$(noise)_$(graph_id)_comparison.pdf")
+    end
+end
+
+# Main plotting script
+
+noise_models = ["T", "τ"] # use "τ" for depolarizing noise, "T" for dephasing noise
+splits = [:link_success_prob]
+cols = ["eig", "fidelity"]
+
+for noise in noise_models
+    for graph_id in [2, 4, 7, 8, 9, 18, 40, 100]
+        data = get_plot_df(graph_id, noise, splits, cols; overall=true, path_config="examples/graphstateswitch/plotconfigs.yaml", stats=[mean, sem])
+        plot_data(data, "eig", disp=true, saveplot=true) # use "fidelity" for fidelity
+        plot_data(data, "fidelity", disp=true, saveplot=true) 
+        plot_data(data; disp=true, saveplot=true) # plot all stabilizer eigenvalues
     end
 end
 
 
-id_graph = 2
-splits = [:link_success_prob]
-cols = ["eig", "fidelity"]
-
-data = get_plot_df(id_graph, splits, cols; overall=true, path_config="examples/graphstateswitch/plotconfigs.yaml", stats=[mean, sem])
-plot_data(data, disp=true, saveplot=false)

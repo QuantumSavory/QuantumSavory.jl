@@ -1,10 +1,8 @@
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.ProtocolZoo
-using QuantumSymbolics
-using QuantumOpticsBase
-using QuantumClifford: AbstractStabilizer, Stabilizer, sHadamard, sPhase, sSWAP, canonicalize!, graphstate, sZ
 using ConcurrentSim
+using QuantumOpticsBase
 using ResumableFunctions
 using NetworkLayout
 using Random, StatsBase
@@ -12,6 +10,7 @@ using Graphs
 using PyCall
 using DataFrames, StatsPlots
 using CSV
+using QuantumClifford: Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT
 
 
 @pyimport pickle
@@ -88,7 +87,7 @@ end
         @debug "Applying CZ gate between $(i) and $(neighbor)"
         @yield lock(reg[n+i]) & lock(reg[n+neighbor])
         apply!((reg[n+i], reg[n+neighbor]), ZCZ) 
-        rem_edge!(graph, i, neighbor) # remove the edge from the graph
+        rem_edge!(graph, i, neighbor) # remove edge from the graph to keep track of the applied CZ gates
         @debug "Removed edge between $(i) and $(neighbor), edges left: $(collect(edges(graph)))"
         unlock(reg[n+i])
         unlock(reg[n+neighbor])
@@ -99,23 +98,22 @@ end
     @yield  lock(qubitA) & lock(bellpair[1]) & lock(bellpair[2])
     @debug "Teleporting qubit $(qubitA.idx) to client node"
     tobeteleported = qubitA
-    apply!((tobeteleported, bellpair[1]), CNOT)
+    apply!((tobeteleported, bellpair[1]), sCNOT)
     apply!(tobeteleported, sHadamard)
 
-    zmeas1 = project_traceout!(tobeteleported, σᶻ)
-    zmeas2 = project_traceout!(bellpair[1], σᶻ)
-     
-    if zmeas2==2 apply!(bellpair[2], X)  end
-    if zmeas1==2 apply!(bellpair[2], Z) end
+    zmeas1 = signed(project_traceout!(tobeteleported, σᶻ)) # TODO: signed is used to convert  signed integer Int64, is this necessary?
+    zmeas2 = signed(project_traceout!(bellpair[1], σᶻ)) # see source file src/tags.jl for defintion of Tags
+
+    # if zmeas2==2 apply!(bellpair[2], X) end # instead of doing this 'locally' we send the correction to the client
+    # if zmeas1==2 apply!(bellpair[2], Z) end # see below
 
     unlock(qubitA) 
     unlock(bellpair[1]) 
     unlock(bellpair[2])
     
-
-    # msg = Tag(TeleportUpdate, 1, i, 2, i, zmeas2, zmeas1)
-    # put!(channel(net, 1=>2; permit_forward=true), msg)
-    # @debug "Teleporting qubit $(qubitA.idx) to client node | message=`$(msg)` | time=$(now(sim))"
+    msg = Tag(TeleportUpdate, 1, i, 2, i, zmeas2, zmeas1)
+    put!(channel(net, 1=>2; permit_forward=true), msg)
+    @debug "Teleporting qubit $(qubitA.idx) to client node | message=`$(msg)` | time=$(now(sim))"
 
     @yield timeout(sim, period)
 end
@@ -130,8 +128,7 @@ end
     @yield @process entangler()
 end
 
-
-function order_state!(reg::Register, orderlist::Vector{Int})
+function order_state!(reg, orderlist)
     @assert length(reg) == length(orderlist)
 
     #orderlist = deepcopy(orderlist)
@@ -151,57 +148,20 @@ function order_state!(reg::Register, orderlist::Vector{Int})
     end
 end
 
-function apply_cliffords!(reg::Register, cliffords::Vector{String})
-    mapping = Dict(
-        'S' => sPhase,
-        'H' => sHadamard,
-    )
-    for (i, clifford) in enumerate(cliffords)
-        for gate in reverse(clifford)
-            if gate == 'I'
-                continue
-            end
-            apply!(reg[i], mapping[gate])
-            @debug "Applied $(gate) to qubit $(i)"
-            
-        end
-    end
-end
-
-function apply_cliffords!(state::AbstractStabilizer, cliffords::Vector{String}, n::Int)
-    for (i, clifford) in enumerate(cliffords)
-        for gate in reverse(clifford)
-            if gate == 'I'
-                continue
-            elseif gate == 'H'
-                apply!(state, sHadamard(i); phases=true)
-            elseif gate == 'S'
-                apply!(state, sPhase(i); phases=true)
-            end
-            @debug "Applied $(gate) to qubit $(i)"
-            
-        end
-    end
-end
-
-@resumable function PiecemakerProt(sim, n, net, graphdata, operationdata, link_success_prob, logging, rounds)
+@resumable function PiecemakerProt(sim, n, net, graphdata, ref_core, link_success_prob, logging, rounds)
 
     a = net[1] # switch
     b = net[2] # clients
-    ε = 1e-12
+    ε = 1e-12 # infinitesimal additional time step to wait for entanglement generation to complete
 
     while rounds != 0
         start = now(sim)
 
         init_run = true
         past_clients = Int[]
-        current_clients = Int[]
         order_teleported = Int[]
 
-        chosen_core = () 
-        core_found = false # flag to check if the core is present
-
-        sanity_counter = 0 # counter to avoid infinite loops. TODO: is this necessary?
+        sanity_counter = 0 # sanity counter to avoid excessive iterations. TODO: is this necessary?
         
         # Initialize the switch storage slots in |+⟩ state
         initialize!(a[n+1:2*n], reduce(⊗, fill(X1,n))) 
@@ -212,6 +172,8 @@ end
         end
 
         while true
+            graph, refstate = copy(graphdata[ref_core][1]), graphdata[ref_core][2] # TODO: fix this
+            
             # Get the successful clients
             activeclients = queryall(b, EntanglementCounterpart, ❓, ❓; locked=false, assigned=true) 
             
@@ -224,42 +186,16 @@ end
             for c in activeclients
                 if c.slot.idx ∉ past_clients
                     push!(past_clients, c.slot.idx)
-                    push!(current_clients, c.slot.idx)
                 end
             end
-            @debug "Currently active clients: ", current_clients
+            @debug "Active clients: $(past_clients)"
 
-            if !core_found
-                for core in keys(graphdata)
-                    if Set(core) ⊆ Set(past_clients)
-                        @debug "Core present, $(core) ⊆ $(past_clients)"
-                        chosen_core = core
-                        core_found = true
-                        @debug "Chosen core: ", chosen_core
-                        graph = deepcopy(graphdata[chosen_core][1])#, copy(graphdata[chosen_core][2])
-                        break # core is found no need for further checking
-                    end
-                end
-            else
-                @debug "Chosen core: ", chosen_core
-                # Teleportation protocol: apply CZ gates according to graph and measure out qubits that are entangled and not part of the core
-
-                for i in current_clients
-                    if !(i in chosen_core)
-                        @yield @process teleport(sim, net, a, b, graph, i)
-                        push!(order_teleported, i)
-                    end
-                end
-                current_clients = []
-
-
-            end
-            # If all clients have been entangled teleport the core qubits
-            if length(order_teleported) == n-length(chosen_core)
-                @debug "All non-core clients teleported, teleporting core qubits"
-
-                # Apply CZ gates according to graph and teleport the remaining qubits
-                for i in chosen_core
+            # If all clients have been entangled teleport the qubits
+            if length(past_clients) == n
+                @debug "All clients entangled, teleporting qubits"
+                teleport_jobs = []
+                # Apply CZ gates according to graph and teleport the qubits
+                for i in past_clients
                     @yield @process teleport(sim, net, a, b, graph, i)
                     push!(order_teleported, i)
                 end
@@ -276,14 +212,13 @@ end
         end
         @debug "Ordered indices of teleported storage qubits to the client: $(b.stateindices)"
         @yield reduce(&, [lock(q) for q in b])
-
+        @debug "order teleported: $(order_teleported)"
         order_state!(b, order_teleported)
-        
         
         resultgraph, hadamard_idx, iphase_idx, flips_idx  = graphstate(b.staterefs[1].state[])
 
         # Compare the graph state with the reference graph state from the input data
-        refstate_stabilizers = graphdata[chosen_core][2].staterefs[1].state[]
+        refstate_stabilizers = graphdata[ref_core][2].staterefs[1].state[]
         coincide = graphstate(refstate_stabilizers)[1] == resultgraph # compare if graphs are equivalent
 
         # Calculate fidelity
@@ -295,7 +230,7 @@ end
         helperreg = Register(n)
         initialize!(helperreg[1:n], client_ketstate)
 
-        refgraph = graphdata[chosen_core][1]
+        refgraph = graphdata[ref_core][1]
         exps = map(vertices(refgraph)) do v
             neighs = neighbors(refgraph, v)
             verts = sort([v, neighs...])
@@ -303,35 +238,43 @@ end
             regs = helperreg[sort([v, neighs...])] 
             real(observable(regs, obs; time=now(sim))) # calculate the value of the observable
         end
-        
-        for q in b
-            unlock(q)
-        end
+
         while sum(b.stateindices) != 0
             @debug b.stateindices
             for q in b
                 traceout!(q)
             end
         end
+        for q in b
+            unlock(q)
+        end
 
-        # LOGGING: push row into the DataFrame
+        # Logging outcome
         push!(
             logging,
             (
-                chosen_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, exps...
+                ref_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, exps...
             )
         )
         rounds -= 1
     end
 end
 
-function prepare_sim(T2, n, graphdata, operationdata, link_success_prob, seed, logging, rounds)
+function prepare_sim(graphdata, link_success_prob, τ, seed, logging, rounds)
     
     # Set a random seed
     Random.seed!(seed)
-    
-    switch = Register(fill(Qubit(), 2*n), fill(CliffordRepr(), 2*n), fill(T2Dephasing(T2), 2*n)) # storage and communication qubits at the switch # fill(T2Dephasing(1.0), 2*n)
-    clients = Register(fill(Qubit(), n),  fill(CliffordRepr(), n), fill(T2Dephasing(T2), n)) # client qubits
+
+    ref_core = first(keys(graphdata))
+    n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
+    @info n
+    qubits = [Qubit() for _ in 1:n]
+    bg = [Depolarization(τ) for _ in 1:n]
+    reprs = [CliffordRepr() for _ in 1:n]
+
+
+    switch = Register([qubits; qubits], [reprs; reprs], [bg; bg]) # storage and communication qubits at the switch
+    clients = Register(qubits, reprs, bg) # client qubits
     net = RegisterNet([switch, clients])
     sim = get_time_tracker(net)
 
@@ -339,26 +282,26 @@ function prepare_sim(T2, n, graphdata, operationdata, link_success_prob, seed, l
     @process TeleportTracker(sim, net, 2)
 
     # Start the piecemaker protocol
-    @process PiecemakerProt(sim, n, net, graphdata, operationdata, link_success_prob, logging, rounds)
+    @process PiecemakerProt(sim, n, net, graphdata, ref_core, link_success_prob, logging, rounds)
     return sim
 end
 
 rounds = 1000
 seed = 42
 
+
 for nr in [2, 4, 7, 8, 9, 18, 40, 100] # Graph identifier 
-    for T2 in [10.0^i for i in 0:3]
+    for τ in [10.0^i for i in 0:3]
 
         all_runs = DataFrame()
         for (f, link_success_prob) in enumerate(range(0.01,1,10))
 
             # Graph state data
             path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
-            graphdata, operationdata = get_graphdata_from_pickle(path_to_graph_data)
-            
+            graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
             ref_core = first(keys(graphdata))
             n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
-            @info n
+            @info ref_core
 
             logging = DataFrame(
                 chosen_core = Tuple[],
@@ -373,7 +316,7 @@ for nr in [2, 4, 7, 8, 9, 18, 40, 100] # Graph identifier
                 logging[!, Symbol("eig", i)] = Float64[]
             end
 
-            sim = prepare_sim(T2, n, graphdata, operationdata, link_success_prob, seed, logging, rounds)
+            sim = prepare_sim(graphdata, link_success_prob, τ, seed, logging, rounds)
             timed = @elapsed run(sim)
 
             logging[!, :elapsed_time]       .= timed
@@ -384,6 +327,6 @@ for nr in [2, 4, 7, 8, 9, 18, 40, 100] # Graph identifier
             @info "Link success probability: $(link_success_prob) | Time: $(timed)"
         end
         # @info all_runs
-        CSV.write("examples/graphstateswitch/output/sequential_clifford_noisy_nr$(nr)_T$(T2).csv", all_runs)
+        CSV.write("examples/graphstateswitch/output/canonical_clifford_noisy_nr$(nr)_τ$(τ).csv", all_runs)
     end
 end
