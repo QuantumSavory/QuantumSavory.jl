@@ -313,6 +313,8 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
             Makie.autolimits!(ax)
         end
     end
+    # translating the plot so that it is in front of the background map
+    Makie.translate!(p, 0, 0, 10)
     ax.parent, ax, p, p[1]
 end
 

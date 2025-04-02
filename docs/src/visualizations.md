@@ -51,8 +51,9 @@ initialize!(net[2,3], X₁) # hide
 initialize!((net[3,1],net[4,2]), X₁⊗Z₂) # hide
 apply!((net[2,3],net[3,1]), CNOT) # hide
 using Tyler
+coords = [Point2f(-118, 34), Point2f(-71, 42), Point2f(-111, 34), Point2f(-96, 32)]
 subfig, ax, map = generate_map()
-fig, ax, plt, obs = registernetplot_axis(ax, net, registercoords=[Point2f(-118, 34), Point2f(-71, 42), Point2f(-111, 34), Point2f(-96, 32)])
+fig, ax, plt, obs = registernetplot_axis(ax, net, registercoords=coords, state_linecolor = :black)
 fig
 ```
 In general, if you have a custom background axis, you can use it as the axis parameter in `registerplot_axis`.

@@ -4,6 +4,7 @@ using QuantumSavory
 using Makie
 using Tyler
 using Tyler.MapTiles
+using Tyler.TileProviders
 import QuantumSavory: generate_map
 
 """
@@ -13,7 +14,9 @@ function generate_map(subfig; extent=nothing)
     if isnothing(extent)
         extent = Rect2f(-125, 24, 58, 25) # US Map
     end
-    map = Tyler.Map(extent; figure=subfig, crs=Tyler.wgs84)
+    provider = TileProviders.CartoDB(:Positron)
+    map = Tyler.Map(extent; provider, figure=subfig, crs=Tyler.wgs84)
+    wait(map)
     return subfig, map.axis, map
 end
 
