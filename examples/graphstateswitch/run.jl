@@ -112,8 +112,8 @@ for t in [100., 1000.] # Noise time
         logging[!, :seed]               .= seed
         logging[!, :nqubits]            .= n
         append!(all_runs, logging)
-        @debug "Link success probability: $(link_success_prob) | Time: $(timed)"
+        @info "Link success probability: $(link_success_prob) | Time: $(timed)"
     end
     @debug all_runs
-    CSV.write(output_path*"sequential_clifford_noisy_nr$(nr)_$(Symbol(noise))_until$(max_prob)_graph$(nr).csv", all_runs)
+    CSV.write(output_path*"$(protocol)_clifford_nr$(nr)_$(Symbol(noise))_until$(max_prob).csv", all_runs)
 end

@@ -36,6 +36,10 @@ function get_plot_df(graph_id::Int, noise::String, splits::Array{Symbol}, cols::
         "τ" => "depol",
         "T" => "dephasing",
     )
+    read_mapping = Dict(
+        "τ" => "Depolarization",
+        "T" => "T2Dephasing",
+    )
     configs = YAML.load_file(path_config)
     protocols = configs["protocol"]
     noise_times = configs[yaml_mapping[noise]]
@@ -45,7 +49,7 @@ function get_plot_df(graph_id::Int, noise::String, splits::Array{Symbol}, cols::
         for protocol in protocols
         # Read the raw data
             input_file_pattern = "$(protocol)_clifford_noisy_nr$(graph_id)_$(noise)$(noise_time).csv"
-            df = CSV.read("examples/graphstateswitch/output/raw/$(yaml_mapping[noise])_canonical_vs_sequential/"*input_file_pattern, DataFrame)
+            df = CSV.read("/Users/localadmin/Documents/github/output/$(protocol)_clifford_noisy_nr$(graph_id)_$(read_mapping[noise])($(noise_time))_until1.0_graph$(graph_id).csv", DataFrame)
         
             # Count how many unique measures there are
             cnames = []
@@ -94,7 +98,7 @@ end
 """
     Plot mean of stabilizer eigenvalues for different noise_time times. 
 """
-function plot_data(data::DataFrame; disp::Bool=true, saveplot::Bool=false)
+function plot_data(data::DataFrame, noise::String; disp::Bool=true, saveplot::Bool=false)
     graph_id = unique(data.graph_id)[1]
     n = unique(data.nqubits)[1]
     noise_time_values = unique(data[!, Symbol(noise)])
@@ -133,7 +137,7 @@ end
 """
     Plot overall mean fidelity or mean stabilizer eigenvalues.
 """
-function plot_data(data::DataFrame, take_meas::String; disp::Bool=true, saveplot::Bool=false)
+function plot_data(data::DataFrame, noise::String, take_meas::String; disp::Bool=true, saveplot::Bool=false)
     graph_id = unique(data.graph_id)[1]
     n = unique(data.nqubits)[1]
     noise_time_values = unique(data[!, Symbol(noise)])
@@ -169,16 +173,16 @@ end
 
 # Main plotting script
 
-noise_models = ["T", "τ"] # use "τ" for depolarizing noise, "T" for dephasing noise
+noise_models = ["τ"] # use "τ" for depolarizing noise, "T" for dephasing noise
 splits = [:link_success_prob]
 cols = ["eig", "fidelity"]
 
 for noise in noise_models
-    for graph_id in [2, 4, 7, 8, 9, 18, 40, 100]
+    for graph_id in [18]#[2, 4, 7, 8, 9, 18, 40, 100]
         data = get_plot_df(graph_id, noise, splits, cols; overall=true, path_config="examples/graphstateswitch/plotconfigs.yaml", stats=[mean, sem])
-        plot_data(data, "eig", disp=true, saveplot=true) # use "fidelity" for fidelity
-        plot_data(data, "fidelity", disp=true, saveplot=true) 
-        plot_data(data; disp=true, saveplot=true) # plot all stabilizer eigenvalues
+        #plot_data(data, noise, "eig", disp=true, saveplot=true) # use "fidelity" for fidelity
+        plot_data(data, noise, "fidelity", disp=true, saveplot=true) 
+        #plot_data(data, noise; disp=true, saveplot=true) # plot all stabilizer eigenvalues
     end
 end
 
