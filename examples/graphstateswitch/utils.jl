@@ -1,3 +1,18 @@
+using QuantumSavory
+using QuantumSavory.CircuitZoo
+using QuantumSavory.ProtocolZoo
+using ConcurrentSim
+using QuantumOpticsBase
+using ResumableFunctions
+using NetworkLayout
+using Random, StatsBase
+using Graphs
+
+using DataFrames, StatsPlots
+using CSV
+
+using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT
+
 using PyCall
 @pyimport pickle
 @pyimport networkx
@@ -52,10 +67,10 @@ end
         net: The network object.
         node: The node to track.
 """
-@resumable function TeleportTracker(sim, net, node)
+@resumable function TeleportTracker(sim, net, node, mb)
     nodereg = net[node]
-    mb = messagebuffer(net, node)
-    while true
+    job_done = false
+    while !job_done
         # Look for EntanglementUpdate? message sent to us
         @yield wait(mb)
         while true
@@ -78,6 +93,9 @@ end
                 apply!(localslot, Z)
             end
             unlock(localslot)
+            
+            job_done = true
+            job_done && break
         end
     end
 end
@@ -95,7 +113,7 @@ end
         i: The index of the qubit to teleport.
         period: The time period assumed for the teleportation process to take.
 """
-@resumable function teleport(sim, net, switch_reg::Register, client_reg::Register, graph::Graph, i::Int, period=1.0)
+@resumable function teleport(sim, net, switch_reg::Register, client_reg::Register, graph::Graph, i::Int; period::Float64=1.0)
     n = nv(graph)
     reg = switch_reg
     graph_local_copy = copy(graph)

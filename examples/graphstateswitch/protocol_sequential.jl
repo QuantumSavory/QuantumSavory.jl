@@ -1,17 +1,3 @@
-using QuantumSavory
-using QuantumSavory.CircuitZoo
-using QuantumSavory.ProtocolZoo
-using QuantumSymbolics
-using QuantumOpticsBase
-using QuantumClifford: AbstractStabilizer, Stabilizer, sHadamard, sPhase, sSWAP, canonicalize!, graphstate, sZ
-using ConcurrentSim
-using ResumableFunctions
-using NetworkLayout
-using Random, StatsBase
-using Graphs
-using DataFrames, StatsPlots
-using CSV
-
 include("utils.jl")
 
 @resumable function PiecemakerProt(sim, n, net, graphdata, link_success_prob, logging, rounds)
@@ -24,21 +10,21 @@ include("utils.jl")
     while rounds != 0
         start = now(sim)
 
-        init_run = true
         past_clients = Int[]
         current_clients = Int[]
         order_teleported = Int[]
 
         chosen_core = () 
-        core_found = false # flag to check if the core is present
+        core_found = false # flag to signal if the core is present
 
         sanity_counter = 0 # counter to avoid infinite loops. TODO: is this necessary?
         
         # Initialize the switch storage slots in |+⟩ state
         initialize!(a[n+1:2*n], reduce(⊗, fill(X1,n))) 
 
-        # Message buffer for the switch
+        # Setup message buffers
         mb = messagebuffer(net, 1)
+        mbs_clients = [messagebuffer(net[2][i]) for i in 1:n]
         # Start entanglement generation for each client
         for i in 1:n
             @process entangle(sim, net, i, link_success_prob)
@@ -71,6 +57,7 @@ include("utils.jl")
                         core_found = true
                         @debug "Chosen core: ", chosen_core
                         graph = deepcopy(graphdata[chosen_core][1])
+                        @debug graph
                         break # core is found no need for further checking
                     end
                 end
@@ -79,7 +66,8 @@ include("utils.jl")
                 # Teleportation protocol: apply CZ gates according to graph and measure out qubits that are entangled and not part of the core
                 for i in current_clients
                     if !(i in chosen_core)
-                        @yield @process teleport(sim, net, a, b, graph, i)
+                        @yield @process teleport(sim, net, a, b, graph, i, period=0.0)
+                        @yield @process TeleportTracker(sim, net, 2, mbs_clients[i])
                         push!(order_teleported, i)
                     end
                 end
@@ -91,19 +79,18 @@ include("utils.jl")
 
                 # Apply CZ gates according to graph and teleport the remaining qubits
                 for i in chosen_core
-                    @yield @process teleport(sim, net, a, b, graph, i)
+                    @yield @process teleport(sim, net, a, b, graph, i, period=0.0)
+                    @yield @process TeleportTracker(sim, net, 2, mbs_clients[i])
                     push!(order_teleported, i)
                 end
                 break
             end
 
             sanity_counter += 1 # TODO: make this prettier?
-            if sanity_counter > 1000
-                @debug "Link success probability might be too small, maximum iterations encountered. Terminate."
+            if sanity_counter > 10000
+                @info "Link success probability might be too small, maximum iterations encountered. Terminate."
                 return
             end
-            !init_run && @yield timeout(sim, 1.)
-            init_run = false
         end
         @debug "Ordered indices of teleported storage qubits to the client: $(b.stateindices)"
         @yield reduce(&, [lock(q) for q in b])
@@ -148,14 +135,14 @@ include("utils.jl")
         push!(
             logging,
             (
-                chosen_core, now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, exps...
+                now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, exps..., chosen_core
             )
         )
         rounds -= 1
     end
 end
 
-function prepare_sim(n, noise_model, graphdata, link_success_prob, seed, logging, rounds)
+function prepare_sim(n::Int, noise_model::AbstractBackground, graphdata::Dict{Tuple, Tuple{SimpleGraph, Any}}, link_success_prob::Float64, seed::Int, logging::DataFrame, rounds::Int)
     
     # Set a random seed
     Random.seed!(seed)
@@ -165,57 +152,7 @@ function prepare_sim(n, noise_model, graphdata, link_success_prob, seed, logging
     net = RegisterNet([switch, clients])
     sim = get_time_tracker(net)
 
-    # Start teleportation tracker to correct the client qubits
-    @process TeleportTracker(sim, net, 2)
-
     # Start the piecemaker protocol
     @process PiecemakerProt(sim, n, net, graphdata, link_success_prob, logging, rounds)
     return sim
-end
-
-rounds = 1000
-seed = 42
-probs = exp10.(range(-2, stop=-1, length=10))
-max_prob = maximum(probs)
-
-for nr in [2]#, 4, 7, 8, 9, 18, 40, 100] # Graph identifier 
-    for t in [10.0^i for i in 0:0]
-        # Noise model
-        noise = Depolarization(t)
-
-        all_runs = DataFrame()
-        for link_success_prob in probs
-            # Graph state data
-            path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
-            graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
-            
-            ref_core = first(keys(graphdata))
-            n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
-
-            logging = DataFrame(
-                chosen_core = Tuple[],
-                sim_time    = Float64[],
-                coincide    = Float64[],
-                H_idx = Any[],
-                S_idx = Any[],
-                Z_idx = Any[],
-                fidelity    = Float64[]
-            )
-            for i in 1:n
-                logging[!, Symbol("eig", i)] = Float64[]
-            end
-
-            sim = prepare_sim(n, noise, graphdata, link_success_prob, seed, logging, rounds)
-            timed = @elapsed run(sim)
-
-            logging[!, :elapsed_time]       .= timed
-            logging[!, :link_success_prob]  .= link_success_prob
-            logging[!, :seed]               .= seed
-            logging[!, :nqubits]                 .= n
-            append!(all_runs, logging)
-            @info "Link success probability: $(link_success_prob) | Time: $(timed)"
-        end
-        @info all_runs
-        # CSV.write("examples/graphstateswitch/output/sequential_clifford_noisy_nr$(nr)_$(Symbol(noise))_until$(max_prob).csv", all_runs)
-    end
 end

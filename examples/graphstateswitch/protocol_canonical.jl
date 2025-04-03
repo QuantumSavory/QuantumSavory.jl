@@ -1,17 +1,3 @@
-using QuantumSavory
-using QuantumSavory.CircuitZoo
-using QuantumSavory.ProtocolZoo
-using ConcurrentSim
-using QuantumOpticsBase
-using ResumableFunctions
-using NetworkLayout
-using Random, StatsBase
-using Graphs
-
-using DataFrames, StatsPlots
-using CSV
-using QuantumClifford: Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT
-
 include("utils.jl")
 
 @resumable function CanonicalProt(sim, n, net, refstatedata, link_success_prob, logging, rounds)
@@ -22,7 +8,6 @@ include("utils.jl")
     while rounds != 0
         start = now(sim)
 
-        init_run = true
         past_clients = Int[]
         order_teleported = Int[]
 
@@ -63,22 +48,29 @@ include("utils.jl")
 
             # If all clients have been entangled teleport the qubits
             if length(past_clients) == n
+                @debug "SIM TIME: $(now(sim)-start)"
                 @debug "All clients entangled, teleporting qubits"
                 
+                # Instantiate message buffers for the clients (to receive classical correction information)
+                mbs = [messagebuffer(net[2][i]) for i in past_clients]
                 for i in past_clients
-                    @yield @process teleport(sim, net, a, b, graph, i)
+                    # Start teleportation protocol for each client
+                    @yield @process teleport(sim, net, a, b, graph, i, period=0.0)
+                    # Start teleportation tracker to correct the client qubits
+                    @yield @process TeleportTracker(sim, net, 2, mbs[i])
                     push!(order_teleported, i)
                 end
+                #@yield reduce(&, correction_jobs) # wait for all teleportation trackers to finish
+                @debug "SIM TIME AFTER TELEPORT: $(now(sim)-start)"
+                # Start teleportation tracker to correct the client qubits
                 break
             end
 
             sanity_counter += 1 # TODO: make this prettier?
-            if sanity_counter > 1000
-                @debug "Link success probability might be too small, maximum iterations reached. Terminate."
+            if sanity_counter > 10000
+                @info "Link success probability might be too small, maximum iterations reached. Terminate."
                 return
             end
-            !init_run && @yield timeout(sim, 1.)
-            init_run = false
         end
         @debug "Ordered indices of teleported storage qubits to the client: $(b.stateindices)"
         @yield reduce(&, [lock(q) for q in b])
@@ -90,6 +82,7 @@ include("utils.jl")
         # Compare the graph state with the reference graph state from the input data
         refstate_stabilizers = refstatedata[2].staterefs[1].state[]
         coincide = graphstate(refstate_stabilizers)[1] == resultgraph # compare if graphs are equivalent
+        @debug "Graph state coincidence: $(coincide)"
 
         # Calculate fidelity
         client_ketstate = Ket(b.staterefs[1].state[]) # get the client state as a ket
@@ -130,7 +123,8 @@ include("utils.jl")
     end
 end
 
-function prepare_sim(n, noise_model, refstatedata, link_success_prob, seed, logging, rounds)
+function prepare_sim(n::Int, noise_model::AbstractBackground, refstatedata::Tuple{SimpleGraph{Int64}, Register},
+    link_success_prob::Float64, seed::Int, logging::DataFrame, rounds::Int)
     
     # Set a random seed
     Random.seed!(seed)
@@ -145,58 +139,7 @@ function prepare_sim(n, noise_model, refstatedata, link_success_prob, seed, logg
     net = RegisterNet([switch, clients])
     sim = get_time_tracker(net)
 
-    # Start teleportation tracker to correct the client qubits
-    @process TeleportTracker(sim, net, 2)
-
     # Start the piecemaker protocol
     @process CanonicalProt(sim, n, net, refstatedata, link_success_prob, logging, rounds)
     return sim
-end
-
-rounds = 1000
-seed = 42
-probs = exp10.(range(-2, stop=-1, length=10))
-max_prob = maximum(probs)
-
-for nr in [2]#, 4, 7, 8, 9, 18, 40, 100] # Graph identifier 
-    for t in [10.0^i for i in 0:0] # Noise time
-        # Noise model
-        noise = T2Dephasing(t) # Depolarization(t)
-
-        all_runs = DataFrame()
-        for link_success_prob in probs
-            # Graph state data
-            path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
-            graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
-            
-            ref_core = first(keys(graphdata)) # the first key is the reference core
-            n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
-            refstatedata = graphdata[ref_core] # reference graph and state to compare to
-
-            logging = DataFrame(
-                sim_time    = Float64[],
-                coincide    = Float64[],
-                H_idx = Any[],
-                S_idx = Any[],
-                Z_idx = Any[],
-                fidelity    = Float64[]
-            )
-            for i in 1:n
-                logging[!, Symbol("eig", i)] = Float64[]
-            end
-
-            sim = prepare_sim(n, noise, refstatedata, link_success_prob, seed, logging, rounds)
-            timed = @elapsed run(sim)
-
-            logging[!, :elapsed_time]       .= timed
-            logging[!, :link_success_prob]  .= link_success_prob
-            logging[!, :seed]               .= seed
-            logging[!, :nqubits]                 .= n
-            logging[!, :chosen_core]         .= Ref(ref_core)
-            append!(all_runs, logging)
-            @info "Link success probability: $(link_success_prob) | Time: $(timed)"
-        end
-        @info all_runs
-        #CSV.write("examples/graphstateswitch/output/canonical_clifford_noisy_nr$(nr)_$(Symbol(noise))_until$(max_prob).csv", all_runs)
-    end
 end

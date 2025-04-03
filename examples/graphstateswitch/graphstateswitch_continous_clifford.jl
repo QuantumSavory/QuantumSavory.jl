@@ -6,12 +6,11 @@ using ResumableFunctions
 using NetworkLayout
 using Random, StatsBase
 using Graphs
-using PyCall
-using DataFrames: groupby, DataFrame
+
+using DataFrames
 using StatsPlots
 using CSV
-using QuantumClifford: sHadamard, sPhase, sSWAP, canonicalize!, graphstate, AbstractStabilizer, apply!, Stabilizer, stabilizerview
-
+using QuantumClifford#: sCNOT, sHadamard, sPhase, sSWAP, sZ, canonicalize!, graphstate, apply!, Stabilizer, stabilizerview, canonicalize!, graphstate
 
 @pyimport pickle
 @pyimport networkx
@@ -280,19 +279,19 @@ end
         order_state!(b.staterefs[1].state[], order_teleported)
         
         cliffords = copy(operationdata[chosen_core])
-        @info "Core $(chosen_core) with cliffords $(cliffords)"
+        @debug "Core $(chosen_core) with cliffords $(cliffords)"
         
         apply_cliffords!(canonicalize!(b.staterefs[1].state[]), cliffords, n) 
 
            
         resultgraph, hadamard_idx, iphase_idx, flips_idx  = graphstate(b.staterefs[1].state[])
-        @info collect(edges(resultgraph)), hadamard_idx, iphase_idx, flips_idx
+        @debug collect(edges(resultgraph)), hadamard_idx, iphase_idx, flips_idx
         corrections = Dict(
             "H_idx" => hadamard_idx,
             "S_idx" => iphase_idx,
             "Z_idx" => flips_idx
         )
-        @info corrections
+        @debug corrections
 
         # Compare the graph state with the reference graph state from the input data
         refstate_stabilizers = graphdata[(2,4)][2].staterefs[1].state[]
@@ -358,15 +357,15 @@ logging = DataFrame(
 
 sim = prepare_sim("examples/graphstateswitch/input/7_20250127.pickle", 0.5, seed, logging, rounds)
 timed = @elapsed run(sim)
-@info logging
+@debug logging
 
 # summary_logging = combine( groupby(logging, :chosen_core), :coincide => mean)
-# @info summary_logging
+# @debug summary_logging
 
 #     logging[!, :elapsed_time]       .= timed
 #     logging[!, :link_success_prob]  .= link_success_prob
 #     logging[!, :seed]               .= seed
 #     append!(all_runs, logging)
 #end
-# @info all_runs
+# @debug all_runs
 # CSV.write("examples/graphstateswitch/output/sequential.csv", all_runs)
