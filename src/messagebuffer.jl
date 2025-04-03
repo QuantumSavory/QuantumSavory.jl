@@ -5,7 +5,9 @@ struct MessageBuffer{T}
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
     waiters::IdDict{Resource,Resource}
     no_wait::Ref{Int} # keeps track of the situation when something is pushed in the buffer and no waiters are present. In that case, when the waiters are available after it they would get locked while the code that was supposed to unlock them has already run. So, we keep track the number of times this happens and put no lock on the waiters in this situation.
+    tag_waiter::AsymmetricSemaphore
 end
+MessageBuffer{T}(sim,net,node,buffer,waiters,no_wait) where {T} = MessageBuffer{T}(sim,net,node,buffer,waiters,no_wait,AsymmetricSemaphore(sim))
 
 function peektags(mb::MessageBuffer)
     [b.tag for b in mb.buffer]
@@ -20,21 +22,28 @@ end
 function Base.put!(cf::ChannelForwarder, tag)
     tag = convert(Tag, tag)
     # shortest path calculated by Graphs.a_star
-    nexthop = first(a_star(cf.net.graph, cf.src, cf.dst))
+    nexthop = first(Graphs.a_star(cf.net.graph, cf.src, cf.dst))
     @debug "ChannelForwarder: Forwarding message from node $(nexthop.src) to node $(nexthop.dst) | message=$(tag)| end destination=$(cf.dst)"
     put!(channel(cf.net, cf.src=>nexthop.dst; permit_forward=false), tag_types.Forward(tag, cf.dst))
 end
 
 function Base.put!(mb::MessageBuffer, tag)
     push!(mb.buffer, (;src=nothing,tag=convert(Tag,tag)))
+    unlock(mb.tag_waiter)
     nothing
 end
 
 tag!(::MessageBuffer, args...) = throw(ArgumentError("MessageBuffer does not support `tag!`. Use `put!(::MessageBuffer, Tag(...))` instead."))
 
+function onchange_tag(mb::MessageBuffer)
+    return lock(mb.tag_waiter)
+end
+
 function Base.put!(reg::Register, tag)
     put!(messagebuffer(reg), tag)
 end
+
+tag!(::Register, args...) = throw(ArgumentError("Register does not support `tag!`, only its slots do. But you can `put!` a `Tag` in its `messagebuffer(::Register)`."))
 
 @resumable function take_loop_mb(sim, ch, src, mb)
     while true
@@ -55,6 +64,7 @@ end
                 for waiter in keys(mb.waiters)
                     unlock(waiter)
                 end
+                unlock(mb.tag_waiter)
             end
         end
     end
