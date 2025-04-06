@@ -1,5 +1,4 @@
-end
-@testitem "Quantum Channel" tags=[:quantumchannel] begin
+@testitem "Quantum Channel" begin
 using ResumableFunctions
 using ConcurrentSim
 
@@ -35,7 +34,7 @@ sref = regB.staterefs[1]
 
 end
 
-@testitem "Quantum Channel - alternative constructor" tags=[:quantumchannel] begin
+@testitem "Quantum Channel - alternative constructor" begin
 using ResumableFunctions
 using ConcurrentSim
 
@@ -63,7 +62,7 @@ sref = regB.staterefs[1]
 
 end
 
-@testitem "Quantum Channel with T1 decay" tags=[:quantumchannel] begin
+@testitem "Quantum Channel with T1 decay" begin
 using ResumableFunctions
 using ConcurrentSim
 
@@ -95,7 +94,7 @@ uptotime!(reg[1], 10.0)
 
 end
 
-@testitem "Quantum Channel with T2 dephasing" tags=[:quantumchannel] begin
+@testitem "Quantum Channel with T2 dephasing" begin
 using ResumableFunctions
 using ConcurrentSim
 
