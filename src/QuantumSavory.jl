@@ -26,8 +26,20 @@ using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
 using Combinatorics: powerset
 
-import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,
-    AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
+import QuantumClifford
+import QuantumClifford: MixedDestabilizer
+
+import QuantumOpticsBase
+import QuantumOpticsBase: StateVector, Ket, Operator,
+    basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy, spre, spost
+
+import QuantumOptics
+import QuantumOptics: timeevolution
+
+import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, permutesystems,
+    projector, identityoperator, embed, dm, expect, ptrace,
+    AbstractOperator, AbstractKet, AbstractSuperOperator,
+    Basis, GenericBasis, CompositeBasis, SpinBasis
 
 export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
