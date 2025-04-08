@@ -1,6 +1,3 @@
-import QuantumClifford
-import QuantumClifford: MixedDestabilizer
-
 subsystemcompose(states::QuantumClifford.MixedDestabilizer...) = QuantumClifford.tensor(states...)
 
 default_repr(::QuantumClifford.MixedDestabilizer) = CliffordRepr()

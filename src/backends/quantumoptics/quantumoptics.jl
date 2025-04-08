@@ -1,12 +1,3 @@
-import QuantumOpticsBase
-import QuantumOpticsBase: GenericBasis, CompositeBasis,
-    StateVector, AbstractSuperOperator, Ket, Operator,
-    basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy,
-    projector, identityoperator, embed, dm, expect, ptrace, spre, spost
-import QuantumOptics
-import QuantumOptics: timeevolution
-import QuantumInterface: nsubsystems
-
 const QOR = QuantumOpticsRepr()
 
 subsystemcompose(states::Ket...) = tensor(states...)
@@ -22,8 +13,9 @@ ispadded(::Operator) = false
 
 function observable(state::Union{<:Ket,<:Operator}, indices::Base.AbstractVecOrTuple{Int}, operation)
     operation = express(operation, QOR)
-    e = basis(state)==basis(operation)
-    op = e ? operation : embed(basis(state), indices, operation)
+    # TODO if indices is ascending 1:n we can skip this embed -- such an improvement should be upstreamed to QuantumOpticsBase, so that embed is faster
+    # TODO if nsubsystems(state) == 1 the embed should still work and be a no-op -- this should be upstreamed to QuantumInterface
+    op = nsubsystems(state) == 1 ? operation : embed(basis(state), indices, operation)
     expect(op, state)
 end
 
