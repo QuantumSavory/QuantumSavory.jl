@@ -15,7 +15,7 @@ function parse_commandline()
             default = "canonical"
             arg_type = String
         "--noise"
-            help = "Noise to be modeled, choose between 'Depolarization' and 'T2Dephasing'"
+            help = "Noise to be modeled, choose between 'nothing', 'Depolarization' and 'T2Dephasing'"
             default = "Depolarization"
             arg_type = String
         "--nr"
@@ -56,34 +56,35 @@ nr = parsed_args["nr"]
 seed = parsed_args["seed"]
 output_path = parsed_args["output_path"]
 
-probs = exp10.(range(-2, stop=0, length=20))
+probs = exp10.(range(-3, stop=0, length=30))
+ts = exp10.(range(1, stop=3, length=30))
 max_prob = maximum(probs)
 
 noise_model = parsed_args["noise"]
 
+# Graph state data
+path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
+graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
+
 # Run simulation experiments for differnt noise models
-for t in [100., 1000.] # Noise time
+all_runs = DataFrame()
+for t in ts # Noise time
 
     # Noise model
     if noise_model == "Depolarization"
         noise = Depolarization(t)
     elseif noise_model == "T2Dephasing"
         noise = T2Dephasing(t)
+    elseif noise_model == "nothing"
+        noise = nothing
     else
-        error("Invalid noise model specified. Use 'Depolarization' or 'T2Dephasing'.")
+        error("Invalid noise model specified. Use 'nothing', 'Depolarization' or 'T2Dephasing'.")
     end
-
-    all_runs = DataFrame()
+    
     for link_success_prob in probs
-        # Graph state data
-        path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
 
-        graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
         ref_core = first(keys(graphdata)) # the first key is the reference core
         n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
-        if protocol == "canonical"
-            graphdata = graphdata[ref_core] # reference graph and state to compare to
-        end
 
         logging = DataFrame(
             sim_time    = Float64[],
@@ -101,7 +102,12 @@ for t in [100., 1000.] # Noise time
             logging[!, :chosen_core] = Tuple[]
         end
 
-        sim = prepare_sim(n, noise, graphdata, link_success_prob, seed, logging, rounds)
+        if protocol == "canonical"
+            g = graphdata[ref_core]
+            sim = prepare_sim(n, noise, g, link_success_prob, seed, logging, rounds)
+        else 
+            sim = prepare_sim(n, noise, graphdata, link_success_prob, seed, logging, rounds)
+        end
         timed = @elapsed run(sim)
 
         if protocol == "canonical"
@@ -109,11 +115,13 @@ for t in [100., 1000.] # Noise time
         end
         logging[!, :elapsed_time]       .= timed
         logging[!, :link_success_prob]  .= link_success_prob
+        logging[!, :noise_time]       .= t
+        logging[!, :graph_id]           .= nr
         logging[!, :seed]               .= seed
         logging[!, :nqubits]            .= n
         append!(all_runs, logging)
         @info "Link success probability: $(link_success_prob) | Time: $(timed)"
     end
-    @debug all_runs
-    CSV.write(output_path*"$(protocol)_clifford_nr$(nr)_$(Symbol(noise))_until$(max_prob).csv", all_runs)
 end
+@info all_runs
+#CSV.write(output_path*"$(protocol)_clifford_nr$(nr)_$(noise_model)_until$(max_prob).csv", all_runs)

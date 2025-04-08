@@ -18,9 +18,6 @@ include("utils.jl")
         core_found = false # flag to signal if the core is present
 
         sanity_counter = 0 # counter to avoid infinite loops. TODO: is this necessary?
-        
-        # Initialize the switch storage slots in |+⟩ state
-        initialize!(a[n+1:2*n], reduce(⊗, fill(X1,n))) 
 
         # Setup message buffers
         mb = messagebuffer(net, 1)
@@ -47,7 +44,7 @@ include("utils.jl")
                     push!(current_clients, c.slot.idx)
                 end
             end
-            @debug "Currently active clients: ", current_clients
+            @debug "Active clients: ", current_clients
 
             if !core_found
                 for core in keys(graphdata)
@@ -66,7 +63,7 @@ include("utils.jl")
                 # Teleportation protocol: apply CZ gates according to graph and measure out qubits that are entangled and not part of the core
                 for i in current_clients
                     if !(i in chosen_core)
-                        @yield @process teleport(sim, net, a, b, graph, i, period=0.0)
+                        @yield @process projective_teleport(sim, net, a, b, graph, i, period=0.0)
                         @yield @process TeleportTracker(sim, net, 2, mbs_clients[i])
                         push!(order_teleported, i)
                     end
@@ -79,7 +76,7 @@ include("utils.jl")
 
                 # Apply CZ gates according to graph and teleport the remaining qubits
                 for i in chosen_core
-                    @yield @process teleport(sim, net, a, b, graph, i, period=0.0)
+                    @yield @process projective_teleport(sim, net, a, b, graph, i, period=0.0)
                     @yield @process TeleportTracker(sim, net, 2, mbs_clients[i])
                     push!(order_teleported, i)
                 end
@@ -94,8 +91,8 @@ include("utils.jl")
         end
         @debug "Ordered indices of teleported storage qubits to the client: $(b.stateindices)"
         @yield reduce(&, [lock(q) for q in b])
-        @debug "order teleported: $(order_teleported)"
-        order_state!(b, order_teleported)
+        current_order = copy(b.stateindices)
+        order_state!(b.staterefs[1].state[], current_order)
         
         resultgraph, hadamard_idx, iphase_idx, flips_idx  = graphstate(b.staterefs[1].state[])
 
@@ -142,12 +139,12 @@ include("utils.jl")
     end
 end
 
-function prepare_sim(n::Int, noise_model::AbstractBackground, graphdata::Dict{Tuple, Tuple{SimpleGraph, Any}}, link_success_prob::Float64, seed::Int, logging::DataFrame, rounds::Int)
+function prepare_sim(n::Int, noise_model::Union{AbstractBackground, Nothing}, graphdata::Dict{Tuple, Tuple{SimpleGraph, Any}}, link_success_prob::Float64, seed::Int, logging::DataFrame, rounds::Int)
     
     # Set a random seed
     Random.seed!(seed)
     
-    switch = Register(fill(Qubit(), 2*n), fill(CliffordRepr(), 2*n), fill(noise_model, 2*n)) # storage and communication qubits at the switch # fill(T2Dephasing(1.0), 2*n)
+    switch = Register(fill(Qubit(), n), fill(CliffordRepr(), n), fill(noise_model, n)) # storage qubits at the switch
     clients = Register(fill(Qubit(), n),  fill(CliffordRepr(), n), fill(noise_model, n)) # client qubits
     net = RegisterNet([switch, clients])
     sim = get_time_tracker(net)

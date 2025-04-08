@@ -1,5 +1,6 @@
 using CSV, DataFrames, Plots, StatsPlots, Statistics, StatsBase
 using YAML 
+using LaTeXStrings
 
 """
     get_statistics(df, [:link_success_prob], ["eig1", "eig2"], [mean, sem])
@@ -49,7 +50,7 @@ function get_plot_df(graph_id::Int, noise::String, splits::Array{Symbol}, cols::
         for protocol in protocols
         # Read the raw data
             input_file_pattern = "$(protocol)_clifford_noisy_nr$(graph_id)_$(noise)$(noise_time).csv"
-            df = CSV.read("/Users/localadmin/Documents/github/output/$(protocol)_clifford_noisy_nr$(graph_id)_$(read_mapping[noise])($(noise_time))_until1.0_graph$(graph_id).csv", DataFrame)
+            df = CSV.read("/Users/localadmin/Documents/github/output/$(protocol)_clifford_nr$(graph_id)_$(read_mapping[noise])($(noise_time))_until1.0.csv", DataFrame)
         
             # Count how many unique measures there are
             cnames = []
@@ -143,7 +144,7 @@ function plot_data(data::DataFrame, noise::String, take_meas::String; disp::Bool
     noise_time_values = unique(data[!, Symbol(noise)])
     n_subplots = length(noise_time_values)
     
-    plt = plot(layout = (div(n_subplots,2), 2), size = (1000, 700), left_margin = 10Plots.mm)
+    plt = plot(size = (1000, 500), left_margin = 10Plots.mm) #layout = (div(n_subplots,2), 2), 
     plt[:plot_title] = "Graph nr. $(graph_id) ($(n) qubits)"
     for (i, t) in enumerate(noise_time_values)
         # Subset the data for noise_time == t and id_graph
@@ -159,8 +160,11 @@ function plot_data(data::DataFrame, noise::String, take_meas::String; disp::Bool
             ylabel = take_meas*" mean +/- SEM",
             title = "$(noise) = $t",
             legend = :right,
+            xscale = :log10,
             ylim = (0, 1),
             yerr = cols(findfirst(columns.=="sem_"*take_meas)),  # sem_eig or sem_fidelity
+            margin = 5Plots.mm,
+            xticks = [0.001, 0.01, 0.1, 1],
         )
     end
     if disp
@@ -173,17 +177,54 @@ end
 
 # Main plotting script
 
-noise_models = ["τ"] # use "τ" for depolarizing noise, "T" for dephasing noise
-splits = [:link_success_prob]
-cols = ["eig", "fidelity"]
+# noise_models = ["τ"] # use "τ" for depolarizing noise, "T" for dephasing noise
+# splits = [:link_success_prob]
+# cols = ["eig", "fidelity"]
 
-for noise in noise_models
-    for graph_id in [18]#[2, 4, 7, 8, 9, 18, 40, 100]
-        data = get_plot_df(graph_id, noise, splits, cols; overall=true, path_config="examples/graphstateswitch/plotconfigs.yaml", stats=[mean, sem])
-        #plot_data(data, noise, "eig", disp=true, saveplot=true) # use "fidelity" for fidelity
-        plot_data(data, noise, "fidelity", disp=true, saveplot=true) 
-        #plot_data(data, noise; disp=true, saveplot=true) # plot all stabilizer eigenvalues
-    end
-end
+# for noise in noise_models
+#     for graph_id in [18]#[2, 4, 7, 8, 9, 18, 40, 100]
+#         data = get_plot_df(graph_id, noise, splits, cols; overall=true, path_config="examples/graphstateswitch/plotconfigs.yaml", stats=[mean, sem])
+#         #plot_data(data, noise, "eig", disp=true, saveplot=true) # use "fidelity" for fidelity
+#         plot_data(data, noise, "fidelity", disp=true, saveplot=true) 
+#         #plot_data(data, noise; disp=true, saveplot=true) # plot all stabilizer eigenvalues
+#     end
+# end
+
+
+
+graph_id = 4
+dfseq = CSV.read("/Users/localadmin/Documents/github/output/sequential_clifford_nr$(graph_id)_Depolarization_until1.0.csv", DataFrame)
+dfcan = CSV.read("/Users/localadmin/Documents/github/output/canonical_clifford_nr$(graph_id)_Depolarization_until1.0.csv", DataFrame)
+
+noise_times = exp10.(range(1, stop=3, length=30))
+link_success_probs = exp10.(range(-3, stop=0, length=30))
+
+d = length(unique(df.link_success_prob))
+dfseq[!, :noise_time] =  [x for x in noise_times for _ in 1:d for _ in 1:1000]
+dfcan[!, :noise_time] =  [x for x in noise_times for _ in 1:d for _ in 1:1000]
+
+data_sequential = get_statistics(dfseq, [:link_success_prob, :noise_time], ["fidelity"], [mean, sem])
+data_canonical = get_statistics(dfcan, [:link_success_prob, :noise_time], ["fidelity"], [mean, sem])
+
+diff = (data_sequential.mean_fidelity .- data_canonical.mean_fidelity)#./ (1. .-data_canonical.mean_fidelity)
+
+# heatmap(data_sequential.link_success_prob, data_sequential.noise_time, diff,
+#     # xlabel = "Link Success Probability",
+#     # ylabel = "Noise Time",
+#     # title = "Difference in Fidelity between Sequential and Canonical Protocols",
+#     # colorbar_title = "Fidelity Difference",
+#     # c=:viridis,
+#     # aspect_ratio = 1,
+#     # size = (800, 600),
+# )
+
+
+data = rand(21,100)
+plt = heatmap(noise_times, link_success_probs, reshape(diff, 30, 30),
+    xlabel="τ", ylabel="link success probability",
+    xscale=:log10, yscale=:log10,
+    title=L"$\frac{\overline{F}_{seq} - \overline{F}_{can}}{1-\overline{F}_{can}}$",
+    margin = 10Plots.mm,)
+savefig(plt, "examples/graphstateswitch/output/heatmap_different_τ_$(graph_id)_comparison.pdf")
 
 

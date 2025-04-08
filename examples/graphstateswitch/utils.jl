@@ -6,7 +6,7 @@ using QuantumOpticsBase
 using ResumableFunctions
 using NetworkLayout
 using Random, StatsBase
-using Graphs
+using Graphs, GraphRecipes
 
 using DataFrames, StatsPlots
 using CSV
@@ -100,6 +100,72 @@ end
     end
 end
 
+@resumable function ProjectTracker(sim, net, node, mb)
+    nodereg = net[node]
+    job_done = false
+    while !job_done
+        # Look for EntanglementUpdate? message sent to us
+        @yield wait(mb)
+        while true
+            msg = querydelete!(mb, TeleportUpdate, ❓, ❓, ❓, ❓, ❓, ❓)
+            isnothing(msg) && break
+
+            (src, (_, past_node, past_slot, local_node, local_slot, zcorrection1, zcorrection2)) = msg
+
+            @assert local_node == node "TeleportTracker @$(node).$(local_slot): Receiving node is not the same as the local node $(local_node) != $(node)"
+            @debug "TeleportTracker @$(node).$(local_slot): Received from $(past_node).$(past_slot) | message=`$(msg.tag)` | time=$(now(sim))"
+            
+            localslot = nodereg[local_slot]
+
+            # Apply Pauli corrections
+            @yield lock(localslot)
+            if zcorrection1==2
+                apply!(localslot, Z)
+            end
+            # if zcorrection2==2
+            #     apply!(localslot, Z)
+            # end
+            unlock(localslot)
+            
+            job_done = true
+            job_done && break
+        end
+    end
+end
+
+@resumable function projective_teleport(sim, net, switch_reg::Register, client_reg::Register, graph::Graph, i::Int; period::Float64=1.0)
+
+    reg = switch_reg
+    graph_local_copy = copy(graph)
+    neighbors_client = neighbors(graph_local_copy, i)
+    for neighbor in neighbors_client
+        @debug "Applying CZ gate between $(i) and $(neighbor)"
+        @yield lock(reg[i]) & lock(reg[neighbor])
+        apply!((reg[i], reg[neighbor]), ZCZ) 
+        unlock(reg[i])
+        unlock(reg[neighbor])
+        rem_edge!(graph, i, neighbor) # remove edge from the graph to keep track of the applied CZ gates
+        @debug "Removed edge between $(i) and $(neighbor), edges left: $(collect(edges(graph)))"
+    end
+    
+    switch_qubit = reg[i]
+    @yield lock(switch_qubit)
+    measi = signed(project_traceout!(switch_qubit, σˣ))
+    unlock(switch_qubit) 
+
+    # @yield lock(client_reg[i])
+    # if measi == 2
+    #     apply!(client_reg[i], Z)
+    # end
+    # unlock(client_reg[i])
+
+    msg = Tag(TeleportUpdate, 1, i, 2, i, 1, measi)
+    put!(channel(net, 1=>2; permit_forward=true), msg)
+    @debug "Teleporting qubit $(qubitA.idx) to client node | message=`$(msg)` | time=$(now(sim))"
+
+    @yield timeout(sim, period)
+end
+
 """
     teleport(sim, net, switch_reg, client_reg, graph, i, period=1.0)
     Teleport a qubit from the switch to the client node.
@@ -183,7 +249,7 @@ end
         reg: The register containing the qubits.
         orderlist: A list of integers representing the desired order of qubits.
 """
-function order_state!(reg, orderlist)
+function order_state!(reg::Register, orderlist)
     @assert length(reg) == length(orderlist) "Length of register and orderlist must be the same"
 
     # Loop over each index i
@@ -200,6 +266,25 @@ function order_state!(reg, orderlist)
             orderlist[i], orderlist[correct_index] = orderlist[correct_index], orderlist[i]
         end
     end
+end
+
+function order_state!(state::AbstractStabilizer, current_order::Vector{Int})
+    # Loop over each index 
+    for i in 1:length(current_order)
+        # If the qubit at position i isn't i, swap it with wherever qubit i lives
+        while current_order[i] != i
+            @debug "current order $(current_order)"
+            # Find which position holds the qubit i
+            correct_index = findfirst(==(i), current_order)
+
+            # Swap the register qubits physically
+            apply!(state, sSWAP(current_order[i], current_order[correct_index]); phases=true)
+            current_order[i], current_order[correct_index] = current_order[correct_index], current_order[i]
+            @debug "swaped $((i,correct_index)) to get $(collect(edges(graphstate(state)[1])))"
+        end
+
+    end
+    @debug "current order $(current_order)"
 end
 
 """

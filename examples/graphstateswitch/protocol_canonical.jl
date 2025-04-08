@@ -12,9 +12,6 @@ include("utils.jl")
         order_teleported = Int[]
 
         sanity_counter = 0 # sanity counter to avoid excessive iterations. TODO: is this necessary?
-        
-        # Initialize the switch storage slots in |+⟩ state
-        initialize!(a[n+1:2*n], reduce(⊗, fill(X1,n))) 
 
         # Message buffer for the switch
         mb = messagebuffer(net, 1)
@@ -55,7 +52,7 @@ include("utils.jl")
                 mbs = [messagebuffer(net[2][i]) for i in past_clients]
                 for i in past_clients
                     # Start teleportation protocol for each client
-                    @yield @process teleport(sim, net, a, b, graph, i, period=0.0)
+                    @yield @process projective_teleport(sim, net, a, b, graph, i, period=0.0)
                     # Start teleportation tracker to correct the client qubits
                     @yield @process TeleportTracker(sim, net, 2, mbs[i])
                     push!(order_teleported, i)
@@ -72,11 +69,11 @@ include("utils.jl")
                 return
             end
         end
-        @debug "Ordered indices of teleported storage qubits to the client: $(b.stateindices)"
+
         @yield reduce(&, [lock(q) for q in b])
         @debug "order teleported: $(order_teleported)"
-        order_state!(b, order_teleported)
-        
+        current_order = copy(b.stateindices) # get the current order of the qubits
+        order_state!(b.staterefs[1].state[], current_order)
         resultgraph, hadamard_idx, iphase_idx, flips_idx  = graphstate(b.staterefs[1].state[])
 
         # Compare the graph state with the reference graph state from the input data
@@ -88,7 +85,7 @@ include("utils.jl")
         client_ketstate = Ket(b.staterefs[1].state[]) # get the client state as a ket
         reference_ketstate = Ket(refstate_stabilizers)' # get the reference state as a bra
         fidelity =  abs(reference_ketstate * client_ketstate)^2 # calculate the fidelity of state shared by clients and reference state
-
+        
         # Calculate the expecation values of stabilizers individually using a helper register
         helperreg = Register(n)
         initialize!(helperreg[1:n], client_ketstate)
@@ -123,19 +120,14 @@ include("utils.jl")
     end
 end
 
-function prepare_sim(n::Int, noise_model::AbstractBackground, refstatedata::Tuple{SimpleGraph{Int64}, Register},
+function prepare_sim(n::Int, noise_model::Union{AbstractBackground, Nothing}, refstatedata::Tuple{SimpleGraph{Int64}, Register},
     link_success_prob::Float64, seed::Int, logging::DataFrame, rounds::Int)
     
     # Set a random seed
     Random.seed!(seed)
 
-    qubits = [Qubit() for _ in 1:n]
-    bg = [noise_model for _ in 1:n]
-    reprs = [CliffordRepr() for _ in 1:n]
-
-
-    switch = Register([qubits; qubits], [reprs; reprs], [bg; bg]) # storage and communication qubits at the switch
-    clients = Register(qubits, reprs, bg) # client qubits
+    switch = Register([Qubit() for _ in 1:n], [CliffordRepr() for _ in 1:n], [noise_model for _ in 1:n]) # storage and communication qubits at the switch
+    clients = Register([Qubit() for _ in 1:n], [CliffordRepr() for _ in 1:n], [noise_model for _ in 1:n]) # client qubits
     net = RegisterNet([switch, clients])
     sim = get_time_tracker(net)
 
@@ -143,3 +135,14 @@ function prepare_sim(n::Int, noise_model::AbstractBackground, refstatedata::Tupl
     @process CanonicalProt(sim, n, net, refstatedata, link_success_prob, logging, rounds)
     return sim
 end
+
+## test 
+# n = 5
+# g = random_regular_graph(n, 2, seed=42)
+# refstate = Stabilizer(g)   
+# refregister = Register(fill(Qubit(), n), fill(CliffordRepr(), n)) # storage and communication qubits at the switch
+# initialize!(refregister[1:n], StabilizerState(refstate))
+# refstatedata = (g, refregister)
+
+# sim = prepare_sim(n, T2Dephasing(1.0), refstatedata, 1.0, 42, DataFrame(), 100)
+# run(sim)
