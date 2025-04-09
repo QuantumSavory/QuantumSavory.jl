@@ -22,6 +22,7 @@ end
 # This is a bit of a hack to work specifically with SProjector. If you start needing more of these for other types, consider doing a bit of a redesign. This all should pass through `express(...,::UseAsObservable)`.
 function observable(state::QuantumClifford.MixedDestabilizer, indices::Base.AbstractVecOrTuple{Int}, operation::SProjector)
     pstate = express(operation.ket, CliffordRepr())
-    QuantumClifford.nqubits(state)==length(indices)==QuantumClifford.nqubits(pstate) || error("An attempt was made to measure a projection observable while using Clifford representation for the qubits. However, the qubits that are being observed are entangled with other qubits. Currently this is not supported. Consider tracing out the extra qubits or using Pauli observables that do not suffer from this embedding limitation.")
-    dot(pstate, state)
+    QuantumClifford.nqubits(state)==length(indices)==QuantumClifford.nqubits(pstate) || error("An attempt was made to measure a projection observable while using Clifford representation for the qubits. However, the qubits that are being observed are entangled with other qubits. Currently this is not supported. Consider tracing out the extra qubits or using Pauli observables that do not suffer from this embedding limitation. Message us on the issue tracker if you want this functionality implemented.")
+    cstate = permutesystems(state, indices)
+    dot(pstate, cstate)
 end

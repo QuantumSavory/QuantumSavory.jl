@@ -7,9 +7,19 @@ const B = sum(projector(l,b') for (l,b) in zip(lls,bells))
 
 angleifnotε(x) = angle(x) * (abs(x)<0.001 ? 0.0 : 1.0)
 
+const PARAMCOLS = 5
+
 function stateexplorer(S)
-    fig = Figure()
-    stateexplorer!(fig,S)
+    sliders = length(stateparameters(S))
+    rows = (sliders-1)÷PARAMCOLS+1
+    yplot = 220
+    ysliders = 230*rows
+    y = yplot+ysliders
+    fig = Figure(size=(600,y))
+    ret = stateexplorer!(fig,S)
+    Makie.rowsize!(fig.layout, 1, Makie.Relative(yplot/y))
+    Makie.rowsize!(fig.layout, 2, Makie.Relative(ysliders/y))
+    ret
 end
 
 function stateexplorer!(fig,S)
@@ -26,25 +36,27 @@ function stateexplorer!(fig,S)
     nbxpoints = 30
     εf = 0.0001
 
-    f3dρ = fig[1:2,1:2]
+    f3dρ = fig[1,1]
     fcb = f3dρ[1,3]
-    fparamsF = fig[3,1:2]
-    fparamsTr = fig[4,1:2]
-    fparamsS = fig[5,1:2]
+    fparams = fig[2,1]
+    #fparamsF = fig[3,1:2]
+    #fparamsTr = fig[4,1:2]
+    #fparamsS = fig[5,1:2]
 
     aparamsF = []
     aparamsTr = []
     sliders = []
     for (i, param) in enumerate(params)
+        subfparam = fparams[(i-1)÷PARAMCOLS+1,(i-1)%PARAMCOLS+1]
         (;min,max,good) = paramdict[param]
         ε = (max-min)*εf
         xs = range(min+ε,max-ε,length=nbxpoints)
 
-        slider = Slider(fparamsS[1, i], range=xs, startvalue=good)
+        slider = Slider(subfparam[3,1], range=xs, startvalue=good)
         push!(sliders, slider)
 
-        af = Axis(fparamsF[1,i] , xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, ylabel = i==1 ? "F" : "")
-        at = Axis(fparamsTr[1,i], xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, xlabel=string(param), ylabel= i==1 ? "tr(ρ)" : "")
+        af = Axis(subfparam[1,1] , xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, ylabel = i==1 ? "F" : "")
+        at = Axis(subfparam[2,1], xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, xlabel=string(param), ylabel= i==1 ? "tr(ρ)" : "")
         xlims!(af, min, max)
         xlims!(at, min, max)
         push!(aparamsF, af)
@@ -121,10 +133,10 @@ function stateexplorer!(fig,S)
         ρdata = @lift $(ρ).data
         ρBdata = @lift (B*$ρ*B').data
         for ij in keys(ρdata[])
-            mesh!(a3dρ, @lift Rect3f(ij[1],ij[2],0,0.9,0.9,abs($(ρdata)[ij])+1e-4); color=(@lift angleifnotε($(ρdata)[ij])), colorrange, colormap)
+            mesh!(a3dρ, @lift Rect3f((ij[1],ij[2],0),(0.9,0.9,abs($(ρdata)[ij])+1e-4)); color=(@lift angleifnotε($(ρdata)[ij])), colorrange, colormap)
         end
         for ij in keys(ρdata[])
-            mesh!(a3dρB, @lift Rect3f(ij[1],ij[2],0,0.9,0.9,abs($(ρBdata)[ij])+1e-4); color=(@lift angleifnotε($(ρBdata)[ij])), colorrange, colormap)
+            mesh!(a3dρB, @lift Rect3f((ij[1],ij[2],0),(0.9,0.9,abs($(ρBdata)[ij])+1e-4)); color=(@lift angleifnotε($(ρBdata)[ij])), colorrange, colormap)
         end
     end
 

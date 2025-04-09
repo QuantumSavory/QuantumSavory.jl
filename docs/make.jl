@@ -32,6 +32,8 @@ function main()
         "Background Noise" => "backgrounds.md",
         "Symbolic Expressions" => "symbolics.md",
         "Tagging and Querying" => "tag_query.md",
+        "Backend Simulators" => "backendsimulator.md",
+        "Discrete Event Simulator" => "discreteeventsimulator.md",
         "Visualizations" => "visualizations.md",
     ],
     "How-To Guides" => [
