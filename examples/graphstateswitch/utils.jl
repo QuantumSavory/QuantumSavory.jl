@@ -17,6 +17,43 @@ using PyCall
 @pyimport pickle
 @pyimport networkx
 
+function get_performance_metrics(sim::Simulation, client::Register, graphstatedata::Tuple{SimpleGraph, Any})
+    # Get the graph state from the client
+    n = length(client.staterefs)
+    resultgraph, hadamard_idx, iphase_idx, flips_idx  = graphstate(client.staterefs[1].state[])
+
+    # Compare the graph state with the reference graph state from the input data
+    refstate_stabilizers = graphstatedata[2].staterefs[1].state[]
+    coincide = graphstate(refstate_stabilizers)[1] == resultgraph # compare if graphs are equivalent
+
+    # Calculate fidelity
+    client_ketstate = Ket(client.staterefs[1].state[]) # get the client state as a ket
+    reference_ketstate = Ket(refstate_stabilizers)' # get the reference state as a bra
+
+    fidelity = real(observable(client[1:n], projector(StabilizerState(refstate_stabilizers)); time=now(sim))) # calculate the fidelity with the reference stabilizers
+
+
+    # Calculate the expectation values of stabilizers individually using a helper register
+    # TODO: Previously was encountered ERROR: An attempt was made to measure a projection observable while using Clifford representation for the qubits. 
+    # However, the qubits that are being observed are entangled with other qubits. Currently this is not supported. Consider tracing out the extra qubits or 
+    # using Pauli observables that do not suffer from this embedding limitation.
+
+    # Calculate the expecation values of stabilizers individually using a helper register
+    # helperreg = Register(n)
+    # initialize!(helperreg[1:n], client_ketstate)
+
+    # refgraph = graphstatedata[1]
+    # exps = map(vertices(refgraph)) do v
+    #     neighs = neighbors(refgraph, v)
+    #     verts = sort([v, neighs...])
+    #     obs = reduce(⊗,[ (i == v) ? σˣ : σᶻ for i in verts ]) # X for the central vertex v, Z for neighbors, Kronecker them together       
+    #     regs = helperreg[sort([v, neighs...])] 
+    #     real(observable(regs, obs; time=now(sim))) # calculate the value of the observable
+    # end
+    coincide, hadamard_idx, iphase_idx, flips_idx, fidelity#, exps
+end
+
+
 """
     get_graphdata_from_pickle(path)
     Load the graph data from a pickle file and convert it to Julia format.

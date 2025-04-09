@@ -94,9 +94,9 @@ for t in ts # Noise time
             Z_idx = Any[],
             fidelity    = Float64[]
         )
-        for i in 1:n
-            logging[!, Symbol("eig", i)] = Float64[]
-        end
+        # for i in 1:n
+        #     logging[!, Symbol("eig", i)] = Float64[]
+        # end
 
         if protocol == "sequential"
             logging[!, :chosen_core] = Tuple[]
@@ -124,4 +124,4 @@ for t in ts # Noise time
     end
 end
 @info all_runs
-#CSV.write(output_path*"$(protocol)_clifford_nr$(nr)_$(noise_model)_until$(max_prob).csv", all_runs)
+CSV.write(output_path*"$(protocol)_clifford_nr$(nr)_$(noise_model)_until$(max_prob).csv", all_runs)

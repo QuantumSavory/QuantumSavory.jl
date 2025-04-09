@@ -78,3 +78,8 @@ current_order = [clients[i].stateindices[1] for i in 1:n]
 order_state!(generated_state, current_order)
 @info "generated state: $(canonicalize!(generated_state))"
 @info "Fidelity: $(abs(Ket(canonicalize!(refstate))'*Ket(canonicalize!(generated_state)))^2)"
+
+state = StabilizerState("XZZ ZXZ ZZX")
+testreg = Register(fill(Qubit(),3), fill(CliffordRepr(), 3))
+initialize!(testreg[1:3], state)
+@info observable(testreg[1:3], projector(state))

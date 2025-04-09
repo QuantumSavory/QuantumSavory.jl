@@ -3,6 +3,7 @@ using Distributions: Geometric
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.ProtocolZoo
+using Graphs
 
 
 
@@ -12,6 +13,8 @@ Base.@kwdef mutable struct QuantumSwitchEnv <: AbstractEnv
     n::Int = 5
     switch::Register = Register(fill(Qubit(), n), fill(CliffordRepr(), n)) 
     clients::Vector{Register}= [Register(1, CliffordRepr()) for _ in 1:n]
+
+    graph::SimpleGraph = random_regular_graph(n, 2, seed=2)
     reward::Union{Nothing, Float64} = nothing
 end
 

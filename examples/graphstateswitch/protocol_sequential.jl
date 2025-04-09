@@ -5,7 +5,7 @@ include("utils.jl")
     a = net[1] # switch
     b = net[2] # clients
 
-    graph = Graph() # general graph object, to be later replaced by chosen state and used for teleportation
+    graph = Graph() # general graph object, to be later replaced by chosen state
 
     while rounds != 0
         start = now(sim)
@@ -89,34 +89,12 @@ include("utils.jl")
                 return
             end
         end
-        @debug "Ordered indices of teleported storage qubits to the client: $(b.stateindices)"
+
         @yield reduce(&, [lock(q) for q in b])
         current_order = copy(b.stateindices)
         order_state!(b.staterefs[1].state[], current_order)
-        
-        resultgraph, hadamard_idx, iphase_idx, flips_idx  = graphstate(b.staterefs[1].state[])
 
-        # Compare the graph state with the reference graph state from the input data
-        refstate_stabilizers = graphdata[chosen_core][2].staterefs[1].state[]
-        coincide = graphstate(refstate_stabilizers)[1] == resultgraph # compare if graphs are equivalent
-
-        # Calculate fidelity
-        client_ketstate = Ket(b.staterefs[1].state[]) # get the client state as a ket
-        reference_ketstate = Ket(refstate_stabilizers)' # get the reference state as a bra
-        fidelity =  abs(reference_ketstate * client_ketstate)^2 # calculate the fidelity of state shared by clients and reference state
-
-        # Calculate the expecation values of stabilizers individually using a helper register
-        helperreg = Register(n)
-        initialize!(helperreg[1:n], client_ketstate)
-
-        refgraph = graphdata[chosen_core][1]
-        exps = map(vertices(refgraph)) do v
-            neighs = neighbors(refgraph, v)
-            verts = sort([v, neighs...])
-            obs = reduce(⊗,[ (i == v) ? σˣ : σᶻ for i in verts ]) # X for the central vertex v, Z for neighbors, Kronecker them together       
-            regs = helperreg[sort([v, neighs...])] 
-            real(observable(regs, obs; time=now(sim))) # calculate the value of the observable
-        end
+        coincide, hadamard_idx, iphase_idx, flips_idx, fidelity = get_performance_metrics(sim, b, graphdata[chosen_core])
         
         while sum(b.stateindices) != 0
             @debug b.stateindices
@@ -128,11 +106,11 @@ include("utils.jl")
             unlock(q)
         end
 
-        # Logging outcome
+        # Log outcome
         push!(
             logging,
             (
-                now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, exps..., chosen_core
+                now(sim)-start, coincide, hadamard_idx, iphase_idx, flips_idx, fidelity, chosen_core
             )
         )
         rounds -= 1

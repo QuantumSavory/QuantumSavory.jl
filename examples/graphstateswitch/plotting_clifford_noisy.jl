@@ -192,32 +192,18 @@ end
 
 
 
-graph_id = 4
+graph_id = 8
 dfseq = CSV.read("/Users/localadmin/Documents/github/output/sequential_clifford_nr$(graph_id)_Depolarization_until1.0.csv", DataFrame)
 dfcan = CSV.read("/Users/localadmin/Documents/github/output/canonical_clifford_nr$(graph_id)_Depolarization_until1.0.csv", DataFrame)
 
 noise_times = exp10.(range(1, stop=3, length=30))
 link_success_probs = exp10.(range(-3, stop=0, length=30))
 
-d = length(unique(df.link_success_prob))
-dfseq[!, :noise_time] =  [x for x in noise_times for _ in 1:d for _ in 1:1000]
-dfcan[!, :noise_time] =  [x for x in noise_times for _ in 1:d for _ in 1:1000]
-
 data_sequential = get_statistics(dfseq, [:link_success_prob, :noise_time], ["fidelity"], [mean, sem])
 data_canonical = get_statistics(dfcan, [:link_success_prob, :noise_time], ["fidelity"], [mean, sem])
 
-diff = (data_sequential.mean_fidelity .- data_canonical.mean_fidelity)#./ (1. .-data_canonical.mean_fidelity)
-
-# heatmap(data_sequential.link_success_prob, data_sequential.noise_time, diff,
-#     # xlabel = "Link Success Probability",
-#     # ylabel = "Noise Time",
-#     # title = "Difference in Fidelity between Sequential and Canonical Protocols",
-#     # colorbar_title = "Fidelity Difference",
-#     # c=:viridis,
-#     # aspect_ratio = 1,
-#     # size = (800, 600),
-# )
-
+diff = (data_sequential.mean_fidelity .- data_canonical.mean_fidelity)./ (1.0 .-data_canonical.mean_fidelity)
+diff .= (diff .> 0.0) .* diff # set negative values to zero
 
 data = rand(21,100)
 plt = heatmap(noise_times, link_success_probs, reshape(diff, 30, 30),
