@@ -20,7 +20,11 @@ export
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
-    SimpleSwitchDiscreteProt, SwitchRequest
+    SimpleSwitchDiscreteProt, SwitchRequest,
+    # from QTCP
+    QDatagram, Flow, FlowAcknowledgment, LinkLevelRequest,
+    LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
+    NetworkNodeController, EndNodeController, LinkController
 
 abstract type AbstractProtocol end
 
@@ -461,5 +465,7 @@ include("cutoff.jl")
 include("swapping.jl")
 include("switches.jl")
 using .Switches
+include("qtcp.jl")
+using .QTCP
 
 end # module
