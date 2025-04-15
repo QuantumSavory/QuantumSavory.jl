@@ -6,7 +6,7 @@ using DocStringExtensions
 export EntanglementSwap, LocalEntanglementSwap,
     Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
     PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
-    SDDecode, SDEncode
+    SDDecode, SDEncode, BellStateMeasurement
 
 abstract type AbstractCircuit end
 
@@ -937,5 +937,46 @@ function (circuit::SDDecode)(rrefA, rrefB)
     b2 = project_traceout!(rrefB, Z)
     return b1-1, b2-1
 end
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+Bell State measurement circuit used in the Teleportation protocol. When Alice and Bob share a Bell pair, Alice can locally apply this circuit to teleport her qubit to Bob.
+The circuit takes as arguments the qubit to be teleported and the half of the Bell pair that Alice has. Both qubits are measured and the circuit returns the measurement results.
+These results are used to apply the necessary correction gates on Bob's side to recover the original qubit.
+
+```jldoctest
+julia> regA = Register(2); regB = Register(1);
+
+julia> initialize!(regA[1], Y1);
+
+julia> initialize!((regA[2], regB[1]), StabilizerState("XX ZZ"));
+
+julia> xmeas, zmeas = BellStateMeasurement()(regA[1], regA[2]);
+
+julia> if xmeas==2 apply!(regB[1], X) end
+
+julia> if zmeas==2 apply!(regB[1], Z) end
+
+julia> observable(regB[1], projector(Y1))
+0.9999999999999997 + 0.0im
+```
+"""
+struct BellStateMeasurement <: AbstractCircuit
+end
+
+function (circuit::BellStateMeasurement)(tobeteleported::RegRef, bellpairhalf::RegRef)
+    apply!((tobeteleported, bellpairhalf), CNOT)
+    apply!(tobeteleported, H)
+    zmeas = project_traceout!(tobeteleported, σᶻ)
+    xmeas = project_traceout!(bellpairhalf, σᶻ)
+    xmeas, zmeas
+end
+
+
 
 end # module
