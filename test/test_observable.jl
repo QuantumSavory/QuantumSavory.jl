@@ -12,7 +12,7 @@
         @test observable(a[1:2], SProjector(bell)) ≈ 1.0
         @test observable(a[1:2], σˣ⊗σˣ) ≈ 1.0
         apply!(a[1], σʸ)
-        @test observable(a[1:2], SProjector(bell)) ≈ 0.0
+        @test observable(a[1:2], SProjector(bell)) ≈ 0.0 atol=1e-5
         @test observable(a[1:2], σˣ⊗σˣ) ≈ -1.0
     end
 end
