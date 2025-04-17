@@ -5,7 +5,7 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory: tag_types
 using QuantumOpticsBase: Ket, Operator
-using QuantumClifford: MixedDestabilizer
+using QuantumClifford: MixedDestabilizer, ghz
 
 const SUITE = BenchmarkGroup()
 
@@ -151,3 +151,12 @@ put!(mb, Tag(EntanglementCounterpart, 2, 23))
 put!(mb, Tag(EntanglementCounterpart, 1, 10))
 SUITE["tagquery"]["messagebuffer"]["query"] = @benchmarkable query(mb, EntanglementCounterpart, 6, ❓)
 SUITE["tagquery"]["messagebuffer"]["querydelete"] = @benchmarkable querydelete!(_mb, EntanglementCounterpart, 6, ❓) setup=(_mb = deepcopy(mb))  evals=1
+
+
+SUITE["quantumstates"] = BenchmarkGroup(["quantumstates"])
+SUITE["quantumstates"]["observable"] = BenchmarkGroup(["observable"])
+state = StabilizerState(ghz(5))
+proj = projector(state)
+express(state)
+express(proj)
+SUITE["quantumstates"]["observable"]["quantumoptics"] = @benchmarkable observable(reg[1:5], proj) setup=(reg=Register(10); initialize!(reg[1:5], state)) evals=1
