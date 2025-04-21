@@ -18,7 +18,9 @@
 <td><p>Common gates: <code>CNOT</code>, <code>H</code>, etc</p></td>
 <td><pre><code class="language-julia hljs">CNOT</code></pre><p>\hat CNOT</p></td>
 <td><pre><code class="language-julia hljs">express(H)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Operator(dim=2x2)
-  basis: Spin(1/2)sparse([1, 2, 1, 2], [1, 1, 2, 2], ComplexF64[0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im, 0.7071067811865475 + 0.0im, -0.7071067811865475 + 0.0im], 2, 2)</code></pre><pre><code class="language-julia hljs">express(CNOT, CliffordRepr(), UseAsOperation())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">QuantumClifford.sCNOT</code></pre></td>
+  basis: Spin(1/2)
+ 0.7071067811865475 + 0.0im   0.7071067811865475 + 0.0im
+ 0.7071067811865475 + 0.0im  -0.7071067811865475 + 0.0im</code></pre><pre><code class="language-julia hljs">express(CNOT, CliffordRepr(), UseAsOperation())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">QuantumClifford.sCNOT</code></pre></td>
 </tr>
 <tr><!-- Tensor products and sums -->
 <td><p>Tensor products <code>⊗</code> and sums <code>+</code></p></td>
@@ -54,7 +56,9 @@
 <td><p>Completely depolarized (mixed) state</p></td>
 <td><pre><code class="language-julia hljs">MixedState(X1)</code></pre><p>\mathbb{M}</p></td>
 <td><pre><code class="language-julia hljs">express(MixedState(X1))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Operator(dim=2x2)
-  basis: Spin(1/2)sparse([1, 2], [1, 2], ComplexF64[0.5 + 0.0im, 0.5 + 0.0im], 2, 2)</code></pre><pre><code class="language-julia hljs">express(MixedState(X1), CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
+  basis: Spin(1/2)
+ 0.5 + 0.0im       ⋅     
+      ⋅       0.5 + 0.0im</code></pre><pre><code class="language-julia hljs">express(MixedState(X1), CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
 
 𝒳ₗ━
 + X
@@ -84,4 +88,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../backgrounds/">« Background Noise</a><a class="docs-footer-nextpage" href="../tag_query/">Tagging and Querying »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Wednesday 16 April 2025 00:35">Wednesday 16 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../backgrounds/">« Background Noise</a><a class="docs-footer-nextpage" href="../tag_query/">Tagging and Querying »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Monday 21 April 2025 20:02">Monday 21 April 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
