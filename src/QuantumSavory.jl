@@ -8,6 +8,8 @@ end
 
 using Reexport
 
+import Base: unlock, lock, islocked
+
 using DocStringExtensions
 using IterTools
 import LinearAlgebra

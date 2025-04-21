@@ -20,7 +20,12 @@ export
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
-    SimpleSwitchDiscreteProt, SwitchRequest
+    SimpleSwitchDiscreteProt, SwitchRequest,
+    # from QTCP
+    QDatagram, Flow, FlowAcknowledgment, LinkLevelRequest,
+    QTCPPairBegin, QTCPPairEnd,
+    LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
+    NetworkNodeController, EndNodeController, LinkController
 
 abstract type AbstractProtocol end
 
@@ -189,6 +194,8 @@ $TYPEDFIELDS
     margin::Int = 0
     """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
     hardmargin::Int = 0
+    """Tag to be added to the entangled qubits or nothing to not add any tag. The created tag will be of the form `tag(remote_node, remote_slot)`, by default `EntanglementCounterpart`."""
+    tag::Union{DataType,Nothing} = EntanglementCounterpart
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -205,8 +212,9 @@ end
 @resumable function (prot::EntanglerProt)()
     rounds = prot.rounds
     round = 1
+    last_a, last_b = nothing, nothing
     while rounds != 0
-        isentangled = !isnothing(query(prot.net[prot.nodeA], EntanglementCounterpart, prot.nodeB, ❓; assigned=true))
+        isentangled = !isnothing(prot.tag) && !isnothing(query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
         a_ = findfreeslot(prot.net[prot.nodeA]; filter=prot.chooseA, randomize=prot.randomize, margin=margin)
         b_ = findfreeslot(prot.net[prot.nodeB]; filter=prot.chooseB, randomize=prot.randomize, margin=margin)
@@ -240,9 +248,11 @@ end
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-            tag!(a, EntanglementCounterpart, prot.nodeB, b.idx)
+            isnothing(prot.tag) || tag!(a, prot.tag, prot.nodeB, b.idx)
+            last_a = a.idx
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-            tag!(b, EntanglementCounterpart, prot.nodeA, a.idx)
+            isnothing(prot.tag) || tag!(b, prot.tag, prot.nodeA, a.idx)
+            last_b = b.idx
 
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
         else
@@ -254,6 +264,7 @@ end
         rounds==-1 || (rounds -= 1)
         round += 1
     end
+    return prot.nodeA, last_a, prot.nodeB, last_b
 end
 
 
@@ -461,5 +472,7 @@ include("cutoff.jl")
 include("swapping.jl")
 include("switches.jl")
 using .Switches
+include("qtcp.jl")
+using .QTCP
 
 end # module
