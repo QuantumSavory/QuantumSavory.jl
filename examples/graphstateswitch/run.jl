@@ -115,10 +115,10 @@ for t in ts # Noise time
         end
         logging[!, :elapsed_time]       .= timed
         logging[!, :link_success_prob]  .= link_success_prob
-        logging[!, :noise_time]       .= t
+        logging[!, :mem_depolar_prob]       .= t
         logging[!, :graph_id]           .= nr
         logging[!, :seed]               .= seed
-        logging[!, :nqubits]            .= n
+        logging[!, :num_remote_nodes]            .= n
         append!(all_runs, logging)
         @info "Link success probability: $(link_success_prob) | Time: $(timed)"
     end

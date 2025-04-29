@@ -69,8 +69,8 @@ include("utils.jl")
 
         @yield reduce(&, [lock(q) for q in b])
 
-        current_order = copy(b.stateindices) # order in which state indices are stored
-        order_state!(b.staterefs[1].state[], current_order)
+        #current_order = copy(b.stateindices) # order in which state indices are stored
+        #order_state!(b.staterefs[1].state[], current_order)
         
         resultgraph, hadamard_idx, iphase_idx, flips_idx  = graphstate(b.staterefs[1].state[])
 

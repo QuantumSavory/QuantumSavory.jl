@@ -11,7 +11,7 @@ using Graphs, GraphRecipes
 using DataFrames, StatsPlots
 using CSV
 
-using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT
+using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT, ghz
 
 using PyCall
 @pyimport pickle
@@ -65,12 +65,12 @@ end
 """
 function get_graphdata_from_pickle(path)
     
-    graphdata = Dict{Tuple, Tuple{Graph, Any}}()
+    graphdata = Dict{Tuple, Graph}()
     operationdata = Dict{Tuple, Any}()
     
     # Load the graph data in python from pickle file
     graphdata_py = pickle.load(open(path, "r"))
-    
+    n = nothing
     for (key, value) in graphdata_py # value = [lc equivalent graph, transition gates
         graph_py = value[1]
         n = networkx.number_of_nodes(graph_py)
@@ -84,15 +84,15 @@ function get_graphdata_from_pickle(path)
         end
 
         # Initialize a perfect reference register using the graph data
-        r = Register(n, CliffordRepr())
-        initialize!(r[1:n], SProjector(StabilizerState(Stabilizer(graph_jl))))
+        # r = Register(n, CliffordRepr())
+        # initialize!(r[1:n], SProjector(StabilizerState(Stabilizer(graph_jl))))
 
         # The core represents the key
         key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
-        graphdata[key_jl] = (graph_jl, r)
+        graphdata[key_jl] = graph_jl
         operationdata[key_jl] = value[2][1,:] # Transition gate sets
     end
-    return graphdata, operationdata
+    return n, graphdata, operationdata
 end
 
 """
@@ -125,9 +125,12 @@ end
             @yield lock(localslot)
             if zcorrection1==2
                 apply!(localslot, X)
+                @debug "TeleportTracker @$(node).$(local_slot): Applied X correction to $(localslot)"
             end
+
             if zcorrection2==2
                 apply!(localslot, Z)
+                @debug "TeleportTracker @$(node).$(local_slot): Applied Z correction to $(localslot)"
             end
             unlock(localslot)
             
@@ -168,6 +171,32 @@ end
             job_done && break
         end
     end
+end
+
+
+@resumable function fusion(sim, net, piecemaker::RegRef, client::RegRef; period::Float64=1.0)
+    @yield lock(piecemaker) & lock(client)
+    @debug "Fusion $(piecemaker.idx) with client @$(client.idx)"
+    apply!((piecemaker, client), CNOT)
+    zmeas = project_traceout!(client, Z)
+    unlock(piecemaker)
+    unlock(client)
+
+    # @yield lock(net[2][client.idx])
+    # if zmeas == 2
+    #     apply!(net[2][client.idx], X)
+    # end
+    # unlock(net[2][client.idx])
+
+    # send message which TeleportTracker will receive on the client side
+    msg = Tag(TeleportUpdate, 1, client.idx, 2, client.idx, signed(zmeas), 1)
+    put!(channel(net, 1=>2; permit_forward=true), msg)
+
+    # send message which EntanglementTracker will receive on the client side
+    # msg = Tag(EntanglementUpdateZ, 1, client.idx, client.idx, 1, piecemaker.idx, signed(zmeas))
+    # put!(channel(net, 1=>2; permit_forward=true), msg)
+
+    @yield timeout(sim, period)
 end
 
 @resumable function projective_teleport(sim, net, switch_reg::Register, client_reg::Register, graph::Graph, i::Int; period::Float64=1.0)
@@ -242,16 +271,16 @@ end
     zmeas1 = signed(project_traceout!(tobeteleported, σᶻ)) # TODO: signed is used to convert  signed integer Int64, is this necessary?
     zmeas2 = signed(project_traceout!(bellpair[1], σᶻ)) # see source file src/tags.jl for defintion of Tags
 
-    # if zmeas2==2 apply!(bellpair[2], X) end # instead of doing this 'locally' we send the correction to the client
-    # if zmeas1==2 apply!(bellpair[2], Z) end # see below
+    if zmeas2==2 apply!(bellpair[2], X) end # instead of doing this 'locally' we send the correction to the client
+    if zmeas1==2 apply!(bellpair[2], Z) end # see below
 
     unlock(qubitA) 
     unlock(bellpair[1]) 
     unlock(bellpair[2])
     
-    msg = Tag(TeleportUpdate, 1, i, 2, i, zmeas2, zmeas1)
-    put!(channel(net, 1=>2; permit_forward=true), msg)
-    @debug "Teleporting qubit $(qubitA.idx) to client node | message=`$(msg)` | time=$(now(sim))"
+    # msg = Tag(TeleportUpdate, 1, i, 2, i, zmeas2, zmeas1)
+    # put!(channel(net, 1=>2; permit_forward=true), msg)
+    # @debug "Teleporting qubit $(qubitA.idx) to client node | message=`$(msg)` | time=$(now(sim))"
 
     @yield timeout(sim, period)
 end
@@ -274,8 +303,8 @@ end
         success_prob=link_success_prob, rounds=1, attempts=-1, attempt_time=1.0,
         )
     @yield @process entangler()
-    msg = Tag(EntanglementCounterpart, 1, client)
-    put!(channel(net, 2=>1; permit_forward=false), msg)
+    # msg = Tag(EntanglementCounterpart, 1, client)
+    # put!(channel(net, 2=>1; permit_forward=false), msg)
 end
 
 """

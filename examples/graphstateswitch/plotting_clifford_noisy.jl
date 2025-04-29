@@ -192,7 +192,7 @@ end
 
 
 
-graph_id = 8
+graph_id = 4
 dfseq = CSV.read("/Users/localadmin/Documents/github/output/sequential_clifford_nr$(graph_id)_Depolarization_until1.0.csv", DataFrame)
 dfcan = CSV.read("/Users/localadmin/Documents/github/output/canonical_clifford_nr$(graph_id)_Depolarization_until1.0.csv", DataFrame)
 

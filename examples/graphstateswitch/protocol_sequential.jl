@@ -1,6 +1,6 @@
 include("utils.jl")
 
-@resumable function PiecemakerProt(sim, n, net, graphdata, link_success_prob, logging, rounds)
+@resumable function PiecewiseGraphProt(sim, n, net, graphdata, link_success_prob, logging, rounds)
 
     a = net[1] # switch
     b = net[2] # clients
@@ -91,8 +91,8 @@ include("utils.jl")
         end
 
         @yield reduce(&, [lock(q) for q in b])
-        current_order = copy(b.stateindices)
-        order_state!(b.staterefs[1].state[], current_order)
+        #current_order = copy(b.stateindices)
+        #order_state!(b.staterefs[1].state[], current_order)
 
         coincide, hadamard_idx, iphase_idx, flips_idx, fidelity = get_performance_metrics(sim, b, graphdata[chosen_core])
         
@@ -128,6 +128,6 @@ function prepare_sim(n::Int, noise_model::Union{AbstractBackground, Nothing}, gr
     sim = get_time_tracker(net)
 
     # Start the piecemaker protocol
-    @process PiecemakerProt(sim, n, net, graphdata, link_success_prob, logging, rounds)
+    @process PiecewiseGraphProt(sim, n, net, graphdata, link_success_prob, logging, rounds)
     return sim
 end

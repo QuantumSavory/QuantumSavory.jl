@@ -1,10 +1,10 @@
-using QuantumClifford: Stabilizer, canonicalize!, sSWAP, AbstractStabilizer
+using QuantumClifford: Stabilizer, canonicalize!, sSWAP
 using QuantumSavory
-using Graphs
+using Graphs: random_regular_graph, edges
 using QuantumOpticsBase
+##
 
-
-function order_state!(state::AbstractStabilizer, current_order::Vector{Int})
+function order_state!(state, current_order::Vector{Int})
     # Loop over each index 
     for i in 1:length(current_order)
         # If the qubit at position i isn't i, swap it with wherever qubit i lives

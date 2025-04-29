@@ -6,7 +6,28 @@ using QuantumOpticsBase: Operator
 using QuantumClifford: AbstractStabilizer, Stabilizer, sHadamard, sPhase, sSWAP, canonicalize!, graphstate, PauliOperator, dm
 using Graphs
 
+bg = [Depolarization(1.0), Depolarization(1.0), nothing, nothing]
+traits = [Qubit(), Qubit(), Qubit(), Qubit()]
+repr = [QuantumOpticsRepr(), QuantumOpticsRepr(), QuantumOpticsRepr(), QuantumOpticsRepr()]
+reg = Register(4, repr, bg)
 
+net = RegisterNet([reg]) # network layout
+sim = get_time_tracker(net)
+
+bell1 = StabilizerState("XX ZZ")
+bell2 = StabilizerState("XX ZZ")
+
+initialize!(reg[1:2], bell1; time=0.0)
+initialize!(reg[3:4], bell2; time=0.0)
+
+obs1 = observable(reg[1:2], projector(bell1); time=10.0)
+obs2 = observable(reg[3:4], projector(bell2); time=10.0)
+
+@info "obs1: $(obs1)"
+@info "obs2: $(obs2)"
+
+
+##
 traits = [Qubit(), Qubit(), Qubit()]
 bg = [T2Dephasing(1.0), T2Dephasing(1.0), T2Dephasing(1.0)]
 repr = [CliffordRepr(), CliffordRepr(), CliffordRepr()]
@@ -21,6 +42,7 @@ add_edge!(graph, 2, 3)
 ψ = StabilizerState(Stabilizer(graph))
 ψ = SProjector(ψ)
 initialize!(r[1:3],ψ,time=0.0)
+
 
 ## This only works in QuantumOpticsRepr()
 # test 1
