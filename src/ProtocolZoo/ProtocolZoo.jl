@@ -22,7 +22,7 @@ export
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # from QTCP
-    QDatagram, Flow, FlowAcknowledgment, LinkLevelRequest,
+    QDatagram, Flow, LinkLevelRequest,
     QTCPPairBegin, QTCPPairEnd,
     LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
     NetworkNodeController, EndNodeController, LinkController
