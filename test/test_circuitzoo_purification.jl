@@ -35,7 +35,7 @@ end
                 if error==leaveout
                     # undetected error
                     @test Purify2to1(leaveout)(r[1:4]...)==true
-                    @test observable(r[1:2], projector(bell))≈0.0
+                    @test observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5
                 else
                     # detected error
                     @test Purify2to1(leaveout)(r[1:4]...)==false
@@ -66,7 +66,7 @@ end
                     ma = Purify2to1Node(leaveout)(r[1], r[3])
                     mb = Purify2to1Node(leaveout)(r[2], r[4])
                     @test ma == mb
-                    @test observable(r[1:2], projector(bell))≈0.0
+                    @test observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5
                 else
                     # detected error
                     ma = Purify2to1Node(leaveout)(r[1], r[3])
@@ -108,7 +108,7 @@ end
 
                         if error == leaveout1
                             @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==true
-                            @test observable(r[1:2], projector(bell))≈0.0
+                            @test observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5
                         else
                             @test Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==false
                         end
@@ -154,7 +154,7 @@ end
                     initialize!(r[3:4], noisy_pair)
                     initialize!(r[5:6], noisy_pair)
                     if Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==true
-                        @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
+                        @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
                     end
                 end
             end
@@ -201,7 +201,7 @@ end
                             ma = Purify3to1Node(leaveout1, leaveout2)(r[1], r[3], r[5])
                             mb = Purify3to1Node(leaveout1, leaveout2)(r[2], r[4], r[6])
                             @test ma == mb
-                            @test observable(r[1:2], projector(bell))≈0.0
+                            @test observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5
                         else
                             ma = Purify3to1Node(leaveout1, leaveout2)(r[1], r[3], r[5])
                             mb = Purify3to1Node(leaveout1, leaveout2)(r[2], r[4], r[6])
@@ -253,7 +253,7 @@ end
                     ma = Purify3to1Node(leaveout1, leaveout2)(r[1], r[3], r[5])
                     mb = Purify3to1Node(leaveout1, leaveout2)(r[2], r[4], r[6])
                     if ma == mb
-                        @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
+                        @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
                     end
                 end
             end
@@ -300,7 +300,7 @@ end
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
         if PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...) == true
-            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
+            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
         end
     end
 end
@@ -344,7 +344,7 @@ end
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
         if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
-            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 # This is a probabilistic test. It has a small chance of triggering
+            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
         end
     end
 end

@@ -8,6 +8,8 @@ end
 
 using Reexport
 
+import Base: unlock, lock, islocked
+
 using DocStringExtensions
 using IterTools
 import LinearAlgebra
@@ -50,7 +52,7 @@ using QuantumSymbolics:
     metadata, istree, operation, arguments, Symbolic, # from Symbolics
     HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
     XBasisState, YBasisState, ZBasisState,
-    STensorOperator, SScaledOperator, SAddOperator
+    STensorOperator, SScaledOperator, SAddOperator, STensor
 using QuantumSymbolics: I # to avoid ambiguity with LinearAlgebra.I
 @reexport using QuantumSymbolics
 
@@ -152,6 +154,7 @@ include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
 
+include("should_upstream.jl")
 include("precompile.jl")
 
 end # module

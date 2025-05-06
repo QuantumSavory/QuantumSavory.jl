@@ -15,7 +15,7 @@ set the state of the given slots in the given registers to `state`.
 e.g., kets or density matrices from `QuantumOptics.jl`
 or tableaux from `QuantumClifford.jl`.
 """
-function initialize!(regs::Vector{Register},indices::Base.AbstractVecOrTuple{Int},state; time=nothing)
+function initialize!(regs::Base.AbstractVecOrTuple{Register},indices::Base.AbstractVecOrTuple{Int},state; time=nothing)
     length(regs)==length(indices)==nsubsystems(state) || throw(DimensionMismatch(lazy"Attempting to initialize a set of registers with a state that does not have the correct number of subsystems."))
     stateref = StateRef(state, collect(regs), collect(indices))
     for (si,(reg,ri)) in enumerate(zip(regs,indices))
@@ -28,11 +28,19 @@ function initialize!(regs::Vector{Register},indices::Base.AbstractVecOrTuple{Int
     end
     stateref
 end
-initialize!(refs::Vector{RegRef}, state; time=nothing) = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time)
-initialize!(refs::NTuple{N,RegRef}, state; time=nothing) where {N} = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time) # TODO temporary array allocated here
+initialize!(refs::Base.AbstractVecOrTuple{RegRef}, state; time=nothing) = initialize!([r.reg for r in refs], [r.idx for r in refs], state; time)
 initialize!(reg::Register,i::Int,state; time=nothing) = initialize!([reg],[i],state; time)
 initialize!(r::RegRef, state; time=nothing) = initialize!(r.reg, r.idx, state; time)
-initialize!(r::Vector{Register},i::Vector{Int},state::Symbolic; time=nothing) = initialize!(r,i,express(state,consistent_representation(r,i,state)); time)
+initialize!(refs::Base.AbstractVecOrTuple{Register},indices::Base.AbstractVecOrTuple{Int},state::Symbolic; time=nothing) = initialize!(refs,indices,express(state,consistent_representation(refs,indices,state)); time)
+function initialize!(refs::Base.AbstractVecOrTuple{Register},indices::Base.AbstractVecOrTuple{Int},state::STensor; time=nothing)
+    length(refs)==length(indices)==nsubsystems(state) || throw(DimensionMismatch(lazy"Attempting to initialize a set of registers with a state that does not have the correct number of subsystems."))
+    i = 1
+    for t in state.terms
+        s = nsubsystems(t)
+        initialize!(refs[i:i+s-1],indices[i:i+s-1],t; time)
+        i += s
+    end
+end
 
 function QuantumSymbolics.consistent_representation(regs::Base.AbstractVecOrTuple{Register},idx,state)
     reprs = Set([r.reprs[i] for (r,i) in zip(regs,idx)])
