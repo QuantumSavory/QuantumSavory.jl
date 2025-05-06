@@ -1,6 +1,6 @@
 
 include("utils.jl")
-##
+
 @resumable function GHZGraphSequentialProt(sim, n, net, link_success_prob, logging, rounds)
 
     while rounds != 0
@@ -12,17 +12,16 @@ include("utils.jl")
             @process entangle(sim, net, i, link_success_prob)
         end
 
-        graph = graphstate(Stabilizer(ghz(n)))[1]
-
         active_clients = []
         counter_clients = 0
-        
 
         while true # until all clients are measured out
             
             if (counter_clients == n) && (length(active_clients) == 1) # measuring out piecemaker slot (first one to arrive) at last
-                zmeas = project_traceout!(net[1][active_clients[1]], σˣ) 
-                if zmeas==2 apply!(net[2][active_clients[1]], Z) end
+                @yield lock(net[1][active_clients[1]]) & lock(net[2][active_clients[1]])
+                ( project_traceout!(net[1][active_clients[1]], σˣ) == 2 ) && apply!(net[2][active_clients[1]], Z) 
+                unlock(net[1][active_clients[1]])
+                unlock(net[2][active_clients[1]])
                 break
             end
 
@@ -41,33 +40,31 @@ include("utils.jl")
             if counter_clients > 1
                 while length(active_clients) > 1
                     idx = pop!(active_clients)
+                    @yield lock(net[1][idx]) & lock(net[1][active_clients[1]]) & lock(net[2][idx])
                     apply!((net[1][active_clients[1]], net[1][idx]), ZCZ; time=now(sim))
-                    zmeas = project_traceout!(net[1][idx], σˣ; time=now(sim))
-                    if zmeas==2 apply!(net[2][idx], Z) end
+                    ( project_traceout!(net[1][idx], σˣ) == 2 ) && apply!(net[2][idx], Z) 
+                    unlock(net[1][idx])
+                    unlock(net[1][active_clients[1]])
+                    unlock(net[2][idx])
                 end
             end
         end
-        @yield reduce(&, [lock(q) for q in net[2]])
 
-        # Calculate fidelity
-        graph = Graph() # reference graph
+        # Generate GHZ graph state
+        graph = Graph() 
         add_vertices!(graph, n)
         for i in 1:n
             if i != active_clients[1]
                 add_edge!(graph, (active_clients[1], i))
             end
         end
+        
+        # Calculate fidelity
+        @yield reduce(&, [lock(q) for q in net[2]])
         obs = projector(StabilizerState(Stabilizer(graph))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but it is L.C. equivalent to a graph state
         result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
         fidelity = sqrt(result'*result)
-
-
-        for q in net[2]
-            traceout!(q)
-        end
-        for q in net[2]
-            unlock(q)
-        end
+        foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
         push!(
@@ -100,7 +97,7 @@ end
 
 
 seed = 42
-for n in [7]
+for n in [3]
     states_representation = QuantumOpticsRepr()#CliffordRepr()
     mem_depolar_prob = 0.1
     number_of_samples = 1000
@@ -129,5 +126,5 @@ for n in [7]
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
     #@info df_all_runs
-    CSV.write("examples/graphstateswitch/output/factory/qs_sequential$(n).csv", df_all_runs)
+    CSV.write("examples/graphstateswitch/output/GHZsimple/sequential/qs_sequential$(n).csv", df_all_runs)
 end

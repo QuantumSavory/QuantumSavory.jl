@@ -10,12 +10,6 @@ include("utils.jl")
         for i in 1:n
             @process entangle(sim, net, i, link_success_prob)
         end
-        
-        # graph = Graph()
-        # add_vertices!(graph, n)
-        # for i in 1:n-1
-        #     add_edge!(graph, (i, i+1))
-        # end
 
         vcs = collect(keys(graphdata)) # vertex covers TODO: can this be prettier?
         graph = Graph() # general graph object, to be later replaced by chosen state
@@ -55,18 +49,22 @@ include("utils.jl")
             @debug "neighbors of $(idx): ", neighs
             while !isempty(neighs)
                 nb = neighs[1]
+                @yield lock(net[1][idx]) & lock(net[1][nb])
                 apply!((net[1][idx], net[1][nb]), ZCZ; time=now(sim))
+                unlock(net[1][idx])
+                unlock(net[1][nb])
                 @debug "apply CZ to $(idx) and $(nb)"
                 rem_edge!(graph, idx, nb)
             end
+            @yield lock(net[1][idx]) & lock(net[2][idx])
             ( project_traceout!(net[1][idx], σˣ) == 2 ) &&
-                apply!(net[2][idx], Z) # measure out the non-cover qubit
+                apply!(net[2][idx], Z) 
+            unlock(net[1][idx])
+            unlock(net[2][idx])
         end
         @yield reduce(&, [lock(q) for q in net[2]])
         obs = projector(StabilizerState(Stabilizer(refgraph)))
-        result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
-        fidelity = sqrt(result'*result)
-
+        fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
@@ -98,13 +96,13 @@ function prepare_sim(n::Int, states_representation::AbstractRepresentation, nois
 end
 
 
-nr = 7
-states_representation = QuantumOpticsRepr()#
-number_of_samples = 1000
+nr = 8
+states_representation = CliffordRepr() #QuantumOpticsRepr() #
+number_of_samples = 10000
 seed = 42
 df_all_runs = DataFrame()
-for prob in range(0.1, stop=1, length=10)
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=30))
+for prob in range(0.1, stop=1, length=10) #cumsum([9/i for i in exp10.(range(1, 10, 10))])#
+    for mem_depolar_prob in exp10.(range(-3, stop=0, length=30)) #[0.001, 0.0001, 0.00001]#
 
         logging = DataFrame(
             distribution_times  = Float64[],

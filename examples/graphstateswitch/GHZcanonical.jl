@@ -1,21 +1,15 @@
 
 include("utils.jl")
-##
+
 @resumable function GHZGraphCanonicalProt(sim, n, net, link_success_prob, logging, rounds)
 
     while rounds != 0
-        @debug "start first round of $(rounds)"
         start = now(sim)
-
-        # Instantiate message buffers for the clients to receive classical correction information
-        mbs = [messagebuffer(net[2][i]) for i in 1:n]
 
         # Start entanglement generation for each client
         for i in 1:n
             @process entangle(sim, net, i, link_success_prob)
         end
-
-        graph = graphstate(Stabilizer(ghz(n)))[1]
 
         active_clients = []
 
@@ -37,39 +31,31 @@ include("utils.jl")
             # If all clients have established their link-level entanglement teleport GHZ state
             if length(active_clients) == n
                 for i in 2:n
+                    @yield lock(net[1][i]) & lock(net[1][1]) & lock(net[2][i])
                     apply!((net[1][1], net[1][i]), ZCZ; time=now(sim))
+                    ( project_traceout!(net[1][i], σˣ) == 2 ) &&
+                    apply!(net[2][i], Z) 
+                    
+                    unlock(net[1][i]) 
+                    unlock(net[1][1]) 
+                    unlock(net[2][i])
                 end
-                for i in 1:n
-                    zmeas = project_traceout!(net[1][i], σˣ) 
-                    if zmeas==2 apply!(net[2][i], Z) end
-                end
+                @yield lock(net[1][1]) & lock(net[2][1])
+                ( project_traceout!(net[1][1], σˣ) == 2 ) &&
+                apply!(net[2][1], Z) 
+                unlock(net[1][1])
+                unlock(net[2][1])
                 break
-                # @debug "SIM TIME: $(now(sim)-start)"
-                # for slot in active_clients
-                #     i = slot.idx
-                #     # Start teleportation protocol for each client
-                #     @yield @process projective_teleport(sim, net, net[1], net[2], graph, i, period=0.0)
-                #     # Start teleportation tracker to correct the client qubits
-                #     @yield @process TeleportTracker(sim, net, 2, mbs[i])
-                # end
-
-                # break
             end
         end
+        # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
-
-        obs = projector(StabilizerState(Stabilizer(graphstate(Stabilizer(ghz(n)))[1]))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but it is L.C. equivalent to a graph state
+        obs = projector(StabilizerState(Stabilizer(graphstate(Stabilizer(ghz(n)))[1]))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but they are L.C. equivalent
         result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
         fidelity = sqrt(result'*result)
 
 
-        for q in net[2]
-            traceout!(q)
-        end
-        @debug net[2].stateindices
-        for q in net[2]
-            unlock(q)
-        end
+        foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
         push!(
@@ -88,7 +74,8 @@ function prepare_sim(n::Int, states_representation::AbstractRepresentation, nois
     
     # Set a random seed
     Random.seed!(seed)
-    
+
+    # Create switch and client registers
     switch = Register(fill(Qubit(), n), fill(states_representation, n), fill(noise_model, n)) # storage qubits at the switch, where n qubits are not affected by noise
     clients = Register(fill(Qubit(), n),  fill(states_representation, n), fill(noise_model, n)) # client qubits
     net = RegisterNet([switch, clients])
@@ -101,26 +88,28 @@ end
 
 
 
-seed = 42
-for n in [7]
+seed = 42 # random seed 
+
+for n in [8] # number of remote nodes
     states_representation = QuantumOpticsRepr() #CliffordRepr() #
-    mem_depolar_prob = 0.1
-    number_of_samples = 1000
+    mem_depolar_prob = 0.1 # depolarization probability of the memory qubits
+    number_of_samples = 1000 # number of samples to be taken
 
 
     df_all_runs = DataFrame()
-    for prop in [0.5]#link_success_probs
+    for prop in [0.5] # link success probability
 
         logging = DataFrame(
             distribution_times  = Float64[],
             fidelities    = Float64[]
         )
 
-        decoherence_rate = - log(1 - mem_depolar_prob)
-        noise_model = Depolarization(1/decoherence_rate)
+        decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rate
+        noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
         sim = prepare_sim(n, states_representation, noise_model, prop, seed, logging, number_of_samples)
         timed = @elapsed run(sim)
 
+        # log constants
         logging[!, :elapsed_time] .= timed
         logging[!, :number_of_samples] .= number_of_samples
         logging[!, :link_success_prob] .= prop
@@ -131,5 +120,5 @@ for n in [7]
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
     #@info df_all_runs
-    CSV.write("examples/graphstateswitch/output/factory/qs_canonical$(n)_adapted.csv", df_all_runs)
+    CSV.write("examples/graphstateswitch/output/GHZsimple/canonical/qs_canonical$(n).csv", df_all_runs)
 end

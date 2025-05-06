@@ -1,6 +1,8 @@
 
 include("utils.jl")
-##
+
+const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+
 @resumable function FactoryProt(sim, n, net, link_success_prob, logging, rounds)
 
     while rounds != 0
@@ -13,7 +15,7 @@ include("utils.jl")
         end
 
         # Initialize "piecemaker" qubit in |+> state after first time step has passed, such that if p=1 fidelity=1
-        ghz_state = StabilizerState(Stabilizer(ghz(n))) # GHZ state locally created
+        ghz_state = StabilizerState(ghz(n)) # GHZ state locally created
         initialize!(net[1][n+1:2*n], ghz_state, time=now(sim)+1.0) 
 
         active_clients = []
@@ -43,16 +45,14 @@ include("utils.jl")
                     tobeteleported = net[1][n+i]
                     bellpair = (net[1][i], net[2][i])
                     @yield  lock(tobeteleported) & lock(bellpair[1]) & lock(bellpair[2])
-                    @debug tobeteleported
-                    @debug bellpair
                     
                     # BSM
                     apply!((tobeteleported, bellpair[1]), CNOT; time=now(sim))
                     apply!(tobeteleported, H)
                 
-                    zmeas1 = project_traceout!(tobeteleported, σᶻ) # TODO: signed is used to convert  signed integer Int64, is this necessary?
-                    zmeas2 = project_traceout!(bellpair[1], σᶻ) # see source file src/tags.jl for defintion of Tags
-                    @debug "zmeas1: $(zmeas1), zmeas2: $(zmeas2)"
+                    zmeas1 = project_traceout!(tobeteleported, σᶻ) 
+                    zmeas2 = project_traceout!(bellpair[1], σᶻ) 
+
                     if zmeas2==2 apply!(bellpair[2], X) end # TODO: instead of doing this 'locally' we should send the correction to the client
                     if zmeas1==2 apply!(bellpair[2], Z) end
                     unlock(tobeteleported)
@@ -63,20 +63,12 @@ include("utils.jl")
                 break
             end
         end
+        # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
-
-        obs = projector(StabilizerState(Stabilizer(ghz(n)))) # GHZ state projector to measure
+        obs = projector(StabilizerState(ghzs[n])) # GHZ state projector to measure
         result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
         fidelity = sqrt(result'*result)
-
-
-        for q in net[2]
-            traceout!(q)
-        end
-        @debug net[2].stateindices
-        for q in net[2]
-            unlock(q)
-        end
+        foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
         push!(
@@ -86,7 +78,7 @@ include("utils.jl")
             )
         )
         rounds -= 1
-        @debug "Round $(rounds) finished"
+        @info "Round $(rounds) finished"
     end
 
 end
@@ -109,10 +101,10 @@ end
 
 
 seed = 42
-for n in [7]
+for n in 2:8
     states_representation = QuantumOpticsRepr() #CliffordRepr() #
     mem_depolar_prob = 0.1
-    number_of_samples = 10000
+    number_of_samples = 1000
 
 
     df_all_runs = DataFrame()
@@ -138,5 +130,5 @@ for n in [7]
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
     #ƒ@debug df_all_runs
-    CSV.write("examples/graphstateswitch/output/factory/qs_factory$(n).csv", df_all_runs)
+    CSV.write("examples/graphstateswitch/output/GHZsimple/factory/qs_factory$(n).csv", df_all_runs)
 end

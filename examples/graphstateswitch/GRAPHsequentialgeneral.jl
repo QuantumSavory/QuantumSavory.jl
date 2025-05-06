@@ -54,26 +54,31 @@ include("utils.jl")
             @debug "Core found: ", vcs[cover_idx]
             active_non_cover_qubits = setdiff(active, vcs[cover_idx]) # active qubits that are not in the vertex cover
             @debug "Non-cover qubits: ", active_non_cover_qubits 
+
+            # Measure out all qubits that arrived before vertex cover was present
             for idx in active_non_cover_qubits
                 neighs = neighbors(graph, idx)
-
-                @debug "neighbors of $(idx): ", neighs
                 while !isempty(neighs)
                     nb = neighs[1]
-                    if nb in vcs[cover_idx]
-                        apply!((net[1][idx], net[1][nb]), ZCZ; time=now(sim))
-                        @debug "apply CZ to $(idx) and $(nb)"
-                        rem_edge!(graph, idx, nb)
-                    end
+                    @assert nb in vcs[cover_idx] "Neighbor $(nb) not in active qubits" # all neighbors should be vertex cover qubits
+                    @yield lock(net[1][idx]) & lock(net[1][nb])
+                    apply!((net[1][idx], net[1][nb]), ZCZ; time=now(sim))
+                    unlock(net[1][idx])
+                    unlock(net[1][nb])
+                    @debug "apply CZ to $(idx) and $(nb)"
+                    rem_edge!(graph, idx, nb)
                 end
-                ( project_traceout!(net[1][idx], σˣ) == 2 ) &&
-                apply!(net[2][idx], Z) # measure out the non-cover qubit
+                @yield lock(net[1][idx]) & lock(net[2][idx])
+                # measure out the qubit and apply correction on client side
+                ( project_traceout!(net[1][idx], σˣ) == 2 ) && apply!(net[2][idx], Z)
+                unlock(net[1][idx])
+                unlock(net[2][idx])
             end
         end
 
-        # now we wait for the rest of the clients to be entangled (if there are any)
+        # Now we wait for the rest of the qubits to arrive (if there are any)
         while counter_clients <= n
-            counter_clients == n && break # all clients are entangled so skip this while
+            counter_clients == n && break # all qubits present so skip this loop
             currently_active = Set{Int}() # qubits that have an EPR pair
             @yield onchange_tag(net[1])
             while true # until the query returns nothing
@@ -87,45 +92,53 @@ include("utils.jl")
                 end
             end
 
-            current_non_cover_qubits = setdiff(currently_active, vcs[cover_idx]) # currently active qubits that are not in the vertex cover
+            current_non_cover_qubits = setdiff(currently_active, vcs[cover_idx]) # currently present qubits that are not in the vertex cover
             @debug "Non-cover qubits in the second section of waiting: ", current_non_cover_qubits 
             for idx in current_non_cover_qubits
                 neighs = neighbors(graph, idx)
                 while !isempty(neighs)
                     nb = neighs[1]
-                    if nb in vcs[cover_idx]
-                        apply!((net[1][idx], net[1][nb]), ZCZ; time=now(sim))
-                        rem_edge!(graph, idx, nb)
-                    end
+                    @assert nb in vcs[cover_idx] "Neighbor $(nb) not in active qubits" # all neighbors should be vertex cover qubits
+                    @yield lock(net[1][idx]) & lock(net[1][nb])
+                    apply!((net[1][idx], net[1][nb]), ZCZ; time=now(sim))
+                    unlock(net[1][idx])
+                    unlock(net[1][nb])
+                    rem_edge!(graph, idx, nb)
                 end
-                ( project_traceout!(net[1][idx], σˣ) == 2 ) &&
-                apply!(net[2][idx], Z) # measure out the non-cover qubit
+                @yield lock(net[1][idx]) & lock(net[2][idx])
+                # measure out the qubit and apply correction on client side
+                ( project_traceout!(net[1][idx], σˣ) == 2 ) && apply!(net[2][idx], Z)
+                unlock(net[1][idx])
+                unlock(net[2][idx])
             end
 
         end
 
-        # Finally only the cover qubits are left to measure
+        # Finally only the cover qubits are left to measure out
         for idx in vcs[cover_idx]
             neighs = neighbors(graph, idx)
             @debug "neighbors of $(idx): ", neighs
             while !isempty(neighs)
                 nb = neighs[1]
+                @yield lock(net[1][idx]) & lock(net[1][nb])
                 apply!((net[1][idx], net[1][nb]), ZCZ; time=now(sim))
+                unlock(net[1][idx])
+                unlock(net[1][nb])
                 @debug "apply CZ to $(idx) and $(nb)"
                 rem_edge!(graph, idx, nb)
             end
-            ( project_traceout!(net[1][idx], σˣ) == 2 ) &&
-                apply!(net[2][idx], Z) # measure out the non-cover qubit
+            @yield lock(net[1][idx]) & lock(net[2][idx])
+            # measure out the qubit and apply correction on client side
+            ( project_traceout!(net[1][idx], σˣ) == 2 ) && apply!(net[2][idx], Z)
+            unlock(net[1][idx])
+            unlock(net[2][idx])
         end
-
         @yield reduce(&, [lock(q) for q in net[2]])
 
         # Calculate fidelity
         @debug collect(edges(refgraph))
         obs = projector(StabilizerState(Stabilizer(refgraph)))
-        result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
-        fidelity = sqrt(result'*result)
-        
+        fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
@@ -156,18 +169,18 @@ function prepare_sim(n::Int, states_representation::AbstractRepresentation, nois
     return sim
 end
 
-nr = 7
-states_representation = QuantumOpticsRepr() #CliffordRepr() #
+nr = 4
+states_representation = QuantumOpticsRepr()
 number_of_samples = 1000
 seed = 42
 df_all_runs = DataFrame()
-for prob in range(0.1, stop=1, length=10)
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=30))
+for prob in [0.5]#range(0.1, stop=1, length=10) #cumsum([9/i for i in exp10.(range(1, 10, 10))])#
+    for mem_depolar_prob in exp10.(range(-3, stop=0, length=30)) #[0.001, 0.0001, 0.00001]#
 
         logging = DataFrame(
             distribution_times  = Float64[],
             fidelities    = Float64[],
-            chosen_vcs = Tuple{Int, Int}[],
+            chosen_vcs = [],
             edges = []
         )
 
@@ -189,4 +202,4 @@ for prob in range(0.1, stop=1, length=10)
     end
 end
 #@info df_all_runs
-CSV.write("examples/graphstateswitch/output/factory/qs_graph$(nr)sequentialgeneral_sweep.csv", df_all_runs)
+CSV.write("examples/graphstateswitch/output/factory/qs_graph$(nr)sequentialgeneraltest.csv", df_all_runs)

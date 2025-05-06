@@ -1,13 +1,12 @@
 include("utils.jl")
-##
+
+const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+
 @resumable function PiecemakerProt(sim, n, net, link_success_prob, logging, rounds)
 
     while rounds != 0
         @debug "start first round of $(rounds)"
         start = now(sim)
-
-        # Instantiate message buffers for the clients to receive classical correction information
-        mbs = [messagebuffer(net[2][i]) for i in 1:n] # messagebuffer is defined always on one register TODO: post issue that this could be better documented
 
         # Start entanglement generation for each client
         for i in 1:n
@@ -26,38 +25,31 @@ include("utils.jl")
                 counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
                 if !isnothing(counterpart)
                     slot, _, _ = counterpart
-                    @debug counter, counterpart
-                    @yield @process fusion(sim, net, net[1][n+1], net[1][slot.idx], period=0.0)
-                    @yield @process TeleportTracker(sim, net, 2, mbs[slot.idx]) # TODO: this is ftl, change!
+
+                    # fuse the qubit with the piecemaker qubit
+                    apply!((net[1][n+1], net[1][slot.idx]), CNOT)
+                    ( project_traceout!(net[1][slot.idx], σᶻ) == 2 ) &&
+                    apply!(net[2][slot.idx], X)
                     counter += 1
                 end
             end
 
             @debug "All clients entangled, measuring piecemaker | time: $(now(sim)-start)"
             @yield lock(net[1][n+1]) & lock(net[2][1])
-            zmeas = project_traceout!(net[1][n+1], X)
-            if zmeas == 2
+            ( project_traceout!(net[1][n+1], σˣ) == 2 ) &&
                 apply!(net[2][1], Z) # apply correction on arbitrary client slot # TODO: this is ftl, change!
-            end
             unlock(net[1][n+1])
             unlock(net[2][1])
             break
         end
-        @yield reduce(&, [lock(q) for q in net[2]])
 
-        obs = projector(StabilizerState(Stabilizer(ghz(n)))) # GHZ state projector to measure
+        # Measure the fidelity to the GHZ state
+        @yield reduce(&, [lock(q) for q in net[2]])
+        obs = projector(StabilizerState(ghzs[n])) # GHZ state projector to measure
         result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
         fidelity = sqrt(result'*result)
 
-        while sum(net[2].stateindices) != 0
-            @debug net[2].stateindices
-            for q in net[2]
-                traceout!(q)
-            end
-        end
-        for q in net[2]
-            unlock(q)
-        end
+        foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
         push!(
@@ -67,7 +59,7 @@ include("utils.jl")
             )
         )
         rounds -= 1
-        @debug "Round $(rounds) finished"
+        @info "Round $(rounds) finished"
     end
 
 end
@@ -89,10 +81,10 @@ end
 
 
 seed = 42
-for n in [2]
+for n in 2:8
     states_representation = QuantumOpticsRepr() 
     mem_depolar_prob = 0.1
-    number_of_samples = 10
+    number_of_samples = 1000
 
 
     df_all_runs = DataFrame()
@@ -117,6 +109,6 @@ for n in [2]
         append!(df_all_runs, logging)
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
-    @info df_all_runs
-    #CSV.write("examples/graphstateswitch/output/piecemaker/qs_piecemaker$(n).csv", df_all_runs)
+    #@info df_all_runs
+    CSV.write("examples/graphstateswitch/output/GHZsimple/piecemaker/qs_piecemaker$(n).csv", df_all_runs)
 end
