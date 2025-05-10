@@ -293,6 +293,11 @@ plot(
 savefig("2graph.png")
 
 ## test noise channel with 3 qubits
+using QuantumSavory
+mem_depolar_prob = 0.0
+decoherence_rate = - log(1 - mem_depolar_prob)
+t_init = 0.0
+Δt = 1.0
 
 regA = Register(fill(Qubit(), 3), fill(QuantumOpticsRepr(), 3), fill(Depolarization(1/decoherence_rate), 3))
 regB = Register(fill(Qubit(), 3), fill(QuantumOpticsRepr(), 3), fill(Depolarization(1/decoherence_rate), 3))

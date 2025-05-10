@@ -13,7 +13,6 @@ include("utils.jl")
 
         vcs = collect(keys(graphdata)) # vertex covers TODO: can this be prettier?
         graph = Graph() # general graph object, to be later replaced by chosen state
-        refgraph = Graph() # reference graph
 
         # vcs  = [(1,3), (2,4), (2,3)]
         # graph = Graph()
@@ -47,9 +46,7 @@ include("utils.jl")
                 end 
             end
             isnothing(cover_idx) && continue # no core found yet so skip and redo loop
-
-            refgraph = graphdata[vcs[cover_idx]] # graph to be generated
-            graph = deepcopy(refgraph)
+            graph = deepcopy(graphdata[vcs[cover_idx]]) # graph to be generated
 
             @debug "Core found: ", vcs[cover_idx]
             active_non_cover_qubits = setdiff(active, vcs[cover_idx]) # active qubits that are not in the vertex cover
@@ -136,8 +133,8 @@ include("utils.jl")
         @yield reduce(&, [lock(q) for q in net[2]])
 
         # Calculate fidelity
-        @debug collect(edges(refgraph))
-        obs = projector(StabilizerState(Stabilizer(refgraph)))
+        @debug collect(edges(graph))
+        obs = projectors[vcs[cover_idx]]
         fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
@@ -145,7 +142,7 @@ include("utils.jl")
         push!(
             logging,
             (
-                now(sim)-start, fidelity, vcs[cover_idx], [(src(e), dst(e)) for e in  edges(refgraph)]
+                now(sim)-start, fidelity, vcs[cover_idx], [(src(e), dst(e)) for e in  edges(graph)]
             )
         )
         rounds -= 1
@@ -169,13 +166,14 @@ function prepare_sim(n::Int, states_representation::AbstractRepresentation, nois
     return sim
 end
 
-nr = 4
+nr = 2
+const n, graphdata, _, projectors = get_graphdata_from_pickle("examples/graphstateswitch/input/3ghz.pickle")
 states_representation = QuantumOpticsRepr()
-number_of_samples = 1000
+number_of_samples = 10
 seed = 42
 df_all_runs = DataFrame()
 for prob in [0.5]#range(0.1, stop=1, length=10) #cumsum([9/i for i in exp10.(range(1, 10, 10))])#
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=30)) #[0.001, 0.0001, 0.00001]#
+    for mem_depolar_prob in [0.1]#exp10.(range(-3, stop=0, length=30)) #[0.001, 0.0001, 0.00001]#
 
         logging = DataFrame(
             distribution_times  = Float64[],
@@ -183,8 +181,6 @@ for prob in [0.5]#range(0.1, stop=1, length=10) #cumsum([9/i for i in exp10.(ran
             chosen_vcs = [],
             edges = []
         )
-
-        n, graphdata, _ = get_graphdata_from_pickle("examples/graphstateswitch/input/$(nr).pickle")
 
         decoherence_rate = - log(1 - mem_depolar_prob)
         noise_model = Depolarization(1/decoherence_rate)
@@ -201,5 +197,5 @@ for prob in [0.5]#range(0.1, stop=1, length=10) #cumsum([9/i for i in exp10.(ran
         @info "Mem depolar probability: $(mem_depolar_prob) | Link probability: $(prob)| Time: $(timed)"
     end
 end
-#@info df_all_runs
-CSV.write("examples/graphstateswitch/output/factory/qs_graph$(nr)sequentialgeneraltest.csv", df_all_runs)
+@info df_all_runs
+#CSV.write("examples/graphstateswitch/output/factory/qs_graph$(nr)sequentialgeneraltest.csv", df_all_runs)

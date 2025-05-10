@@ -1,6 +1,8 @@
 
 include("utils.jl")
 
+const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+
 @resumable function GHZGraphCanonicalProt(sim, n, net, link_success_prob, logging, rounds)
 
     while rounds != 0
@@ -41,8 +43,7 @@ include("utils.jl")
                     unlock(net[2][i])
                 end
                 @yield lock(net[1][1]) & lock(net[2][1])
-                ( project_traceout!(net[1][1], σˣ) == 2 ) &&
-                apply!(net[2][1], Z) 
+                ( project_traceout!(net[1][1], σˣ) == 2 ) && apply!(net[2][1], Z) 
                 unlock(net[1][1])
                 unlock(net[2][1])
                 break
@@ -50,10 +51,8 @@ include("utils.jl")
         end
         # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
-        obs = projector(StabilizerState(Stabilizer(graphstate(Stabilizer(ghz(n)))[1]))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but they are L.C. equivalent
-        result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
-        fidelity = sqrt(result'*result)
-
+        obs = projector(StabilizerState(Stabilizer(graphstate(Stabilizer(ghzs[n]))[1]))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but they are L.C. equivalent
+        fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
 
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
@@ -90,10 +89,10 @@ end
 
 seed = 42 # random seed 
 
-for n in [8] # number of remote nodes
+for n in [7] # number of remote nodes
     states_representation = QuantumOpticsRepr() #CliffordRepr() #
     mem_depolar_prob = 0.1 # depolarization probability of the memory qubits
-    number_of_samples = 1000 # number of samples to be taken
+    number_of_samples = 10 # number of samples to be taken
 
 
     df_all_runs = DataFrame()
@@ -104,7 +103,7 @@ for n in [8] # number of remote nodes
             fidelities    = Float64[]
         )
 
-        decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rate
+        decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
         noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
         sim = prepare_sim(n, states_representation, noise_model, prop, seed, logging, number_of_samples)
         timed = @elapsed run(sim)
@@ -119,6 +118,6 @@ for n in [8] # number of remote nodes
         append!(df_all_runs, logging)
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
-    #@info df_all_runs
-    CSV.write("examples/graphstateswitch/output/GHZsimple/canonical/qs_canonical$(n).csv", df_all_runs)
+    @info df_all_runs
+    #CSV.write("examples/graphstateswitch/output/GHZsimple/canonical/qs_canonical$(n).csv", df_all_runs)
 end

@@ -66,6 +66,7 @@ end
 function get_graphdata_from_pickle(path)
     
     graphdata = Dict{Tuple, Graph}()
+    projectors = Dict{Tuple, Any}()
     operationdata = Dict{Tuple, Any}()
     
     # Load the graph data in python from pickle file
@@ -90,9 +91,10 @@ function get_graphdata_from_pickle(path)
         # The core represents the key
         key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
         graphdata[key_jl] = graph_jl
+        projectors[key_jl] = projector(Ket(Stabilizer(graph_jl))) # projectors for the graph states # TODO: using StabilizerState is not working!
         operationdata[key_jl] = value[2][1,:] # Transition gate sets
     end
-    return n, graphdata, operationdata
+    return n, graphdata, operationdata, projectors
 end
 
 """

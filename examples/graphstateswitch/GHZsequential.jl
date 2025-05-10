@@ -14,6 +14,7 @@ include("utils.jl")
 
         active_clients = []
         counter_clients = 0
+        CZs = []
 
         while true # until all clients are measured out
             
@@ -42,6 +43,7 @@ include("utils.jl")
                     idx = pop!(active_clients)
                     @yield lock(net[1][idx]) & lock(net[1][active_clients[1]]) & lock(net[2][idx])
                     apply!((net[1][active_clients[1]], net[1][idx]), ZCZ; time=now(sim))
+                    push!(CZs, (net[1][active_clients[1]].idx, net[1][idx].idx))
                     ( project_traceout!(net[1][idx], σˣ) == 2 ) && apply!(net[2][idx], Z) 
                     unlock(net[1][idx])
                     unlock(net[1][active_clients[1]])
@@ -58,12 +60,12 @@ include("utils.jl")
                 add_edge!(graph, (active_clients[1], i))
             end
         end
-        
+
         # Calculate fidelity
         @yield reduce(&, [lock(q) for q in net[2]])
-        obs = projector(StabilizerState(Stabilizer(graph))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but it is L.C. equivalent to a graph state
-        result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
-        fidelity = sqrt(result'*result)
+        obs = projector(StabilizerState(Stabilizer(graph))) #projector(StabilizerState(Stabilizer(graph))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but it is L.C. equivalent to a graph state
+
+        fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
@@ -100,7 +102,8 @@ seed = 42
 for n in [3]
     states_representation = QuantumOpticsRepr()#CliffordRepr()
     mem_depolar_prob = 0.1
-    number_of_samples = 1000
+
+    number_of_samples = 10
 
 
     df_all_runs = DataFrame()
@@ -125,6 +128,6 @@ for n in [3]
         append!(df_all_runs, logging)
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
-    #@info df_all_runs
-    CSV.write("examples/graphstateswitch/output/GHZsimple/sequential/qs_sequential$(n).csv", df_all_runs)
+    @info df_all_runs
+    #CSV.write("examples/graphstateswitch/output/GHZsimple/sequential/qs_sequential$(n).csv", df_all_runs)
 end
