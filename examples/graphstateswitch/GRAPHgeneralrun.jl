@@ -1,4 +1,4 @@
-include("GRAPHutils.jl") # to import graphdata from pickle files
+include("GRAPHgeneralutils.jl") # to import graphdata from pickle files
 
 # load protocol
 protocol = parsed_args["protocol"]
@@ -57,4 +57,4 @@ for link_success_prob in exp10.(range(-3, stop=0, length=10))[1] #cumsum([9/i fo
         @debug "Mem depolar probability: $(mem_depolar_prob) | Link probability: $(link_success_prob)| Time: $(sum(times))"
     end
 end
-CSV.write(parsed_args["output_path"] * "$(filename)_$(protocol)_seed$(seed).csv", df_all_runs)
+CSV.write(parsed_args["output_path"] * "$(replace(filename, ".pickle" => ""))_$(protocol)_seed$(seed).csv", df_all_runs)
