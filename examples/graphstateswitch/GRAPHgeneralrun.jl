@@ -11,8 +11,7 @@ else
 end
 
 # input file
-folder_path = "examples/graphstateswitch/input/"
-input_path = joinpath(pwd(), folder_path)
+folder_path = parsed_args["input_path"]
 files = filter(x -> occursin("pickle", x), readdir(input_path))
 
 filename = files[parsed_args["file_index"]]
