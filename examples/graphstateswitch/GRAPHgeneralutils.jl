@@ -1,4 +1,102 @@
-include("GRAPHutils.jl") # to import graphdata from pickle files
+using QuantumSavory
+using QuantumSavory.CircuitZoo
+using QuantumSavory.ProtocolZoo
+using ConcurrentSim
+using QuantumOpticsBase
+using ResumableFunctions
+using NetworkLayout
+using Random, StatsBase
+using Graphs, GraphRecipes
+
+using DataFrames, StatsPlots
+using CSV
+
+using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT, ghz
+
+using PyCall
+@pyimport pickle
+@pyimport networkx
+
+using ArgParse
+"""
+    parse_commandline()
+    Parse command line arguments using ArgParse.
+    
+    Returns:
+        parsed_args (Dict): Dictionary containing parsed command line arguments.
+"""
+function parse_commandline()
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+        "--file_index", "-f"
+            help = "index of the file to be used"
+            default = 1
+            arg_type = Int
+        "--protocol"
+            help = "protocol to run, choose between 'sequential' and 'canonical'"
+            default = "canonical"
+            arg_type = String
+        "--noise"
+            help = "Noise to be modeled, choose between 'nothing', 'Depolarization' and 'T2Dephasing'"
+            default = "Depolarization"
+            arg_type = String
+        "--nsamples"
+            help = "number of samples to be generated"
+            arg_type = Int
+            default = 10
+        "--seed"
+            help = "random seed"
+            arg_type = Int
+            default = 42
+        "--output_path", "-o"
+            help = "output path"
+            arg_type = String
+            default = "../output/"
+    end
+
+    return parse_args(s)
+end
+parsed_args = parse_commandline()
+
+
+"""
+    get_graphdata_from_pickle(path)
+    Load the graph data from a pickle file and convert it to Julia format.
+    Args:
+        path (str): Path to the pickle file containing graph data.
+    Returns:
+        graphdata (Dict): Dictionary mapping tuples to tuples of Graph and Register.
+        operationdata (Dict): Dictionary mapping tuples to transition gate sets.
+"""
+function get_graphdata_from_pickle(path)
+    graphdata = Dict{Tuple, Graph}()
+    projectors = Dict{Tuple, Any}()
+    operationdata = Dict{Tuple, Any}()
+    
+    # Load the graph data in python from pickle file
+    graphdata_py = pickle.load(open(path, "r"))
+    n = nothing
+    for (key, value) in graphdata_py # value = [lc equivalent graph, transition gates
+        graph_py = value[1]
+        n = networkx.number_of_nodes(graph_py)
+
+        # Generate graph in Julia and apply the CZ gates to reference register
+        graph_jl = Graph()
+        add_vertices!(graph_jl, n)
+        for edge in value[1].edges
+            edgejl = map(x -> x + 1, Tuple(edge)) # +1 because Julia is 1-indexed
+            add_edge!(graph_jl, edgejl) 
+        end
+
+        # The core represents the key
+        key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
+        graphdata[key_jl] = graph_jl
+        projectors[key_jl] = projector(StabilizerState(Stabilizer(graph_jl))) # projectors for the graph states # TODO: using StabilizerState instead of Ket is not working!
+        operationdata[key_jl] = value[2][1,:] # Transition gate sets
+    end
+    return n, graphdata, operationdata, projectors
+end
 
 """
     Generates an EPR pair between the storage qubit at the switch node and the
@@ -125,6 +223,7 @@ end
     @yield reduce(&, [lock(net[idx+1][1]) for idx in 1:n])
     obs = projectors[vcs[cover_idx]]
     fidelity = real(observable([net[idx+1][1] for idx in 1:n], obs; time=now(sim)))
+    @debug "Fidelity: ", fidelity
     foreach(q -> (traceout!(q); unlock(q)), [net[idx+1][1] for idx in 1:n])
 
     # Log outcome
@@ -190,7 +289,112 @@ end
 
 end
 
-function prepare_sim(n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, link_success_prob::Float64, logging::DataFrame, graphdata::Any)
+"""
+    Central switch routine that waits for link-level EPR pairs, selects
+    a suitable vertex cover from `vcs`, distributes the corresponding graph
+    state across the clients and initiates the CZ-and-measurement phase sequentially.
+
+    Args:
+        sim: Simulation time-tracker.
+        net: Quantum network with the switch at node 1 and `n` clients.
+        n: Number of client nodes.
+        vcs: A collection of vertex covers; the first cover contained in the
+            current set of active qubits is chosen and its index broadcast to
+            the clients.
+
+    Returns:
+        Nothing. The function spawns `apply_cz_and_measure` processes for every
+        client once all EPR pairs are available.
+"""
+@resumable function GraphSequentialProt(sim::Environment, net::RegisterNet, n::Int, vcs::Vector{Tuple})
+
+    graph = Graph() # general graph object, to be later replaced by chosen graph
+    counter_clients = 0 # counts clients that are entangled
+    active = Set{Int}() # qubits that have an EPR pair 
+    cover_idx = nothing # index in vcs (fixed once)
+
+    # Wait until core is present
+    while isnothing(cover_idx)
+        @yield onchange_tag(net[1])
+        while true # until the query returns nothing (multiple clients can be successful in parallel)
+            counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+            if !isnothing(counterpart)
+                slot, _, _ = counterpart
+                push!(active, slot.idx)
+                counter_clients += 1
+            else
+                break
+            end
+        end
+        if isnothing(cover_idx)
+            @debug "Active clients: ", active
+            cover_idx = findfirst(vcs) do cover # check if a core is present
+                cover ⊆ active
+            end 
+        end
+        isnothing(cover_idx) && continue # no core found yet so skip and redo loop
+        graph = deepcopy(graphdata[vcs[cover_idx]]) # otherwise select graph to be generated
+
+        @debug "Core found: ", vcs[cover_idx]
+        put!(channel(net, 1=>2), Tag(:cover, cover_idx)) # send the index of the vertex cover to the Logger
+
+        active_non_cover_qubits = setdiff(active, vcs[cover_idx]) # active qubits that are not in the vertex cover
+        @debug "Non-cover qubits: ", active_non_cover_qubits 
+
+        # Measure out all qubits that arrived before vertex cover was present
+        for idx in active_non_cover_qubits
+            @yield @process apply_cz_and_measure(sim, net, idx, graph) # apply CZ gates, measure and send the result to the client
+        end
+    end
+
+    # Now we wait for the rest of the qubits to arrive 
+    while counter_clients <= n
+        counter_clients == n && break # all clients already measured out so skip this loop
+        currently_active = Set{Int}() # qubits that have an EPR pair
+        @yield onchange_tag(net[1])
+        while true # until the query returns nothing
+            counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+            if !isnothing(counterpart)
+                slot, _, _ = counterpart
+                push!(currently_active, slot.idx)
+                counter_clients += 1
+            else
+                break
+            end
+        end
+
+        current_non_cover_qubits = setdiff(currently_active, vcs[cover_idx]) # currently present qubits that are not in the vertex cover
+        @debug "Non-cover qubits that arrived after vertex cover qubits: ", current_non_cover_qubits 
+        for idx in current_non_cover_qubits
+            @yield @process apply_cz_and_measure(sim, net, idx, graph) # apply CZ gates, measure and send the result to the client
+        end
+
+    end
+
+    # Finally only the cover qubits are left to measure out
+    for idx in vcs[cover_idx]
+        @yield @process apply_cz_and_measure(sim, net, idx, graph) # apply CZ gates, measure and send the result to the client
+    end
+end
+
+"""
+    prepare_sim(protocol::Function, n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, link_success_prob::Float64, logging::DataFrame, graphdata::Any)
+
+    Prepare the simulation environment for the given protocol.
+
+    Args:
+        protocol (Function): The protocol function to be executed.
+        n (Int): Number of clients.
+        states_representation (AbstractRepresentation): Representation of the quantum states.
+        noise_model (Union{AbstractBackground, Nothing}): Noise model to be used.
+        link_success_prob (Float64): Probability of successful link establishment.
+        logging (DataFrame): DataFrame to log simulation results.
+        graphdata (Any): Graph data for the simulation.
+
+    Returns:
+        sim: The simulation object.
+"""
+function prepare_sim(protocol::Function, n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, link_success_prob::Float64, logging::DataFrame, graphdata::Any)
 
     graph = star_graph(n+1)
     
@@ -212,52 +416,9 @@ function prepare_sim(n::Int, states_representation::AbstractRepresentation, nois
     end
 
     # Start the piecemaker protocol on the switch
-    @process GraphCanonicalProt(sim, net, n, vcs)
+    @process protocol(sim, net, n, vcs)
 
     @process Logger(sim, net, logging, vcs)
 
     return sim
 end
-
-
-nr = 4
-const n, graphdata, _, projectors = get_graphdata_from_pickle("examples/graphstateswitch/input/6_wheel_graph.pickle")
-states_representation = CliffordRepr() #QuantumOpticsRepr() #
-number_of_samples = 10000
-seed = 42
-
-# Set a random seed
-Random.seed!(seed)
-
-df_all_runs = DataFrame()
-for prob in range(0.1, stop=1, length=10) #cumsum([9/i for i in exp10.(range(1, 10, 10))])#
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=10)) #[0.001, 0.0001, 0.00001]#
-
-        logging = DataFrame(
-            distribution_times  = Float64[],
-            fidelities    = Float64[]
-        )
-        decoherence_rate = - log(1 - mem_depolar_prob)
-        noise_model = Depolarization(1/decoherence_rate)
-
-        times = Float64[]
-        for i in 1:number_of_samples
-            sim = prepare_sim(n, states_representation, noise_model, prob, logging, graphdata)
-        
-            timed = @elapsed run(sim) # time and run the simulation
-            push!(times, timed)
-            @info "Sample $(i) finished", timed
-        end
-
-        logging[!, :elapsed_time] .= times
-        logging[!, :number_of_samples] .= number_of_samples
-        logging[!, :link_success_prob] .= prob
-        logging[!, :mem_depolar_prob] .= mem_depolar_prob
-        logging[!, :num_remote_nodes] .= n
-        logging[!, :seed] .= seed
-        append!(df_all_runs, logging)
-        @debug "Mem depolar probability: $(mem_depolar_prob) | Link probability: $(prob)| Time: $(sum(times))"
-    end
-end
-#@info df_all_runs
-CSV.write("examples/graphstateswitch/output/factory/qs_graph6_wheelcanonicalgeneral_sweep.csv", df_all_runs)
