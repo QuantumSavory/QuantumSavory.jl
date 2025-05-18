@@ -1,6 +1,4 @@
-include("utils.jl")
-
-const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+include("GHZutils.jl")
 
 @resumable function PiecemakerProt(sim, n, net, link_success_prob, logging, rounds)
 
@@ -22,15 +20,24 @@ const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every 
             counter = 0
             while counter < n # until all clients are entangled
                 @yield onchange_tag(net[1])
-                counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
-                if !isnothing(counterpart)
-                    slot, _, _ = counterpart
+                while true
+                    counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+                    if !isnothing(counterpart)
+                        slot, _, _ = counterpart
 
-                    # fuse the qubit with the piecemaker qubit
-                    apply!((net[1][n+1], net[1][slot.idx]), CNOT)
-                    ( project_traceout!(net[1][slot.idx], σᶻ) == 2 ) &&
-                    apply!(net[2][slot.idx], X)
-                    counter += 1
+                        # fuse the qubit with the piecemaker qubit
+                        @yield lock(net[1][n+1]) & lock(net[1][slot.idx]) & lock(net[2][slot.idx])
+                        apply!((net[1][n+1], net[1][slot.idx]), CNOT)
+                        ( project_traceout!(net[1][slot.idx], σᶻ) == 2 ) &&
+                        apply!(net[2][slot.idx], X)
+                        unlock(net[1][n+1])
+                        unlock(net[1][slot.idx])
+                        unlock(net[2][slot.idx])
+                        counter += 1
+                        @debug "Fused client $(slot.idx) with piecemaker qubit"
+                    else
+                        break
+                    end
                 end
             end
 
@@ -46,8 +53,8 @@ const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every 
         # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
         obs = projector(StabilizerState(ghzs[n])) # GHZ state projector to measure
-        result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
-        fidelity = sqrt(result'*result)
+        fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
+        @debug "Fidelity: $(fidelity)"
 
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
@@ -59,7 +66,7 @@ const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every 
             )
         )
         rounds -= 1
-        @info "Round $(rounds) finished"
+        @debug "Round $(rounds) finished"
     end
 
 end
@@ -88,7 +95,7 @@ for n in 2:8
 
 
     df_all_runs = DataFrame()
-    for prop in [0.5]#link_success_probs
+    for prop in [0.5] #link_success_probs
 
         logging = DataFrame(
             distribution_times  = Float64[],

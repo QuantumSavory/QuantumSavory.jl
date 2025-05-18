@@ -1,7 +1,5 @@
 
-include("utils.jl")
-
-const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+include("GHZutils.jl")
 
 @resumable function GHZGraphCanonicalProt(sim, n, net, link_success_prob, logging, rounds)
 
@@ -21,7 +19,7 @@ const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every 
             while true # until the query returns nothing
                 counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
                 if !isnothing(counterpart)
-                    slot, _, tag = counterpart
+                    slot, _, _ = counterpart
                     push!(active_clients, slot)
                     @debug counterpart
                 else
@@ -51,7 +49,7 @@ const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every 
         end
         # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
-        obs = projector(StabilizerState(Stabilizer(graphstate(Stabilizer(ghzs[n]))[1]))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but they are L.C. equivalent
+        obs = projector(Ket(Stabilizer(graphstate(Stabilizer(ghzs[n]))[1]))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but they are L.C. equivalent
         fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
 
         foreach(q -> (traceout!(q); unlock(q)), net[2])
@@ -89,10 +87,10 @@ end
 
 seed = 42 # random seed 
 
-for n in [7] # number of remote nodes
+for n in 2:8 # number of remote nodes
     states_representation = QuantumOpticsRepr() #CliffordRepr() #
     mem_depolar_prob = 0.1 # depolarization probability of the memory qubits
-    number_of_samples = 10 # number of samples to be taken
+    number_of_samples = 1000 # number of samples to be taken
 
 
     df_all_runs = DataFrame()
@@ -118,6 +116,6 @@ for n in [7] # number of remote nodes
         append!(df_all_runs, logging)
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
-    @info df_all_runs
-    #CSV.write("examples/graphstateswitch/output/GHZsimple/canonical/qs_canonical$(n).csv", df_all_runs)
+    #@info df_all_runs
+    CSV.write("examples/graphstateswitch/output/GHZsimple/canonical/qs_canonical$(n).csv", df_all_runs)
 end

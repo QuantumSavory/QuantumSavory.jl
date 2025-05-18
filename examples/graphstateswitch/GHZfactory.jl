@@ -1,7 +1,4 @@
-
-include("utils.jl")
-
-const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+include("GHZutils.jl")
 
 @resumable function FactoryProt(sim, n, net, link_success_prob, logging, rounds)
 
@@ -26,7 +23,7 @@ const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every 
             while true # until the query returns nothing
                 counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
                 if !isnothing(counterpart)
-                    slot, _, tag = counterpart
+                    slot, _, _ = counterpart
                     push!(active_clients, slot)
                     @debug counterpart
                 else
@@ -66,8 +63,7 @@ const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every 
         # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
         obs = projector(StabilizerState(ghzs[n])) # GHZ state projector to measure
-        result = observable([net[2][i] for i in 1:n], obs; time=now(sim))
-        fidelity = sqrt(result'*result)
+        fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
         # Log outcome
@@ -129,6 +125,6 @@ for n in 2:8
         append!(df_all_runs, logging)
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
-    #ƒ@debug df_all_runs
+    #@info df_all_runs
     CSV.write("examples/graphstateswitch/output/GHZsimple/factory/qs_factory$(n).csv", df_all_runs)
 end

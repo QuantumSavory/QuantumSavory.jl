@@ -1,5 +1,4 @@
-
-include("utils.jl")
+include("GHZutils.jl")
 
 @resumable function GHZGraphSequentialProt(sim, n, net, link_success_prob, logging, rounds)
 
@@ -30,7 +29,7 @@ include("utils.jl")
             while true # until the query returns nothing
                 counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
                 if !isnothing(counterpart)
-                    slot, _, tag = counterpart
+                    slot, _, _ = counterpart
                     push!(active_clients, slot.idx)
                     counter_clients += 1
                 else
@@ -63,7 +62,7 @@ include("utils.jl")
 
         # Calculate fidelity
         @yield reduce(&, [lock(q) for q in net[2]])
-        obs = projector(StabilizerState(Stabilizer(graph))) #projector(StabilizerState(Stabilizer(graph))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but it is L.C. equivalent to a graph state
+        obs = projector(Ket(Stabilizer(graph))) #projector(StabilizerState(Stabilizer(graph))) # GHZ graphstate projector to measure NOTE: GHZ state is not a graph state, but it is L.C. equivalent to a graph state
 
         fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         foreach(q -> (traceout!(q); unlock(q)), net[2])
@@ -99,11 +98,11 @@ end
 
 
 seed = 42
-for n in [3]
-    states_representation = QuantumOpticsRepr()#CliffordRepr()
+for n in 2:8
+    states_representation = QuantumOpticsRepr() #CliffordRepr() -- currently not working because of inconsistency with StabilizerState method when using QuantumOpticsRepr
     mem_depolar_prob = 0.1
 
-    number_of_samples = 10
+    number_of_samples = 1000
 
 
     df_all_runs = DataFrame()
@@ -128,6 +127,6 @@ for n in [3]
         append!(df_all_runs, logging)
         @info "Link success probability: $(prop) | Time: $(timed)"
     end
-    @info df_all_runs
-    #CSV.write("examples/graphstateswitch/output/GHZsimple/sequential/qs_sequential$(n).csv", df_all_runs)
+    #@info df_all_runs
+    CSV.write("examples/graphstateswitch/output/GHZsimple/sequential/qs_sequential$(n).csv", df_all_runs)
 end

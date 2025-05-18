@@ -56,25 +56,26 @@ nr = parsed_args["nr"]
 seed = parsed_args["seed"]
 output_path = parsed_args["output_path"]
 
-probs = exp10.(range(-3, stop=0, length=30))
-ts = exp10.(range(1, stop=3, length=30))
+probs = [0.5]#exp10.(range(-3, stop=0, length=30))
+mem_depolar_probs = [0.1]#exp10.(range(1, stop=3, length=30))
 max_prob = maximum(probs)
 
 noise_model = parsed_args["noise"]
 
 # Graph state data
 path_to_graph_data = "examples/graphstateswitch/input/$(nr).pickle"
-graphdata, _ = get_graphdata_from_pickle(path_to_graph_data)
+n, graphdata, operationdata, projectors = get_graphdata_from_pickle(path_to_graph_data)
 
 # Run simulation experiments for differnt noise models
 all_runs = DataFrame()
-for t in ts # Noise time
+for mem_depolar_prob in mem_depolar_probs # Noise time
 
+    t = -log(1 - mem_depolar_prob) # decoherence rate
     # Noise model
     if noise_model == "Depolarization"
-        noise = Depolarization(t)
+        noise = Depolarization(1/t)
     elseif noise_model == "T2Dephasing"
-        noise = T2Dephasing(t)
+        noise = T2Dephasing(1/t)
     elseif noise_model == "nothing"
         noise = nothing
     else
@@ -84,7 +85,6 @@ for t in ts # Noise time
     for link_success_prob in probs
 
         ref_core = first(keys(graphdata)) # the first key is the reference core
-        n = nv(graphdata[ref_core][1]) # number of clients taken from one example graph
 
         logging = DataFrame(
             sim_time    = Float64[],
@@ -124,4 +124,4 @@ for t in ts # Noise time
     end
 end
 @info all_runs
-CSV.write(output_path*"$(protocol)_clifford_nr$(nr)_$(noise_model)_until$(max_prob).csv", all_runs)
+#CSV.write(output_path*"$(protocol)_clifford_nr$(nr)_$(noise_model)_until$(max_prob).csv", all_runs)
