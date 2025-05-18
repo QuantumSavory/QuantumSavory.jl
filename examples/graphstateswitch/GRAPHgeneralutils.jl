@@ -53,10 +53,6 @@ function parse_commandline()
             help = "output path"
             arg_type = String
             default = "../output/"
-        "--input_path",
-            help = "output path"
-            arg_type = String
-            default = "../input/"
     end
 
     return parse_args(s)
