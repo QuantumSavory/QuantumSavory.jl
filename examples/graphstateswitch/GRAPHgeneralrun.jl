@@ -28,8 +28,8 @@ seed = parsed_args["seed"]
 Random.seed!(seed)
 
 df_all_runs = DataFrame()
-for link_success_prob in exp10.(range(-3, stop=0, length=10))[1] #cumsum([9/i for i in exp10.(range(1, 10, 10))])#
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=10))[1] #[0.001, 0.0001, 0.00001]#
+for link_success_prob in exp10.(range(-3, stop=0, length=20))
+    for mem_depolar_prob in exp10.(range(-3, stop=0, length=20)) 
 
         logging = DataFrame(
             distribution_times  = Float64[],
@@ -44,7 +44,7 @@ for link_success_prob in exp10.(range(-3, stop=0, length=10))[1] #cumsum([9/i fo
         
             timed = @elapsed run(sim) # time and run the simulation
             push!(times, timed)
-            @info "Sample $(i) finished", timed
+            @debug "Sample $(i) finished", timed
         end
 
         logging[!, :elapsed_time] .= times
