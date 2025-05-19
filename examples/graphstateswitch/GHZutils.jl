@@ -9,10 +9,38 @@ using Random, StatsBase
 using Graphs, GraphRecipes
 using DataFrames
 using CSV
+using ArgParse
 
 using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT, ghz
 
 const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+
+function parse_commandline()
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+        "-n"
+            help = "number of qubits in the GHZ state"
+            default = 2
+            arg_type = Int
+        "--nsamples"
+            help = "number of samples to be generated"
+            arg_type = Int
+            default = 10
+        "--seed"
+            help = "random seed"
+            arg_type = Int
+            default = 42
+        "--output_path", "-o"
+            help = "output path"
+            arg_type = String
+            default = "../output/"
+    end
+
+    return parse_args(s)
+end
+parsed_args = parse_commandline()
+
 
 """
     Sets up the entangler protocols at a client.

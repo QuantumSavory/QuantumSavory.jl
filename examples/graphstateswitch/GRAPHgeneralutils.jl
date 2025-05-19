@@ -37,10 +37,6 @@ function parse_commandline()
             help = "protocol to run, choose between 'sequential' and 'canonical'"
             default = "canonical"
             arg_type = String
-        "--noise"
-            help = "Noise to be modeled, choose between 'nothing', 'Depolarization' and 'T2Dephasing'"
-            default = "Depolarization"
-            arg_type = String
         "--nsamples"
             help = "number of samples to be generated"
             arg_type = Int

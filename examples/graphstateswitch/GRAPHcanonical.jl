@@ -92,9 +92,9 @@ end
 
 
 nr = 4
-const n, graphdata, _, projectors = get_graphdata_from_pickle("examples/graphstateswitch/input/$(nr).pickle")
+const n, graphdata, _, projectors = get_graphdata_from_pickle("examples/graphstateswitch/input/ghzfiles/$(nr)ghz.pickle")
 @info n
-states_representation = QuantumOpticsRepr() #
+states_representation = QuantumOpticsRepr() 
 number_of_samples = 10
 seed = 42
 df_all_runs = DataFrame()
