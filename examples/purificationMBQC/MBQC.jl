@@ -6,21 +6,18 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 import QuantumSavory: Tag
 
-using GLMakie
-using GeoMakie
-GLMakie.activate!()
-
 using Logging
 global_logger(ConsoleLogger(stderr, Logging.Debug))
 
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
-noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm 
+noisy_pair_func_depol(p) = p*perfect_pair_dm + (1-p)*mixed_dm
 
-F = 0.9
-
-noisy_pair = noisy_pair_func(F)
+function noisy_pair_func(F)
+    p = (4*F-1)/3
+    return noisy_pair_func_depol(p)
+end
 
 @kwdef struct MBQCSetUp
     node::Int
@@ -43,11 +40,11 @@ end
 Base.show(io::IO, tag::PurifiedEntalgementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::PurifiedEntalgementCounterpart) = Tag(PurifiedEntalgementCounterpart, tag.remote_node, tag.remote_slot)
 
-@resumable function MBQC_tracker(sim, net, node)
+@resumable function MBQC_purification_tracker(sim, net, node)
     nodereg = net[node]
     mb = messagebuffer(net, node)
     while true
-        local_tag = query(nodereg, MBQCMeasurement, node, ❓)
+        local_tag = query(nodereg, MBQCMeasurement, node, ❓) # waits on the measurement result
 
         if isnothing(local_tag)
             @yield onchange_tag(net[node])
@@ -80,7 +77,7 @@ end
 @resumable function MBQC_setup(sim, net, node, duration=0.1, period=0.1)
     while true
         query_setup = query(net[node], MBQCSetUp, node)
-        if !isnothing(query_setup)
+        if !isnothing(query_setup) # no need to set up if it already is
             if isnothing(period)
                 @yield onchange_tag(net[node])
             else
@@ -89,6 +86,7 @@ end
             continue
         end
         @debug "Setup starting at node $(node)."
+        # creating cluster states
         initialize!(net[node, 3], X1)
         initialize!(net[node, 4], X1)
         apply!((net[node, 3], net[node, 4]), CPHASE)
@@ -97,9 +95,10 @@ end
         @debug "Setup done at node $(node)."
     end
 end
+
 @resumable function entangler(sim, net; pairstate=noisy_pair, period=0.1)
     while true
-        # entangle 1 to 1 and 2 to 2
+        # entangle 1 to 1 and 2 to 2 (long-range entanglements to be purified)
         entangler1 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=1, chooseB=1, rounds=1)
         entangler2 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=2, chooseB=2, rounds=1)
         p1 = @process entangler1()
@@ -112,6 +111,7 @@ end
 
 @resumable function MBQC_purify(sim, net, node, duration=0.1, period=0.1)
     while true
+        # checking whether we have entanglements to purify & setup is completed
         query1 = queryall(net[node], EntanglementCounterpart, ❓, ❓; locked=false, assigned=true) 
         query2 = query(net[node], MBQCSetUp, node)
         if length(query1) < 2 || isnothing(query2)
@@ -154,19 +154,17 @@ end
     end
 end
 
-
-
+# Run simulation (infinite rounds)
 
 regL = Register(4)
 regR = Register(4)
 net = RegisterNet([regL, regR])
 sim = get_time_tracker(net)
+F = 0.9 # fidelity
 
 @process entangler(sim, net)
-@process MBQC_tracker(sim, net, 1)
-@process MBQC_tracker(sim, net, 2)
-
-
+@process MBQC_purification_tracker(sim, net, 1)
+@process MBQC_purification_tracker(sim, net, 2)
 
 @process MBQC_setup(sim, net, 1)
 @process MBQC_setup(sim, net, 2)
@@ -185,9 +183,8 @@ observable([net[1], net[2]], [2, 2], projector(perfect_pair))
 # has not been consumed yet
 observable([net[1], net[2]], [4, 4], projector(perfect_pair))
 
-
 run(sim, 4)
 
-# should be consumed and return nothing
+# should have been consumed and return nothing
 observable([net[1], net[2]], [4, 4], projector(perfect_pair))
 
