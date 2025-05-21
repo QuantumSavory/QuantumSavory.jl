@@ -4,6 +4,10 @@ using Revise
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumClifford: ghz
+
+using Logging
+global_logger(ConsoleLogger(stderr, Logging.Debug))
+
 const bell = StabilizerState("XX ZZ")
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
@@ -18,64 +22,86 @@ end
 
 S = 5 # number of sensors
 F = 0.99 # fidelity
+entanglemnt_success_prob = 0.05 
+fixed_time = 1 # time for EntanglerProts
 
 noisy_pair = noisy_pair_func(F)
 
-@resumable function GHZ_projection(sim, net, S; time=0.1)
+mutable struct EntangledNodes
+    nodes::Vector{Int}
+end 
+
+@resumable function GHZ_projection(sim, net, S, fixed_time, entangled; time=0.1)
     hub_idx = S + 1
     while true
-        queries = []
-        incomplete = false
-        # check & wait for all entanglements
+        @yield timeout(sim, fixed_time + 0.1)  # TODO: Fix this for multiple rounds (probably tag-based)
+        entangled_ = Int[]
         for i in 1:S
             q = query(net[hub_idx], EntanglementCounterpart, i, ❓; locked=false, assigned=true)
-            if isnothing(q)
-                @yield timeout(sim, 0.1)
-                incomplete = true
-                break
+            if !isnothing(q)
+                push!(entangled_, q.tag.data[2])
             end
-            push!(queries, q)
         end
-        if incomplete
-            continue
+        entangled.nodes = entangled_
+        if length(entangled.nodes) == 0 # no entanglements
+            @debug "All entanglement failed"
+            break
+        else
+            #@debug "$(length(entangled)) entanglements are ready, at $(now(sim))"
+            println("$(length(entangled.nodes)) entanglements are ready, at $(now(sim))")
+            
+            # GHZ -> computational basis
+
+            first = entangled.nodes[1]
+            others = filter(i -> i != first, entangled.nodes)
+            
+            # This "collects" parity information into the first entangled qubit
+            for i in others
+                apply!([net[hub_idx, first], net[hub_idx, i]], CNOT)
+            end
+            apply!(net[hub_idx, first], H)
+
+            # measure & send correction message
+            m1 = project_traceout!(net[hub_idx, first], Z)
+
+            # If the result is '1' (m1 == 2), the global GHZ state is flipped (X gate needed)
+            if m1 == 2
+                msg1 = Tag(EntanglementUpdateX, hub_idx, first, 1, -1, -1, m1)
+                put!(channel(net, hub_idx => first; permit_forward=true), msg1)
+            end
+
+            # If m == 2 ('1'), this indicates a relative phase flip (Z gate needed)
+            for i in others
+                m = project_traceout!(net[hub_idx, i], Z)
+                msg = Tag(EntanglementUpdateZ, hub_idx, i, 1, -1, -1, m)
+                put!(channel(net, hub_idx => i; permit_forward=true), msg)
+            end
+
+            @yield timeout(sim, time)
         end
-
-        @debug "All entanglements are ready, at $(now(sim))"
-
-        # GHZ -> computational basis
-
-        # This "collects" parity information into qubit 1
-        for i in 2:S
-            apply!([net[hub_idx, 1], net[hub_idx, i]], CNOT)
-        end
-        apply!(net[hub_idx, 1], H)
-
-        # measure & send correction message
-        m1 = project_traceout!(net[hub_idx, 1], Z)
-
-        # If the result is '1' (m1 == 2), the global GHZ state is flipped (X gate needed)
-        if m1 == 2
-            msg1 = Tag(EntanglementUpdateX, hub_idx, 1, 1, -1, -1, m1)
-            put!(channel(net, hub_idx => 1; permit_forward=true), msg1)
-        end
-
-        # If m == 2 ('1'), this indicates a relative phase flip (Z gate needed)
-        for i in 2:S
-            m = project_traceout!(net[hub_idx, i], Z)
-            msg = Tag(EntanglementUpdateZ, hub_idx, i, 1, -1, -1, m)
-            put!(channel(net, hub_idx => i; permit_forward=true), msg)
-        end
-
-        @yield timeout(sim, time)
     end
 end
 
+@resumable function entangler(sim, net, S, fixed_time)
+    procs = []
+    for i in 1:S
+        # entangle sensors with the hub (S+1)
+        eprot = EntanglerProt(sim, net, i, S + 1; pairstate=noisy_pair, chooseA=1, chooseB=i, success_prob=entanglemnt_success_prob)
+        @process eprot()
+    end
+    @yield timeout(sim, fixed_time)
+    for p in procs
+        cancel!(p)
+    end
+end
 
 # run the simulation
 
-net = RegisterNet([[Register(1, T2Dephasing(1.0)) for _ in 1:S]; Register(S, T2Dephasing(1.0))])
+net = RegisterNet([[Register(1, Depolarization(1.0)) for _ in 1:S]; Register(S, Depolarization(1.0))])
 
 sim = get_time_tracker(net)
+
+entangled_nodes = EntangledNodes(Int[])
 
 for i in 1:S
     # for entanglements and incoming correction messages
@@ -83,16 +109,15 @@ for i in 1:S
     @process tracker()
 end
 
-for i in 1:S
-    # entangle sensors with the hub (S+1)
-    eprot = EntanglerProt(sim, net, i, S + 1; pairstate=noisy_pair, chooseA=1, chooseB=i, rounds=1, success_prob=1.)
-    @process eprot()
-end
+@process entangler(sim, net, S, fixed_time)
 
-@process GHZ_projection(sim, net, S)
-run(sim, 10)
+@process GHZ_projection(sim, net, S, fixed_time, entangled_nodes)
+run(sim, 3)
 
-ghz_state = StabilizerState(ghz(S))
+ghz_state = StabilizerState(ghz(length(entangled[])))
 
 # a bit noisy, but should be close to 1
-observable([net[i,1] for i in 1:S], projector(ghz_state)) 
+observable([net[i,1] for i in entangled], projector(ghz_state)) 
+
+entangled_nodes.nodes
+isnothing([])
