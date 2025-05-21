@@ -22,8 +22,8 @@ end
 
 S = 5 # number of sensors
 F = 0.99 # fidelity
-entanglemnt_success_prob = 0.05 
-fixed_time = 1 # time for EntanglerProts
+entanglemnt_success_prob = 0.001
+fixed_time = 0.5 # time for EntanglerProts
 
 noisy_pair = noisy_pair_func(F)
 
@@ -31,9 +31,10 @@ mutable struct EntangledNodes
     nodes::Vector{Int}
 end 
 
-@resumable function GHZ_projection(sim, net, S, fixed_time, entangled; time=0.1)
+@resumable function GHZ_projection(sim, net, S, fixed_time, entangled; rounds=1, time=0.1)
     hub_idx = S + 1
-    while true
+    while rounds != 0
+        println(entangled.nodes)
         @yield timeout(sim, fixed_time + 0.1)  # TODO: Fix this for multiple rounds (probably tag-based)
         entangled_ = Int[]
         for i in 1:S
@@ -43,35 +44,32 @@ end
             end
         end
         entangled.nodes = entangled_
+        println(entangled.nodes)
         if length(entangled.nodes) == 0 # no entanglements
             @debug "All entanglement failed"
             break
         else
-            #@debug "$(length(entangled)) entanglements are ready, at $(now(sim))"
-            println("$(length(entangled.nodes)) entanglements are ready, at $(now(sim))")
+            @debug "$(length(entangled)) entanglements are ready, at $(now(sim))"
             
             # GHZ -> computational basis
-
-            first = entangled.nodes[1]
-            others = filter(i -> i != first, entangled.nodes)
             
             # This "collects" parity information into the first entangled qubit
-            for i in others
-                apply!([net[hub_idx, first], net[hub_idx, i]], CNOT)
+            for i in entangled.nodes[2:end]
+                apply!([net[hub_idx, entangled.nodes[1]], net[hub_idx, i]], CNOT)
             end
-            apply!(net[hub_idx, first], H)
+            apply!(net[hub_idx, entangled.nodes[1]], H)
 
             # measure & send correction message
-            m1 = project_traceout!(net[hub_idx, first], Z)
+            m1 = project_traceout!(net[hub_idx, entangled.nodes[1]], Z)
 
             # If the result is '1' (m1 == 2), the global GHZ state is flipped (X gate needed)
             if m1 == 2
-                msg1 = Tag(EntanglementUpdateX, hub_idx, first, 1, -1, -1, m1)
-                put!(channel(net, hub_idx => first; permit_forward=true), msg1)
+                msg1 = Tag(EntanglementUpdateX, hub_idx, entangled.nodes[1], 1, -1, -1, m1)
+                put!(channel(net, hub_idx => entangled.nodes[1]; permit_forward=true), msg1)
             end
 
             # If m == 2 ('1'), this indicates a relative phase flip (Z gate needed)
-            for i in others
+            for i in entangled.nodes[2:end]
                 m = project_traceout!(net[hub_idx, i], Z)
                 msg = Tag(EntanglementUpdateZ, hub_idx, i, 1, -1, -1, m)
                 put!(channel(net, hub_idx => i; permit_forward=true), msg)
@@ -79,10 +77,11 @@ end
 
             @yield timeout(sim, time)
         end
+        rounds==-1 || (rounds -= 1)
     end
 end
 
-@resumable function entangler(sim, net, S, fixed_time)
+@resumable function entangler(sim, net, S, fixed_time, entanglemnt_success_prob)
     procs = []
     for i in 1:S
         # entangle sensors with the hub (S+1)
@@ -109,15 +108,12 @@ for i in 1:S
     @process tracker()
 end
 
-@process entangler(sim, net, S, fixed_time)
+@process entangler(sim, net, S, fixed_time,entanglemnt_success_prob)
 
 @process GHZ_projection(sim, net, S, fixed_time, entangled_nodes)
-run(sim, 3)
+run(sim, 1)
 
-ghz_state = StabilizerState(ghz(length(entangled[])))
+ghz_state = StabilizerState(ghz(length(entangled_nodes.nodes)))
 
 # a bit noisy, but should be close to 1
-observable([net[i,1] for i in entangled], projector(ghz_state)) 
-
-entangled_nodes.nodes
-isnothing([])
+observable([net[i,1] for i in entangled_nodes.nodes], projector(ghz_state))
