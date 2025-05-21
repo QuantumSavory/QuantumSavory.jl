@@ -102,11 +102,10 @@ end
         # entangle 1 to 1 and 2 to 2
         entangler1 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=1, chooseB=1, rounds=1)
         entangler2 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=2, chooseB=2, rounds=1)
-        @process entangler1()
-        query1 = query(net[1], EntanglementCounterpart, 2, 1)
-        if !isnothing(query1)
-            @process entangler2()
-        end
+        p1 = @process entangler1()
+        @yield p1
+        p2 =  @process entangler2()
+        @yield p2
         @yield timeout(sim, period)
     end
 end
