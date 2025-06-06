@@ -7,6 +7,7 @@ using ResumableFunctions
 using NetworkLayout
 using Random, StatsBase
 using Graphs, GraphRecipes
+using Graphs: grid
 
 using DataFrames, StatsPlots
 using CSV
@@ -29,6 +30,14 @@ function parse_commandline()
     s = ArgParseSettings()
 
     @add_arg_table s begin
+        "--size"
+            help = "number of nodes in the graph state (or gridlenth if grid graph is used)"
+            default = 3
+            arg_type = Int
+        "--graphtype", "-g"
+            help = "type of the graph to be used, choose between 'path' and 'grid'"
+            default = "path"
+            arg_type = String
         "--file_index", "-f"
             help = "index of the file to be used"
             default = 1
@@ -40,7 +49,7 @@ function parse_commandline()
         "--nsamples"
             help = "number of samples to be generated"
             arg_type = Int
-            default = 10
+            default = 5
         "--seed"
             help = "random seed"
             arg_type = Int
@@ -92,6 +101,36 @@ function get_graphdata_from_pickle(path)
         operationdata[key_jl] = value[2][1,:] # Transition gate sets
     end
     return n, graphdata, operationdata, projectors
+end
+
+"""
+is_vertex_cover(g::AbstractGraph, S::Set{Int})::Bool
+Return `true` iff every edge of `g` has at least one endpoint in `S`.
+Runs in Θ(|E|) time.
+"""
+function is_vertex_cover(g::AbstractGraph, S::Set{Int})::Bool
+    for e in edges(g)
+        (src(e) ∈ S || dst(e) ∈ S) || return false
+    end
+    return true
+end
+
+"""
+minimal_vertex_cover(g::AbstractGraph, S::Set{Int})::Set{Int}
+Given a vertex cover S, return a *minimal* vertex cover contained in S
+by deleting every redundant vertex. Returns a set with only 0 as an element if S is not a cover.
+Runs in Θ(|V| + |E|) time.
+"""
+function minimal_vertex_cover(g::AbstractGraph, S::Set{Int})::Set{Int}
+    is_vertex_cover(g, S) || return Set([0])  # return empty set if S is not a cover
+    @debug g, S
+
+    C = Set(S)                     # non-destructive copy
+    for v in C
+        neighs = neighbors(g, v)    # get neighbors of v and remove v if all neighbors are in C (then no edge can be uncovered by removing v)
+        issubset(neighs, C) && delete!(C, v)  # remove neighbors from C
+    end
+    return C
 end
 
 """
@@ -231,6 +270,31 @@ end
     )
 end
 
+@resumable function Logger(sim::Environment, net::RegisterNet, logging::DataFrame, graph::Graph)
+    # Wait until all clients have been corrected
+    corrected = 0
+    while corrected < n
+        @yield wait(messagebuffer(net[1]))
+        if !isnothing(querydelete!(messagebuffer(net[1]), :corrected))
+            corrected += 1
+        end
+    end
+
+    # Now we can calculate the fidelity and log the outcome
+    @yield reduce(&, [lock(net[idx+1][1]) for idx in 1:n])
+    fidelity = real(observable([net[idx+1][1] for idx in 1:n], prjtr; time=now(sim)))
+    @debug "Fidelity: ", fidelity
+    foreach(q -> (traceout!(q); unlock(q)), [net[idx+1][1] for idx in 1:n])
+
+    # Log outcome
+    push!(
+        logging,
+        (
+            now(sim), fidelity
+        )
+    )
+end
+
 """
     Central switch routine that waits for all link-level EPR pairs, selects
     a suitable vertex cover from `vcs`, distributes the corresponding graph
@@ -285,6 +349,34 @@ end
 
 end
 
+@resumable function GraphCanonicalProt(sim::Environment, net::RegisterNet, n::Int, graph::Graph)
+
+    counter_clients = 0 # counts clients that are entangled
+    active = Set{Int}() # qubits that have an EPR pair 
+
+    while counter_clients < n
+
+        @yield onchange_tag(net[1])
+        while true # until the query returns nothing (multiple clients can be successful in parallel)
+            counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+            if !isnothing(counterpart)
+                slot, _, _ = counterpart
+                push!(active, slot.idx)
+                counter_clients += 1
+            else
+                break
+            end
+        end
+    end
+
+    # All clients have established their link-level entanglement
+    graph = deepcopy(graph) # graph to be generated
+    for idx in 1:n
+        @yield @process apply_cz_and_measure(sim, net, idx, graph) # apply CZ gates, measure and send the result to the client
+    end
+
+end
+
 """
     Central switch routine that waits for link-level EPR pairs, selects
     a suitable vertex cover from `vcs`, distributes the corresponding graph
@@ -303,6 +395,7 @@ end
         client once all EPR pairs are available.
 """
 @resumable function GraphSequentialProt(sim::Environment, net::RegisterNet, n::Int, vcs::Vector{Tuple})
+    println("GraphSequentialProt called with vcs.")
 
     graph = Graph() # general graph object, to be later replaced by chosen graph
     counter_clients = 0 # counts clients that are entangled
@@ -373,6 +466,77 @@ end
     end
 end
 
+@resumable function GraphSequentialProt(sim::Environment, net::RegisterNet, n::Int, graph::Graph)
+
+    counter_clients = 0 # counts clients that are entangled
+    active = Set{Int}() # qubits that have an EPR pair 
+    cover = nothing # minimal vertex cover (fixed once)
+
+    # Wait until core is present
+    while isnothing(cover)
+        @yield onchange_tag(net[1])
+        while true # until the query returns nothing (multiple clients can be successful in parallel)
+            counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+            if !isnothing(counterpart)
+                slot, _, _ = counterpart
+                push!(active, slot.idx)
+                counter_clients += 1
+            else
+                break
+            end
+        end
+        @debug "Active clients: ", active
+        if isnothing(cover)
+            # check if a core is present
+            mvc = minimal_vertex_cover(graph, active)
+            if mvc != Set([0]) # if the set is not empty, we have a cover
+                cover = mvc
+            end
+        end
+        isnothing(cover) && continue # no core found yet so skip and redo loop
+        graph = deepcopy(graph) # otherwise select graph to be generated
+
+        @debug "Core found: ", cover
+
+        active_non_cover_qubits = setdiff(active, cover) # active qubits that are not in the vertex cover
+        @debug "Non-cover qubits: ", active_non_cover_qubits 
+
+        # Measure out all qubits that arrived before vertex cover was present
+        for idx in active_non_cover_qubits
+            @yield @process apply_cz_and_measure(sim, net, idx, graph) # apply CZ gates, measure and send the result to the client
+        end
+    end
+
+    # Now we wait for the rest of the qubits to arrive 
+    while counter_clients <= n
+        counter_clients == n && break # all clients already measured out so skip this loop
+        currently_active = Set{Int}() # qubits that have an EPR pair
+        @yield onchange_tag(net[1])
+        while true # until the query returns nothing
+            counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+            if !isnothing(counterpart)
+                slot, _, _ = counterpart
+                push!(currently_active, slot.idx)
+                counter_clients += 1
+            else
+                break
+            end
+        end
+
+        current_non_cover_qubits = setdiff(currently_active, cover) # currently present qubits that are not in the vertex cover
+        @debug "Non-cover qubits that arrived after vertex cover qubits: ", current_non_cover_qubits 
+        for idx in current_non_cover_qubits
+            @yield @process apply_cz_and_measure(sim, net, idx, graph) # apply CZ gates, measure and send the result to the client
+        end
+
+    end
+
+    # Finally only the cover qubits are left to measure out
+    for idx in cover
+        @yield @process apply_cz_and_measure(sim, net, idx, graph) # apply CZ gates, measure and send the result to the client
+    end
+end
+
 """
     prepare_sim(protocol::Function, n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, link_success_prob::Float64, logging::DataFrame, graphdata::Any)
 
@@ -399,8 +563,6 @@ function prepare_sim(protocol::Function, n::Int, states_representation::Abstract
     net = RegisterNet(graph, [switch, clients...])
     sim = get_time_tracker(net)
 
-    vcs = collect(keys(graphdata)) # vertex covers TODO: can this be prettier?
-
     # Start entanglement generation for each client
     for i in 1:n
         @process entangle(sim, net, 1, i, link_success_prob)
@@ -412,9 +574,9 @@ function prepare_sim(protocol::Function, n::Int, states_representation::Abstract
     end
 
     # Start the piecemaker protocol on the switch
-    @process protocol(sim, net, n, vcs)
+    @process protocol(sim, net, n, graphdata)
 
-    @process Logger(sim, net, logging, vcs)
+    @process Logger(sim, net, logging, graphdata)
 
     return sim
 end

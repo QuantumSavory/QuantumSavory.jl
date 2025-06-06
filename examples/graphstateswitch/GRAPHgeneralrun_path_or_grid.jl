@@ -10,16 +10,19 @@ else
     error("Invalid protocol specified. Use 'sequential' or 'canonical'.")
 end
 
-# input file
-folder_path = "examples/graphstateswitch/input/"
-input_path = joinpath(pwd(), folder_path)
-files = filter(x -> occursin("pickle", x), readdir(input_path))
-
-filename = files[parsed_args["file_index"]]
-file = joinpath(input_path, filename)
-
 # load graph data
-const n, graphdata, _, projectors = get_graphdata_from_pickle(file)
+graph = nothing
+if parsed_args["graphtype"] == "path"
+    graph = path_graph(parsed_args["size"])
+elseif parsed_args["graphtype"] == "grid"
+    l = parsed_args["size"]
+    graph = grid([l,l])
+else
+    error("Invalid graph type specified. Use 'path' or 'grid'.")
+end
+
+const n = nv(graph) # number of nodes in the graph
+const prjtr = projector(StabilizerState(Stabilizer(graph)))
 states_representation = CliffordRepr()
 number_of_samples = parsed_args["nsamples"]
 
@@ -40,7 +43,7 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
 
         times = Float64[]
         for i in 1:number_of_samples
-            sim = prepare_sim(Prot, n, states_representation, noise_model, link_success_prob, logging, graphdata)
+            sim = prepare_sim(Prot, n, states_representation, noise_model, link_success_prob, logging, graph)
         
             timed = @elapsed run(sim) # time and run the simulation
             push!(times, timed)
@@ -57,4 +60,4 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
         @debug "Mem depolar probability: $(mem_depolar_prob) | Link probability: $(link_success_prob)| Time: $(sum(times))"
     end
 end
-CSV.write(parsed_args["output_path"] * "$(replace(filename, ".pickle" => ""))_$(protocol)_seed$(seed).csv", df_all_runs)
+CSV.write(parsed_args["output_path"] * "$(parsed_args["graphtype"])$(parsed_args["size"])_$(protocol)_seed$(seed).csv", df_all_runs)
