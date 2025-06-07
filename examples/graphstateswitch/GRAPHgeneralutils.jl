@@ -14,9 +14,9 @@ using CSV
 
 using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT, ghz
 
-using PyCall
-@pyimport pickle
-@pyimport networkx
+# using PyCall
+# @pyimport pickle
+# @pyimport networkx
 
 using ArgParse
 """
@@ -65,43 +65,43 @@ end
 parsed_args = parse_commandline()
 
 
-"""
-    get_graphdata_from_pickle(path)
-    Load the graph data from a pickle file and convert it to Julia format.
-    Args:
-        path (str): Path to the pickle file containing graph data.
-    Returns:
-        graphdata (Dict): Dictionary mapping tuples to tuples of Graph and Register.
-        operationdata (Dict): Dictionary mapping tuples to transition gate sets.
-"""
-function get_graphdata_from_pickle(path)
-    graphdata = Dict{Tuple, Graph}()
-    projectors = Dict{Tuple, Any}()
-    operationdata = Dict{Tuple, Any}()
+# """
+#     get_graphdata_from_pickle(path)
+#     Load the graph data from a pickle file and convert it to Julia format.
+#     Args:
+#         path (str): Path to the pickle file containing graph data.
+#     Returns:
+#         graphdata (Dict): Dictionary mapping tuples to tuples of Graph and Register.
+#         operationdata (Dict): Dictionary mapping tuples to transition gate sets.
+# """
+# function get_graphdata_from_pickle(path)
+#     graphdata = Dict{Tuple, Graph}()
+#     projectors = Dict{Tuple, Any}()
+#     operationdata = Dict{Tuple, Any}()
     
-    # Load the graph data in python from pickle file
-    graphdata_py = pickle.load(open(path, "r"))
-    n = nothing
-    for (key, value) in graphdata_py # value = [lc equivalent graph, transition gates
-        graph_py = value[1]
-        n = networkx.number_of_nodes(graph_py)
+#     # Load the graph data in python from pickle file
+#     graphdata_py = pickle.load(open(path, "r"))
+#     n = nothing
+#     for (key, value) in graphdata_py # value = [lc equivalent graph, transition gates
+#         graph_py = value[1]
+#         n = networkx.number_of_nodes(graph_py)
 
-        # Generate graph in Julia and apply the CZ gates to reference register
-        graph_jl = Graph()
-        add_vertices!(graph_jl, n)
-        for edge in value[1].edges
-            edgejl = map(x -> x + 1, Tuple(edge)) # +1 because Julia is 1-indexed
-            add_edge!(graph_jl, edgejl) 
-        end
+#         # Generate graph in Julia and apply the CZ gates to reference register
+#         graph_jl = Graph()
+#         add_vertices!(graph_jl, n)
+#         for edge in value[1].edges
+#             edgejl = map(x -> x + 1, Tuple(edge)) # +1 because Julia is 1-indexed
+#             add_edge!(graph_jl, edgejl) 
+#         end
 
-        # The core represents the key
-        key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
-        graphdata[key_jl] = graph_jl
-        projectors[key_jl] = projector(StabilizerState(Stabilizer(graph_jl))) # projectors for the graph states # TODO: using StabilizerState instead of Ket is not working!
-        operationdata[key_jl] = value[2][1,:] # Transition gate sets
-    end
-    return n, graphdata, operationdata, projectors
-end
+#         # The core represents the key
+#         key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
+#         graphdata[key_jl] = graph_jl
+#         projectors[key_jl] = projector(StabilizerState(Stabilizer(graph_jl))) # projectors for the graph states # TODO: using StabilizerState instead of Ket is not working!
+#         operationdata[key_jl] = value[2][1,:] # Transition gate sets
+#     end
+#     return n, graphdata, operationdata, projectors
+# end
 
 """
 is_vertex_cover(g::AbstractGraph, S::Set{Int})::Bool
