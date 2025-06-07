@@ -32,7 +32,7 @@ function parse_commandline()
     @add_arg_table s begin
         "--size"
             help = "number of nodes in the graph state (or gridlenth if grid graph is used)"
-            default = 3
+            default = 50
             arg_type = Int
         "--graphtype", "-g"
             help = "type of the graph to be used, choose between 'path' and 'grid'"
@@ -49,7 +49,7 @@ function parse_commandline()
         "--nsamples"
             help = "number of samples to be generated"
             arg_type = Int
-            default = 5
+            default = 1
         "--seed"
             help = "random seed"
             arg_type = Int

@@ -22,7 +22,7 @@ else
 end
 
 const n = nv(graph) # number of nodes in the graph
-const prjtr = projector(StabilizerState(Stabilizer(graph)))
+const prjtr = SProjector(StabilizerState(Stabilizer(graph)))
 states_representation = CliffordRepr()
 number_of_samples = parsed_args["nsamples"]
 
