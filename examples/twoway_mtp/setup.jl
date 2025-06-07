@@ -4,7 +4,7 @@ using QuantumSymbolics
 using QuantumInterface
 
 using Random
-using Makie
+using CairoMakie
 include("./noisyops/CircuitZoo.jl")
 
 
@@ -58,8 +58,8 @@ struct NetworkParam
         @assert 0 <=  ϵ_g  <= 1     "ϵ_g must be in [0, 1]"
         @assert 0 <=   ξ   <= 1     "ξ must be in [0, 1]"
         @assert all(x -> 0 <= x, t_comms)       "All node distances must be non-negative"
-        @assert length(t_comms) == n            "Number of node distances must be N"
-        @assert length(distil_sched) == log2(n) "Number of distillation schedules must be N"
+        @assert length(t_comms) == n            "Number of node distances must be n"
+        @assert length(distil_sched) == log2(n) "Number of distillation schedules must be log2(n)"
 
         new(n, q, T2, F, p_ent, ϵ_g, ξ, t_comms, distil_sched)
     end
@@ -97,6 +97,7 @@ end
 
 include("./utils/bellStates.jl")
 include("./utils/network.jl")
+include("./utils/distil_sched.jl")
 include("./baseops/uptotime.jl")
 
 include("./processes/purify.jl")
@@ -109,20 +110,20 @@ function simulate!(N::Network; PLOT::Bool=false)
     plots::Vector{Figure} = []
 
     @info "Starting simulation of Quantum Network with n=$n"
-    QuantumNetwork.entangle!(N)
+    entangle!(N)
     
     if PLOT push!(plots, netplot(N)) end
 
     for i in Int64.(1:log2(n))
         if N.param.distil_sched[i]
             @info "Purifying at level $i"
-            QuantumNetwork.purify!(N)
+            purify!(N)
 
             if PLOT push!(plots, netplot(N)) end
         end
 
         @info "Performing entanglement swapping at level $i"
-        QuantumNetwork.ent_swap!(N, i)
+        ent_swap!(N, i)
 
         if PLOT push!(plots, netplot(N)) end
     end

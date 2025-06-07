@@ -21,7 +21,7 @@ function entangle!(N::Network, nodeL::Node, nodeR::Node)
 
     for q in 1:q
         if rand(N.rng) < N.param.p_ent
-            QuantumNetwork.entangle!(N, nodeL.right[q], nodeR.left[q])
+            entangle!(N, nodeL.right[q], nodeR.left[q])
         end
     end
 
@@ -36,6 +36,6 @@ function entangle!(N::Network)
     n = N.param.n
     
     for i in 1:n
-        QuantumNetwork.entangle!(N, i, i+1)
+        entangle!(N, i, i+1)
     end
 end

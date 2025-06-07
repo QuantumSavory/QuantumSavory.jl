@@ -17,7 +17,7 @@ function ent_swap!(N::Network, node::Node)
     ent_list_R = [(node.right[q], N.ent_list[node.right[q]]) for q in 1:q if node.right[q] in keys(N.ent_list)]
 
     for ((remoteL, localL), (localR, remoteR)) in zip(ent_list_L, ent_list_R)
-        QuantumNetwork.ent_swap!(N, remoteL, localL, localR, remoteR)
+        ent_swap!(N, remoteL, localL, localR, remoteR)
     end
 
     len_diff = length(ent_list_L) - length(ent_list_R)
@@ -46,7 +46,7 @@ function ent_swap!(N::Network, i::Int)
 
     for j in 1:n         # Implement multi-threading (after thread safety)
         if j % 2^i == (2^i)/2
-            QuantumNetwork.ent_swap!(N, N.nodes[j+1])
+            ent_swap!(N, N.nodes[j+1])
         end
     end
 end
@@ -58,9 +58,9 @@ function ent_swap!(N::Network)
 
     for i in Int64.(1:log2(n))
         if N.param.distil_sched[i]
-            QuantumNetwork.purify!(N)
+            purify!(N)
         end
         
-        QuantumNetwork.ent_swap!(N, i)
+        ent_swap!(N, i)
     end
 end

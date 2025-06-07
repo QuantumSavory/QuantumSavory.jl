@@ -19,7 +19,7 @@ function purify!(N::Network, nodeL::Node, nodeR::Node)
     while length(ent_list) > 1
         (memL, memR) = popfirst!(ent_list)
         (ancL, ancR) = popfirst!(ent_list)
-        QuantumNetwork.purify!(N, memL, memR, ancL, ancR)
+        purify!(N, memL, memR, ancL, ancR)
     end
 
     if length(ent_list) == 1
@@ -36,7 +36,7 @@ function purify!(N::Network)
     times::Vector{Float64} = []
     for node in N.nodes
         if !isnothing(node.connectedTo_R)
-            QuantumNetwork.purify!(N, node, node.connectedTo_R)
+            purify!(N, node, node.connectedTo_R)
             push!(times, getCommTime(N, node, node.connectedTo_R))
         end
     end
