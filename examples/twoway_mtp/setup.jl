@@ -4,7 +4,7 @@ using QuantumSymbolics
 using QuantumInterface
 
 using Random
-using CairoMakie
+using Makie
 include("./noisyops/CircuitZoo.jl")
 
 
@@ -115,13 +115,13 @@ function simulate!(N::Network; PLOT::Bool=false)
 
     for i in Int64.(1:log2(n))
         if N.param.distil_sched[i]
-            @info "Purifying at distillation level $i"
+            @info "Purifying at level $i"
             QuantumNetwork.purify!(N)
 
             if PLOT push!(plots, netplot(N)) end
         end
 
-        @info "Performing entanglement swapping at distillation level $i"
+        @info "Performing entanglement swapping at level $i"
         QuantumNetwork.ent_swap!(N, i)
 
         if PLOT push!(plots, netplot(N)) end

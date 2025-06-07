@@ -23,23 +23,23 @@ function netplot(N::Network)
     n = N.param.n
     q = N.param.q
     
-    fig = CairoMakie.Figure()
-    ax = CairoMakie.Axis(fig[1, 1])
+    fig = Figure()
+    ax = Axis(fig[1, 1])
     
-    coords::Vector{CairoMakie.Point2f} = []
-    push!(coords, CairoMakie.Point2f(2, 1))
+    coords::Vector{Point2f} = []
+    push!(coords, Point2f(2, 1))
     for i in 1:n
         if N.nodes[i+1].isActive
-            push!(coords, CairoMakie.Point2f(10*i+1, 1))
-            push!(coords, CairoMakie.Point2f(10*i+2, 1))
+            push!(coords, Point2f(10*i+1, 1))
+            push!(coords, Point2f(10*i+2, 1))
         end
     end
-    push!(coords, CairoMakie.Point2f(10*(n)+1, 1))
+    push!(coords, Point2f(10*(n)+1, 1))
     
-    CairoMakie.xlims!(ax, 0, 10*(n)+2)
-    CairoMakie.ylims!(ax, 0, q+1)
-    CairoMakie.hidedecorations!(ax)
-    CairoMakie.hidespines!(ax)
+    xlims!(ax, 0, 10*(n)+2)
+    ylims!(ax, 0, q+1)
+    hidedecorations!(ax)
+    hidespines!(ax)
     
     net = toRegisterNet(N)
     QuantumSavory.registernetplot!(ax, net, registercoords=coords)
