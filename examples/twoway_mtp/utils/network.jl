@@ -1,6 +1,6 @@
 import QuantumSavory
 
-"""Converts a Network into a QuantumSavory.RegiterNet"""
+"""Converts a Network into a QuantumSavory.RegisterNet"""
 function toRegisterNet(N::Network)
     registers::Vector{Register} = []
 
