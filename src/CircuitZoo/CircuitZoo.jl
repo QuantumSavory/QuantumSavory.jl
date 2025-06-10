@@ -866,6 +866,33 @@ function (circuit::PurifyExpedientNode)(purified,sacrificed...)
 end
 
 """
+"""
+struct DEJMPSProtocol <: AbstractCircuit
+end
+
+inputqubits(circuit::DEJMPSProtocol) = 4
+
+function (circuit::DEJMPSProtocol)(purifiedL, purifiedR, sacrificedL, sacrificedR)
+    apply!(purifiedL, Rx(π/2))
+    apply!(sacrificedL, Rx(π/2))
+    apply!(purifiedR, Rx(-π/2))
+    apply!(sacrificedR, Rx(-π/2))
+
+    apply!((purifiedL, sacrificedL), CNOT)
+    apply!((purifiedR, sacrificedR), CNOT)
+
+    measa = project_traceout!(sacrificedL, σᶻ)
+    measb = project_traceout!(sacrificedR, σᶻ)
+
+    success = measa == measb
+    if !success
+        traceout!(purifiedL)
+        traceout!(purifiedR)
+    end
+    success
+end
+
+"""
 $TYPEDEF
 
 Fields:
