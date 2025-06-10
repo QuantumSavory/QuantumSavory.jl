@@ -868,6 +868,56 @@ end
 """
 $TYPEDEF
 
+A purification protocol implementing the DEJMPS scheme, which sacrifices an 
+entangled Bell pair to purify another one. This circuit is capable of detecting
+and correcting all Pauli errors on the purified pair.
+
+This circuit applies Rx rotations, bilateral CNOTs, and projective measurements 
+in the Z basis on the sacrificial pair. 
+The sacrificial qubits are removed from the register.
+
+If both measurement outcomes agree, the protocol succeeds and the purified pair 
+is retained. Otherwise, all qubits are discarded.
+
+```jldoctest
+julia> a = Register(2)
+       b = Register(2)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell);
+       
+julia> DEJMPSProtocol()(a[1], b[1], a[2], b[2])
+```
+
+See also: [`Purify2to1`](@ref), [PhysRevLett.77.2818](@cite)
+"""
+struct DEJMPSProtocol <: AbstractCircuit
+end
+
+inputqubits(circuit::DEJMPSProtocol) = 4
+
+function (circuit::DEJMPSProtocol)(purifiedL, purifiedR, sacrificedL, sacrificedR)
+    apply!(purifiedL, Rx(π/2))
+    apply!(sacrificedL, Rx(π/2))
+    apply!(purifiedR, Rx(-π/2))
+    apply!(sacrificedR, Rx(-π/2))
+
+    apply!((purifiedL, sacrificedL), CNOT)
+    apply!((purifiedR, sacrificedR), CNOT)
+
+    measa = project_traceout!(sacrificedL, σᶻ)
+    measb = project_traceout!(sacrificedR, σᶻ)
+    success = measa == measb
+    if !success
+        traceout!(purifiedL)
+        traceout!(purifiedR)
+    end
+    success
+end
+
+"""
+$TYPEDEF
+
 Fields:
 
 $FIELDS
