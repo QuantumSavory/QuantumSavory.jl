@@ -28,9 +28,10 @@ julia --project=examples ./examples/twoway_mtp/n_example.jl
 
 ## References
 - Mantri, P., Goodenough, K., & Towsley, D. (2024, September 10). Comparing one- and two-way quantum repeater architectures. arXiv.org. https://arxiv.org/abs/2409.06152
-- Experiment results: http://github.com/sagnikpal2004/QNet-MTP
+- Main project repository and Experiment results: http://github.com/sagnikpal2004/QNet-MTP
 
 ## To Do List:
-- Upstream [`RGate`](baseops/RGate.jl) to QuantumSymbolics.jl - in progress  [QuantumSymbolics.jl:Pull95](https://github.com/QuantumSavory/QuantumSymbolics.jl/pull/95)
-- Modify measurement error model to integrate into the projectors themselves instead of using a random number to flip the measurement using [`traceout`](noisyops/traceout.jl)
+- Upstream [`RGate`](baseops/RGate.jl) to QuantumSymbolics.jl - in progress  [QuantumSymbolics.jl:Pull#95](https://github.com/QuantumSavory/QuantumSymbolics.jl/pull/95)
+- [`DEJMPSProtocol`](noisyops/CircuitZoo.jl) is also missing from QuantumSavory.jl - in progress [QuantumSavory.jl:Issue#237](https://github.com/QuantumSavory/QuantumSavory.jl/issues/237)
+- Modify measurement error model to integrate into the projectors themselves instead of using a random number to flip the measurement using [`project_traceout!`](noisyops/traceout.jl) (Do we need a `project_traceout!` that can work with POVM as well and not just Kets?)
 - Figure out a better way to do noisy [`apply!`](noisyops/apply.jl)

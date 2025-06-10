@@ -4,6 +4,20 @@ include("./traceout.jl")
 include("../baseops/RGate.jl")
 
 
+_b2 = SpinBasis(1//2)
+_l0 = spinup(_b2)
+_l1 = spindown(_b2)
+_l⁺ = (_l0 + _l1)/√2
+_l⁻ = (_l0 - _l1)/√2
+_l00 = projector(_l0)
+_l11 = projector(_l1)
+_l⁺⁺ = projector(_l⁺)
+_l⁻⁻ = projector(_l⁻)
+
+noisy_zbasis(ξ) = [(1-ξ)*_l00 + ξ*_l11, (1-ξ)*_l11 + ξ*_l00]
+noisy_xbasis(ξ) = [(1-ξ)*_l⁺⁺ + ξ*_l⁻⁻, (1-ξ)*_l⁻⁻ + ξ*_l⁺⁺]
+
+
 struct EntanglementSwap <: QuantumSavory.CircuitZoo.AbstractCircuit
     ϵ_g::Float64
     ξ::Float64
@@ -18,8 +32,8 @@ struct EntanglementSwap <: QuantumSavory.CircuitZoo.AbstractCircuit
 end
 function (circuit::EntanglementSwap)(localL, remoteL, localR, remoteR)
     apply!((localL, localR), QuantumSavory.CNOT; ϵ_g=circuit.ϵ_g)
-    xmeas = project_traceout!(localL, QuantumSavory.σˣ; ξ=circuit.ξ, rng=circuit.rng)
-    zmeas = project_traceout!(localR, QuantumSavory.σᶻ; ξ=circuit.ξ, rng=circuit.rng)
+    xmeas = project_traceout!(localL, noisy_xbasis(circuit.ξ))
+    zmeas = project_traceout!(localR, noisy_zbasis(circuit.ξ))
     if xmeas==2
         QuantumSavory.apply!(remoteL, QuantumSavory.Z)
     end
@@ -51,8 +65,8 @@ function (circuit::DEJMPSProtocol)(purifiedL, purifiedR, sacrificedL, sacrificed
     apply!([purifiedL, sacrificedL], QuantumSavory.CNOT; ϵ_g=circuit.ϵ_g)
     apply!([purifiedR, sacrificedR], QuantumSavory.CNOT; ϵ_g=circuit.ϵ_g)
 
-    measa = project_traceout!(sacrificedL, QuantumSavory.σᶻ; ξ=circuit.ξ)
-    measb = project_traceout!(sacrificedR, QuantumSavory.σᶻ; ξ=circuit.ξ)
+    measa = project_traceout!(sacrificedL, noisy_zbasis(circuit.ξ))
+    measb = project_traceout!(sacrificedR, noisy_zbasis(circuit.ξ))
 
     success = measa == measb
     if !success
