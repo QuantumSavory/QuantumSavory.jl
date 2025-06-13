@@ -14,9 +14,9 @@ using CSV
 
 using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT, ghz
 
-# using PyCall
-# @pyimport pickle
-# @pyimport networkx
+using PyCall
+@pyimport pickle
+@pyimport networkx
 
 using ArgParse
 """
@@ -32,7 +32,7 @@ function parse_commandline()
     @add_arg_table s begin
         "--size"
             help = "number of nodes in the graph state (or gridlenth if grid graph is used)"
-            default = 50
+            default = 10
             arg_type = Int
         "--graphtype", "-g"
             help = "type of the graph to be used, choose between 'path' and 'grid'"
@@ -64,44 +64,43 @@ function parse_commandline()
 end
 parsed_args = parse_commandline()
 
-
-# """
-#     get_graphdata_from_pickle(path)
-#     Load the graph data from a pickle file and convert it to Julia format.
-#     Args:
-#         path (str): Path to the pickle file containing graph data.
-#     Returns:
-#         graphdata (Dict): Dictionary mapping tuples to tuples of Graph and Register.
-#         operationdata (Dict): Dictionary mapping tuples to transition gate sets.
-# """
-# function get_graphdata_from_pickle(path)
-#     graphdata = Dict{Tuple, Graph}()
-#     projectors = Dict{Tuple, Any}()
-#     operationdata = Dict{Tuple, Any}()
+"""
+    get_graphdata_from_pickle(path)
+    Load the graph data from a pickle file and convert it to Julia format.
+    Args:
+        path (str): Path to the pickle file containing graph data.
+    Returns:
+        graphdata (Dict): Dictionary mapping tuples to tuples of Graph and Register.
+        operationdata (Dict): Dictionary mapping tuples to transition gate sets.
+"""
+function get_graphdata_from_pickle(path)
+    graphdata = Dict{Tuple, Graph}()
+    projectors = Dict{Tuple, Any}()
+    operationdata = Dict{Tuple, Any}()
     
-#     # Load the graph data in python from pickle file
-#     graphdata_py = pickle.load(open(path, "r"))
-#     n = nothing
-#     for (key, value) in graphdata_py # value = [lc equivalent graph, transition gates
-#         graph_py = value[1]
-#         n = networkx.number_of_nodes(graph_py)
+    # Load the graph data in python from pickle file
+    graphdata_py = pickle.load(open(path, "r"))
+    n = nothing
+    for (key, value) in graphdata_py # value = [lc equivalent graph, transition gates
+        graph_py = value[1]
+        n = networkx.number_of_nodes(graph_py)
 
-#         # Generate graph in Julia and apply the CZ gates to reference register
-#         graph_jl = Graph()
-#         add_vertices!(graph_jl, n)
-#         for edge in value[1].edges
-#             edgejl = map(x -> x + 1, Tuple(edge)) # +1 because Julia is 1-indexed
-#             add_edge!(graph_jl, edgejl) 
-#         end
+        # Generate graph in Julia and apply the CZ gates to reference register
+        graph_jl = Graph()
+        add_vertices!(graph_jl, n)
+        for edge in value[1].edges
+            edgejl = map(x -> x + 1, Tuple(edge)) # +1 because Julia is 1-indexed
+            add_edge!(graph_jl, edgejl) 
+        end
 
-#         # The core represents the key
-#         key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
-#         graphdata[key_jl] = graph_jl
-#         projectors[key_jl] = projector(StabilizerState(Stabilizer(graph_jl))) # projectors for the graph states # TODO: using StabilizerState instead of Ket is not working!
-#         operationdata[key_jl] = value[2][1,:] # Transition gate sets
-#     end
-#     return n, graphdata, operationdata, projectors
-# end
+        # The core represents the key
+        key_jl = map(x -> x + 1, Tuple(key)) # +1 because Julia is 1-indexed
+        graphdata[key_jl] = graph_jl
+        projectors[key_jl] = SProjector(StabilizerState(Stabilizer(graph_jl))) # projectors for the graph states # TODO: using StabilizerState instead of Ket is not working!
+        operationdata[key_jl] = value[2][1,:] # Transition gate sets
+    end
+    return n, graphdata, operationdata, projectors
+end
 
 """
 is_vertex_cover(g::AbstractGraph, S::Set{Int})::Bool
@@ -312,7 +311,7 @@ end
         Nothing. The function spawns `apply_cz_and_measure` processes for every
         client once all EPR pairs are available.
 """
-@resumable function GraphCanonicalProt(sim::Environment, net::RegisterNet, n::Int, vcs::Vector{Tuple})
+@resumable function GraphCanonicalProt(sim::Environment, net::RegisterNet, n::Int, vcs::Vector{Tuple}, vc::Any)
 
     graph = Graph() # general graph object, to be later replaced by chosen graph
     counter_clients = 0 # counts clients that are entangled
@@ -338,6 +337,7 @@ end
             end
         end
         isnothing(cover_idx) && continue 
+        vc[] = vcs[cover_idx]
         graph = deepcopy(graphdata[vcs[cover_idx]]) # graph to be generated
         put!(channel(net, 1=>2), Tag(:cover, cover_idx))
     end
@@ -349,7 +349,7 @@ end
 
 end
 
-@resumable function GraphCanonicalProt(sim::Environment, net::RegisterNet, n::Int, graph::Graph)
+@resumable function GraphCanonicalProt(sim::Environment, net::RegisterNet, n::Int, graph::Graph, vc::Any)
 
     counter_clients = 0 # counts clients that are entangled
     active = Set{Int}() # qubits that have an EPR pair 
@@ -394,8 +394,7 @@ end
         Nothing. The function spawns `apply_cz_and_measure` processes for every
         client once all EPR pairs are available.
 """
-@resumable function GraphSequentialProt(sim::Environment, net::RegisterNet, n::Int, vcs::Vector{Tuple})
-    println("GraphSequentialProt called with vcs.")
+@resumable function GraphSequentialProt(sim::Environment, net::RegisterNet, n::Int, vcs::Vector{Tuple}, vc::Any)
 
     graph = Graph() # general graph object, to be later replaced by chosen graph
     counter_clients = 0 # counts clients that are entangled
@@ -425,6 +424,7 @@ end
         graph = deepcopy(graphdata[vcs[cover_idx]]) # otherwise select graph to be generated
 
         @debug "Core found: ", vcs[cover_idx]
+        vc[] = vcs[cover_idx] # vertex cover to be used
         put!(channel(net, 1=>2), Tag(:cover, cover_idx)) # send the index of the vertex cover to the Logger
 
         active_non_cover_qubits = setdiff(active, vcs[cover_idx]) # active qubits that are not in the vertex cover
@@ -466,7 +466,7 @@ end
     end
 end
 
-@resumable function GraphSequentialProt(sim::Environment, net::RegisterNet, n::Int, graph::Graph)
+@resumable function GraphSequentialProt(sim::Environment, net::RegisterNet, n::Int, graph::Graph, vc::Any)
 
     counter_clients = 0 # counts clients that are entangled
     active = Set{Int}() # qubits that have an EPR pair 
@@ -497,6 +497,7 @@ end
         graph = deepcopy(graph) # otherwise select graph to be generated
 
         @debug "Core found: ", cover
+        vc[] = cover # vertex cover to be used
 
         active_non_cover_qubits = setdiff(active, cover) # active qubits that are not in the vertex cover
         @debug "Non-cover qubits: ", active_non_cover_qubits 
@@ -554,7 +555,7 @@ end
     Returns:
         sim: The simulation object.
 """
-function prepare_sim(protocol::Function, n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, link_success_prob::Float64, logging::DataFrame, graphdata::Any)
+function prepare_sim(protocol::Function, n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, link_success_prob::Float64, logging::DataFrame, graphdata::Any, vc::Any)
 
     graph = star_graph(n+1)
     
@@ -574,7 +575,7 @@ function prepare_sim(protocol::Function, n::Int, states_representation::Abstract
     end
 
     # Start the piecemaker protocol on the switch
-    @process protocol(sim, net, n, graphdata)
+    @process protocol(sim, net, n, graphdata, vc)
 
     @process Logger(sim, net, logging, graphdata)
 

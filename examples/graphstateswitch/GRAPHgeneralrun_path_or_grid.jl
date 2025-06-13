@@ -42,14 +42,17 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
         noise_model = Depolarization(1/decoherence_rate)
 
         times = Float64[]
+        covers = Set[]
         for i in 1:number_of_samples
-            sim = prepare_sim(Prot, n, states_representation, noise_model, link_success_prob, logging, graph)
-        
+            vc = Ref{Any}(nothing) # to be filled with the vertex cover determined by the simulation
+            sim = prepare_sim(Prot, n, states_representation, noise_model, link_success_prob, logging, graph, vc)
             timed = @elapsed run(sim) # time and run the simulation
             push!(times, timed)
+            push!(covers, vc[])
             @debug "Sample $(i) finished", timed
         end
 
+        logging[!, :vertex_cover] .= covers
         logging[!, :elapsed_time] .= times
         logging[!, :number_of_samples] .= number_of_samples
         logging[!, :link_success_prob] .= link_success_prob
@@ -60,4 +63,8 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
         @debug "Mem depolar probability: $(mem_depolar_prob) | Link probability: $(link_success_prob)| Time: $(sum(times))"
     end
 end
-CSV.write(parsed_args["output_path"] * "$(parsed_args["graphtype"])$(parsed_args["size"])_$(protocol)_seed$(seed).csv", df_all_runs)
+# @show sum(df_all_runs[!, :distribution_times])
+@show "PATH GRAPH"
+gdf = groupby(df_all_runs, :vertex_cover)
+@show sort!(combine(gdf, nrow => :count), :count)
+#CSV.write(parsed_args["output_path"] * "$(parsed_args["graphtype"])$(parsed_args["size"])_$(protocol)_seed$(seed).csv", df_all_runs)

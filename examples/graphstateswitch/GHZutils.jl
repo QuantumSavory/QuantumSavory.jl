@@ -13,7 +13,7 @@ using ArgParse
 
 using QuantumClifford: AbstractStabilizer, Stabilizer, graphstate, sHadamard, sSWAP, stabilizerview, canonicalize!, sCNOT, ghz
 
-const ghzs = [ghz(n) for n in 1:9] # make const in order to not build new every time
+const ghzs = [ghz(n) for n in 1:50] # make const in order to not build new every time
 
 function parse_commandline()
     s = ArgParseSettings()

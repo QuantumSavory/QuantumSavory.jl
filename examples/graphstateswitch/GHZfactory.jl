@@ -45,7 +45,7 @@ include("GHZutils.jl")
                     
                     # BSM
                     apply!((tobeteleported, bellpair[1]), CNOT; time=now(sim))
-                    apply!(tobeteleported, H)
+                    apply!(tobeteleported, sHadamard)
                 
                     zmeas1 = project_traceout!(tobeteleported, σᶻ) 
                     zmeas2 = project_traceout!(bellpair[1], σᶻ) 
@@ -62,7 +62,7 @@ include("GHZutils.jl")
         end
         # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
-        obs = projector(StabilizerState(ghzs[n])) # GHZ state projector to measure
+        obs = SProjector(StabilizerState(ghzs[n])) # GHZ state projector to measure
         fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         foreach(q -> (traceout!(q); unlock(q)), net[2])
 
@@ -98,7 +98,7 @@ end
 
 seed = parsed_args["seed"] # random seed 
 number_of_samples = parsed_args["nsamples"] # number of samples to be taken
-states_representation = QuantumOpticsRepr()
+states_representation = CliffordRepr()
 
 n = parsed_args["n"] # number of qubits in the GHZ state
     
@@ -117,7 +117,7 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
         timed = @elapsed run(sim)
 
         # log constants
-        logging[!, :elapsed_time] .= timed
+        logging[!, :elapsed_time] .= timed/number_of_samples
         logging[!, :number_of_samples] .= number_of_samples
         logging[!, :link_success_prob] .= link_success_prob
         logging[!, :mem_depolar_prob] .= mem_depolar_prob
@@ -128,4 +128,4 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
     end
 end
 #@info df_all_runs
-CSV.write(parsed_args["output_path"]*"qs_factory$(n)_scan.csv", df_all_runs)
+CSV.write(parsed_args["output_path"]*"GHZ_factory$(n)_scan.csv", df_all_runs)

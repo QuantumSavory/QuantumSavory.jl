@@ -5,7 +5,7 @@ using ColorSchemes         # for :RdBu
 using Glob                 # for glob()
 using LaTeXStrings
 
-DATADIR = "/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_backup_project_piecemaker/output"
+DATADIR = "/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_backup_project_piecemaker/output_MVC"
 
 all_csvs = glob("*.csv", DATADIR)
 
@@ -54,21 +54,20 @@ function diff_matrices(path_can::String, path_seq::String)
         y = wide.mem_depolar_prob
         Z = Matrix(select(wide, Not(:mem_depolar_prob)))
         x_str = string.(names(wide)[2:end])  # Convert Symbols to Strings
-        x = parse.(Float64, x_str)           # Now parseable
+        x = parse.(Float64, x_str)
         return x, y, Z
     end
 
     return [to_matrix(:diff_abs), to_matrix(:diff_infid)]
 end
 
-# Second pass: Generate plots with consistent color scaling
 for (sample, paths) in pairs
     plots = []
     mats = diff_matrices(paths[:canonical], paths[:sequential])
     
     for (j, (x, y, Z)) in enumerate(mats)
         p = heatmap(x, y, Z';
-                    title = j == 1 ? L"\small{Absolute increase in fidelity}" : L"\small{Relative decrease in infidelity}",
+                    title = j == 1 ? L"$F_{pm} - F_{factory}$" : L"$(F_{pm} - F_{factory})/(1 - F_{factory})$",
                     xscale=:log10, yscale=:log10,
                     xlabel=L"$p_{depol}$",
                     ylabel=L"$p_{link}$",

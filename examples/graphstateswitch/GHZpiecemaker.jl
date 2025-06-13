@@ -52,7 +52,7 @@ include("GHZutils.jl")
 
         # Measure the fidelity to the GHZ state
         @yield reduce(&, [lock(q) for q in net[2]])
-        obs = projector(StabilizerState(ghzs[n])) # GHZ state projector to measure
+        obs = SProjector(StabilizerState(ghzs[n])) # GHZ state projector to measure
         fidelity = real(observable([net[2][i] for i in 1:n], obs; time=now(sim)))
         @debug "Fidelity: $(fidelity)"
 
@@ -89,13 +89,13 @@ end
 
 seed = parsed_args["seed"] # random seed 
 number_of_samples = parsed_args["nsamples"] # number of samples to be taken
-states_representation = QuantumOpticsRepr()
+states_representation = CliffordRepr()
 
 n = parsed_args["n"] # number of qubits in the GHZ state
     
 df_all_runs = DataFrame()
 for link_success_prob in exp10.(range(-3, stop=0, length=20))
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=20)) 
+    for mem_depolar_prob in exp10.(range(-3, stop=0, length=20))
 
         logging = DataFrame(
             distribution_times  = Float64[],
@@ -108,15 +108,14 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
         timed = @elapsed run(sim)
 
         # log constants
-        logging[!, :elapsed_time] .= timed
+        logging[!, :elapsed_time] .= timed/number_of_samples
         logging[!, :number_of_samples] .= number_of_samples
         logging[!, :link_success_prob] .= link_success_prob
         logging[!, :mem_depolar_prob] .= mem_depolar_prob
         logging[!, :num_remote_nodes] .= n
         logging[!, :seed] .= seed
         append!(df_all_runs, logging)
-        @info "Link success probability: $(link_success_prob) | Time: $(timed)"
     end
 end
 #@info df_all_runs
-CSV.write(parsed_args["output_path"]*"qs_piecemaker$(n)_scan.csv", df_all_runs)
+CSV.write(parsed_args["output_path"]*"GHZ_piecemaker$(n)_scan.csv", df_all_runs)
