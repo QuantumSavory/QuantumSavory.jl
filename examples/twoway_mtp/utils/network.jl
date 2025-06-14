@@ -1,5 +1,8 @@
 import QuantumSavory
 
+nsteps(p::NetworkParam) = Int64(log2(p.n)) + sum(p.distil_sched) + 1
+nsteps(N::Network) = nsteps(N.param)
+
 """Converts a Network into a QuantumSavory.RegisterNet"""
 function toRegisterNet(N::Network)
     registers::Vector{Register} = []
@@ -23,9 +26,6 @@ function netplot(N::Network)
     n = N.param.n
     q = N.param.q
     
-    fig = Figure()
-    ax = Axis(fig[1, 1])
-    
     coords::Vector{Point2f} = []
     push!(coords, Point2f(2, 1))
     for i in 1:n
@@ -36,15 +36,11 @@ function netplot(N::Network)
     end
     push!(coords, Point2f(10*(n)+1, 1))
     
-    xlims!(ax, 0, 10*(n)+2)
-    ylims!(ax, 0, q+1)
-    hidedecorations!(ax)
-    hidespines!(ax)
-    
+    empty!(N.ax)
     net = toRegisterNet(N)
-    QuantumSavory.registernetplot!(ax, net, registercoords=coords)
+    registernetplot!(N.ax, net, registercoords=coords)
 
-    return fig
+    return N.fig
 end
 
 

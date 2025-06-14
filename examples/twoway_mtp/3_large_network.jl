@@ -23,8 +23,10 @@ distil_sched = distil_scheds[(L, n, ϵ_g, η_c)]  # Distillation schedule
 net_param = NetworkParam(n, q; T2, F, p_ent, ϵ_g, ξ, t_comms, distil_sched)
 network = Network(net_param, rng=Xoshiro(1))
 
-figures = @time simulate!(network; PLOT=true)
-for fig in figures
-    display(fig)
-    sleep(2)
+# @time simulate!(network)
+
+sim = simulate_iter!(network)
+video_path = "./results/3_large_network.mp4"
+record(network.fig, video_path, 1:nsteps(net_param); framerate=2) do i
+    iterate(sim, nothing)
 end

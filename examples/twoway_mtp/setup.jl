@@ -78,6 +78,9 @@ mutable struct Network      # mutable due to curTime
     swapcircuit::EntanglementSwap
     purifycircuit::DEJMPSProtocol
 
+    fig::Figure
+    ax::Axis
+
     function Network(p::NetworkParam; rng::AbstractRNG=Random.GLOBAL_RNG)
         nodes = Vector{Node}()
         push!(nodes, Node(:Alice, p.q; p.T2))
@@ -90,7 +93,14 @@ mutable struct Network      # mutable due to curTime
         swapcircuit = EntanglementSwap(p.ϵ_g, p.ξ, rng)
         purifycircuit = DEJMPSProtocol(p.ϵ_g, p.ξ)
 
-        new(p, rng, 0.0, nodes, ent_list, swapcircuit, purifycircuit)
+        fig = Figure()
+        ax = Axis(fig[1, 1])
+        xlims!(ax, 0, 10*(p.n)+2)
+        ylims!(ax, 0, p.q+1)
+        hidedecorations!(ax)
+        hidespines!(ax)
+
+        new(p, rng, 0.0, nodes, ent_list, swapcircuit, purifycircuit, fig, ax)
     end
 end
 
@@ -105,30 +115,34 @@ include("./processes/entangle.jl")
 include("./processes/ent_swap.jl")
 
 
-function simulate!(N::Network; PLOT::Bool=false)
+function simulate!(N::Network)
     n = N.param.n
-    plots::Vector{Figure} = []
+
+    entangle!(N)
+    for i in 1:Int64(log2(n))
+        if N.param.distil_sched[i]
+            purify!(N)
+        end
+        ent_swap!(N, i)
+    end
+end
+
+function simulate_iter!(N::Network) Channel(channel -> begin
+    n = N.param.n
 
     @info "Starting simulation of Quantum Network with n=$n"
     entangle!(N)
-    
-    if PLOT push!(plots, netplot(N)) end
+    put!(channel, netplot(N))
 
-    for i in Int64.(1:log2(n))
+    for i in 1:Int64(log2(n))
         if N.param.distil_sched[i]
             @info "Purifying at level $i"
             purify!(N)
-
-            if PLOT push!(plots, netplot(N)) end
+            put!(channel, netplot(N))
         end
 
         @info "Performing entanglement swapping at level $i"
         ent_swap!(N, i)
-
-        if PLOT push!(plots, netplot(N)) end
+        put!(channel, netplot(N))
     end
-    
-    if PLOT
-        return plots
-    end
-end
+end) end

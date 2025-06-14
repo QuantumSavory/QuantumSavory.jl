@@ -24,8 +24,10 @@ distil_sched = fill(true, floor(Int, log2(n)))
 net_param = NetworkParam(n, q; T2, F, p_ent, ϵ_g, ξ, t_comms, distil_sched)
 network = Network(net_param, rng=Xoshiro(1))
 
-figures = @time simulate!(network; PLOT=true)
-for fig in figures
-    display(fig)
-    sleep(2)
+# @time simulate!(network)
+
+sim = simulate_iter!(network)
+video_path = "./results/2_small_withdistil.mp4"
+record(network.fig, video_path, 1:nsteps(net_param); framerate=2) do i
+    iterate(sim, nothing)
 end
