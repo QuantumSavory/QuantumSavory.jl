@@ -17,6 +17,8 @@ if parsed_args["graphtype"] == "path"
 elseif parsed_args["graphtype"] == "grid"
     l = parsed_args["size"]
     graph = grid([l,l])
+elseif parsed_args["graphtype"] == "complete"
+    graph = complete_graph(parsed_args["size"])
 else
     error("Invalid graph type specified. Use 'path' or 'grid'.")
 end
@@ -64,7 +66,4 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
     end
 end
 # @show sum(df_all_runs[!, :distribution_times])
-@show "PATH GRAPH"
-gdf = groupby(df_all_runs, :vertex_cover)
-@show sort!(combine(gdf, nrow => :count), :count)
-#CSV.write(parsed_args["output_path"] * "$(parsed_args["graphtype"])$(parsed_args["size"])_$(protocol)_seed$(seed).csv", df_all_runs)
+CSV.write(parsed_args["output_path"] * "$(parsed_args["graphtype"])$(parsed_args["size"])_$(protocol)_seed$(seed).csv", df_all_runs)
