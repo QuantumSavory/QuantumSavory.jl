@@ -5,16 +5,16 @@ using ColorSchemes         # for :RdBu
 using Glob                 # for glob()
 using LaTeXStrings
 
-DATADIR = "/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_backup_project_piecemaker/output_MVC"
+DATADIR = "/Users/localadmin/Library/CloudStorage/OneDrive-DelftUniversityofTechnology/2_backup_project_piecemaker/output_GHZ"
 
 all_csvs = glob("*.csv", DATADIR)
 
 function split_filename(path::AbstractString)
     name = Base.basename(path)    # use Base.basename on a String
-    if occursin("_canonical_", name)
-        return first(split(name, "_canonical_")), :canonical
-    elseif occursin("_sequential_", name)
-        return first(split(name, "_sequential_")), :sequential
+    if occursin("_factory", name)
+        return first(eachmatch(r"\d+", name)).match, :factory
+    elseif occursin("_piecemaker", name)
+        return first(eachmatch(r"\d+", name)).match, :piecemaker
     else
         return nothing, nothing
     end
@@ -29,8 +29,8 @@ for p in all_csvs
     samples[sample][proto] = p
 end
 
-# keep only those with both canonical & sequential
-pairs = sort([ (k,v) for (k,v) in samples if (:canonical in keys(v) && :sequential in keys(v)) ])
+# keep only those with both factory & piecemaker
+pairs = sort([ (k,v) for (k,v) in samples if (:factory in keys(v) && :piecemaker in keys(v)) ])
 
 println("Found $(length(pairs)) samples: ", join(first.(pairs), ", "))
 BYCOLS = [:mem_depolar_prob, :link_success_prob]
@@ -63,7 +63,7 @@ end
 
 for (sample, paths) in pairs
     plots = []
-    mats = diff_matrices(paths[:canonical], paths[:sequential])
+    mats = diff_matrices(paths[:factory], paths[:piecemaker])
     
     for (j, (x, y, Z)) in enumerate(mats)
         p = heatmap(x, y, Z';
@@ -79,5 +79,5 @@ for (sample, paths) in pairs
         layout = (1, 2),
         margin=2*Plots.mm)
 
-    savefig(fig, "sample_$(sample)_diff_heatmaps.png")
+    savefig(fig, "sample_$(sample)GHZ_diff_heatmaps.pdf")
 end
