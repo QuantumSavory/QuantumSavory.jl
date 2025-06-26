@@ -123,6 +123,7 @@ for ΔL in range(2,20,step=2) # km, the difference in client links
         timed = @elapsed run(sim)
 
         # log constants
+        logging[!, :L] .= ΔL
         logging[!, :elapsed_time] .= timed
         logging[!, :number_of_samples] .= number_of_samples
         logging[!, :mem_depolar_prob] .= mem_depolar_prob
