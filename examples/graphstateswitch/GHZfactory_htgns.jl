@@ -102,32 +102,35 @@ states_representation = QuantumOpticsRepr()
 n = 5 # number of qubits in the GHZ state
 γ = 0.2 # dB/km the attenuation coefficient
 L_0 = 50 # km
-ΔL = 10 # km, the difference in client links
-diff_factors = [-1, -2, 0, 2, 1]
+diff_factors = [-2, -1, 0, 1, 2]
 prob_link = L -> 10^(-γ*(L/2)/10) # link success probability model for each client, where L is the link length in km
-link_success_prob = [prob_link(L_0+i*ΔL) for i in diff_factors] # link success probabilities for each client
+
+@info "Link success probabilities: $(link_success_prob)"
 
 df_all_runs = DataFrame()
-for mem_depolar_prob in exp10.(range(-3, stop=0, length=20)) 
+for ΔL in range(2,20,step=2) # km, the difference in client links
+    link_success_prob = [prob_link(L_0+i*ΔL) for i in diff_factors] # link success probabilities for each client
+    for mem_depolar_prob in exp10.(range(-3, stop=0, length=20)) 
 
-    logging = DataFrame(
-        distribution_times  = Float64[],
-        fidelities    = Float64[]
-    )
+        logging = DataFrame(
+            distribution_times  = Float64[],
+            fidelities    = Float64[]
+        )
 
-    decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
-    noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
-    sim = prepare_sim(n, states_representation, noise_model, link_success_prob, seed, logging, number_of_samples)
-    timed = @elapsed run(sim)
+        decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
+        noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
+        sim = prepare_sim(n, states_representation, noise_model, link_success_prob, seed, logging, number_of_samples)
+        timed = @elapsed run(sim)
 
-    # log constants
-    logging[!, :elapsed_time] .= timed
-    logging[!, :number_of_samples] .= number_of_samples
-    logging[!, :mem_depolar_prob] .= mem_depolar_prob
-    logging[!, :num_remote_nodes] .= n
-    logging[!, :seed] .= seed
-    append!(df_all_runs, logging)
-    @info "Mem depolar prob: $(mem_depolar_prob) | Time: $(timed)"
+        # log constants
+        logging[!, :elapsed_time] .= timed
+        logging[!, :number_of_samples] .= number_of_samples
+        logging[!, :mem_depolar_prob] .= mem_depolar_prob
+        logging[!, :num_remote_nodes] .= n
+        logging[!, :seed] .= seed
+        append!(df_all_runs, logging)
+        @info "Mem depolar prob: $(mem_depolar_prob) | Time: $(timed)"
+    end
 end
 #@info df_all_runs
 CSV.write(parsed_args["output_path"]*"qs_factory$(n)_heterog.csv", df_all_runs)
