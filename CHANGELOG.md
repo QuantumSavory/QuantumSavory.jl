@@ -11,6 +11,7 @@
 - Rebuilding the ZALM source from StatesZoo in a more reproducible fashion.
 - Fixes and performance improvements to `observable`.
 - New examples related to preparing GHZ states and MBQC-based purification.
+- The switch protocol is now back to fully functional, thanks to an upstream fix in GraphsMatching.jl.
 
 ## v0.5.0 - 2024-10-16
 
@@ -20,7 +21,7 @@
 - **(breaking)** `observable` now takes a default value as a kwarg, i.e., you need to make the substitution `observable(regs, obs, 0.0; time)` ↦ `observable(regs, obs; something=0.0, time)`
 - Bump QuantumSymbolics and QuantumOpticsBase compat bound and bump julia compat to 1.10.
 - Implement a simple switch protocol.
-    - Simplify one of the switch protocols to avoid dependence on GraphMatching.jl which does not install well on non-linux systems. Do not rely on the default `SimpleSwitchDiscreteProt` for the time being.
+    - Simplify one of the switch protocols to avoid dependence on GraphsMatching.jl. which does not install well on non-linux systems. Do not rely on the default `SimpleSwitchDiscreteProt` for the time being.
 
 ## v0.4.2 - 2024-08-13
 
