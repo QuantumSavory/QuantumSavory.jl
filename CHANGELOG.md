@@ -5,6 +5,12 @@
 - Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
 - `onchange_tag` now permits a protocol to wait for any change to the tag metadata. Implemented thanks to the new `AsymmetricSemaphore`, a resource object that allows multiple processes to wait for an update.
 - Plots of networks can now overlay real-world maps (see `generate_map`).
+- A "state explorer" tool was added to the plotting submodule and as an interactive example, to heal visualize many of the states in StatesZoo.
+- Additional filtering and decision capabilities in `EntanglerProt`.
+- Fixes and additions to available background noise processes.
+- Rebuilding the ZALM source from StatesZoo in a more reproducible fashion.
+- Fixes and performance improvements to `observable`.
+- New examples related to preparing GHZ states and MBQC-based purification.
 
 ## v0.5.0 - 2024-10-16
 
