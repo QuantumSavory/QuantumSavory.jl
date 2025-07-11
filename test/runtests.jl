@@ -1,24 +1,51 @@
+using Pkg
+
+if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
+    @info "skipping plotting tests"
+else
+    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
+end
+
+if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
+    @info "skipping examples tests"
+else
+end
+
+if get(ENV,"JET_TEST","")!="true"
+    @info "skipping JET tests"
+else
+    Pkg.add("JET")
+end
+
 using QuantumSavory
 using TestItemRunner
 
 function testfilter(tags)
     exclude = Symbol[]
-    # Only do the plotting tests if the ENV variable `QUANTUMSAVORY_PLOT_TEST` is set
     if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
         push!(exclude, :plotting_cairo)
         push!(exclude, :plotting_gl)
         push!(exclude, :examples_plotting)
         push!(exclude, :doctests)
+    else
+        return :plotting_cairo in tags || :plotting_gl in tags || :examples_plotting in tags || :doctests in tags
     end
+
+    if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
+        push!(exclude, :examples)
+    else
+        return :examples in tags
+    end
+
     if get(ENV,"JET_TEST","")!="true"
         push!(exclude, :jet)
+    else
+        return :jet in tags
     end
+
     return all(!in(exclude), tags)
 end
 
-if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-    include("setup_plotting.jl") # avoid the installation cost for GLMakie unless necessary
-end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
 @run_package_tests filter=ti->testfilter(ti.tags) verbose=true
