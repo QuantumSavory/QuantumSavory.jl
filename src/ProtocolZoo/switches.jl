@@ -11,6 +11,8 @@ using ConcurrentSim: @process, timeout, Simulation, Process
 #using ResumableFunctions: @resumable, @yield # TODO serious bug that makes it not work without full `using`
 using ResumableFunctions
 using Random
+using JuMP: optimizer_with_attributes, MOI
+using HiGHS: HiGHS
 
 export SimpleSwitchDiscreteProt, SwitchRequest
 
@@ -102,7 +104,7 @@ function match_entangled_pattern(backlog, entangled_nodes, g, w)
     for (;src, dst) in edges(g)
         w[src,dst] = backlog[entangled_nodes[src], entangled_nodes[dst]]
     end
-    opt = optimizer_with_attributes(Cbc.Optimizer, "LogLevel" => 0, MOI.Silent() => true)
+    opt = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
     match = capture_stdout() do; maximum_weight_matching(g,opt,w); end
     weight = match.weight
     mate = [(entangled_nodes[i],entangled_nodes[j]) for (i,j) in enumerate(match.mate) if i<j]
