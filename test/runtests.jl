@@ -6,8 +6,14 @@ else
     Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
 end
 
+if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
+    @info "skipping examples with plotting tests"
+else
+    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
+end
+
 if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
-    @info "skipping examples tests"
+    @info "skipping examples without plotting tests"
 else
 end
 
@@ -25,10 +31,15 @@ function testfilter(tags)
     if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
         push!(exclude, :plotting_cairo)
         push!(exclude, :plotting_gl)
-        push!(exclude, :examples_plotting)
         push!(exclude, :doctests)
     else
         return :plotting_cairo in tags || :plotting_gl in tags || :examples_plotting in tags || :doctests in tags
+    end
+
+    if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
+        push!(exclude, :examples_plotting)
+    else
+        return :examples_plotting in tags
     end
 
     if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"

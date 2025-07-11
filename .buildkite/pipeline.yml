@@ -21,7 +21,7 @@ steps:
           codecov: true
     env:
       JET_TEST: true
-  - label: "Examples Tests"
+  - label: "Examples without Plotting Tests"
     plugins:
       - JuliaCI/julia#v1:
           version: "1"
@@ -31,6 +31,16 @@ steps:
           codecov: true
     env:
       QUANTUMSAVORY_EXAMPLES_TEST: true
+  - label: "Examples with PlottingTests"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+      - QuantumSavory/julia-xvfb#v1:
+      - JuliaCI/julia-test#v1: ~
+      - JuliaCI/julia-coverage#v1:
+          codecov: true
+    env:
+      QUANTUMSAVORY_EXAMPLES_PLOT_TEST: true
   - label: "Plotting Tests"
     plugins:
       - JuliaCI/julia#v1:

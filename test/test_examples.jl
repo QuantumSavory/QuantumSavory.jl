@@ -1,4 +1,4 @@
-@testitem "Examples - colorcentermodularcluster 1" tags=[:examples] begin
+@testitem "Examples - colorcentermodularcluster 1" tags=[:examples_plotting] begin
     include("../examples/colorcentermodularcluster/1_time_to_connected.jl")
 end
 
