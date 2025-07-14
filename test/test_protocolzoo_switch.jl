@@ -2,8 +2,10 @@
 using Revise
 using ResumableFunctions
 using ConcurrentSim
+using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using Graphs
+using Test
 
 if isinteractive()
     using Logging

@@ -3,7 +3,7 @@ module Switches
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, AbstractProtocol
-using Graphs: edges, complete_graph, neighbors
+using Graphs: nv, edges, complete_graph, neighbors, adjacency_matrix
 using GraphsMatching: maximum_weight_matching
 using Combinatorics: combinations
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS
@@ -100,6 +100,7 @@ Perform the match of clients in `entangled_nodes` based on matching weights from
 Returns the weight of the best matching and the list of pairs of matched nodes.
 """
 function match_entangled_pattern(backlog, entangled_nodes, g, w)
+    nv(g)<=1 && return (;weight=0.0, mate=Tuple{Int,Int}[])
     # w .= 0 # not needed because g is a complete graph
     for (;src, dst) in edges(g)
         w[src,dst] = backlog[entangled_nodes[src], entangled_nodes[dst]]
