@@ -1,28 +1,9 @@
-@testitem "JET" tags=[:jet] begin
-using JET
-using DiffEqBase, Graphs, JumpProcesses, Makie, ResumableFunctions, ConcurrentSim, QuantumOptics, QuantumOpticsBase, QuantumClifford, Symbolics, WignerSymbols, JuMP, SumTypes
+@testitem "JET checks" tags=[:jet] begin
+    using JET
+    using Test
+    using QuantumSavory
 
-rep = report_package("QuantumSavory";
-    ignored_modules=(
-        AnyFrameModule(DiffEqBase),
-        AnyFrameModule(Graphs.LinAlg),
-        AnyFrameModule(Graphs.SimpleGraphs),
-        AnyFrameModule(JumpProcesses),
-        AnyFrameModule(Makie),
-        AnyFrameModule(Symbolics),
-        AnyFrameModule(QuantumOptics),
-        AnyFrameModule(QuantumOpticsBase),
-        AnyFrameModule(QuantumClifford),
-        AnyFrameModule(ResumableFunctions),
-        AnyFrameModule(ConcurrentSim),
-        AnyFrameModule(WignerSymbols),
-        AnyFrameModule(JuMP.Containers),
-        AnyFrameModule(SumTypes),
-    ))
-
-@show length(JET.get_reports(rep))
-@show rep
-
-@test length(JET.get_reports(rep)) <= 33
-@test_broken length(JET.get_reports(rep)) == 0
+    rep = JET.report_package(QuantumSavory, target_defined_modules = true)
+    @test length(JET.get_reports(rep)) <= 12
+    @test_broken length(JET.get_reports(rep)) == 0
 end
