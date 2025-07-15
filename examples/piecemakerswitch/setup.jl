@@ -10,6 +10,49 @@ using Profile
 using NetworkLayout
 
 
+# """ $TYPEDEF
+
+# ## Fields:
+
+# $FIELDS
+
+# A circuit that combines two multipartide entangled states (e.g., GHZ states) into one, up to some Pauli correction. 
+# The circuit applies a CNOT gate, measures the target qubit in the Z basis and traces out the latter (removed from the register). 
+# The measurement result (1 for |0⟩ and 2 for |1⟩) is returned by the circuit. 
+# By measuring and discarding the target qubit, the entanglement is effectively transferred to the control qubit.
+
+# This circuit is useful in protocols where two multipartide entangled states are combined into one, e.g., when generating graph states. 
+
+# ```jldoctest
+# julia> a = Register(1)
+#        b = Register(2)
+#        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+#        initialize!(a[1], X1)  # Initialize `a[1]` in |+⟩ state.
+#        initialize!((b[1], b[2]), bell)  # Initialize `b` with a bell pair.
+
+# julia> correction = EntanglementFusion()(a[1], b[1]) # Apply fusion and receive measurement outcome.
+
+# julia> isassigned(b[1])  # The `b[1]` qubit has been traced out. 
+# false
+
+# julia> if correction==2 apply!(b[2], X) end # Apply correction.
+
+# julia> real(observable((a[1], b[2]), projector(bell))) # Now bell pair is fused into a.
+# 1.0
+# ```
+# """
+# struct EntanglementFusion <: AbstractCircuit
+# end
+
+# function (::EntanglementFusion)(control,  target)
+#     apply!((control, target), CNOT)
+#     zmeas = project_traceout!(target, σᶻ)
+#     zmeas
+# end
+
+# inputqubits(::EntanglementFusion) = 2
+
+
 # """
 # Run `queryall(switch, EntanglemetnCounterpart, ...)`
 # to find out which clients the switch has successfully entangled with. 
