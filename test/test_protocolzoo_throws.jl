@@ -1,12 +1,10 @@
-using Revise
-using QuantumSavory
-using ResumableFunctions
-using ConcurrentSim
-using QuantumSavory.ProtocolZoo
-using Graphs
-using Test
+@testitem "ProtocolZoo Throws - SimpleSwitchDiscreteProt" tags=[:protocolzoo_throws] begin
+    using Revise
+    using ResumableFunctions
+    using ConcurrentSim
+    using QuantumSavory.ProtocolZoo
+    using Graphs
 
-@testset "SimpleSwitchDiscreteProt" begin
     net = RegisterNet([Register(2), Register(3), Register(4)])
     @test_throws "`clientnodes` must be unique" SimpleSwitchDiscreteProt(net, 1, [2,2,3], fill(0.5, 3))
     @test_throws "`clientnodes` must be directly connected to the `switchnode`" SimpleSwitchDiscreteProt(net, 1, 2:4, fill(0.5, 3))

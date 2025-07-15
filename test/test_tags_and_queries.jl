@@ -1,7 +1,6 @@
-using QuantumSavory
-using QuantumSavory: tag_types
-using QuantumSavory.ProtocolZoo: EntanglementCounterpart
-using Test
+@testitem "Tags and Queries" tags=[:tags_and_queries] begin
+    using QuantumSavory: tag_types
+    using QuantumSavory.ProtocolZoo: EntanglementCounterpart
 
 function strip_id(query_result)
     return (;slot=query_result.slot, tag=query_result.tag)
@@ -151,8 +150,21 @@ id3 = tag!(reg[4], :symB, 4, 5)
 @test untag!(reg[1], id1).tag == Tag(:symA, 1, 2)
 @test untag!(reg, id2).tag == Tag(:symB, 2, 3)
 @test_throws "Attempted to delete a nonexistent" untag!(reg, -1)
+
+##
+# findfreeslot tests
+reg = Register(5)
+initialize!(reg[1], X)
+lock(reg[3])
+
+@test findfreeslot(reg).idx == 2
+@test findfreeslot(reg, filter=maximum).idx == 5
+@test findfreeslot(reg, filter=1) == nothing
+@test findfreeslot(reg, filter=2).idx == 2
+
 end
 
 f()
 #using BenchmarkTools
 #@benchmark f()
+end

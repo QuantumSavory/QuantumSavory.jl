@@ -8,6 +8,8 @@ end
 
 using Reexport
 
+import Base: unlock, lock, islocked
+
 using DocStringExtensions
 using IterTools
 import LinearAlgebra
@@ -26,8 +28,20 @@ using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
 using Combinatorics: powerset
 
-import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems,
-    AbstractOperator, AbstractKet, AbstractSuperOperator, Basis, SpinBasis
+import QuantumClifford
+import QuantumClifford: MixedDestabilizer
+
+import QuantumOpticsBase
+import QuantumOpticsBase: StateVector, Ket, Operator,
+    basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy, spre, spost
+
+import QuantumOptics
+import QuantumOptics: timeevolution
+
+import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, permutesystems,
+    projector, identityoperator, embed, dm, expect, ptrace,
+    AbstractOperator, AbstractKet, AbstractSuperOperator,
+    Basis, GenericBasis, CompositeBasis, SpinBasis
 
 export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
@@ -38,7 +52,7 @@ using QuantumSymbolics:
     metadata, istree, operation, arguments, Symbolic, # from Symbolics
     HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
     XBasisState, YBasisState, ZBasisState,
-    STensorOperator, SScaledOperator, SAddOperator
+    STensorOperator, SScaledOperator, SAddOperator, STensor
 using QuantumSymbolics: I # to avoid ambiguity with LinearAlgebra.I
 @reexport using QuantumSymbolics
 
@@ -48,6 +62,7 @@ export
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
+    onchange_tag,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer,
     # initialize.jl
@@ -69,15 +84,40 @@ export
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
     # plots.jl
-    registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis
+    registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, generate_map,
+    # backends/quantumoptics
+    krausops, lindbladop,
+    # backends/quantumclifford
+    paulinoise
 
 
 #TODO you can not assume you can always in-place modify a state. Have all these functions work on stateref, not stateref[]
 # basically all ::QuantumOptics... should be turned into ::Ref{...}... but an abstract ref
 
+# warnings for not having Ext packages
+function __init__()
+    if isdefined(Base.Experimental, :register_error_hint)
+        Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, kwargs
+            if exc.f === registernetplot
+                println(io, "\n`registernetplot!` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+            elseif exc.f === registernetplot!
+                println(io, "\n`registernetplot!` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+            elseif exc.f === registernetplot_axis
+                println(io, "\n`registernetplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+            elseif exc.f === resourceplot_axis
+                println(io, "\n`resourceplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+            elseif exc.f === generate_map
+                println(io, "\n`generate_map` requires the package `Tyler`; please make sure `Tyler` is installed and imported first.")
+            end
+        end
+    end
+end
+
 include("traits_and_defaults.jl")
 
 include("tags.jl")
+
+include("semaphore.jl")
 
 include("states_registers.jl")
 include("quantumchannel.jl")
@@ -114,6 +154,7 @@ include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
 
+include("should_upstream.jl")
 include("precompile.jl")
 
 end # module

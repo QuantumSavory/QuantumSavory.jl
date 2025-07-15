@@ -1,59 +1,67 @@
-using SafeTestsets
+using Pkg
+
+if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
+    @info "skipping plotting tests"
+else
+    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
+end
+
+if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
+    @info "skipping examples with plotting tests"
+else
+    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
+end
+
+if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
+    @info "skipping examples without plotting tests"
+else
+end
+
+if get(ENV,"JET_TEST","")!="true"
+    @info "skipping JET tests"
+else
+    Pkg.add("JET")
+end
+
 using QuantumSavory
+using TestItemRunner
 
-function doset(descr)
-    if length(ARGS) == 0
-        return true
+function testfilter(tags)
+    exclude = Symbol[]
+    if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
+        push!(exclude, :plotting_cairo)
+        push!(exclude, :plotting_gl)
+        push!(exclude, :doctests)
+    else
+        return :plotting_cairo in tags || :plotting_gl in tags || :examples_plotting in tags || :doctests in tags
     end
-    for a in ARGS
-        if occursin(lowercase(a), lowercase(descr))
-            return true
-        end
+
+    if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
+        push!(exclude, :examples_plotting)
+    else
+        return :examples_plotting in tags
     end
-    return false
+
+    if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
+        push!(exclude, :examples)
+    else
+        return :examples in tags
+    end
+
+    if get(ENV,"JET_TEST","")!="true"
+        push!(exclude, :jet)
+    else
+        return :jet in tags
+    end
+
+    return all(!in(exclude), tags)
 end
 
-macro doset(descr)
-    quote
-        if doset($descr)
-            @safetestset $descr begin include("test_"*$descr*".jl") end
-        end
-    end
-end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
-
-@doset "quantumchannel"
-@doset "register_interface"
-@doset "project_traceout"
-@doset "observable"
-@doset "noninstant_and_backgrounds_qubit"
-@doset "noninstant_and_backgrounds_qumode"
-@doset "messagebuffer"
-@doset "tags_and_queries"
-
-@doset "protocolzoo_entanglement_tracker"
-@doset "protocolzoo_entanglement_consumer"
-@doset "protocolzoo_entanglement_tracker_grid"
-@doset "protocolzoo_switch"
-@doset "protocolzoo_throws"
-@doset "protocolzoo_cutoffprot"
-
-@doset "circuitzoo_api"
-@doset "circuitzoo_ent_swap"
-@doset "circuitzoo_purification"
-@doset "circuitzoo_superdense"
-
-@doset "stateszoo_api"
+@run_package_tests filter=ti->testfilter(ti.tags) verbose=true
 
 if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-    using Pkg
-    Pkg.add("GLMakie")
+    import GLMakie
+    GLMakie.closeall() # to avoid errors when running headless
 end
-@doset "examples"
-get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_cairo"
-get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && @doset "plotting_gl"
-get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true" && VERSION >= v"1.9" && @doset "doctests"
-
-get(ENV,"JET_TEST","")=="true" && @doset "jet"
-@doset "aqua"

@@ -34,3 +34,6 @@ function _project_and_drop(state::Operator, project_on, basis_index)
     result = emproj*state*emproj'
     return _drop_singular_bases(result)
 end
+
+
+QuantumSymbolics.express(s::Union{<:Ket,<:Operator}, ::QuantumOpticsRepr) = s

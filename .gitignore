@@ -3,5 +3,4 @@ build
 .gitignore
 ROADMAP.md
 coverage
-.DS_Store
-.vscode
+*.cov

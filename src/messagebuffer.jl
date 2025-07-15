@@ -20,13 +20,13 @@ end
 function Base.put!(cf::ChannelForwarder, tag)
     tag = convert(Tag, tag)
     # shortest path calculated by Graphs.a_star
-    nexthop = first(a_star(cf.net.graph, cf.src, cf.dst))
+    nexthop = first(Graphs.a_star(cf.net.graph, cf.src, cf.dst))
     @debug "ChannelForwarder: Forwarding message from node $(nexthop.src) to node $(nexthop.dst) | message=$(tag)| end destination=$(cf.dst)"
     put!(channel(cf.net, cf.src=>nexthop.dst; permit_forward=false), tag_types.Forward(tag, cf.dst))
 end
 
 function Base.put!(mb::MessageBuffer, tag)
-    push!(mb.buffer, (;src=nothing,tag=convert(Tag,tag)))
+    put_and_unlock_waiters(mb, nothing, convert(Tag,tag))
     nothing
 end
 
@@ -36,6 +36,12 @@ function Base.put!(reg::Register, tag)
     put!(messagebuffer(reg), tag)
 end
 
+tag!(::Register, args...) = throw(ArgumentError("Register does not support `tag!`, only its slots do. But you can `put!` a `Tag` in its `messagebuffer(::Register)`."))
+
+"""
+This function is used to take messages from a channel and put them in a message buffer.
+Importantly, it also unlocks all processes waiting on the message buffer.
+"""
 @resumable function take_loop_mb(sim, ch, src, mb)
     while true
         _tag = @yield take!(ch) # TODO: The type assert is necessary due to a bug in ResumableFunctions. The bug was probably introduced in https://github.com/JuliaDynamics/ResumableFunctions.jl/pull/76 which introduces type inference for resumable functions in julia >=1.10. The type assert is not necessary on julia 1.9.
@@ -46,17 +52,21 @@ end
                 put!(channel(mb.net, mb.node=>enddestination; permit_forward=true), innertag)
             end
             _ => begin
-                @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
-                length(mb.waiters) == 0 && @debug "MessageBuffer @$(mb.node) received a message, but there is no one waiting on that message buffer. The message was `$(tag)`."
-                if length(mb.waiters) == 0
-                    mb.no_wait[] += 1
-                end
-                push!(mb.buffer, (;src,tag));
-                for waiter in keys(mb.waiters)
-                    unlock(waiter)
-                end
+                put_and_unlock_waiters(mb, src, tag)
             end
         end
+    end
+end
+
+function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
+    @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
+    length(mb.waiters) == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
+    if length(mb.waiters) == 0
+        mb.no_wait[] += 1
+    end
+    push!(mb.buffer, (;src,tag));
+    for waiter in keys(mb.waiters)
+        unlock(waiter)
     end
 end
 

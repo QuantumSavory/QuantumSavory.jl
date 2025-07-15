@@ -1,7 +1,6 @@
-using QuantumSavory
+@testitem "Quantum Channel" begin
 using ResumableFunctions
 using ConcurrentSim
-using Test
 
 bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
@@ -33,6 +32,14 @@ sref = regB.staterefs[1]
 @test sref.registers[1] == sref.registers[2]
 @test !isassigned(regA, 1)
 
+end
+
+@testitem "Quantum Channel - alternative constructor" begin
+using ResumableFunctions
+using ConcurrentSim
+
+bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
+
 ## Test with the second constructor
 
 regA = Register(1)
@@ -52,6 +59,14 @@ run(sim)
 sref = regB.staterefs[1]
 @test sref.registers[1] == sref.registers[2]
 @test !isassigned(regA, 1)
+
+end
+
+@testitem "Quantum Channel with T1 decay" begin
+using ResumableFunctions
+using ConcurrentSim
+
+bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
 ## Test with T1Decay
 
@@ -76,6 +91,14 @@ initialize!(reg[1:2], bell)
 uptotime!(reg[1], 10.0)
 
 @test observable(reg[1:2], projector(bell)) ≈ observable(regB[1:2], projector(bell))
+
+end
+
+@testitem "Quantum Channel with T2 dephasing" begin
+using ResumableFunctions
+using ConcurrentSim
+
+bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
 ## Test with T2Dephasing
 
@@ -109,3 +132,4 @@ initialize!(regC[1], Z1)
 put!(qc, regC[1])
 take!(qc, regB[1])
 @test_throws "A take! operation is being performed on a QuantumChannel in order to swap the state into a Register, but the target register slot is not empty (it is already initialized)." run(sim)
+end

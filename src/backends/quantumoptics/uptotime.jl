@@ -1,5 +1,3 @@
-export krausops
-
 function uptotime!(state::StateVector, idx::Int, background, Δt)
     state = dm(state)
     uptotime!(state, idx, background, Δt)
@@ -56,29 +54,62 @@ const _cphase = _ll⊗_Id + _hh⊗_z
 const _phase = _ll + im*_hh
 const _iphase = _ll - im*_hh
 
+"""
+For a given background noise type, provide the corresponding Kraus operators, in a QuantumOptics.jl representation.
+
+See also: [`paulinoise`](@ref), [`lindbladop`](@ref)
+"""
+function krausops end
+
 function krausops(b::AbstractBackground, Δt, basis) # shortcircuit for backgrounds that work on a single basis
     return krausops(b, Δt)
 end
 
-# TODO move to QuantumSymbolics (and remove the above constants)
-function krausops(T1::T1Decay, Δt) # TODO checks comparing krausops and lindbladops
+"""
+The Kraus operators for a T₁ process
+
+- `A₁ = |0⟩⟨0| + √(1-γ) |1⟩⟨1|`
+- `A₂ = √γ |0⟩⟨1|`
+- `λ = 1 - exp(-Δt/T₁)`
+"""
+function krausops(T1::T1Decay, Δt)
     p = exp(-Δt/T1.t1) # TODO check this
     [√(1-p) * _lh, √p * _hh + _ll]
 end
 
+"""
+The Kraus operators for a T₂ process
+
+One option is the following (more popular in the literature):
+- `P₁ = |0⟩⟨0| + √(1-λ) |1⟩⟨1|`
+- `P₂ = √λ |1⟩⟨1|`
+- `λ = 1 - exp(-2Δt/T₂)`
+
+An equivalent option is (more convenient when converting to a Pauli error channel):
+- `P₁′ = √(1-p/2) I`
+- `P₂′ = √(p/2) Z`
+- `p = 1 - exp(-Δt/T₂)`
+
+These two options are equivalent under a unitary transformation. We implement the second one.
+"""
 function krausops(T2::T2Dephasing, Δt)
-    p = 1-exp(-Δt/T2.t2) # TODO check this
+    p = 1-exp(-Δt/T2.t2)
     [√(1-p/2) * _id, √(p/2) * _z]
-    #[√(1-p) * _id, √(p) * _hh, √(p) * _ll]
 end
 
 function krausops(d::AmplitudeDamping, Δt, basis) # https://quantumcomputing.stackexchange.com/questions/6828/amplitude-damping-of-a-harmonic-oscillator
-    nothing # TODO maybe encode this as a trait
+    nothing # TODO strictly speaking this is not necessary as we can always fall back to the lindbladians
 end
 
-# TODO add an amplitude damping example of transduction
+"""
+The Kraus operators for depolarization are
+`√(1-3p/4) I, √p/2 * X, √p/2 * Y, √p/2 Z`
+"""
+function krausops(D::Depolarization, Δt)
+    p = 1-exp(-Δt/D.τ)
+    [√(1-3p/4) * _id, √(p)/2 * _x, √(p)/2 * _y, √(p)/2 * _z]
+end
 
-function krausops(Depol::Depolarization, Δt)
-    p = 1-exp(-Δt/Depol.τ) # TODO check this
-    [√(1-3*p/4) * _id, √(p/4) * _x, √(p/4) * _y, √(p/4) * _z]
+function krausops(P::PauliNoise)
+    nothing # TODO strictly speaking this is not necessary as we can always fall back to the lindbladians
 end

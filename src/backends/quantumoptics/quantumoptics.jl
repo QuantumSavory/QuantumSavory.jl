@@ -1,12 +1,3 @@
-import QuantumOpticsBase
-import QuantumOpticsBase: GenericBasis, CompositeBasis,
-    StateVector, AbstractSuperOperator, Ket, Operator,
-    basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy,
-    projector, identityoperator, embed, dm, expect, ptrace, spre, spost
-import QuantumOptics
-import QuantumOptics: timeevolution
-import QuantumInterface: nsubsystems
-
 const QOR = QuantumOpticsRepr()
 
 subsystemcompose(states::Ket...) = tensor(states...)
@@ -22,10 +13,34 @@ ispadded(::Operator) = false
 
 function observable(state::Union{<:Ket,<:Operator}, indices::Base.AbstractVecOrTuple{Int}, operation)
     operation = express(operation, QOR)
-    e = basis(state)==basis(operation)
-    op = e ? operation : embed(basis(state), indices, operation)
+    # TODO if indices is ascending 1:n we can skip this embed -- such an improvement should be upstreamed to QuantumOpticsBase, so that embed is faster
+    # TODO if nsubsystems(state) == 1 the embed should still work and be a no-op -- this should be upstreamed to QuantumInterface
+    op = if nsubsystems(state) == 1
+        operation
+    else
+        if nsubsystems(state) == length(indices) && 1:length(indices) == indices
+            operation
+        else
+            embed(basis(state), indices, operation)
+        end
+    end
     expect(op, state)
 end
+
+# special case for projectors in order to avoid the overhead of an outer product
+function observable(state::Union{<:Ket,<:Operator}, indices::Base.AbstractVecOrTuple{Int}, proj::SProjector)
+    projket = express(proj.ket, QOR)
+    if nsubsystems(projket) == length(indices) == nsubsystems(state)
+        1:length(indices) != indices && (projket = permutesystems(projket, indices))
+        return _observable(state, projket)
+    else # TODO this branch still uses an outer product because we do not have a convenient contraction operation implemented when the dimensions differ
+        return observable(state, indices, express(proj, QOR))
+    end
+end
+
+_observable(a::Ket,b::Ket) = abs2(a'*b)
+_observable(a::Operator,b::Ket) = expect(a,b)
+_observable(a::Operator,b::Operator) = expect(a,b)
 
 function project_traceout!(state::Union{Ket,Operator},stateindex::Int,psis::Base.AbstractVecOrTuple{Ket})
     if nsubsystems(state) == 1 # TODO is there a way to do this in a single function, instead of _overlap vs _project_and_drop

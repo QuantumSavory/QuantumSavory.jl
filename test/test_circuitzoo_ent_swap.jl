@@ -1,6 +1,5 @@
-using QuantumSavory
+@testitem "Circuit Zoo Entanglement Swap" tags=[:circuitzoo_ent_swap] begin
 using QuantumSavory.CircuitZoo
-using Test
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 const perfect_pair_stab = StabilizerState("XX ZZ")
@@ -54,4 +53,5 @@ for pair in (perfect_pair, perfect_pair_stab), n in 3:10, rep in 1:10
     @test all(!isassigned(net[i][1]) & !isassigned(net[i][2]) for i in 2:n-1)
     @test observable((net[1][1], net[n][2]), Z⊗Z) ≈ 1
     @test observable((net[1][1], net[n][2]), X⊗X) ≈ 1
+end
 end
