@@ -23,6 +23,7 @@ function uptotime!(state::Operator, idx::Int, background, Δt)
             mul!(tmpr,tmpl,k',1,0)
             nstate.data .+= tmpr.data
         end
+    end
     @assert abs(tr(nstate)) ≈ 1. # TODO maybe put under a debug flag
     nstate
 end
