@@ -3,12 +3,12 @@ module ProtocolZoo
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange_tag
 using QuantumSavory: Wildcard
-using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap, EntanglementFusion
+using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
 
 using Distributions: Geometric
-using ConcurrentSim: Simulation, @yield, timeout, @process, now, StopSimulation
+using ConcurrentSim: Simulation, @yield, timeout, @process, now
 import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
@@ -16,9 +16,9 @@ import SumTypes
 
 export
     # protocols
-    EntanglerProt, SwapperProt, FusionProt, EntanglementTracker, EntanglementConsumer, FusionConsumer, CutoffProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
     # tags
-    EntanglementCounterpart, FusionCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # from QTCP
@@ -49,25 +49,6 @@ $TYPEDFIELDS
 end
 Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot)")
 Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot)
-
-
-"""
-$TYPEDEF
-
-Indicates the current entanglement status with a remote node's slot. Added when a new qubit is fused into the multipartide state through [`FusionProt`](@ref).
-The [`EntanglementTracker`](@ref) receives an [`EntanglementUpdate`] message: a tag pointing to a remote node slot it has performed fusion with. For example, in the `piecemakerswitch` setup the piecemaker slot in the central node is taged with all the client nodes it is fused with.
-
-$TYPEDFIELDS
-"""
-@kwdef struct FusionCounterpart
-    "the id of the remote node to which we are entangled"
-    remote_node::Int
-    "the slot in the remote node containing the qubit we are entangled to"
-    remote_slot::Int
-end
-Base.show(io::IO, tag::FusionCounterpart) = print(io, "Fused with $(tag.remote_node).$(tag.remote_slot)")
-Tag(tag::FusionCounterpart) = Tag(FusionCounterpart, tag.remote_node, tag.remote_slot)
-
 
 """
 $TYPEDEF
@@ -187,10 +168,6 @@ $TYPEDFIELDS
     nodeA::Int
     """the vertex index of node B"""
     nodeB::Int
-    """the slot index of node A"""
-    slotA::Union{Int,Wildcard} = ❓
-    """the slot index of node B"""
-    slotB::Union{Int,Wildcard} = ❓
     """the state being generated (supports symbolic, numeric, noisy, and pure)"""
     pairstate = StabilizerState("ZZ XX")
     """success probability of one attempt of entanglement generation"""
@@ -266,7 +243,6 @@ end
             rand(Geometric(prot.success_prob))+1
         end
         if prot.attempts == -1 || prot.attempts >= attempts
-    
             @yield timeout(prot.sim, attempts * prot.attempt_time)
             initialize!((a,b), prot.pairstate; time=now(prot.sim))
             @yield timeout(prot.sim, prot.local_busy_time_post)
