@@ -46,6 +46,7 @@ end
 
 inputqubits(::LocalEntanglementSwap) = 2
 
+
 """
 $TYPEDEF
 
