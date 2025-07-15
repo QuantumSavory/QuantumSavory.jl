@@ -316,17 +316,15 @@ end
                 counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
                 unlock(localslot)
                 if !isnothing(counterpart)
-                    time_before_lock = now(prot.sim)
+                    # time_before_lock = now(prot.sim)
                     @yield lock(localslot)
-                    time_after_lock = now(prot.sim)
-                    time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
+                    # time_after_lock = now(prot.sim)
+                    # time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
                     if !isassigned(localslot)
                         unlock(localslot)
                         error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
                     end
-                    @debug "EntanglementTracker @$(prot.node): updategate = $(updategate)"
                     if !isnothing(updategate) # EntanglementUpdate
-                        @debug "Entanglement updated for $(prot.node).$(localslot.idx) 2"
                         # Pauli frame correction gate
                         if correction==2
                             apply!(localslot, updategate)
@@ -336,7 +334,6 @@ end
                             tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
                         end
                     else # EntanglementDelete
-                        @debug "Entanglement deleted"
                         traceout!(localslot)
                     end
                     unlock(localslot)

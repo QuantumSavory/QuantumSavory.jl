@@ -286,28 +286,6 @@ end
 
 """
 Run `queryall(switch, EntanglemetnCounterpart, ...)`
-to find out which clients the switch has successfully entangled with. 
-Then returns returns a list of indices corresponding to the successful clients.
-"""
-
-function _switch_successful_entanglements(prot, reverseclientindex)
-    switch = prot.net[prot.switchnode]
-    successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓)
-    entangled_clients = [r.tag[2] for r in successes] # RegRef (qubit slot)
-    if isempty(entangled_clients)
-        @debug "Switch $(prot.switchnode) failed to entangle with any clients"
-        return nothing
-    end
-    # get the maximum match for the actually connected nodes
-    ne = length(entangled_clients)
-    @debug "Switch $(prot.switchnode) successfully entangled with $ne clients" 
-    if ne < 1 return nothing end
-    entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
-    return entangled_clients_revindex
-end
-
-"""
-Run `queryall(switch, EntanglemetnCounterpart, ...)`
 to find out which clients the switch has successfully entangled with.
 Then, choose a matching of entangled clients to the memory slots of the switch,
 and return the best match given the current backlog of requests.
