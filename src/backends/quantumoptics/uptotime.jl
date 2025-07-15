@@ -23,12 +23,6 @@ function uptotime!(state::Operator, idx::Int, background, Δt)
             mul!(tmpr,tmpl,k',1,0)
             nstate.data .+= tmpr.data
         end
-        # Suggestion for alternative implementation:
-        # for k in Ks
-        #     k = e ? embed(b, [idx], k) : k
-        #     nstate .+= k * state * adjoint(k)
-        # end
-    end
     @assert abs(tr(nstate)) ≈ 1. # TODO maybe put under a debug flag
     nstate
 end

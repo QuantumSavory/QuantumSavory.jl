@@ -9,7 +9,7 @@ using CSV
 using Profile
 using NetworkLayout
 
-@resumable function init_state(sim, net, nclients, delay)
+@resumable function init_state(sim, net, nclients::Int, delay::Real)
     @yield timeout(sim, delay)
     initialize!(net[1][nclients+1], X1; time=now(sim))
 end
