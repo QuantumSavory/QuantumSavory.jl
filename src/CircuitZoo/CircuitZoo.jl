@@ -6,6 +6,7 @@ using DocStringExtensions
 export EntanglementSwap, LocalEntanglementSwap,
     Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
     PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
+    PurifyDEJMPS, PurifyDEJMPSNodeL, PurifyDEJMPSNodeR
     SDDecode, SDEncode
 
 abstract type AbstractCircuit end
@@ -868,11 +869,10 @@ end
 """
 $TYPEDEF
 
-A purification protocol implementing the DEJMPS scheme, which sacrifices an 
-entangled Bell pair to purify another one. This circuit is capable of detecting
-and correcting all Pauli errors on the purified pair.
+A purification circuit implementing the DEJMPS scheme, which sacrifices an 
+entangled Bell pair to purify another one.
 
-This circuit applies Rx rotations, bilateral CNOTs, and projective measurements 
+This circuit applies X rotations, bilateral CNOTs, and projective measurements 
 in the Z basis on the sacrificial pair. 
 The sacrificial qubits are removed from the register.
 
@@ -886,21 +886,21 @@ julia> a = Register(2)
        initialize!((a[1], b[1]), bell)
        initialize!((a[2], b[2]), bell);
        
-julia> DEJMPSProtocol()(a[1], b[1], a[2], b[2])
+julia> PurifyDEJMPS()(a[1], b[1], a[2], b[2])
 ```
 
-See also: [`Purify2to1`](@ref), [PhysRevLett.77.2818](@cite)
+See also: [`PurifyDEJMPSNodeL`](@ref), [`PurifyDEJMPSNodeR`](@ref), [`Purify2to1`](@ref), [PhysRevLett.77.2818](@cite)
 """
-struct DEJMPSProtocol <: AbstractCircuit
+struct PurifyDEJMPS <: AbstractCircuit
 end
 
-inputqubits(circuit::DEJMPSProtocol) = 4
+inputqubits(circuit::PurifyDEJMPS) = 4
 
-function (circuit::DEJMPSProtocol)(purifiedL, purifiedR, sacrificedL, sacrificedR)
-    apply!(purifiedL, Rx(π/2))
-    apply!(sacrificedL, Rx(π/2))
-    apply!(purifiedR, Rx(-π/2))
-    apply!(sacrificedR, Rx(-π/2))
+function (circuit::PurifyDEJMPS)(purifiedL, purifiedR, sacrificedL, sacrificedR)
+    apply!(purifiedL, RotXGate(π/2))
+    apply!(sacrificedL, RotXGate(π/2))
+    apply!(purifiedR, RotXGate(-π/2))
+    apply!(sacrificedR, RotXGate(-π/2))
 
     apply!((purifiedL, sacrificedL), CNOT)
     apply!((purifiedR, sacrificedR), CNOT)
@@ -914,6 +914,131 @@ function (circuit::DEJMPSProtocol)(purifiedL, purifiedR, sacrificedL, sacrificed
     end
     success
 end
+
+"""
+$TYPEDEF
+
+A purification circuit implementing the DEJMPS scheme, which sacrifices an 
+entangled Bell pair to purify another one.
+
+This is only the "left half" of the full purification circuit - the local gates to
+be applied on the left network node. For a complete purification circuit, you need
+to apply the [`PurifyDEJMPSNodeR`](@ref) circuit to the right node as well.
+Alternatively, you can use the complete [`PurifyDEJMPS`](@ref) circuit.
+
+This circuit returns the measurement result (as an integer index among the 
+possible Z-basis states)
+
+```jldoctest
+julia> a = Register(2)
+       b = Register(2)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell);
+
+julia> PurifyDEJMPSNodeL()(a[1], a[2])
+```
+"""
+struct PurifyDEJMPSNodeL <: AbstractCircuit
+end
+
+inputqubits(circuit::PurifyDEJMPSNodeL) = 2
+
+function (circuit::PurifyDEJMPSNodeL)(purifiedL, sacrificedL)
+    apply!(purifiedL, RotXGate(π/2))
+    apply!(sacrificedL, RotXGate(π/2))
+
+    apply!((purifiedL, sacrificedL), CNOT)
+
+    return project_traceout!(sacrificedL, σᶻ)
+end
+
+"""
+$TYPEDEF
+
+A purification circuit implementing the DEJMPS scheme, which sacrifices an 
+entangled Bell pair to purify another one.
+
+This is only the "right half" of the full purification circuit - the local gates to
+be applied on the right network node. For a complete purification circuit, you need
+to apply the [`PurifyDEJMPSNodeL`](@ref) circuit to the left node as well.
+Alternatively, you can use the complete [`PurifyDEJMPS`](@ref) circuit.
+
+This circuit returns the measurement result (as an integer index among the 
+possible Z-basis states)
+
+```jldoctest
+julia> a = Register(2)
+       b = Register(2)
+       bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell);
+
+julia> PurifyDEJMPSNodeR()(a[1], a[2])
+```
+"""
+struct PurifyDEJMPSNodeR <: AbstractCircuit
+end
+
+inputqubits(circuit::PurifyDEJMPSNodeR) = 2
+
+function (circuit::PurifyDEJMPSNodeR)(purifiedR, sacrificedR)
+    apply!(purifiedR, RotXGate(-π/2))
+    apply!(sacrificedR, RotXGate(-π/2))
+
+    apply!((purifiedR, sacrificedR), CNOT)
+
+    return project_traceout!(sacrificedR, σᶻ)
+end
+
+# """
+# $TYPEDEF
+
+# A purification circuit implementing the DEJMPS scheme, which sacrifices an 
+# entangled Bell pair to purify another one.
+
+# This is only one "half" of the full purification circuit - the local gates to
+# be applied on the network node. For a complete purification circuit, you need
+# to apply the [`PurifyDEJMPSNode`](@ref) circuit to the remote node as well.
+# Alternatively, you can use the complete [`PurifyDEJMPS`](@ref) circuit.
+
+# The circuit is parameterized by a `side` symbol which determines whether it is 
+# the left or right half. Use the symbol `:L` to specify the left half and `:R` 
+# to specify the right half of the circuit.
+# This circuit returns the measurement result (as an integer index among the 
+# possible Z-basis states)
+
+# ```jldoctest
+# julia> a = Register(2)
+#        b = Register(2)
+#        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
+#        initialize!((a[1], b[1]), bell)
+#        initialize!((a[2], b[2]), bell);
+
+# julia> PurifyDEJMPSNode(:L)(a[1], a[2])
+# julia> PurifyDEJMPSNode(:R)(a[1], a[2])
+# ```
+# """
+# struct PurifyDEJMPSNode <: AbstractCircuit
+#     side::Symbol
+#     function PurifyDEJMPSNode(side)
+#         @assert side ∈ (:L, :R) "PurifyDEJMPSNode must be initialized with either :L for the left or :R for the right half of the circuit."
+#         new(side)
+#     end
+# end
+
+# inputqubits(circuit::PurifyDEJMPSNode) = 2
+
+# function (circuit::PurifyDEJMPSNode)(purified, sacrificed)
+#     x = circuit.side == :L ? 1 : -1
+#     apply!(purified, RotXGate(x*π/2))
+#     apply!(sacrificed, RotXGate(x*π/2))
+
+#     apply!((purified, sacrificed), CNOT)
+
+#     return project_traceout!(sacrificed, σᶻ)
+# end
+
 
 """
 $TYPEDEF
