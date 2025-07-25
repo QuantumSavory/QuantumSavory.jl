@@ -1,4 +1,4 @@
-@testitem "Examples - colorcentermodularcluster 1" tags=[:examples] begin
+@testitem "Examples - colorcentermodularcluster 1" tags=[:examples_plotting] begin
     include("../examples/colorcentermodularcluster/1_time_to_connected.jl")
 end
 
@@ -40,7 +40,6 @@ end
 end
 
 @testitem "Examples - simpleswitch" tags=[:examples_plotting] begin
-    # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
     include("../examples/simpleswitch/1_interactive_visualization.jl")
 end
 
