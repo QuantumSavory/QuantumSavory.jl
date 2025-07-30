@@ -33,3 +33,28 @@ end
 # T1T2Noise
 # T1TwirledDecay
 # T1T2TwirledNoise
+
+using InteractiveUtils 
+import PrettyTables: pretty_table
+
+function available_background_types()
+    types = subtypes(AbstractBackground)
+
+    docs = [(type = T, doc = Base.Docs.doc(T)) for T in types] #TODO: edge case: no doc
+
+    pretty_table(docs; crop = :none, header = ["Type", "Docstring"])
+
+    return docs
+end
+
+
+function constructor_metadata(::Type{T}) where {T<:AbstractBackground}
+    fields = fieldnames(T)
+    types = T.types
+
+    metadata = [(arg = fields[i], type = types[i]) for i in eachindex(fields)]
+
+    pretty_table(metadata; crop = :none)
+
+    return metadata
+end
