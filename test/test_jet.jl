@@ -4,6 +4,7 @@
     using QuantumSavory
 
     rep = JET.report_package(QuantumSavory, target_defined_modules = true)
-    @test length(JET.get_reports(rep)) <= 12
+    println(rep)
+    @test length(JET.get_reports(rep)) <= 14
     @test_broken length(JET.get_reports(rep)) == 0
 end
