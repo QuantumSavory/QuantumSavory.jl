@@ -13,12 +13,11 @@ struct Qumode <: QuantumStateTrait end
 default_repr(::Qubit) = QuantumOpticsRepr()
 default_repr(::Qumode) = QuantumOpticsRepr()
 
-"""Display all available slot types in QuantumSavory along with their documentation.
 
-The `InteractiveUtils` package must be installed and imported."""
-function available_slot_types end
+function available_slot_types() # TODO move this to an extension that loads when the InteractiveUtils is loaded
+    types = subtypes(QuantumStateTrait)
 
-"""Display all argument types and their documentation for the specified background type.
+    docs = [(type = T, doc = Base.Docs.doc(T)) for T in types] #TODO: edge case: no doc
 
-The `InteractiveUtils` package must be installed and imported."""
-function constructor_metadata end
+    return docs
+end

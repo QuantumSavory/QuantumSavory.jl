@@ -28,6 +28,8 @@ using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
 using Combinatorics: powerset
 
+import InteractiveUtils: subtypes
+
 import QuantumClifford
 import QuantumClifford: MixedDestabilizer
 
