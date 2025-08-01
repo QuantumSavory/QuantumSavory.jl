@@ -58,7 +58,7 @@ using QuantumSymbolics: I # to avoid ambiguity with LinearAlgebra.I
 
 export
     StateRef, RegRef, Register,
-    Qubit, Qumode, QuantumStateTrait, available_slot_types,
+    Qubit, Qumode, QuantumStateTrait,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
@@ -80,7 +80,7 @@ export
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
-    T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping, available_background_types, constructor_metadata,
+    T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping,
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
     # plots.jl

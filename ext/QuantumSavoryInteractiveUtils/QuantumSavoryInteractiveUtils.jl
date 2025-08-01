@@ -3,7 +3,7 @@ module QuantumSavoryInteractiveUtils
 using QuantumSavory
 import InteractiveUtils: subtypes
 
-function available_slot_types()
+function QuantumSavory.available_slot_types()
     types = subtypes(QuantumStateTrait)
 
     docs = [(type = T, doc = Base.Docs.doc(T)) for T in types] #TODO: edge case: no doc
@@ -11,7 +11,7 @@ function available_slot_types()
     return docs
 end
 
-function available_background_types()
+function QuantumSavory.available_background_types()
     types = subtypes(AbstractBackground)
 
     docs = [(type = T, doc = Base.Docs.doc(T)) for T in types]
@@ -20,7 +20,7 @@ function available_background_types()
 end
 
 # Taken from DocStringExtensions.format(::TupeFields)
-function constructor_metadata(::Type{T}) where {T<:AbstractBackground}
+function QuantumSavory.constructor_metadata(::Type{T}) where {T<:AbstractBackground}
     fields = fieldnames(T)
     types = T.types
     typedoc = Base.Docs.doc(T)
