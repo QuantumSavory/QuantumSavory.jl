@@ -39,7 +39,6 @@ Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 QuantumSavoryInteractiveUtils = ["InteractiveUtils", "REPL"]
 QuantumSavoryMakie = "Makie"
 QuantumSavoryTylerMakie = ["Tyler", "Makie"]
-QuantumSavoryInteractiveUtils = "InteractiveUtils"
 
 [compat]
 Combinatorics = "1"
