@@ -41,25 +41,12 @@ end
 # T1TwirledDecay
 # T1T2TwirledNoise
 
+"""Display all available background types in QuantumSavory along with their documentation.
 
-function available_background_types() # TODO move this to an extension that loads when the InteractiveUtils is loaded
-    types = subtypes(AbstractBackground)
+The `InteractiveUtils` package must be installed and imported."""
+function available_background_types end
 
-    docs = [(type = T, doc = Base.Docs.doc(T)) for T in types]
+"""Display all argument types and their documentation for the specified background type.
 
-    return docs
-end
-
-# Taken from DocStringExtensions.format(::TupeFields)
-function constructor_metadata(::Type{T}) where {T<:AbstractBackground}
-    fields = fieldnames(T)
-    types = T.types
-    typedoc = Base.Docs.doc(T)
-    binding = typedoc.meta[:binding]
-    object = Docs.resolve(binding)
-    fieldsdata = typedoc.meta[:results][1].data[:fields]
-
-    metadata = [(;field, type, doc = fieldsdata[field]) for (field, type) in zip(fields, types)]
-
-    return metadata
-end
+The `InteractiveUtils` package must be installed and imported."""
+function constructor_metadata end

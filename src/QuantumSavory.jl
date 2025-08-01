@@ -28,8 +28,6 @@ using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
 using Combinatorics: powerset
 
-import InteractiveUtils: subtypes
-
 import QuantumClifford
 import QuantumClifford: MixedDestabilizer
 
@@ -60,7 +58,7 @@ using QuantumSymbolics: I # to avoid ambiguity with LinearAlgebra.I
 
 export
     StateRef, RegRef, Register,
-    Qubit, Qumode, QuantumStateTrait,
+    Qubit, Qumode, QuantumStateTrait, available_slot_types,
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
@@ -82,7 +80,7 @@ export
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
-    T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping,
+    T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping, available_background_types, constructor_metadata,
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
     # plots.jl
