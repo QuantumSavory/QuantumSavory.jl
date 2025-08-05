@@ -16,7 +16,7 @@ function generate_map(subfig; extent=nothing)
     end
     provider = TileProviders.CartoDB(:Positron)
     map = Tyler.Map(extent; provider, figure=subfig, crs=Tyler.wgs84)
-    wait(map)
+    wait(map; timeout=100)
     return subfig, map.axis, map
 end
 
