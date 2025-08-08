@@ -104,7 +104,8 @@ n = parsed_args["n"] # number of qubits in the GHZ state
     
 df_all_runs = DataFrame()
 for link_success_prob in exp10.(range(-3, stop=0, length=20))
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=20)) 
+    timed = 0.0 # time for one run
+    for mem_depolar_prob in [0.001, 0.006, 0.078]
 
         logging = DataFrame(
             distribution_times  = Float64[],
@@ -114,7 +115,7 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
         decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
         noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
         sim = prepare_sim(n, states_representation, noise_model, link_success_prob, seed, logging, number_of_samples)
-        timed = @elapsed run(sim)
+        timed += @elapsed run(sim)
 
         # log constants
         logging[!, :elapsed_time] .= timed/number_of_samples
@@ -124,8 +125,8 @@ for link_success_prob in exp10.(range(-3, stop=0, length=20))
         logging[!, :num_remote_nodes] .= n
         logging[!, :seed] .= seed
         append!(df_all_runs, logging)
-        @info "Link success probability: $(link_success_prob) | Time: $(timed)"
     end
+    @info "Link success probability: $(link_success_prob) | Time: $(timed)"
 end
 #@info df_all_runs
-CSV.write(parsed_args["output_path"]*"GHZ_factory$(n)_scan.csv", df_all_runs)
+CSV.write(parsed_args["output_path"]*"GHZ_factory$(n)_scan.csv", df_all_runs) 

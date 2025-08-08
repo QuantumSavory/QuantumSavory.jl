@@ -21,7 +21,7 @@ function parse_commandline()
     @add_arg_table s begin
         "-n"
             help = "number of qubits in the GHZ state"
-            default = 2
+            default = 3
             arg_type = Int
         "--nsamples"
             help = "number of samples to be generated"

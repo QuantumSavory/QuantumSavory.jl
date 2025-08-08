@@ -11,15 +11,17 @@ include("GHZutils.jl")
             @process entangle(sim, net, i, link_success_prob)
         end
 
-        # Initialize "piecemaker" qubit in |+> state after first time step has passed, such that if p=1 fidelity=1
-        initialize!(net[1][n+1], X1, time=now(sim)+1.0) 
-
         while true
 
             # Look for EntanglementCounterpart changed on switch
             counter = 0
             while counter < n # until all clients are entangled
                 @yield onchange_tag(net[1])
+                if counter == 0 # initialize piecemaker
+                    # Initialize "piecemaker" qubit in |+> state when first qubit arrived s.t. if p=1 fidelity=1
+                    initialize!(net[1][n+1], X1, time=now(sim))
+                end
+
                 while true
                     counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
                     if !isnothing(counterpart)
@@ -95,7 +97,7 @@ n = parsed_args["n"] # number of qubits in the GHZ state
     
 df_all_runs = DataFrame()
 for link_success_prob in exp10.(range(-3, stop=0, length=20))
-    for mem_depolar_prob in exp10.(range(-3, stop=0, length=20))
+    for mem_depolar_prob in [0.001, 0.006, 0.078]# exp10.(range(-3, stop=0, length=20))
 
         logging = DataFrame(
             distribution_times  = Float64[],
