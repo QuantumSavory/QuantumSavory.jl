@@ -3,139 +3,169 @@ using QuantumSavory.ProtocolZoo
 using Graphs
 using ConcurrentSim
 using ResumableFunctions
-using Distributions
-using DataFrames
-using CSV
-using Profile
 using NetworkLayout
+using DataFrames
+using Random
+using QuantumClifford: ghz
 
+const ghzs = [ghz(n) for n in 1:7] # make const in order to not build new every time
 
-# """ $TYPEDEF
-
-# ## Fields:
-
-# $FIELDS
-
-# A circuit that combines two multipartide entangled states (e.g., GHZ states) into one, up to some Pauli correction. 
-# The circuit applies a CNOT gate, measures the target qubit in the Z basis and traces out the latter (removed from the register). 
-# The measurement result (1 for |0⟩ and 2 for |1⟩) is returned by the circuit. 
-# By measuring and discarding the target qubit, the entanglement is effectively transferred to the control qubit.
-
-# This circuit is useful in protocols where two multipartide entangled states are combined into one, e.g., when generating graph states. 
-
-# ```jldoctest
-# julia> a = Register(1)
-#        b = Register(2)
-#        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
-#        initialize!(a[1], X1)  # Initialize `a[1]` in |+⟩ state.
-#        initialize!((b[1], b[2]), bell)  # Initialize `b` with a bell pair.
-
-# julia> correction = EntanglementFusion()(a[1], b[1]) # Apply fusion and receive measurement outcome.
-
-# julia> isassigned(b[1])  # The `b[1]` qubit has been traced out. 
-# false
-
-# julia> if correction==2 apply!(b[2], X) end # Apply correction.
-
-# julia> real(observable((a[1], b[2]), projector(bell))) # Now bell pair is fused into a.
-# 1.0
-# ```
-# """
-# struct EntanglementFusion <: AbstractCircuit
-# end
-
-# function (::EntanglementFusion)(control,  target)
-#     apply!((control, target), CNOT)
-#     zmeas = project_traceout!(target, σᶻ)
-#     zmeas
-# end
-
-# inputqubits(::EntanglementFusion) = 2
-
-
-# """
-# Run `queryall(switch, EntanglemetnCounterpart, ...)`
-# to find out which clients the switch has successfully entangled with. 
-# Then returns returns a list of indices corresponding to the successful clients.
-# """
-
-# function _switch_successful_entanglements(prot, reverseclientindex)
-#     switch = prot.net[prot.switchnode]
-#     successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓)
-#     entangled_clients = [r.tag[2] for r in successes] # RegRef (qubit slot)
-#     if isempty(entangled_clients)
-#         @debug "Switch $(prot.switchnode) failed to entangle with any clients"
-#         return nothing
-#     end
-#     # get the maximum match for the actually connected nodes
-#     ne = length(entangled_clients)
-#     @debug "Switch $(prot.switchnode) successfully entangled with $ne clients" 
-#     if ne < 1 return nothing end
-#     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
-#     return entangled_clients_revindex
-# end
-
-@resumable function init_state(sim, net, nclients::Int, delay::Real)
-    @yield timeout(sim, delay)
-    initialize!(net[1][nclients+1], X1; time=now(sim))
+function fusion(piecemaker_slot, client_slot)
+    apply!((piecemaker_slot, client_slot), CNOT)
+    res = project_traceout!(client_slot, σᶻ)
+    return res
 end
 
-@resumable function entangle_and_fuse(sim, net, client, link_success_prob)
+"""
+    EntanglementCorrector(sim, net, node)
 
-    # Set up the entanglement trackers at each client
-    tracker = EntanglementTracker(sim, net, client) 
-    @process tracker()
+A resumable protocol process that listens for entanglement correction instructions at a given network node.
 
-    # Set up the entangler and fuser protocols at each client
-    entangler = EntanglerProt(
-        sim=sim, net=net, nodeA=1, slotA=client-1, nodeB=client,
-        success_prob=link_success_prob, rounds=1, attempts=-1, attempt_time=1.0 
-        )
-    @yield @process entangler()
-
-    fuser = FusionProt(
-            sim=sim, net=net, node=1,
-            nodeC=client,
-            rounds=1
-        )
-    @yield @process fuser()
-end
-
-
-@resumable function run_protocols(sim, net, nclients, link_success_prob)
-    # Run entangler and fusion for each client and wait for all to finish
-    procs_succeeded = []
-    for k in 2:nclients+1    
-        proc_succeeded = @process entangle_and_fuse(sim, net, k, link_success_prob)
-        push!(procs_succeeded, proc_succeeded)
+Upon receiving a message tagged `:updateX`, the protocol checks the received value and, if the value equals `2`, applies an X correction to the node's qubit. The process locks the qubit during the correction to ensure thread safety, logs the correction event, and then terminates.
+"""
+@resumable function EntanglementCorrector(sim, net, node)
+    while true
+        @yield onchange_tag(net[node][1])
+        msg = querydelete!(net[node][1], :updateX, ❓)
+        if !isnothing(msg)
+            value = msg[3][2]
+            @yield lock(net[node][1])
+            @info "X received at node $(node), with value $(value)"
+            value == 2 && apply!(net[node][1], X)
+            unlock(net[node][1])
+            break
+        end
     end
-    @yield reduce(&, procs_succeeded)
 end
 
-function prepare_simulation(nclients=2, mem_depolar_prob = 0.1, link_success_prob = 0.5)
+"""
+    Logger(sim, net, node, n, logging, start_of_round)
 
-    m = nclients+1 # memory slots in switch is equal to the number of clients + 1 slot for piecemaker qubit
-    r_depol =  - log(1 - mem_depolar_prob) # depolarization rate
-    delay = 1 # initialize the piecemaker |+> after one time unit (in order to provide fidelity ==1 if success probability = 1)
+A resumable protocol process that listens for entanglement measurement instructions at a given network node and logs the fidelity of the resulting state.
 
-    # The graph of network connectivity. Index 1 corresponds to the switch.
-    graph = star_graph(nclients+1)
+Upon receiving a message tagged `:updateZ`, the protocol checks the received value and, if the value equals `2`, applies a Z correction to the node's qubit. The process then measures the fidelity of the current state against the ideal GHZ state, logs the result, and terminates.
+"""
+@resumable function Logger(sim, net, node, n, logging, start_of_round)
+    msg = querydelete!(net[node], :updateZ, ❓)
+    if isnothing(msg)
+        error("No message received at node $(node) with tag :updateZ.")
+    else
+        value = msg[3][2]
+        @info "Z received at node $(node), with value $(value)"
+        @yield lock(net[node][1])
+        value == 2 && apply!(net[node][1], Z)
+        unlock(net[node][1])
 
-    switch_register = Register(m, Depolarization(1/r_depol)) # the first slot is reserved for the 'piecemaker' qubit used as fusion qubit 
-    client_registers = [Register(1, Depolarization(1/r_depol)) for _ in 1:nclients] #Depolarization(1/r_depol)
-    net = RegisterNet(graph, [switch_register, client_registers...])
+        # Measure the fidelity to the GHZ state
+        @yield reduce(&, [lock(q) for q in net[2]])
+        obs = SProjector(StabilizerState(ghzs[n])) # GHZ state projector to measure
+        fidelity = real(observable([net[i+1][1] for i in 1:n], obs; time=now(sim)))
+        @info "Fidelity: $(fidelity)"
+
+        # Log outcome
+        push!(
+            logging,
+            (
+                now(sim)-start_of_round, fidelity
+            )
+        )
+    end
+end
+
+@resumable function PiecemakerProt(sim, n, net, link_success_prob, logging, rounds)
+
+    while rounds != 0
+        @info "round $(rounds)"
+        start = now(sim)
+
+        for i in 1:n # entangle each client with the switch
+            entangler = EntanglerProt(
+                sim=sim, net=net, nodeA=1, chooseA=i, nodeB=1+i, chooseB=1,
+                success_prob=link_success_prob, rounds=1, attempts=-1, attempt_time=1.0,
+                )
+            @process entangler()
+        end
+
+        for i in 1:n
+            @process EntanglementCorrector(sim, net, 1+i) # start entanglement correctors at each client
+        end
+
+        while true
+            # Look for EntanglementCounterpart changed on switch
+            counter = 0
+            while counter < n # until all clients are entangled
+                @yield onchange_tag(net[1])
+                if counter == 0 # initialize piecemaker
+                    # Initialize "piecemaker" qubit in |+> state when first qubit arrived s.t. if p=1 fidelity=1
+                    initialize!(net[1][n+1], X1, time=now(sim))
+                end
+
+                while true
+                    counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+                    if !isnothing(counterpart)
+                        slot, _, _ = counterpart
+
+                        # fuse the qubit with the piecemaker qubit
+                        @yield lock(net[1][n+1]) & lock(net[1][slot.idx])
+                        res = fusion(net[1][n+1], net[1][slot.idx])
+                        unlock(net[1][n+1])
+                        unlock(net[1][slot.idx])
+                        tag!(net[1+slot.idx][1], Tag(:updateX, res)) # communicate change to client node
+                        counter += 1
+                        @debug "Fused client $(slot.idx) with piecemaker qubit"
+                    else
+                        break
+                    end
+                end
+            end
+
+            @debug "All clients entangled, measuring piecemaker | time: $(now(sim)-start)"
+            @yield lock(net[1][n+1])
+            res = project_traceout!(net[1][n+1], σˣ)
+            unlock(net[1][n+1])
+            tag!(net[2][1], Tag(:updateZ, res)) # communicate change to client node
+            break
+        end
+
+        @yield @process Logger(sim, net, 2, n, logging, start) # start logger
+
+        foreach(q -> (traceout!(q); unlock(q)), net[1])
+        foreach(q -> (traceout!(q); unlock(q)), [net[1+i][1] for i in 1:n])
+
+        rounds -= 1
+        @debug "Round $(rounds) finished"
+    end
+
+end
+
+function prepare_sim(n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, 
+    link_success_prob::Float64, seed::Int, logging::DataFrame, rounds::Int)
+
+    # Set a random seed
+    Random.seed!(seed)
+
+    switch = Register([Qubit() for _ in 1:(n+1)], [states_representation for _ in 1:(n+1)], [noise_model for _ in 1:(n+1)]) # storage qubits at the switch, first qubit is the "piecemaker" qubit
+    clients = [Register([Qubit()], [states_representation], [noise_model]) for _ in 1:n] # client qubits
+    
+    graph = star_graph(n+1)
+    net = RegisterNet(graph, [switch, clients...])
+    @info net
     sim = get_time_tracker(net)
 
-    @process init_state(sim, net, nclients, delay)
-    
-    # Run entangler and fusion for each client and wait for all to finish
-    @process run_protocols(sim, net, nclients, link_success_prob)
-
-    # Set up the consumer to measure final entangled state
-    consumer = FusionConsumer(net, net[1][m]; period=0.001)
-    @process consumer()
-
-    return sim, consumer
+    # Start the piecemaker protocol
+    @process PiecemakerProt(sim, n, net, link_success_prob, logging, rounds)
+    return sim
 end
 
+mem_depolar_prob = 0.0 # memory depolarization probability
+decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
+noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
+logging = DataFrame(Δt=[], fidelity=[])
 
+sim = prepare_sim(
+    5, QuantumOpticsRepr(), noise_model, 0.5, 42, logging, 10
+)
+
+timed = @elapsed run(sim)
+println("Simulation finished in $(timed) seconds")
+@info logging
