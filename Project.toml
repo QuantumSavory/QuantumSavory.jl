@@ -30,10 +30,12 @@ SumTypes = "8e1ec7a9-0e02-4297-b0fe-6433085c89f2"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [weakdeps]
+InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [extensions]
+QuantumSavoryInteractiveUtils = "InteractiveUtils"
 QuantumSavoryMakie = "Makie"
 QuantumSavoryTylerMakie = ["Tyler", "Makie"]
 
@@ -45,10 +47,11 @@ DocStringExtensions = "0.9"
 Graphs = "1.13"
 GraphsMatching = "0.2.1"
 HiGHS = "1.18"
+InteractiveUtils = "1"
 IterTools = "1.4.0"
 JuMP = "1.26"
 LinearAlgebra = "1"
-Makie = "0.21, 0.22, 0.23, 0.24"
+Makie = "0.21, 0.22, 0.23"
 NetworkLayout = "0.4.4"
 PrecompileTools = "1"
 Printf = "1"

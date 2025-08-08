@@ -12,3 +12,8 @@ struct Qumode <: QuantumStateTrait end
 # TODO move these definitions to a neater place
 default_repr(::Qubit) = QuantumOpticsRepr()
 default_repr(::Qumode) = QuantumOpticsRepr()
+
+"""Display all available slot types in QuantumSavory along with their documentation.
+
+The `InteractiveUtils` package must be installed and imported."""
+function available_slot_types end
