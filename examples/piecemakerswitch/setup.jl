@@ -60,15 +60,15 @@ Upon receiving a message tagged `:updateZ`, the protocol checks the received val
         @yield reduce(&, [lock(q) for q in net[2]])
         obs = SProjector(StabilizerState(ghzs[n])) # GHZ state projector to measure
         fidelity = real(observable([net[i+1][1] for i in 1:n], obs; time=now(sim)))
+        t = now(sim) - start_of_round
         @info "Fidelity: $(fidelity)"
 
-        # Log outcome
-        push!(
-            logging,
-            (
-                now(sim)-start_of_round, fidelity
-            )
-        )
+        push!(logging, (t, fidelity))
+
+        # update for visualization
+        pts = fidelity_points[]             # current vector of Point2f
+        push!(pts, Point2f(t, fidelity))
+        fidelity_points[] = pts             # notify Makie plot
     end
 end
 
@@ -149,23 +149,9 @@ function prepare_sim(n::Int, states_representation::AbstractRepresentation, nois
     
     graph = star_graph(n+1)
     net = RegisterNet(graph, [switch, clients...])
-    @info net
     sim = get_time_tracker(net)
 
     # Start the piecemaker protocol
     @process PiecemakerProt(sim, n, net, link_success_prob, logging, rounds)
     return sim
 end
-
-mem_depolar_prob = 0.0 # memory depolarization probability
-decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
-noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
-logging = DataFrame(Δt=[], fidelity=[])
-
-sim = prepare_sim(
-    5, QuantumOpticsRepr(), noise_model, 0.5, 42, logging, 10
-)
-
-timed = @elapsed run(sim)
-println("Simulation finished in $(timed) seconds")
-@info logging
