@@ -12,7 +12,7 @@ initialize!
 
 #### `initialize!(refs::Vector{RegRef}, state; time)`
 
-Store a `state` in the given register slots.
+Store a `state` in the given register slots. When using [`QuantumOpticsRepr`](@ref) `initialize!` checks if a `state` is a simple tensor product. In this case `2*n` complex numbers are used to store the state. Otherwise,since in general it is computationally too expensive to check for seperability, `initialize!` defaults to the full representation of a `state` storing `2^n` complex values.
 
 `refs` can also be `Tuple{Vararg{RegRef, N}}` or a single [`RegRef`](@ref).
 
