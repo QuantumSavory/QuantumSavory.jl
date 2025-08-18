@@ -160,7 +160,6 @@ include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
 
-include("should_upstream.jl")
 include("precompile.jl")
 
 end # module
