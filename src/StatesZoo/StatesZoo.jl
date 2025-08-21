@@ -36,6 +36,7 @@ include("barrett_kok.jl")
 if VERSION >= v"1.12.0-DEV.2047"
     include("zalm/zalm.jl")
 end
+include("genqo.jl")
 
 include("state_explorer.jl")
 
