@@ -1,6 +1,7 @@
 module QuantumSavoryInteractiveUtils
 
-using QuantumSavory
+import QuantumSavory
+import QuantumSavory.ProtocolZoo
 import InteractiveUtils: subtypes
 
 function QuantumSavory.available_slot_types()
@@ -13,6 +14,14 @@ end
 
 function QuantumSavory.available_background_types()
     types = subtypes(AbstractBackground)
+
+    docs = [(type = T, doc = Base.Docs.doc(T)) for T in types]
+
+    return docs
+end
+
+function QuantumSavory.ProtocolZoo.available_protocol_types()
+    types = subtypes(AbstractProtocol)
 
     docs = [(type = T, doc = Base.Docs.doc(T)) for T in types]
 
