@@ -1,6 +1,7 @@
 module QuantumSavoryInteractiveUtils
 
-using QuantumSavory
+import QuantumSavory
+import QuantumSavory.ProtocolZoo
 import InteractiveUtils: subtypes
 
 function QuantumSavory.available_slot_types()
@@ -12,23 +13,44 @@ function QuantumSavory.available_slot_types()
 end
 
 function QuantumSavory.available_background_types()
-    types = subtypes(AbstractBackground)
+    types = subtypes(QuantumSavory.AbstractBackground)
 
     docs = [(type = T, doc = Base.Docs.doc(T)) for T in types]
 
     return docs
 end
 
+function QuantumSavory.ProtocolZoo.available_protocol_types()
+    types = subtypes(QuantumSavory.ProtocolZoo.AbstractProtocol)
+    types = filter(t->Base.ispublic(QuantumSavory.ProtocolZoo, Symbol(t)), types)
+
+    docs = [(type = T, doc = Base.Docs.doc(T), nodeargs = nodeargs(T)) for T in types]
+
+    return docs
+end
+
+function nodeargs(::Type{T}) where {T<:QuantumSavory.ProtocolZoo.AbstractProtocol}
+    metadata = QuantumSavory.constructor_metadata(T)
+    (metadata[1].field == :sim && metadata[2].field == :net) || error(ArgumentError(lazy"Protocol $(T) is structured incorrectly -- the `sim` and `net` fields are not in the expected location."))
+    length(filter(metadata[3:end]) do m
+        m.field ∈ (:node, :nodeA, :nodeB)
+    end)
+end
+
+types_of_UnionAll(t::DataType) = t.types
+types_of_UnionAll(t::UnionAll) = types_of_UnionAll(t.body)
+
 # Taken from DocStringExtensions.format(::TupeFields)
-function QuantumSavory.constructor_metadata(::Type{T}) where {T<:AbstractBackground}
+function QuantumSavory.constructor_metadata(::Type{T}) where {T}
     fields = fieldnames(T)
-    types = T.types
+    types = types_of_UnionAll(T)
     typedoc = Base.Docs.doc(T)
     binding = typedoc.meta[:binding]
     object = Docs.resolve(binding)
     fieldsdata = typedoc.meta[:results][1].data[:fields]
 
-    metadata = [(;field, type, doc = fieldsdata[field]) for (field, type) in zip(fields, types)]
+    # the metadata includes only documented fields
+    metadata = [(;field, type, doc = fieldsdata[field]) for (field, type) in zip(fields, types) if haskey(fieldsdata, field)]
 
     return metadata
 end

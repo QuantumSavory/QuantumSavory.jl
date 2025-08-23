@@ -33,6 +33,11 @@ get_time_tracker(prot::AbstractProtocol) = prot.sim::Simulation
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
 
+"""Display all available background types in QuantumSavory along with their documentation.
+
+The `InteractiveUtils` package must be installed and imported."""
+function available_protocol_types end
+
 """
 $TYPEDEF
 
