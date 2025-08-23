@@ -76,7 +76,10 @@ function newstate(::Qumode,::QuantumMCRepr)
     copy(_vac)
 end
 
-include("should_upstream.jl")
+# Import upstreamed functions from QuantumOpticsBase
+import QuantumOpticsBase: _drop_singular_bases, _branch_prob, _overlap, _project_and_drop
+
 include("express.jl")
+include("express_local.jl")
 include("uptotime.jl")
 include("noninstant.jl")

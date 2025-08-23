@@ -9,6 +9,6 @@ function newstate(::Qubit,::CliffordRepr)
     copy(_qc_l)
 end
 
-include("should_upstream.jl")
+include("gate_sequence_to_upstream.jl")  # TODO: upstream QCGateSequence to QuantumClifford
 include("express.jl")
 include("uptotime.jl")
