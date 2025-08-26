@@ -1,11 +1,12 @@
 module QuantumSavoryInteractiveUtils
 
 import QuantumSavory
-import QuantumSavory.ProtocolZoo
+using QuantumSavory.ProtocolZoo # to make them available in this namespace
 import InteractiveUtils: subtypes
+import REPL # in order to load Base.Docs.doc
 
 function QuantumSavory.available_slot_types()
-    types = subtypes(QuantumStateTrait)
+    types = subtypes(QuantumSavory.QuantumStateTrait)
 
     docs = [(type = T, doc = Base.Docs.doc(T)) for T in types] #TODO: edge case: no doc
 
@@ -22,7 +23,7 @@ end
 
 function QuantumSavory.ProtocolZoo.available_protocol_types()
     types = subtypes(QuantumSavory.ProtocolZoo.AbstractProtocol)
-    types = filter(t->Base.ispublic(QuantumSavory.ProtocolZoo, Symbol(t)), types)
+    types = filter(t->Base.ispublic(QuantumSavory.ProtocolZoo, name_of_UnionAll(t)), types)
 
     docs = [(type = T, doc = Base.Docs.doc(T), nodeargs = nodeargs(T)) for T in types]
 
@@ -39,6 +40,8 @@ end
 
 types_of_UnionAll(t::DataType) = t.types
 types_of_UnionAll(t::UnionAll) = types_of_UnionAll(t.body)
+name_of_UnionAll(t::DataType) = t.name.name
+name_of_UnionAll(t::UnionAll) = name_of_UnionAll(t.body)
 
 # Taken from DocStringExtensions.format(::TupeFields)
 function QuantumSavory.constructor_metadata(::Type{T}) where {T}
