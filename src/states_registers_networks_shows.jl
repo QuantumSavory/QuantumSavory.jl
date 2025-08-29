@@ -43,3 +43,57 @@ function Base.show(io::IO, r::RegRef)
         end
     end
 end
+
+"""The human-readable name or the simulated object as a string (potentially empty)."""
+function name end
+name(r::Register) = isnothing(r.netparent[]) ? "" : get(r.netparent[].names, r.netindex[], "")
+name(r::RegisterNet) = isnothing(r.name) ? "" : r.name
+name(::Nothing) = ""
+
+function Base.show(io::IO, m::MIME"text/html", r::RegRef)
+    print(io,"""
+    <div class="quantumsavory_show quantumsavory_regref">
+    """)
+    isnothing(r.reg.netparent[]) || print(io,"""
+    <span class"quantumsavory_regref_netname">$(name(r.reg.netparent[]))</span>
+    <span class"quantumsavory_regref_regindex">$(r.reg.netindex[])</span>
+    <span class"quantumsavory_regref_name">$(name(r.reg))</span>
+    """)
+    print(io,"""
+    <span class"quantumsavory_regref_slotindex">$(r.idx)</span>
+    </div>
+    """)
+end
+
+function Base.show(io::IO, m::MIME"text/html", s::StateRef)
+    print(io,"""
+    <div class="quantumsavory_show quantumsavory_stateref">
+    <div class="quantumsavory_stateref_regrefs">
+    <ol>
+    """)
+    for rr in slots(s)
+        print(io, "<li>")
+        show(io, m, rr)
+        print(io, "</li>")
+    end
+    print(io,"""
+    </ol>
+    </div>
+    <div class="quantumsavory_stateref_state">
+    """)
+    stateshow(io, m, quantumstate(s), s)
+    print(io,"""
+    </div>
+    </div>
+    """)
+end
+
+"""Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""
+function stateshow(io, ::MIME"text/html", state, stateref)
+    print(io,
+    """
+    <div class="quantumsavory_show quantumsavory_numericalstate quantumsavory_numericalstate_unknown">
+    state of type <pre class="quantumsavory_typename quantumsavory_numericalstate_typename">$(typeof(state))</pre> does not support rich visualization in HTML
+    </div>
+    """)
+end
