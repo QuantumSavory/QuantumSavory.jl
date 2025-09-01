@@ -17,3 +17,8 @@ default_repr(::Qumode) = QuantumOpticsRepr()
 
 The `InteractiveUtils` package must be installed and imported."""
 function available_slot_types end
+
+"""Display all argument types and their documentation for the specified background type.
+
+The `InteractiveUtils` package must be installed and imported."""
+function constructor_metadata end
