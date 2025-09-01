@@ -5,15 +5,21 @@ using Graphs
 using NetworkLayout
 import ConcurrentSim
 import Makie
-import Makie: Theme, Figure, Axis, Axis3,
+import Makie: Theme, Figure, Axis, Axis3, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
-    scatter!, poly!, linesegments!, lines!, vlines!, mesh!,
+    scatter!, poly!, linesegments!, lines!, vlines!, mesh!, text!,
     xlims!, ylims!, zlims!,
+    xticks!, yticks!,
+    hidedecorations!, hidespines!,
     deregister_interaction!, interactions,
     DataInspector, Slider, Colorbar
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
+import QuantumSavory.ProtocolZoo
+
+import QuantumClifford
+import QuantumOpticsBase
 
 ##
 
@@ -387,5 +393,7 @@ end
 ##
 
 include("state_explorer.jl")
+include("show_state.jl")
+include("show_protocol.jl")
 
 end

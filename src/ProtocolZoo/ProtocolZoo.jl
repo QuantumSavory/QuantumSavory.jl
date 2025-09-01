@@ -38,6 +38,8 @@ Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->pro
 The `InteractiveUtils` package must be installed and imported."""
 function available_protocol_types end
 
+include("show.jl")
+
 """
 $TYPEDEF
 
