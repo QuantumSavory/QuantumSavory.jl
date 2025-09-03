@@ -2,6 +2,7 @@
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using InteractiveUtils
+using REPL
 
 bgs = QuantumSavory.available_background_types()
 QuantumSavory.constructor_metadata.([bg.type for bg in bgs])
