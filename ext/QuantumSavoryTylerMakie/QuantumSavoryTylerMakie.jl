@@ -14,7 +14,7 @@ function generate_map(subfig; extent=nothing)
     if isnothing(extent)
         extent = Rect2f(-125, 24, 58, 25) # US Map
     end
-    #provider = TileProviders.CartoDB(:Positron)
+    #provider = TileProviders.CartoDB(:Positron) # pretier but it times out
     provider = TileProviders.OpenStreetMap()
     map = Tyler.Map(extent; provider, figure=subfig, crs=Tyler.wgs84)
     wait(map)
