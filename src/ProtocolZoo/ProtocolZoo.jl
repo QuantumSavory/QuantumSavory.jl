@@ -40,6 +40,9 @@ function available_protocol_types end
 
 include("show.jl")
 
+const QueryArgs = Union{Int,Function,Wildcard}
+
+
 """
 $TYPEDEF
 
@@ -402,7 +405,7 @@ A protocol running between two nodes, checking periodically for any entangled pa
 
 $FIELDS
 """
-@kwdef struct EntanglementConsumer{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
+@kwdef struct EntanglementConsumer <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -412,7 +415,7 @@ $FIELDS
     """the vertex index of node B"""
     nodeB::Int
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
-    period::LT = 0.1
+    period::Union{Float64,Nothing} = 0.1
     """tag type which the consumer is looking for -- the consumer query will be `query(node, EntanglementConsumer.tag, remote_node)` and it will be expected that `remote_node` possesses the symmetric reciprocal tag; defaults to `EntanglementCounterpart`"""
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
