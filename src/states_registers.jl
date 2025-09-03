@@ -61,6 +61,9 @@ const RegOrRegRef = Union{Register,RegRef}
 get_register(r::RegRef) = r.reg
 get_register(r::Register) = r
 
+Base.parent(r::RegRef) = r.reg
+parentindex(r::RegRef) = r.idx
+
 """The state stored at a given register slot."""
 function stateof end
 stateof(r::RegRef) = stateof(r.reg, r.idx) # TODO introduce Slot and make RegRef an alias of Slot

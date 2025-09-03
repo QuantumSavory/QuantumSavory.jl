@@ -128,6 +128,16 @@ function add_register!(net::RegisterNet, r::Register)
     return length(Graph())
 end
 
+"""Get the parent network of a [`Register`](@ref) or parent register of a [`RegRef`](@ref)."""
+function Base.parent(r::Register)
+    return r.netparent[]
+end
+
+"""Get the index of a [`Register`](@ref) / [`RegRef`](@ref) in the parent network / register."""
+function parentindex end
+
+parentindex(r::Register) = r.netindex[]
+
 ## Channel accessors
 
 """Get a handle to a classical channel between two registers.
