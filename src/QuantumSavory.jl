@@ -99,21 +99,21 @@ function __init__()
     if isdefined(Base.Experimental, :register_error_hint)
         Base.Experimental.register_error_hint(MethodError) do io, exc, argtypes, kwargs
             if exc.f === registernetplot
-                println(io, "\n`registernetplot!` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+                println(io, "\n`registernetplot!` is implemented as an optional extension dependent on `Makie`; please make sure `Makie` is installed and imported first.")
             elseif exc.f === registernetplot!
-                println(io, "\n`registernetplot!` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+                println(io, "\n`registernetplot!` is implemented as an optional extension dependent on `Makie`; please make sure `Makie` is installed and imported first.")
             elseif exc.f === registernetplot_axis
-                println(io, "\n`registernetplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+                println(io, "\n`registernetplot_axis` is implemented as an optional extension dependent on `Makie`; please make sure `Makie` is installed and imported first.")
             elseif exc.f === resourceplot_axis
-                println(io, "\n`resourceplot_axis` requires the package `Makie`; please make sure `Makie` is installed and imported first.")
+                println(io, "\n`resourceplot_axis` is implemented as an optional extension dependent on `Makie`; please make sure `Makie` is installed and imported first.")
             elseif exc.f === generate_map
-                println(io, "\n`generate_map` requires the package `Tyler`; please make sure `Tyler` is installed and imported first.")
+                println(io, "\n`generate_map` is implemented as an optional extension dependent on `Tyler`; please make sure `Tyler` is installed and imported first.")
             elseif exc.f === available_slot_types
-                println(io, "\n`available_slot_types` requires the package `InteractiveUtils`; please make sure `InteractiveUtils` is installed and imported first.")
+                println(io, "\n`available_slot_types` is implemented as an optional extension dependent on `InteractiveUtils` and `REPL`; please make sure `InteractiveUtils` and `REPL` are installed and imported first.")
             elseif exc.f === available_background_types
-                println(io, "\n`available_background_types` requires the package `InteractiveUtils`; please make sure `InteractiveUtils` is installed and imported first.")
+                println(io, "\n`available_background_types` is implemented as an optional extension dependent on `InteractiveUtils` and `REPL`; please make sure `InteractiveUtils` and `REPL` are installed and imported first.")
             elseif exc.f === constructor_metadata
-                println(io, "\n`constructor_metadata` requires the package `InteractiveUtils`; please make sure `InteractiveUtils` is installed and imported first.")
+                println(io, "\n`constructor_metadata` is implemented as an optional extension dependent on `InteractiveUtils` and `REPL`; please make sure `InteractiveUtils` and `REPL` are installed and imported first.")
             end
         end
     end
