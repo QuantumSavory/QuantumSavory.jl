@@ -2,6 +2,7 @@
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using CairoMakie
+import InteractiveUtils, REPL
 
 #out = stdout
 out = IOBuffer()
