@@ -378,7 +378,7 @@ end
         qdatagram = querydelete!(mb, QDatagram, ❓, ❓, !=(node), ❓, ❓, ❓)
         if !isnothing(qdatagram)
             _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = qdatagram.tag
-            nexthop = first(Graphs.a_star(net.graph, node, flow_dst)).dst
+            nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
             request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
             datagrams_in_waiting[(flow_uuid, seq_num)] = (qdatagram.tag, nexthop)
             put!(mb, request)
