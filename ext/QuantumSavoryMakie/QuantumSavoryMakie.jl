@@ -8,12 +8,12 @@ import Makie
 import Makie: Theme, Figure, Axis, Axis3, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
-    scatter!, poly!, linesegments!, lines!, vlines!, mesh!, text!,
+    scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
     xlims!, ylims!, zlims!,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
     deregister_interaction!, interactions,
-    DataInspector, Slider, Colorbar
+    DataInspector, Slider, Colorbar, axislegend
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 import QuantumSavory.ProtocolZoo

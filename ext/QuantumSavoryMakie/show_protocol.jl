@@ -12,3 +12,15 @@ function protshowimage(subfig, prot)
     text = "protocol of type\n$(typeof(prot))\ndoes not support rich visualization"
     text!(a,0,0;text,align=(:center,:center))
 end
+
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsumer)
+    a = Axis(subfig[1,1], xlabel="Time", ylabel="Observable")
+    t = [t for (t, _, _) in prot._log]
+    zz = [z for (_, z, _) in prot._log]
+    xx = [x for (_, _, x) in prot._log]
+    scatter!(a, t, zz, label="ZZ")
+    scatter!(a, t, xx, label="XX")
+    hlines!(a, 0.0, color=:gray)
+    hlines!(a, 1.0, color=:gray)
+    axislegend(a, position=:lb)
+end
