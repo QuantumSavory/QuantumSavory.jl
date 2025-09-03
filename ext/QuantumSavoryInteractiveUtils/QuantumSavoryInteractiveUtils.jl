@@ -53,7 +53,7 @@ function QuantumSavory.constructor_metadata(::Type{T}) where {T}
     fieldsdata = typedoc.meta[:results][1].data[:fields]
 
     # the metadata includes only documented fields
-    metadata = [(;field, type, doc = fieldsdata[field]) for (field, type) in zip(fields, types) if haskey(fieldsdata, field)]
+    metadata = [(;field, type, doc = fieldsdata[field]) for (field, type) in zip(fields, types) if haskey(fieldsdata, field) && !startswith(string(field), "_")]
 
     return metadata
 end

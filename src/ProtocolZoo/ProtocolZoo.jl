@@ -419,7 +419,7 @@ $FIELDS
     """tag type which the consumer is looking for -- the consumer query will be `query(node, EntanglementConsumer.tag, remote_node)` and it will be expected that `remote_node` possesses the symmetric reciprocal tag; defaults to `EntanglementCounterpart`"""
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
-    log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
+    _log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
 end
 
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
@@ -468,7 +468,7 @@ end
         ob2 = real(observable((q1, q2), X⊗X))
 
         traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
-        push!(prot.log, (now(prot.sim), ob1, ob2))
+        push!(prot._log, (now(prot.sim), ob1, ob2))
         unlock(q1)
         unlock(q2)
         if !isnothing(prot.period)
