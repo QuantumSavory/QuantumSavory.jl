@@ -73,7 +73,7 @@ end
                 @yield onchange_tag(prot.net[prot.node])
             else
                 @debug "SwapperProt: no swappable qubits found. Waiting a fixed amount of time..."
-                @yield timeout(prot.sim, prot.retry_lock_time)
+                @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
         end

@@ -169,7 +169,7 @@ and starts probabilistic attempts to establish entanglement.
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglerProt{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
+@kwdef struct EntanglerProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation # TODO check that
     """a network graph of registers"""
@@ -189,15 +189,15 @@ $TYPEDFIELDS
     """fixed "busy time" duration immediately after the a successful entanglement generation attempt"""
     local_busy_time_post::Float64 = 0.0
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up)"""
-    retry_lock_time::LT = 0.1
+    retry_lock_time::Union{Float64,Nothing} = 0.1
     """how many rounds of this protocol to run (`-1` for infinite)"""
     rounds::Int = -1
     """maximum number of attempts to make per round (`-1` for infinite)"""
     attempts::Int = -1
     """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node A"""
-    chooseA::Union{Int,<:Function} = identity
+    chooseA::Union{Int,Function} = identity
     """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node B"""
-    chooseB::Union{Int,<:Function} = identity
+    chooseB::Union{Int,Function} = identity
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
     """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
@@ -235,7 +235,7 @@ end
                 @yield onchange_tag(prot.net[prot.nodeA]) | onchange_tag(prot.net[prot.nodeB])
             else
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting a fixed amount of time..."
-                @yield timeout(prot.sim, prot.retry_lock_time)
+                @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
         end
@@ -438,7 +438,7 @@ end
                 @yield onchange_tag(prot.net[prot.nodeA])
             else
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting a fixed amount of time."
-                @yield timeout(prot.sim, prot.period)
+                @yield timeout(prot.sim, prot.period::Float64)
             end
             continue
         else
@@ -449,7 +449,7 @@ end
                     @yield onchange_tag(prot.net[prot.nodeB])
                 else
                     @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
-                    @yield timeout(prot.sim, prot.period)
+                    @yield timeout(prot.sim, prot.period::Float64)
                 end
                 continue
             end
