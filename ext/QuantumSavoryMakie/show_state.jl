@@ -16,7 +16,7 @@ end
 function stateshowimage(subfig, state::QuantumClifford.MixedDestabilizer, stateref)
     stab = QuantumClifford.stabilizerview(state)
     names = [
-        (isnothing(QuantumSavory.name(s.reg)) ? QuantumSavory.name(s.reg) : string(s.reg.netindex[]))*"[$(s.idx)]"
+        QuantumSavory.namestr(s.reg,useobjectid=false)*".$(s.idx)"
         for s in QuantumSavory.slots(stateref)
         ]
     subfig,ax,p = QuantumClifford.stabilizerplot_axis(subfig, stab)
