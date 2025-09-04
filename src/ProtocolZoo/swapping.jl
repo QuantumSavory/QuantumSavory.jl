@@ -95,6 +95,7 @@ end
         uptotime!((q1, q2), now(prot.sim))
         swapcircuit = LocalEntanglementSwap()
         xmeas, zmeas = swapcircuit(q1, q2)
+        println("$(now(prot.sim)) SwapperProt on $(prot.node).$(q1.idx) and $(q2.idx) and forwarding to $(tag1[2]).$(tag1[3]) and $(tag2[2]).$(tag2[3])")
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], Int(xmeas))
