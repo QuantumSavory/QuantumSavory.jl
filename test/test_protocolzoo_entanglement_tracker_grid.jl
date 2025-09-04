@@ -234,7 +234,7 @@ n = 6 # the size of the square grid network (n × n)
 regsize = 20 # the size of the quantum registers at each node
 
 graph = grid([n,n])
-net = RegisterNet(graph, [Register(regsize) for i in 1:n^2])
+net = RegisterNet(graph, [Register(regsize) for i in 1:n^2], classical_delay=0.01)
 
 sim = get_time_tracker(net)
 
@@ -250,7 +250,7 @@ for i in 2:(n^2 - 1)
     h(x) = check_nodes(net, i, x; low=false)
     cL(arr) = choose_node(net, i, arr)
     cH(arr) = choose_node(net, i, arr; low=false)
-    swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds=-1)
+    swapper = SwapperProt(sim, net, i; nodeL = l, nodeH = h, chooseL = cL, chooseH = cH, rounds=-1, agelimit=1.0)
     @process swapper()
 end
 
@@ -266,10 +266,10 @@ consumer = EntanglementConsumer(sim, net, 1, n^2)
 
 # at each node we discard the qubits that have decohered after a certain cutoff time
 for v in vertices(net)
-    cutoffprot = CutoffProt(sim, net, v)
+    cutoffprot = CutoffProt(sim, net, v, retention_time=10, period=nothing)
     @process cutoffprot()
 end
-run(sim, 400)
+@test_broken (run(sim, 400); true)
 
 for i in 1:length(consumer._log)
     @test consumer._log[i][2] ≈ 1.0

@@ -1,11 +1,15 @@
-struct MessageBuffer{T}
-    sim::Simulation
-    net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
-    node::Int
-    buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
-    waiters::IdDict{Resource,Resource}
-    no_wait::Ref{Int} # keeps track of the situation when something is pushed in the buffer and no waiters are present. In that case, when the waiters are available after it they would get locked while the code that was supposed to unlock them has already run. So, we keep track the number of times this happens and put no lock on the waiters in this situation.
+mutable struct MessageBuffer{T}
+    const sim::Simulation
+    const net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
+    const node::Int
+    const buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
+    const tag_waiter::AsymmetricSemaphore
+    """Keeps track of the situation when something is pushed in the buffer and no waiters are present.
+    That way we can ensure the waiters are not waiting forever on a message that has already been put in the buffer."""
+    early_arrival::Int
 end
+
+get_time_tracker(mb::MessageBuffer) = mb.sim
 
 function peektags(mb::MessageBuffer)
     [b.tag for b in mb.buffer]
@@ -29,6 +33,7 @@ function Base.put!(mb::MessageBuffer, tag)
     put_and_unlock_waiters(mb, nothing, convert(Tag,tag))
     nothing
 end
+Base.put!(mb::MessageBuffer, args...) = put!(mb, Tag(args...))
 
 tag!(::MessageBuffer, args...) = throw(ArgumentError("MessageBuffer does not support `tag!`. Use `put!(::MessageBuffer, Tag(...))` instead."))
 
@@ -60,39 +65,30 @@ end
 
 function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
-    length(mb.waiters) == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
-    if length(mb.waiters) == 0
-        mb.no_wait[] += 1
+    nbwaiters(mb.tag_waiter) == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
+    if nbwaiters(mb.tag_waiter) == 0
+        mb.early_arrival += 1
     end
     push!(mb.buffer, (;src,tag));
-    for waiter in keys(mb.waiters)
-        unlock(waiter)
-    end
+    unlock(mb.tag_waiter)
 end
 
 function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
     sim = get_time_tracker(net)
-    signal = IdDict{Resource,Resource}()
-    no_wait = Ref{Int}(0)
-    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], signal, no_wait)
+    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], AsymmetricSemaphore(sim), 0)
     for (;src, channel) in qs
         @process take_loop_mb(sim, channel, src, mb)
     end
     mb
 end
 
-@resumable function wait_process(sim, mb)
-    if mb.no_wait[] != 0 # This happens only in the specific case when something is put in the buffer before there any waiters.
-        mb.no_wait[] -= 1
-        return
-    end
-    waitresource = Resource(sim)
-    lock(waitresource)
-    mb.waiters[waitresource] = waitresource
-    @yield lock(waitresource)
-    pop!(mb.waiters, waitresource)
+@resumable function noop(sim)
 end
 
 function Base.wait(mb::MessageBuffer)
-    @process wait_process(mb.sim, mb)
+    if mb.early_arrival > 0
+        mb.early_arrival -= 1
+        return @process noop(get_time_tracker(mb))
+    end
+    return lock(mb.tag_waiter)
 end
