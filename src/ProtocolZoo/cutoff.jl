@@ -45,7 +45,6 @@ end
             end
             if now(prot.sim) - reg.tag_info[info.id][3] > prot.retention_time # TODO this should be part of the query interface, not using non-public implementation details
                 untag!(slot, info.id)
-                println("EntanglementDelete in CutoffProt traceout $(prot.node).$(slot.idx)")
                 traceout!(slot)
                 msg = Tag(EntanglementDelete, prot.node, slot.idx, info.tag[2], info.tag[3])
                 tag!(slot, msg)
