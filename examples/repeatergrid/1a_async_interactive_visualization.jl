@@ -1,4 +1,5 @@
-using GLMakie
+#using GLMakie
+using CairoMakie
 # TODO significant code duplication with the other examples
 
 include("setup.jl")

@@ -1,4 +1,6 @@
 @testitem "Message Buffer" tags=[:messagebuffer] begin
+using Test
+using QuantumSavory
 using QuantumSavory: tag_types
 using QuantumSavory.ProtocolZoo
 using ResumableFunctions, ConcurrentSim
