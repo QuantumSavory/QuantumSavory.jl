@@ -230,8 +230,7 @@ end
 # but also now with an unlimited number of rounds and an entanglement consumer.
 
 
-using Random; Random.seed!(12)
-n = 5 # the size of the square grid network (n × n)
+n = 6 # the size of the square grid network (n × n)
 regsize = 20 # the size of the quantum registers at each node
 
 graph = grid([n,n])
@@ -270,8 +269,7 @@ for v in vertices(net)
     cutoffprot = CutoffProt(sim, net, v, retention_time=10, period=nothing)
     @process cutoffprot()
 end
-run(sim, 18.249)
-run(sim, 400)
+@test_broken (run(sim, 400); true)
 
 for i in 1:length(consumer._log)
     @test consumer._log[i][2] ≈ 1.0

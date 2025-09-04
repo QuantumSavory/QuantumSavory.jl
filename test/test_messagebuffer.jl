@@ -43,4 +43,35 @@ proc4 = put!(messagebuffer(net[1]), SwitchRequest(2,3))
 run(sim, 10)
 @test QuantumSavory.peektags(messagebuffer(net,1)) == [Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3)), Tag(SwitchRequest(2,3))]
 @test_throws "does not support `tag!`" tag!(messagebuffer(net, 1), EntanglementCounterpart, 1, 10)
+
+##
+
+reg = Register(10)
+net = RegisterNet([reg])
+sim = get_time_tracker(net)
+mb = messagebuffer(reg)
+put!(mb, Tag(:something, 1, 2))
+put!(mb, Tag(:something, 1, 2))
+put!(mb, Tag(:something, 1, 2))
+put!(mb, Tag(:something, 1, 2))
+@resumable function receiver(sim, LOG)
+    @yield wait(mb)
+    push!(LOG, "got result immediately")
+end
+LOG = []
+@process receiver(sim, LOG)
+put!(mb, Tag(:something, 1, 2))
+@process receiver(sim, LOG)
+@process receiver(sim, LOG)
+@process receiver(sim, LOG)
+run(sim, 1.0)
+@process receiver(sim, LOG)
+@process receiver(sim, LOG)
+put!(mb, Tag(:something, 1, 2))
+put!(mb, Tag(:something, 1, 2))
+@process receiver(sim, LOG)
+@process receiver(sim, LOG)
+run(sim, 2.0)
+@test length(LOG) == 7
+
 end
