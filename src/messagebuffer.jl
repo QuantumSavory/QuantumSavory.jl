@@ -94,6 +94,7 @@ end
 end
 
 function Base.wait(mb::MessageBuffer)
+    Base.depwarn("wait(::MessageBuffer) is deprecated, use onchange(::MessageBuffer) instead", :wait)
     @process wait_process(mb.sim, mb)
 end
 
