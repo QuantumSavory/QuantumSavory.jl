@@ -232,7 +232,7 @@ end
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting for changes to tags..."
-                @yield onchange(prot.net[prot.nodeA]) | onchange(prot.net[prot.nodeB])
+                @yield onchange(prot.net[prot.nodeA], Tag) | onchange(prot.net[prot.nodeB], Tag)
             else
                 @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting a fixed amount of time..."
                 @yield timeout(prot.sim, prot.retry_lock_time::Float64)
@@ -435,7 +435,7 @@ end
         if isnothing(query1)
             if isnothing(prot.period)
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting on tag updates in $(prot.nodeA)."
-                @yield onchange(prot.net[prot.nodeA])
+                @yield onchange(prot.net[prot.nodeA], Tag)
             else
                 @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting a fixed amount of time."
                 @yield timeout(prot.sim, prot.period::Float64)
@@ -446,7 +446,7 @@ end
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 if isnothing(prot.period)
                     @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting on tag updates in $(prot.nodeB)."
-                    @yield onchange(prot.net[prot.nodeB])
+                    @yield onchange(prot.net[prot.nodeB], Tag)
                 else
                     @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
                     @yield timeout(prot.sim, prot.period::Float64)
