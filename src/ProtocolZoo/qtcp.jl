@@ -459,7 +459,7 @@ end
             put!(net[destination_node], reply_at_destination)
         end
         # wait until we have received a message
-        @yield (wait(mbA) | wait(mbB))
+        @yield (onchange(mbA) | onchange(mbB))
     end
 end
 

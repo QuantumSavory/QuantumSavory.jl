@@ -281,8 +281,8 @@ end
         # Wait for messages from either sender
         while true
             # Create processes for waiting on each message buffer
-            p1 = wait(mb1)
-            p2 = wait(mb2)
+            p1 = onchange(mb1)
+            p2 = onchange(mb2)
 
             # Wait for either process to complete
             @yield (p1 | p2)
