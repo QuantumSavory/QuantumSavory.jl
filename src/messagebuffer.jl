@@ -99,22 +99,16 @@ function Base.wait(mb::MessageBuffer)
 end
 
 """
-Wait for changes to occur on a MessageBuffer or Register.
-
-For MessageBuffer, this waits for new messages to arrive.
-For Register, this waits for tag changes on the register.
+Wait for changes to occur on a [`MessageBuffer``](@ref) or [`Register`](@ref). By specifying a second argument, you can filter what type of events are waited on.
+E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
 """
+function onchange end
+
 function onchange(mb::MessageBuffer)
     @process wait_process(mb.sim, mb)
 end
 
-"""
-Wait for changes to occur on a MessageBuffer or Register with a specific tag type.
-
-This variant is reserved for future functionality to differentiate between 
-different types of changes (e.g., "changed tag" vs "changed register assignment").
-"""
-function onchange(mb::MessageBuffer, ::Type{T}) where {T}
+function onchange(mb::MessageBuffer, ::Type{Tag})
     # For now, this behaves the same as the basic version
     onchange(mb)
 end
