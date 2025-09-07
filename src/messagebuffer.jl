@@ -99,7 +99,7 @@ function Base.wait(mb::MessageBuffer)
 end
 
 """
-Wait for changes to occur on a [`MessageBuffer``](@ref) or [`Register`](@ref). By specifying a second argument, you can filter what type of events are waited on.
+Wait for changes to occur on a [`MessageBuffer`](@ref) or [`Register`](@ref). By specifying a second argument, you can filter what type of events are waited on.
 E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
 """
 function onchange end
