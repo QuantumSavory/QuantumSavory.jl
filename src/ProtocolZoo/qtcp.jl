@@ -365,7 +365,7 @@ end
         end
 
         # wait until we have received a message
-        @yield wait(mb)
+        @yield onchange(mb)
     end
 end
 
@@ -413,7 +413,7 @@ end
         end
 
         # Wait until we have received a message
-        @yield wait(mb)
+        @yield onchange(mb)
     end
 end
 

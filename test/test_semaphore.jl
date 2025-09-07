@@ -169,9 +169,9 @@ end
 
     @resumable function watcher(sim)
         push!(LOG, (now(sim), "watcher: start"))
-        @yield onchange_tag(reg[1])
+        @yield onchange(reg[1])
         push!(LOG, (now(sim), "watcher: got first tag"))
-        @yield onchange_tag(reg[1])
+        @yield onchange(reg[1])
         push!(LOG, (now(sim), "watcher: got second tag"))
     end
 
@@ -216,11 +216,11 @@ end
 
     @resumable function receiver(sim)
         push!(LOG, (now(sim), "receiver: start"))
-        @yield wait(mb)
+        @yield onchange(mb)
         push!(LOG, (now(sim), "receiver: got message"))
-        @yield wait(mb)
+        @yield onchange(mb)
         push!(LOG, (now(sim), "receiver: got second message"))
-        @yield wait(mb)
+        @yield onchange(mb)
         push!(LOG, (now(sim), "receiver: got third message"))
     end
 

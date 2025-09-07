@@ -70,7 +70,7 @@ end
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
                 @debug "SwapperProt: no swappable qubits found. Waiting for tag change..."
-                @yield onchange_tag(prot.net[prot.node])
+                @yield onchange(prot.net[prot.node])
             else
                 @debug "SwapperProt: no swappable qubits found. Waiting a fixed amount of time..."
                 @yield timeout(prot.sim, prot.retry_lock_time::Float64)

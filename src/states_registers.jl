@@ -84,3 +84,13 @@ function onchange_tag(r::RegOrRegRef)
     register = get_register(r)
     return lock(register.tag_waiter[])
 end
+
+function onchange(r::RegOrRegRef)
+    register = get_register(r)
+    return lock(register.tag_waiter[])
+end
+
+function onchange(r::RegOrRegRef, ::Type{T}) where {T}
+    # For now, this behaves the same as the basic version
+    onchange(r)
+end
