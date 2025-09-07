@@ -1,3 +1,8 @@
+"""
+A a buffer for classical messages. Usually a part of a [`Register`](@ref) structure.
+
+See also: [`channel`](@ref), [`messagebuffer`](@ref)
+"""
 struct MessageBuffer{T}
     sim::Simulation
     net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
