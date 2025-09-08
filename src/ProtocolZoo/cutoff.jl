@@ -44,29 +44,27 @@ end
     while true
         if empty_query
             if isnothing(prot.period)
-                @yield onchange_tag(slot) # TODO this should be just for the slot, not for the whole register
+                @yield onchange(slot, Tag) # TODO this should be just for the slot, not for the whole register
             else
                 @yield timeout(prot.sim, prot.period::Float64)
             end
         end
         @yield lock(slot)
         info = query(slot, EntanglementCounterpart, ❓, ❓)
-        if isnothing(info)
+        if isnothing(info) || now(sim) - info.time < prot.retention_time
             empty_query = true
             unlock(slot)
             continue
         end
         println("$(now(sim)) $slot info $info")
 
-        if now(prot.sim) - info.time > prot.retention_time
-            untag!(slot, info.id)
-            traceout!(slot)
-            println("$(now(sim)) $slot traced out")
-            msg = Tag(EntanglementDelete, prot.node, slot.idx, info.tag[2], info.tag[3])
-            tag!(slot, msg)
-            (prot.announce) && put!(channel(prot.net, prot.node=>msg[4]; permit_forward=true), msg)
-            @debug "CutoffProt @$(prot.node): Send message to $(msg[4]) | message=`$msg` | time=$(now(prot.sim))"
-        end
+        untag!(slot, info.id)
+        traceout!(slot)
+        println("$(now(sim)) $slot traced out")
+        msg = Tag(EntanglementDelete, prot.node, slot.idx, info.tag[2], info.tag[3])
+        tag!(slot, msg)
+        (prot.announce) && put!(channel(prot.net, prot.node=>msg[4]; permit_forward=true), msg)
+        @debug "CutoffProt @$(prot.node): Send message to $(msg[4]) | message=`$msg` | time=$(now(prot.sim))"
 
         # TODO the tag deletions below are not necessary when announce=true and EntanglementTracker is running on other nodes. Verify the veracity of that statement, make tests for both cases, and document.
 

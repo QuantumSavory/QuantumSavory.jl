@@ -237,6 +237,31 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
+function check_nodes(net, c_node, node; low=true)
+    n = Int(sqrt(size(net.graph)[1])) # grid size
+    c_x = c_node%n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
+    c_y = c_node - n*(c_x-1)
+    x = node%n == 0 ? node ÷ n : (node ÷ n) + 1
+    y = node - n*(x-1)
+    return low ? (c_x - x) >= 0 && (c_y - y) >= 0 : (c_x - x) <= 0 && (c_y - y) <= 0
+end
+
+# predicate for picking the furthest node
+function distance(n, a, b)
+    x1 = a%n == 0 ? a ÷ n : (a ÷ n) + 1
+    x2 = b%n == 0 ? b ÷ n : (b ÷ n) + 1
+    y1 = a - n*(x1-1)
+    y2 = b - n*(x2-1)
+
+    return x1 - x2 + y1 - y2
+end
+
+# filter for picking the furthest node
+function choose_node(net, node, arr; low=true)
+    grid_size = Int(sqrt(size(net.graph)[1]))
+    return low ? argmax((distance.(grid_size, node, arr))) : argmin((distance.(grid_size, node, arr)))
+end
+
 
 n = 6 # the size of the square grid network (n × n)
 regsize = 20 # the size of the quantum registers at each node
@@ -275,7 +300,7 @@ consumer = EntanglementConsumer(sim, net, 1, n^2)
 # at each node we discard the qubits that have decohered after a certain cutoff time
 for v in vertices(net)
     cutoffprot = CutoffProt(sim, net, v, retention_time=10, period=nothing)
-    #@process cutoffprot()
+    @process cutoffprot()
 end
 #@test_broken (run(sim, 400); true)
 run(sim, 400)

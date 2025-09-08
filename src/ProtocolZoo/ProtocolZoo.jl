@@ -1,7 +1,7 @@
 module ProtocolZoo
 
 using QuantumSavory
-import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange
+import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange, QueryOnRegResult
 using QuantumSavory: Wildcard
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 

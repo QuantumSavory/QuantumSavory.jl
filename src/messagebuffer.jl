@@ -91,7 +91,7 @@ E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
 function onchange end
 
 function onchange(mb::MessageBuffer)
-    @process wait_process(mb.sim, mb)
+    return lock(mb.tag_waiter)
 end
 
 function onchange(mb::MessageBuffer, ::Type{Tag})

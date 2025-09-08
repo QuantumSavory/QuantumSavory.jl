@@ -1,3 +1,5 @@
+const QueryOnRegResult = NamedTuple{(:slot, :id, :tag, :time), Tuple{RegRef, Int128, Tag, Float64}}
+
 struct QueryError <: Exception
     msg
     f
@@ -190,17 +192,17 @@ for i in 1:10 # Vararg{Union{...}, N} does not specialize well, so we are explic
     ) where {allB, filoB} # queryargs is so specifically typed in order to trigger the compiler heuristics for specialization, leading to very significant performance improvements
         ref = isa(reg, RegRef) ? reg : nothing
         reg = get_register(reg)
-        res = NamedTuple{(:slot, :id, :tag), Tuple{RegRef, Int128, Tag}}[]
+        res = QueryOnRegResult[]
         l = length(reg.guids)
         indices = filoB ? (l:-1:1) : (1:l)
         for i in indices
             i = reg.guids[i]
-            tag = reg.tag_info[i].tag
+            (;tag, time) = reg.tag_info[i]
             slot = reg[reg.tag_info[i].slot]
             if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
                 good = query_good(tag, $(args...))
                 if good
-                    allB ? push!(res, (slot=slot, id=i, tag=tag)) : return (slot=slot, id=i, tag=tag)
+                    allB ? push!(res, (;slot, id=i, tag, time)) : return (;slot, id=i, tag, time)
                 end
             end
         end
@@ -363,7 +365,7 @@ tag!(tagcontainer, args...) = tag!(tagcontainer, Tag(args...))
 function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, query::Tag; locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {allB, filoB}
     ref = isa(reg, RegRef) ? reg : nothing
     reg = get_register(reg)
-    res = NamedTuple{(:slot, :id, :tag, :time), Tuple{RegRef, Int128, Tag, Float64}}[]
+    res = QueryOnRegResult[]
     l = length(reg.guids)
     indices = filoB ? (l:-1:1) : (1:l)
     for i in indices
