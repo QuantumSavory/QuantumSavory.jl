@@ -47,14 +47,14 @@ Tag(tag::PurifiedEntalgementCounterpart) = Tag(PurifiedEntalgementCounterpart, t
         local_tag = query(nodereg, MBQCMeasurement, node, ❓) # waits on the measurement result
 
         if isnothing(local_tag)
-            @yield onchange_tag(net[node])
+            @yield onchange(net[node], Tag)
             continue
         end
 
         msg = query(mb, MBQCMeasurement, ❓, ❓)
         if isnothing(msg)
             @debug "Starting message wait at $(now(sim)) with MessageBuffer containing: $(mb.buffer)"
-            @yield wait(mb)
+            @yield onchange(mb)
             @debug "Done waiting for message at $(node)"
             continue
         end
@@ -79,7 +79,7 @@ end
         query_setup = query(net[node], MBQCSetUp, node)
         if !isnothing(query_setup) # no need to set up if it already is
             if isnothing(period)
-                @yield onchange_tag(net[node])
+                @yield onchange(net[node], Tag)
             else
                 @yield timeout(sim, period)
             end
@@ -116,7 +116,7 @@ end
         query2 = query(net[node], MBQCSetUp, node)
         if length(query1) < 2 || isnothing(query2)
             if isnothing(period)
-                @yield onchange_tag(net[node])
+                @yield onchange(net[node], Tag)
             else
                 @yield timeout(sim, period)
             end

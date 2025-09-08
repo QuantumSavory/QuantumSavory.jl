@@ -81,6 +81,17 @@ slots(s::StateRef) = RegRef[r[i] for (r,i) in zip(s.registers, s.registerindices
 
 
 function onchange_tag(r::RegOrRegRef)
+    Base.depwarn("onchange_tag(::RegOrRegRef) is deprecated, use onchange(::RegOrRegRef, Tag) instead", :onchange_tag)
     register = get_register(r)
     return lock(register.tag_waiter[])
+end
+
+function onchange(r::RegOrRegRef)
+    register = get_register(r)
+    return lock(register.tag_waiter[])
+end
+
+function onchange(r::RegOrRegRef, ::Type{Tag})
+    # For now, this behaves the same as the basic version
+    onchange(r)
 end

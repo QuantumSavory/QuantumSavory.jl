@@ -155,3 +155,39 @@ julia -e 'using Pkg; Pkg.develop(path="./QuantumSavory.jl")'
 ```
 
 This allows testing changes across multiple related packages simultaneously.
+
+## Creating Pull Requests
+
+When creating pull requests to solve GitHub issues:
+
+1. **Setup remotes properly**: Make sure you have both `origin` (your fork) and `upstream` (main repository) remotes configured:
+   ```bash
+   git remote add upstream https://github.com/QuantumSavory/QuantumSavory.jl.git
+   git remote add origin https://github.com/YOUR_USERNAME/QuantumSavory.jl.git
+   ```
+
+2. **Create feature branch**: Always create a feature branch from the latest upstream master:
+   ```bash
+   git checkout master
+   git pull upstream master
+   git checkout -b descriptive-branch-name
+   ```
+
+3. **Make your changes**: Implement the solution, add tests, and ensure all tests pass:
+   ```bash
+   julia --project=. -e "using Pkg; Pkg.test()"
+   ```
+
+4. **Commit and push**: Commit your changes and push to your fork:
+   ```bash
+   git add .
+   git commit -m "Descriptive commit message"
+   git push -u origin your-branch-name
+   ```
+
+5. **Create PR using gh CLI**: Use the GitHub CLI to create the pull request:
+   ```bash
+   gh pr create --title "Your PR Title" --body "Description of changes" --repo QuantumSavory/QuantumSavory.jl
+   ```
+
+This workflow ensures your PR targets the main repository from your personal fork.
