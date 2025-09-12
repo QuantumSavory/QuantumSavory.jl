@@ -49,7 +49,7 @@ export project_traceout! #TODO should move to QuantumInterface
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
     CliffordRepr, consistent_representation, QuantumOpticsRepr, QuantumMCRepr,
-    metadata, istree, operation, arguments, Symbolic, # from Symbolics
+    metadata, istree, operation, arguments, Symbolic, SymQObj, # from Symbolics
     HGate, XGate, YGate, ZGate, CPHASEGate, CNOTGate,
     XBasisState, YBasisState, ZBasisState,
     STensorOperator, SScaledOperator, SAddOperator, STensor
