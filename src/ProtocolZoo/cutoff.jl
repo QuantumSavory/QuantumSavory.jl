@@ -32,6 +32,8 @@ function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return CutoffProt(;sim, net, node, kwargs...)
 end
 
+CutoffProt(net::RegisterNet, node::Int; kwargs...) = CutoffProt(QuantumSavory.get_time_tracker(net), net, node; kwargs...)
+
 @resumable function (prot::CutoffProt)()
     reg = prot.net[prot.node]
     while true

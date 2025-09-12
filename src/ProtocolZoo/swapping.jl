@@ -62,6 +62,8 @@ function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return SwapperProt(;sim, net, node, kwargs...)
 end
 
+SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(QuantumSavory.get_time_tracker(net), net, node; kwargs...)
+
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
     round = 1

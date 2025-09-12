@@ -217,6 +217,8 @@ function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int
     end
 end
 
+EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerProt(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+
 #TODO """Convenience constructor for specifying `fidelity` of generation instead of success probability and time"""
 
 @resumable function (prot::EntanglerProt)()
@@ -293,6 +295,8 @@ $TYPEDFIELDS
     """the vertex of the node where the tracker is working"""
     node::Int
 end
+
+EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
 @resumable function (prot::EntanglementTracker)()
     nodereg = prot.net[prot.node]
