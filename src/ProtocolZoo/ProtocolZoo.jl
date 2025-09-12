@@ -29,6 +29,15 @@ export
 
 abstract type AbstractProtocol end
 
+"""
+Check whether a protocol permits virtual edges between nodes.
+
+Virtual edges refer to protocol connections between two nodes that do not correspond
+to actual network edges/links. Some protocols like [`EntanglementConsumer`](@ref) can operate
+between any two nodes in the network regardless of physical connectivity.
+"""
+permits_virtual_edge(::AbstractProtocol) = false
+
 get_time_tracker(prot::AbstractProtocol) = prot.sim::Simulation
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
@@ -403,6 +412,8 @@ $TYPEDEF
 
 A protocol running between two nodes, checking periodically for any entangled pairs between the two nodes and consuming/emptying the qubit slots.
 
+This protocol permits virtual edges, meaning it can operate between any two nodes in the network regardless of whether they are physically connected by an edge.
+
 $FIELDS
 """
 @kwdef struct EntanglementConsumer <: AbstractProtocol
@@ -428,6 +439,8 @@ end
 function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 end
+
+permits_virtual_edge(::EntanglementConsumer) = true
 
 @resumable function (prot::EntanglementConsumer)()
     while true
