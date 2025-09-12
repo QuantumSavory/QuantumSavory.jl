@@ -157,22 +157,22 @@ $TYPEDFIELDS
     rounds::Int = -1
     """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
     assignment_algorithm::Function = promponas_bruteforce_choice
-    backlog::SymMatrix{Matrix{Int}}
-    function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, backlog)
+    _backlog::SymMatrix{Matrix{Int}}
+    function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
         all(in(neighbors(net, switchnode)), clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be directly connected to the `switchnode`!"))
         0 < ticktock || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested protocol period `ticktock` must be positive!"))
         0 < rounds || rounds == -1 || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested number of rounds `rounds` must be positive or `-1` for infinite!"))
         length(clientnodes) == length(success_probs) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `success_probs` must have the same length as `clientnodes`!"))
         all(0 .<= success_probs .<= 1) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `success_probs` must be in the range [0,1]!"))
-        new{typeof(assignment_algorithm)}(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, backlog)
+        new(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
     end
 end
 
 function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs; kwrags...)
     n = length(clientnodes)
-    backlog = SymMatrix(zeros(Int, n, n))
-    SimpleSwitchDiscreteProt(;sim, net, switchnode, clientnodes=collect(clientnodes), success_probs=collect(success_probs), backlog, kwrags...)
+    _backlog = SymMatrix(zeros(Int, n, n))
+    SimpleSwitchDiscreteProt(;sim, net, switchnode, clientnodes=collect(clientnodes), success_probs=collect(success_probs), _backlog, kwrags...)
 end
 SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...) = SimpleSwitchDiscreteProt(get_time_tracker(net), net, switchnode, clientnodes, success_probs; kwrags...)
 
@@ -182,7 +182,7 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
     net = prot.net
     clientnodes = prot.clientnodes
     switchnode = prot.switchnode
-    backlog = prot.backlog
+    _backlog = prot._backlog
     n = length(clientnodes)
     m = nsubsystems(net[switchnode])
     reverseclientindex = Dict{Int,Int}(c=>i for (i,c) in enumerate(clientnodes))
@@ -198,7 +198,7 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
         _switch_read_backlog(prot, reverseclientindex)
 
         # pick a set of client nodes to which to assign local memory slots
-        assignment = prot.assignment_algorithm(m,n,backlog,prot.success_probs)
+        assignment = prot.assignment_algorithm(m,n,_backlog,prot.success_probs)
         if isnothing(assignment)
             @debug "Switch $switchnode found no useful memory slot assignments"
             @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
@@ -263,7 +263,7 @@ function _switch_read_backlog(prot, reverseclientindex)
         tag = switchrequest.tag
         i = reverseclientindex[tag[2]]
         j = reverseclientindex[tag[3]]
-        prot.backlog[i,j] += 1
+        prot._backlog[i,j] += 1
     end
 end
 
@@ -303,7 +303,7 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
     @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" # (indexed as $entangled_clients_revindex)"
 
-    (;weight, mate) = match_entangled_pattern(prot.backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
+    (;weight, mate) = match_entangled_pattern(prot._backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
 
     isempty(mate) && return nothing
     return mate
@@ -321,7 +321,7 @@ function _switch_run_swaps(prot, match)
             nodeL=prot.clientnodes[i], nodeH=prot.clientnodes[j],
             rounds=1
         )
-        prot.backlog[i,j] -= 1
+        prot._backlog[i,j] -= 1
         @process swapper()
     end
 end
