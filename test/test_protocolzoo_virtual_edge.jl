@@ -3,13 +3,6 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, permits_virtual_edge
 using ConcurrentSim
 
-if isinteractive()
-    using Logging
-    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
-    global_logger(logger)
-    println("Logger set to debug")
-end
-
 # Test default behavior
 @test permits_virtual_edge(EntanglerProt(sim=Simulation(), net=RegisterNet([Register(2)]), nodeA=1, nodeB=1)) == false
 @test permits_virtual_edge(SwapperProt(sim=Simulation(), net=RegisterNet([Register(2)]), node=1)) == false

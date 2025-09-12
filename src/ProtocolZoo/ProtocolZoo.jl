@@ -33,10 +33,8 @@ abstract type AbstractProtocol end
 Check whether a protocol permits virtual edges between nodes.
 
 Virtual edges refer to protocol connections between two nodes that do not correspond
-to actual network edges/links. Some protocols like EntanglementConsumer can operate
+to actual network edges/links. Some protocols like [`EntanglementConsumer`](@ref) can operate
 between any two nodes in the network regardless of physical connectivity.
-
-Returns `false` by default for `AbstractProtocol`.
 """
 permits_virtual_edge(::AbstractProtocol) = false
 
