@@ -179,7 +179,7 @@ $TYPEDFIELDS
     """the vertex index of node B"""
     nodeB::Int
     """the state being generated (supports symbolic, numeric, noisy, and pure)"""
-    pairstate = StabilizerState("ZZ XX")
+    pairstate::SymQObj = StabilizerState("ZZ XX")
     """success probability of one attempt of entanglement generation"""
     success_prob::Float64 = 0.001
     """duration of single entanglement attempt"""
