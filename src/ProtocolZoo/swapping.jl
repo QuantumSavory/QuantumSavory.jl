@@ -32,7 +32,7 @@ which deletes qubits that are about to go past their cutoff/retention time.
 
 $TYPEDFIELDS
 """
-@kwdef struct SwapperProt{CL,CH} <: AbstractProtocol where {CL<:Function, CH<:Function}
+@kwdef struct SwapperProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -44,9 +44,9 @@ $TYPEDFIELDS
     """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
     nodeH::QueryArgs = ❓
     """the `nodeL` predicate can return many positive candidates; `chooseL` picks one of them (by index into the array of filtered `nodeL` results), defaults to a random pick `arr->rand(keys(arr))`; if you are working on a repeater chain a good choice is `argmin`, i.e. the node furthest to the "left" """
-    chooseL::CL = random_index
+    chooseL::Function = random_index
     """the `nodeH` counterpart for `chooseH`; if you are working on a repeater chain a good choice is `argmax`, i.e. the node furthest to the "right" """
-    chooseH::CH = random_index
+    chooseH::Function = random_index
     """fixed "busy time" duration immediately before starting entanglement generation attempts"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
@@ -62,7 +62,7 @@ function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return SwapperProt(;sim, net, node, kwargs...)
 end
 
-SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(QuantumSavory.get_time_tracker(net), net, node; kwargs...)
+SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_tracker(net), net, node; kwargs...)
 
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds

@@ -140,7 +140,7 @@ By default we use the `QuantumSavory.ProtocolZoo.Switches.promponas_bruteforce_c
 
 $TYPEDFIELDS
 """
-@kwdef struct SimpleSwitchDiscreteProt{AA} <: AbstractProtocol where {AA}
+@kwdef struct SimpleSwitchDiscreteProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation # TODO check that
     """a network graph of registers"""
@@ -156,7 +156,7 @@ $TYPEDFIELDS
     """how many rounds of this protocol to run (`-1` for infinite)"""
     rounds::Int = -1
     """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
-    assignment_algorithm::AA = promponas_bruteforce_choice
+    assignment_algorithm::Function = promponas_bruteforce_choice
     backlog::SymMatrix{Matrix{Int}}
     function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
