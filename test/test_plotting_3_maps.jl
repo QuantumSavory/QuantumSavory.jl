@@ -25,8 +25,10 @@ notify(netobs)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 display(fig)
+close(map)
 
 fig = Figure()
 fig, map_axis, map = generate_map()
 _, _, plt, netobs = registernetplot_axis(map_axis, network, registercoords=coords)
 save(File{format"PNG"}(mktemp()[1]), fig)
+close(map)
