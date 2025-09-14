@@ -29,6 +29,15 @@ export
 
 abstract type AbstractProtocol end
 
+"""
+Check whether a protocol permits virtual edges between nodes.
+
+Virtual edges refer to protocol connections between two nodes that do not correspond
+to actual network edges/links. Some protocols like [`EntanglementConsumer`](@ref) can operate
+between any two nodes in the network regardless of physical connectivity.
+"""
+permits_virtual_edge(::AbstractProtocol) = false
+
 get_time_tracker(prot::AbstractProtocol) = prot.sim::Simulation
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
@@ -179,7 +188,7 @@ $TYPEDFIELDS
     """the vertex index of node B"""
     nodeB::Int
     """the state being generated (supports symbolic, numeric, noisy, and pure)"""
-    pairstate = StabilizerState("ZZ XX")
+    pairstate::SymQObj = StabilizerState("ZZ XX")
     """success probability of one attempt of entanglement generation"""
     success_prob::Float64 = 0.001
     """duration of single entanglement attempt"""
@@ -216,6 +225,8 @@ function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int
         return EntanglerProt(;sim, net, nodeA, nodeB, kwargs..., success_prob=0.001, attempt_time=0.001/rate)
     end
 end
+
+EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerProt(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 
 #TODO """Convenience constructor for specifying `fidelity` of generation instead of success probability and time"""
 
@@ -293,6 +304,8 @@ $TYPEDFIELDS
     """the vertex of the node where the tracker is working"""
     node::Int
 end
+
+EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
 @resumable function (prot::EntanglementTracker)()
     nodereg = prot.net[prot.node]
@@ -403,6 +416,8 @@ $TYPEDEF
 
 A protocol running between two nodes, checking periodically for any entangled pairs between the two nodes and consuming/emptying the qubit slots.
 
+This protocol permits virtual edges, meaning it can operate between any two nodes in the network regardless of whether they are physically connected by an edge.
+
 $FIELDS
 """
 @kwdef struct EntanglementConsumer <: AbstractProtocol
@@ -428,6 +443,8 @@ end
 function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 end
+
+permits_virtual_edge(::EntanglementConsumer) = true
 
 @resumable function (prot::EntanglementConsumer)()
     while true

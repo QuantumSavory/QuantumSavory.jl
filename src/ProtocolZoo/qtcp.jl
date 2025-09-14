@@ -1,7 +1,7 @@
 module QTCP
 
 using QuantumSavory
-using QuantumSavory: Tag
+using QuantumSavory: Tag, get_time_tracker
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol
 using QuantumSavory.CircuitZoo: LocalEntanglementSwap
@@ -215,6 +215,8 @@ Managing the following transformations of classical control signals:
     node::Int
 end
 
+EndNodeController(net::RegisterNet, node::Int) = EndNodeController(get_time_tracker(net), net, node)
+
 """
 $TYPEDEF
 
@@ -239,6 +241,8 @@ Managing the following transformations of classical control signals:
     node::Int
 end
 
+NetworkNodeController(net::RegisterNet, node::Int) = NetworkNodeController(get_time_tracker(net), net, node)
+
 """
 $TYPEDEF
 
@@ -259,6 +263,8 @@ Managing the following transformations of classical control signals:
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
 end
+
+LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_time_tracker(net), net, nodeA, nodeB)
 
 
 ###
