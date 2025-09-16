@@ -190,6 +190,8 @@ $TYPEDFIELDS
     chooseB::Union{Int,<:Function} = identity
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
+    """whether the protocol should look for unlocked slots to entangle and lock them during the protocol"""
+    uselock::Bool = true
     """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
     margin::Int = 0
     """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
@@ -216,8 +218,9 @@ end
     while rounds != 0
         isentangled = !isnothing(prot.tag) && !isnothing(query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        a_ = findfreeslot(prot.net[prot.nodeA]; filter=prot.chooseA, randomize=prot.randomize, margin=margin)
-        b_ = findfreeslot(prot.net[prot.nodeB]; filter=prot.chooseB, randomize=prot.randomize, margin=margin)
+        (; chooseA, chooseB, randomize, uselock) = prot
+        a_ = findfreeslot(prot.net[prot.nodeA]; filter=chooseA, randomize=randomize, locked=!uselock, margin=margin)
+        b_ = findfreeslot(prot.net[prot.nodeB]; filter=chooseB, randomize=randomize, locked=!uselock, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
@@ -234,7 +237,9 @@ end
         a = a_::RegRef
         b = b_::RegRef
 
-        @yield lock(a) & lock(b) # this yield is expected to return immediately
+        if uselock
+            @yield lock(a) & lock(b) # this yield is expected to return immediately
+        end
 
         @yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
@@ -259,8 +264,10 @@ end
             @yield timeout(prot.sim, prot.attempts * prot.attempt_time)
             @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Performed the maximum number of attempts and gave up"
         end
-        unlock(a)
-        unlock(b)
+        if uselock
+            unlock(a)
+            unlock(b)
+        end
         rounds==-1 || (rounds -= 1)
         round += 1
     end

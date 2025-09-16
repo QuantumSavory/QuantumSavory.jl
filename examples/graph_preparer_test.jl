@@ -256,3 +256,238 @@ for i in 1:nv(state_graph)
     o = observable([reg[2] for reg in registers], QuantumOpticsBase.Operator(QuantumClifford.Stabilizer(state_graph)[i]))
     println(o) # should be 1 or -1 (only 1 after we are done with corrections)
 end
+
+
+
+
+
+
+
+
+using ResumableFunctions
+using ConcurrentSim
+using Revise
+
+using QuantumSavory
+using QuantumSavory.ProtocolZoo
+import QuantumSavory: Tag
+
+using Logging
+global_logger(ConsoleLogger(stderr, Logging.Debug))
+
+const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+const perfect_pair_dm = SProjector(perfect_pair)
+const mixed_dm = MixedState(perfect_pair_dm)
+noisy_pair_func_depol(p) = p*perfect_pair_dm + (1-p)*mixed_dm
+
+function noisy_pair_func(F)
+    p = (4*F-1)/3
+    return noisy_pair_func_depol(p)
+end
+
+@kwdef struct MBQCMeasurement
+    node::Int
+    measurement::Int
+end
+Base.show(io::IO, tag::MBQCMeasurement) = print(io, "Measurement for register $(tag.node) is $(tag.measurement).")
+Tag(tag::MBQCMeasurement) = Tag(MBQCMeasurement, tag.node, tag.measurement)
+
+@kwdef struct PurifiedEntalgementCounterpart
+    remote_node::Int
+    remote_slot::Int
+end
+Base.show(io::IO, tag::PurifiedEntalgementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot)")
+Tag(tag::PurifiedEntalgementCounterpart) = Tag(PurifiedEntalgementCounterpart, tag.remote_node, tag.remote_slot)
+
+@resumable function MBQC_purification_tracker(sim, net, node)
+    nodereg = net[node]
+    mb = messagebuffer(net, node)
+    while true
+        local_tag = query(nodereg, MBQCMeasurement, node, ❓) # waits on the measurement result
+
+        if isnothing(local_tag)
+            @yield onchange_tag(net[node])
+            continue
+        end
+
+        msg = query(mb, MBQCMeasurement, ❓, ❓)
+        if isnothing(msg)
+            @debug "Starting message wait at $(now(sim)) with MessageBuffer containing: $(mb.buffer)"
+            @yield wait(mb)
+            @debug "Done waiting for message at $(node)"
+            continue
+        end
+
+        msg = querydelete!(mb, MBQCMeasurement, ❓, ❓)
+        local_measurement = local_tag.tag.data[3] # it would be better if it can be local_tag.tag.measurement
+        src, (_, src_node, src_measurement) = msg
+
+        if src_measurement == local_measurement
+            @debug "Purification was successful"
+            tag!(local_tag.slot, PurifiedEntalgementCounterpart, src_node, 4)
+
+        else
+            @debug "Purification failed."
+            untag!(local_tag.slot, local_tag.id)
+        end
+    end
+end
+
+
+
+@resumable function MBQC_purify(sim, net, side, duration=0.1, period=0.1)
+    if side == 2
+        idx = 5
+    else
+        idx = 1
+    end
+    while true
+        # checking whether we have entanglements to purify & setup is completed
+        query1 = query(net[idx], EntanglementCounterpart, ❓, ❓; locked=false, assigned=true)
+        query2 = query(net[idx + 1], EntanglementCounterpart, ❓, ❓; locked=false, assigned=true)
+        query3 = query(net[idx], MBQCSetUp)
+        if isnothing(query1) || isnothing(query2) || isnothing(query3)
+            if isnothing(period)
+                @yield onchange_tag(net[idx]) || onchange_tag(net[idx + 1])
+            else
+                @yield timeout(sim, period)
+            end
+            continue
+        end
+        println(query1)
+        @debug "Purification starting at side $(side)."
+
+        m1 = project_traceout!(net[idx, storage_slot], X)
+        m2 = project_traceout!(net[idx + 2, storage_slot], X)
+
+        if m1 == 2
+            apply!(net[idx + 3, storage_slot], Z)
+            apply!(net[idx + 1, storage_slot], Z)
+        end
+        if m2 == 2
+            apply!(net[idx + 3, storage_slot], X)
+        end
+        untag!(query1[1].slot, query1[1].id)
+        untag!(query1[2].slot, query1[2].id)
+        m = project_traceout!(net[node, storage_slot], X)
+        tag!(net[node][4], MBQCMeasurement, node, m)
+
+        if node == 1
+            other = 2
+        else
+            other = 1
+        end
+        @debug "Purification done at node $(node)."
+        put!(channel(net, node=>other), Tag(MBQCMeasurement, node, m))
+        @yield timeout(sim, duration)
+    end
+end
+
+# Run simulation (infinite rounds)
+
+regL = Register(4)
+regR = Register(4)
+net = RegisterNet([regL, regR])
+sim = get_time_tracker(net)
+F = 0.9 # fidelity
+
+@process entangler(sim, net)
+@process MBQC_purification_tracker(sim, net, 1)
+@process MBQC_purification_tracker(sim, net, 2)
+
+@process MBQC_setup(sim, net, 1)
+@process MBQC_setup(sim, net, 2)
+
+@process MBQC_purify(sim, net, 1)
+@process MBQC_purify(sim, net, 2)
+
+purified_consumer = EntanglementConsumer(sim, net, 1, 2; period=3, tag=PurifiedEntalgementCounterpart)
+@process purified_consumer()
+
+run(sim, 2)
+
+observable([net[1], net[2]], [1, 1], projector(perfect_pair))
+observable([net[1], net[2]], [2, 2], projector(perfect_pair))
+
+# has not been consumed yet
+observable([net[1], net[2]], [4, 4], projector(perfect_pair))
+
+run(sim, 4)
+
+# should have been consumed and return nothing
+observable([net[1], net[2]], [4, 4], projector(perfect_pair))
+
+
+
+
+
+### 2-1 purification
+@resumable function entangler_fusion(sim, net, nodeA, nodeB, communication_slot, storage_slot, pairstate, rounds=1)
+    for round in 1:rounds
+        entangler = EntanglerProt(sim, net, nodeA, nodeB; pairstate=pairstate, chooseA=communication_slot, chooseB=communication_slot, success_prob=1.0, attempts=-1, rounds=1)
+        p = @process entangler()
+        @yield p
+        regA = net[nodeA]
+        regB = net[nodeB]
+        initialize!(net[nodeA][storage_slot], X1)
+        initialize!(net[nodeB][storage_slot], X1)  #TODO: check whether it is actually initialized
+        for reg in (regA, regB)
+            @yield lock(reg[storage_slot]) & lock(reg[communication_slot])
+            apply!((reg[storage_slot],reg[communication_slot]),CNOT)
+            meas = project_traceout!(reg[communication_slot], Z)
+            println(meas)
+            if meas == 2
+                apply!(reg[storage_slot], X)
+            end
+            unlock(reg[storage_slot])
+            unlock(reg[communication_slot])
+        end
+    end
+end
+
+
+
+
+const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+const perfect_pair_dm = SProjector(perfect_pair)
+const mixed_dm = MixedState(perfect_pair_dm)
+noisy_pair_func_depol(p) = p*perfect_pair_dm + (1-p)*mixed_dm
+
+function noisy_pair_func(F)
+    p = (4*F-1)/3
+    return noisy_pair_func_depol(p)
+end
+
+
+pairstate = perfect_pair
+communication_slot = 1
+storage_slot = 2
+g = Graph(8)
+
+for ij in [(1,3), (2,3), (3,4), (5,7), (6,7), (7,8)]
+    add_edge!(g, ij...)
+end
+
+registers = [Register(2) for _ in vertices(g)]
+net = RegisterNet(g, registers)
+sim = get_time_tracker(net)
+
+g1 = induced_subgraph(g, 1:4)[1]
+g2 = induced_subgraph(g, 5:8)[1]
+
+#collect(vertices(g)[5:8])
+
+@process entangler_fusion(sim, net, 1, 5, communication_slot, storage_slot, pairstate)
+@process entangler_fusion(sim, net, 2, 6, communication_slot, storage_slot, pairstate)
+#graphconstructor1 = GraphStateConstructor(sim, net, g1, collect(vertices(g)[1:4]), communication_slot, storage_slot)
+#graphconstructor2 = GraphStateConstructor(sim, net, g2, collect(vertices(g)[5:8]), communication_slot, storage_slot)
+
+#@process graphconstructor1()
+#@process graphconstructor2()
+
+run(sim, 100)
+
+observable([net[1], net[5]], [1, 1], projector(perfect_pair))
+observable([net[1], net[5]], [2, 2], projector(perfect_pair))
+
+observable([net[2], net[6]], [2, 2], projector(perfect_pair))

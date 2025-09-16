@@ -4,3 +4,6 @@ build
 ROADMAP.md
 coverage
 *.cov
+.venv
+.vscode
+dev
