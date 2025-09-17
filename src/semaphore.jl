@@ -64,3 +64,9 @@ function islocked(s::AsymmetricSemaphore)
     sem = s.semaphorepair[s.current_semaphore]
     return islocked(sem)
 end
+
+function nbwaiters(s::AsymmetricSemaphore)
+    #s1, s2 = s.semaphorepair
+    #return s1.nbwaiters + s2.nbwaiters
+    return s.semaphorepair[s.current_semaphore].nbwaiters
+end
