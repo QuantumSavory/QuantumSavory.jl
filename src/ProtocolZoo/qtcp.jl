@@ -1,7 +1,7 @@
 module QTCP
 
 using QuantumSavory
-using QuantumSavory: Tag, get_time_tracker
+import QuantumSavory: Tag, get_time_tracker
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol
 using QuantumSavory.CircuitZoo: LocalEntanglementSwap
