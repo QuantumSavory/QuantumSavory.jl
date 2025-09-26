@@ -6,6 +6,7 @@ using JuMP: JuMP, MOI
 using Graphs
 using GraphsMatching: maximum_weight_matching
 
+import QuantumSavory.CircuitZoo: Fusion
 import QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglerProt
 
 import QuantumClifford
@@ -218,19 +219,7 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
             regA = net[nodes[i]]
             regB = net[nodes[j]]
 
-            # CZ
-            apply!((regA[storage_slot], regA[communication_slot]), CPHASE)
-            apply!((regB[storage_slot], regB[communication_slot]), CPHASE)
-
-            mA = project_traceout!(regA[communication_slot], X)
-            mB = project_traceout!(regB[communication_slot], X)
-
-            if mA == 2
-                apply!(regB[storage_slot], Z)
-            end
-            if mB == 2
-                apply!(regA[storage_slot], Z)
-            end
+            Fusion(regA, regB, storage_slot, communication_slot)
         end
 
         @debug "Graph state is established."
