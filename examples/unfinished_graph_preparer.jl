@@ -201,10 +201,19 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
         for (i,j) in current_edges
             regA = net[nodes[i]]
             regB = net[nodes[j]]
-            for reg in (regA, regB)
-                apply!((reg[storage_slot],reg[communication_slot]),CNOT)
-                meas = project_traceout!(reg[communication_slot], Z)
-                # TODO correction
+
+            # CZ
+            apply!((regA[storage_slot], regA[communication_slot]), CPHASE)
+            apply!((regB[storage_slot], regB[communication_slot]), CPHASE)
+
+            mA = project_traceout!(regA[communication_slot], X)
+            mB = project_traceout!(regB[communication_slot], X)
+
+            if mA == 2
+                apply!(regB[storage_slot], Z)
+            end
+            if mB == 2
+                apply!(regA[storage_slot], Z)
             end
         end
     end
