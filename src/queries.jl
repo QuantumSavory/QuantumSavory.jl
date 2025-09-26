@@ -397,13 +397,17 @@ julia> findfreeslot(reg) |> isnothing
 true
 ```
 """
-function findfreeslot(reg::Register; filter=identity::Union{Int,<:Function}, randomize=false, margin=0)
+function findfreeslot(reg::Register; filter=identity::Union{Int,<:Function}, randomize=false, locked=false, margin=0)
     n_slots = length(reg.staterefs)
     n_freeslots = sum((!isassigned(reg[i]) for i in 1:n_slots))
     if n_freeslots < margin
         return nothing
     end
-    freeslots = [i for i in 1:n_slots if !islocked(reg[i]) && !isassigned(reg[i])]
+    if locked # locked slots can be used
+        freeslots = [i for i in 1:n_slots if !isassigned(reg[i])]
+    else
+        freeslots = [i for i in 1:n_slots if !islocked(reg[i]) && !isassigned(reg[i])]
+    end
     if isempty(freeslots)
         return nothing
     end

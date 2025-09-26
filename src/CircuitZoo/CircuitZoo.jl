@@ -6,7 +6,7 @@ using DocStringExtensions
 export EntanglementSwap, LocalEntanglementSwap,
     Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
     PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
-    SDDecode, SDEncode
+    SDDecode, SDEncode, Fusion
 
 abstract type AbstractCircuit end
 
@@ -937,5 +937,35 @@ function (circuit::SDDecode)(rrefA, rrefB)
     b2 = project_traceout!(rrefB, Z)
     return b1-1, b2-1
 end
+
+"""
+    Fusion(regA, regB, storage_slot, communication_slot)
+
+Perform a fusion operation between two registers.
+
+# Arguments
+- `regA::Register` : first register.
+- `regB::Register` : second register.
+- `storage_slot::Int` : index of storage qubit in each register.
+- `communication_slot::Int` : index of communication qubit in each register.
+"""
+struct Fusion <: AbstractCircuit
+    function Fusion(regA, regB, storage_slot, communication_slot)
+        apply!((regA[storage_slot], regA[communication_slot]), CPHASE)
+        apply!((regB[storage_slot], regB[communication_slot]), CPHASE)
+
+        mA = project_traceout!(regA[communication_slot], X)
+        mB = project_traceout!(regB[communication_slot], X)
+
+        if mA == 2
+            apply!(regB[storage_slot], Z)
+        end
+        if mB == 2
+            apply!(regA[storage_slot], Z)
+        end
+    end
+end
+
+inputqubits(circuit::Fusion) = 4
 
 end # module
