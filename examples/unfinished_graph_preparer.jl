@@ -168,16 +168,32 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
 
     entangling_steps_generator = graph_builder(graph)
 
+    slots = []
+    # TODO: debug
+    # comm_slots = [net[n][communication_slot] for n in nodes]
+    # stor_slots = [net[n][storage_slot] for n in nodes]
+    # append!(slots, comm_slots)
+    # append!(slots, stor_slots)
+    for n in nodes
+        push!(slots, net[n][communication_slot])
+        push!(slots, net[n][storage_slot])
+    end
+
+
+    # lock all
+    @yield reduce(&, [lock(slot) for slot in slots])
+
     # prepare all the storage qubits
     for n in nodes
-        initialize!(net[n][storage_slot], X1)
+        if !isassigned(net[n][storage_slot])
+            initialize!(net[n][storage_slot], X1)
+        end
     end
 
     # run multiple rounds of parallel entangling of independent edges
     while true
         # which edges are we entangling in this round
         current_edges = entangling_steps_generator()
-        println(current_edges)
         isnothing(current_edges) && break
         processes = []
         # set up an entangler for each edge
@@ -190,7 +206,7 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
                 chooseA=communication_slot, chooseB=communication_slot,
                 tag=nothing,
                 pairstate = StabilizerState("ZX XZ"),
-                rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
+                uselock=false, rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
             )
             process = @process entangler()
             push!(processes, process)
@@ -198,7 +214,7 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
         # wait on all entanglers
         @yield reduce(&, processes)
         # perform fusion at each communication qubit
-        for (i,j) in current_edges
+        for (i, j) in current_edges
             regA = net[nodes[i]]
             regB = net[nodes[j]]
 
@@ -216,6 +232,11 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
                 apply!(regA[storage_slot], Z)
             end
         end
+
+        @debug "Graph state is established."
+    end
+    for slot in slots
+        unlock(slot)
     end
 
     uuid = rand(Int)
