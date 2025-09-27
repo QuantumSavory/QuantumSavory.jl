@@ -2,19 +2,11 @@ using Oxygen
 using JSON3
 using QuantumSavory
 using QuantumSavory.StatesZoo
-using QuantumSavory.StatesZoo.Genqo
+using QuantumSavory.StatesZoo.Genqo: GenqoUnheraldedSPDCBellPairW, GenqoMultiplexedCascadedBellPairW
 using QuantumOpticsBase
 using QuantumSymbolics
 
-"""
-REST API Server for QuantumSavory StatesZoo Density Matrices
-
-This server provides REST endpoints to obtain density matrices from various quantum states
-in the QuantumSavory StatesZoo, including Barrett-Kok Bell pairs and Genqo states.
-"""
-
-# Enable CORS for frontend access
-@oxidise 
+@oxidise
 @get "/api/health" function()
     return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running")
 end
@@ -22,31 +14,31 @@ end
 # Barrett-Kok Bell Pair endpoints
 @get "/api/barrett-kok/density-matrix" function(req)
     # Extract parameters with defaults
-    ηᴬ = get(queryparams(req), "etaA", "1.0") |> x -> parse(Float64, x)
-    ηᴮ = get(queryparams(req), "etaB", "1.0") |> x -> parse(Float64, x)
-    Pᵈ = get(queryparams(req), "Pd", "0.0") |> x -> parse(Float64, x)
-    ηᵈ = get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
-    𝒱 = get(queryparams(req), "V", "1.0") |> x -> parse(Float64, x)
-    m = get(queryparams(req), "m", "0") |> x -> parse(Int, x)
-    weighted = get(queryparams(req), "weighted", "false") == "true"
-    
+    ηᴬ = Base.get(queryparams(req), "etaA", "1.0") |> x -> parse(Float64, x)
+    ηᴮ = Base.get(queryparams(req), "etaB", "1.0") |> x -> parse(Float64, x)
+    Pᵈ = Base.get(queryparams(req), "Pd", "0.0") |> x -> parse(Float64, x)
+    ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
+    𝒱 = Base.get(queryparams(req), "V", "1.0") |> x -> parse(Float64, x)
+    m = Base.get(queryparams(req), "m", "0") |> x -> parse(Int, x)
+    weighted = Base.get(queryparams(req), "weighted", "false") == "true"
+
     try
         # Validate parameters
         if !(0 ≤ ηᴬ ≤ 1) || !(0 ≤ ηᴮ ≤ 1) || !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ abs(𝒱) ≤ 1) || Pᵈ < 0
             return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], Pd must be ≥0, |V| must be in [0,1]")
         end
-        
+
         # Create the state
         if weighted
             state = BarrettKokBellPairW(ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱, m)
         else
             state = BarrettKokBellPair(ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱, m)
         end
-        
+
         # Get density matrix
         ρ = express(state, QuantumOpticsRepr())
         density_matrix = Array(ρ.data)
-        
+
         return Dict(
             "state_type" => weighted ? "BarrettKokBellPairW" : "BarrettKokBellPair",
             "parameters" => Dict(
@@ -72,7 +64,7 @@ end
 @get "/api/barrett-kok/parameters" function()
     params = stateparameters(BarrettKokBellPair)
     ranges = stateparametersrange(BarrettKokBellPair)
-    
+
     return Dict(
         "parameters" => params,
         "ranges" => ranges,
@@ -90,25 +82,24 @@ end
 # Genqo ZALM (Multiplexed Cascaded) endpoints
 @get "/api/genqo/zalm/density-matrix" function(req)
     # Extract parameters with defaults
-    ηᵇ = get(queryparams(req), "etab", "1.0") |> x -> parse(Float64, x)
-    ηᵈ = get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
-    ηᵗ = get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
-    N = get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
-    Pᵈ = get(queryparams(req), "Pd", "1e-8") |> x -> parse(Float64, x)
-    
+    ηᵇ = Base.get(queryparams(req), "etab", "1.0") |> x -> parse(Float64, x)
+    ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
+    ηᵗ = Base.get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
+    N = Base.get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
+    Pᵈ = Base.get(queryparams(req), "Pd", "1e-8") |> x -> parse(Float64, x)
+
     try
         # Validate parameters
         if !(0 ≤ ηᵇ ≤ 1) || !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0 || Pᵈ < 0
             return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], N must be >0, Pd must be ≥0")
         end
-        
+
         # Create the state
         state = GenqoMultiplexedCascadedBellPairW(ηᵇ, ηᵈ, ηᵗ, N, Pᵈ)
-        
-        # Get density matrix (this uses the Python genqo package)
+
         ρ = express(state, QuantumOpticsRepr())
         density_matrix = Array(ρ.data)
-        
+
         return Dict(
             "state_type" => "GenqoMultiplexedCascadedBellPairW",
             "parameters" => Dict(
@@ -133,7 +124,7 @@ end
 @get "/api/genqo/zalm/parameters" function()
     params = stateparameters(GenqoMultiplexedCascadedBellPairW)
     ranges = stateparametersrange(GenqoMultiplexedCascadedBellPairW)
-    
+
     return Dict(
         "parameters" => params,
         "ranges" => ranges,
@@ -150,23 +141,23 @@ end
 # Genqo SPDC endpoints
 @get "/api/genqo/spdc/density-matrix" function(req)
     # Extract parameters with defaults
-    ηᵈ = get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
-    ηᵗ = get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
-    N = get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
-    Pᵈ = get(queryparams(req), "Pd", "1e-6") |> x -> parse(Float64, x)
-    
+    ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
+    ηᵗ = Base.get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
+    N = Base.get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
+    Pᵈ = Base.get(queryparams(req), "Pd", "1e-6") |> x -> parse(Float64, x)
+
     try
         # Validate parameters
         if !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0 || Pᵈ < 0
             return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], N must be >0, Pd must be ≥0")
         end
-        
+
         # Create the state
         state = GenqoUnheraldedSPDCBellPairW(ηᵈ, ηᵗ, N, Pᵈ)
-        
-        # Get density matrix using the _express_spin_spin_matrix function
-        density_matrix = Array(Genqo._express_spin_spin_matrix(state))
-        
+
+        ρ = express(state, QuantumOpticsRepr())
+        density_matrix = Array(ρ.data)
+
         return Dict(
             "state_type" => "GenqoUnheraldedSPDCBellPairW",
             "parameters" => Dict(
@@ -190,7 +181,7 @@ end
 @get "/api/genqo/spdc/parameters" function()
     params = stateparameters(GenqoUnheraldedSPDCBellPairW)
     ranges = stateparametersrange(GenqoUnheraldedSPDCBellPairW)
-    
+
     return Dict(
         "parameters" => params,
         "ranges" => ranges,
@@ -214,7 +205,7 @@ end
                 "parameters_endpoint" => "/api/barrett-kok/parameters"
             ),
             Dict(
-                "name" => "BarrettKokBellPairW", 
+                "name" => "BarrettKokBellPairW",
                 "description" => "Weighted Barrett-Kok Bell pair state (trace = success probability)",
                 "endpoint" => "/api/barrett-kok/density-matrix?weighted=true",
                 "parameters_endpoint" => "/api/barrett-kok/parameters"
@@ -228,7 +219,7 @@ end
             Dict(
                 "name" => "GenqoUnheraldedSPDCBellPairW",
                 "description" => "Unheralded SPDC Bell pair source",
-                "endpoint" => "/api/genqo/spdc/density-matrix", 
+                "endpoint" => "/api/genqo/spdc/density-matrix",
                 "parameters_endpoint" => "/api/genqo/spdc/parameters"
             )
         ]
@@ -249,6 +240,6 @@ if abspath(PROGRAM_FILE) == @__FILE__
     println("  GET /api/genqo/spdc/parameters - Genqo SPDC parameters info")
     println()
     println("Server running on http://localhost:8080")
-    
+
     serve(port=8080)
 end

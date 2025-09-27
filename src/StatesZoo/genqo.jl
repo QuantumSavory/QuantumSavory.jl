@@ -1,8 +1,9 @@
 module Genqo
 
-import QuantumSavory.StatesZoo: AbstractTwoQubitState, stateparameters, stateparametersrange
+import QuantumSavory.StatesZoo: AbstractTwoQubitState, stateparameters, stateparametersrange, _bspin
 import QuantumSymbolics: Metadata # TODO fix the @withmetadata macro to not require this import
-import QuantumSymbolics: @withmetadata, symbollabel, QuantumOpticsRepr, express_nolookup
+import QuantumSymbolics: @withmetadata, symbollabel, QuantumOpticsRepr, express_nolookup, ⊗
+import QuantumOpticsBase
 import PythonCall
 import LinearAlgebra: tr
 using DocStringExtensions
@@ -48,39 +49,9 @@ stateparametersrange(::Type{GenqoMultiplexedCascadedBellPairW}) = (
     ηᵇ =(;min=0,max=1,good=1),
     ηᵈ =(;min=0,max=1,good=1),
     ηᵗ =(;min=0,max=1,good=1),
-    N   =(;min=0,max=10,good=0.1),
-    Pᵈ  =(;min=0,max=0.1,good=10^(-8))
+    N  =(;min=0,max=10,good=0.1),
+    Pᵈ =(;min=0,max=0.1,good=1e-8)
 )
-
-function _express_photon_photon_probability_of_generation(x::GenqoMultiplexedCascadedBellPairW)
-    # This function calculates the photon-photon probability of generation
-    (;ηᵇ, ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.ZALM()
-    state.params["bsm_efficiency"] = ηᵇ
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_probability_success()
-    return state.results["probability_success"]
-end
-
-function _express_photon_photon_fidelity(x::GenqoMultiplexedCascadedBellPairW)
-    # This function calculates the photon-photon fidelity
-    (;ηᵇ, ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.ZALM()
-    state.params["bsm_efficiency"] = ηᵇ
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_fidelity()
-    return state.results["fidelity"]
-end
 
 function _express_spin_spin_matrix(x::GenqoMultiplexedCascadedBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
@@ -97,38 +68,12 @@ function _express_spin_spin_matrix(x::GenqoMultiplexedCascadedBellPairW)
     return state.results["output_state"]
 end
 
-function _express_spin_spin_probability_of_generation(x::GenqoMultiplexedCascadedBellPairW)
-    # This function calculates the unnormalized spin-spin density matrix
-    (;ηᵇ, ηᵈ, ηᵗ, N, Pᵈ) = x
+symbollabel(x::GenqoMultiplexedCascadedBellPairW) = "ρᶻᵃˡᵐ"
 
-    state = gq.ZALM()
-    state.params["bsm_efficiency"] = ηᵇ
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_density_operator(gq.np.array([1,0,1,1,0,0,1,0]))
-    return tr(state.results["output_state"])
+function express_nolookup(x::GenqoMultiplexedCascadedBellPairW, ::QuantumOpticsRepr)
+    mat = Array(PythonCall.PyArray(_express_spin_spin_matrix(x)))
+    return QuantumOpticsBase.SparseOperator(_bspin⊗_bspin, mat)
 end
-
-function _express_spin_spin_fidelity(x::GenqoMultiplexedCascadedBellPairW)
-    # This function calculates the unnormalized spin-spin density matrix
-    (;ηᵇ, ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.ZALM()
-    state.params["bsm_efficiency"] = ηᵇ
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_density_operator(gq.np.array([1,0,1,1,0,0,1,0]))
-    rho_un = state.results["output_state"]
-    Ps =  tr(rho_un)
-    return (1/2)*(rho_un[0][0] - rho_un[0][3] - rho_un[3][0] + rho_un[3][3])/(Ps)
-end
-
 
 """
 $TYPEDEF
@@ -162,34 +107,6 @@ stateparametersrange(::Type{GenqoUnheraldedSPDCBellPairW}) = (
     Pᵈ  =(;min=0,max=0.1,good=10^(-6))
 )
 
-function _express_photon_photon_probability_of_generation(x::GenqoUnheraldedSPDCBellPairW)
-    # This function calculates the photon-photon probability of generation
-    (;ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.SPDC()
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_probability_success()
-    return state.results["probability_success"]
-end
-
-function _express_photon_photon_fidelity(x::GenqoUnheraldedSPDCBellPairW)
-    # This function calculates the photon-photon fidelity
-    (;ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.SPDC()
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_fidelity()
-    return state.results["fidelity"]
-end
-
 function _express_spin_spin_matrix(x::GenqoUnheraldedSPDCBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
     (;ηᵈ, ηᵗ, N, Pᵈ) = x
@@ -204,42 +121,11 @@ function _express_spin_spin_matrix(x::GenqoUnheraldedSPDCBellPairW)
     return state.results["output_state"]
 end
 
-function _express_spin_spin_probability_of_generation(x::GenqoUnheraldedSPDCBellPairW)
-    # This function calculates the unnormalized spin-spin density matrix
-    (;ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.SPDC()
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_density_operator(gq.np.array([0,1,0,1]))
-    return tr(state.results["output_state"])
-end
-
-function _express_spin_spin_fidelity(x::GenqoUnheraldedSPDCBellPairW)
-    # This function calculates the unnormalized spin-spin density matrix
-    (;ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.SPDC()
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_density_operator(gq.np.array([0,1,0,1]))
-    rho_un = state.results["output_state"]
-    Ps =  tr(rho_un)
-    return (1/2)*(rho_un[0][0] - rho_un[0][3] - rho_un[3][0] + rho_un[3][3])/(Ps)
-end
-
-symbollabel(x::GenqoMultiplexedCascadedBellPairW) = "ρᶻᵃˡᵐ"
 symbollabel(x::GenqoUnheraldedSPDCBellPairW) = "ρˢᵖᵈᶜ"
 
-function express_nolookup(x::GenqoMultiplexedCascadedBellPairW, ::QuantumOpticsRepr)
-    mat = Array(PyArray(_express_spin_spin_matrix(x)))
-    return SparseOperator(_bspin⊗_bspin, mat)
+function express_nolookup(x::GenqoUnheraldedSPDCBellPairW, ::QuantumOpticsRepr)
+    mat = Array(PythonCall.PyArray(_express_spin_spin_matrix(x)))
+    return QuantumOpticsBase.SparseOperator(_bspin⊗_bspin, mat)
 end
 
 end

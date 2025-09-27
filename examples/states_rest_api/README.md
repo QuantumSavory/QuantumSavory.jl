@@ -9,31 +9,16 @@ This REST API provides access to density matrices from quantum states in the Qua
 1. Julia 1.11+ with QuantumSavory.jl installed
 2. Oxygen.jl for the REST API framework
 3. JSON3.jl for JSON handling
-4. For Genqo states: Python with the `genqo` package installed
-
-### Installation
-
-```bash
-# Install required Julia packages
-julia -e 'using Pkg; Pkg.add(["Oxygen", "JSON3"])'
-
-# For Genqo functionality, install the Python package:
-pip install genqo
-```
 
 ### Running the Server
 
+From the folder containing the server and the Project.toml file with the dependencies:
+
 ```bash
-julia api_server.jl
+julia --project=. api_server.jl
 ```
 
 The server will start on `http://localhost:8080`
-
-### Testing
-
-```bash
-julia test_api.jl
-```
 
 ## API Endpoints
 
@@ -42,7 +27,7 @@ julia test_api.jl
 - Returns server status
 
 ### Available States
-- **GET** `/api/states` 
+- **GET** `/api/states`
 - Lists all available quantum state types with their endpoints
 
 ### Barrett-Kok Bell Pairs
@@ -51,7 +36,7 @@ julia test_api.jl
 - **GET** `/api/barrett-kok/density-matrix`
 - **Parameters:**
   - `etaA` (optional): Transmissivity from source A, ∈[0,1], default=1.0
-  - `etaB` (optional): Transmissivity from source B, ∈[0,1], default=1.0  
+  - `etaB` (optional): Transmissivity from source B, ∈[0,1], default=1.0
   - `Pd` (optional): Excess noise in detectors, ≥0, default=0.0
   - `etad` (optional): Detection efficiency, ∈[0,1], default=1.0
   - `V` (optional): Mode matching parameter, |V|∈[0,1], default=1.0
@@ -73,7 +58,7 @@ julia test_api.jl
   - `N` (optional): Mean photon number, >0, default=0.1
   - `Pd` (optional): Excess noise, ≥0, default=1e-8
 
-#### Get Parameters Info  
+#### Get Parameters Info
 - **GET** `/api/genqo/zalm/parameters`
 - Returns parameter descriptions and valid ranges
 
@@ -88,7 +73,7 @@ julia test_api.jl
   - `Pd` (optional): Excess noise, ≥0, default=1e-6
 
 #### Get Parameters Info
-- **GET** `/api/genqo/spdc/parameters` 
+- **GET** `/api/genqo/spdc/parameters`
 - Returns parameter descriptions and valid ranges
 
 ## Response Format
@@ -180,7 +165,7 @@ import requests
 import numpy as np
 
 # Get Barrett-Kok density matrix
-response = requests.get("http://localhost:8080/api/barrett-kok/density-matrix", 
+response = requests.get("http://localhost:8080/api/barrett-kok/density-matrix",
                        params={"etaA": 0.95, "etaB": 0.90})
 data = response.json()
 
@@ -199,7 +184,7 @@ print(f"Dimensions: {data['dimensions']}")
 A symbolic representation of the noisy Bell pair state obtained in a Barrett-Kok style protocol (sequence of two successful entanglement swaps). Based on the "dual rail photonic qubit swap" protocol.
 
 **Key Parameters:**
-- **etaA, etaB**: Channel transmissivities from sources A and B 
+- **etaA, etaB**: Channel transmissivities from sources A and B
 - **Pd**: Excess noise in photon detectors
 - **etad**: Detection efficiency of photon detectors
 - **V**: Mode matching parameter (|V| = mode overlap, arg(V) = phase mismatch)
@@ -210,7 +195,7 @@ Heralded multiplexed cascaded source for generating Bell pairs. Uses the Python 
 
 **Key Parameters:**
 - **etab**: Bell state measurement transmissivity
-- **etad**: Detector transmissivity  
+- **etad**: Detector transmissivity
 - **etat**: Outcoupling transmissivity
 - **N**: Mean photon number (fidelity vs rate tradeoff)
 - **Pd**: Excess noise in detectors
@@ -218,7 +203,7 @@ Heralded multiplexed cascaded source for generating Bell pairs. Uses the Python 
 ### Genqo SPDC
 Unheralded spontaneous parametric down-conversion Bell pair source, as described by Kwiat et al.
 
-**Key Parameters:**  
+**Key Parameters:**
 - **etad**: Detector transmissivity
 - **etat**: Outcoupling transmissivity
 - **N**: Mean photon number
@@ -231,3 +216,7 @@ Unheralded spontaneous parametric down-conversion Bell pair source, as described
 - All states represent two-qubit systems with 4×4 density matrices
 - Parameter validation is performed server-side with appropriate error messages
 - The weighted versions return unnormalized density matrices where the trace represents the success probability
+
+# TODO future improvements
+
+The API end points for states and their documentation can be generated programmatic through the available introspection tools of the library. That would make the code a bit less legible, but drastically shorter and easier to maintain. Instead, the current setup will rapidly become outdated as new states are added and the documentation of old states gets improved.
