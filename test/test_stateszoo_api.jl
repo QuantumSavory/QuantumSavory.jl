@@ -16,6 +16,7 @@ else
 end
 
 for S in [BarrettKokBellPair, BarrettKokBellPairW,
+    GenqoUnheraldedSPDCBellPairW, GenqoMultiplexedCascadedBellPairW,
     onlyon112...
     ] # TODO use some abstract supertype to automatically get all of these
     params = QuantumSavory.StatesZoo.stateparameters(S)
