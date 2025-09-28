@@ -33,7 +33,7 @@ function testfilter(tags)
         push!(exclude, :plotting_gl)
         push!(exclude, :doctests)
     else
-        return :plotting_cairo in tags || :plotting_gl in tags || :examples_plotting in tags || :doctests in tags
+        return :plotting_cairo in tags || :plotting_gl in tags || :doctests in tags
     end
 
     if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"

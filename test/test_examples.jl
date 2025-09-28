@@ -1,3 +1,8 @@
+using Logging
+logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
+
+with_logger(logger) do
+
 @testitem "Examples - colorcentermodularcluster 1" tags=[:examples_plotting] begin
     include("../examples/colorcentermodularcluster/1_time_to_connected.jl")
 end
@@ -49,3 +54,5 @@ end
 @safetestset "Examples - repeatergrid 2a" tags=[:examples_plotting] begin
     include("../examples/repeatergrid/2a_sync_interactive_visualization.jl")
 end
+
+end # with_logger
