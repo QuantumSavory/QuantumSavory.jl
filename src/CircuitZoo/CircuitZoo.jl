@@ -939,33 +939,39 @@ function (circuit::SDDecode)(rrefA, rrefB)
 end
 
 """
-    Fusion(regA, regB, storage_slot, communication_slot)
+$TYPEDEF
 
-Perform a fusion operation between two registers.
+Fields:
 
-# Arguments
-- `regA::Register` : first register.
-- `regB::Register` : second register.
-- `storage_slot::Int` : index of storage qubit in each register.
-- `communication_slot::Int` : index of communication qubit in each register.
+$FIELDS
+
+Performs the type-I fusion operation between two registers. The registers are assumed to be in the same fridge.
 """
 struct Fusion <: AbstractCircuit
-    function Fusion(regA, regB, storage_slot, communication_slot)
-        apply!((regA[storage_slot], regA[communication_slot]), CPHASE)
-        apply!((regB[storage_slot], regB[communication_slot]), CPHASE)
-
-        mA = project_traceout!(regA[communication_slot], X)
-        mB = project_traceout!(regB[communication_slot], X)
-
-        if mA == 2
-            apply!(regB[storage_slot], Z)
-        end
-        if mB == 2
-            apply!(regA[storage_slot], Z)
-        end
-    end
 end
 
 inputqubits(circuit::Fusion) = 4
+
+function (circuit::Fusion)(regA, regB, communication_slot, storage_slot)
+    if !isassigned(regA[storage_slot])
+        initialize!(regA[storage_slot], X1)
+    end
+    if !isassigned(regB[storage_slot])
+        initialize!(regB[storage_slot], X1)
+    end
+
+    apply!((regA[storage_slot], regA[communication_slot]), CPHASE)
+    apply!((regB[storage_slot], regB[communication_slot]), CPHASE)
+
+    mA = project_traceout!(regA[communication_slot], X)
+    mB = project_traceout!(regB[communication_slot], X)
+
+    if mA == 2
+        apply!(regB[storage_slot], Z)
+    end
+    if mB == 2
+        apply!(regA[storage_slot], Z)
+    end
+end
 
 end # module

@@ -219,7 +219,7 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
             regA = net[nodes[i]]
             regB = net[nodes[j]]
 
-            Fusion(regA, regB, storage_slot, communication_slot)
+            Fusion()(regA, regB, communication_slot, storage_slot)
         end
 
         @debug "Graph state is established."

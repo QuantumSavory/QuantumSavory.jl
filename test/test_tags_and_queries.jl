@@ -161,6 +161,8 @@ lock(reg[3])
 @test findfreeslot(reg, filter=maximum).idx == 5
 @test findfreeslot(reg, filter=1) == nothing
 @test findfreeslot(reg, filter=2).idx == 2
+@test findfreeslot(reg, filter=3).idx == nothing
+@test findfreeslot(reg, filter=3, locked=true).idx == 3
 
 end
 
