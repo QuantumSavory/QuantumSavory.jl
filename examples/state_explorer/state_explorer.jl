@@ -1,4 +1,5 @@
 using QuantumSavory.StatesZoo
+using QuantumSavory.StatesZoo.Genqo: GenqoUnheraldedSPDCBellPairW, GenqoMultiplexedCascadedBellPairW
 
 using WGLMakie
 WGLMakie.activate!()
@@ -14,6 +15,8 @@ const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TOD
 const permitted_queries = Dict(
     "MultiplexedCascadedBellPairW" => MultiplexedCascadedBellPairW,
     "BarrettKokBellPairW" => BarrettKokBellPairW,
+    "GenqoUnheraldedSPDCBellPairW" => GenqoUnheraldedSPDCBellPairW,
+    "GenqoMultiplexedCascadedBellPairW" => GenqoMultiplexedCascadedBellPairW,
 )
 
 landing = Bonito.App(; title="State Explorer") do
@@ -22,6 +25,8 @@ landing = Bonito.App(; title="State Explorer") do
 
     - [Barrett-Kok Bell Pair](./vis/BarrettKokBellPairW)
     - [ZALM Bell Pair](./vis/MultiplexedCascadedBellPairW)
+    - [Genqo Unheralded SPDC Bell Pair](./vis/GenqoUnheraldedSPDCBellPairW)
+    - [Genqo Multiplexed Cascaded Bell Pair](./vis/GenqoMultiplexedCascadedBellPairW)
     """
     Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end

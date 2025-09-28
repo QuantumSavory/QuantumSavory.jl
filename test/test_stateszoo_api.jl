@@ -1,5 +1,8 @@
 @testitem "StatesZoo API" begin
+using Test
+using QuantumSavory
 using QuantumSavory.StatesZoo
+using QuantumSavory.StatesZoo.Genqo: GenqoUnheraldedSPDCBellPairW, GenqoMultiplexedCascadedBellPairW
 using QuantumOpticsBase
 using LinearAlgebra
 
@@ -15,6 +18,9 @@ else
     []
 end
 
+_evalf(x::Number) = x
+_evalf(x) = express(x)
+
 for S in [BarrettKokBellPair, BarrettKokBellPairW,
     GenqoUnheraldedSPDCBellPairW, GenqoMultiplexedCascadedBellPairW,
     onlyon112...
@@ -26,7 +32,7 @@ for S in [BarrettKokBellPair, BarrettKokBellPairW,
     reg = Register(2)
     initialize!(reg[1:2], state)
     @test ! iszero(observable(reg[1:2], Z⊗Z))
-    @test tr(state) ≈ tr(express(state))
+    @test _evalf(tr(state)) ≈ tr(express(state))
 end
 
 for S in [BarrettKokBellPair, onlyon112normed...] # TODO use some abstract supertype
