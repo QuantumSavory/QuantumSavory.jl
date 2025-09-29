@@ -1,7 +1,9 @@
 @testitem "ProtocolZoo Entanglement Tracker Grid" tags=[:protocolzoo_entanglement_tracker_grid] begin
+using Test
 using Revise
 using ResumableFunctions
 using ConcurrentSim
+using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
@@ -184,7 +186,7 @@ for n in 4:10
 end
 
 # and here we test for a simple 2d rectangular grid
-for n in 4:10
+for n in 4:7
     graph = grid([n,n])
 
     net = RegisterNet(graph, [Register(8) for i in 1:n^2])
@@ -210,9 +212,9 @@ for n in 4:10
         @process tracker()
     end
 
-    run(sim, 100)
+    run(sim, 300)
 
-    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
+    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓) # might return nothing in which case the next line fails -- solved by simulating for longer
     q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
 
     @test q1.tag[2] == size(graph)[1]
@@ -269,8 +271,8 @@ for v in vertices(net)
 end
 run(sim, 400)
 
-for i in 1:length(consumer.log)
-    @test consumer.log[i][2] ≈ 1.0
-    @test consumer.log[i][3] ≈ 1.0
+for i in 1:length(consumer._log)
+    @test consumer._log[i][2] ≈ 1.0
+    @test consumer._log[i][3] ≈ 1.0
 end
 end

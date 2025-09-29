@@ -1,2 +1,3 @@
 *.png
 *.mp4
+Project.toml # because the test runner might add things like JET to it

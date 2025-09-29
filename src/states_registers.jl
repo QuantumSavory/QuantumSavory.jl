@@ -12,7 +12,7 @@ StateRef(state, registers, registerindices) = StateRef(Ref{Any}(copy(state)), re
 """
 The main data structure in `QuantumSavory`, used to represent a quantum register in an arbitrary formalism.
 """
-struct Register # TODO better type description
+struct Register # TODO better type description / TODO mutable struct with immutable fields to remove the refs
     traits::Vector{Any}
     reprs::Vector{Any}
     backgrounds::Vector{Any}
@@ -23,12 +23,13 @@ struct Register # TODO better type description
     tag_info::Dict{Int128, @NamedTuple{tag::Tag, slot::Int, time::Float64}}
     guids::Vector{Int128}
     netparent::Ref{Any}
+    netindex::Ref{Int}
     tag_waiter::Ref{AsymmetricSemaphore} # TODO This being a ref is a bit of code smell... but we also want to be able to have registers that are not linked to a net so we need to be able to have this field un-initialized
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), [], nothing, Ref(AsymmetricSemaphore(env)))
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), Int128[], nothing, 0, Ref(AsymmetricSemaphore(env)))
 end
 
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
@@ -60,9 +61,37 @@ const RegOrRegRef = Union{Register,RegRef}
 get_register(r::RegRef) = r.reg
 get_register(r::Register) = r
 
-#Base.:(==)(r1::Register, r2::Register) =
+Base.parent(r::RegRef) = r.reg
+parentindex(r::RegRef) = r.idx
+
+"""The state stored at a given register slot."""
+function stateof end
+stateof(r::RegRef) = stateof(r.reg, r.idx) # TODO introduce Slot and make RegRef an alias of Slot
+stateof(r::Register, i::Int) = r.staterefs[i]
+
+"""The underlying backend-dependent quantum state numerical object for a given state of multiple register slots."""
+function quantumstate end
+quantumstate(::Nothing) = nothing
+quantumstate(s::StateRef) = s.state[]
+
+"""The slots which are entangled into the given state reference."""
+function slots end
+slots(::Nothing) = RegRef[]
+slots(s::StateRef) = RegRef[r[i] for (r,i) in zip(s.registers, s.registerindices)]
+
 
 function onchange_tag(r::RegOrRegRef)
+    Base.depwarn("onchange_tag(::RegOrRegRef) is deprecated, use onchange(::RegOrRegRef, Tag) instead", :onchange_tag)
     register = get_register(r)
     return lock(register.tag_waiter[])
+end
+
+function onchange(r::RegOrRegRef)
+    register = get_register(r)
+    return lock(register.tag_waiter[])
+end
+
+function onchange(r::RegOrRegRef, ::Type{Tag})
+    # For now, this behaves the same as the basic version
+    onchange(r)
 end

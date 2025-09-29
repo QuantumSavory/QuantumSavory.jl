@@ -47,20 +47,20 @@ Tag(tag::PurifiedEntalgementCounterpart) = Tag(PurifiedEntalgementCounterpart, t
         local_tag = query(nodereg, MBQCMeasurement, node, ❓) # waits on the measurement result
 
         if isnothing(local_tag)
-            @yield onchange_tag(net[node])
+            @yield onchange(net[node], Tag)
             continue
         end
-        
+
         msg = query(mb, MBQCMeasurement, ❓, ❓)
         if isnothing(msg)
             @debug "Starting message wait at $(now(sim)) with MessageBuffer containing: $(mb.buffer)"
-            @yield wait(mb)
+            @yield onchange(mb)
             @debug "Done waiting for message at $(node)"
             continue
         end
 
         msg = querydelete!(mb, MBQCMeasurement, ❓, ❓)
-        local_measurement = local_tag.tag.data[3] # it would be better if it can be local_tag.tag.measurement 
+        local_measurement = local_tag.tag.data[3] # it would be better if it can be local_tag.tag.measurement
         src, (_, src_node, src_measurement) = msg
 
         if src_measurement == local_measurement
@@ -79,7 +79,7 @@ end
         query_setup = query(net[node], MBQCSetUp, node)
         if !isnothing(query_setup) # no need to set up if it already is
             if isnothing(period)
-                @yield onchange_tag(net[node])
+                @yield onchange(net[node], Tag)
             else
                 @yield timeout(sim, period)
             end
@@ -112,11 +112,11 @@ end
 @resumable function MBQC_purify(sim, net, node, duration=0.1, period=0.1)
     while true
         # checking whether we have entanglements to purify & setup is completed
-        query1 = queryall(net[node], EntanglementCounterpart, ❓, ❓; locked=false, assigned=true) 
+        query1 = queryall(net[node], EntanglementCounterpart, ❓, ❓; locked=false, assigned=true)
         query2 = query(net[node], MBQCSetUp, node)
         if length(query1) < 2 || isnothing(query2)
             if isnothing(period)
-                @yield onchange_tag(net[node])
+                @yield onchange(net[node], Tag)
             else
                 @yield timeout(sim, period)
             end
@@ -134,15 +134,15 @@ end
         if m1 == 2
             apply!(net[node, 4], Z)
             apply!(net[node, 2], Z)
-        end 
+        end
         if m2 == 2
             apply!(net[node, 4], X)
         end
         untag!(query1[1].slot, query1[1].id)
         untag!(query1[2].slot, query1[2].id)
-        m = project_traceout!(net[node, 2], X) 
+        m = project_traceout!(net[node, 2], X)
         tag!(net[node][4], MBQCMeasurement, node, m)
-        
+
         if node == 1
             other = 2
         else
