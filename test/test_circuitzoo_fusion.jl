@@ -2,6 +2,8 @@
 using Graphs
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: Fusion
+import QuantumClifford
+import QuantumOpticsBase
 
 const pairstate = StabilizerState("ZX XZ")
 const communication_slot = 1
