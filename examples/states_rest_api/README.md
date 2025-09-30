@@ -219,4 +219,4 @@ Unheralded spontaneous parametric down-conversion Bell pair source, as described
 
 # TODO future improvements
 
-The API end points for states and their documentation can be generated programmatic through the available introspection tools of the library. That would make the code a bit less legible, but drastically shorter and easier to maintain. Instead, the current setup will rapidly become outdated as new states are added and the documentation of old states gets improved.
+The API end points for states and their documentation can be generated programmatically through the available introspection tools of the library. That would make the code a bit less legible, but drastically shorter and easier to maintain. Instead, the current setup will rapidly become outdated as new states are added and the documentation of old states gets improved.
