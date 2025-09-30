@@ -239,6 +239,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     println("  GET /api/genqo/spdc/density-matrix - Genqo SPDC density matrix")
     println("  GET /api/genqo/spdc/parameters - Genqo SPDC parameters info")
 
-    port = parse(Int, Base.get(ENV, "QS_STATES_REST_API_PORT", "8080"))
-    serve(port=port)
+    port = parse(Int, Base.get(ENV, "QS_STATES_REST_SERVER_PORT", "8080"))
+    host = Base.get(ENV, "QS_STATES_REST_SERVER_IP", "127.0.0.1")
+    serve(port=port, host=host)
 end
