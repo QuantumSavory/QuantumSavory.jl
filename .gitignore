@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+Manifest.toml
+>>>>>>> b71cc436 (polish the genqo state_explorer)
 Manifest*.toml
 build
 .gitignore
