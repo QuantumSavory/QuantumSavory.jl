@@ -5,9 +5,10 @@ using Documenter
 using DocumenterCitations, DocumenterMermaid
 using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
+using QuantumSavory.StatesZoo.Genqo
 using QuantumInterface
 
-DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo); recursive=true)
+DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumSavory.StatesZoo.Genqo); recursive=true)
 
 function main()
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
