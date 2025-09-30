@@ -5,3 +5,6 @@ ROADMAP.md
 coverage
 *.cov
 .CondaPkg
+.venv
+.vscode
+dev
