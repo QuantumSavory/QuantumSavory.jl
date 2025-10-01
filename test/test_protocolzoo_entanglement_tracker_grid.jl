@@ -17,7 +17,7 @@ end
 
 ##
 
-# This set of tests ensures that the combination of entanglement genererator, tracker, and swapper works on what is basically a 1D chain of nodes that happen to be otherwise located in a grid.
+# This set of tests ensures that the combination of entanglement generator, tracker, and swapper works on what is basically a 1D chain of nodes that happen to be otherwise located in a grid.
 # This set of tests DOES NOT test anything related to 2D grid structure of a network.
 # It is little more than a copy of `test_entanglement_tracker` but with more complicated predicates for choosing who to swap in swapper protocol.
 
