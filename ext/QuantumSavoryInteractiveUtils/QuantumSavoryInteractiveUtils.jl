@@ -43,7 +43,7 @@ types_of_UnionAll(t::UnionAll) = types_of_UnionAll(t.body)
 name_of_UnionAll(t::DataType) = t.name.name
 name_of_UnionAll(t::UnionAll) = name_of_UnionAll(t.body)
 
-# Taken from DocStringExtensions.format(::TupeFields)
+# Taken from DocStringExtensions.format(::TupleFields)
 function QuantumSavory.constructor_metadata(::Type{T}) where {T}
     fields = fieldnames(T)
     types = types_of_UnionAll(T)
