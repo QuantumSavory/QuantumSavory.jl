@@ -1,5 +1,6 @@
 @testitem "AsymmetricSemaphore functionality" begin
-
+using Test
+using QuantumSavory
 using QuantumSavory: AsymmetricSemaphore
 using ConcurrentSim
 using ResumableFunctions
