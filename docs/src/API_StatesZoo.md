@@ -17,3 +17,12 @@ The submodule `QuantumSavory.StatesZoo` provides models for many frequently used
 Modules = [QuantumSavory.StatesZoo]
 Private = false
 ```
+
+## API list for the `QuantumSavory.StatesZoo.Genqo` states
+
+Implemented as wrappers to the `genqo` python package.
+
+```@autodocs
+Modules = [QuantumSavory.StatesZoo.Genqo]
+Private = false
+```
