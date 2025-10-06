@@ -96,7 +96,7 @@ end
             while counter < n # until all clients are entangled
                 @yield onchange_tag(net[1])
                 if counter == 0 # initialize piecemaker
-                    # Initialize "piecemaker" qubit in |+> state when first qubit arrived s.t. if p=1 fidelity=1
+                    # Initialize "piecemaker" qubit in |+> state when first qubit arrived
                     initialize!(net[1][n+1], X1, time=now(sim))
                 end
 

@@ -1,5 +1,4 @@
-# run_with_live_plot_and_registernetplot.jl
-
+# Live visualization of the piecemaker switch protocol
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumClifford: ghz
@@ -190,11 +189,6 @@ function main(; n = 5, link_success_prob = 0.5, rounds = 5, seed = 42)
         @info "Simulation finished in $(t) seconds"
     end
     wait(simtask)
-
-    if !Base.isinteractive()
-        @info "Press Enter to close the window…"
-        readline()
-    end
 end
 
 main()
