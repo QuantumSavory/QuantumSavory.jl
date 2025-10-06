@@ -19,7 +19,7 @@ function prepare_singlerun(
     regsize = 2,                # Number of qubits in each register
     T2 = 100.0,                 # T2 dephasing time of all qubits
     F = 0.97,                   # Fidelity of the raw Bell pairs
-    entangler_wait_time = 0.1,  # How long to wait if all qubits are busy before retring entangling
+    entangler_wait_time = 0.1,  # How long to wait if all qubits are busy before retrying entangling
     entangler_busy_λ = 0.5,     # How long it takes to establish a newly entangled pair (Exponential distribution parameter)
     swapper_wait_time = 0.1,    # How long to wait if all qubits are unavailable for swapping
     swapper_busy_time = 0.55,   # How long it takes to swap two qubits

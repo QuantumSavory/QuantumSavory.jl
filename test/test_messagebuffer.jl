@@ -8,7 +8,7 @@ env = get_time_tracker(net);
 @resumable function receive_tags(env)
     while true
         mb = messagebuffer(net, 2)
-        @yield wait(mb)
+        @yield onchange(mb)
         msg = querydelete!(mb, :second_tag, ❓, ❓)
         if isnothing(msg)
             # println("nothing")

@@ -1,7 +1,7 @@
 module QTCP
 
 using QuantumSavory
-using QuantumSavory: Tag
+import QuantumSavory: Tag, get_time_tracker
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol
 using QuantumSavory.CircuitZoo: LocalEntanglementSwap
@@ -215,6 +215,8 @@ Managing the following transformations of classical control signals:
     node::Int
 end
 
+EndNodeController(net::RegisterNet, node::Int) = EndNodeController(get_time_tracker(net), net, node)
+
 """
 $TYPEDEF
 
@@ -239,6 +241,8 @@ Managing the following transformations of classical control signals:
     node::Int
 end
 
+NetworkNodeController(net::RegisterNet, node::Int) = NetworkNodeController(get_time_tracker(net), net, node)
+
 """
 $TYPEDEF
 
@@ -259,6 +263,8 @@ Managing the following transformations of classical control signals:
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
 end
+
+LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_time_tracker(net), net, nodeA, nodeB)
 
 
 ###
@@ -365,7 +371,7 @@ end
         end
 
         # wait until we have received a message
-        @yield wait(mb)
+        @yield onchange(mb)
     end
 end
 
@@ -378,7 +384,7 @@ end
         qdatagram = querydelete!(mb, QDatagram, ❓, ❓, !=(node), ❓, ❓, ❓)
         if !isnothing(qdatagram)
             _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = qdatagram.tag
-            nexthop = first(Graphs.a_star(net.graph, node, flow_dst)).dst
+            nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
             request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
             datagrams_in_waiting[(flow_uuid, seq_num)] = (qdatagram.tag, nexthop)
             put!(mb, request)
@@ -413,7 +419,7 @@ end
         end
 
         # Wait until we have received a message
-        @yield wait(mb)
+        @yield onchange(mb)
     end
 end
 
@@ -459,7 +465,7 @@ end
             put!(net[destination_node], reply_at_destination)
         end
         # wait until we have received a message
-        @yield (wait(mbA) | wait(mbB))
+        @yield (onchange(mbA) | onchange(mbB))
     end
 end
 
