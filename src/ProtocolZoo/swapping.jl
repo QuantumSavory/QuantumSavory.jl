@@ -5,29 +5,23 @@ end
 
 function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high, chooseslots; agelimit=nothing)
     reg = net[node]
-    low_nodes  = [
+    low_queryresults  = [
         n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
-    high_nodes = [
+    high_queryresults = [
         n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
 
-    if chooseslots isa Vector{Int}
-        low_nodes = filter(n -> n.slot.idx in chooseslots, low_nodes)
-        high_nodes = filter(n -> n.slot.idx in chooseslots, high_nodes)
-    elseif chooseslots isa Function
-        filtered_low_slots = chooseslots([n.slot.idx for n in low_nodes])
-        filtered_high_slots = chooseslots([n.slot.idx for n in high_nodes])
-        low_nodes = filter(n -> n.slot.idx in filtered_low_slots, low_nodes)
-        high_nodes = filter(n -> n.slot.idx in filtered_high_slots, high_nodes)
-    end
+    choosefunc = chooseslots isa Vector{Int} ? in(chooseslots) : chooseslots
+    low_queryresults = [qr for qr in low_queryresults if choosefunc(qr.slot.idx)]
+    high_queryresults = [qr for qr in high_queryresults if choosefunc(qr.slot.idx)]
 
-    (isempty(low_nodes) || isempty(high_nodes)) && return nothing
-    il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
-    ih = choose_high((n.tag[2] for n in high_nodes))
-    return (low_nodes[il], high_nodes[ih])
+    (isempty(low_queryresults) || isempty(high_queryresults)) && return nothing
+    il = choose_low((qr.tag[2] for qr in low_queryresults)) # TODO make [2] into a nice named property
+    ih = choose_high((qr.tag[2] for qr in high_queryresults))
+    return (low_queryresults[il], high_queryresults[ih])
 end
 
 
@@ -49,7 +43,7 @@ $TYPEDFIELDS
     net::RegisterNet
     """the vertex of the node where swapping is happening"""
     node::Int
-    """function `Vector{Int}->Vector{Int}` or a vector of allowed slot indices, specifying the slots to take among swappable slots in the node"""
+    """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among swappable slots in the node"""
     chooseslots::Union{Vector{Int},Function} = identity
     """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
     nodeL::QueryArgs = ❓
