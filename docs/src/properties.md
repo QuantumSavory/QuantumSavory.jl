@@ -16,5 +16,5 @@ import PrettyTables: pretty_table, tf_markdown # hide
 
 
 types = QuantumSavory.available_slot_types() # hide
-pretty_table(types; linebreaks = true, show_subheader=false) # hide
+pretty_table(types; line_breaks = true, show_subheader=false) # hide
 ```
