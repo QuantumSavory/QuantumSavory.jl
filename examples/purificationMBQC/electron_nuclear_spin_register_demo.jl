@@ -5,8 +5,8 @@ using Graphs
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 import QuantumSavory: Tag
-
-include("../graphstate/graph_preparer.jl")
+import QuantumClifford
+include("../graphstate/graph_preparer.jl") # TODO: only import the functions?
 
 using Logging
 global_logger(ConsoleLogger(stderr, Logging.Debug))
@@ -172,10 +172,18 @@ end
         g2 = @process graphconstructor2()
 
         @yield reduce(&, (entanglers..., g1, g2))
+        @yield timeout(sim, 100)
 
         m1 = @process measure(sim, net, 1, purified_nodes, storage_slot)
         m2 = @process measure(sim, net, 2, purified_nodes, storage_slot)
         @yield (m1 & m2)
+
+        @yield timeout(sim, 100)
+
+        for node in purified_nodes #TODO: this is kind of redundant
+            purified_consumer = EntanglementConsumer(sim, net, node, node + n÷2; tag=PurifiedEntalgementCounterpart)
+            @process purified_consumer()
+        end
     end
 end
 
@@ -213,8 +221,8 @@ end
 
 communication_slot = 1
 storage_slot = 2
-registers = [Register(2) for _ in vertices(g)]
 
+registers = [Register(2) for _ in vertices(g)]
 net = RegisterNet(g, registers)
 sim = get_time_tracker(net)
 
@@ -224,12 +232,27 @@ bob_subgraph = induced_subgraph(g, bob_indices)[1]
 prepA = GraphStateConstructor(sim, net, alice_subgraph, alice_indices, communication_slot, storage_slot)
 prepB = GraphStateConstructor(sim, net, bob_subgraph, bob_indices, communication_slot, storage_slot)
 
-@process run_protocols(sim, net, prepA, prepB, communication_slot, storage_slot, pairstate, initial_entanglements_nodes, purified_nodes)
+@process run_protocols(sim, net, prepA, prepB, communication_slot, storage_slot, pairstate, initial_entanglements_nodes, purified_nodes, rounds=1)
 
-for node in purified_nodes
-    purified_consumer = EntanglementConsumer(sim, net, node, node + n÷2; tag=PurifiedEntalgementCounterpart)
-    @process purified_consumer()
+run(sim, 100)
+
+
+# after graph state & initial entanglements
+for node in initial_entanglements_nodes
+    alice_tag = query(net[node], FusionMeasurement, ❓, ❓)
+    bob_tag = query(net[node + n÷2], FusionMeasurement, ❓, ❓)
+    println(alice_tag.tag.data[3])
+    println(bob_tag.tag.data[3])
+end
+
+graph_state = copy(g)
+rem_edge!(graph_state, purified_nodes[1], purified_nodes[1] + n÷2)
+
+for i in 1:nv(graph_state)
+    all_regs = [net[j][storage_slot] for j in 1:nv(g)]
+    o = observable(all_regs, QuantumOpticsBase.Operator(QuantumClifford.Stabilizer(QuantumClifford.Stabilizer(graph_state))[i]))
+    println(o) # should be 1 or -1 (only 1 after we are done with corrections)
 end
 
 
-run(sim, 50)
+run(sim, 200)
