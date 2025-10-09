@@ -2,7 +2,6 @@ include("setup.jl")
 using DataFrames
 using CSV
 
-
 # Set up the simulation parameters
 name = "qs_piecemeal"
 
