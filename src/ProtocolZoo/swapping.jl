@@ -44,7 +44,7 @@ $TYPEDFIELDS
     """the vertex of the node where swapping is happening"""
     node::Int
     """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among swappable slots in the node"""
-    chooseslots::Union{Vector{Int},Function} = identity
+    chooseslots::Union{Vector{Int},Function} = alwaystrue
     """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
     nodeL::QueryArgs = ❓
     """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
