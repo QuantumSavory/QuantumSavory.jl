@@ -43,68 +43,48 @@ Base.show(io::IO, tag::PurifiedEntalgementCounterpart) = print(io, "Entangled to
 Tag(tag::PurifiedEntalgementCounterpart) = Tag(PurifiedEntalgementCounterpart, tag.remote_node, tag.remote_slot)
 
 
-# TODO: hardcoded for now
-function graph_generator(initial_entanglements_nodes, purified_nodes)
-    g = Graph(4)
-    for ij in [(1,3), (2,3), (3,4)]
-        add_edge!(g, ij...)
-    end
-    return g
+# TODO
+function purification_resource_graph(code)
 end
 
 # TODO: right now, it just measures all but purified nodes
-@resumable function measure(sim, net, side, purified_nodes, storage_slot)
-    graph = net.graph
-    n = nv(graph)
-    offset = side == 1 ? 0 : n÷2
-    side_nodes = (1:n÷2) .+ offset
-    local_purified_nodes = purified_nodes .+ offset
-
+function measure(sim, net, local_storage_nodes_idx, remote_chief_node_idx, storage_slot)
     xor_result = 0
-    for node in side_nodes
+    for node in local_storage_nodes_idx
         if !(node in local_purified_nodes)
             reg = net[node]
             m = project_traceout!(reg[storage_slot], X) # TODO: fixed basis for now
-            tag!(reg[storage_slot], MBQCMeasurement, node, m) # storing the results for now, in case we need to something more sophisticated with them
             xor_result = xor(xor_result, m - 1)
         end
     end
 
-    local_purified = purified_nodes[1] + offset # save XOR result in the first purified node
-    reg = net[local_purified]
-    tag!(reg[storage_slot], XORMeasurements, local_purified, xor_result)
-    remote_purified = purified_nodes[1] + (side == 1 ? n÷2 : 0)
-    put!(channel(net, local_purified=>remote_purified), Tag(XORMeasurements, local_purified, xor_result))
+    # save XOR result locally and send it to the remote side
+    local_chief_node_idx = local_storage_nodes_idx[1]
+    reg = net[local_chief_node_idx]
+    tag!(reg[storage_slot], XORMeasurements, local_chief_node_idx, xor_result)
+    put!(channel(net, local_chief_node_idx=>remote_chief_node_idx), Tag(XORMeasurements, local_chief_node_idx, xor_result))
     # TODO: send the entangler fusion measurement info as well..
 end
 
-@resumable function purification_tracker(sim, net, side, purified_nodes, storage_slot)
-    graph = net.graph
-    n = nv(graph)
-    offset = side == 1 ? 0 : n÷2
-
-    # Local and remote purified nodes
-    local_purified = purified_nodes[1] + offset
-    remote_purified = purified_nodes[1] + (side == 1 ? n÷2 : 0)
-
-    nodereg = net[local_purified]
-    mb = messagebuffer(net, local_purified)
+@resumable function purification_tracker(sim, net, cluster_nodes_idx, local_chief_node_idx, remote_chief_nodes_idx, storage_slot)
+    nodereg = net[local_chief_node_idx]
+    mb = messagebuffer(net, local_chief_node_idx)
 
     while true
         # for local XOR measurement result
-        local_tag = query(nodereg, XORMeasurements, local_purified, ❓)
+        local_tag = query(nodereg, XORMeasurements, local_chief_node_idx, ❓)
 
         if isnothing(local_tag)
-            @yield onchange_tag(net[local_purified])
+            @yield onchange_tag(net[local_chief_node_idx])
             continue
         end
 
         # for remote XOR measurement result
-        msg = query(mb, XORMeasurements, remote_purified, ❓)
+        msg = query(mb, XORMeasurements, remote_chief_nodes_idx, ❓)
         if isnothing(msg)
             @debug "Starting message wait at $(now(sim)) with MessageBuffer containing: $(mb.buffer)"
             @yield wait(mb)
-            @debug "Done waiting for message at side $(side)"
+            @debug "Done waiting for message at $(local_chief_nodes_idx)"
             continue
         end
 
@@ -118,6 +98,9 @@ end
         else
             @debug "Purification failed."
             untag!(local_tag.slot, local_tag.id)
+            for node_idx in cluster_nodes_idx
+                traceout!(net[node_idx][storage_slot])
+            end
         end
     end
 end
@@ -157,7 +140,7 @@ end
 end
 
 
-@resumable function run_protocols(sim, net, graphconstructor1, graphconstructor2, comm_slot, storage_slot, pairstate, initial_entanglements_nodes, purified_nodes; rounds=-1)
+@resumable function run_protocols(sim, net, graphconstructor1, graphconstructor2, communication_slot, storage_slot, pairstate, initial_entanglements_nodes, purified_nodes; rounds=-1)
     round = 0
     while rounds == -1 || round < rounds
         round += 1
