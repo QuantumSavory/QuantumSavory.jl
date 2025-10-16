@@ -20,9 +20,9 @@ for i in 1:10
     sim = get_time_tracker(net)
 
     for e in edges(net)
-        eprot1 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseA=1, chooseB=2)
+        eprot1 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseslotA=1, chooseslotB=2)
         @process eprot1()
-        eprot2 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseA=3, chooseB=4)
+        eprot2 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseslotA=3, chooseslotB=4)
         @process eprot2()
     end
 
@@ -70,9 +70,9 @@ for i in 1:10
     sim = get_time_tracker(net)
 
     for e in edges(net)
-        eprot1 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseA=1, chooseB=2)
+        eprot1 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseslotA=1, chooseslotB=2)
         @process eprot1()
-        eprot2 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseA=3, chooseB=4)
+        eprot2 = EntanglerProt(sim, net, e.src, e.dst; rounds=1, success_prob=1.0, chooseslotA=3, chooseslotB=4)
         @process eprot2()
     end
 

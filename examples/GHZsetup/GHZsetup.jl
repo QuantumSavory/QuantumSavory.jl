@@ -85,7 +85,7 @@ end
 
 for i in 1:S
     # entangle sensors with the hub (S+1)
-    eprot = EntanglerProt(sim, net, i, S + 1; pairstate=noisy_pair, chooseA=1, chooseB=i, rounds=1, success_prob=1.)
+    eprot = EntanglerProt(sim, net, i, S + 1; pairstate=noisy_pair, chooseslotA=1, chooseslotB=i, rounds=1, success_prob=1.)
     @process eprot()
 end
 
