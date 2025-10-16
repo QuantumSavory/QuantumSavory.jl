@@ -140,41 +140,53 @@ end
 end
 
 
-@resumable function run_protocols(sim, net, graphconstructor1, graphconstructor2, communication_slot, storage_slot, pairstate, initial_entanglements_nodes, purified_nodes; rounds=-1)
+@resumable function run_protocols(sim, net, n, k, alice_indices, bob_indices, communication_slot, storage_slot, pairstate, initial_entanglements_nodes, purified_nodes; rounds=-1)
+    alice_subgraph, vmap = induced_subgraph(net.graph, alice_indices[k+1:k+n+1])
+    bob_subgraph, vmap = induced_subgraph(net.graph, bob_indices[k+1:k+n+1])
+    prepA = GraphStateConstructor(sim, net, alice_subgraph, alice_indices[k+1:k+n+1], communication_slot, storage_slot)
+    prepB = GraphStateConstructor(sim, net, bob_subgraph, bob_indices[k+1:k+n+1], communication_slot, storage_slot)
+
     round = 0
     while rounds == -1 || round < rounds
         round += 1
         n = nv(net.graph)
         entanglers = []
-        for node in initial_entanglements_nodes
-            e = @process entangler_fusion(sim, net, node, node + n÷2, comm_slot, storage_slot, pairstate)
+        for i in 1:k
+            e = @process entangler_fusion(sim, net, alice_indices[i], bob_nodes[i], communication_slot, storage_slot, pairstate)
             push!(entanglers, e)
         end
-
-        g1 = @process graphconstructor1()
-        g2 = @process graphconstructor2()
+        g1 = @process prepA()
+        g2 = @process prepB()
 
         @yield reduce(&, (entanglers..., g1, g2))
-
-        m1 = @process measure(sim, net, 1, purified_nodes, storage_slot)
-        m2 = @process measure(sim, net, 2, purified_nodes, storage_slot)
+        m1 = @process measure(sim, net, alice_indices[k+1:k+n+1], bob_indices[k+1], storage_slot)
+        m2 = @process measure(sim, net, bob_indices[k+1:k+n+1], alice_indices[k+1], storage_slot)
         @yield (m1 & m2)
     end
 end
 
 
 
-
+n = 2
+k = 1
 pairstate = StabilizerState("ZX XZ")
 
-initial_entanglements_nodes = [1, 2]
-purified_nodes = [4]
 
+communication_slot = 1
+storage_slot = 2
+
+n = 2*nv(graph_state_resource)
+registers = [Register(2) for _ in vertices(g)]
+
+net = RegisterNet(g, registers)
+sim = get_time_tracker(net)
+
+net.graph
 graph_state_resource = graph_generator(initial_entanglements_nodes, purified_nodes)
 
 #TODO: the following process can be a function
 n = 2*nv(graph_state_resource)
-g = Graph(n)
+
 
 alice_indices = collect(1:n÷2)
 bob_indices = alice_indices .+ n÷2
