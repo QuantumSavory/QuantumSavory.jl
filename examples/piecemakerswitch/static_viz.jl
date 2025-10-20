@@ -1,26 +1,27 @@
 include("setup.jl")
 using GLMakie
 GLMakie.activate!(inline=false)
-using DataFrames
 
+
+logging = Point2f[] # for plotting
 mem_depolar_prob = 0.1 # memory depolarization probability
 decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
 noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
-logging = DataFrame(Δt=[], fidelity=[])
+rounds = 10 # number of rounds to run
 
 sim = prepare_sim(
-    5, QuantumOpticsRepr(), noise_model, 0.5, 42, logging, 10
+    5, QuantumOpticsRepr(), noise_model, 0.5, 42, rounds
 )
 
 timed = @elapsed run(sim)
 println("Simulation finished in $(timed) seconds")
 @info logging
 
-function plot_fidelity(logging::DataFrame)
+function plot_fidelity(logging::Vector{Point2f})
     fig = Figure(resolution = (800, 450))
     ax  = Axis(fig[1, 1], xlabel = "Δt (simulation time)", ylabel = "Fidelity to GHZₙ",
                title = "Entanglement fidelity over time")
-    scatter!(ax, logging.Δt, logging.fidelity, markersize = 8)
+    scatter!(ax, logging, markersize = 8)
     ylims!(ax, 0, 1)
     fig
 end
