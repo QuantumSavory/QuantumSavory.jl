@@ -256,3 +256,33 @@ end
 
 
 run(sim, 200)
+
+
+
+communication_slot = 1
+storage_slot = 2
+
+A = Register(2)
+B = Register(2)
+C = Register(2)
+registers = [A, B, C]
+net = RegisterNet(registers)
+initialize!([A, B, C], [1, 1, 1], ghz_state)
+
+
+
+StabilizerState("ZZI XXX ZIZ")
+
+using QuantumClifford: ghz
+
+
+
+registers = [Register(2), Register(2), Register(2)]
+net = RegisterNet(registers)
+initialize!([net[1], net[2]], [1, 1], StabilizerState(ghz(2)))
+#observable([net[1, 1], net[2, 1]], projector(StabilizerState(ghz(2))))
+Fusion()(net[1], net[2], 1, 2)
+#observable([net[1, 2], net[2, 2]], projector(StabilizerState(ghz(2))))
+initialize!([net[2], net[3]], [1, 1], StabilizerState(ghz(2)))
+Fusion()(net[2], net[3], 1, 2)
+observable([net[i,2] for i in 1:3], projector(StabilizerState(ghz(3))))
