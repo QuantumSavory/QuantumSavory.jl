@@ -1,6 +1,6 @@
 # Distributing a GHZ state with a quantum entanglement switch
 
-Live version is at [areweentangledyet.com/piecemakerswitch/](https://areweentangledyet.com/piecemakerswitch/).
+Live version is available at [areweentangledyet.com/piecemakerswitch/](https://areweentangledyet.com/piecemakerswitch/).
 
 In this setup, multiple nodes (user nodes) connect to a central node (switch node) trough bipartite entangled states. The switch node performs fusion operations on these shared states to create a GHZ state among the user nodes. The goal is to do the latter as memory efficient as possible. Each of the $n$ clients can store one memory qubit in its memory buffer and one qubit at the switch side. In addition the switch's register holds a dedicated 'piecemaker' slot - a qubit in the $|+\rangle$ state, which all successfull clients fuse their switch'side qubits with. We term this protocol the _piecemaker_ protocol, see [Prielinger et al., 2025](https://arxiv.org/abs/2508.14737).
 

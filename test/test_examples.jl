@@ -48,6 +48,14 @@ end
     include("../examples/simpleswitch/1_interactive_visualization.jl")
 end
 
+@testitem "Examples - piecemakerswitch 1" tags=[:examples_plotting] begin
+    include("../examples/piecemakerswitch/static_viz.jl")
+end
+
+@testitem "Examples - piecemakerswitch 2" tags=[:examples_plotting] begin
+    include("../examples/piecemakerswitch/live_visualization_network.jl")
+end
+
 @safetestset "Examples - repeatergrid 1a" tags=[:examples_plotting] begin
     include("../examples/repeatergrid/1a_async_interactive_visualization.jl")
 end
