@@ -97,7 +97,7 @@ landing = Bonito.App() do
         running[] = true
         @async begin
             try # run the sim
-                sim, net, net_obs = prepare_sim(fig, 5, conf_obs[][:link_success_prob], conf_obs[][:mem_depolar_prob])
+                sim, net, net_obs = prepare_sim(fig, n, conf_obs[][:link_success_prob], conf_obs[][:mem_depolar_prob])
                 t = 0
                 while true
                     t += 1
@@ -117,13 +117,13 @@ landing = Bonito.App() do
     end
 
     content = md"""
-    Pick simulation settings and hit “Run once”. The left panel plots the running fidelity to the target GHZ state; the right panel shows the network state as it evolves.
+    Pick simulation settings and hit “Run once”. The left panel plots the running fidelity to the target GHZ state; the right panel shows the network state as it evolves over 10 simulation rounds.
 
     $(fig.scene)
 
     # GHZ state distribution with a quantum entanglement switch
 
-    This demo simulates a star-shaped network with a central switch node and n client nodes. Each client holds one memory qubit locally and one at the switch. The switch has an extra “piecemaker” qubit (slot n+1) that is initialized in the |+⟩ state; it is used to “stitch together” all successful links into an n-party GHZ state.
+    This demo simulates 10 rounds of GHZ-state distribution in a star-shaped network with a central switch node and n client nodes. Each client holds one memory qubit locally and one at the switch. The switch has an extra “piecemaker” qubit (slot n+1) that is initialized in the |+⟩ state; it is used to fuse all successful links into an n-party GHZ state.
 
     What happens during one run:
     - Per time step, the switch attempts to entangle with each client in parallel (success probability set by the slider “link success prob”).
@@ -142,7 +142,7 @@ landing = Bonito.App() do
 
     NOTE that this is a simplified simulation for demonstration purposes. In particular, it assumes instantaneous gates as well as classical communication. The only time inducing steps are the attempts for heralded entanglement generation (Δt = 1 time step each).
 
-    [Browse or modify the code for this simulation on GitHub.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/piecemakerswitch/live_visualization_network_interactive.jl)
+    [Browse or modify the code for this simulation on GitHub.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/piecemakerswitch/live_visualization_interactive.jl)
     """
     return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end;

@@ -21,11 +21,11 @@ Append a time-fidelity data point to the logging vector.
 - `fidelity::Float64`: Measured fidelity to the target GHZ state
 """
 function push_to_logging!(logging::Vector, t::Float64, fidelity::Float64)
-    push!(logging, Point2f(t, fidelity))
+    push!(logging, (t, fidelity))
 end
 
 """
-    fusion(piecemaker_slot::Int, client_slot::Int)
+    fusion(piecemaker_slot::RegRef, client_slot::RegRef)
 
 Perform a fusion operation between a piecemaker qubit and a client qubit.
 
@@ -39,7 +39,7 @@ as target, then measures the client qubit in the Z basis and traces it out.
 # Returns
 - Measurement outcome (1 or 2) from projecting the client qubit onto the Z basis
 """
-function fusion(piecemaker_slot::Int, client_slot::Int)
+function fusion(piecemaker_slot::RegRef, client_slot::RegRef)
     apply!((piecemaker_slot, client_slot), CNOT)
     res = project_traceout!(client_slot, σᶻ)
     return res
@@ -217,7 +217,7 @@ The piecemaker protocol generates multipartite entanglement by:
         # cleanup qubits
         clear_up_qubits!(net, n)
         rounds -= 1
-        @debug "Round $(rounds) finished"
+        @info "Round $(rounds) finished"
     end
 end
 

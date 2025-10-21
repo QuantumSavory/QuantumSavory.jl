@@ -7,7 +7,7 @@ logging = Point2f[] # for plotting
 mem_depolar_prob = 0.1 # memory depolarization probability
 decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
 noise_model = Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
-rounds = 10 # number of rounds to run
+rounds = 100 # number of rounds to run
 
 sim = prepare_sim(
     5, QuantumOpticsRepr(), noise_model, 0.5, 42, rounds
