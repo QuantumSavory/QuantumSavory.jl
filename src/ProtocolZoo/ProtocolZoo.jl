@@ -236,19 +236,21 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
     rounds = prot.rounds
     round = 1
     last_a, last_b = nothing, nothing
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
     while rounds != 0
-        isentangled = !isnothing(prot.tag) && !isnothing(query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; assigned=true))
+        isentangled = !isnothing(prot.tag) && !isnothing(query(regA, prot.tag, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
         (; chooseA, chooseB, randomize, uselock) = prot
-        a_ = findfreeslot(prot.net[prot.nodeA]; filter=chooseA, randomize=randomize, locked=!uselock, margin=margin)
-        b_ = findfreeslot(prot.net[prot.nodeB]; filter=chooseB, randomize=randomize, locked=!uselock, margin=margin)
+        a_ = findfreeslot(regA; filter=chooseA, randomize=randomize, locked=!uselock, margin=margin)
+        b_ = findfreeslot(regB; filter=chooseB, randomize=randomize, locked=!uselock, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
-                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting for changes to tags..."
-                @yield onchange(prot.net[prot.nodeA], Tag) | onchange(prot.net[prot.nodeB], Tag)
+                @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Failed to find free slots, waiting for changes to tags..."
+                @yield onchange(regA, Tag) | onchange(regB, Tag)
             else
-                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting a fixed amount of time..."
+                @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Failed to find free slots, waiting a fixed amount of time..."
                 @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
@@ -280,10 +282,10 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
             isnothing(prot.tag) || tag!(b, prot.tag, prot.nodeA, a.idx)
             last_b = b.idx
 
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
+            @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Entangled .$(a.idx) and .$(b.idx)"
         else
             @yield timeout(prot.sim, prot.attempts * prot.attempt_time)
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Performed the maximum number of attempts and gave up"
+            @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Performed the maximum number of attempts and gave up"
         end
         if uselock
             unlock(a)
