@@ -3,6 +3,7 @@ module ProtocolZoo
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange
 using QuantumSavory: Wildcard, compactstr
+using QuantumSavory: timestr, compactstr
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
@@ -453,25 +454,27 @@ end
 permits_virtual_edge(::EntanglementConsumer) = true
 
 @resumable function (prot::EntanglementConsumer)()
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
     while true
-        query1 = query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        query1 = query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
             if isnothing(prot.period)
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting on tag updates in $(prot.nodeA)."
-                @yield onchange(prot.net[prot.nodeA], Tag)
+                @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on first node found no entanglement. Waiting on tag updates in $(compactstr(regA))."
+                @yield onchange(regA, Tag)
             else
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting a fixed amount of time."
+                @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on first node found no entanglement. Waiting a fixed amount of time."
                 @yield timeout(prot.sim, prot.period::Float64)
             end
             continue
         else
-            query2 = query(prot.net[prot.nodeB], prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+            query2 = query(regB, prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 if isnothing(prot.period)
-                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting on tag updates in $(prot.nodeB)."
-                    @yield onchange(prot.net[prot.nodeB], Tag)
+                    @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on second node found no entanglement (yet...). Waiting on tag updates in $(compactstr(regB))."
+                    @yield onchange(regB, Tag)
                 else
-                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
+                    @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
                     @yield timeout(prot.sim, prot.period::Float64)
                 end
                 continue
@@ -482,7 +485,7 @@ permits_virtual_edge(::EntanglementConsumer) = true
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
 
-        @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx) @ $(now(prot.sim))"
+        @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx)"
         untag!(q1, query1.id)
         untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory or EntanglementDelete and should that be a different EntanglementHistory since the current one is specifically for Swapper
@@ -490,7 +493,7 @@ permits_virtual_edge(::EntanglementConsumer) = true
         ob1 = real(observable((q1, q2), Z⊗Z))
         ob2 = real(observable((q1, q2), X⊗X))
 
-        traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
+        traceout!(regA[q1.idx], regB[q2.idx])
         push!(prot._log, (now(prot.sim), ob1, ob2))
         unlock(q1)
         unlock(q2)
