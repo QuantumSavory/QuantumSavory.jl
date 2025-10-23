@@ -5,7 +5,7 @@ using Graphs
 using NetworkLayout
 import ConcurrentSim
 import Makie
-import Makie: Theme, Figure, Axis, Axis3, get_scene,
+import Makie: Theme, Figure, Axis, Axis3, Label, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
     scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
@@ -16,6 +16,7 @@ import Makie: Theme, Figure, Axis, Axis3, get_scene,
     DataInspector, Slider, Colorbar, axislegend
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
+import QuantumSavory: compactstr
 import QuantumSavory.ProtocolZoo
 
 import QuantumClifford

@@ -2,7 +2,7 @@ module ProtocolZoo
 
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange
-using QuantumSavory: Wildcard
+using QuantumSavory: Wildcard, compactstr
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
@@ -13,6 +13,7 @@ import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
+using PrettyTables: PrettyTables, pretty_table
 
 export
     # protocols
@@ -46,8 +47,6 @@ Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->pro
 
 The `InteractiveUtils` package must be installed and imported."""
 function available_protocol_types end
-
-include("show.jl")
 
 const QueryArgs = Union{Int,Function,Wildcard}
 
@@ -441,7 +440,7 @@ $FIELDS
     """tag type which the consumer is looking for -- the consumer query will be `query(node, EntanglementConsumer.tag, remote_node)` and it will be expected that `remote_node` possesses the symmetric reciprocal tag; defaults to `EntanglementCounterpart`"""
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
-    _log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
+    _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end
 
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
@@ -508,5 +507,7 @@ include("switches.jl")
 using .Switches
 include("qtcp.jl")
 using .QTCP
+
+include("show.jl")
 
 end # module
