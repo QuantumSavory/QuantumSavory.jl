@@ -3,9 +3,8 @@ module QuantumSavoryMakie
 using QuantumSavory
 using Graphs
 using NetworkLayout
-import ConcurrentSim
-import Makie
-import Makie: Theme, Figure, Axis, Axis3, Label, get_scene,
+using ConcurrentSim: ConcurrentSim
+using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
     scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
@@ -16,11 +15,12 @@ import Makie: Theme, Figure, Axis, Axis3, Label, get_scene,
     DataInspector, Slider, Colorbar, axislegend
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
-import QuantumSavory: compactstr
-import QuantumSavory.ProtocolZoo
+using QuantumSavory: compactstr
+using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
 
-import QuantumClifford
-import QuantumOpticsBase
+using QuantumClifford: QuantumClifford
+using QuantumOpticsBase: QuantumOpticsBase, dm
+
 
 ##
 

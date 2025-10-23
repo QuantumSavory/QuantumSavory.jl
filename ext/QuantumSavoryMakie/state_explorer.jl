@@ -170,10 +170,10 @@ function stateexplorer!(fig,S)
         Makie.Label(ftext[1,2], textTr, tellheight=false, tellwidth=false, halign=:left)
     end
 
-    zlims!(a3dρ,0,1)
-    zlims!(a3dρB,0,1)
+    zlims!(a3dρ,-0.001,1.001)
+    zlims!(a3dρB,-0.001,1.001)
 
-    Colorbar(fcb; colorrange, colormap, ticks=([-π,0,π],["-π","0","π"]), label="phase")
+    Colorbar(fcb; colorrange, colormap, ticks=([-π,0,π],["-π","0","π"]), label="phase", tellheight=false)
 
     fig
 end

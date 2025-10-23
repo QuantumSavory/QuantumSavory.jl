@@ -7,6 +7,26 @@ function Base.show(io::IO, m::MIME"text/html", p::AbstractProtocol)
     """)
 end
 
+function Base.show(io::IO, m::MIME"text/html", p::EntanglerProt)
+    label_a = compactstr(p.net[p.nodeA])
+    label_b = compactstr(p.net[p.nodeB])
+    p_success = p.success_prob
+    mean_time = 1/p_success
+    print(io,
+    """
+    <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_entangler">
+      <h1><code class="quantumsavory_typename quantumsavory_protocol_typename">EntanglerProt</code> protocol</h1>
+      <address>on <b>$(label_a)</b> and <b>$(label_b)</b></address>
+      <dl>
+        <dt>Success probability per attempt</dt>
+        <dd>$(p_success)</dd>
+        <dt>Mean time to generate a state</dt>
+        <dd>$(mean_time)</dd>
+      </dl>
+    </div>
+    """)
+end
+
 function Base.show(io::IO, m::MIME"text/html", p::EntanglementConsumer)
     consumedpairs = length(p._log)
     total_time = length(p._log) > 0 ? last(p._log).t : 0.0

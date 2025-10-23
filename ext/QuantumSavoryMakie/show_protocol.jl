@@ -13,6 +13,18 @@ function protshowimage(subfig, prot)
     text!(a,0,0;text,align=(:center,:center))
 end
 
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglerProt)
+    l = Label(subfig[1,1], text="State generated between\n$(compactstr(prot.net[prot.nodeA])) and $(compactstr(prot.net[prot.nodeB]))", tellwidth=false)
+    se = stateexplorer!(subfig[2,1], dm(express(prot.pairstate)))
+    ldist = Label(subfig[3,1], text="Time to generate a state\n(Geometric distribution)", tellwidth=false)
+    adist = Axis(subfig[4,1], xlabel="Attempt", ylabel="Success probability")
+    p = prot.success_prob
+    attempts = 1:Int(floor(3/p))
+    Makie.stairs!(adist, attempts, (1-p).^(attempts.-1).*p; step=:center)
+    Makie.vlines!(adist, [1/p], color=:gray)
+    Makie.text!(adist, 1/p, 0.0, text=" Mean time:\n$(@sprintf " %.4g" (1/p))", color=:black)
+end
+
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsumer)
     l = Label(subfig[1,1], text="Fidelity of consumed pairs between\n$(compactstr(prot.net[prot.nodeA])) and $(compactstr(prot.net[prot.nodeB]))", tellwidth=false)
     a = Axis(subfig[2,1], xlabel="Time", ylabel="Observable")
@@ -27,4 +39,7 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     lh = Label(subfig[3,1], text="Histogram of time to consume a pair", tellwidth=false)
     ah = Axis(subfig[4,1], xlabel="ΔTime", ylabel="Fraction")
     Makie.hist!(ah, diff([0; t]), normalization=:probability)
+    avg = sum(diff([0; t]))/length(t)
+    Makie.vlines!(ah, avg, color=:gray)
+    Makie.text!(ah, avg, 0.0, text=" Mean time:\n$(@sprintf " %.4g" avg)", color=:black)
 end
