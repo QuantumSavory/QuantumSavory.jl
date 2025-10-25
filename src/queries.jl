@@ -414,7 +414,7 @@ function findfreeslot(reg::Register; predicate=alwaystrue::Union{Int,Function}, 
         return nothing
     end
     if predicate isa Int
-        return filter in freeslots ? reg[filter] : nothing
+        return predicate in freeslots ? reg[predicate] : nothing
     else
         filtered_slots = filter(predicate, freeslots)
         if isempty(filtered_slots)
