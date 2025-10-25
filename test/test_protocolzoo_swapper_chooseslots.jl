@@ -9,8 +9,8 @@ struct SwapTag end
 
 function choose_SwapTag_slots(reg, slots)
     results = queryall(reg, SwapTag)
-    tagged_slots = [r.slot.idx for r in results if r.slot.idx in slots]
-    return tagged_slots
+    tagged_slots = [r.slot.idx for r in results]
+    return slots in tagged_slots
 end
 
 # Tag-based filter
