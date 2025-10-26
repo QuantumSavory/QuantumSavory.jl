@@ -1,3 +1,4 @@
 
 [pip.deps]
+python = "3.12.*"
 genqo = "~=0.1.1"
