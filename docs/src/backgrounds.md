@@ -21,7 +21,7 @@ function pt_to_html(args...; kwargs...) # hide
     return Base.HTML(str) # hide
 end # hide
 types = QuantumSavory.available_background_types() # hide
-pt_to_html(types; backend = :html, show_subheader = false) # hide
+pt_to_html(types; backend = :html, show_column_labels = false) # hide
 ```
 
 
