@@ -2,7 +2,7 @@ module ProtocolZoo
 
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange
-using QuantumSavory: Wildcard
+using QuantumSavory: Wildcard, alwaystrue
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
@@ -203,10 +203,10 @@ $TYPEDFIELDS
     rounds::Int = -1
     """maximum number of attempts to make per round (`-1` for infinite)"""
     attempts::Int = -1
-    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node A"""
-    chooseA::Union{Int,Function} = identity
-    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node B"""
-    chooseB::Union{Int,Function} = identity
+    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node A"""
+    chooseslotA::Union{Int,Function} = alwaystrue
+    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node B"""
+    chooseslotB::Union{Int,Function} = alwaystrue
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
     """whether the protocol should look for unlocked slots to entangle and lock them during the protocol"""
@@ -239,9 +239,9 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
     while rounds != 0
         isentangled = !isnothing(prot.tag) && !isnothing(query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        (; chooseA, chooseB, randomize, uselock) = prot
-        a_ = findfreeslot(prot.net[prot.nodeA]; filter=chooseA, randomize=randomize, locked=!uselock, margin=margin)
-        b_ = findfreeslot(prot.net[prot.nodeB]; filter=chooseB, randomize=randomize, locked=!uselock, margin=margin)
+        (; chooseslotA, chooseslotB, randomize, uselock) = prot
+        a_ = findfreeslot(prot.net[prot.nodeA]; chooseslot=chooseslotA, randomize=randomize, locked=!uselock, margin=margin)
+        b_ = findfreeslot(prot.net[prot.nodeB]; chooseslot=chooseslotB, randomize=randomize, locked=!uselock, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
