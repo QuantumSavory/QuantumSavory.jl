@@ -240,8 +240,8 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
         isentangled = !isnothing(prot.tag) && !isnothing(query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
         (; chooseslotA, chooseslotB, randomize, uselock) = prot
-        a_ = findfreeslot(prot.net[prot.nodeA]; predicate=chooseslotA, randomize=randomize, locked=!uselock, margin=margin)
-        b_ = findfreeslot(prot.net[prot.nodeB]; predicate=chooseslotB, randomize=randomize, locked=!uselock, margin=margin)
+        a_ = findfreeslot(prot.net[prot.nodeA]; chooseslot=chooseslotA, randomize=randomize, locked=!uselock, margin=margin)
+        b_ = findfreeslot(prot.net[prot.nodeB]; chooseslot=chooseslotB, randomize=randomize, locked=!uselock, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
