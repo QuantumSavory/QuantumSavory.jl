@@ -90,8 +90,76 @@ end
     unlock(regB[communication_slot])
 end
 
+@kwdef struct Measurements
+    node::Int
+    measurements_XX::Int64
+    measurements_ZZ::Int64
+end
+Base.show(io::IO, msg::Measurements) = print(io, "XX and ZZ measurements for register $(msg.node): XX=$(bitstring(msg.measurements_XX)), ZZ=$(bitstring(msg.measurements_ZZ))")
+Tag(msg::Measurements) = Tag(Measurements, msg.node, msg.measurements_XX, msg.measurements_ZZ)
+
+@kwdef struct BellMeasurements <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    resource_idx::Vector{Int}
+    bell_idx::Vector{Int}
+    local_chief_idx::Int
+    remote_chief_idx::Int
+    storage_slot::Int
+end
+
+@resumable function (prot::BellMeasurements)()
+    (;sim, net, resource_idx, bell_idx, local_chief_idx, remote_chief_idx, storage_slot) = prot
+
+    n = length(bell_idx)
+
+    # not sure if locking is necessary, but maybe will be useful in the future?
+    slots = []
+    for i in 1:n
+        push!(slots, net[resource_idx[i]][storage_slot])
+        push!(slots, net[bell_idx[i]][storage_slot])
+    end
+
+    @yield reduce(&, [lock(slot) for slot in slots])
+
+    s = []
+    t = []
+    for i in 1:n
+        resource_slot = net[resource_idx[i]][storage_slot]
+        bell_slot = net[bell_idx[i]][storage_slot]
+
+        apply!((resource_slot, bell_slot), CNOT)
+        mX = project_traceout!(resource_slot, X)
+        mZ = project_traceout!(bell_slot, Z)
+
+        push!(s, mX - 1)  # Convert from {1,2} to {0,1}
+        push!(t, mZ - 1)
+    end
+
+    for slot in slots
+        unlock(slot)
+    end
+
+    s_int = sum(bit * 2^(i-1) for (i, bit) in enumerate(s))
+    t_int = sum(bit * 2^(i-1) for (i, bit) in enumerate(t))
+
+    msg = Measurements(node=local_chief_idx, measurements_XX=s_int, measurements_ZZ=t_int)
+    println(msg)
+
+    tag!(net[local_chief_idx][storage_slot], Tag(msg))
+    put!(channel(net, local_chief_idx=>remote_chief_idx; permit_forward=true), msg)
+end
+
 
 @resumable function run_protocols(sim, net, resource_state, alice_resource_idx, alice_bell_idx, bob_resource_idx, bob_bell_idx, communication_slot, storage_slot, pairstate; rounds=-1)
+    n = length(alice_bell_idx)
+    @assert n <= 63 "Number of (n=$n) exceeds maximum of 63 bits for Int64 encoding"
+
+    alice_chief_idx = alice_resource_idx[1]
+    bob_chief_idx = bob_resource_idx[1]
+    #add_edge!(net.graph, alice_chief_idx, bob_chief_idx) # for classical communication
 
     g, hadamard_idx, iphase_idx, flips_idx = graphstate(resource_state)
 
@@ -105,7 +173,7 @@ end
         round += 1
 
         entanglers = []
-        for i in 1:k
+        for i in 1:n
             entangler = EntanglerSwap(sim, net, alice_bell_idx[i], bob_bell_idx[i], communication_slot, storage_slot, pairstate)
             e = @process entangler()
             push!(entanglers, e)
@@ -113,15 +181,26 @@ end
         g1 = @process graphA()
         g2 = @process graphB()
         @yield reduce(&, (entanglers..., g1, g2))
-        println("graph & entangle", now(sim))
+
+        println("graph & entangle ", now(sim))
         @yield timeout(sim, 10)
+
         r1 = @process resourceA()
         r2 = @process resourceB()
         @yield r1 & r2
-        println("resource", now(sim))
-        #m1 = @process measure(sim, net, alice_indices[k+1:k+n+1], bob_indices[k+1], storage_slot)
-        #m2 = @process measure(sim, net, bob_indices[k+1:k+n+1], alice_indices[k+1], storage_slot)
-        #@yield (m1 & m2)
+
+        println("resource ", now(sim))
+        @yield timeout(sim, 10)
+
+        alice_bell_meas = BellMeasurements(sim, net, alice_resource_idx, alice_bell_idx, alice_chief_idx, bob_chief_idx, storage_slot)
+        bob_bell_meas = BellMeasurements(sim, net, bob_resource_idx, bob_bell_idx, bob_chief_idx, alice_chief_idx, storage_slot)
+
+        m1 = @process alice_bell_meas()
+        m2 = @process bob_bell_meas()
+        @yield m1 & m2
+
+        println("measurements ", now(sim))
+        @yield timeout(sim, 10)
     end
 end
 
@@ -177,7 +256,7 @@ for i in 1:nv(g)
 end
 
 ## entangler checks
-for i in 1:k
+for i in 1:n
     println(observable([net[alice_bell_idx[i]], net[bob_bell_idx[i]]], [storage_slot, storage_slot], projector(pairstate)))
 end
 
@@ -196,7 +275,8 @@ for i in 1:length(resource_state)
 end
 
 ## entangler checks
-for i in 1:k
+for i in 1:n
     println(observable([net[alice_bell_idx[i]], net[bob_bell_idx[i]]], [storage_slot, storage_slot], projector(pairstate)))
 end
 
+run(sim, 25)
