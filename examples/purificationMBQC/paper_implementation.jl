@@ -322,6 +322,13 @@ end
     end
 end
 
+function noisy_pair_func(perfect_pair, F)
+    p = (4*F-1)/3
+    perfect_pair_dm = SProjector(perfect_pair)
+    mixed_dm = MixedState(perfect_pair_dm)
+    return  p*perfect_pair_dm + (1-p)*mixed_dm
+end
+
 h1 = [1 1 1 1]
 h2 = [1 1 1 1]
 code = parity_checks(CSS(h1, h2)) # == S"XXXX ZZZZ"
@@ -341,7 +348,8 @@ resource_state = vcat(
     Stabilizer([l⊗single_z(k,i) for (i,l) in enumerate(logzs)]),
 )
 
-pairstate = StabilizerState("ZZ XX")
+perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+pairstate = noisy_pair_func(perfect_pair, 0.9)
 communication_slot = 1
 storage_slot = 2
 alice_resource_idx = 1:n+k
@@ -375,7 +383,7 @@ end
 
 ## entangler checks
 for i in 1:n
-    println(observable([net[alice_bell_idx[i]], net[bob_bell_idx[i]]], [storage_slot, storage_slot], projector(pairstate)))
+    println(observable([net[alice_bell_idx[i]], net[bob_bell_idx[i]]], [storage_slot, storage_slot], projector(perfect_pair)))
 end
 
 run(sim, 15)
@@ -394,7 +402,7 @@ end
 
 ## entangler checks
 for i in 1:n
-    println(observable([net[alice_bell_idx[i]], net[bob_bell_idx[i]]], [storage_slot, storage_slot], projector(pairstate)))
+    println(observable([net[alice_bell_idx[i]], net[bob_bell_idx[i]]], [storage_slot, storage_slot], projector(perfect_pair)))
 end
 
 run(sim, 25)
@@ -403,7 +411,7 @@ run(sim, 25)
 for i in 1:k
     println(query(net[alice_resource_idx[n+i]][storage_slot], PurifiedEntalgementCounterpart, ❓, ❓))
     println(query(net[bob_resource_idx[n+i]][storage_slot], PurifiedEntalgementCounterpart, ❓, ❓))
-    println(observable([net[alice_resource_idx[n+i]], net[bob_resource_idx[n+i]]], [storage_slot, storage_slot], projector(pairstate)))
+    println(observable([net[alice_resource_idx[n+i]], net[bob_resource_idx[n+i]]], [storage_slot, storage_slot], projector(perfect_pair)))
 end
 
 
@@ -413,5 +421,5 @@ run(sim, 40)
 for i in 1:k
     println(query(net[alice_resource_idx[n+i]][storage_slot], PurifiedEntalgementCounterpart, ❓, ❓))
     println(query(net[bob_resource_idx[n+i]][storage_slot], PurifiedEntalgementCounterpart, ❓, ❓))
-    println(observable([net[alice_resource_idx[n+i]], net[bob_resource_idx[n+i]]], [storage_slot, storage_slot], projector(pairstate)))
+    println(observable([net[alice_resource_idx[n+i]], net[bob_resource_idx[n+i]]], [storage_slot, storage_slot], projector(perfect_pair)))
 end
