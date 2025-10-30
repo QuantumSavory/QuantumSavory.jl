@@ -15,7 +15,7 @@ This REST API provides access to density matrices from quantum states in the Qua
 From the folder containing the server and the Project.toml file with the dependencies:
 
 ```bash
-julia --project=. api_server.jl
+julia --project=. server.jl
 ```
 
 The server will start on `http://localhost:8080`

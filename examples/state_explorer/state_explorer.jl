@@ -14,14 +14,12 @@ const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}") # TOD
 #
 
 const permitted_queries = Dict(
-    #"MultiplexedCascadedBellPairW" => MultiplexedCascadedBellPairW,
     "BarrettKokBellPairW" => BarrettKokBellPairW,
     "GenqoUnheraldedSPDCBellPairW" => GenqoUnheraldedSPDCBellPairW,
     "GenqoMultiplexedCascadedBellPairW" => GenqoMultiplexedCascadedBellPairW,
 )
 
 const link_dict = Dict(
-    #"MultiplexedCascadedBellPairW" => "MultiplexedCascadedBellPairW",
     "BarrettKokBellPairW" => "BarrettKokBellPair",
     "GenqoUnheraldedSPDCBellPairW" => "Genqo.GenqoUnheraldedSPDCBellPairW",
     "GenqoMultiplexedCascadedBellPairW" => "Genqo.GenqoMultiplexedCascadedBellPairW",

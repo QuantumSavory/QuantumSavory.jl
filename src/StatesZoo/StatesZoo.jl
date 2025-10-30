@@ -11,10 +11,6 @@ import LinearAlgebra: tr
 export BarrettKokBellPair, BarrettKokBellPairW,
     stateexplorer, stateexplorer!, stateparameters, stateparametersrange
 
-if VERSION >= v"1.12.0-DEV.2047"
-    export MultiplexedCascadedBellPair, MultiplexedCascadedBellPairW
-end
-
 
 # TODO this abstract type should specify isexpr()==false
 abstract type AbstractTwoQubitState <: QuantumSymbolics.AbstractTwoQubitOp end #For representing density matrices
@@ -33,10 +29,6 @@ stateparameters(::Any) = ()
 stateparametersrange(::Any) = ()
 
 include("barrett_kok.jl")
-
-if VERSION >= v"1.12.0-DEV.2047"
-    include("zalm/zalm.jl")
-end
 
 include("genqo.jl")
 
