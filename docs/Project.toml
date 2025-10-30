@@ -25,6 +25,3 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
 ThreadTools = "dbf13d8f-d36e-4350-8970-f3a99faba1a8"
 Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
-
-[extras]
-CPUSummary = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
