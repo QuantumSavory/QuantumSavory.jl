@@ -259,7 +259,7 @@ end
 @resumable function run_protocols(sim, net, resource_state, alice_resource_idx, alice_bell_idx, bob_resource_idx, bob_bell_idx, communication_slot, storage_slot, pairstate, H1, H2, logxs, logzs; rounds=-1)
     n = length(alice_bell_idx)
     @assert n <= 63 "Number of (n=$n) exceeds maximum of 63 bits for Int64 encoding"
-
+    k = length(alice_resource_idx) - n
     alice_chief_idx = alice_resource_idx[1]
     bob_chief_idx = bob_resource_idx[1]
     #add_edge!(net.graph, alice_chief_idx, bob_chief_idx) # for classical communication
@@ -277,11 +277,11 @@ end
     @process alice_tracker()
     @process bob_tracker()
 
-    # consumer
-    #for node in purified_nodes
-    #    purified_consumer = EntanglementConsumer(sim, net, node, node + n÷2; tag=PurifiedEntalgementCounterpart)
-    #    @process purified_consumer()
-    #end
+    # # consumer
+    # for i in 1:k
+    #     purified_consumer = EntanglementConsumer(sim, net, alice_resource_idx[n+i], bob_resource_idx[n+i]; tag=PurifiedEntalgementCounterpart)
+    #     @process purified_consumer()
+    # end
 
     round = 0
     while rounds == -1 || round < rounds
@@ -313,6 +313,12 @@ end
 
         println("measurements ", now(sim))
         @yield timeout(sim, 10)
+
+        # for testing
+        for i in 1:k
+            purified_consumer = EntanglementConsumer(sim, net, alice_resource_idx[n+i], bob_resource_idx[n+i]; tag=PurifiedEntalgementCounterpart)
+            @process purified_consumer()
+        end
     end
 end
 
@@ -401,5 +407,11 @@ for i in 1:k
 end
 
 
-run(sim, 30)
+run(sim, 40)
+
 ## consumer
+for i in 1:k
+    println(query(net[alice_resource_idx[n+i]][storage_slot], PurifiedEntalgementCounterpart, ❓, ❓))
+    println(query(net[bob_resource_idx[n+i]][storage_slot], PurifiedEntalgementCounterpart, ❓, ❓))
+    println(observable([net[alice_resource_idx[n+i]], net[bob_resource_idx[n+i]]], [storage_slot, storage_slot], projector(pairstate)))
+end
