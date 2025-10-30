@@ -241,5 +241,6 @@ if abspath(PROGRAM_FILE) == @__FILE__
 
     port = parse(Int, Base.get(ENV, "QS_STATES_REST_SERVER_PORT", "8080"))
     host = Base.get(ENV, "QS_STATES_REST_SERVER_IP", "127.0.0.1")
-    serve(port=port, host=host)
+    external_url = Base.get(ENV, "QS_STATES_REST_SERVER_PROXY", nothing)
+    serve(;port, host, external_url)
 end
