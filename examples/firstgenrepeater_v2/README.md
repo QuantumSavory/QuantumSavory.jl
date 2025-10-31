@@ -2,6 +2,16 @@
 
 This `firstgenrepeater_v2` is much simpler implementation compared to the `firstgenrepeater`. Behind the scenes the simulation is basically the same, but this `v2` uses much more convenient higher-level abstractions, so the user needs to write much less code.
 
+## Running the interactive swapper demo
+
+To explore the repeater chain with configurable Genqo sources, run:
+
+```bash
+julia --project=examples/firstgenrepeater_v2 examples/firstgenrepeater_v2/2_swapper_example.jl
+```
+
+This launches a WGLMakie web app (default `http://127.0.0.1:8890`) that lets you adjust both simulation parameters and the `GenqoMultiplexedCascadedBellPairW` state used by the entangler.
+
 TODO: This example does not include the final purification step.
 
 Documentation:
