@@ -131,6 +131,8 @@ include("messagebuffer.jl")
 include("networks.jl")
 include("states_registers_networks_getset.jl")
 include("states_registers_networks_shows.jl")
+include("show.jl")
+
 
 include("baseops/subsystemcompose.jl")
 include("baseops/initialize.jl")
@@ -159,8 +161,6 @@ include("CircuitZoo/CircuitZoo.jl")
 include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
-
-include("show.jl")
 
 include("should_upstream.jl")
 include("precompile.jl")

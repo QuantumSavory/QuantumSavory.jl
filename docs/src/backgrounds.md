@@ -14,11 +14,14 @@ using QuantumSavory # hide
 
 
 using InteractiveUtils # hide
-import PrettyTables: pretty_table, tf_markdown # hide
+import PrettyTables: pretty_table # hide
 
-
+function pt_to_html(args...; kwargs...) # hide
+    str = pretty_table(String, args...; kwargs...) # hide
+    return Base.HTML(str) # hide
+end # hide
 types = QuantumSavory.available_background_types() # hide
-pretty_table(types; linebreaks = true, show_subheader=false) # hide
+pt_to_html(types; backend = :html, show_column_labels = false) # hide
 ```
 
 

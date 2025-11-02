@@ -82,7 +82,7 @@ Fields:
 
 $FIELDS
 
-Unheralded source of polarization Bell pairs, as described by Kwiat et al (Phys. Rev. Lett. 75, 4337 (1995))
+Unheralded source of polarization Bell pairs, as described by [kwiat1995new](@cite).
 
 Functions are included for both the photon-photon state as well as the spin-spin state following loading using Duan-Kimble style quantum memories
 

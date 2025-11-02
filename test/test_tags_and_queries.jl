@@ -158,11 +158,11 @@ initialize!(reg[1], X)
 lock(reg[3])
 
 @test findfreeslot(reg).idx == 2
-@test findfreeslot(reg, filter=maximum).idx == 5
-@test findfreeslot(reg, filter=1) == nothing
-@test findfreeslot(reg, filter=2).idx == 2
-@test findfreeslot(reg, filter=3) == nothing
-@test findfreeslot(reg, filter=3, locked=true).idx == 3
+@test findfreeslot(reg, chooseslot=(x -> x >= 5)).idx == 5
+@test findfreeslot(reg, chooseslot=1) == nothing
+@test findfreeslot(reg, chooseslot=2).idx == 2
+@test findfreeslot(reg, chooseslot=3) == nothing
+@test findfreeslot(reg, chooseslot=3, locked=true).idx == 3
 
 end
 

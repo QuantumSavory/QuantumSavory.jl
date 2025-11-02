@@ -99,8 +99,8 @@ end
 @resumable function entangler(sim, net; pairstate=noisy_pair, period=0.1)
     while true
         # entangle 1 to 1 and 2 to 2 (long-range entanglements to be purified)
-        entangler1 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=1, chooseB=1, rounds=1)
-        entangler2 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseA=2, chooseB=2, rounds=1)
+        entangler1 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseslotA=1, chooseslotB=1, rounds=1)
+        entangler2 = EntanglerProt(sim, net, 1, 2; pairstate=pairstate, chooseslotA=2, chooseslotB=2, rounds=1)
         p1 = @process entangler1()
         @yield p1
         p2 =  @process entangler2()
