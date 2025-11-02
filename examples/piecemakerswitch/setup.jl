@@ -221,20 +221,20 @@ The piecemaker protocol generates multipartite entanglement by:
     end
 end
 
-function prepare_sim(n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, 
-    link_success_prob::Float64, seed::Int, rounds::Int)
+# function prepare_sim(n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, 
+#     link_success_prob::Float64, seed::Int, rounds::Int)
 
-    # Set a random seed
-    Random.seed!(seed)
+#     # Set a random seed
+#     Random.seed!(seed)
 
-    switch = Register([Qubit() for _ in 1:(n+1)], [states_representation for _ in 1:(n+1)], [noise_model for _ in 1:(n+1)]) # storage qubits at the switch, first qubit is the "piecemaker" qubit
-    clients = [Register([Qubit()], [states_representation], [noise_model]) for _ in 1:n] # client qubits
+#     switch = Register([Qubit() for _ in 1:(n+1)], [states_representation for _ in 1:(n+1)], [noise_model for _ in 1:(n+1)]) # storage qubits at the switch, first qubit is the "piecemaker" qubit
+#     clients = [Register([Qubit()], [states_representation], [noise_model]) for _ in 1:n] # client qubits
     
-    graph = star_graph(n+1)
-    net = RegisterNet(graph, [switch, clients...])
-    sim = get_time_tracker(net)
+#     graph = star_graph(n+1)
+#     net = RegisterNet(graph, [switch, clients...])
+#     sim = get_time_tracker(net)
 
-    # Start the piecemaker protocol
-    @process PiecemakerProt(sim, n, net, link_success_prob, rounds)
-    return sim
-end
+#     # Start the piecemaker protocol
+#     @process PiecemakerProt(sim, n, net, link_success_prob, rounds)
+#     return sim
+# end

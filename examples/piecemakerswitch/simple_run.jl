@@ -25,4 +25,4 @@ for nclients in 2:5
 
     @info "Simulation with $(nclients) clients finished in $(elapsed_time) seconds"
 end
-println(results_per_client)
+@info("Results per client:\n", results_per_client)

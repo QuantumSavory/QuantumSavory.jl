@@ -84,14 +84,15 @@ landing = Bonito.App() do
     fig[2, 1] = buttongrid = GridLayout(tellwidth = false)
     buttongrid[1,1] = b = Makie.Button(
         fig,
-        label = @lift($running ? "Running..." : "Run once"),
+        label = @lift($running ? "Stop" : "Run"),
         height = 30, tellwidth = false,
     )
 
     conf_obs = add_conf_sliders(fig[2, 2])
 
     on(b.clicks) do _
-        if running[] # ignore while already running
+        if running[] # if already running, stop it
+            running[] = false
             return
         end
         running[] = true
@@ -99,9 +100,9 @@ landing = Bonito.App() do
             try # run the sim
                 sim, net, net_obs = prepare_sim(fig, n, conf_obs[][:link_success_prob], conf_obs[][:mem_depolar_prob])
                 t = 0
-                while true
+                while running[] == true
                     t += 1
-                    if length(logging[]) > 10
+                    if length(logging[]) > 100
                         break
                     end
                     run(sim, t)
@@ -111,7 +112,6 @@ landing = Bonito.App() do
                 end
             finally
                 running[] = false
-                logging[] = Point2f[] # clear points for next run
             end
         end
     end
@@ -158,5 +158,6 @@ Bonito.route!(server, "/" => landing);
 
 
 @info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
+
 
 wait(server)
