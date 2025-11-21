@@ -6,9 +6,8 @@ This REST API provides access to density matrices from quantum states in the Qua
 
 ### Prerequisites
 
-1. Julia 1.11+ with QuantumSavory.jl installed
+1. Julia 1.12+ with QuantumSavory.jl installed
 2. Oxygen.jl for the REST API framework
-3. JSON3.jl for JSON handling
 
 ### Running the Server
 
