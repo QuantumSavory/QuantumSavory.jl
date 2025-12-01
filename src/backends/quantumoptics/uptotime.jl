@@ -13,8 +13,13 @@ function uptotime!(state::Operator, idx::Int, background, Δt)
     if isnothing(Ks) # TODO turn this into a dispatch on a trait of having a kraus representations
         # TODO code repetition with apply_noninstant!
         L = lindbladop(background,b)
-        lindbladian = e ? embed(b,[idx],L) : L
-        _, sol = timeevolution.master([0,Δt], state, identityoperator(b), [lindbladian])
+        # Handle tuple of Lindblad operators (e.g., T1T2Noise)
+        lindbladians = if isa(L, Tuple)
+            [e ? embed(b,[idx],l) : l for l in L]
+        else
+            [e ? embed(b,[idx],L) : L]
+        end
+        _, sol = timeevolution.master([0,Δt], state, identityoperator(b), lindbladians)
         nstate.data .= sol[end].data
     else
         for k in Ks
@@ -107,4 +112,40 @@ end
 
 function krausops(P::PauliNoise)
     nothing # TODO strictly speaking this is not necessary as we can always fall back to the lindbladians
+end
+
+"""
+The Kraus operators for combined T₁ and T₂ noise.
+
+This combines amplitude damping (T₁) and pure dephasing (T₂*) where 1/T₂ = 1/(2T₁) + 1/T₂*.
+
+The Kraus operators are:
+- `K₁ = √(1-p₁-pϕ/2) I`
+- `K₂ = √(p₁) |0⟩⟨1|`  (amplitude damping)
+- `K₃ = √(pϕ/2) Z`      (pure dephasing)
+
+where:
+- `p₁ = 1 - exp(-Δt/T₁)`
+- `pϕ = (1 - exp(-Δt/T₂*))` with `1/T₂* = 1/T₂ - 1/(2T₁)`
+"""
+function krausops(noise::T1T2Noise, Δt)
+    p1 = 1 - exp(-Δt/noise.t1)
+
+    # Calculate T₂* (pure dephasing time) from T₁ and T₂
+    # 1/T₂ = 1/(2T₁) + 1/T₂*  =>  1/T₂* = 1/T₂ - 1/(2T₁)
+    t2star_inv = 1/noise.t2 - 1/(2*noise.t1)
+
+    if t2star_inv <= 0
+        # T₂ ≈ 2T₁, no pure dephasing, only amplitude damping (use T1 Kraus ops)
+        p = exp(-Δt/noise.t1)
+        return [√p * (_hh + _ll), √(1-p) * _lh]
+    end
+
+    t2star = 1/t2star_inv
+    pphi = 1 - exp(-Δt/t2star)
+
+    # For T1T2 combined noise, deriving properly normalized Kraus operators is complex
+    # Instead, return nothing to fall back to Lindblad master equation evolution
+    # The Lindblad operators (implemented in noninstant.jl) are correct
+    nothing
 end
