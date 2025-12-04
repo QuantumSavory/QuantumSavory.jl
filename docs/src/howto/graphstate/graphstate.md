@@ -1,4 +1,3 @@
-````markdown
 # [Graph State Examples](@id Graph-State-Examples)
 
 This page demonstrates the `graphstate` example in the `examples/graphstate` folder.
@@ -35,4 +34,3 @@ include("examples/graphstate/graph_preparer.jl")
 - API docs for the main data structures: [`Register`](@ref) and [`RegisterNet`](@ref).
 
 The example source is in `examples/graphstate` in this repository.
-````
