@@ -31,6 +31,7 @@ include("examples/graphstate/graph_preparer.jl")
 ## Suggested reading and related resources
 
 - See the `firstgenrepeater` how-to for a longer example of building and simulating network primitives: [firstgenrepeater](@ref howto/firstgenrepeater/firstgenrepeater.md).
-- API docs for the main data structures: [`Register`](@ref) and [`RegisterNet`](@ref).
+- API docs for the main data structures: `Register` (@ref QuantumSavory.Register) and `RegisterNet` (@ref QuantumSavory.RegisterNet).
+
 
 The example source is in `examples/graphstate` in this repository.
