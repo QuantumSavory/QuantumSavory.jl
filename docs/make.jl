@@ -3,6 +3,7 @@ push!(LOAD_PATH,"../src/")
 
 using Documenter
 using DocumenterCitations, DocumenterMermaid
+using AnythingLLMDocs
 using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
 using QuantumSavory.StatesZoo.Genqo
@@ -11,7 +12,20 @@ using QuantumInterface
 DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumSavory.StatesZoo.Genqo); recursive=true)
 
 function main()
+    doc_modules = [QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumInterface]
+    api_base="https://anythingllm.krastanov.org/api/v1"
+    anythingllm_assets = integrate_anythingllm(
+        "QuantumSavory",
+        doc_modules,
+        @__DIR__,
+        api_base;
+        repo = "github.com/QuantumSavory/QuantumSavory.jl.git",
+        options = EmbedOptions(),
+    )
+
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
+    assets = Any["assets/custom.css"]
+    append!(assets, anythingllm_assets)
     makedocs(
     plugins = [bib],
     doctest = false,
@@ -19,9 +33,9 @@ function main()
     warnonly = [:missing_docs],
     sitename = "QuantumSavory.jl",
     format = Documenter.HTML(
-        assets=["assets/custom.css"]
+        assets=assets
     ),
-    modules = [QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumInterface],
+    modules = doc_modules,
     authors = "Stefan Krastanov",
     pages = [
     "QuantumSavory.jl" => "index.md",
