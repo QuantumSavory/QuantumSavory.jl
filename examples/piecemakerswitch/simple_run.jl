@@ -1,4 +1,6 @@
 include("setup.jl")
+using GLMakie
+logging = Point2f[] # TODO: just put this here to avoid error, find better way to share with setup.jl
 
 mem_depolar_prob = 0.1 # memory depolarization probability
 decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
