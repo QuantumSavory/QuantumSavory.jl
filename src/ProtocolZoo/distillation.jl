@@ -15,7 +15,7 @@ has successfully undergone distillation.
 
 $TYPEDFIELDS
 
-For example, see also: [`BBPPSWProt`](@ref)
+For example, see also: [`BBPSSWProt`](@ref)
 """
 @kwdef struct DistilledTag end
 
@@ -35,7 +35,7 @@ $TYPEDFIELDS
 
 See also: [`Purify2to1`](@ref)
 """
-@kwdef struct BBPPSWProt <: AbstractProtocol
+@kwdef struct BBPSSWProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
      """a network graph of registers"""
@@ -61,47 +61,47 @@ See also: [`Purify2to1`](@ref)
 end
 
 """
-Convenience constructor for `BBPPSWProt`.
-Defaults for missing fields are described in the [`BBPPSWProt`](@ref) docstring.
+Convenience constructor for `BBPSSWProt`.
+Defaults for missing fields are described in the [`BBPSSWProt`](@ref) docstring.
 - `sim::Simulation`: time-and-schedule-tracking instance from `ConcurrentSim`
 - `net::RegisterNet`: a network graph of registers
 - `nodeA::Int`: the vertex index of node A
 - `nodeB::Int`: the vertex index of node B
 - `chooseslotsA::Union{Vector{Int}, Function}`: function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node
 - `chooseslotsB::Union{Vector{Int}, Function}`: function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node
-- `kwargs...`: optional keyword arguments for `BBPPSWProt` remaining fields
+- `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
 """
-function BBPPSWProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int, chooseslotsA::Union{Vector{Int}, Function}, chooseslotsB::Union{Vector{Int}, Function}; kwargs...)
-    return BBPPSWProt(sim, net, nodeA, nodeB; chooseslotsA=chooseslotsA, chooseslotsB=chooseslotsB, kwargs...)
+function BBPSSWProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int, chooseslotsA::Union{Vector{Int}, Function}, chooseslotsB::Union{Vector{Int}, Function}; kwargs...)
+    return BBPSSWProt(sim, net, nodeA, nodeB; chooseslotsA=chooseslotsA, chooseslotsB=chooseslotsB, kwargs...)
 end
 
 """
-Convenience constructor for `BBPPSWProt`. 
+Convenience constructor for `BBPSSWProt`. 
 Defaults for missing `chooseslotsA` and `chooseslotsB` are set to filter for slots that have no distillation tag (`DistilledTag` by default).
-Defaults for remaining missing fields are described in the [`BBPPSWProt`](@ref) docstring.
+Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) docstring.
 - `sim::Simulation`: time-and-schedule-tracking instance from `ConcurrentSim`
 - `net::RegisterNet`: a network graph of registers
 - `nodeA::Int`: the vertex index of node A
 - `nodeB::Int`: the vertex index of node B
-- `kwargs...`: optional keyword arguments for `BBPPSWProt` remaining fields
+- `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
 """
-function BBPPSWProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
-    return BBPPSWProt(;sim, net, nodeA, nodeB, chooseslotsA=nondistilled(net[nodeA]), chooseslotsB=nondistilled(net[nodeB]), kwargs...)
+function BBPSSWProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return BBPSSWProt(;sim, net, nodeA, nodeB, chooseslotsA=nondistilled(net[nodeA]), chooseslotsB=nondistilled(net[nodeB]), kwargs...)
 end
 
 """
-Convenience constructor for `BBPPSWProt`.
+Convenience constructor for `BBPSSWProt`.
 Defaults for missing `sim` is taken from the network's time tracker.
 Defaults for missing `chooseslotsA` and `chooseslotsB` are set to filter for slots that have no distillation tag (`DistilledTag` by default).
-Defaults for remaining missing fields are described in the [`BBPPSWProt`](@ref) docstring.
+Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) docstring.
 - `net::RegisterNet`: a network graph of registers
 - `nodeA::Int`: the vertex index of node A
 - `nodeB::Int`: the vertex index of node B
-- `kwargs...`: optional keyword arguments for `BBPPSWProt` remaining fields
+- `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
 """
-BBPPSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPPSWProt(get_time_tracker(net), net, nodeA=nodeA, nodeB=nodeB; kwargs...)
+BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get_time_tracker(net), net, nodeA=nodeA, nodeB=nodeB; kwargs...)
 
-@resumable function(prot::BBPPSWProt)()
+@resumable function(prot::BBPSSWProt)()
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
 
@@ -111,10 +111,10 @@ BBPPSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPPSWProt(get
         two_qubit_pairs_ = finddistillablequbits(prot.net, prot.nodeA, prot.nodeB, prot.chooseslotsA, prot.chooseslotsB; agelimit=prot.agelimit)
         if isnothing(two_qubit_pairs_)
             if isnothing(prot.retry_lock_time)
-                @debug "BBPPSWProt: no distillable qubits found. Waiting for tag change..."
+                @debug "BBPSSWProt: no distillable qubits found. Waiting for tag change..."
                 @yield (onchange(prot.net[prot.nodeA], Tag) | onchange(prot.net[prot.nodeB], Tag))
             else
-                @debug "BBPPSWProt: no distillable qubits found. Waiting a fixed amount of time..."
+                @debug "BBPSSWProt: no distillable qubits found. Waiting a fixed amount of time..."
                 @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
@@ -144,12 +144,12 @@ BBPPSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPPSWProt(get
             # Mark distilled qubits with DistilledTag
             tag!(q1, prot.tag)
             tag!(q2, prot.tag)
-            @debug "BBPPSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation succeeded on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx))."
+            @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation succeeded on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx))."
         else
             # untag distilled qubits if distillation failed
             untag!(q1, id1)
             untag!(q2, id2)
-            @debug "BBPPSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation failed on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx)). Released."
+            @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation failed on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx)). Released."
         end
         
         # TODO: emulate classical communication time here?

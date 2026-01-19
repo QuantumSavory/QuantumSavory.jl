@@ -18,7 +18,7 @@ using PrettyTables: PrettyTables, pretty_table
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, BBPPSWProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, BBPSSWProt,
     # tags
     EntanglementCounterpart, EntanglementHistory, DistilledTag, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches

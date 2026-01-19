@@ -7,11 +7,11 @@ using Revise
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: BBPPSWProt, DistilledTag, EntanglerProt
+using QuantumSavory.ProtocolZoo: BBPSSWProt, DistilledTag, EntanglerProt
 using Graphs
 
 
-@testset "BBPPSWProt chooseslots nondistilled" begin
+@testset "BBPSSWProt chooseslots nondistilled" begin
     for i in 1:10
         n = 2
         net = RegisterNet([Register(2), Register(2), Register(2), Register(2)])
@@ -32,9 +32,9 @@ using Graphs
         tag!(net[3][1], DistilledTag)
         tag!(net[4][1], DistilledTag)
 
-        distiller_12 = BBPPSWProt(sim, net, 1, 2; rounds=1)
+        distiller_12 = BBPSSWProt(sim, net, 1, 2; rounds=1)
         @process distiller_12()
-        distiller_34 = BBPPSWProt(sim, net, 3, 4; rounds=1)
+        distiller_34 = BBPSSWProt(sim, net, 3, 4; rounds=1)
         @process distiller_34()
 
 
@@ -70,7 +70,7 @@ using Graphs
     
 end
 
-@testset "BBPPSWProt fidelity improvement" begin
+@testset "BBPSSWProt fidelity improvement" begin
     for i in 1:20
         n = 2
         net = RegisterNet([Register(2), Register(2)])
@@ -90,7 +90,7 @@ end
             @process eprot2()
         end
 
-        distiller = BBPPSWProt(sim, net, 1, 2; rounds=1)
+        distiller = BBPSSWProt(sim, net, 1, 2; rounds=1)
         @process distiller()
 
         run(sim, 200)
