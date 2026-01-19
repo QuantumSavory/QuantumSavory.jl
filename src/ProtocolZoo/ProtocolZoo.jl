@@ -4,7 +4,7 @@ using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange
 using QuantumSavory: Wildcard, alwaystrue
 using QuantumSavory: timestr, compactstr
-using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
+using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap, Purify2to1
 
 using DocStringExtensions
 
@@ -18,9 +18,9 @@ using PrettyTables: PrettyTables, pretty_table
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, BBPPSWProt,
     # tags
-    EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    EntanglementCounterpart, EntanglementHistory, DistilledTag, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # from QTCP
@@ -508,6 +508,7 @@ end
 
 include("cutoff.jl")
 include("swapping.jl")
+include("distillation.jl")
 include("switches.jl")
 using .Switches
 include("qtcp.jl")
