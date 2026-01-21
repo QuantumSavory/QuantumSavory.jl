@@ -588,7 +588,7 @@ $TYPEDFIELDS
 end
 
 function CutoffProtUUID(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
-    return CutoffProtUUID(;sim, net, node, kwargs...)
+    return CutoffProtUUID(; sim, net, node, kwargs...)
 end
 
 CutoffProtUUID(net::RegisterNet, node::Int; kwargs...) =
@@ -611,7 +611,10 @@ CutoffProtUUID(net::RegisterNet, node::Int; kwargs...) =
                 traceout!(slot)
                 if prot.announce
                     msg = Tag(EntanglementDeleteUUID, uuid, prot.node, slot.idx)
-                    put!(channel(prot.net, prot.node=>remote_node; permit_forward=true), msg)
+                    put!(
+                        channel(prot.net, prot.node=>remote_node; permit_forward = true),
+                        msg,
+                    )
                     @debug "CutoffProtUUID @$(prot.node): Send delete message to $(remote_node) | message=`$msg` | time=$(now(prot.sim))"
                 end
             end
@@ -651,17 +654,18 @@ $TYPEDFIELDS
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::Union{Float64,Nothing} = 0.1
     """stores the time and resulting observable from querying nodeA and nodeB for entanglement"""
-    _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{
-        t::Float64,
-        obs1::Float64,
-        obs2::Float64,
-    }[]
+    _log::Vector{@NamedTuple{t::Float64,obs1::Float64,obs2::Float64}} =
+        @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end
 
 function EntanglementConsumerUUID(
-    sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...
+    sim::Simulation,
+    net::RegisterNet,
+    nodeA::Int,
+    nodeB::Int;
+    kwargs...,
 )
-    return EntanglementConsumerUUID(;sim, net, nodeA, nodeB, kwargs...)
+    return EntanglementConsumerUUID(; sim, net, nodeA, nodeB, kwargs...)
 end
 
 EntanglementConsumerUUID(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) =
@@ -675,10 +679,22 @@ permits_virtual_edge(::EntanglementConsumerUUID) = true
     while true
         # Query for any pair with matching UUID between the two nodes
         queryresults_A = queryall(
-            regA, EntanglementUUID, ❓, prot.nodeB, ❓; assigned = true, locked = false
+            regA,
+            EntanglementUUID,
+            ❓,
+            prot.nodeB,
+            ❓;
+            assigned = true,
+            locked = false,
         )
         queryresults_B = queryall(
-            regB, EntanglementUUID, ❓, prot.nodeA, ❓; assigned = true, locked = false
+            regB,
+            EntanglementUUID,
+            ❓,
+            prot.nodeA,
+            ❓;
+            assigned = true,
+            locked = false,
         )
 
         if !isempty(queryresults_A) && !isempty(queryresults_B)
