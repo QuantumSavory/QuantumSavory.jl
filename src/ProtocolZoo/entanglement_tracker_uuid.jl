@@ -7,8 +7,8 @@ tracking protocol to identify and track pairs throughout their lifetime, includi
 $TYPEDFIELDS
 """
 @kwdef struct EntanglementUUID
-    """The UUID assigned to this Bell pair"""
-    uuid::UInt128
+    """The UUID assigned to this Bell pair (stored as `Int` for Tag compatibility)"""
+    uuid::Int
     """The remote node to which we are entangled"""
     remote_node::Int
     """The remote slot to which we are entangled"""
@@ -33,8 +33,8 @@ Unlike the old EntanglementUpdate tags, this uses a UUID to identify the pair th
 $TYPEDFIELDS
 """
 @kwdef struct EntanglementUpdateUUID
-    """The UUID of the pair being updated"""
-    uuid::UInt128
+    """The UUID of the pair being updated (stored as `Int` for Tag compatibility)"""
+    uuid::Int
     """The node that performed the swap"""
     swap_node::Int
     """The qubit measurement outcome for X basis (0 or 1)"""
@@ -70,8 +70,8 @@ Identifies the pair by UUID.
 $TYPEDFIELDS
 """
 @kwdef struct EntanglementDeleteUUID
-    """The UUID of the pair being deleted"""
-    uuid::UInt128
+    """The UUID of the pair being deleted (stored as `Int` for Tag compatibility)"""
+    uuid::Int
     """The node that is deleting the qubit"""
     delete_node::Int
     """The slot being deleted at the delete_node"""
@@ -86,12 +86,12 @@ Tag(tag::EntanglementDeleteUUID) =
     Tag(EntanglementDeleteUUID, tag.uuid, tag.delete_node, tag.delete_slot)
 
 """
-    generate_pair_uuid()::UInt128
+    generate_pair_uuid()::Int
 
-Generate a new UUID for an entangled pair.
+Generate a new UUID for an entangled pair (stored as `Int` to integrate with Tag system).
 """
-function generate_pair_uuid()::UInt128
-    return rand(UInt128)
+function generate_pair_uuid()::Int
+    return rand(Int)
 end
 
 """$TYPEDEF

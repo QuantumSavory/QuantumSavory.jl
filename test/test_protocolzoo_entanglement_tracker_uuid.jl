@@ -14,7 +14,7 @@
 
     ##
     # Test basic UUID generation
-    @test typeof(generate_pair_uuid()) == UInt128
+    @test typeof(generate_pair_uuid()) == Int
 
     # Test EntanglerProtUUID and basic entanglement creation
 
