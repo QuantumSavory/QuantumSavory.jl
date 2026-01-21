@@ -14,7 +14,6 @@ using Graphs
         using Logging
         logger = ConsoleLogger(Logging.Debug; meta_formatter = (args...)->(:black, "", ""))
         global_logger(logger)
-        println("Logger set to debug")
     end
 
     ##
