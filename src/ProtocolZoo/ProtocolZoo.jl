@@ -19,8 +19,10 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    EntanglerProtUUID, EntanglementTrackerUUID, SwapperProtUUID, generate_pair_uuid,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    EntanglementUUID, EntanglementUpdateUUID, EntanglementDeleteUUID,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # from QTCP
@@ -508,6 +510,7 @@ end
 
 include("cutoff.jl")
 include("swapping.jl")
+include("entanglement_tracker_uuid.jl")
 include("switches.jl")
 using .Switches
 include("qtcp.jl")
