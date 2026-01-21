@@ -17,11 +17,10 @@ using Graphs
     end
 
     ##
-    # Test 1: Basic UUID generation
+    # Test basic UUID generation
     @test typeof(generate_pair_uuid()) == UInt128
 
-    ##
-    # Test 2: EntanglerProtUUID and basic entanglement creation
+    # Test EntanglerProtUUID and basic entanglement creation
 
     net = RegisterNet([Register(3), Register(4), Register(2), Register(3)])
     sim = get_time_tracker(net)
@@ -52,8 +51,7 @@ using Graphs
     @test uuid_tags_1[1][3] == 2  # Node 1 is entangled to node 2
     @test uuid_tags_2[1][3] == 1  # Node 2 is entangled to node 1
 
-    ##
-    # Test 3: SwapperProtUUID with EntanglementTrackerUUID
+    # Test SwapperProtUUID with EntanglementTrackerUUID
 
     net = RegisterNet([Register(3), Register(4), Register(2), Register(3)])
     sim = get_time_tracker(net)
@@ -103,9 +101,7 @@ using Graphs
     @test length(uuid_tags_1) >= 1
     @test uuid_tags_1[1][3] == 3  # Node 1 now entangled to node 3
 
-    ##
-    # Test 4: CutoffProtUUID
-
+    # Test CutoffProtUUID
     net = RegisterNet([Register(3), Register(3)])
     sim = get_time_tracker(net)
 
@@ -131,9 +127,7 @@ using Graphs
     # Qubits should be deleted
     @test length(collect(net[1])) >= 0  # May or may not have qubits
 
-    ##
-    # Test 5: EntanglementConsumerUUID
-
+    # Test EntanglementConsumerUUID
     net = RegisterNet([Register(2), Register(2)])
     sim = get_time_tracker(net)
 
@@ -148,9 +142,7 @@ using Graphs
     @test length(consumer._log) >= 1
     @test consumer._log[1][1] == 50.0  # Time of consumption
 
-    ##
-    # Test 6: Multiple sequential swaps
-
+    # Test Multiple sequential swaps
     net = RegisterNet([Register(3), Register(3), Register(3)])
     sim = get_time_tracker(net)
 
@@ -189,7 +181,5 @@ using Graphs
     if length(uuid_tags_1) > 0
         @test uuid_tags_1[1][3] == 3
     end
-
-    println("All UUID-based entanglement tracker tests passed!")
 
 end
