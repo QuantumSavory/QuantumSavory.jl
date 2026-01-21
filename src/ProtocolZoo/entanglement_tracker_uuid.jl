@@ -86,7 +86,10 @@ Tag(tag::EntanglementDeleteUUID) =
     Tag(EntanglementDeleteUUID, tag.uuid, tag.delete_node, tag.delete_slot)
 
 """
-Generate a new UUID for an entangled pair."""
+    generate_pair_uuid()::UInt128
+
+Generate a new UUID for an entangled pair.
+"""
 function generate_pair_uuid()::UInt128
     return rand(UInt128)
 end
