@@ -6,7 +6,8 @@ on the same network topology.
 """
 
 using QuantumSavory
-using QuantumSavory.ProtocolZoo
+using QuantumSavory.ProtocolZoo: EntanglerProtUUID, SwapperProtUUID, EntanglementTrackerUUID
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker
 using ConcurrentSim
 
 function run_uuid_protocol(num_nodes::Int)

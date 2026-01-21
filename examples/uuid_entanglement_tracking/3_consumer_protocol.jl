@@ -5,7 +5,7 @@ This shows how to consume entangled pairs for measurements and applications.
 """
 
 using QuantumSavory
-using QuantumSavory.ProtocolZoo
+using QuantumSavory.ProtocolZoo: EntanglerProtUUID, EntanglementConsumerUUID
 using ConcurrentSim
 
 # Create a simple two-node system with consumer

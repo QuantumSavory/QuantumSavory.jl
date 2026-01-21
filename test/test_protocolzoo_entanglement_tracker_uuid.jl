@@ -1,14 +1,14 @@
-using Revise
-using ResumableFunctions
-using ConcurrentSim
-using QuantumSavory.ProtocolZoo
-using QuantumSavory.ProtocolZoo:
-    EntanglementUUID, EntanglementUpdateUUID, EntanglementDeleteUUID, generate_pair_uuid
-using Graphs
-
 @testitem "ProtocolZoo Entanglement Tracker UUID" tags=[
     :protocolzoo_entanglement_tracker_uuid,
 ] begin
+    using ResumableFunctions
+    using ConcurrentSim
+    using QuantumSavory
+    using QuantumSavory.ProtocolZoo
+    using QuantumSavory.ProtocolZoo:
+        EntanglementUUID, EntanglementUpdateUUID, EntanglementDeleteUUID, generate_pair_uuid,
+        EntanglerProtUUID, SwapperProtUUID, EntanglementTrackerUUID, CutoffProtUUID, EntanglementConsumerUUID
+    using Graphs
 
     if isinteractive()
         using Logging
