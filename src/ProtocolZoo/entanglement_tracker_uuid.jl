@@ -15,8 +15,12 @@ $TYPEDFIELDS
     remote_slot::Int
 end
 
-Base.show(io::IO, tag::EntanglementUUID) = print(io, "UUID $(string(tag.uuid, base=16)) entangled to $(tag.remote_node).$(tag.remote_slot)")
-Tag(tag::EntanglementUUID) = Tag(EntanglementUUID, tag.uuid, tag.remote_node, tag.remote_slot)
+Base.show(io::IO, tag::EntanglementUUID) = print(
+    io,
+    "UUID $(string(tag.uuid, base=16)) entangled to $(tag.remote_node).$(tag.remote_slot)",
+)
+Tag(tag::EntanglementUUID) =
+    Tag(EntanglementUUID, tag.uuid, tag.remote_node, tag.remote_slot)
 
 """
 $TYPEDEF
@@ -43,8 +47,19 @@ $TYPEDFIELDS
     new_remote_slot::Int
 end
 
-Base.show(io::IO, tag::EntanglementUpdateUUID) = print(io, "Update UUID $(string(tag.uuid, base=16)): X_meas=$(tag.x_meas) Z_meas=$(tag.z_meas), new counterpart $(tag.new_remote_node).$(tag.new_remote_slot)")
-Tag(tag::EntanglementUpdateUUID) = Tag(EntanglementUpdateUUID, tag.uuid, tag.swap_node, tag.x_meas, tag.z_meas, tag.new_remote_node, tag.new_remote_slot)
+Base.show(io::IO, tag::EntanglementUpdateUUID) = print(
+    io,
+    "Update UUID $(string(tag.uuid, base=16)): X_meas=$(tag.x_meas) Z_meas=$(tag.z_meas), new counterpart $(tag.new_remote_node).$(tag.new_remote_slot)",
+)
+Tag(tag::EntanglementUpdateUUID) = Tag(
+    EntanglementUpdateUUID,
+    tag.uuid,
+    tag.swap_node,
+    tag.x_meas,
+    tag.z_meas,
+    tag.new_remote_node,
+    tag.new_remote_slot,
+)
 
 """
 $TYPEDEF
@@ -63,8 +78,12 @@ $TYPEDFIELDS
     delete_slot::Int
 end
 
-Base.show(io::IO, tag::EntanglementDeleteUUID) = print(io, "Delete UUID $(string(tag.uuid, base=16)): deleted at $(tag.delete_node).$(tag.delete_slot)")
-Tag(tag::EntanglementDeleteUUID) = Tag(EntanglementDeleteUUID, tag.uuid, tag.delete_node, tag.delete_slot)
+Base.show(io::IO, tag::EntanglementDeleteUUID) = print(
+    io,
+    "Delete UUID $(string(tag.uuid, base=16)): deleted at $(tag.delete_node).$(tag.delete_slot)",
+)
+Tag(tag::EntanglementDeleteUUID) =
+    Tag(EntanglementDeleteUUID, tag.uuid, tag.delete_node, tag.delete_slot)
 
 """
 Generate a new UUID for an entangled pair."""
@@ -122,15 +141,31 @@ $TYPEDFIELDS
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
-function EntanglerProtUUID(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
+function EntanglerProtUUID(
+    sim::Simulation,
+    net::RegisterNet,
+    nodeA::Int,
+    nodeB::Int;
+    rate::Union{Nothing,Float64} = nothing,
+    kwargs...,
+)
     if isnothing(rate)
-        return EntanglerProtUUID(;sim, net, nodeA, nodeB, kwargs...)
+        return EntanglerProtUUID(; sim, net, nodeA, nodeB, kwargs...)
     else
-        return EntanglerProtUUID(;sim, net, nodeA, nodeB, kwargs..., success_prob=0.001, attempt_time=0.001/rate)
+        return EntanglerProtUUID(;
+            sim,
+            net,
+            nodeA,
+            nodeB,
+            kwargs...,
+            success_prob = 0.001,
+            attempt_time = 0.001/rate,
+        )
     end
 end
 
-EntanglerProtUUID(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerProtUUID(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+EntanglerProtUUID(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) =
+    EntanglerProtUUID(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 
 @resumable function (prot::EntanglerProtUUID)()
     rounds = prot.rounds
@@ -139,11 +174,24 @@ EntanglerProtUUID(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = Entangl
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
     while rounds != 0
-        isentangled = !isnothing(query(regA, EntanglementUUID, ❓, prot.nodeB, ❓; assigned=true))
+        isentangled =
+            !isnothing(query(regA, EntanglementUUID, ❓, prot.nodeB, ❓; assigned = true))
         margin = isentangled ? prot.margin : prot.hardmargin
         (; chooseslotA, chooseslotB, randomize, uselock) = prot
-        a_ = findfreeslot(regA; chooseslot=chooseslotA, randomize=randomize, locked=!uselock, margin=margin)
-        b_ = findfreeslot(regB; chooseslot=chooseslotB, randomize=randomize, locked=!uselock, margin=margin)
+        a_ = findfreeslot(
+            regA;
+            chooseslot = chooseslotA,
+            randomize = randomize,
+            locked = !uselock,
+            margin = margin,
+        )
+        b_ = findfreeslot(
+            regB;
+            chooseslot = chooseslotB,
+            randomize = randomize,
+            locked = !uselock,
+            margin = margin,
+        )
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
@@ -172,7 +220,7 @@ EntanglerProtUUID(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = Entangl
         end
         if prot.attempts == -1 || prot.attempts >= attempts
             @yield timeout(prot.sim, attempts * prot.attempt_time)
-            initialize!((a,b), prot.pairstate; time=now(prot.sim))
+            initialize!((a, b), prot.pairstate; time = now(prot.sim))
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # Generate and assign UUIDs
@@ -220,7 +268,8 @@ $TYPEDFIELDS
     node::Int
 end
 
-EntanglementTrackerUUID(net::RegisterNet, node::Int) = EntanglementTrackerUUID(get_time_tracker(net), net, node)
+EntanglementTrackerUUID(net::RegisterNet, node::Int) =
+    EntanglementTrackerUUID(get_time_tracker(net), net, node)
 
 @resumable function (prot::EntanglementTrackerUUID)()
     nodereg = prot.net[prot.node]
@@ -234,7 +283,10 @@ EntanglementTrackerUUID(net::RegisterNet, node::Int) = EntanglementTrackerUUID(g
             # Process EntanglementUpdateUUID messages (pair was swapped)
             msg = querydelete!(mb, EntanglementUpdateUUID, ❓, ❓, ❓, ❓, ❓, ❓)
             if !isnothing(msg)
-                (src, (_, uuid, swap_node, x_meas, z_meas, new_remote_node, new_remote_slot)) = msg
+                (
+                    src,
+                    (_, uuid, swap_node, x_meas, z_meas, new_remote_node, new_remote_slot),
+                ) = msg
                 workwasdone = true
 
                 @debug "EntanglementTrackerUUID @$(prot.node): Received update for UUID $(string(uuid, base=16)) from swap at $(swap_node) | time=$(now(prot.sim))"
@@ -254,7 +306,10 @@ EntanglementTrackerUUID(net::RegisterNet, node::Int) = EntanglementTrackerUUID(g
 
                     if isassigned(slot_with_uuid)
                         # Remove old EntanglementUUID tag
-                        untag!(slot_with_uuid, query(slot_with_uuid, EntanglementUUID, uuid, ❓, ❓).id)
+                        untag!(
+                            slot_with_uuid,
+                            query(slot_with_uuid, EntanglementUUID, uuid, ❓, ❓).id,
+                        )
 
                         # Apply corrections based on measurements
                         # If x_meas == 1, we need to apply Z correction
@@ -268,7 +323,13 @@ EntanglementTrackerUUID(net::RegisterNet, node::Int) = EntanglementTrackerUUID(g
 
                         # Update the entanglement information
                         if new_remote_node != -1
-                            tag!(slot_with_uuid, EntanglementUUID, uuid, new_remote_node, new_remote_slot)
+                            tag!(
+                                slot_with_uuid,
+                                EntanglementUUID,
+                                uuid,
+                                new_remote_node,
+                                new_remote_slot,
+                            )
                         end
                     else
                         @warn "EntanglementTrackerUUID @$(prot.node): Received update for UUID $(string(uuid, base=16)) but the slot is unassigned"
@@ -358,20 +419,44 @@ $TYPEDFIELDS
 end
 
 function SwapperProtUUID(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
-    return SwapperProtUUID(;sim, net, node, kwargs...)
+    return SwapperProtUUID(; sim, net, node, kwargs...)
 end
 
-SwapperProtUUID(net::RegisterNet, node::Int; kwargs...) = SwapperProtUUID(get_time_tracker(net), net, node; kwargs...)
+SwapperProtUUID(net::RegisterNet, node::Int; kwargs...) =
+    SwapperProtUUID(get_time_tracker(net), net, node; kwargs...)
 
-function findswapablequbits_uuid(net, node, pred_low, pred_high, choose_low, choose_high, chooseslots; agelimit=nothing)
+function findswapablequbits_uuid(
+    net,
+    node,
+    pred_low,
+    pred_high,
+    choose_low,
+    choose_high,
+    chooseslots;
+    agelimit = nothing,
+)
     reg = net[node]
-    low_queryresults  = [
-        n for n in queryall(reg, EntanglementUUID, ❓, pred_low, ❓; locked=false, assigned=true)
-        if isnothing(agelimit) || !isolderthan(n.slot, agelimit)
+    low_queryresults = [
+        n for n in queryall(
+            reg,
+            EntanglementUUID,
+            ❓,
+            pred_low,
+            ❓;
+            locked = false,
+            assigned = true,
+        ) if isnothing(agelimit) || !isolderthan(n.slot, agelimit)
     ]
     high_queryresults = [
-        n for n in queryall(reg, EntanglementUUID, ❓, pred_high, ❓; locked=false, assigned=true)
-        if isnothing(agelimit) || !isolderthan(n.slot, agelimit)
+        n for n in queryall(
+            reg,
+            EntanglementUUID,
+            ❓,
+            pred_high,
+            ❓;
+            locked = false,
+            assigned = true,
+        ) if isnothing(agelimit) || !isolderthan(n.slot, agelimit)
     ]
 
     choosefunc = chooseslots isa Vector{Int} ? in(chooseslots) : chooseslots
@@ -388,7 +473,16 @@ end
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        qubit_pair_ = findswapablequbits_uuid(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH, prot.chooseslots; agelimit=prot.agelimit)
+        qubit_pair_ = findswapablequbits_uuid(
+            prot.net,
+            prot.node,
+            prot.nodeL,
+            prot.nodeH,
+            prot.chooseL,
+            prot.chooseH,
+            prot.chooseslots;
+            agelimit = prot.agelimit,
+        )
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
                 @debug "SwapperProtUUID: no swappable qubits found. Waiting for tag change..."
@@ -400,7 +494,10 @@ end
             continue
         end
 
-        qubit_pair = qubit_pair_::NTuple{2, Base.NamedTuple{(:slot, :id, :tag), Base.Tuple{RegRef, Int128, Tag}}}
+        qubit_pair = qubit_pair_::NTuple{
+            2,
+            Base.NamedTuple{(:slot, :id, :tag),Base.Tuple{RegRef,Int128,Tag}},
+        }
 
         (q1, id1, tag1) = qubit_pair[1].slot, qubit_pair[1].id, qubit_pair[1].tag
         (q2, id2, tag2) = qubit_pair[2].slot, qubit_pair[2].id, qubit_pair[2].tag
@@ -431,13 +528,29 @@ end
 
         # Send update messages to remote nodes
         # Node 1 needs to know that UUID1 now points to remote_node2.remote_slot2
-        msg1 = Tag(EntanglementUpdateUUID, uuid1, prot.node, Int(xmeas), Int(zmeas), remote_node2, remote_slot2)
-        put!(channel(prot.net, prot.node=>remote_node1; permit_forward=true), msg1)
+        msg1 = Tag(
+            EntanglementUpdateUUID,
+            uuid1,
+            prot.node,
+            Int(xmeas),
+            Int(zmeas),
+            remote_node2,
+            remote_slot2,
+        )
+        put!(channel(prot.net, prot.node=>remote_node1; permit_forward = true), msg1)
         @debug "SwapperProtUUID @$(prot.node)|round $(round): Send update to $(remote_node1) for UUID $(string(uuid1, base=16))"
 
         # Node 2 needs to know that UUID2 now points to remote_node1.remote_slot1
-        msg2 = Tag(EntanglementUpdateUUID, uuid2, prot.node, Int(zmeas), Int(xmeas), remote_node1, remote_slot1)
-        put!(channel(prot.net, prot.node=>remote_node2; permit_forward=true), msg2)
+        msg2 = Tag(
+            EntanglementUpdateUUID,
+            uuid2,
+            prot.node,
+            Int(zmeas),
+            Int(xmeas),
+            remote_node1,
+            remote_slot1,
+        )
+        put!(channel(prot.net, prot.node=>remote_node2; permit_forward = true), msg2)
         @debug "SwapperProtUUID @$(prot.node)|round $(round): Send update to $(remote_node2) for UUID $(string(uuid2, base=16))"
 
         @yield timeout(prot.sim, prot.local_busy_time)
