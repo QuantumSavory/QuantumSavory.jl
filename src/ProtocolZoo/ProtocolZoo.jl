@@ -19,7 +19,7 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
-    EntanglerProtUUID, EntanglementTrackerUUID, SwapperProtUUID, generate_pair_uuid,
+    EntanglerProtUUID, EntanglementTrackerUUID, SwapperProtUUID, CutoffProtUUID, EntanglementConsumerUUID, generate_pair_uuid,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     EntanglementUUID, EntanglementUpdateUUID, EntanglementDeleteUUID,

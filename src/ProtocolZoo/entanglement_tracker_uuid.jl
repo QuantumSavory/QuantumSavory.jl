@@ -560,3 +560,155 @@ end
         round += 1
     end
 end
+
+"""
+$TYPEDEF
+
+A protocol running at a node that deletes qubits after a retention period expires,
+using UUID-based entanglement tracking.
+
+Similar to [`CutoffProt`](@ref), but designed to work with the UUID-based protocols.
+When a qubit is deleted, an `EntanglementDeleteUUID` message is sent to the remote node.
+
+$TYPEDFIELDS
+"""
+@kwdef struct CutoffProtUUID <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of the node on which the protocol is running"""
+    node::Int
+    """time period between successive queries on the node (`nothing` for queuing up)"""
+    period::Union{Float64,Nothing} = 0.1
+    """time after which a slot is emptied"""
+    retention_time::Float64 = 5.0
+    """if `true`, synchronization messages are sent after a deletion to the node containing the other entangled qubit"""
+    announce::Bool = true
+end
+
+function CutoffProtUUID(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
+    return CutoffProtUUID(;sim, net, node, kwargs...)
+end
+
+CutoffProtUUID(net::RegisterNet, node::Int; kwargs...) =
+    CutoffProtUUID(get_time_tracker(net), net, node; kwargs...)
+
+@resumable function (prot::CutoffProtUUID)()
+    reg = prot.net[prot.node]
+    while true
+        for slot in reg
+            islocked(slot) && continue
+            @yield lock(slot)
+            info = query(slot, EntanglementUUID, ❓, ❓, ❓)
+            if isnothing(info)
+                unlock(slot)
+                continue
+            end
+            uuid, remote_node, remote_slot = info.tag[2], info.tag[3], info.tag[4]
+            if now(prot.sim) - reg.tag_info[info.id][3] > prot.retention_time
+                untag!(slot, info.id)
+                traceout!(slot)
+                if prot.announce
+                    msg = Tag(EntanglementDeleteUUID, uuid, prot.node, slot.idx)
+                    put!(channel(prot.net, prot.node=>remote_node; permit_forward=true), msg)
+                    @debug "CutoffProtUUID @$(prot.node): Send delete message to $(remote_node) | message=`$msg` | time=$(now(prot.sim))"
+                end
+            end
+
+            unlock(slot)
+        end
+        if isnothing(prot.period)
+            @yield onchange(reg, Tag)
+        else
+            @yield timeout(prot.sim, prot.period::Float64)
+        end
+    end
+end
+
+"""
+$TYPEDEF
+
+A protocol running between two nodes that checks periodically for any entangled pairs
+between the two nodes and consumes/empties the qubit slots, using UUID-based tracking.
+
+This is the UUID-based variant of [`EntanglementConsumer`](@ref).
+
+This protocol permits virtual edges, meaning it can operate between any two nodes
+in the network regardless of whether they are physically connected by an edge.
+
+$TYPEDFIELDS
+"""
+@kwdef struct EntanglementConsumerUUID <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of node A"""
+    nodeA::Int
+    """the vertex index of node B"""
+    nodeB::Int
+    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    period::Union{Float64,Nothing} = 0.1
+    """stores the time and resulting observable from querying nodeA and nodeB for entanglement"""
+    _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{
+        t::Float64,
+        obs1::Float64,
+        obs2::Float64,
+    }[]
+end
+
+function EntanglementConsumerUUID(
+    sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...
+)
+    return EntanglementConsumerUUID(;sim, net, nodeA, nodeB, kwargs...)
+end
+
+EntanglementConsumerUUID(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) =
+    EntanglementConsumerUUID(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+
+permits_virtual_edge(::EntanglementConsumerUUID) = true
+
+@resumable function (prot::EntanglementConsumerUUID)()
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
+    while true
+        # Query for any pair with matching UUID between the two nodes
+        queryresults_A = queryall(
+            regA, EntanglementUUID, ❓, prot.nodeB, ❓; assigned = true, locked = false
+        )
+        queryresults_B = queryall(
+            regB, EntanglementUUID, ❓, prot.nodeA, ❓; assigned = true, locked = false
+        )
+
+        if !isempty(queryresults_A) && !isempty(queryresults_B)
+            # Find matching pairs
+            query1 = queryresults_A[1]
+            query2 = queryresults_B[1]
+
+            q1 = query1.slot
+            q2 = query2.slot
+
+            @yield lock(q1) & lock(q2)
+
+            if isassigned(q1) && isassigned(q2)
+                @debug "$(timestr(prot.sim)) EntanglementConsumerUUID($(compactstr(regA)), $(compactstr(regB))): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx)"
+                untag!(q1, query1.id)
+                untag!(q2, query2.id)
+                ob1 = real(observable((q1, q2), Z ⊗ Z))
+                ob2 = real(observable((q1, q2), X ⊗ X))
+
+                traceout!(regA[q1.idx], regB[q2.idx])
+                push!(prot._log, (now(prot.sim), ob1, ob2))
+            end
+            unlock(q1)
+            unlock(q2)
+        end
+
+        if !isnothing(prot.period)
+            @yield timeout(prot.sim, prot.period)
+        else
+            @yield onchange(regA, Tag) | onchange(regB, Tag)
+        end
+    end
+end
