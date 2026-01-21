@@ -6,7 +6,7 @@ that exceed a certain age, preventing accumulation of degraded states.
 """
 
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProtUUID, CutoffProtUUID, EntanglementTrackerUUID
+using QuantumSavory.ProtocolZoo
 using ConcurrentSim
 
 # Create network with cutoff protocol

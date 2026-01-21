@@ -6,7 +6,7 @@ entanglement swaps using the UUID-based protocols.
 """
 
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProtUUID, SwapperProtUUID, EntanglementTrackerUUID
+using QuantumSavory.ProtocolZoo
 using ConcurrentSim
 
 # Create a linear network of 4 nodes

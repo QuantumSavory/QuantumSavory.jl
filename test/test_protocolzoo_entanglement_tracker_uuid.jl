@@ -3,11 +3,7 @@
 ] begin
     using ResumableFunctions
     using ConcurrentSim
-    using QuantumSavory
     using QuantumSavory.ProtocolZoo
-    using QuantumSavory.ProtocolZoo:
-        EntanglementUUID, EntanglementUpdateUUID, EntanglementDeleteUUID, generate_pair_uuid,
-        EntanglerProtUUID, SwapperProtUUID, EntanglementTrackerUUID, CutoffProtUUID, EntanglementConsumerUUID
     using Graphs
 
     if isinteractive()
