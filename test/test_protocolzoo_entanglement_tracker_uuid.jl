@@ -5,6 +5,7 @@
     using ConcurrentSim
     using QuantumSavory.ProtocolZoo
     using Graphs
+    using SumTypes
 
     if isinteractive()
         using Logging
@@ -25,21 +26,26 @@
     @process entangler1()
     run(sim, 20)
 
-    # Check that EntanglementUUID tags were created using queryall
-    uuid_tags_1 = queryall(net[1], EntanglementUUID, ❓, ❓, ❓)
-    uuid_tags_2 = queryall(net[2], EntanglementUUID, ❓, ❓, ❓)
+    # Helper to filter EntanglementUUID tags from a register
+    function uuid_tags(reg)
+        tags = [reg.tag_info[i].tag for i in reg.guids]
+        filter(t -> SumTypes.unwrap(t).data[1] === EntanglementUUID, tags)
+    end
+
+    uuid_tags_1 = uuid_tags(net[1])
+    uuid_tags_2 = uuid_tags(net[2])
 
     @test length(uuid_tags_1) == 1
     @test length(uuid_tags_2) == 1
 
-    # The UUIDs should match (first element is slot, second is tag)
-    uuid_1 = uuid_tags_1[1][2][2]  # tag[2] is the uuid field
-    uuid_2 = uuid_tags_2[1][2][2]
+    # The UUIDs should match
+    uuid_1 = uuid_tags_1[1][2]  # tag[2] is the uuid field
+    uuid_2 = uuid_tags_2[1][2]
     @test uuid_1 == uuid_2
 
     # Test that remote node/slot info is correct
-    @test uuid_tags_1[1][2][3] == 2  # Node 1 is entangled to node 2
-    @test uuid_tags_2[1][2][3] == 1  # Node 2 is entangled to node 1
+    @test uuid_tags_1[1][3] == 2  # Node 1 is entangled to node 2
+    @test uuid_tags_2[1][3] == 1  # Node 2 is entangled to node 1
 
     # Test SwapperProtUUID with EntanglementTrackerUUID
 
@@ -84,9 +90,9 @@
     run(sim, 60)
 
     # After swap, node 1 should be connected to node 3
-    uuid_tags_1 = queryall(net[1], EntanglementUUID, ❓, ❓, ❓)
+    uuid_tags_1 = uuid_tags(net[1])
     @test length(uuid_tags_1) >= 1
-    @test uuid_tags_1[1][2][3] == 3  # Node 1 now entangled to node 3
+    @test uuid_tags_1[1][3] == 3  # Node 1 now entangled to node 3
 
     # Test CutoffProtUUID
     net = RegisterNet([Register(3), Register(3)])
@@ -159,11 +165,11 @@
     run(sim, 40)
 
     # Now 1 should be entangled to 3
-    uuid_tags_1 = queryall(net[1], EntanglementUUID, ❓, ❓, ❓)
+    uuid_tags_1 = uuid_tags(net[1])
 
     # Verify the swap created the correct connection
     if length(uuid_tags_1) > 0
-        @test uuid_tags_1[1][2][3] == 3
+        @test uuid_tags_1[1][3] == 3
     end
 
 end
