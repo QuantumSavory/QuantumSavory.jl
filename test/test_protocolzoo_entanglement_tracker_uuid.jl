@@ -5,7 +5,6 @@
     using ConcurrentSim
     using QuantumSavory.ProtocolZoo
     using Graphs
-    using SumTypes
 
     if isinteractive()
         using Logging
@@ -28,8 +27,8 @@
 
     # Helper to filter EntanglementUUID tags from a register
     function uuid_tags(reg)
-        tags = [reg.tag_info[i].tag for i in reg.guids]
-        filter(t -> SumTypes.unwrap(t).data[1] === EntanglementUUID, tags)
+        infos = queryall(reg, EntanglementUUID, ❓, ❓, ❓)
+        [info.tag for info in infos]
     end
 
     uuid_tags_1 = uuid_tags(net[1])
@@ -78,7 +77,7 @@
         net,
         2;
         nodeL = <(2),
-        nodeH=>(2),
+        nodeH = >(2),
         chooseL = argmin,
         chooseH = argmax,
         rounds = 1,
@@ -156,7 +155,7 @@
         net,
         2;
         nodeL = <(2),
-        nodeH=>(2),
+        nodeH = >(2),
         chooseL = argmin,
         chooseH = argmax,
         rounds = 1,

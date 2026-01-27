@@ -56,9 +56,6 @@ function run_history_protocol(num_nodes::Int)
 end
 
 # Compare both protocols
-println("Comparing UUID-based vs History-based protocols")
-println("=" ^ 60)
-
 for num_nodes in [3, 5, 7]
     println("\nNetwork size: $num_nodes nodes")
     
