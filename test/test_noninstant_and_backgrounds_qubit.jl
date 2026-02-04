@@ -55,6 +55,14 @@ kraus_lindblad_test(T2Dephasing(1.0),Z1)
 kraus_lindblad_test(T2Dephasing(1.0),Z2)
 kraus_lindblad_test(T2Dephasing(1.0),X1)
 kraus_lindblad_test(T2Dephasing(1.0),X2)
+kraus_lindblad_test(T1T2Noise(1.0,1.0),Z1)
+kraus_lindblad_test(T1T2Noise(1.0,1.0),Z2)
+kraus_lindblad_test(T1T2Noise(1.0,1.0),X1)
+kraus_lindblad_test(T1T2Noise(1.0,1.0),X2)
+kraus_lindblad_test(T1T2Noise(1.0,3.0),Z1)
+kraus_lindblad_test(T1T2Noise(1.0,3.0),Z2)
+kraus_lindblad_test(T1T2Noise(1.0,3.0),X1)
+kraus_lindblad_test(T1T2Noise(1.0,3.0),X2)
 
 ##
 # Kraus composition check (the effect of two short Kraus operators should be the same as the effect of one long Kraus operator)
@@ -80,6 +88,8 @@ for state in (X1, X2, Z1, Z2, Y1, Y2)
         @test kraus_composition_test(T1Decay(1.0),state,obs)
         @test kraus_composition_test(T2Dephasing(1.0),state,obs)
         @test kraus_composition_test(Depolarization(1.0),state,obs)
+        @test kraus_composition_test(T1T2Noise(1.0,1.0),state,obs)
+        @test kraus_composition_test(T1T2Noise(1.0,3.0),state,obs)
     end
 end
 
@@ -93,9 +103,11 @@ function kraus_normed(kraus_ops)
 end
 
 for δ in [0.1,1.0,2.0,10.]
-    @test kraus_normed(krausops(T1Decay(1.0), δ))
-    @test kraus_normed(krausops(T2Dephasing(1.0), δ))
-    @test kraus_normed(krausops(Depolarization(1.0), δ))
+    @test kraus_normed(krausops(T1Decay(1.0),δ))
+    @test kraus_normed(krausops(T2Dephasing(1.0),δ))
+    @test kraus_normed(krausops(Depolarization(1.0),δ))
+    @test kraus_normed(krausops(T1T2Noise(1.0,1.0),δ))
+    @test kraus_normed(krausops(T1T2Noise(1.0,3.0),δ))
 end
 
 ##
@@ -130,37 +142,11 @@ for δ in [0.1,1.0,2.0,10.]
 end
 
 ##
-# T1T2Noise tests
+# Test that T1T2Noise reduces to T1 alone when T2 > 2*T1
 
-# Test T1T2Noise constructor enforces T2 <= 2*T1
-@test_logs (:warn, r"T₂ > 2T₁ is unphysical") T1T2Noise(t1=1.0, t2=3.0)
-noise = T1T2Noise(t1=1.0, t2=3.0)
-@test noise.t2 == 2.0  # Should be clamped to 2*T1
-
-# Test T1T2Noise with valid parameters
-noise_valid = T1T2Noise(t1=1.0, t2=1.5)
-@test noise_valid.t1 == 1.0
-@test noise_valid.t2 == 1.5
-
-# Test Kraus operators for T1T2Noise
-kraus_lindblad_test(T1T2Noise(t1=1.0, t2=0.5), Z1)
-kraus_lindblad_test(T1T2Noise(t1=1.0, t2=0.5), X1)
-kraus_lindblad_test(T1T2Noise(t1=1.0, t2=1.5), Z1)
-kraus_lindblad_test(T1T2Noise(t1=1.0, t2=1.5), X1)
-
-# Test Kraus composition for T1T2Noise
-for state in (X1, X2, Z1, Z2, Y1, Y2)
-    for obs in (X, Z, Y)
-        @test kraus_composition_test(T1T2Noise(t1=1.0, t2=0.8), state, obs)
-    end
-end
-
-# T1T2Noise uses Lindblad operators, not Kraus (returns nothing from krausops)
-
-# Test that T1T2Noise reduces to T1 alone when T2 = 2*T1
-function test_t1t2_reduces_to_t1(t1, δ)
+function test_t1t2_reduces_to_t1(t1, t2, δ)
     # When T2 = 2*T1, there's no pure dephasing, only amplitude damping
-    noise_t1t2 = T1T2Noise(t1=t1, t2=2*t1)
+    noise_t1t2 = T1T2Noise(t1=t1, t2=t2)
     noise_t1 = T1Decay(t1=t1)
 
     reg1 = Register([Qubit()], [noise_t1t2])
@@ -175,45 +161,9 @@ function test_t1t2_reduces_to_t1(t1, δ)
     return reg1.staterefs[1].state[] ≈ reg2.staterefs[1].state[]
 end
 
-for t1 in [0.5, 1.0, 2.0]
-    for δ in [0.1, 1.0, 2.0]
-        @test test_t1t2_reduces_to_t1(t1, δ)
+for (t1, t2) in [(0.5, 1.0), (1.0, 2.0), (1.0, 2.5), (1.5, 4.0)]
+    for δ in [0.1,1.0,2.0,10.]
+        @test test_t1t2_reduces_to_t1(t1, t2, δ)
     end
 end
-
-# Test physically meaningful T1T2 evolution
-function test_t1t2_physics(t1, t2, δ)
-    noise = T1T2Noise(t1=t1, t2=t2)
-    reg = Register([Qubit()], [noise])
-
-    # Start in |+⟩ = (|0⟩ + |1⟩)/√2
-    initialize!(reg[1], X1)
-
-    # Initial expectations
-    z_initial = observable(reg[1], Z)
-    x_initial = observable(reg[1], X)
-
-    # Evolve
-    uptotime!(reg[1], δ)
-
-    z_final = observable(reg[1], Z)
-    x_final = observable(reg[1], X)
-
-    # Physics checks:
-    # 1. |+⟩ has ⟨Z⟩ = 0, should decay toward ⟨Z⟩ = 0 or become more negative (toward |0⟩)
-    # 2. |+⟩ has ⟨X⟩ = 1, should decay toward 0 (lose coherence)
-    @test abs(x_final) <= abs(x_initial) + 1e-10  # X coherence decreases
-    @test z_final <= z_initial + 1e-10  # Population moves toward ground state
-
-    return true
-end
-
-for t1 in [1.0, 2.0]
-    for t2 in [0.5, 1.0, 1.5]
-        for δ in [0.5, 1.0, 2.0]
-            @test test_t1t2_physics(t1, t2, δ)
-        end
-    end
-end
-
 end

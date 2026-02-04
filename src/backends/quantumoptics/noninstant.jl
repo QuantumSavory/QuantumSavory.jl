@@ -71,20 +71,17 @@ Lindblad operators for combined T₁ and T₂ noise.
 
 Returns a tuple of Lindblad operators:
 - `L₁ = (1/√T₁) |0⟩⟨1|` for amplitude damping
-- `L₂ = (1/√(2T₂*)) Z` for pure dephasing (if T₂ < 2T₁)
+- `L₂ = (1/√(2Tᵩ)) Z` for pure dephasing (if T₂ < 2T₁)
 
-where `1/T₂* = 1/T₂ - 1/(2T₁)`
+where `1/Tᵩ = 1/T₂ - 1/(2T₁)`
 """
-function lindbladop(noise::T1T2Noise)
-    # Calculate T₂* (pure dephasing time)
-    t2star_inv = 1/noise.t2 - 1/(2*noise.t1)
+function lindbladop(T1T2::T1T2Noise)
+    Tᵩ_inv = 1/T1T2.t2 - 1/(2*T1T2.t1)
 
-    if t2star_inv <= 0
-        # T₂ ≈ 2T₁, only amplitude damping
-        return (1/√noise.t1 * _lh,)
+    if Tᵩ_inv <= 0
+        return (1/√T1T2.t1 * _lh,)
     end
 
-    t2star = 1/t2star_inv
-    # Return both Lindblad operators as a tuple
-    (1/√noise.t1 * _lh, 1/√(2*t2star) * _z)
+    Tᵩ = 1/Tᵩ_inv
+    (1/√T1T2.t1 * _lh, 1/√(2*Tᵩ) * _z)
 end

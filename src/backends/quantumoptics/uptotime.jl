@@ -115,37 +115,22 @@ function krausops(P::PauliNoise)
 end
 
 """
-The Kraus operators for combined T₁ and T₂ noise.
-
-This combines amplitude damping (T₁) and pure dephasing (T₂*) where 1/T₂ = 1/(2T₁) + 1/T₂*.
-
-The Kraus operators are:
-- `K₁ = √(1-p₁-pϕ/2) I`
-- `K₂ = √(p₁) |0⟩⟨1|`  (amplitude damping)
-- `K₃ = √(pϕ/2) Z`      (pure dephasing)
-
-where:
-- `p₁ = 1 - exp(-Δt/T₁)`
-- `pϕ = (1 - exp(-Δt/T₂*))` with `1/T₂* = 1/T₂ - 1/(2T₁)`
+The Kraus operators for T₁T₂ are obtained by composing T1 with pure dephasing (if T₂ < 2T₁))
 """
-function krausops(noise::T1T2Noise, Δt)
-    p1 = 1 - exp(-Δt/noise.t1)
+function krausops(T1T2::T1T2Noise, Δt)
+    p = exp(-Δt/T1T2.t1)
+    kraus_T1 = [√(1-p) * _lh, √p * _hh + _ll]
 
-    # Calculate T₂* (pure dephasing time) from T₁ and T₂
-    # 1/T₂ = 1/(2T₁) + 1/T₂*  =>  1/T₂* = 1/T₂ - 1/(2T₁)
-    t2star_inv = 1/noise.t2 - 1/(2*noise.t1)
+    # Pure dephasing rate: 1/Tphi = 1/T2 - 1/(2T1)
+    Tᵩ_inv = 1/T1T2.t2 - 1/(2*T1T2.t1)
 
-    if t2star_inv <= 0
-        # T₂ ≈ 2T₁, no pure dephasing, only amplitude damping (use T1 Kraus ops)
-        p = exp(-Δt/noise.t1)
-        return [√p * (_hh + _ll), √(1-p) * _lh]
+    if Tᵩ_inv <= 0 # no pure dephasing
+        return kraus_T1
     end
 
-    t2star = 1/t2star_inv
-    pphi = 1 - exp(-Δt/t2star)
+    Tᵩ = 1/Tᵩ_inv
+    pphi = 1 - exp(-Δt/Tᵩ)
+    kraus_dephase = [√(1 - pphi/2) * _id, √(pphi/2) * _z]
 
-    # For T1T2 combined noise, deriving properly normalized Kraus operators is complex
-    # Instead, return nothing to fall back to Lindblad master equation evolution
-    # The Lindblad operators (implemented in noninstant.jl) are correct
-    nothing
+    [F*E for F in kraus_dephase for E in kraus_T1]
 end
