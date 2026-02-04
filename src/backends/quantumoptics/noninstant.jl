@@ -34,13 +34,7 @@ See also: [`paulinoise`](@ref), [`krausops`](@ref)
 function lindbladop end
 
 function lindbladop(b::AbstractBackground, basis) # shortcircuit for backgrounds that work on a single basis
-    res = lindbladop(b)
-    # Handle case where lindbladop returns multiple operators (like T1T2Noise)
-    if isa(res, Tuple)
-        return res
-    else
-        return res
-    end
+    lindbladop(b)
 end
 
 "`1/√T₁ |0⟩⟨1|`"
