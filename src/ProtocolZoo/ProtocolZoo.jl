@@ -2,7 +2,8 @@ module ProtocolZoo
 
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange, QueryOnRegResult
-using QuantumSavory: Wildcard
+using QuantumSavory: Wildcard, alwaystrue
+using QuantumSavory: timestr, compactstr
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
@@ -13,6 +14,7 @@ import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
+using PrettyTables: PrettyTables, pretty_table
 
 export
     # protocols
@@ -46,8 +48,6 @@ Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->pro
 
 The `InteractiveUtils` package must be installed and imported."""
 function available_protocol_types end
-
-include("show.jl")
 
 const QueryArgs = Union{Int,Function,Wildcard}
 
@@ -203,12 +203,14 @@ $TYPEDFIELDS
     rounds::Int = -1
     """maximum number of attempts to make per round (`-1` for infinite)"""
     attempts::Int = -1
-    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node A"""
-    chooseA::Union{Int,Function} = identity
-    """function `Vector{Int}->Vector{Int}` or an integer slot number, specifying the slot to take among available free slots in node B"""
-    chooseB::Union{Int,Function} = identity
+    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node A"""
+    chooseslotA::Union{Int,Function} = alwaystrue
+    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node B"""
+    chooseslotB::Union{Int,Function} = alwaystrue
     """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
     randomize::Bool = false
+    """whether the protocol should look for unlocked slots to entangle and lock them during the protocol"""
+    uselock::Bool = true
     """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
     margin::Int = 0
     """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
@@ -234,18 +236,21 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
     rounds = prot.rounds
     round = 1
     last_a, last_b = nothing, nothing
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
     while rounds != 0
-        isentangled = !isnothing(prot.tag) && !isnothing(query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; assigned=true))
+        isentangled = !isnothing(prot.tag) && !isnothing(query(regA, prot.tag, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
-        a_ = findfreeslot(prot.net[prot.nodeA]; filter=prot.chooseA, randomize=prot.randomize, margin=margin)
-        b_ = findfreeslot(prot.net[prot.nodeB]; filter=prot.chooseB, randomize=prot.randomize, margin=margin)
+        (; chooseslotA, chooseslotB, randomize, uselock) = prot
+        a_ = findfreeslot(regA; chooseslot=chooseslotA, randomize=randomize, locked=!uselock, margin=margin)
+        b_ = findfreeslot(regB; chooseslot=chooseslotB, randomize=randomize, locked=!uselock, margin=margin)
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
-                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting for changes to tags..."
-                @yield onchange(prot.net[prot.nodeA], Tag) | onchange(prot.net[prot.nodeB], Tag)
+                @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Failed to find free slots, waiting for changes to tags..."
+                @yield onchange(regA, Tag) | onchange(regB, Tag)
             else
-                @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Failed to find free slots. \nGot:\n1. \t $a_ \n2.\t $b_ \n waiting a fixed amount of time..."
+                @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Failed to find free slots, waiting a fixed amount of time..."
                 @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
@@ -255,7 +260,9 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
         a = a_::RegRef
         b = b_::RegRef
 
-        @yield lock(a) & lock(b) # this yield is expected to return immediately
+        if uselock
+            @yield lock(a) & lock(b) # this yield is expected to return immediately
+        end
 
         @yield timeout(prot.sim, prot.local_busy_time_pre)
         attempts = if isone(prot.success_prob)
@@ -275,13 +282,15 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
             isnothing(prot.tag) || tag!(b, prot.tag, prot.nodeA, a.idx)
             last_b = b.idx
 
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Entangled .$(a.idx) and .$(b.idx)"
+            @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Entangled .$(a.idx) and .$(b.idx)"
         else
             @yield timeout(prot.sim, prot.attempts * prot.attempt_time)
-            @debug "EntanglerProt between $(prot.nodeA) and $(prot.nodeB)|round $(round): Performed the maximum number of attempts and gave up"
+            @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Performed the maximum number of attempts and gave up"
         end
-        unlock(a)
-        unlock(b)
+        if uselock
+            unlock(a)
+            unlock(b)
+        end
         rounds==-1 || (rounds -= 1)
         round += 1
     end
@@ -434,7 +443,7 @@ $FIELDS
     """tag type which the consumer is looking for -- the consumer query will be `query(node, EntanglementConsumer.tag, remote_node)` and it will be expected that `remote_node` possesses the symmetric reciprocal tag; defaults to `EntanglementCounterpart`"""
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
-    _log::Vector{Tuple{Float64, Float64, Float64}} = Tuple{Float64, Float64, Float64}[]
+    _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end
 
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
@@ -447,25 +456,27 @@ end
 permits_virtual_edge(::EntanglementConsumer) = true
 
 @resumable function (prot::EntanglementConsumer)()
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
     while true
-        query1 = query(prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        query1 = query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
             if isnothing(prot.period)
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting on tag updates in $(prot.nodeA)."
-                @yield onchange(prot.net[prot.nodeA], Tag)
+                @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on first node found no entanglement. Waiting on tag updates in $(compactstr(regA))."
+                @yield onchange(regA, Tag)
             else
-                @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on first node found no entanglement. Waiting a fixed amount of time."
+                @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on first node found no entanglement. Waiting a fixed amount of time."
                 @yield timeout(prot.sim, prot.period::Float64)
             end
             continue
         else
-            query2 = query(prot.net[prot.nodeB], prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+            query2 = query(regB, prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 if isnothing(prot.period)
-                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting on tag updates in $(prot.nodeB)."
-                    @yield onchange(prot.net[prot.nodeB], Tag)
+                    @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on second node found no entanglement (yet...). Waiting on tag updates in $(compactstr(regB))."
+                    @yield onchange(regB, Tag)
                 else
-                    @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
+                    @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on second node found no entanglement (yet...). Waiting a fixed amount of time."
                     @yield timeout(prot.sim, prot.period::Float64)
                 end
                 continue
@@ -476,7 +487,7 @@ permits_virtual_edge(::EntanglementConsumer) = true
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
 
-        @debug "EntanglementConsumer between $(prot.nodeA) and $(prot.nodeB): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx) @ $(now(prot.sim))"
+        @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx)"
         untag!(q1, query1.id)
         untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory or EntanglementDelete and should that be a different EntanglementHistory since the current one is specifically for Swapper
@@ -484,7 +495,7 @@ permits_virtual_edge(::EntanglementConsumer) = true
         ob1 = real(observable((q1, q2), Z⊗Z))
         ob2 = real(observable((q1, q2), X⊗X))
 
-        traceout!(prot.net[prot.nodeA][q1.idx], prot.net[prot.nodeB][q2.idx])
+        traceout!(regA[q1.idx], regB[q2.idx])
         push!(prot._log, (now(prot.sim), ob1, ob2))
         unlock(q1)
         unlock(q2)
@@ -501,5 +512,7 @@ include("switches.jl")
 using .Switches
 include("qtcp.jl")
 using .QTCP
+
+include("show.jl")
 
 end # module

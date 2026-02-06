@@ -3,9 +3,8 @@ module QuantumSavoryMakie
 using QuantumSavory
 using Graphs
 using NetworkLayout
-import ConcurrentSim
-import Makie
-import Makie: Theme, Figure, Axis, Axis3, get_scene,
+using ConcurrentSim: ConcurrentSim
+using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
     scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
@@ -16,10 +15,12 @@ import Makie: Theme, Figure, Axis, Axis3, get_scene,
     DataInspector, Slider, Colorbar, axislegend
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
-import QuantumSavory.ProtocolZoo
+using QuantumSavory: compactstr
+using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
 
-import QuantumClifford
-import QuantumOpticsBase
+using QuantumClifford: QuantumClifford
+using QuantumOpticsBase: QuantumOpticsBase, dm
+
 
 ##
 
@@ -39,7 +40,7 @@ import QuantumOpticsBase
         state_marker = :diamond,
         state_markercolor = :black,
         state_linecolor = :gray90,
-        lock_marker = '⚿',  # TODO plot the state of the locks
+        lock_marker = '⚿',
         # The registercoords and observables arguments are not considered "theme" configuration options
     )
 end
@@ -51,6 +52,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     register_rectangles = Observable(Rect2f[])     # Makie rectangles that will be plotted for each register
     register_slots_coords = Observable(Point2f[])  # Makie marker locations that will be plotted for each register slot
     state_coords = Observable(Point2f[])           # Makie marker locations for each slot that contains a state subsystem
+    lock_coords = Observable(Point2f[])            # Makie marker locations for each lock
     state_links = Observable(Point2f[])            # The lines connecting the state subsystem markers corresponding to the same composite system
     observables_coords = Observable(Point2f[])     # Makie marker locations that will be plotted for each subsystem on which an observable is evaluated
     observables_links = Observable(Point2f[])      # The links between observed subsystems
@@ -117,7 +119,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         registercoords = rn[:registercoords][]
         all_nodes = [ # TODO it is rather wasteful to replot everything... do it smarter
             register_rectangles, register_slots_coords,
-            state_coords, state_links,
+            state_coords, state_links, lock_coords,
             register_slots_coords_backref, state_coords_backref,
             observables_coords, observables_links, observables_vals, observables_linkvals
         ]
@@ -137,6 +139,9 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 yˢˡᵒᵗ = registercoords[iʳᵉᵍ][2]+(iˢˡᵒᵗ-1)*rn[:scale][]
                 push!(register_slots_coords[], Point2f(xˢˡᵒᵗ,yˢˡᵒᵗ))
                 push!(register_slots_coords_backref[], (reg,iʳᵉᵍ,iˢˡᵒᵗ))
+                if reg.locks[iˢˡᵒᵗ].level >= 1
+                    push!(lock_coords[], Point2f(xˢˡᵒᵗ, yˢˡᵒᵗ))
+                end
             end
         end
 
@@ -221,6 +226,11 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         inspector_label = (self, i, p) -> get_state_vis_string(state_coords_backref[],i))
     state_linesegmentsplot = linesegments!(rn, state_links, color=rn[:state_linecolor])
     state_linesegmentsplot.inspectable[] = false
+    lock_scatterplot = scatter!(
+        rn, lock_coords,
+        marker=rn[:lock_marker], markersize=rn[:slotsize][]*rn[:scale][],
+        markerspace=:data)
+    lock_scatterplot.inspectable[] = false
 
     # TODO all of these should be wrapped into their own types in order to simplify DataInspector and process_interaction
     rn[:register_polyplot] = register_polyplot
@@ -229,6 +239,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     rn[:observables_linesegmentsplot] = observables_linesegments
     rn[:state_scatterplot] = state_scatterplot
     rn[:state_linesegmentsplot] = state_linesegmentsplot
+    rn[:lock_scatterplot] = lock_scatterplot
     rn
 end
 

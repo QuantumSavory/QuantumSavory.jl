@@ -16,3 +16,6 @@ ResumableFunctions = "c5292f4c-5179-55e1-98c5-05642aab7184"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 ThreadTools = "dbf13d8f-d36e-4350-8970-f3a99faba1a8"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
+
+[sources]
+QuantumSavory = {path = ".."}

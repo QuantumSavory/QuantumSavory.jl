@@ -6,8 +6,8 @@ using ResumableFunctions
 
 net = RegisterNet([Register(5), Register(5)])
 sim = get_time_tracker(net)
-eprot1 = EntanglerProt(sim, net, 1, 2; chooseA=1, chooseB=5, rounds=1, success_prob=1.)
-eprot2 = EntanglerProt(sim, net, 1, 2; chooseA=3, chooseB=3, rounds=1, success_prob=1.)
+eprot1 = EntanglerProt(sim, net, 1, 2; chooseslotA=1, chooseslotB=5, rounds=1, success_prob=1.)
+eprot2 = EntanglerProt(sim, net, 1, 2; chooseslotA=3, chooseslotB=3, rounds=1, success_prob=1.)
 @process eprot1()
 @process eprot2()
 

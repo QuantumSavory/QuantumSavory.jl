@@ -6,7 +6,7 @@ using DocStringExtensions
 export EntanglementSwap, LocalEntanglementSwap,
     Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
     PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
-    SDDecode, SDEncode
+    SDDecode, SDEncode, Fusion
 
 abstract type AbstractCircuit end
 
@@ -244,16 +244,15 @@ If no error was detected, the circuit returns `true`.
 The sacrificial qubits are removed from the register.
 
 ```jldoctest
-julia> a = Register(2)
-       b = Register(2)
-       c = Register(2)
+julia> a = Register(3)
+       b = Register(3)
        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
-       initialize!(a[1:2], bell)
-       initialize!(b[1:2], bell)
-       initialize!(c[1:2], bell);
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell)
+       initialize!((a[3], b[3]), bell);
 
-
-julia> Purify3to1(:Z, :Y)(a[1], a[2], b[1], c[1], b[2], c[2])
+# purifiedL, purifiedR, sacrificedL1, sacrificedL2, sacrificedR1, sacrificedR2
+julia> Purify3to1(:Z, :Y)(a[1], b[1], a[2], a[3], b[2], b[3])
 true
 ```
 """
@@ -328,15 +327,14 @@ This circuit is the same as the Purifiy3to1 one but it works on individual qubit
 This algorithm is detailed in [keisuke2009doubleselection](@cite)
 
 ```jldoctest
-julia> a = Register(2)
-       b = Register(2)
-       c = Register(2)
+julia> a = Register(3)
+       b = Register(3)
        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
-       initialize!(a[1:2], bell)
-       initialize!(b[1:2], bell)
-       initialize!(c[1:2], bell);
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell)
+       initialize!((a[3], b[3]), bell);
 
-julia> Purify3to1Node(:Z, :Y)(a[1], b[1], c[1]) == Purify3to1Node(:Z, :Y)(a[2], b[2], c[2])
+julia> Purify3to1Node(:Z, :Y)(a[1], a[2], a[3]) == Purify3to1Node(:Z, :Y)(b[1], b[2], b[3])
 true
 ```
 """
@@ -936,6 +934,42 @@ function (circuit::SDDecode)(rrefA, rrefB)
     b1 = project_traceout!(rrefA, Z)
     b2 = project_traceout!(rrefB, Z)
     return b1-1, b2-1
+end
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+Performs the type-I fusion operation between two registers. The registers are assumed to be in the same fridge.
+"""
+struct Fusion <: AbstractCircuit
+end
+
+inputqubits(circuit::Fusion) = 4
+
+function (circuit::Fusion)(regA, regB, communication_slot, storage_slot)
+    if !isassigned(regA[storage_slot])
+        initialize!(regA[storage_slot], X1)
+    end
+    if !isassigned(regB[storage_slot])
+        initialize!(regB[storage_slot], X1)
+    end
+
+    apply!((regA[storage_slot], regA[communication_slot]), CPHASE)
+    apply!((regB[storage_slot], regB[communication_slot]), CPHASE)
+
+    mA = project_traceout!(regA[communication_slot], X)
+    mB = project_traceout!(regB[communication_slot], X)
+
+    if mA == 2
+        apply!(regB[storage_slot], Z)
+    end
+    if mB == 2
+        apply!(regA[storage_slot], Z)
+    end
 end
 
 end # module
