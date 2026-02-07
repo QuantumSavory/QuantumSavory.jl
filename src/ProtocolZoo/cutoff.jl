@@ -58,11 +58,9 @@ end
             unlock(slot)
             continue
         end
-        println("$(now(sim)) $slot info $info")
 
         untag!(slot, info.id)
         traceout!(slot)
-        println("$(now(sim)) $slot traced out")
         msg = Tag(EntanglementDelete, prot.node, slot.idx, info.tag[2], info.tag[3])
         tag!(slot, msg)
         (prot.announce) && put!(channel(prot.net, prot.node=>msg[4]; permit_forward=true), msg)
