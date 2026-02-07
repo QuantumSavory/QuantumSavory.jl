@@ -7,14 +7,12 @@ returning a ConcurrentSim process that yields the first successful query result.
 This replaces the common pattern of:
 
 ```julia
-@resumable function protocol(sim, register)
-    while true
-        @yield onchange(register, Tag)
-        result = query(register, :my_tag, ❓)
-        if !isnothing(result)
-            # do something with result
-            break
-        end
+while true
+    @yield onchange(register, Tag)
+    result = query(register, :my_tag, ❓)
+    if !isnothing(result)
+        # do something with result
+        break
     end
 end
 ```
@@ -22,13 +20,11 @@ end
 with the much simpler:
 
 ```julia
-@resumable function protocol(sim, register)
-    result = @yield query_wait(register, :my_tag, ❓)
-    # do something with result
-end
+result = @yield query_wait(register, :my_tag, ❓)
+# do something with result
 ```
 
-The `on` keyword argument is passed to [`onchange`](@ref) to control what type of events are waited on (defaults to [`Tag`](@ref)).
+The `on` keyword argument is passed to [`onchange`](@ref) to control what type of events are waited on.
 The `locked` and `assigned` keyword arguments are passed through to [`query`](@ref) for register queries.
 
 ```jldoctest
@@ -81,7 +77,7 @@ function query_wait end
     end
     return q
 end
-function query_wait(store::Register, args...; on::Type{Tag}=Tag, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing)
+function query_wait(store::Register, args...; on=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing)
     # TODO weird ordering of what should be kwargs due to https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/135
     return @process _query_wait(get_time_tracker(store), store, on, locked, assigned, args...)
 end
@@ -94,7 +90,7 @@ end
     end
     return q
 end
-function query_wait(store::MessageBuffer, args...; on::Type{Tag}=Tag)
+function query_wait(store::MessageBuffer, args...; on=Any)
     return @process _query_wait(get_time_tracker(store), store, on, args...)
 end
 
@@ -107,14 +103,12 @@ returning a ConcurrentSim process that yields the first successful query result 
 This replaces the common pattern of:
 
 ```julia
-@resumable function protocol(sim, store)
-    while true
-        @yield onchange(store, Tag)
-        result = querydelete!(store, :my_tag, ❓)
-        if !isnothing(result)
-            # do something with result
-            break
-        end
+while true
+    @yield onchange(store, Tag)
+    result = querydelete!(store, :my_tag, ❓)
+    if !isnothing(result)
+        # do something with result
+        break
     end
 end
 ```
@@ -122,13 +116,11 @@ end
 with the much simpler:
 
 ```julia
-@resumable function protocol(sim, store)
-    result = @yield querydelete_wait!(store, :my_tag, ❓)
-    # do something with result
-end
+result = @yield querydelete_wait!(store, :my_tag, ❓)
+# do something with result
 ```
 
-The `on` keyword argument is passed to [`onchange`](@ref) to control what type of events are waited on (defaults to [`Tag`](@ref)).
+The `on` keyword argument is passed to [`onchange`](@ref) to control what type of events are waited on.
 The `locked` and `assigned` keyword arguments are passed through to [`querydelete!`](@ref) for register queries.
 
 ```jldoctest
@@ -182,7 +174,7 @@ function querydelete_wait! end
     end
     return q
 end
-function querydelete_wait!(store::Register, args...; on::Type{Tag}=Tag, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing)
+function querydelete_wait!(store::Register, args...; on=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing)
     return @process _querydelete_wait(get_time_tracker(store), store, on, locked, assigned, args...)
 end
 
@@ -194,6 +186,6 @@ end
     end
     return q
 end
-function querydelete_wait!(store::MessageBuffer, args...; on::Type{Tag}=Tag)
+function querydelete_wait!(store::MessageBuffer, args...; on=Any)
     return @process _querydelete_wait(get_time_tracker(store), store, on, args...)
 end
