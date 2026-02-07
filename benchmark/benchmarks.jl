@@ -18,4 +18,5 @@ V = M[findfirst(v -> v.name == "QuantumSavory", M)].version
 include("benchmark_register.jl")
 include("benchmark_tagquery.jl")
 include("benchmark_onchange.jl")
+include("benchmark_querywait.jl")
 include("benchmark_quantumstates.jl")
