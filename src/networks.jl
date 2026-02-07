@@ -205,8 +205,10 @@ See also: [`channel`](@ref)
 """
 function messagebuffer(ref::RegOrRegRef)
     reg = get_register(ref)
-    net = reg.netparent[]
-    return messagebuffer(net, net.reverse_lookup[reg])
+    net = parent(reg)
+    idx = parentindex(reg)
+    isnothing(net) && throw(ArgumentError("The register does not have a parent network and thus it does not have an assigned message buffer."))
+    return messagebuffer(net, idx)
 end
 
 function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{:C}; permit_forward=false)
