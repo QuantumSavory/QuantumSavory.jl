@@ -107,3 +107,5 @@ end
     run(sim, 2.1)
     @test length(LOG) == 1
 end
+
+end
