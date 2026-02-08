@@ -1,4 +1,5 @@
 @testitem "ProtocolZoo CutoffProt" tags=[:protocolzoo_cutoffprot] begin
+using Test
 using QuantumSavory.ProtocolZoo
 
 using ConcurrentSim

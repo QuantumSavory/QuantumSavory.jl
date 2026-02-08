@@ -1,4 +1,5 @@
 @testitem "ProtocolZoo Throws - SimpleSwitchDiscreteProt" tags=[:protocolzoo_throws] begin
+using Test
     using Revise
     using ResumableFunctions
     using ConcurrentSim

@@ -1,4 +1,6 @@
 @testitem "Plotting GL" tags=[:plotting_gl] begin
+using Test
+using QuantumSavory
     using GLMakie
     GLMakie.activate!()
 

@@ -1,4 +1,5 @@
 @testitem "Tags and Queries" tags=[:tags_and_queries] begin
+using Test
     using QuantumSavory: tag_types
     using QuantumSavory.ProtocolZoo: EntanglementCounterpart
 

@@ -1,4 +1,5 @@
 @testitem "ProtocolZoo Shorthand Constructors" tags=[:protocolzoo_shorthand_constructors] begin
+using Test
 using Revise
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt
 using QuantumSavory.ProtocolZoo.QTCP: EndNodeController, NetworkNodeController, LinkController

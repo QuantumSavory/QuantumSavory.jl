@@ -1,4 +1,5 @@
 @testitem "Circuit Zoo Purification - throws" tags=[:circuitzoo_purification] begin
+using Test
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
 
@@ -18,6 +19,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - 2to1" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
@@ -46,6 +49,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - 2to1 - Node" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
@@ -79,6 +84,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - 3to1" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
@@ -120,6 +127,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [QuantumOpticsRepr]
@@ -142,6 +151,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [CliffordRepr]
@@ -164,6 +175,8 @@ end
 
 
 @testitem "Circuit Zoo Purification - 3to1 -- Node" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
@@ -215,6 +228,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [QuantumOpticsRepr]
@@ -239,6 +254,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [CliffordRepr]
@@ -262,6 +279,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - Stringent" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [CliffordRepr, QuantumOpticsRepr]
@@ -291,6 +310,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [CliffordRepr]
@@ -306,6 +327,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - Expedient" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [CliffordRepr, QuantumOpticsRepr]
@@ -319,6 +342,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [QuantumOpticsRepr]
@@ -335,6 +360,8 @@ end
 end
 
 @testitem "Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
     include("setup_circuitzoo_purification.jl")
 
     for rep in [CliffordRepr]

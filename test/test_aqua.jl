@@ -1,4 +1,5 @@
 @testitem "Aqua" tags=[:aqua] begin
+using Test
 using Aqua
 using QuantumOpticsBase
 using QuantumSavory

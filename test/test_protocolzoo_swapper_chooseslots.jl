@@ -1,4 +1,5 @@
 @testitem "ProtocolZoo Swapper chooseslots" tags=[:protocolzoo_swapper] begin
+using Test
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory.ProtocolZoo
