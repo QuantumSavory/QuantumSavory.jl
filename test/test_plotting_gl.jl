@@ -1,8 +1,6 @@
 @testitem "Plotting GL" tags=[:plotting_gl] begin
-using Test
-using QuantumSavory
-    using GLMakie
-    GLMakie.activate!()
+using GLMakie
+GLMakie.activate!()
 
 @testset "register coordinates" begin
     include("test_plotting_1_regcoords.jl")

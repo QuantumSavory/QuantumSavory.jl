@@ -1,5 +1,6 @@
 @testitem "Circuit Zoo Entanglement Swap" tags=[:circuitzoo_ent_swap] begin
 using Test
+using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 

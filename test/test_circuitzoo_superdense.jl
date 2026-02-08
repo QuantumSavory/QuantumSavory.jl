@@ -1,5 +1,6 @@
 @testitem "Circuit Zoo Super Dense" tags=[:circuitzoo_superdense] begin
 using Test
+using QuantumSavory
 using QuantumSavory.CircuitZoo: SDEncode, SDDecode
 
 for i in 1:8

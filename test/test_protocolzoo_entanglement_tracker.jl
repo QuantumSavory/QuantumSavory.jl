@@ -1,6 +1,6 @@
 @testitem "ProtocolZoo Entanglement Tracker" tags=[:protocolzoo_entanglement_tracker] begin
 using Test
-using Revise
+using QuantumSavory
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory.ProtocolZoo

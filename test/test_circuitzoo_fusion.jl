@@ -1,6 +1,7 @@
 @testitem "Circuit Zoo Fusion" tags=[:circuitzoo_fusion] begin
 using Test
 using Graphs
+using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: Fusion
 import QuantumClifford
