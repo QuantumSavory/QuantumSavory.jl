@@ -13,7 +13,7 @@ import Base: unlock, lock, islocked
 using DocStringExtensions
 using IterTools
 import LinearAlgebra
-using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot
+using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot, rank
 import Random
 using Random: randperm
 using Graphs

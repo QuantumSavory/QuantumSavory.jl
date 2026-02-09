@@ -15,14 +15,18 @@ express_qc_proj(::ZGate) = QuantumClifford.projectZ! # should be project*rand! i
 
 function observable(state::QuantumClifford.MixedDestabilizer, indices::Base.AbstractVecOrTuple{Int}, operation)
     operation = express(operation, CliffordRepr(), UseAsObservable())::QuantumClifford.PauliOperator
+    @show indices
     op = embed(QuantumClifford.nqubits(state), indices, operation)
-    QuantumClifford.expect(op, state)
+    @show QuantumClifford.expect(op, state)
 end
 
 # This is a bit of a hack to work specifically with SProjector. If you start needing more of these for other types, consider doing a bit of a redesign. This all should pass through `express(...,::UseAsObservable)`.
 function observable(state::QuantumClifford.MixedDestabilizer, indices::Base.AbstractVecOrTuple{Int}, operation::SProjector)
     pstate = express(operation.ket, CliffordRepr())
-    QuantumClifford.nqubits(state)==length(indices)==QuantumClifford.nqubits(pstate) || error("An attempt was made to measure a projection observable while using Clifford representation for the qubits. However, the qubits that are being observed are entangled with other qubits. Currently this is not supported. Consider tracing out the extra qubits or using Pauli observables that do not suffer from this embedding limitation. Message us on the issue tracker if you want this functionality implemented.")
-    cstate = permutesystems(state, indices)
-    dot(pstate, cstate)
+    traceout_indices = setdiff(1:QuantumClifford.nqubits(state), indices)
+    cstate = permutesystems(state, [indices; traceout_indices])
+    cstate = QuantumClifford.traceout!(cstate, traceout_indices) # TODO just use ptrace when QuantumClifford 0.11 is out - it makes this and the next line unnecessary
+    cstate = QuantumClifford.MixedDestabilizer(QuantumClifford.tab(cstate)[:,1:length(indices)], rank(cstate))
+    @show cstate
+    inner_product_mixed_destab(pstate, cstate)
 end
