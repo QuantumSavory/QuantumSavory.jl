@@ -134,3 +134,25 @@ function krausops(T1T2::T1T2Noise, Δt)
 
     [F*E for F in kraus_dephase for E in kraus_T1]
 end
+
+"""Kraus operators have freedom in how they can be picked -- this fuction exists to provide known alternative implementations for use in testing."""
+function krausops_alt end
+
+struct KrausAltWrapper <: AbstractBackground
+    noise
+end
+
+function krausops(wrapper::KrausAltWrapper, args)
+    return krausops_alt(wrapper.noise, args)
+end
+
+function krausops_alt(T1T2::T1T2Noise, Δt)
+    (; t1, t2) = T1T2
+    γ = 1-exp(-Δt/t1)
+    tᵩ = t1 * t2 / (2t1 - t2)
+    λ = 1-exp(-Δt/tᵩ)
+    k1 = _ll + √((1-γ)*(1-λ)) * _hh
+    k2 = √((1-γ)*λ) * _hh
+    k3 = √(γ) * _lh
+    [k1, k2, k3]
+end

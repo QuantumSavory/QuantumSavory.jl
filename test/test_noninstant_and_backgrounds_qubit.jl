@@ -166,4 +166,29 @@ for (t1, t2) in [(0.5, 1.0), (1.0, 2.0), (1.0, 2.5), (1.5, 4.0)]
         @test test_t1t2_reduces_to_t1(t1, t2, δ)
     end
 end
+
+##
+# Test alternative Kraus operator versions
+
+
+function test_kraus_alt(noise, δ)
+    reg1 = Register([Qubit()], [noise])
+    reg2 = Register([Qubit()], [QuantumSavory.KrausAltWrapper(noise)])
+
+    initialize!(reg1[1], X1)
+    initialize!(reg2[1], X1)
+
+    uptotime!(reg1[1], δ)
+    uptotime!(reg2[1], δ)
+
+    return reg1.staterefs[1].state[] ≈ reg2.staterefs[1].state[]
+end
+
+for (t1, t2) in [(1.5, 1.0), (3.0, 2.0), (1.0, 1.5)]
+    for δ in [0.1,1.0,2.0,10.]
+        @test test_kraus_alt(T1T2Noise(t1, t2), δ)
+    end
+end
+
+
 end
