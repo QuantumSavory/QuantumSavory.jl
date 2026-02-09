@@ -13,8 +13,13 @@ function uptotime!(state::Operator, idx::Int, background, Δt)
     if isnothing(Ks) # TODO turn this into a dispatch on a trait of having a kraus representations
         # TODO code repetition with apply_noninstant!
         L = lindbladop(background,b)
-        lindbladian = e ? embed(b,[idx],L) : L
-        _, sol = timeevolution.master([0,Δt], state, identityoperator(b), [lindbladian])
+        # Handle tuple of Lindblad operators (e.g., T1T2Noise)
+        lindbladians = if isa(L, Tuple)
+            [e ? embed(b,[idx],l) : l for l in L]
+        else
+            [e ? embed(b,[idx],L) : L]
+        end
+        _, sol = timeevolution.master([0,Δt], state, identityoperator(b), lindbladians)
         nstate.data .= sol[end].data
     else
         for k in Ks
@@ -107,4 +112,47 @@ end
 
 function krausops(P::PauliNoise)
     nothing # TODO strictly speaking this is not necessary as we can always fall back to the lindbladians
+end
+
+"""
+The Kraus operators for T₁T₂ are obtained by composing T1 with pure dephasing (if T₂ < 2T₁))
+"""
+function krausops(T1T2::T1T2Noise, Δt)
+    p = exp(-Δt/T1T2.t1)
+    kraus_T1 = [√(1-p) * _lh, √p * _hh + _ll]
+
+    # Pure dephasing rate: 1/Tphi = 1/T2 - 1/(2T1)
+    Tᵩ_inv = 1/T1T2.t2 - 1/(2*T1T2.t1)
+
+    if Tᵩ_inv <= 0 # no pure dephasing
+        return kraus_T1
+    end
+
+    Tᵩ = 1/Tᵩ_inv
+    pphi = 1 - exp(-Δt/Tᵩ)
+    kraus_dephase = [√(1 - pphi/2) * _id, √(pphi/2) * _z]
+
+    [F*E for F in kraus_dephase for E in kraus_T1]
+end
+
+"""Kraus operators have freedom in how they can be picked -- this fuction exists to provide known alternative implementations for use in testing."""
+function krausops_alt end
+
+struct KrausAltWrapper <: AbstractBackground
+    noise
+end
+
+function krausops(wrapper::KrausAltWrapper, args)
+    return krausops_alt(wrapper.noise, args)
+end
+
+function krausops_alt(T1T2::T1T2Noise, Δt)
+    (; t1, t2) = T1T2
+    γ = 1-exp(-Δt/t1)
+    tᵩ = t1 * t2 / (2t1 - t2)
+    λ = 1-exp(-Δt/tᵩ)
+    k1 = _ll + √((1-γ)*(1-λ)) * _hh
+    k2 = √((1-γ)*λ) * _hh
+    k3 = √(γ) * _lh
+    [k1, k2, k3]
 end
