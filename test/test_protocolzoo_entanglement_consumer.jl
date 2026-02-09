@@ -1,4 +1,5 @@
 @testitem "ProtocolZoo Entanglement Consumer" tags=[:protocolzoo_entanglement_consumer] begin
+using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 using Graphs

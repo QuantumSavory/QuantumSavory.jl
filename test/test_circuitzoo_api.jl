@@ -1,4 +1,6 @@
 @testitem "Circuit Zoo API" tags=[:circuitzoo_api] begin
+using Test
+using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: AbstractCircuit, inputqubits
 using InteractiveUtils

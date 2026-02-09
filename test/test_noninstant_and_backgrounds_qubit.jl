@@ -1,4 +1,5 @@
 @testitem "Noninstant and Backgrounds - Qubit" begin
+using Test
 using QuantumSavory: NonInstantGate
 using QuantumSavory
 using LinearAlgebra

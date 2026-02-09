@@ -1,4 +1,6 @@
 @testitem "Observable" begin
+using Test
+using QuantumSavory
 
 @testset "entangled observable" begin
     bell = StabilizerState("XX ZZ")

@@ -1,4 +1,5 @@
 @testitem "InteractiveUtils" begin
+using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using InteractiveUtils
