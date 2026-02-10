@@ -8,7 +8,7 @@ using DataFrames
 using Random
 using QuantumClifford: ghz
 
-const ghzs = [ghz(n) for n in 1:7] # make const in order to not build new every time
+const ghzs = [ghz(n) for n in 1:35] # make const in order to not build new every time
 
 """
     push_to_logging!(logging::Vector, t::Float64, fidelity::Float64)
@@ -195,7 +195,7 @@ The piecemaker protocol generates multipartite entanglement by:
                         @yield lock(net[1][n+1]) & lock(net[1][slot.idx])
                         res = fusion(net[1][n+1], net[1][slot.idx])
                         unlock(net[1][n+1]); unlock(net[1][slot.idx])
-                        tag!(net[1 + slot.idx][1], Tag(:updateX, res)) # communicate change to client node
+                        tag!(net[1 + slot.idx][1], Tag(:updateX, Int(res))) # communicate change to client node
                         counter += 1
                         @debug "Fused client $(slot.idx) with piecemaker qubit"
                     else
@@ -208,7 +208,7 @@ The piecemaker protocol generates multipartite entanglement by:
             @yield lock(net[1][n+1])
             res = project_traceout!(net[1][n+1], σˣ)
             unlock(net[1][n+1])
-            tag!(net[2][1], Tag(:updateZ, res)) # communicate change to client node
+            tag!(net[2][1], Tag(:updateZ, Int(res))) # communicate change to client node
             break
         end
 
@@ -217,7 +217,7 @@ The piecemaker protocol generates multipartite entanglement by:
         # cleanup qubits
         clear_up_qubits!(net, n)
         rounds -= 1
-        @info "Round $(rounds) finished"
+        @debug "Round $(rounds) finished"
     end
 end
 
