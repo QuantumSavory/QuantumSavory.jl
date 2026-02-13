@@ -55,3 +55,30 @@ function Base.show(io::IO, m::MIME"text/html", p::EntanglementConsumer)
     </div>
     """)
 end
+
+function Base.show(io::IO, m::MIME"text/html", p::BBM92Prot)
+    n_total = length(p._log)
+    n_sifted = count(e -> e.basisA == e.basisB, p._log)
+    total_time = n_total > 0 ? last(p._log).t : 0.0
+    qber_val = qber_estimate(p._log)
+    kr = keyrate(p._log)
+    print(io,
+    """
+    <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_bbm92">
+    <h1><code class="quantumsavory_typename quantumsavory_protocol_typename">BBM92Prot</code> protocol</h1>
+    <address>on nodes $(compactstr(p.net[p.nodeA])) and $(compactstr(p.net[p.nodeB]))</address>
+    <dl>
+    <dt>Total measurements</dt>
+    <dd>$(n_total)</dd>
+    <dt>Sifted key bits</dt>
+    <dd>$(n_sifted)</dd>
+    <dt>QBER</dt>
+    <dd>$(isnan(qber_val) ? "N/A" : @sprintf("%.4f", qber_val))</dd>
+    <dt>Key rate (bits/time)</dt>
+    <dd>$(@sprintf("%.4f", kr))</dd>
+    <dt>Total time</dt>
+    <dd>$(total_time)</dd>
+    </dl>
+    </div>
+    """)
+end

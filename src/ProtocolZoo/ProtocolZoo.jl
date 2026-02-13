@@ -15,10 +15,13 @@ import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
 using PrettyTables: PrettyTables, pretty_table
+using Printf: @sprintf
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, BBM92Prot,
+    # BBM92 helpers
+    sifted_key, qber_estimate, keyrate,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
@@ -512,6 +515,7 @@ include("switches.jl")
 using .Switches
 include("qtcp.jl")
 using .QTCP
+include("bbm92.jl")
 
 include("show.jl")
 
