@@ -13,6 +13,8 @@
 - Protocols (subtypes of `AbstractProtocol` in the `ProtocolZoo`) now have rich `show` methods for the `image/png` and `text/html` MIME types
 - Unexported function `permits_virtual_edge` to describe whether a protocol can run between two nodes that are not directly connected.
 - Non-public functions `parent`, `parentindex`, `name`, `namestr`, `timestr`, `compactstr`,  `available_protocol_types`, `available_slot_types`, `available_background_types`, `constructor_metadata` for better introspection capabilities and cleaner printing.
+- `BBM92Prot` protocol for entanglement-based quantum key distribution (BBM92), with helper functions `sifted_key`, `qber_estimate`, and `keyrate` for post-processing the measurement log (issue #137).
+- New interactive example: BBM92 QKD over a repeater chain, demonstrating key generation rate, QBER estimation, and basis sifting statistics.
 
 ## v0.5.1 - 2025-07-14
 

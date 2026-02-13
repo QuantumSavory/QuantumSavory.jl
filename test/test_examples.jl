@@ -55,4 +55,8 @@ end
     include("../examples/repeatergrid/2a_sync_interactive_visualization.jl")
 end
 
+@testitem "Examples - bbm92qkd" tags=[:examples_plotting] begin
+    include("../examples/bbm92qkd/1_interactive_visualization.jl")
+end
+
 end # with_logger
