@@ -94,3 +94,45 @@ tag!(net[3,1], Tag(:sometag, 10, 20))
 initialize!(net[2,1], X1)
 p = registernetplot_axis(fig[1,1], net, observables=[(X, ((1,2),)), (X⊗X⊗X, ((1,1),(2,2),(3,2)))], infocli=false)
 display(fig)
+
+## Tag indicator markers on tagged slots
+
+using QuantumSavory.ProtocolZoo: EntanglementCounterpart
+
+fig = Figure()
+net = RegisterNet([Register(2), Register(2)])
+tag!(net[1,1], Tag(:sometag, 1, 2))
+tag!(net[2,1], Tag(:anothertag, 3))
+_, _, p, _ = registernetplot_axis(fig[1,1], net, infocli=false)
+display(fig)
+
+## Entanglement link visualization
+
+fig = Figure()
+net = RegisterNet([Register(2), Register(2)])
+initialize!((net[1,1], net[2,1]), X1⊗X1)
+tag!(net[1,1], Tag(EntanglementCounterpart, 2, 1))
+tag!(net[2,1], Tag(EntanglementCounterpart, 1, 1))
+_, _, p, _ = registernetplot_axis(fig[1,1], net, infocli=false)
+display(fig)
+
+## Message buffer tooltip content
+
+fig = Figure()
+net = RegisterNet([Register(2), Register(2)])
+put!(net[1], Tag(:hello_msg, 42))
+_, _, p, _ = registernetplot_axis(fig[1,1], net, infocli=false)
+display(fig)
+
+## Custom theme options for tag and entanglement visuals
+
+fig = Figure()
+net = RegisterNet([Register(2), Register(2)])
+tag!(net[1,1], Tag(:sometag, 1, 2))
+tag!(net[1,1], Tag(EntanglementCounterpart, 2, 1))
+tag!(net[2,1], Tag(EntanglementCounterpart, 1, 1))
+_, _, p, _ = registernetplot_axis(fig[1,1], net,
+    tag_markercolor=:red, tag_markersize=0.3,
+    entanglement_linecolor=:blue, entanglement_linewidth=3,
+    infocli=false)
+display(fig)
