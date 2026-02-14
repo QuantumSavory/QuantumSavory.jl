@@ -38,6 +38,8 @@ import QuantumOpticsBase: StateVector, Ket, Operator,
 import QuantumOptics
 import QuantumOptics: timeevolution
 
+import Gabs
+
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, permutesystems,
     projector, identityoperator, embed, dm, expect, ptrace,
     AbstractOperator, AbstractKet, AbstractSuperOperator,
@@ -84,6 +86,8 @@ export
     T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping,
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
+    # measurements.jl
+    HomodyneMeasurement,
     # plots.jl
     registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, generate_map,
     # backends/quantumoptics
@@ -148,9 +152,12 @@ include("querywait.jl")
 include("representations.jl")
 include("backgrounds.jl")
 include("noninstant.jl")
+include("measurements.jl")
 
 include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
+include("backends/gabs/gabs.jl")
+include("backends/gabs/should_upstream.jl")
 
 include("ambiguity_fix.jl")
 
