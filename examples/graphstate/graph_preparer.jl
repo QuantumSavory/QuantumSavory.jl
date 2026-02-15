@@ -14,14 +14,6 @@ import QuantumOpticsBase
 
 ##
 
-# TODO move to a module under ProtocolZoo and make separate nicely documented tests following the style of a very descriptive readme with links to online demos (have online demos)
-# TODO check whether you are happy with the order of fields in the constructors of the structs
-# TODO change all prints to @info messages formatted in the new style and generally make the logs better
-# TODO add logs and show methods in the new style
-# TODO make sure it runs as part of the tests (no annoying logs in the tests)
-
-##
-
 """
     graph_builder(g::Graph)
 
