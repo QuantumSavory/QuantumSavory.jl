@@ -25,7 +25,10 @@ export
     QDatagram, Flow, LinkLevelRequest,
     QTCPPairBegin, QTCPPairEnd,
     LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
-    NetworkNodeController, EndNodeController, LinkController
+    NetworkNodeController, EndNodeController, LinkController,
+    # from MBQCEntanglementDistillation
+    GraphStateConstructor, GraphToResource, PurifierBellMeasurements, PurifierBellMeasurementResults,
+    PurifiedEntanglementCounterpart, MBQCPurificationTracker
 
 abstract type AbstractProtocol end
 
@@ -508,5 +511,7 @@ include("switches.jl")
 using .Switches
 include("qtcp.jl")
 using .QTCP
+include("mbqc.jl")
+using .MBQCEntanglementDistillation
 
 end # module
