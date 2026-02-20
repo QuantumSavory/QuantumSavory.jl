@@ -1,4 +1,6 @@
 @testitem "Project Traceout" tags=[:project_traceout] begin
+using Test
+using QuantumSavory
 
 const bell = StabilizerState("XX ZZ")
 # or equivalently `const bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2`,

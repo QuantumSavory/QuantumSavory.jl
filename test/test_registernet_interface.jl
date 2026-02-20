@@ -1,4 +1,6 @@
 @testitem "RegisterNet Interface" tags=[:registernet_interface] begin
+using Test
+using QuantumSavory
 using Graphs
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer

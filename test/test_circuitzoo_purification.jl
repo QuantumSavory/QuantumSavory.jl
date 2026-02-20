@@ -1,4 +1,6 @@
 @testitem "Circuit Zoo Purification - throws" tags=[:circuitzoo_purification] begin
+using Test
+using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
 

@@ -5,7 +5,8 @@
 - **(breaking)** Some fields of EntanglerProt were renamed for consistency with other protocols. More such renaming is to be expected, for consistency's sake.
 - **(breaking)** The `StatesZoo` now integrates with the `genqo` python package, to provide high accuracy models of the ZALM entanglement source. The previous implementation of the ZALM source was removed.
 - **(breaking)** Renaming `wait(::MessageBuffer)` and `onchange_tag(::Register)` to `onchange`.
-- Stabilized the UUID-based entanglement tracker flow by making test protocols deterministic and relaxing brittle timing checks in the consumer.
+- Querying functions now also return the time at which a tag was tagged.
+- `query_wait` now exists as a much simpler alternative to `onchange` followed by `query`.
 - `GraphStateConstructor` protocol and related tooling for modeling of the iterative construction of a graph state out of Bell pairs.
 - Protocol constructors moving to having constructors that do not require `sim` to be explicitly specified.
 - Noise types now have default parameters, for ease of construction in examples. The default values generally correspond to near-zero noise (e.g. decoherence time of `1e9`).
