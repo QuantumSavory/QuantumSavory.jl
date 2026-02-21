@@ -16,7 +16,7 @@ using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 using QuantumSavory: compactstr
-using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
+using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer, EntanglementCounterpart
 
 using QuantumClifford: QuantumClifford
 using QuantumOpticsBase: QuantumOpticsBase, dm
@@ -41,6 +41,11 @@ using QuantumOpticsBase: QuantumOpticsBase, dm
         state_markercolor = :black,
         state_linecolor = :gray90,
         lock_marker = '⚿',
+        tag_marker = :utriangle,
+        tag_markersize = 0.25,
+        tag_markercolor = :royalblue,
+        entanglement_linecolor = (:orange, 0.7),
+        entanglement_linewidth = 2,
         # The registercoords and observables arguments are not considered "theme" configuration options
     )
 end
@@ -63,6 +68,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     state_coords_backref = Observable(Tuple{Any,Any,Int,Int,Int}[])  # A backreference to the state object and register object and reference indices for each state marker
     observables_backref = Observable(Tuple{Any,Float64}[])           # A backreference to the observable (and its value) for each colored dot visualizing an observable
     observables_links_backref = Observable(Tuple{Any,Float64}[])     # same as above but for the links
+    tag_indicator_coords = Observable(Point2f[])                     # Makie marker locations for slots that have tags
+    entanglement_link_coords = Observable(Point2f[])                 # Lines connecting entangled slot pairs (from EntanglementCounterpart tags)
     rn[:register_backref] = register_backref
     rn[:register_slots_coords_backref] = register_slots_coords_backref
     rn[:state_coords_backref] = state_coords_backref
@@ -121,7 +128,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
             register_rectangles, register_slots_coords,
             state_coords, state_links, lock_coords,
             register_slots_coords_backref, state_coords_backref,
-            observables_coords, observables_links, observables_vals, observables_linkvals
+            observables_coords, observables_links, observables_vals, observables_linkvals,
+            tag_indicator_coords, entanglement_link_coords
         ]
         for a in all_nodes # using a naive `lift` would allocate, so instead we just empty each array and refill it; can still be done more elegantly with lift and preallocation
             empty!(a[])
@@ -186,6 +194,42 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         end
         end
 
+        # Tag indicators and entanglement links (issues #66 and #96)
+        entanglement_pairs = Set{NTuple{4,Int}}()
+        for (iʳᵉᵍ, reg) in enumerate(registers)
+            for iˢˡᵒᵗ in 1:nsubsystems(reg)
+                slot_tags = QuantumSavory.peektags(reg[iˢˡᵒᵗ])
+                if !isempty(slot_tags)
+                    xˢ = registercoords[iʳᵉᵍ][1]
+                    yˢ = registercoords[iʳᵉᵍ][2] + (iˢˡᵒᵗ - 1) * rn[:scale][]
+                    push!(tag_indicator_coords[], Point2f(xˢ, yˢ))
+
+                    # Check for EntanglementCounterpart tags to draw non-local links
+                    for tag in slot_tags
+                        if length(tag) >= 3 && tag[1] === EntanglementCounterpart
+                            remote_node = tag[2]::Int
+                            remote_slot = tag[3]::Int
+                            # Canonical pair ordering to avoid duplicate links
+                            pair = if (iʳᵉᵍ, iˢˡᵒᵗ) < (remote_node, remote_slot)
+                                (iʳᵉᵍ, iˢˡᵒᵗ, remote_node, remote_slot)
+                            else
+                                (remote_node, remote_slot, iʳᵉᵍ, iˢˡᵒᵗ)
+                            end
+                            if pair ∉ entanglement_pairs && 1 <= remote_node <= length(registers)
+                                push!(entanglement_pairs, pair)
+                                x1 = registercoords[pair[1]][1]
+                                y1 = registercoords[pair[1]][2] + (pair[2] - 1) * rn[:scale][]
+                                x2 = registercoords[pair[3]][1]
+                                y2 = registercoords[pair[3]][2] + (pair[4] - 1) * rn[:scale][]
+                                push!(entanglement_link_coords[], Point2f(x1, y1))
+                                push!(entanglement_link_coords[], Point2f(x2, y2))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
         for a in all_nodes
             notify(a)
         end
@@ -204,6 +248,13 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     register_polyplot = poly!(rn, register_rectangles, color=rn[:register_color],
         inspector_label = (self, i, p) -> "a register")
     register_polyplot.inspectable[] = false # TODO this `Poly` plot does not seem to be properly inspectable
+    # Entanglement links (drawn early so they appear behind markers)
+    entanglement_link_plot = linesegments!(
+        rn, entanglement_link_coords,
+        color=rn[:entanglement_linecolor],
+        linewidth=rn[:entanglement_linewidth],
+        linestyle=:dash)
+    entanglement_link_plot.inspectable[] = false
     register_slots_scatterplot = scatter!(
         rn, register_slots_coords,
         marker=rn[:slotmarker], markersize=rn[:slotsize][]*rn[:scale][], color=rn[:slotcolor],
@@ -231,6 +282,13 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         marker=rn[:lock_marker], markersize=rn[:slotsize][]*rn[:scale][],
         markerspace=:data)
     lock_scatterplot.inspectable[] = false
+    # Tag indicators (small markers on slots that have tags)
+    tag_indicator_plot = scatter!(
+        rn, tag_indicator_coords,
+        marker=rn[:tag_marker], markersize=rn[:tag_markersize][]*rn[:scale][],
+        color=rn[:tag_markercolor],
+        markerspace=:data)
+    tag_indicator_plot.inspectable[] = false
 
     # TODO all of these should be wrapped into their own types in order to simplify DataInspector and process_interaction
     rn[:register_polyplot] = register_polyplot
@@ -240,6 +298,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     rn[:state_scatterplot] = state_scatterplot
     rn[:state_linesegmentsplot] = state_linesegmentsplot
     rn[:lock_scatterplot] = lock_scatterplot
+    rn[:tag_indicator_plot] = tag_indicator_plot
+    rn[:entanglement_link_plot] = entanglement_link_plot
     rn
 end
 
@@ -256,7 +316,22 @@ function get_slots_vis_string(backrefs, i)
     else
         "tagged with:\n"*join((" • $(t)" for t in tags), "\n")
     end
-    return "Register $(registeridx) | Slot $(slot)\n $(tags_str)"
+    # Message buffer contents (issue #96)
+    mb_str = ""
+    net = register.netparent[]
+    if !isnothing(net) && haskey(net.cbuffers, registeridx)
+        mb = net.cbuffers[registeridx]
+        msgs = mb.buffer
+        if !isempty(msgs)
+            shown = msgs[max(1, end-4):end]
+            mb_str = "\nMessage buffer ($(length(msgs))):\n" *
+                join((" ✉ $(m.tag)" for m in shown), "\n")
+            if length(msgs) > 5
+                mb_str *= "\n  ... and $(length(msgs) - 5) more"
+            end
+        end
+    end
+    return "Register $(registeridx) | Slot $(slot)\n $(tags_str)$(mb_str)"
 end
 
 function get_state_vis_string(backrefs, i)
