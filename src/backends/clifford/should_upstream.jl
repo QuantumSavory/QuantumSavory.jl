@@ -10,3 +10,5 @@ function QuantumClifford.apply!(state::QuantumClifford.MixedDestabilizer, gseq::
 end
 apply_popindex!(state, g::QuantumClifford.AbstractSingleQubitOperator, indices::AbstractVector{Int}) = QuantumClifford.apply!(state, g(pop!(indices)))
 apply_popindex!(state, g::QuantumClifford.AbstractTwoQubitOperator, indices::AbstractVector{Int}) = QuantumClifford.apply!(state, g(pop!(indices),pop!(indices)))
+
+projector(state::QuantumClifford.Stabilizer) = projector(StabilizerState(state)) # convert to a type that QuantumSymbolics can handle
