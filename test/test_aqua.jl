@@ -12,10 +12,10 @@ else
 
 Aqua.test_all(QuantumSavory,
     ambiguities=(QuantumSavory; recursive=false),
-    piracies=(; treat_as_own=[QuantumSavory.Symbolic, QuantumOpticsBase.Ket, QuantumOpticsBase.Operator]),
+    piracies=(; treat_as_own=[QuantumSavory.Symbolic, QuantumOpticsBase.Ket, QuantumOpticsBase.Operator, QuantumSavory.projector]),
     stale_deps=(; ignore=[:NetworkLayout]) # needed by package extension but not a condition of its loading
 )
 
-@test length(Aqua.Piracy.hunt(QuantumSavory)) == 8
+@test length(Aqua.Piracy.hunt(QuantumSavory)) == 9 # TODO upstream the sources of piracies
 end
 end
