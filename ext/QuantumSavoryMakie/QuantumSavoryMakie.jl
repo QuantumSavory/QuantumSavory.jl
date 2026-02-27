@@ -41,7 +41,8 @@ using QuantumOpticsBase: QuantumOpticsBase, dm
         state_markercolor = :black,
         state_linecolor = :gray90,
         lock_marker = '⚿',
-        # The registercoords and observables arguments are not considered "theme" configuration options
+        registercoords = nothing,
+        observables = nothing,
     )
 end
 
@@ -63,37 +64,36 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     state_coords_backref = Observable(Tuple{Any,Any,Int,Int,Int}[])  # A backreference to the state object and register object and reference indices for each state marker
     observables_backref = Observable(Tuple{Any,Float64}[])           # A backreference to the observable (and its value) for each colored dot visualizing an observable
     observables_links_backref = Observable(Tuple{Any,Float64}[])     # same as above but for the links
-    rn[:register_backref] = register_backref
-    rn[:register_slots_coords_backref] = register_slots_coords_backref
-    rn[:state_coords_backref] = state_coords_backref
-    rn[:observables_backref] = observables_backref
-    rn[:observables_links_backref] = observables_links_backref
+    _extras = Dict{Symbol, Any}(
+        :register_backref => register_backref,
+        :register_slots_coords_backref => register_slots_coords_backref,
+        :state_coords_backref => state_coords_backref,
+        :observables_backref => observables_backref,
+        :observables_links_backref => observables_links_backref,
+    )
 
     # Optional arguments
     ## registercoords -- updates handled explicitly by an `onany` call below
-    if haskey(rn, :registercoords) && !isnothing(rn[:registercoords][])
-        registercoordsobs = rn[:registercoords]
-        registercoords = registercoordsobs[]
+    if !isnothing(rn[:registercoords][])
+        registercoords = rn[:registercoords][]
         registercoords isa Vector{<:Point2} || throw(ArgumentError("While plotting a network layout an incorrect argument was given: `registercoords` has to be of type `Vector{<:Point2}`. You can leave it empty to autogenerate a register layout. You can generate it manually or with packages like `NetworkLayout`."))
-        rn[:registercoords] = registercoordsobs
     else
         adj_matrix = adjacency_matrix(networkobs[].graph)
         registercoords = spring(adj_matrix, iterations=400, C=2*maximum(nsubsystems.(registers)))
-        rn[:registercoords] = Observable(registercoords)
+        rn.registercoords[] = registercoords
     end
     ## slotcolor -- updates handled implicitly (used only in a single `scatter` call)
-    if haskey(rn, :slotcolor) && !isnothing(rn[:slotcolor][])
-        slotcolorobs = rn[:slotcolor]
-        if slotcolorobs[] isa Vector{<:Vector} # A vector of vector of colors (i.e. a vector of colors per register)
-            rn[:slotcolor] = lift(x->reduce(vcat, x), slotcolorobs) # Turn it into a vector of colors
-        end
+    slotcolor_resolved = if rn[:slotcolor][] isa Vector{<:Vector} # A vector of vector of colors (i.e. a vector of colors per register)
+        lift(x->reduce(vcat, x), rn[:slotcolor]) # Turn it into a vector of colors
+    else
+        rn[:slotcolor]
     end
     ## observables -- updates handled explicitly by an `onany` call below
-    if haskey(rn, :observables) && !isnothing(rn[:observables][])
-        observablesobs = rn[:observables]
-        if observablesobs[] isa Vector{<:Tuple{Any,Tuple{Vararg{Tuple{Int,Int}}}}}
+    if !isnothing(rn[:observables][])
+        observablesval = rn[:observables][]
+        if observablesval isa Vector{<:Tuple{Any,Tuple{Vararg{Tuple{Int,Int}}}}}
             observables = Tuple{Any, Tuple{Vararg{Tuple{Int,Int}}}, Vector{Tuple{Int,Int}}}[]
-            for (O, rsidx) in observablesobs[]
+            for (O, rsidx) in observablesval
                 links = Tuple{Int,Int}[]
                 if length(rsidx)>1
                     for (i, (iʳᵉᵍ, iˢˡᵒᵗ)) in enumerate(rsidx)
@@ -103,14 +103,12 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 end
                 push!(observables, (O, rsidx, links))
             end
-            rn[:observables] = Observable(observables)
-        elseif observablesobs[] isa Vector{<:Tuple{Any,Tuple{Vararg{Tuple{Int,Int}}},Vector{Tuple{Int,Int}}}}
+            rn.observables[] = observables
+        elseif observablesval isa Vector{<:Tuple{Any,Tuple{Vararg{Tuple{Int,Int}}},Vector{Tuple{Int,Int}}}}
             # the expected most general format
         else
             throw(ArgumentError("While plotting a network layout an incorrect argument was given: `observables` has to be of type `Vector{<:Tuple{Any, Tuple{...}}}`, i.e. it has to be a vector in which each element is similar to `(X⊗X, ((1,1), (1,2)))`, giving the observable operator and the `(register, slot)` indices for each observed subsystem. There is also a support for adding a third tuple element, a vector specifying the exact links to be drawn."))
         end
-    else
-        rn[:observables] = nothing
     end
 
     # this handles the majority of conversions from input data to graphics coordinates/metadata
@@ -206,7 +204,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     register_polyplot.inspectable[] = false # TODO this `Poly` plot does not seem to be properly inspectable
     register_slots_scatterplot = scatter!(
         rn, register_slots_coords,
-        marker=rn[:slotmarker], markersize=rn[:slotsize][]*rn[:scale][], color=rn[:slotcolor],
+        marker=rn[:slotmarker], markersize=rn[:slotsize][]*rn[:scale][], color=slotcolor_resolved,
         markerspace=:data,
         inspector_label = (self, i, p) -> get_slots_vis_string(register_slots_coords_backref[],i))
     observables_scatterplot = scatter!(
@@ -233,13 +231,14 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     lock_scatterplot.inspectable[] = false
 
     # TODO all of these should be wrapped into their own types in order to simplify DataInspector and process_interaction
-    rn[:register_polyplot] = register_polyplot
-    rn[:register_slots_scatterplot] = register_slots_scatterplot
-    rn[:observables_scatterplot] = observables_scatterplot
-    rn[:observables_linesegmentsplot] = observables_linesegments
-    rn[:state_scatterplot] = state_scatterplot
-    rn[:state_linesegmentsplot] = state_linesegmentsplot
-    rn[:lock_scatterplot] = lock_scatterplot
+    _extras[:register_polyplot] = register_polyplot
+    _extras[:register_slots_scatterplot] = register_slots_scatterplot
+    _extras[:observables_scatterplot] = observables_scatterplot
+    _extras[:observables_linesegmentsplot] = observables_linesegments
+    _extras[:state_scatterplot] = state_scatterplot
+    _extras[:state_linesegmentsplot] = state_linesegmentsplot
+    _extras[:lock_scatterplot] = lock_scatterplot
+    rn[:_extras] = _extras
     rn
 end
 
@@ -278,21 +277,22 @@ end
 function Makie.process_interaction(handler::RNHandler, event::Makie.MouseEvent, axis)
     plot, index = Makie.pick(axis.scene)
     rn = handler.rn
-    #if plot===rn[:register_polyplot][]             # TODO this does not work because poly seems to be much too basic for `pick` to provide a useful reference
-    #    register = rn[:register_backref][][index]
+    extras = rn[:_extras][]
+    #if plot===extras[:register_polyplot]             # TODO this does not work because poly seems to be much too basic for `pick` to provide a useful reference
+    #    register = extras[:register_backref][][index]
     #    run(`clear`)
     #    println("$(register)")
     #else
-    if plot===rn[:register_slots_scatterplot][]
-        register, registeridx, slot = rn[:register_slots_coords_backref][][index]
+    if plot===extras[:register_slots_scatterplot]
+        register, registeridx, slot = extras[:register_slots_coords_backref][][index]
         try run(`clear`) catch end
         println("Register $registeridx | Slot $(slot)\n Details: $(register)")
-    elseif plot===rn[:state_scatterplot][]
-        state, reg, registeridx, slot, subsystem = rn[:state_coords_backref][][index]
+    elseif plot===extras[:state_scatterplot]
+        state, reg, registeridx, slot, subsystem = extras[:state_coords_backref][][index]
         try run(`clear`) catch end
         println("Subsystem stored in Register $(registeridx) | Slot $(slot)\n Subsystem $(subsystem) of $(state)")
-    elseif plot===rn[:observables_scatterplot][]
-        o, val = rn[:observables_backref][][index]
+    elseif plot===extras[:observables_scatterplot]
+        o, val = extras[:observables_backref][][index]
         try run(`clear`) catch end
         println("Observable $(o) has value $(val)")
     end
