@@ -25,6 +25,8 @@ jobs:
       - uses: julia-actions/julia-downgrade-compat@v2
         with:
           projects: .,test
+          skip: Pkg,TOML,InteractiveUtils,Random,LinearAlgebra,Statistics,Printf,Combinatorics,Random,PrecompileTools
+
           julia_version: ${{ matrix.version }}
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
