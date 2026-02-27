@@ -24,8 +24,6 @@ jobs:
           version: ${{ matrix.version }}
       - uses: julia-actions/julia-downgrade-compat@v2
         with:
-          allow_reresolve: false
-          force_latest_compatible_version: false
           projects: .,test
           julia_version: ${{ matrix.version }}
       - uses: julia-actions/cache@v2
