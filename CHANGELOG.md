@@ -5,6 +5,7 @@
 - **(breaking)** Some fields of EntanglerProt were renamed for consistency with other protocols. More such renaming is to be expected, for consistency's sake.
 - **(breaking)** The `StatesZoo` now integrates with the `genqo` python package, to provide high accuracy models of the ZALM entanglement source. The previous implementation of the ZALM source was removed.
 - **(breaking)** Renaming `wait(::MessageBuffer)` and `onchange_tag(::Register)` to `onchange`.
+- **(fix)** `observable` used to incorrectly handle subsystem permutations on some backends in some edge cases, giving wrong results.
 - Querying functions now also return the time at which a tag was tagged.
 - `query_wait` now exists as a much simpler alternative to `onchange` followed by `query`.
 - `GraphStateConstructor` protocol and related tooling for modeling of the iterative construction of a graph state out of Bell pairs.

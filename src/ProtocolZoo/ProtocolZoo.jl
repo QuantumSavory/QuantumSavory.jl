@@ -239,7 +239,9 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
     while rounds != 0
-        isentangled = !isnothing(prot.tag) && !isnothing(query(regA, prot.tag, prot.nodeB, ❓; assigned=true))
+        tagtype = prot.tag
+        isentangled = !isnothing(tagtype) &&
+                      !isnothing(query(regA, tagtype::DataType, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
         (; chooseslotA, chooseslotB, randomize, uselock) = prot
         a_ = findfreeslot(regA; chooseslot=chooseslotA, randomize=randomize, locked=!uselock, margin=margin)
@@ -276,10 +278,10 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-            isnothing(prot.tag) || tag!(a, prot.tag, prot.nodeB, b.idx)
+            isnothing(tagtype) || tag!(a, tagtype::DataType, prot.nodeB, b.idx)
             last_a = a.idx
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-            isnothing(prot.tag) || tag!(b, prot.tag, prot.nodeA, a.idx)
+            isnothing(tagtype) || tag!(b, tagtype::DataType, prot.nodeA, a.idx)
             last_b = b.idx
 
             @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Entangled .$(a.idx) and .$(b.idx)"
@@ -500,7 +502,7 @@ permits_virtual_edge(::EntanglementConsumer) = true
         unlock(q1)
         unlock(q2)
         if !isnothing(prot.period)
-            @yield timeout(prot.sim, prot.period)
+            @yield timeout(prot.sim, prot.period::Float64)
         end
     end
 end

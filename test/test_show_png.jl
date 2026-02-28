@@ -1,4 +1,5 @@
 @testitem "show image/png" tags=[:plotting_cairo] begin
+using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using CairoMakie
