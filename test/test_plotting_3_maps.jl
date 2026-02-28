@@ -25,10 +25,14 @@ notify(netobs)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 display(fig)
+# Let Tyler finish throttled tile updates before shutting down map resources.
+wait(map)
 close(map)
 
 fig = Figure()
 fig, map_axis, map = generate_map()
 _, _, plt, netobs = registernetplot_axis(map_axis, network, registercoords=coords)
 save(File{format"PNG"}(mktemp()[1]), fig)
+# Let Tyler finish throttled tile updates before shutting down map resources.
+wait(map)
 close(map)

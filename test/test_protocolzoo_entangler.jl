@@ -1,5 +1,6 @@
 @testitem "ProtocolZoo Entangler - EntanglerProt" tags=[:protocolzoo_entangler] begin
-using Revise
+using Test
+using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 using ConcurrentSim
 using ResumableFunctions

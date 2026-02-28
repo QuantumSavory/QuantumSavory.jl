@@ -302,6 +302,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
         if !isnothing(success)
             # TODO implement drop detection and window modification
             _, flow_uuid, seq_num, start_time = success.tag
+            start_time = start_time::Float64
             qdatagrams_in_flight[flow_uuid]   -= 1
             pairs_left_to_fulfill[flow_uuid] -= 1
 
@@ -337,6 +338,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
         if !isnothing(qdatagram)
             # We need to generate a QDatagramSuccess message and send it back to the flow source
             _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = qdatagram.tag
+            start_time = start_time::Float64
             qdatagram_success = QDatagramSuccess(flow_uuid, seq_num, start_time)
             put!(channel(net, node=>flow_src; permit_forward=true), qdatagram_success)
             # TODO implement Pauli corrections
@@ -363,7 +365,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 qdatagrams_in_flight[uuid] += 1
                 dst        = destination[uuid]
                 seq_num    = qdatagrams_sent[uuid] += 1
-                start_time = now(sim)
+                start_time = now(sim)::Float64
                 corrections = 0 # TODO implement Pauli corrections
                 qdatagram = QDatagram(uuid, node, dst, corrections, seq_num, start_time)
                 put!(net[node], qdatagram)
@@ -379,14 +381,14 @@ end
 @resumable function (prot::NetworkNodeController)()
     (;sim, net, node) = prot
     mb = messagebuffer(net, node)
-    datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int}}() # keyed by flow_uuid, seq_num; storing datagram and next hop
+    datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int}}() # keyed by flow_uuid, seq_num; storing datagram tag and next hop
     while true
-        qdatagram = querydelete!(mb, QDatagram, ❓, ❓, !=(node), ❓, ❓, ❓)
-        if !isnothing(qdatagram)
-            _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = qdatagram.tag
+        incoming_qdatagram = querydelete!(mb, QDatagram, ❓, ❓, !=(node), ❓, ❓, ❓)
+        if !isnothing(incoming_qdatagram)
+            _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = incoming_qdatagram.tag
             nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
             request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
-            datagrams_in_waiting[(flow_uuid, seq_num)] = (qdatagram.tag, nexthop)
+            datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop)
             put!(mb, request)
         end
 
@@ -396,9 +398,9 @@ end
         if !isnothing(llreply)
             _, flow_uuid, seq_num, memory_slot = llreply.tag
             # Find the corresponding QDatagram that matches this reply
-            qdatagram, nexthop = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
+            queued_tag, nexthop = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
             # Process the entanglement and forward the datagram
-            _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = qdatagram
+            _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = queued_tag
 
             # Perform entanglement swapping
             if node == flow_src

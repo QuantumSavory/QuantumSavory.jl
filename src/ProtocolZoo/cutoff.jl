@@ -53,7 +53,8 @@ end
         end
         @yield lock(slot)
         info = query(slot, EntanglementCounterpart, ❓, ❓)
-        if isnothing(info) || now(sim) - info.time < prot.retention_time
+        sim_time = now(sim)::Float64
+        if isnothing(info) || sim_time - info.time < prot.retention_time
             empty_query = true
             unlock(slot)
             continue
