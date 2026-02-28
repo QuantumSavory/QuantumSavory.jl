@@ -123,7 +123,7 @@ end
 ##
 
 """
-\$TYPEDEF
+$TYPEDEF
 
 A graph state constructor protocol. For a given graph state with n vertices,
 and n registers each containing a communication qubit and a storage qubit,
@@ -155,7 +155,7 @@ For example, constructing this graph will require the following steps:
 - if one of the links in a given round succeeds first, we should execute the corresponding fusion into storage qubits immediately. I.e. if 3-4 succeeds before 1-2, the fusion at 3 and 4 should not wait for the entangler between 1 and 2.
 - if one of the links succeeds before another link in the same round, permit other entanglers to run. I.e. if 1-2 succeeds before 3-4, rerun the edge search (in this particular example there is nothing to do, but that is not always the case).
 
-\$TYPEDFIELDS
+$TYPEDFIELDS
 """
 @kwdef struct GraphStateConstructor <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -255,7 +255,7 @@ end
 #
 
 """
-\$TYPEDEF
+$TYPEDEF
 
 Apply local operations to a graph state to convert it to a locally-equivalent general stabilizer state.
 
@@ -265,7 +265,7 @@ e.g. as provided by the `graphstate` function in QuantumClifford.jl.
 There are constraints to how this protocol works, chiefly it is an "instant classical communication" protocol.
 It is useful in situations where all "registers" or "nodes" are in the same fridge, controlled by a single controller.
 
-\$TYPEDFIELDS
+$TYPEDFIELDS
 """
 @kwdef struct GraphToResource <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -301,11 +301,11 @@ end
 end
 
 """
-\$TYPEDEF
+$TYPEDEF
 
 Message containing the results of Bell measurements performed during purification.
 
-\$TYPEDFIELDS
+$TYPEDFIELDS
 """
 @kwdef struct PurifierBellMeasurementResults
     """the node that performed the measurements"""
@@ -319,14 +319,14 @@ Base.show(io::IO, msg::PurifierBellMeasurementResults) = print(io, "PurifierBell
 Tag(msg::PurifierBellMeasurementResults) = Tag(PurifierBellMeasurementResults, msg.node, msg.measurements_XX, msg.measurements_ZZ)
 
 """
-\$TYPEDEF
+$TYPEDEF
 
 Apply Bell measurements to a number of local nodes, bitpack the results in a single `Int64` and send that information to a remote location.
 
 There are constraints to how this protocol works, chiefly it is an "instant classical communication" protocol.
 It is useful in situations where all "registers" or "nodes" are in the same fridge, controlled by a single controller.
 
-\$TYPEDFIELDS
+$TYPEDFIELDS
 """
 @kwdef struct PurifierBellMeasurements <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -387,11 +387,11 @@ end
 end
 
 """
-\$TYPEDEF
+$TYPEDEF
 
 A tag indicating a purified entanglement with a remote node.
 
-\$TYPEDFIELDS
+$TYPEDFIELDS
 """
 @kwdef struct PurifiedEntanglementCounterpart
     """the remote node we are entangled to after purification"""

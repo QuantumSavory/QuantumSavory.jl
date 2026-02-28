@@ -55,4 +55,8 @@ end
     include("../examples/repeatergrid/2a_sync_interactive_visualization.jl")
 end
 
+@testitem "Examples - purificationMBQC" tags=[:examples] begin
+    include("../examples/purificationMBQC/full_purification_example.jl")
+end
+
 end # with_logger
