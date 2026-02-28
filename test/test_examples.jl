@@ -55,4 +55,8 @@ end
     include("../examples/repeatergrid/2a_sync_interactive_visualization.jl")
 end
 
+@testitem "Examples - ringnetwork" tags=[:examples_plotting] begin
+    include("../examples/ringnetwork/1_interactive_visualization.jl")
+end
+
 end # with_logger
