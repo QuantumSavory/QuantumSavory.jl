@@ -146,7 +146,7 @@ end
 # Test that T1T2Noise reduces to T1 alone when T2 > 2*T1
 
 function test_t1t2_reduces_to_t1(t1, t2, δ)
-    # When T2 = 2*T1, there's no pure dephasing, only amplitude damping
+    # When T2 > 2*T1, there's no pure dephasing, only amplitude damping
     noise_t1t2 = T1T2Noise(t1=t1, t2=t2)
     noise_t1 = T1Decay(t1=t1)
 

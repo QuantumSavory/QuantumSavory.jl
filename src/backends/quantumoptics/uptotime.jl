@@ -115,7 +115,13 @@ function krausops(P::PauliNoise)
 end
 
 """
-The Kraus operators for T₁T₂ are obtained by composing T1 with pure dephasing (if T₂ < 2T₁))
+The Kraus operators for a T₁T₂ process.
+
+Of note, this is **not** the same as having "on top of each other"
+T₁ noise and then an additional "dephasing" noise.
+T₁ is causing dephasing of its own, and T₂ (transverse relaxation time) includes
+dephasing from T₁ and pure dephasing Tᵩ where `1/Tᵩ = 1/T₂ - 1/(2T₁)`.
+See https://qiskit-community.github.io/qiskit-experiments/manuals/characterization/tphi.html for more.
 """
 function krausops(T1T2::T1T2Noise, Δt)
     p = exp(-Δt/T1T2.t1)
@@ -135,7 +141,7 @@ function krausops(T1T2::T1T2Noise, Δt)
     [F*E for F in kraus_dephase for E in kraus_T1]
 end
 
-"""Kraus operators have freedom in how they can be picked -- this fuction exists to provide known alternative implementations for use in testing."""
+"""Kraus operators have freedom in how they can be picked -- this function exists to provide known alternative implementations for use in testing."""
 function krausops_alt end
 
 struct KrausAltWrapper <: AbstractBackground

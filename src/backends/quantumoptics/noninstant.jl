@@ -6,13 +6,8 @@ function apply_noninstant!(state::Operator, state_indices::Vector{Int}, operatio
     for (i,bg) in zip(state_indices,backgrounds)
         if !isnothing(bg)
             ops = lindbladop(bg)
-            # Handle both single operators and tuples of operators
-            if isa(ops, Tuple)
-                for op in ops
-                    push!(lindbladians, e ? embed(base,[i],op) : op)
-                end
-            else
-                push!(lindbladians, e ? embed(base,[i],ops) : ops)
+            for op in ops
+                push!(lindbladians, e ? embed(base,[i],op) : op)
             end
         end
     end
@@ -39,17 +34,17 @@ end
 
 "`1/√T₁ |0⟩⟨1|`"
 function lindbladop(T1::T1Decay)
-    1/√T1.t1 * _lh
+    (1/√T1.t1 * _lh)
 end
 
 "`1/√τ â`"
 function lindbladop(d::AmplitudeDamping, basis)
-    1/√d.τ * destroy(basis)
+    (1/√d.τ * destroy(basis))
 end
 
 "`1/√(2T₂) Z`"
 function lindbladop(T2::T2Dephasing)
-    1 / √(2*T2.t2) * _z
+    (1 / √(2*T2.t2) * _z)
 end
 
 function lindbladop(D::Depolarization)
@@ -68,11 +63,17 @@ Returns a tuple of Lindblad operators:
 - `L₂ = (1/√(2Tᵩ)) Z` for pure dephasing (if T₂ < 2T₁)
 
 where `1/Tᵩ = 1/T₂ - 1/(2T₁)`
+
+Of note, this is **not** the same as having "on top of each other"
+T₁ noise and then an additional "dephasing" noise. As you can see from
+the formula above, T₁ is causing dephasing of its own.
+Thus, T₂ (transverse relaxation time) includes dephasing from T₁ and pure dephasing Tᵩ.
+See https://qiskit-community.github.io/qiskit-experiments/manuals/characterization/tphi.html for more.
 """
 function lindbladop(T1T2::T1T2Noise)
     Tᵩ_inv = 1/T1T2.t2 - 1/(2*T1T2.t1)
 
-    if Tᵩ_inv <= 0
+    if Tᵩ_inv <= 0 # no pure dephasing, so same as T1 implementation above
         return (1/√T1T2.t1 * _lh,)
     end
 
