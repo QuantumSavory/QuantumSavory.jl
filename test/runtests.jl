@@ -28,6 +28,10 @@ using TestItemRunner
 
 function testfilter(tags)
     exclude = Symbol[]
+    if get(ENV,"QUANTUMSAVORY_DOWNGRADE_TEST","")=="true"
+        push!(exclude, :aqua)
+    end
+
     if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
         push!(exclude, :plotting_cairo)
         push!(exclude, :plotting_gl)

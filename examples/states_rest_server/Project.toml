@@ -1,0 +1,9 @@
+[deps]
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+Oxygen = "df9a0d86-3283-4920-82dc-4555fc0d1d8b"
+QuantumOpticsBase = "4f57444f-1401-5e15-980d-4471b28d5678"
+QuantumSavory = "2de2e421-972c-4cb5-a0c3-999c85908079"
+QuantumSymbolics = "efa7fd63-0460-4890-beb7-be1bbdfbaeae"
+
+[sources]
+QuantumSavory = {path = "../.."}

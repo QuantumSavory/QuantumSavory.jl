@@ -113,6 +113,10 @@ function onchange(mb::MessageBuffer)
     @process wait_process(mb.sim, mb)
 end
 
+function onchange(mb::MessageBuffer, ::Type{Any})
+    onchange(mb)
+end
+
 function onchange(mb::MessageBuffer, ::Type{Tag})
     # For now, this behaves the same as the basic version
     onchange(mb)

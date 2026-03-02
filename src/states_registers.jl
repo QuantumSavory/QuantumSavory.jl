@@ -91,6 +91,10 @@ function onchange(r::RegOrRegRef)
     return lock(register.tag_waiter[])
 end
 
+function onchange(r::RegOrRegRef, ::Type{Any})
+    onchange(r)
+end
+
 function onchange(r::RegOrRegRef, ::Type{Tag})
     # For now, this behaves the same as the basic version
     onchange(r)

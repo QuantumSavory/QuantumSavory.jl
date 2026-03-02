@@ -1,4 +1,6 @@
 @testitem "Noninstant and Backgrounds - Qumode" begin
+using Test
+using QuantumSavory
 
 ##
 # Time of application and gate durations

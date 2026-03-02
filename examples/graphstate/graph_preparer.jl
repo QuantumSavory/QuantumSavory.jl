@@ -204,7 +204,7 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
             entangler = EntanglerProt(;
                 sim, net,
                 nodeA, nodeB,
-                chooseA=communication_slot, chooseB=communication_slot,
+                chooseslotA=communication_slot, chooseslotB=communication_slot,
                 tag=nothing,
                 pairstate = StabilizerState("ZX XZ"),
                 uselock=false, rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality

@@ -73,8 +73,9 @@ export
     observable,
     # uptotime.jl
     uptotime!, overwritetime!,
-    # tags.jl and queries.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, findfreeslot,
+    # tags.jl and queries.jl and querywait.jl
+    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    findfreeslot,
     #messagebuffer.jl
     MessageBuffer,
     # quantumchannel.jl
@@ -131,6 +132,8 @@ include("messagebuffer.jl")
 include("networks.jl")
 include("states_registers_networks_getset.jl")
 include("states_registers_networks_shows.jl")
+include("show.jl")
+
 
 include("baseops/subsystemcompose.jl")
 include("baseops/initialize.jl")
@@ -140,6 +143,7 @@ include("baseops/uptotime.jl")
 include("baseops/observable.jl")
 
 include("queries.jl")
+include("querywait.jl")
 
 include("representations.jl")
 include("backgrounds.jl")
@@ -159,8 +163,6 @@ include("CircuitZoo/CircuitZoo.jl")
 include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
-
-include("show.jl")
 
 include("should_upstream.jl")
 include("precompile.jl")
