@@ -34,17 +34,17 @@ end
 
 "`1/√T₁ |0⟩⟨1|`"
 function lindbladop(T1::T1Decay)
-    (1/√T1.t1 * _lh)
+    [1/√T1.t1 * _lh]
 end
 
 "`1/√τ â`"
 function lindbladop(d::AmplitudeDamping, basis)
-    (1/√d.τ * destroy(basis))
+    [1/√d.τ * destroy(basis)]
 end
 
 "`1/√(2T₂) Z`"
 function lindbladop(T2::T2Dephasing)
-    (1 / √(2*T2.t2) * _z)
+    [1 / √(2*T2.t2) * _z]
 end
 
 function lindbladop(D::Depolarization)
@@ -58,7 +58,7 @@ end
 """
 Lindblad operators for combined T₁ and T₂ noise.
 
-Returns a tuple of Lindblad operators:
+Returns a list of Lindblad operators:
 - `L₁ = (1/√T₁) |0⟩⟨1|` for amplitude damping
 - `L₂ = (1/√(2Tᵩ)) Z` for pure dephasing (if T₂ < 2T₁)
 
@@ -74,9 +74,9 @@ function lindbladop(T1T2::T1T2Noise)
     Tᵩ_inv = 1/T1T2.t2 - 1/(2*T1T2.t1)
 
     if Tᵩ_inv <= 0 # no pure dephasing, so same as T1 implementation above
-        return (1/√T1T2.t1 * _lh,)
+        return [1/√T1T2.t1 * _lh]
     end
 
     Tᵩ = 1/Tᵩ_inv
-    (1/√T1T2.t1 * _lh, 1/√(2*Tᵩ) * _z)
+    [1/√T1T2.t1 * _lh, 1/√(2*Tᵩ) * _z]
 end

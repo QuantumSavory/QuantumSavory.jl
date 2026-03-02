@@ -13,12 +13,7 @@ function uptotime!(state::Operator, idx::Int, background, Δt)
     if isnothing(Ks) # TODO turn this into a dispatch on a trait of having a kraus representations
         # TODO code repetition with apply_noninstant!
         L = lindbladop(background,b)
-        # Handle tuple of Lindblad operators (e.g., T1T2Noise)
-        lindbladians = if isa(L, Tuple)
-            [e ? embed(b,[idx],l) : l for l in L]
-        else
-            [e ? embed(b,[idx],L) : L]
-        end
+        lindbladians = [e ? embed(b,[idx],l) : l for l in L]
         _, sol = timeevolution.master([0,Δt], state, identityoperator(b), lindbladians)
         nstate.data .= sol[end].data
     else
