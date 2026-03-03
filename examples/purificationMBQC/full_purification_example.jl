@@ -56,7 +56,7 @@ import QuantumOpticsBase
         for i in 1:n
             entangler = EntanglerProt(sim, net, alice_nodes[i], bob_nodes[i];
                 pairstate=pairstate,
-                chooseA=communication_slot, chooseB=communication_slot,
+                chooseslotA=communication_slot, chooseslotB=communication_slot,
                 success_prob=1.0, attempts=-1, rounds=1)
             e = @process entangler()
             push!(entanglers, e)
@@ -112,14 +112,12 @@ storage_slot = 2
 alice_nodes = collect(1:n+k)
 bob_nodes = collect(n+k+1:2*(n+k))
 
-# Perfect Bell Pairs
-
-
+# Perfect Bell Pairs: purification should be successful every time
 @info "Input fidelity: 1 (Perfect pair)"
 fidelity = 1
 pairstate = noisy_pair_func(perfect_pair, fidelity)
-for i in 1:5
-    println(i)
+for trial in 1:5
+    println(trial)
     registers = [Register(2) for _ in 1:2*(n+k)]
     net = RegisterNet(registers)
     sim = get_time_tracker(net)
@@ -127,28 +125,27 @@ for i in 1:5
     @process run_purification(sim, net, n, resource_state, alice_nodes, bob_nodes,
         communication_slot, storage_slot, pairstate, H1, H2, logxs, logzs, rounds=1)
 
-    run(sim, 50.0)
-    alice_tag = query(net[alice_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓)
-    bob_tag = query(net[bob_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓)
-    # check whether purification was successful
-    #@assert !isnothing(alice_tag)
-    #@assert !isnothing(bob_tag)
-    f = observable([net[alice_nodes[n+i]], net[bob_nodes[n+i]]], [storage_slot, storage_slot], projector(perfect_pair))
-    @info "Purified pair $i: fidelity=$(round(f, digits=4)), alice_tag=$(alice_tag), bob_tag=$(bob_tag)"
-    @assert isapprox(f, 1.0) # Purified pair should be perfect
+    run(sim, 5.0)
+    for i in 1:k
+        alice_tag = query(net[alice_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓)
+        bob_tag = query(net[bob_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓)
+        # check whether purification was successful
+        @assert !isnothing(alice_tag)
+        @assert !isnothing(bob_tag)
+        f = observable([net[alice_nodes[n+i]], net[bob_nodes[n+i]]], [storage_slot, storage_slot], projector(perfect_pair))
+        @info "Purified pair $i: fidelity=$(round(f, digits=4)), alice_tag=$(alice_tag), bob_tag=$(bob_tag)"
+        @assert isapprox(f, 1.0) # Purified pair should be perfect
+    end
 end
-##
-# Verify acceptance rate matches theory: P_accept = (1 + 3p^4) / 4
-# For [[4,2,2]] with Werner input pairs of fidelity F, both syndrome parities
-# pass with probability (1+3p^4)/4 where p = (4F-1)/3 is the Bloch shrink factor.
-##
 
+# Noisy bell pairs: checks for success rate and purification fidelity.
 N_trials = 100
-for test_fidelity in [0.7, 0.75, 0.8, 0.85, 0.9]
+for test_fidelity in [0.5, 0.6, 0.7, 0.8, 0.9]
     p_bloch = (4*test_fidelity - 1) / 3
     P_accept_theory = (1 + 3*p_bloch^4) / 4
 
     n_success = 0
+    total_fidelity = 0.0
     for _ in 1:N_trials
         pairstate_noisy = noisy_pair_func(perfect_pair, test_fidelity)
         regs_trial = [Register(2) for _ in 1:2*(n+k)]
@@ -157,12 +154,18 @@ for test_fidelity in [0.7, 0.75, 0.8, 0.85, 0.9]
         @process run_purification(sim_trial, net_trial, n, resource_state, alice_nodes, bob_nodes,
             communication_slot, storage_slot, pairstate_noisy, H1, H2, logxs, logzs, rounds=1)
         run(sim_trial, 5.0)
-        tag = query(net_trial[alice_nodes[n+1]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓)
-        n_success += !isnothing(tag)
+        tags = [query(net_trial[alice_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓) for i in 1:k]
+        if all(!isnothing, tags)
+            n_success += 1
+            fidelities = [observable([net_trial[alice_nodes[n+i]], net_trial[bob_nodes[n+i]]], [storage_slot, storage_slot], projector(perfect_pair)) for i in 1:k]
+            total_fidelity += sum(fidelities)
+            @assert all(f -> test_fidelity < f, fidelities)
+        end
     end
 
     P_accept_empirical = n_success / N_trials
+    avg_output_fidelity = n_success > 0 ? total_fidelity / (n_success * k) : NaN
     σ = sqrt(P_accept_theory * (1 - P_accept_theory) / N_trials)
-    @info "Acceptance rate (F=$(test_fidelity)): theory=$(round(P_accept_theory, digits=4)), empirical=$(round(P_accept_empirical, digits=4)) ± $(round(4σ, digits=4)) (4σ, N=$(N_trials))"
-    @assert abs(P_accept_empirical - P_accept_theory) < 4σ "Acceptance rate mismatch at F=$(test_fidelity): theory=$(round(P_accept_theory,digits=4)), empirical=$(round(P_accept_empirical,digits=4)), 4σ=$(round(4σ,digits=4))"
+    @info "Acceptance rate (F=$(test_fidelity)): theory=$(round(P_accept_theory, digits=4)), empirical=$(round(P_accept_empirical, digits=4)) ± $(round(4σ, digits=4)) (4σ, N=$(N_trials)), avg output fidelity=$(round(avg_output_fidelity, digits=4))"
+    @assert abs(P_accept_empirical - P_accept_theory) < 4σ
 end
