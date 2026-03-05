@@ -8,7 +8,7 @@ using QuantumSymbolics
 
 @oxidise
 @get "/api/health" function()
-    return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running")
+    return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running -- see implementation details at https://github.com/QuantumSavory/QuantumSavory.jl/tree/main/examples/states_rest_api")
 end
 
 # Barrett-Kok Bell Pair endpoints
@@ -238,8 +238,10 @@ if abspath(PROGRAM_FILE) == @__FILE__
     println("  GET /api/genqo/zalm/parameters - Genqo ZALM parameters info")
     println("  GET /api/genqo/spdc/density-matrix - Genqo SPDC density matrix")
     println("  GET /api/genqo/spdc/parameters - Genqo SPDC parameters info")
-    println()
-    println("Server running on http://localhost:8080")
 
-    serve(port=8080)
+    port = parse(Int, Base.get(ENV, "QS_STATES_REST_SERVER_PORT", "8080"))
+    host = Base.get(ENV, "QS_STATES_REST_SERVER_IP", "127.0.0.1")
+    external_url = Base.get(ENV, "QS_STATES_REST_SERVER_PROXY", nothing)
+    docs_path = Base.get(ENV, "QS_STATES_REST_SERVER_DOCPATH", "/docs")
+    serve(;port, host, external_url, docs_path)
 end

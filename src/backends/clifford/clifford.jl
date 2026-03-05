@@ -9,6 +9,5 @@ function newstate(::Qubit,::CliffordRepr)
     copy(_qc_l)
 end
 
-include("should_upstream.jl")
 include("express.jl")
 include("uptotime.jl")

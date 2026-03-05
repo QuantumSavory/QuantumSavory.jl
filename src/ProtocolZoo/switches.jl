@@ -326,6 +326,8 @@ function _switch_run_swaps(prot, match)
     end
 end
 
+_switch_run_swaps(::SimpleSwitchDiscreteProt, ::Nothing) = nothing # A fix just for JET -- this should not be necessary, but after all the mangling done by @resumable, the compiler can not figure out that the branch in which match is Nothing can not happen.
+
 
 """
 $TYPEDEF

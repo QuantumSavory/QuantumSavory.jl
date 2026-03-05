@@ -57,15 +57,17 @@ Base.length(tag::Tag) = length(SumTypes.unwrap(tag).data)
 Base.iterate(tag::Tag, state=1) = state > length(tag) ? nothing : (SumTypes.unwrap(tag)[state],state+1)
 
 function SumTypes.show_sumtype(io::IO, x::Tag)
-    data = SumTypes.unwrap(x)
-    sym = SumTypes.get_name(data)
-    if length(data.data) == 0
+    unwrapped = SumTypes.unwrap(x)
+    payload = unwrapped.data
+    sym = SumTypes.get_name(unwrapped)
+    if isempty(payload)
         print(io, String(sym), "::Tag")
     else
-        if data[1] isa DataType && data[1]!==Int
-            print(io, data[1](data[2:length(x)]...))
+        first_field = payload[1]
+        if first_field isa DataType && first_field !== Int
+            print(io, first_field(Base.tail(payload)...))
         else
-            print(io, String(sym), '(', join((repr(field) for field ∈ data), ", "), ")::Tag")
+            print(io, String(sym), '(', join((repr(field) for field ∈ payload), ", "), ")::Tag")
         end
     end
 end

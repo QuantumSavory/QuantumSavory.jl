@@ -1,6 +1,6 @@
 @testitem "Plotting GL" tags=[:plotting_gl] begin
-    using GLMakie
-    GLMakie.activate!()
+using GLMakie
+GLMakie.activate!()
 
 @testset "register coordinates" begin
     include("test_plotting_1_regcoords.jl")
@@ -27,6 +27,7 @@ end
     _, ax, plt, obs = registernetplot_axis(fig[1,1],net)
 
     # check the data inspector tooltip functionality
-    @test Base.get_extension(QuantumSavory, :QuantumSavoryMakie).get_state_vis_string(plt.state_coords_backref[],1) == "Subsystem 1 of a state of 1 subsystems, stored in\nRegister 1 | Slot 1\n not tagged"
+    backref = plt._extras[][:state_coords_backref][]
+    @test Base.get_extension(QuantumSavory, :QuantumSavoryMakie).get_state_vis_string(backref,1) == "Subsystem 1 of a state of 1 subsystems, stored in\nRegister 1 | Slot 1\n not tagged"
 end
 end
