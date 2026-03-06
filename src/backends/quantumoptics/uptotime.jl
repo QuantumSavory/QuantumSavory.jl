@@ -139,6 +139,7 @@ end
 """Kraus operators have freedom in how they can be picked -- this function exists to provide known alternative implementations for use in testing."""
 function krausops_alt end
 
+"""Alternative Krauss operator for testing"""
 struct KrausAltWrapper <: AbstractBackground
     noise
 end
