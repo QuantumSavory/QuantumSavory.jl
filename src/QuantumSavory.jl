@@ -81,7 +81,7 @@ export
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
-    T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping,
+    T1Decay, T2Dephasing, T1T2Noise, Depolarization, PauliNoise, AmplitudeDamping,
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
     # plots.jl
