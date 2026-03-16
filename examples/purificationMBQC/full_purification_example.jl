@@ -8,11 +8,11 @@ using QuantumSavory.ProtocolZoo
 import QuantumClifford
 import QuantumOpticsBase
 
-"""Run the full MBQC purification pipeline:
+"""Run the full MBQC purification pipeline described in ["Measurement-Based Entanglement Distillation and Constant-Rate Quantum Repeaters over Arbitrary Distances"](https://journals.aps.org/prl/abstract/10.1103/2bp8-cdxc):
 1. Construct graph states on Alice's and Bob's sides
 2. Convert graph states to resource states via local Clifford corrections
 3. Distribute noisy Bell pairs between Alice and Bob
-4. Perform Bell measurements and apply pauli
+4. Perform Bell measurements and apply Pauli frame corrections
 """
 @resumable function run_purification(sim, net, n, resource_state, alice_nodes, bob_nodes,
                                      communication_slot, storage_slot, pairstate,
@@ -49,7 +49,7 @@ import QuantumOpticsBase
         g2 = @process graphB()
         @yield g1 & g2
 
-        # Step 2&3: Convert to resource states and distribute Bell pairs
+        # Step 2 & 3: Convert to resource states and distribute Bell pairs
         r1 = @process resourceA()
         r2 = @process resourceB()
         entanglers = []
@@ -71,7 +71,11 @@ import QuantumOpticsBase
 end
 
 ##
-# Set up the [4,2,2] CSS code
+# Set up the [4,2,2] CSS code.
+# The protocol takes an [n,k,d] CSS code and uses n noisy Bell pairs
+# to distill k higher-fidelity Bell pairs. In this example, we use n=4, k=2, d=2.
+# The parity check matrices H1 (X-type) and H2 (Z-type) define the syndrome measurements,
+# and logxs/logzs are the logical X and Z operators used to verify the purified pairs.
 ##
 
 """Create a noisy Werner state with fidelity F."""
@@ -103,7 +107,10 @@ resource_state = vcat(
 )
 
 ##
-# Configure and run the simulation
+# Configure and run the simulation.
+# Each node has 2 slots: slot 1 (communication) for Bell pair generation via EntanglerProt,
+# and slot 2 (storage) for holding the graph state qubit.
+# Alice occupies nodes 1..n+k and Bob occupies nodes n+k+1..2*(n+k).
 ##
 
 perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
@@ -112,12 +119,15 @@ storage_slot = 2
 alice_nodes = collect(1:n+k)
 bob_nodes = collect(n+k+1:2*(n+k))
 
-# Perfect Bell Pairs: purification should be successful every time
-@info "Input fidelity: 1 (Perfect pair)"
+# Sanity check with perfect Bell pairs: syndrome should always be trivial,
+# so purification must succeed every time and the k output pairs must have fidelity 1.
+# Here, we check for PurifiedEntanglementCounterpart and calculate the fidelities of the purified pairs.
+@info "Checking perfect Bell pairs (initial fidelity = 1): purification must always succeed with output fidelity 1"
 fidelity = 1
 pairstate = noisy_pair_func(perfect_pair, fidelity)
-for trial in 1:5
-    println(trial)
+N_perfect_trials = 5
+for trial in 1:N_perfect_trials
+    @info "Trial $trial:"
     registers = [Register(2) for _ in 1:2*(n+k)]
     net = RegisterNet(registers)
     sim = get_time_tracker(net)
@@ -127,20 +137,28 @@ for trial in 1:5
 
     run(sim, 5.0)
     for i in 1:k
+        # The last k nodes on each side (indices n+1..n+k) hold the purified logical qubits
         alice_tag = query(net[alice_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓)
         bob_tag = query(net[bob_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓)
-        # check whether purification was successful
+        # Both sides must have PurifiedEntanglementCounterpart
         @assert !isnothing(alice_tag)
         @assert !isnothing(bob_tag)
+        # Measure fidelity with the ideal Bell state
         f = observable([net[alice_nodes[n+i]], net[bob_nodes[n+i]]], [storage_slot, storage_slot], projector(perfect_pair))
-        @info "Purified pair $i: fidelity=$(round(f, digits=4)), alice_tag=$(alice_tag), bob_tag=$(bob_tag)"
+        @info "  Purified pair $i: fidelity=$(round(f, digits=4))"
         @assert isapprox(f, 1.0) # Purified pair should be perfect
     end
 end
 
-# Noisy bell pairs: checks for success rate and purification fidelity.
+# Noisy Werner state sweep: for each input fidelity F, verify two things:
+#   1. Acceptance rate matches the theoretical value P_accept = (1 + 3p^4) / 4,
+#      where p = (4F-1)/3 is the depolarizing parameter.
+#   2. Every accepted output pair has fidelity strictly higher than the input (purification gain).
+# The assertion uses a 4σ tolerance band to account for statistical fluctuations over N_trials.
 N_trials = 100
+@info "Noisy Bell pairs sweep: launching $N_trials simulations per fidelity value"
 for test_fidelity in [0.5, 0.6, 0.7, 0.8, 0.9]
+    @info "Starting trials for input fidelity F=$(test_fidelity)"
     p_bloch = (4*test_fidelity - 1) / 3
     P_accept_theory = (1 + 3*p_bloch^4) / 4
 
@@ -154,11 +172,13 @@ for test_fidelity in [0.5, 0.6, 0.7, 0.8, 0.9]
         @process run_purification(sim_trial, net_trial, n, resource_state, alice_nodes, bob_nodes,
             communication_slot, storage_slot, pairstate_noisy, H1, H2, logxs, logzs, rounds=1)
         run(sim_trial, 5.0)
+        # Check Alice's k output slots for PurifiedEntanglementCounterpart tags to see if purification was successful
         tags = [query(net_trial[alice_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓) for i in 1:k]
         if all(!isnothing, tags)
             n_success += 1
             fidelities = [observable([net_trial[alice_nodes[n+i]], net_trial[bob_nodes[n+i]]], [storage_slot, storage_slot], projector(perfect_pair)) for i in 1:k]
             total_fidelity += sum(fidelities)
+            # Each purified pair must be strictly better than the raw input
             @assert all(f -> test_fidelity < f, fidelities)
         end
     end
@@ -166,6 +186,7 @@ for test_fidelity in [0.5, 0.6, 0.7, 0.8, 0.9]
     P_accept_empirical = n_success / N_trials
     avg_output_fidelity = n_success > 0 ? total_fidelity / (n_success * k) : NaN
     σ = sqrt(P_accept_theory * (1 - P_accept_theory) / N_trials)
-    @info "Acceptance rate (F=$(test_fidelity)): theory=$(round(P_accept_theory, digits=4)), empirical=$(round(P_accept_empirical, digits=4)) ± $(round(4σ, digits=4)) (4σ, N=$(N_trials)), avg output fidelity=$(round(avg_output_fidelity, digits=4))"
+    @info "F=$(test_fidelity) results: acceptance theory=$(round(P_accept_theory, digits=4)), empirical=$(round(P_accept_empirical, digits=4)) ± $(round(4σ, digits=4)) (4σ), avg output fidelity=$(round(avg_output_fidelity, digits=4))"
+    # Empirical rate must fall within 4σ of theory
     @assert abs(P_accept_empirical - P_accept_theory) < 4σ
 end
