@@ -33,3 +33,5 @@ end
     @test Base.get_extension(QuantumSavory, :QuantumSavoryMakie).get_state_vis_string(backref,1) == "Subsystem 1 of a state of 1 subsystems, stored in\nRegister 1 | Slot 1\n not tagged"
 end
 end
+
+GLMakie.closeall()
