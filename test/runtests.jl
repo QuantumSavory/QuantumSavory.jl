@@ -34,10 +34,10 @@ end
 
 # ENV-based filtering
 if get(ENV,"QUANTUMSAVORY_DOWNGRADE_TEST","")=="true"
-    delete!(testsuite, "test_aqua_tests")
+    delete!(testsuite, "aqua_tests")
 end
 if get(ENV,"JET_TEST","")!="true"
-    delete!(testsuite, "test_jet_tests")
+    delete!(testsuite, "jet_tests")
 end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
