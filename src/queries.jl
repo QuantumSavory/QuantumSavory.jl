@@ -112,14 +112,14 @@ whether the given slot is locked or whether it contains a quantum state.
 The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
 defaulting to `filo=true` (i.e. a stack-like behavior).
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
 
 
 julia> query(r, :symbol, 4, 5)
-(slot = Slot 2, id = 4, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+(slot = 1043859625813851568.2, id = 4, tag = SymbolIntInt(:symbol, 4, 5)::Tag, time = 0.0)
 
 julia> lock(r[1]);
 
@@ -127,7 +127,7 @@ julia> query(r, :symbol, 4, 5; locked=false) |> isnothing
 false
 
 julia> query(r, :symbol, ❓, 3)
-(slot = Slot 1, id = 3, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = 1043859625813851568.1, id = 3, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 
 julia> query(r, :symbol, ❓, 3; assigned=true) |> isnothing
 true
@@ -144,7 +144,7 @@ julia> query(r, Int, 4, >(7)) |> isnothing
 true
 
 julia> query(r, Int, 4, <(7))
-(slot = Slot 5, id = 5, tag = TypeIntInt(Int64, 4, 5)::Tag)
+(slot = 1043859625813851568.5, id = 5, tag = TypeIntInt(Int64, 4, 5)::Tag, time = 0.0)
 ```
 
 A [`query`](@ref) can be on on a single slot of a register:

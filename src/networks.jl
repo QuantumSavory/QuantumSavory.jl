@@ -81,7 +81,7 @@ A network of 4 registers in a graph of 4 edges
 
 
 julia> neighbors(net, 1) # from Graphs.jl
-2-element Vector{Int64}:
+2-element Graphs.FrozenVector{Int64}:
  2
  3
 ```

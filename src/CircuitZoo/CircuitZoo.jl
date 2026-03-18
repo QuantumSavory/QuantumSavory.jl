@@ -250,6 +250,7 @@ julia> a = Register(3)
        initialize!((a[1], b[1]), bell)
        initialize!((a[2], b[2]), bell)
        initialize!((a[3], b[3]), bell);
+
 julia> Purify3to1(:Z, :Y)(a[1], b[1], a[2], a[3], b[2], b[3])
 true
 ```
