@@ -75,7 +75,7 @@ julia> Purify2to1(:X)(a[1], b[1], a[2], b[2])
 true
 
 julia> observable((a[1], b[1]), projector(bell))
-1.0 + 0.0im
+1.0
 ```
 
 However, an error might have occurred on the initial state. If the error is detectable,
@@ -93,7 +93,7 @@ julia> Purify2to1(:X)(a[1], b[1], a[2], b[2])
 false
 
 julia> a
-Register with 2 slots: [ Qubit | Qubit ]
+Register  with 2 slots: [ Qubit | Qubit ]
   Slots:
     nothing
     nothing
@@ -115,7 +115,7 @@ julia> Purify2to1(:X)(a[1], b[1], a[2], b[2])
 true
 
 julia> observable((a[1], b[1]), projector(bell))
-0.0 + 0.0im
+0.0
 ```
 
 See also: [`Purify2to1Node`](@ref), [`Purify3to1`](@ref), [`PurifyExpedient`](@ref), [`PurifyStringent`](@ref)
@@ -250,8 +250,6 @@ julia> a = Register(3)
        initialize!((a[1], b[1]), bell)
        initialize!((a[2], b[2]), bell)
        initialize!((a[3], b[3]), bell);
-
-# purifiedL, purifiedR, sacrificedL1, sacrificedL2, sacrificedR1, sacrificedR2
 julia> Purify3to1(:Z, :Y)(a[1], b[1], a[2], a[3], b[2], b[3])
 true
 ```

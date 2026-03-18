@@ -77,22 +77,22 @@ $TYPEDSIGNATURES
 
 A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
 
 julia> queryall(r, :symbol, ❓, ❓)
-2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
- (slot = Slot 1, id = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 15531193455478883312.2, id = 16, tag = SymbolIntInt(:symbol, 4, 5)::Tag, time = 0.0)
+ (slot = 15531193455478883312.1, id = 15, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 
 julia> queryall(r, :symbol, ❓, >(4))
-1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 15531193455478883312.2, id = 16, tag = SymbolIntInt(:symbol, 4, 5)::Tag, time = 0.0)
 
 julia> queryall(r, :symbol, ❓, >(5))
-@NamedTuple{slot::RegRef, id::Int128, tag::Tag}[]
+@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}[]
 ```
 """
 queryall(reg::RegOrRegRef, queryargs::Vararg{QueryTypes,N}; filo=true, kwargs...) where {N} = _query(reg, Val{true}(), Val{filo}(), queryargs...; kwargs...)
@@ -149,20 +149,20 @@ julia> query(r, Int, 4, <(7))
 
 A [`query`](@ref) can be on on a single slot of a register:
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> r = Register(5);
 
 julia> tag!(r[2], :symbol, 2, 3);
 
 julia> query(r[2], :symbol, 2, 3)
-(slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = 2589040728030450388.2, id = 14, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 
 julia> query(r[3], :symbol, 2, 3) === nothing
 true
 
 julia> queryall(r[2], :symbol, 2, 3)
-1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 2589040728030450388.2, id = 14, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 ```
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
@@ -335,23 +335,23 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RegRef`](@ref)) that also deletes the tag.
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> reg = Register(3)
        tag!(reg[1], :tagA, 1, 2, 3)
        tag!(reg[2], :tagA, 10, 20, 30)
        tag!(reg[2], :tagB, 6, 7, 8);
 
 julia> queryall(reg, :tagA, ❓, ❓, ❓)
-2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
- (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 767672459337976635.2, id = 19, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag, time = 0.0)
+ (slot = 767672459337976635.1, id = 18, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag, time = 0.0)
 
 julia> querydelete!(reg, :tagA, ❓, ❓, ❓)
-(slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
+(slot = 767672459337976635.2, id = 19, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag, time = 0.0)
 
 julia> queryall(reg, :tagA, ❓, ❓, ❓)
-1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 767672459337976635.1, id = 18, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag, time = 0.0)
 ```
 """
 function querydelete!(reg::RegOrRegRef, args...; kwa...)
