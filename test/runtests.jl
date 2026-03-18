@@ -24,48 +24,21 @@ else
 end
 
 using QuantumSavory
-using TestItemRunner
+using ParallelTestRunner
 
-function testfilter(tags)
-    exclude = Symbol[]
-    if get(ENV,"QUANTUMSAVORY_DOWNGRADE_TEST","")=="true"
-        push!(exclude, :aqua)
-    end
-
-    if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
-        push!(exclude, :plotting_cairo)
-        push!(exclude, :plotting_gl)
-        push!(exclude, :doctests)
-    else
-        return :plotting_cairo in tags || :plotting_gl in tags || :doctests in tags
-    end
-
-    if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
-        push!(exclude, :examples_plotting)
-    else
-        return :examples_plotting in tags
-    end
-
-    if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
-        push!(exclude, :examples)
-    else
-        return :examples in tags
-    end
-
-    if get(ENV,"JET_TEST","")!="true"
-        push!(exclude, :jet)
-    else
-        return :jet in tags
-    end
-
-    return all(!in(exclude), tags)
+# Discover tests and filter to only _tests files
+testsuite = find_tests(@__DIR__)
+filter!(testsuite) do (name, _)
+    endswith(name, "_tests")
 end
 
+# ENV-based filtering
+if get(ENV,"QUANTUMSAVORY_DOWNGRADE_TEST","")=="true"
+    delete!(testsuite, "test_aqua_tests")
+end
+if get(ENV,"JET_TEST","")!="true"
+    delete!(testsuite, "test_jet_tests")
+end
 
 println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
-@run_package_tests filter=ti->testfilter(ti.tags) verbose=true
-
-if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-    import GLMakie
-    GLMakie.closeall() # to avoid errors when running headless
-end
+runtests(QuantumSavory, ARGS; testsuite)
