@@ -1,0 +1,9 @@
+[deps]
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+QuantumSavory = "2de2e421-972c-4cb5-a0c3-999c85908079"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+QuantumSavory = {path = "../../.."}
