@@ -1,7 +1,8 @@
+using JET
+using Test
+using QuantumSavory
+
 @testset "JET JET checks" begin
-    using JET
-    using Test
-    using QuantumSavory
 
     rep = JET.report_package(QuantumSavory; target_modules=(QuantumSavory,))
     println(rep)

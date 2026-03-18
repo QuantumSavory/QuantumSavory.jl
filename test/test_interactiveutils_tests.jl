@@ -1,9 +1,10 @@
-@testset "InteractiveUtils" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using InteractiveUtils
 using REPL
+
+@testset "InteractiveUtils" begin
 
 bgs = QuantumSavory.available_background_types()
 QuantumSavory.constructor_metadata.([bg.type for bg in bgs])

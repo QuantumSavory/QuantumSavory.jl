@@ -1,8 +1,9 @@
-@testset "AQUA Aqua" begin
 using Test
 using Aqua
 using QuantumOpticsBase
 using QuantumSavory
+
+@testset "AQUA Aqua" begin
 
 if get(ENV,"JET_TEST","")=="true"
 # JET generates new methods with ambiguities

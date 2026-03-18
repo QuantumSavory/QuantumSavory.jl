@@ -1,8 +1,9 @@
-@testset "REGISTER_INTERFACE Register Interface" begin
 using Test
 using QuantumSavory
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
+
+@testset "REGISTER_INTERFACE Register Interface" begin
 
 ##
 # no backgrounds

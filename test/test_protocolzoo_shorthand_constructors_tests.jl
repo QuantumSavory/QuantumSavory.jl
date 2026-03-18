@@ -1,9 +1,10 @@
-@testset "PROTOCOLZOO_SHORTHAND_CONSTRUCTORS ProtocolZoo Shorthand Constructors" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt
 using QuantumSavory.ProtocolZoo.QTCP: EndNodeController, NetworkNodeController, LinkController
 using ConcurrentSim
+
+@testset "PROTOCOLZOO_SHORTHAND_CONSTRUCTORS ProtocolZoo Shorthand Constructors" begin
 
 # Create a simple network for testing
 net = RegisterNet([Register(3), Register(3), Register(3)])

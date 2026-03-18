@@ -1,10 +1,11 @@
-@testset "AsymmetricSemaphore functionality" begin
 using Test
 using QuantumSavory
 using QuantumSavory: AsymmetricSemaphore
 using ConcurrentSim
 using ResumableFunctions
 import Base: unlock, lock
+
+@testset "AsymmetricSemaphore functionality" begin
 
 ##
 

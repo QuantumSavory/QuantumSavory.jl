@@ -1,13 +1,14 @@
-@testset "PROTOCOLZOO_CUTOFFPROT ProtocolZoo CutoffProt" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
-
 using ConcurrentSim
 using ResumableFunctions
+using Logging
+
+@testset "PROTOCOLZOO_CUTOFFPROT ProtocolZoo CutoffProt" begin
+
 
 if isinteractive()
-    using Logging
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")

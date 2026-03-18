@@ -1,8 +1,9 @@
-@testset "Noninstant and Backgrounds - Qubit" begin
 using Test
 using QuantumSavory: NonInstantGate
 using QuantumSavory
 using LinearAlgebra
+
+@testset "Noninstant and Backgrounds - Qubit" begin
 
 ##
 # Time of application and gate durations

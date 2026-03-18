@@ -1,10 +1,11 @@
-@testset "Quantum Channel" begin
 using Test
 using QuantumSavory
 using ResumableFunctions
 using ConcurrentSim
 
 bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
+
+@testset "Quantum Channel" begin
 
 ## Manually construct a QuantumChannel and test a simple put/take
 
@@ -37,12 +38,6 @@ sref = regB.staterefs[1]
 end
 
 @testset "Quantum Channel - alternative constructor" begin
-using Test
-using QuantumSavory
-using ResumableFunctions
-using ConcurrentSim
-
-bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
 ## Test with the second constructor
 
@@ -67,12 +62,6 @@ sref = regB.staterefs[1]
 end
 
 @testset "Quantum Channel with T1 decay" begin
-using Test
-using QuantumSavory
-using ResumableFunctions
-using ConcurrentSim
-
-bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
 ## Test with T1Decay
 
@@ -101,12 +90,6 @@ uptotime!(reg[1], 10.0)
 end
 
 @testset "Quantum Channel with T2 dephasing" begin
-using Test
-using QuantumSavory
-using ResumableFunctions
-using ConcurrentSim
-
-bell = (Z1⊗Z1 + Z2⊗Z2)/sqrt(2.0)
 
 ## Test with T2Dephasing
 

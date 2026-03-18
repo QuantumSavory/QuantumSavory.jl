@@ -1,8 +1,9 @@
-@testset "TAGS_AND_QUERIES Tags and Queries" begin
 using Test
 using QuantumSavory
 using QuantumSavory: tag_types
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart
+
+@testset "TAGS_AND_QUERIES Tags and Queries" begin
 
 function strip_id(query_result)
     return (;slot=query_result.slot, tag=query_result.tag)

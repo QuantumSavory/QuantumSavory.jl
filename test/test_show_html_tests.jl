@@ -1,7 +1,8 @@
-@testset "show text/html" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
+
+@testset "show text/html" begin
 
 #out = stdout
 out = IOBuffer()

@@ -1,4 +1,3 @@
-@testset "PROTOCOLZOO_SWITCH ProtocolZoo Switch - SimpleSwitchDiscreteProt" begin
 using Revise
 using ResumableFunctions
 using ConcurrentSim
@@ -6,9 +5,11 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using Graphs
 using Test
+using Logging
+
+@testset "PROTOCOLZOO_SWITCH ProtocolZoo Switch - SimpleSwitchDiscreteProt" begin
 
 if isinteractive()
-    using Logging
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")

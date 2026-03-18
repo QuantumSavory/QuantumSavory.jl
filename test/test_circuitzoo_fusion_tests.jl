@@ -1,15 +1,17 @@
-@testset "CIRCUITZOO_FUSION Circuit Zoo Fusion" begin
 using Test
 using Graphs
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: Fusion
+
 import QuantumClifford
 import QuantumOpticsBase
 
 const pairstate = StabilizerState("ZX XZ")
 const communication_slot = 1
 const storage_slot = 2
+
+@testset "CIRCUITZOO_FUSION Circuit Zoo Fusion" begin
 
 for n in 2:6, k in 1:5
     if k < n && n*k % 2 == 0

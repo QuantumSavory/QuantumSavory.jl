@@ -1,6 +1,7 @@
-@testset "Noninstant and Backgrounds - Qumode" begin
 using Test
 using QuantumSavory
+
+@testset "Noninstant and Backgrounds - Qumode" begin
 
 ##
 # Time of application and gate durations

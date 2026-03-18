@@ -1,10 +1,11 @@
-@testset "StatesZoo API" begin
 using Test
 using QuantumSavory
 using QuantumSavory.StatesZoo
 using QuantumSavory.StatesZoo.Genqo: GenqoUnheraldedSPDCBellPairW, GenqoMultiplexedCascadedBellPairW
 using QuantumOpticsBase
 using LinearAlgebra
+
+@testset "StatesZoo API" begin
 
 _evalf(x::Number) = x
 _evalf(x) = express(x)

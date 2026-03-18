@@ -1,9 +1,10 @@
-@testset "Observable" begin
 using Test
 using QuantumSavory
 using QuantumClifford: Stabilizer
 using Graphs: Graph, add_edge!, add_vertices!
 using QuantumOpticsBase: Ket
+
+@testset "Observable" begin
 
 @testset "entangled observable" begin
     bell = StabilizerState("XX ZZ")

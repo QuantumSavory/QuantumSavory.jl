@@ -1,6 +1,7 @@
-@testset "Apply" begin
 using Test
 using QuantumSavory
+
+@testset "Apply" begin
 
 gate = tensor(X, Z)
 express(gate, CliffordRepr(), UseAsOperation())

@@ -1,7 +1,8 @@
-@testset "Noninstant and Backgrounds - Clifford" begin
 using Test
 using QuantumSavory
 using Statistics: mean
+
+@testset "Noninstant and Backgrounds - Clifford" begin
 
 ##
 # state vector vs clifford comparison of background noise processes

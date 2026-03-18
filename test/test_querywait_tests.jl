@@ -1,7 +1,8 @@
-@testset "QUERYWAIT Query Wait" begin
 using Test
 using QuantumSavory
 using ResumableFunctions, ConcurrentSim
+
+@testset "QUERYWAIT Query Wait" begin
 
 @testset "querydelete_wait!" begin
     @resumable function sender(sim, store, putf)

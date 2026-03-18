@@ -1,7 +1,8 @@
-@testset "CIRCUITZOO_SUPERDENSE Circuit Zoo Super Dense" begin
 using Test
 using QuantumSavory
 using QuantumSavory.CircuitZoo: SDEncode, SDDecode
+
+@testset "CIRCUITZOO_SUPERDENSE Circuit Zoo Super Dense" begin
 
 for i in 1:8
     ## Set up an entangled bell pair

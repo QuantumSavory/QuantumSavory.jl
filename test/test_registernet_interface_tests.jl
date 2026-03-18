@@ -1,9 +1,10 @@
-@testset "REGISTERNET_INTERFACE RegisterNet Interface" begin
 using Test
 using QuantumSavory
 using Graphs
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
+
+@testset "REGISTERNET_INTERFACE RegisterNet Interface" begin
 
 ##
 

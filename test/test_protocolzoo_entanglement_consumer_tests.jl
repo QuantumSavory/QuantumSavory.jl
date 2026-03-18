@@ -1,13 +1,14 @@
-@testset "PROTOCOLZOO_ENTANGLEMENT_CONSUMER ProtocolZoo Entanglement Consumer" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 using Graphs
 using ConcurrentSim
 using ResumableFunctions
+using Logging
+
+@testset "PROTOCOLZOO_ENTANGLEMENT_CONSUMER ProtocolZoo Entanglement Consumer" begin
 
 if isinteractive()
-    using Logging
     logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")

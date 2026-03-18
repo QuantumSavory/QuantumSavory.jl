@@ -1,13 +1,14 @@
-@testset "QTCP" begin
-
-##
-
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using ConcurrentSim
 using Graphs
 using Random
 using Test
+
+@testset "QTCP" begin
+
+##
+
 
 @testset "EndNodeController turning Flow into QDatagram" begin
     # Create registers with a few qubits each

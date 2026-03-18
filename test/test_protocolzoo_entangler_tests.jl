@@ -1,9 +1,10 @@
-@testset "PROTOCOLZOO_ENTANGLER ProtocolZoo Entangler - EntanglerProt" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer
 using ConcurrentSim
 using ResumableFunctions
+
+@testset "PROTOCOLZOO_ENTANGLER ProtocolZoo Entangler - EntanglerProt" begin
 
 net = RegisterNet([Register(5), Register(5)])
 sim = get_time_tracker(net)

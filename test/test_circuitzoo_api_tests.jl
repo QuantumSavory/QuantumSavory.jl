@@ -1,9 +1,10 @@
-@testset "CIRCUITZOO_API Circuit Zoo API" begin
 using Test
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: AbstractCircuit, inputqubits
 using InteractiveUtils
+
+@testset "CIRCUITZOO_API Circuit Zoo API" begin
 
 for T in subtypes(AbstractCircuit)
     circ = T()

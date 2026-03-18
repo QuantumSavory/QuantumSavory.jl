@@ -1,4 +1,3 @@
-@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER ProtocolZoo Entanglement Tracker" begin
 using Test
 using QuantumSavory
 using ResumableFunctions
@@ -6,9 +5,13 @@ using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
+using Revise
+using Random
+using Logging
+
+@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER ProtocolZoo Entanglement Tracker" begin
 
 if isinteractive()
-    using Logging
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")
@@ -67,16 +70,7 @@ end
 
 ##
 
-using Revise
-using ResumableFunctions
-using ConcurrentSim
-using QuantumSavory.ProtocolZoo
-using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
-using Graphs
-using Random
-
 if isinteractive()
-    using Logging
     logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")

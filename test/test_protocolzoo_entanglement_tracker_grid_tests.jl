@@ -1,4 +1,3 @@
-@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER_GRID ProtocolZoo Entanglement Tracker Grid" begin
 using Test
 using Revise
 using ResumableFunctions
@@ -7,9 +6,11 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
+using Logging
+
+@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER_GRID ProtocolZoo Entanglement Tracker Grid" begin
 
 if isinteractive()
-    using Logging
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
     println("Logger set to debug")

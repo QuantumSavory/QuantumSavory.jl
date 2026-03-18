@@ -1,4 +1,3 @@
-@testset "PROTOCOLZOO_SWAPPER ProtocolZoo Swapper chooseslots" begin
 using Test
 using QuantumSavory
 using ResumableFunctions
@@ -6,6 +5,8 @@ using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
+
+@testset "PROTOCOLZOO_SWAPPER ProtocolZoo Swapper chooseslots" begin
 
 struct SwapTag end
 
