@@ -1,6 +1,4 @@
 [default.extend-words]
 ket = "ket"
 BA = "BA"
-
-[files]
-extend-exclude = ["src/StatesZoo/zalm/*.nb"]
+IZ = "IZ"

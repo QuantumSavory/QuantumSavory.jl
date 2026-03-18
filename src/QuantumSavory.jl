@@ -73,14 +73,15 @@ export
     observable,
     # uptotime.jl
     uptotime!, overwritetime!,
-    # tags.jl and queries.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, findfreeslot,
+    # tags.jl and queries.jl and querywait.jl
+    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    findfreeslot,
     #messagebuffer.jl
     MessageBuffer,
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
-    T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping,
+    T1Decay, T2Dephasing, T1T2Noise, Depolarization, PauliNoise, AmplitudeDamping,
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
     # plots.jl
@@ -142,6 +143,7 @@ include("baseops/uptotime.jl")
 include("baseops/observable.jl")
 
 include("queries.jl")
+include("querywait.jl")
 
 include("representations.jl")
 include("backgrounds.jl")

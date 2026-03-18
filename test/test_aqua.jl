@@ -1,4 +1,5 @@
 @testitem "Aqua" tags=[:aqua] begin
+using Test
 using Aqua
 using QuantumOpticsBase
 using QuantumSavory
@@ -15,6 +16,6 @@ Aqua.test_all(QuantumSavory,
     stale_deps=(; ignore=[:NetworkLayout]) # needed by package extension but not a condition of its loading
 )
 
-@test length(Aqua.Piracy.hunt(QuantumSavory)) == 8
+@test length(Aqua.Piracy.hunt(QuantumSavory)) == 8 # TODO upstream the sources of piracies
 end
 end

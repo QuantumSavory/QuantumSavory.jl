@@ -1,4 +1,6 @@
 @testitem "Register Interface" tags=[:register_interface] begin
+using Test
+using QuantumSavory
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
 

@@ -1,4 +1,5 @@
 @testitem "Noninstant and Backgrounds - Clifford" begin
+using Test
 using QuantumSavory
 using Statistics: mean
 
