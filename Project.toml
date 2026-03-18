@@ -4,7 +4,7 @@ authors = ["Stefan Krastanov <stefan@krastanov.org>"]
 version = "0.6.0"
 
 [workspace]
-projects = ["docs", "test", "test/projects/plotting", "test/projects/examples", "test/projects/jet", "benchmark", "examples", "examples/states_rest_server"]
+projects = ["docs", "test", "test/projects/plotting", "test/projects/examples", "benchmark", "examples", "examples/states_rest_server"]
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
