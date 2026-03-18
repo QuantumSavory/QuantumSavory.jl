@@ -1,4 +1,4 @@
-@testitem "Noninstant and Backgrounds - Qumode" begin
+@testset "Noninstant and Backgrounds - Qumode" begin
 using Test
 using QuantumSavory
 

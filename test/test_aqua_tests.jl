@@ -1,4 +1,4 @@
-@testitem "Aqua" tags=[:aqua] begin
+@testset "AQUA Aqua" begin
 using Test
 using Aqua
 using QuantumOpticsBase

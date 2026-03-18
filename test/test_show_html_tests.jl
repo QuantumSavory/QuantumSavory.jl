@@ -1,4 +1,4 @@
-@testitem "show text/html" begin
+@testset "show text/html" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo

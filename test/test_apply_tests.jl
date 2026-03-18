@@ -1,4 +1,4 @@
-@testitem "Apply" begin
+@testset "Apply" begin
 using Test
 using QuantumSavory
 

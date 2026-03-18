@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo CutoffProt" tags=[:protocolzoo_cutoffprot] begin
+@testset "PROTOCOLZOO_CUTOFFPROT ProtocolZoo CutoffProt" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo

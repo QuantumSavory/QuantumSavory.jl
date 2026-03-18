@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Entanglement Tracker" tags=[:protocolzoo_entanglement_tracker] begin
+@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER ProtocolZoo Entanglement Tracker" begin
 using Test
 using QuantumSavory
 using ResumableFunctions

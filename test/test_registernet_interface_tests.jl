@@ -1,4 +1,4 @@
-@testitem "RegisterNet Interface" tags=[:registernet_interface] begin
+@testset "REGISTERNET_INTERFACE RegisterNet Interface" begin
 using Test
 using QuantumSavory
 using Graphs

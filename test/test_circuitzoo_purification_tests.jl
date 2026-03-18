@@ -1,8 +1,10 @@
-@testitem "Circuit Zoo Purification - throws" tags=[:circuitzoo_purification] begin
 using Test
 using QuantumSavory
 using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
+include("setup_circuitzoo_purification.jl")
+
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - throws" begin
 
 @test_throws ArgumentError Purify2to1(:lalala)
 @test_throws ArgumentError Purify3to1(:lalala, :X)
@@ -19,8 +21,7 @@ end
 @test_throws ArgumentError PurifyStringent()(r[1], r[2], r[3:2:21]...)
 end
 
-@testitem "Circuit Zoo Purification - 2to1" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 2to1" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
@@ -47,8 +48,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 2to1 - Node" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 2to1 - Node" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
@@ -80,8 +80,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -121,8 +120,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -143,8 +141,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -165,8 +162,7 @@ end
 end
 
 
-@testitem "Circuit Zoo Purification - 3to1 -- Node" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Node" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -216,8 +212,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -240,8 +235,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -263,8 +257,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - Stringent" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Stringent" begin
 
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(26, rep())
@@ -276,8 +269,7 @@ end
     end
     end
 
-    @testitem "Circuit Zoo Purification - Stringent - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+    @testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Stringent - Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         r = Register(26, rep())
@@ -292,8 +284,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         r = Register(26, rep())
@@ -307,8 +298,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - Expedient" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Expedient" begin
 
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(22, rep())
@@ -320,8 +310,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         r = Register(22, rep())
@@ -336,8 +325,7 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
+@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         r = Register(22, rep())

@@ -1,4 +1,4 @@
-@testitem "Circuit Zoo Fusion" tags=[:circuitzoo_fusion] begin
+@testset "CIRCUITZOO_FUSION Circuit Zoo Fusion" begin
 using Test
 using Graphs
 using QuantumSavory

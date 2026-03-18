@@ -1,4 +1,4 @@
-@testitem "Register Interface" tags=[:register_interface] begin
+@testset "REGISTER_INTERFACE Register Interface" begin
 using Test
 using QuantumSavory
 using QuantumOpticsBase: Ket, Operator

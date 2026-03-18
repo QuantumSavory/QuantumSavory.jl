@@ -1,4 +1,4 @@
-@testitem "Circuit Zoo API" tags=[:circuitzoo_api] begin
+@testset "CIRCUITZOO_API Circuit Zoo API" begin
 using Test
 using QuantumSavory
 using QuantumSavory.CircuitZoo

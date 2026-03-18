@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Shorthand Constructors" tags=[:protocolzoo_shorthand_constructors] begin
+@testset "PROTOCOLZOO_SHORTHAND_CONSTRUCTORS ProtocolZoo Shorthand Constructors" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt

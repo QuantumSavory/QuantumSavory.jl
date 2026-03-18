@@ -1,4 +1,4 @@
-@testitem "Query Wait" tags=[:querywait] begin
+@testset "QUERYWAIT Query Wait" begin
 using Test
 using QuantumSavory
 using ResumableFunctions, ConcurrentSim

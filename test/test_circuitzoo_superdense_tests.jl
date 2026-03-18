@@ -1,4 +1,4 @@
-@testitem "Circuit Zoo Super Dense" tags=[:circuitzoo_superdense] begin
+@testset "CIRCUITZOO_SUPERDENSE Circuit Zoo Super Dense" begin
 using Test
 using QuantumSavory
 using QuantumSavory.CircuitZoo: SDEncode, SDDecode

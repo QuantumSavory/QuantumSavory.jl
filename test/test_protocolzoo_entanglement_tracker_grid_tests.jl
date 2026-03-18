@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Entanglement Tracker Grid" tags=[:protocolzoo_entanglement_tracker_grid] begin
+@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER_GRID ProtocolZoo Entanglement Tracker Grid" begin
 using Test
 using Revise
 using ResumableFunctions

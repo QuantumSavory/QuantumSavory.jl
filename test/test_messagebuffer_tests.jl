@@ -1,4 +1,4 @@
-@testitem "Message Buffer" tags=[:messagebuffer] begin
+@testset "MESSAGEBUFFER Message Buffer" begin
 using Test
 using QuantumSavory
 using QuantumSavory: tag_types

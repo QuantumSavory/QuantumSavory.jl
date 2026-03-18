@@ -1,4 +1,4 @@
-@testitem "Circuit Zoo Entanglement Swap" tags=[:circuitzoo_ent_swap] begin
+@testset "CIRCUITZOO_ENT_SWAP Circuit Zoo Entanglement Swap" begin
 using Test
 using QuantumSavory
 using QuantumSavory.CircuitZoo

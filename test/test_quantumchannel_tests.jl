@@ -1,4 +1,4 @@
-@testitem "Quantum Channel" begin
+@testset "Quantum Channel" begin
 using Test
 using QuantumSavory
 using ResumableFunctions
@@ -36,7 +36,7 @@ sref = regB.staterefs[1]
 
 end
 
-@testitem "Quantum Channel - alternative constructor" begin
+@testset "Quantum Channel - alternative constructor" begin
 using Test
 using QuantumSavory
 using ResumableFunctions
@@ -66,7 +66,7 @@ sref = regB.staterefs[1]
 
 end
 
-@testitem "Quantum Channel with T1 decay" begin
+@testset "Quantum Channel with T1 decay" begin
 using Test
 using QuantumSavory
 using ResumableFunctions
@@ -100,7 +100,7 @@ uptotime!(reg[1], 10.0)
 
 end
 
-@testitem "Quantum Channel with T2 dephasing" begin
+@testset "Quantum Channel with T2 dephasing" begin
 using Test
 using QuantumSavory
 using ResumableFunctions

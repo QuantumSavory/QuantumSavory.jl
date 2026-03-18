@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Swapper chooseslots" tags=[:protocolzoo_swapper] begin
+@testset "PROTOCOLZOO_SWAPPER ProtocolZoo Swapper chooseslots" begin
 using Test
 using QuantumSavory
 using ResumableFunctions

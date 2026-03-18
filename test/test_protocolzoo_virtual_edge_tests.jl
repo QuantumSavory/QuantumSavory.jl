@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Virtual Edge Detection" tags=[:protocolzoo_virtual_edge] begin
+@testset "PROTOCOLZOO_VIRTUAL_EDGE ProtocolZoo Virtual Edge Detection" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, permits_virtual_edge

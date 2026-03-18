@@ -1,4 +1,4 @@
-@testitem "Observable" begin
+@testset "Observable" begin
 using Test
 using QuantumSavory
 using QuantumClifford: Stabilizer

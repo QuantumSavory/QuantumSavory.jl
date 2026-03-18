@@ -1,4 +1,4 @@
-@testitem "Tags and Queries" tags=[:tags_and_queries] begin
+@testset "TAGS_AND_QUERIES Tags and Queries" begin
 using Test
 using QuantumSavory
 using QuantumSavory: tag_types

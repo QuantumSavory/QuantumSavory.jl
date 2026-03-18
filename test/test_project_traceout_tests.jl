@@ -1,4 +1,4 @@
-@testitem "Project Traceout" tags=[:project_traceout] begin
+@testset "PROJECT_TRACEOUT Project Traceout" begin
 using Test
 using QuantumSavory
 

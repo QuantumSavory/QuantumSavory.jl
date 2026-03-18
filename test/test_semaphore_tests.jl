@@ -1,4 +1,4 @@
-@testitem "AsymmetricSemaphore functionality" begin
+@testset "AsymmetricSemaphore functionality" begin
 using Test
 using QuantumSavory
 using QuantumSavory: AsymmetricSemaphore

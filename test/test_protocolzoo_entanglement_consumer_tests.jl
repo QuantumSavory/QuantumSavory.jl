@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Entanglement Consumer" tags=[:protocolzoo_entanglement_consumer] begin
+@testset "PROTOCOLZOO_ENTANGLEMENT_CONSUMER ProtocolZoo Entanglement Consumer" begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer

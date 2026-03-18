@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Throws - SimpleSwitchDiscreteProt" tags=[:protocolzoo_throws] begin
+@testset "PROTOCOLZOO_THROWS ProtocolZoo Throws - SimpleSwitchDiscreteProt" begin
 using Test
 using QuantumSavory
 using ResumableFunctions

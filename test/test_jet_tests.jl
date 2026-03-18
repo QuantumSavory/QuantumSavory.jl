@@ -1,4 +1,4 @@
-@testitem "JET checks" tags=[:jet] begin
+@testset "JET JET checks" begin
     using JET
     using Test
     using QuantumSavory

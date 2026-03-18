@@ -1,4 +1,4 @@
-@testitem "QTCP" begin
+@testset "QTCP" begin
 
 ##
 

@@ -1,4 +1,4 @@
-@testitem "StatesZoo API" begin
+@testset "StatesZoo API" begin
 using Test
 using QuantumSavory
 using QuantumSavory.StatesZoo

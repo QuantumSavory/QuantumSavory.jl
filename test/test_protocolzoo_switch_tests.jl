@@ -1,4 +1,4 @@
-@testitem "ProtocolZoo Switch - SimpleSwitchDiscreteProt" tags=[:protocolzoo_switch] begin
+@testset "PROTOCOLZOO_SWITCH ProtocolZoo Switch - SimpleSwitchDiscreteProt" begin
 using Revise
 using ResumableFunctions
 using ConcurrentSim
