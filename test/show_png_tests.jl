@@ -1,9 +1,10 @@
-@testitem "show image/png" tags=[:plotting_cairo] begin
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using CairoMakie
 import InteractiveUtils, REPL
+
+@testset "show image/png" begin
 
 #out = stdout
 out = IOBuffer()
