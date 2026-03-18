@@ -5,7 +5,7 @@ using ConcurrentSim
 using ResumableFunctions
 using Logging
 
-@testset "PROTOCOLZOO_CUTOFFPROT ProtocolZoo CutoffProt" begin
+@testset "ProtocolZoo CutoffProt" begin
 
 
 if isinteractive()

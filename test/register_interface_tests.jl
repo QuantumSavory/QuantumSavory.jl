@@ -3,7 +3,7 @@ using QuantumSavory
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
 
-@testset "REGISTER_INTERFACE Register Interface" begin
+@testset "Register Interface" begin
 
 ##
 # no backgrounds

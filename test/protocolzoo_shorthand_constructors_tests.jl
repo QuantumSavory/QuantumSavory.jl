@@ -4,7 +4,7 @@ using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker
 using QuantumSavory.ProtocolZoo.QTCP: EndNodeController, NetworkNodeController, LinkController
 using ConcurrentSim
 
-@testset "PROTOCOLZOO_SHORTHAND_CONSTRUCTORS ProtocolZoo Shorthand Constructors" begin
+@testset "ProtocolZoo Shorthand Constructors" begin
 
 # Create a simple network for testing
 net = RegisterNet([Register(3), Register(3), Register(3)])

@@ -4,7 +4,7 @@ using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker
 using ConcurrentSim
 using ResumableFunctions
 
-@testset "PROTOCOLZOO_ENTANGLER ProtocolZoo Entangler - EntanglerProt" begin
+@testset "ProtocolZoo Entangler - EntanglerProt" begin
 
 net = RegisterNet([Register(5), Register(5)])
 sim = get_time_tracker(net)

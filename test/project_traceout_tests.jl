@@ -6,7 +6,7 @@ const bell = StabilizerState("XX ZZ")
 # however converting to stabilizer state for Clifford simulations
 # is not implemented (and can not be done efficiently).
 
-@testset "PROJECT_TRACEOUT Project Traceout" begin
+@testset "Project Traceout" begin
 
 for rep in [QuantumOpticsRepr(), CliffordRepr()]
     a = Register(2,rep)

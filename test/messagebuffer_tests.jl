@@ -4,7 +4,7 @@ using QuantumSavory: tag_types
 using QuantumSavory.ProtocolZoo
 using ResumableFunctions, ConcurrentSim
 
-@testset "MESSAGEBUFFER Message Buffer" begin
+@testset "Message Buffer" begin
 
 net = RegisterNet([Register(3), Register(2), Register(3)])
 env = get_time_tracker(net);

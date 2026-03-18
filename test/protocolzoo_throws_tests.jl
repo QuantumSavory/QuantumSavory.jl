@@ -5,7 +5,7 @@ using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using Graphs
 
-@testset "PROTOCOLZOO_THROWS ProtocolZoo Throws - SimpleSwitchDiscreteProt" begin
+@testset "ProtocolZoo Throws - SimpleSwitchDiscreteProt" begin
 
 net = RegisterNet([Register(2), Register(3), Register(4)])
 @test_throws "`clientnodes` must be unique" SimpleSwitchDiscreteProt(net, 1, [2,2,3], fill(0.5, 3))

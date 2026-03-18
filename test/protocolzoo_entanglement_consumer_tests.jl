@@ -6,7 +6,7 @@ using ConcurrentSim
 using ResumableFunctions
 using Logging
 
-@testset "PROTOCOLZOO_ENTANGLEMENT_CONSUMER ProtocolZoo Entanglement Consumer" begin
+@testset "ProtocolZoo Entanglement Consumer" begin
 
 if isinteractive()
     logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))

@@ -9,7 +9,7 @@ using Revise
 using Random
 using Logging
 
-@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER ProtocolZoo Entanglement Tracker" begin
+@testset "ProtocolZoo Entanglement Tracker" begin
 
 if isinteractive()
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))

@@ -6,7 +6,7 @@ using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
 
-@testset "PROTOCOLZOO_SWAPPER ProtocolZoo Swapper chooseslots" begin
+@testset "ProtocolZoo Swapper chooseslots" begin
 
 struct SwapTag end
 

@@ -4,7 +4,7 @@ using Graphs
 using QuantumOpticsBase: Ket, Operator
 using QuantumClifford: MixedDestabilizer
 
-@testset "REGISTERNET_INTERFACE RegisterNet Interface" begin
+@testset "RegisterNet Interface" begin
 
 ##
 

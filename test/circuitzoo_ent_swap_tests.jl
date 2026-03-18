@@ -6,7 +6,7 @@ using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 const perfect_pair_stab = StabilizerState("XX ZZ")
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 
-@testset "CIRCUITZOO_ENT_SWAP Circuit Zoo Entanglement Swap" begin
+@testset "Circuit Zoo Entanglement Swap" begin
 
 for pair in (perfect_pair, perfect_pair_stab), rep in 1:10
     net = RegisterNet([Register(1), Register(2), Register(1)])

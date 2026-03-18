@@ -8,7 +8,7 @@ using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, E
 using Graphs
 using Logging
 
-@testset "PROTOCOLZOO_ENTANGLEMENT_TRACKER_GRID ProtocolZoo Entanglement Tracker Grid" begin
+@testset "ProtocolZoo Entanglement Tracker Grid" begin
 
 if isinteractive()
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))

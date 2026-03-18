@@ -3,7 +3,7 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, permits_virtual_edge
 using ConcurrentSim
 
-@testset "PROTOCOLZOO_VIRTUAL_EDGE ProtocolZoo Virtual Edge Detection" begin
+@testset "ProtocolZoo Virtual Edge Detection" begin
 
 # Test default behavior
 @test permits_virtual_edge(EntanglerProt(sim=Simulation(), net=RegisterNet([Register(2)]), nodeA=1, nodeB=1)) == false

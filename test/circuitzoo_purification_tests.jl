@@ -4,7 +4,7 @@ using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
 include("setup_circuitzoo_purification.jl")
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - throws" begin
+@testset "Circuit Zoo Purification - throws" begin
 
 @test_throws ArgumentError Purify2to1(:lalala)
 @test_throws ArgumentError Purify3to1(:lalala, :X)
@@ -21,7 +21,7 @@ end
 @test_throws ArgumentError PurifyStringent()(r[1], r[2], r[3:2:21]...)
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 2to1" begin
+@testset "Circuit Zoo Purification - 2to1" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
@@ -48,7 +48,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 2to1 - Node" begin
+@testset "Circuit Zoo Purification - 2to1 - Node" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout in [:X, :Y, :Z]
@@ -80,7 +80,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1" begin
+@testset "Circuit Zoo Purification - 3to1" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -120,7 +120,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" begin
+@testset "Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -141,7 +141,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" begin
+@testset "Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -162,7 +162,7 @@ end
 end
 
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Node" begin
+@testset "Circuit Zoo Purification - 3to1 -- Node" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -212,7 +212,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" begin
+@testset "Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -235,7 +235,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" begin
+@testset "Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -257,7 +257,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Stringent" begin
+@testset "Circuit Zoo Purification - Stringent" begin
 
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(26, rep())
@@ -269,7 +269,7 @@ end
     end
     end
 
-    @testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Stringent - Fidelity - QuantumOpticsRepr" begin
+    @testset "Circuit Zoo Purification - Stringent - Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         r = Register(26, rep())
@@ -284,7 +284,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" begin
+@testset "Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         r = Register(26, rep())
@@ -298,7 +298,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Expedient" begin
+@testset "Circuit Zoo Purification - Expedient" begin
 
     for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(22, rep())
@@ -310,7 +310,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" begin
+@testset "Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" begin
 
     for rep in [QuantumOpticsRepr]
         r = Register(22, rep())
@@ -325,7 +325,7 @@ end
     end
 end
 
-@testset "CIRCUITZOO_PURIFICATION Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" begin
+@testset "Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" begin
 
     for rep in [CliffordRepr]
         r = Register(22, rep())

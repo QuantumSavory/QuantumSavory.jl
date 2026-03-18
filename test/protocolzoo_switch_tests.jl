@@ -7,7 +7,7 @@ using Graphs
 using Test
 using Logging
 
-@testset "PROTOCOLZOO_SWITCH ProtocolZoo Switch - SimpleSwitchDiscreteProt" begin
+@testset "ProtocolZoo Switch - SimpleSwitchDiscreteProt" begin
 
 if isinteractive()
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
