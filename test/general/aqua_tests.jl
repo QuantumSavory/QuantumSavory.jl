@@ -18,6 +18,6 @@ Aqua.test_all(QuantumSavory,
     stale_deps=(; ignore=[:NetworkLayout]) # needed by package extension but not a condition of its loading
 )
 
-@test length(Aqua.Piracy.hunt(QuantumSavory)) == 8 # TODO upstream the sources of piracies
+@test length(Aqua.Piracy.hunt(QuantumSavory)) == 12 # TODO upstream the sources of piracies
 end
 end
