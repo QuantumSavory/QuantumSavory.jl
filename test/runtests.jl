@@ -15,6 +15,9 @@ test_project(name) = startswith(name, "plotting/") ? TEST_PROJECTS["plotting"] :
 project_init_code(project::String) = quote
     using Pkg
     Pkg.activate($project)
+    if occursin("jet", $project) # The JET Project.toml is not included in the main Project.toml workspace because it frequently causes nightly tests to fail
+        Pkg.instantiate()
+    end
 end
 
 testsuite = find_tests(@__DIR__)
