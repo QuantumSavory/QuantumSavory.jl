@@ -1,15 +1,17 @@
-@testitem "Plotting GL" tags=[:plotting_gl] begin
+using QuantumSavory
+using Test
 using GLMakie
 GLMakie.activate!()
 
+@testset "Plotting GL" begin
 @testset "register coordinates" begin
-    include("test_plotting_1_regcoords.jl")
+    include("plotting_regcoords.jl")
 end
 @testset "arguments and observables and tags" begin
-    include("test_plotting_2_tags_observables.jl")
+    include("plotting_tags_observables.jl")
 end
 @testset "background map" begin
-    include("test_plotting_3_maps.jl")
+    include("plotting_maps.jl")
 end
 
 @testset "data inspectors" begin # only available in GLMakie
