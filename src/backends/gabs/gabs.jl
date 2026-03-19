@@ -4,7 +4,7 @@ nsubsystems(channel::Gabs.GaussianChannel) = Gabs.nmodes(channel.basis)
 
 subsystemcompose(states::Gabs.GaussianState...) = tensor(states...)
 subsystemcompose(ops::Gabs.GaussianUnitary...) = tensor(ops...)
-subsystemcompose(channels::Gabs.GaussianChannel...) = tensor(ops...)
+subsystemcompose(channels::Gabs.GaussianChannel...) = tensor(channels...)
 
 function project_traceout!(
     state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
