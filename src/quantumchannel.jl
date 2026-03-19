@@ -37,7 +37,7 @@ Putting Alice's qubit in the channel at 0.0
 Taking the qubit from alice at 10.0
 
 julia> regA
-Register with 1 slots: [ Qubit ]
+Register  with 1 slots: [ Qubit ]
   Slots:
     nothing
 ```
