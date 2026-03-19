@@ -62,7 +62,7 @@ function prepare_swapping_simulation(
         @process sprot()
     end
 
-    _, ax, _, obs = registernetplot_axis(fig, network; interactions = false)
+    _, ax, _, obs = registernetplot_axis(fig[1, 1], network; interactions = false)
 
     return sim, network, obs, ax
 end
@@ -218,8 +218,13 @@ landing = Bonito.App() do
             config = deepcopy(config_obs[])
             state_config = deepcopy(state_obs[])
 
+            fig[2, 1] = display_area = GridLayout()
+            # display_area[1, 1] = inner_fig = Figure(size = (640, 420))
+            rowsize!(display_area, 1, Fixed(420))
+            colsize!(display_area, 1, Fixed(640))
+
             sim, network, obs, ax = prepare_swapping_simulation(
-                fig[2, 1];
+                display_area[1, 1]; #inner_fig;
                 config = config,
                 state_config = state_config,
             )
