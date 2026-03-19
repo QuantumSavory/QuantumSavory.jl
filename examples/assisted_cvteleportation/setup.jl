@@ -70,12 +70,19 @@ end
 end
 
 sim, net = simulation_setup()
+initial_state = CoherentState(rand(ComplexF64))
 prepare_states!(
     net,
-    CoherentState(rand(ComplexF64));
+    initial_state;
     squeezes = [rand(ComplexF64) for _ in 1:3]
 )
 teleport = AssistedTeleport(sim, net, 1, 2, 3)
 @process teleport()
 
 run(sim)
+
+# These two should be the same, but
+# 1. The net[2,1] state has not shrunk after the projections (the traceout did not happen)
+# 2. They do not seem similar at all.
+@show express(initial_state, GabsRepr(QuadBlockBasis))
+@show QuantumSavory.stateof(net[2,1]).state[]

@@ -10,6 +10,7 @@ function project_traceout!(
     state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
 )
     res, state = Gabs.homodyne(state, subsys, meas.angles; squeeze = meas.squeeze)
+    state = Gabs.ptrace(state, subsys)
     return res, state
 end
 
