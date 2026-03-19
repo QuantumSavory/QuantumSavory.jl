@@ -15,8 +15,6 @@ using QuantumSavory
 # Predefined useful circuits
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
 using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementCounterpart
-using QuantumSavory.StatesZoo: DepolarizedBellPair
-
 ##
 # Create a handful of qubit registers in a chain
 ##
@@ -59,7 +57,7 @@ end
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
-# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm  # replaced by DepolarizedBellPair(F=F)
+noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 const XX = X⊗X
 const ZZ = Z⊗Z
 const YY = Y⊗Y

@@ -17,8 +17,7 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 purifier_wait_time = 0.15  # How long to wait if there are no pairs to be purified
 purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
-# noisy_pair = noisy_pair_func(F)  # replaced by DepolarizedBellPair
-noisy_pair = DepolarizedBellPair(F=F)
+noisy_pair = noisy_pair_func(F)
 
 sim, network = simulation_setup(sizes, T2)
 
