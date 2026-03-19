@@ -35,4 +35,10 @@ function test_worker(name)
     return addworker(; init_worker_code = project_init_code(project))
 end
 
-runtests(QuantumSavory, ARGS; testsuite, test_worker)
+args = ARGS
+if isempty(args)
+    @info "No test arguments provided; defaulting to `general` tests."
+    args = ["general"]
+end
+
+runtests(QuantumSavory, args; testsuite, test_worker)
