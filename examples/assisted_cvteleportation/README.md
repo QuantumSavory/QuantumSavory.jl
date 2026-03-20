@@ -1,7 +1,7 @@
 # Assisted CV Teleportation
 
 This example implements the assisted continuous-variable teleportation protocol
-from <https://arxiv.org/abs/quant-ph/0604027> using
+from [arxiv:quant-ph/0604027](https://arxiv.org/abs/quant-ph/0604027) using
 [Gabs.jl](https://github.com/QuantumSavory/Gabs.jl) as the Gaussian backend.
 
 ## What This Example Does
@@ -14,7 +14,7 @@ The script:
 
 1. Creates a `RegisterNet` with continuous-variable `Qumode` slots backed by
    `Gabs.jl`.
-2. Samples a random coherent input state, which is the state to be teleported.
+2. Prepares a random coherent input state, which is the state to be teleported.
 3. Prepares the shared three-mode Gaussian resource used by the assisted
    protocol.
 4. Lets Alice perform the Bell-like homodyne step and Charlie perform the
@@ -47,7 +47,9 @@ interfaces:
 6. How to package a protocol as a callable struct together with a `@resumable`
    process that runs inside the `ConcurrentSim`-based simulator.
 7. How to inspect the resulting backend state directly with `stateof` for
-   simple sanity checks at the end of an example.
+   simple sanity checks at the end of an example. This is an introspection tool,
+   you should not use it to modify the state of the simulation as it provides
+   god-like unphysical access.
 
 Documentation:
 

@@ -20,8 +20,8 @@ julia> initialize!(reg[1], CoherentState(0.3 + 0.2im));
 
 julia> project_traceout!(reg[1], HomodyneMeasurement([0.0]; squeeze = 1e-12))
 2-element Vector{Float64}:
- 0.0
- 0.0
+ 0.3
+ 0.2
 
 julia> isnothing(QuantumSavory.stateof(reg[1]))
 true
