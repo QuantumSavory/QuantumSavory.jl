@@ -13,9 +13,12 @@ Shared squeezing strength used for the three-mode entangled resource.
 Larger values make the teleportation closer to the ideal protocol, while smaller
 values leave more finite-squeezing noise in Bob's output mode.
 """
-const RESOURCE_SQUEEZE = 1.5
+const RESOURCE_SQUEEZE = 4.5
 
+###
 # Use Gabs.jl as a numerical backend for `Qumode`s and build the three-node network.
+###
+
 """
     simulation_setup(; repr = GabsRepr(QuadBlockBasis))
 
@@ -51,6 +54,9 @@ function prepare_states!(net, input_state; squeezes)
     initialize!(regA, 2, input_state)
 
     # Prepare the shared three-mode entangled resource across Alice, Bob, and Charlie.
+    # In a more complete simulation, there will be some other networked protocols that establish this state.
+    # Here we just create it manually, disregarding the "local operations" constraint that one
+    # would usually expect from a networking simulation.
     initialize!(regA, 1, SqueezedState(-squeezes[1]))
     initialize!(regB, 1, SqueezedState(squeezes[2]))
     initialize!(regC, 1, SqueezedState(squeezes[3]))
@@ -71,6 +77,15 @@ Protocol object representing the assisted continuous-variable teleportation run.
 Alice (`nodeA`) performs the Bell-like homodyne measurement, Charlie (`nodeC`)
 provides the assisting quadrature, and Bob (`nodeB`) applies the final
 displacement correction.
+
+You could have just as well used another `@resumable` function here,
+but the "Protocol" style of a "callable struct" is a convenient way to create
+the equivalent of a `@resumable` function with neatly packaged configuration options.
+
+For a more realistic simulation you would probably want to split the protocol
+into a protocol instance per node in order to make locality constraints more explicit
+(and more easily enforced).
+Such separate protocols would then message each other through their classical message buffers.
 """
 struct AssistedTeleport <: AbstractProtocol
     sim::Simulation
@@ -120,6 +135,9 @@ Run one assisted teleportation round.
 
 After Alice and Charlie send their measurement outcomes, Bob applies the
 displacement that reconstructs the input state on his output mode.
+
+Here we are turning all instances of the type AssistedTeleport into callables,
+so that they can be used as functions with neatly packaged configuration options inside of them.
 """
 @resumable function (prot::AssistedTeleport)()
     (; sim, net, nodeA, nodeB, nodeC) = prot
@@ -132,11 +150,16 @@ displacement that reconstructs the input state on his output mode.
     quadsAtag = @yield query_wait(mb, :quadsA, ❓, ❓)
     quadsA = [quadsAtag.tag[2], quadsAtag.tag[3]]
     quadsCtag = @yield query_wait(mb, :quadsC, ❓)
-    D = DisplaceOp((-sqrt(2) * quadsA[1] + im * (sqrt(2) * quadsA[2] + quadsCtag.tag[2])) / 2)
+    quadC = quadsCtag.tag[2]
+    D = DisplaceOp((-sqrt(2) * quadsA[1] + im * (sqrt(2) * quadsA[2] + quadC)) / 2)
     apply!(regB[1], D)
 end
 
-# Run a single teleportation instance for a random coherent input state.
+###
+# Run the actual simulation!
+# A single teleportation instance for a random coherent input state.
+###
+
 sim, net = simulation_setup()
 initial_state = CoherentState(rand(ComplexF64))
 prepare_states!(
@@ -149,7 +172,12 @@ teleport = AssistedTeleport(sim, net, 1, 2, 3)
 
 run(sim)
 
+###
 # Compare the input state with Bob's final output state.
 # For sufficiently large `RESOURCE_SQUEEZE`, these should be very similar.
-@show express(initial_state, GabsRepr(QuadBlockBasis))
-@show QuantumSavory.stateof(net[2,1]).state[]
+###
+
+initial_state = express(initial_state, GabsRepr(QuadBlockBasis))
+teleported_state = QuantumSavory.stateof(net[2,1]).state[]
+
+@assert ≈(initial_state, teleported_state, atol=1e-2)
