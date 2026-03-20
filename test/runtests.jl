@@ -18,6 +18,10 @@ project_init_code(project::String) = quote
     if occursin("jet", $project) # The JET Project.toml is not included in the main Project.toml workspace because it frequently causes nightly tests to fail
         Pkg.instantiate()
     end
+
+    using Logging # The examples generate a ton of logs
+    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
+    global_logger(logger)
 end
 
 testsuite = find_tests(@__DIR__)
