@@ -13,14 +13,12 @@ used by Gaussian backends when approximating the ideal measurement.
 This is typically used together with [`project_traceout!`](@ref) on a
 continuous-variable register slot.
 
-```jldoctest; setup = :(using QuantumSavory, Gabs)
+```jldoctest; setup = :(using QuantumSavory, Gabs), filter = [r"-?[0-9]+[.][0-9]+(?:e[+-]?[0-9]+)?" => s"0.0", r"(?m)^ +0[.]0\$" => s" 0.0"]
 julia> reg = Register([Qumode()], [GabsRepr(QuadBlockBasis)]);
 
 julia> initialize!(reg[1], CoherentState(0.3 + 0.2im));
 
-julia> result = project_traceout!(reg[1], HomodyneMeasurement([0.0]; squeeze = 1e-12));
-
-julia> println(replace(sprint(show, MIME"text/plain"(), result), r"-?[0-9]+[.][0-9]+(?:e[+-]?[0-9]+)?" => "0.0"))
+julia> project_traceout!(reg[1], HomodyneMeasurement([0.0]; squeeze = 1e-12))
 2-element Vector{Float64}:
  0.0
  0.0
