@@ -13,7 +13,7 @@ Shared squeezing strength used for the three-mode entangled resource.
 Larger values make the teleportation closer to the ideal protocol, while smaller
 values leave more finite-squeezing noise in Bob's output mode.
 """
-const RESOURCE_SQUEEZE = 4.5
+const RESOURCE_SQUEEZE = 5.5
 
 ###
 # Use Gabs.jl as a numerical backend for `Qumode`s and build the three-node network.
