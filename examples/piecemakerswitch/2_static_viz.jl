@@ -22,7 +22,7 @@ timed = @elapsed run(sim)
 @info logging
 
 function plot_fidelity(logging::Vector{Point2f})
-    fig = Figure(resolution = (800, 450))
+    fig = Figure(size = (800, 450))
     ax  = Axis(fig[1, 1], xlabel = "Δt (simulation time)", ylabel = "Fidelity to GHZₙ",
                title = "Entanglement fidelity over time")
     scatter!(ax, logging, markersize = 8)
@@ -32,7 +32,9 @@ end
 
 fig = plot_fidelity(logging)
 display(fig)
-wait() # keeps REPL open until the figure is closed
+
+# optional:
+# wait() # keeps REPL open until the figure is closed
 
 # optional: save it
-# save("examples/piecemakerswitch/fidelity.png", fig)
+# save("fidelity.png", fig)

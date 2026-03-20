@@ -1,5 +1,6 @@
 [deps]
 Bonito = "824d6782-a2ef-11e9-3a09-e5662e0c26f8"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ConcurrentSim = "6ed1e86c-fcaf-46a9-97e0-2b26a2cdb499"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"

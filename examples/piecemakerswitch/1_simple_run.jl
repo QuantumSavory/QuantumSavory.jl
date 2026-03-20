@@ -7,7 +7,7 @@ logging = Point2f[] # TODO: just put this here to avoid error, find better way t
 # decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
 noise_model = T2Dephasing(9.49122) # λ=0.9 #Depolarization(1/decoherence_rate) # noise model applied to the memory qubits
 link_success_prob = 0.6
-rounds = 10000 # number of rounds to run
+rounds = 100 # number of rounds to run
 
 results_per_client = DataFrame(nclients = Int[], Δt = Float64[], fidelity = Float64[])
 for nclients in [5, 10, 15, 20, 25, 30, 35]
