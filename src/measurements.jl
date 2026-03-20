@@ -10,15 +10,23 @@ For example, `0.0` corresponds to an `x`-quadrature measurement and `pi/2`
 to a `p`-quadrature measurement. `squeeze` sets the finite-squeezing parameter
 used by Gaussian backends when approximating the ideal measurement.
 
-```jldoctest
-julia> meas = HomodyneMeasurement([0.0]; squeeze = 1e-12);
+This is typically used together with [`project_traceout!`](@ref) on a
+continuous-variable register slot.
 
-julia> meas.angles
-1-element Vector{Real}:
+```jldoctest; setup = :(using QuantumSavory, Gabs)
+julia> reg = Register([Qumode()], [GabsRepr(QuadBlockBasis)]);
+
+julia> initialize!(reg[1], CoherentState(0.3 + 0.2im));
+
+julia> result = project_traceout!(reg[1], HomodyneMeasurement([0.0]; squeeze = 1e-12));
+
+julia> println(replace(sprint(show, MIME"text/plain"(), result), r"-?[0-9]+[.][0-9]+(?:e[+-]?[0-9]+)?" => "0.0"))
+2-element Vector{Float64}:
+ 0.0
  0.0
 
-julia> meas.squeeze
-1.0e-12
+julia> isnothing(QuantumSavory.stateof(reg[1]))
+true
 ```
 """
 struct HomodyneMeasurement <: AbstractMeasurement
