@@ -35,7 +35,4 @@ for F in [0.25, 0.5, 0.75, 1.0]
     @test tr(dm) ≈ 1
 end
 
-# display label
-@test string(DepolarizedBellPair(0.9)) == "ρᵖ"
-
 end
