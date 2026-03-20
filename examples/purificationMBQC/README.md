@@ -14,3 +14,15 @@ The `full_purification_example.jl` file runs the complete pipeline and verifies 
 Note that the ordering of steps shown in the example (e.g. long-range entanglement generation/graph state generation) is somewhat arbitrary and may vary depending on hardware constraints.
 
 All protocols used are from `QuantumSavory.ProtocolZoo`.
+
+## Success Probability Analysis
+
+For the [4,2,2] code with depolarizing parameter `p`, the success probability follows from enumerating all 4-pair Pauli error configurations and keeping those with even X- and Z-parity. With `a = (1+3p)/4` and `b = (1-p)/4`, the five accepted symmetry classes are:
+
+- **IIII**: `a⁴`
+- **Two identical non-identity errors** (e.g. XXII, ZZII, YYII): `18a²b²`
+- **Two pairs of different errors** (e.g. XXZZ, XXYY, ZZYY): `18b⁴`
+- **All four errors identical** (e.g. XXXX, ZZZZ, YYYY): `3b⁴`
+- **One each of I, X, Y, Z**: `24ab³`
+
+Summing gives `P_succ = a⁴ + 18a²b² + 24ab³ + 21b⁴ = (1 + 3p⁴) / 4`.
