@@ -3,7 +3,7 @@
 // Bad workaround for Documenter + require.js clashing with AnythingLLM.
 // Render the widget inside a sandboxed iframe overlay to isolate globals.
 (function() {
-  const embedId = "139ab96f-a40b-4407-8a51-3e9948df3fa7";
+  const embedId = "206716f9-9f20-4314-a275-df43a89a6522";
   const apiBase = "https://anythingllm.krastanov.org/api/embed";
   const src = "https://anythingllm.krastanov.org/embed/anythingllm-chat-widget.min.js";
 
@@ -79,7 +79,7 @@
 </tr>
 <tr><!-- Tensor products and sums -->
 <td><p>Tensor products <code>⊗</code> and sums <code>+</code></p></td>
-<td><pre><code class="language-julia hljs">(X1⊗Z2 + Y1⊗Y2 ) / √3</code></pre><p class="math-container">\[0.5773502691896258 \left|Y_1\right\rangle\otimes\left|Y_2\right\rangle + \left|X_1\right\rangle\otimes\left|Z_2\right\rangle\]</p></td>
+<td><pre><code class="language-julia hljs">(X1⊗Z2 + Y1⊗Y2 ) / √3</code></pre><p class="math-container">\[0.5773502691896258 \left|X_1\right\rangle\otimes\left|Z_2\right\rangle + \left|Y_1\right\rangle\otimes\left|Y_2\right\rangle\]</p></td>
 <td><pre><code class="language-julia hljs">express(X1⊗Z1)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Ket(dim=4)
   basis: [Spin(1/2) ⊗ Spin(1/2)]
  0.7071067811865475 + 0.0im
@@ -129,12 +129,8 @@
   basis: Spin(1/2)
  0.75+0.0im   0.0+0.0im
   0.0+0.0im  0.25+0.0im</code></pre><p>When a Clifford representation is used, an efficient sampler is generated, and stabilizer states are randomly sampled from the correct distribution:</p><pre><code class="language-julia hljs">express(MixedState(X1)/2+SProjector(Z1)/2, CliffordRepr())</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">𝒟ℯ𝓈𝓉𝒶𝒷
-
-𝒳ₗ━
 + X
 𝒮𝓉𝒶𝒷
-
-𝒵ₗ━
 + Z</code></pre></td>
 </tr>
 <tr></tr>
@@ -143,4 +139,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../backgrounds/">« Background Noise</a><a class="docs-footer-nextpage" href="../tag_query/">Tagging and Querying »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 19 March 2026 15:08">Thursday 19 March 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../backgrounds/">« Background Noise</a><a class="docs-footer-nextpage" href="../tag_query/">Tagging and Querying »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 20 March 2026 15:02">Friday 20 March 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
