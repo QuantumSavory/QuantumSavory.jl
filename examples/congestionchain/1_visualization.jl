@@ -42,11 +42,16 @@ c2 = Makie.wong_colors()[2]
 scatter!(ax_fidXX,ts,fidXX,label="XX",color=(c1,0.1))
 scatter!(ax_fidZZ,ts,fidZZ,label="ZZ",color=(c2,0.1))
 
-display(fig)
+testmode = get(ENV, "QS_CONGESTIONCHAIN_TEST", "") == "true"
+if !testmode
+    display(fig)
+end
 
-step_ts = range(0, 1000, step=0.1)
+step_ts = testmode ? range(0, 20, step=1) : range(0, 1000, step=0.1)
+framerate = testmode ? 5 : 50
+visible = !testmode
 
-record(fig, "congestionchain.mp4", step_ts; framerate=50, visible=true) do t
+record(fig, "congestionchain.mp4", step_ts; framerate, visible) do t
     run(sim, t)
     ax.title = "t=$(t)"
     if length(ts[])>2 # to avoid failing autolimits on empty plots
