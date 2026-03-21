@@ -19,7 +19,7 @@ timed = @elapsed run(sim)
 @info("Simulation finished in $(timed) seconds")
 @info logging
 
-function plot_fidelity(logging::Vector{Point2f})
+function plot_fidelity(logging)
     fig = Figure(size = (800, 450))
     ax  = Axis(fig[1, 1], xlabel = "Δt (simulation time)", ylabel = "Fidelity to GHZₙ",
                title = "Entanglement fidelity over time")

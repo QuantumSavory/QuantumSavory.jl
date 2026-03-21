@@ -23,6 +23,7 @@ for nclients in [5, 10, 15, 20, 25, 30, 35]
 
     @info "Simulation with $(nclients) clients finished in $(elapsed_time) seconds"
 end
+
 using CSV
 CSV.write("results_piecemaker.csv", results_per_client)
 

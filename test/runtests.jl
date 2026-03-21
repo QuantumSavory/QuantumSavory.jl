@@ -3,7 +3,7 @@ using ParallelTestRunner
 
 const TEST_PROJECTS = Dict(
     "plotting" => normpath(joinpath(@__DIR__, "projects", "plotting")),
-    "example" => normpath(joinpath(@__DIR__, "projects", "examples")),
+    "example" => normpath(joinpath(@__DIR__, "..", "examples")),
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
 
