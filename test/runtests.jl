@@ -7,8 +7,8 @@ const TEST_PROJECTS = Dict(
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
 
-test_project(name) = startswith(name, "plotting/") ? TEST_PROJECTS["plotting"] :
-                     startswith(name, "example/") ? TEST_PROJECTS["example"] :
+test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
+                     startswith(name, "examples") ? TEST_PROJECTS["example"] :
                      startswith(name, "jet") ? TEST_PROJECTS["jet"] :
                      nothing
 
