@@ -19,6 +19,7 @@
 - Support for Gaussian states, unitaries, and channels through `GabsRepr` as the default for QModes.
 - `HomodyneMeasurement` has been added for Gaussian-state measurements.
 - New assisted continuous-variable teleportation example.
+- New piecemaker GHZ-switch example.
 
 ## v0.5.1 - 2025-07-14
 
