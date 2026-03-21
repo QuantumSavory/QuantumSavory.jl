@@ -1,5 +1,4 @@
 include("setup.jl")
-using CSV
 
 # mem_depolar_prob = 0.1 # memory depolarization probability
 # decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
@@ -24,6 +23,7 @@ for nclients in [5, 10, 15, 20, 25, 30, 35]
 
     @info "Simulation with $(nclients) clients finished in $(elapsed_time) seconds"
 end
+using CSV
 CSV.write("results_piecemaker.csv", results_per_client)
 
 ## calculate statistics (mean, std and standard error) from results_per_client
