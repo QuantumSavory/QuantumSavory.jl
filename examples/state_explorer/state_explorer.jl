@@ -104,4 +104,6 @@ Bonito.route!(server, r"/vis/.*" => vis);
 
 @info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
 
-wait(server)
+if abspath(PROGRAM_FILE) == @__FILE__
+    wait(server)
+end

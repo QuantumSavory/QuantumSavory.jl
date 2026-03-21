@@ -1,9 +1,9 @@
 using Test
 
-@testset "Examples - firstgenrepeater_v2 2" begin
-    withenv("QS_FIRSTGENREPEATER_V2_PORT" => "8890") do
+@testset "Examples - repeatergrid 1b" begin
+    withenv("QS_ASYNC_REPEATERGRID_PORT" => "8894") do
         try
-            include("../../examples/firstgenrepeater_v2/2_swapper_example.jl")
+            include("../../examples/repeatergrid/1b_async_wglmakie_interactive.jl")
         finally
             if isdefined(@__MODULE__, :server)
                 close(server)

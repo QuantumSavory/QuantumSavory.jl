@@ -161,4 +161,6 @@ Bonito.route!(server, "/" => landing);
 
 ##
 
-wait(server)
+if abspath(PROGRAM_FILE) == @__FILE__
+    wait(server)
+end

@@ -1,9 +1,9 @@
 using Test
 
-@testset "Examples - firstgenrepeater_v2 2" begin
-    withenv("QS_FIRSTGENREPEATER_V2_PORT" => "8890") do
+@testset "Examples - simpleswitch 2" begin
+    withenv("QS_SIMPLESWITCH_PORT" => "8893") do
         try
-            include("../../examples/firstgenrepeater_v2/2_swapper_example.jl")
+            include("../../examples/simpleswitch/2_wglmakie_interactive.jl")
         finally
             if isdefined(@__MODULE__, :server)
                 close(server)
