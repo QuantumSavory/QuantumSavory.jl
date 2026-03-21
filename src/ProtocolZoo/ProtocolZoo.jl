@@ -413,6 +413,10 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                     continue
                 end
 
+                # Protocol bug tracked in issue #303:
+                # https://github.com/QuantumSavory/QuantumSavory.jl/issues/303
+                # Stale delete messages can still arrive after the corresponding local
+                # bookkeeping has already been cleared or superseded.
                 if isnothing(updategate)
                     @error "EntanglementTracker @$(prot.node): stale delete message=`$msg` is dropped"
                     continue
