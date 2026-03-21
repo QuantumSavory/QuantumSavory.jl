@@ -6,8 +6,6 @@ using Gabs
 
 @testset "Aqua" begin
 
-if isempty(VERSION.prerelease) # do not run on nightly
-
 @test Test.detect_ambiguities(QuantumSavory) == Tuple{Method, Method}[]
 
 Aqua.test_all(QuantumSavory,
@@ -17,7 +15,5 @@ Aqua.test_all(QuantumSavory,
 )
 
 @test length(Aqua.Piracy.hunt(QuantumSavory)) == 12 # TODO upstream the sources of piracies
-
-end
 
 end

@@ -29,7 +29,7 @@ filter!(testsuite) do (name, _)
     endswith(name, "_tests")
 end
 
-if get(ENV, "QUANTUMSAVORY_DOWNGRADE_TEST", "") == "true"
+if !isempty(VERSION.prerelease) || get(ENV, "QUANTUMSAVORY_DOWNGRADE_TEST", "") == "true"
     delete!(testsuite, "general/aqua_tests")
 end
 
