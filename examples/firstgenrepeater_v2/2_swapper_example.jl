@@ -107,7 +107,7 @@ function add_configuration_controls(block)
     state_obs = Observable(copy(state_defaults))
 
     config_section = container[1, 1] = GridLayout(tellwidth = false)
-    config_section[1, 1] = Makie.Label("Simulation settings", textsize = 16, color = (:white, 0.85))
+    Makie.Label(config_section[1, 1], "Simulation settings", fontsize = 16, color = (:white, 0.85))
 
     sim_slider_grid = SliderGrid(
         config_section[2, 1],
@@ -123,7 +123,8 @@ function add_configuration_controls(block)
         width = 520,
     )
 
-    chain_label = config_section[3, 1] = Makie.Label(
+    chain_label = Makie.Label(
+        config_section[3, 1],
         "chain: $(config_defaults[:len]) nodes × $(config_defaults[:regsize]) qubits",
         tellwidth = false,
         halign = :left,
@@ -159,7 +160,7 @@ function add_configuration_controls(block)
     end
 
     state_section = container[2, 1] = GridLayout(tellwidth = false)
-    state_section[1, 1] = Makie.Label("Genqo source parameters", textsize = 16, color = (:white, 0.85))
+    Makie.Label(state_section[1, 1], "Genqo source parameters", fontsize = 16, color = (:white, 0.85))
 
     state_slider_specs = [
         (
@@ -172,7 +173,8 @@ function add_configuration_controls(block)
     ]
     state_slider_grid = SliderGrid(state_section[2, 1], state_slider_specs...; width = 520)
 
-    state_label = state_section[3, 1] = Makie.Label(
+    state_label = Makie.Label(
+        state_section[3, 1],
         "state parameters: " * state_summary(state_defaults, state_params),
         tellwidth = false,
         halign = :left,
@@ -217,10 +219,12 @@ landing = Bonito.App() do
             state_config = deepcopy(state_obs[])
 
             fig[2, 1] = display_area = GridLayout()
-            display_area[1, 1] = inner_fig = Figure(size = (640, 420))
+            # display_area[1, 1] = inner_fig = Figure(size = (640, 420))
+            rowsize!(display_area, 1, Fixed(420))
+            colsize!(display_area, 1, Fixed(640))
 
             sim, network, obs, ax = prepare_swapping_simulation(
-                inner_fig;
+                display_area[1, 1]; #inner_fig;
                 config = config,
                 state_config = state_config,
             )
