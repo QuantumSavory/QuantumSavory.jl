@@ -261,16 +261,16 @@ end
 
 @info "app definition is complete"
 
+isdefined(Main, :server) && close(server)
+port = parse(Int, get(ENV, "QS_FIRSTGENREPEATER_V2_PORT", "8890"))
+interface = get(ENV, "QS_FIRSTGENREPEATER_V2_IP", "127.0.0.1")
+proxy_url = get(ENV, "QS_FIRSTGENREPEATER_V2_PROXY", "")
+server = Bonito.Server(interface, port; proxy_url)
+Bonito.HTTPServer.start(server)
+Bonito.route!(server, "/" => landing)
+
+@info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
+
 if abspath(PROGRAM_FILE) == @__FILE__
-    isdefined(Main, :server) && close(server)
-    port = parse(Int, get(ENV, "QS_FIRSTGENREPEATER_V2_PORT", "8890"))
-    interface = get(ENV, "QS_FIRSTGENREPEATER_V2_IP", "127.0.0.1")
-    proxy_url = get(ENV, "QS_FIRSTGENREPEATER_V2_PROXY", "")
-    server = Bonito.Server(interface, port; proxy_url)
-    Bonito.HTTPServer.start(server)
-    Bonito.route!(server, "/" => landing)
-
-    @info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
-
     wait(server)
 end
