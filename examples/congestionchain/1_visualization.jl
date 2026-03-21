@@ -27,9 +27,12 @@ for node in vertices(network)
     @process swapper(sim, network, node, swapper_wait_time, swapper_busy_time)
 end
 
-ts = Observable(Float64[])
-fidXX = Observable(Float64[])
-fidZZ = Observable(Float64[])
+ts = Ref(Float64[])
+fidXX = Ref(Float64[])
+fidZZ = Ref(Float64[])
+ts_obs = Observable(Float64[])
+fidXX_obs = Observable(Float64[])
+fidZZ_obs = Observable(Float64[])
 @process consumer(sim, network, 1, len, consume_wait_time,ts,fidXX,fidZZ)
 
 fig = Figure(size=(800,400))
@@ -39,8 +42,8 @@ ax_fidXX = Axis(fig[1,2][1,1], xlabel="", ylabel="XX Stabilizer\nExpectation")
 ax_fidZZ = Axis(fig[1,2][2,1], xlabel="time", ylabel="ZZ Stabilizer\nExpectation")
 c1 = Makie.wong_colors()[1]
 c2 = Makie.wong_colors()[2]
-scatter!(ax_fidXX,ts,fidXX,label="XX",color=(c1,0.1))
-scatter!(ax_fidZZ,ts,fidZZ,label="ZZ",color=(c2,0.1))
+scatter!(ax_fidXX,ts_obs,fidXX_obs,label="XX",color=(c1,0.1))
+scatter!(ax_fidZZ,ts_obs,fidZZ_obs,label="ZZ",color=(c2,0.1))
 
 if isinteractive()
     display(fig)
@@ -53,9 +56,11 @@ visible = isinteractive()
 record(fig, "congestionchain.mp4", step_ts; framerate, visible) do t
     run(sim, t)
     ax.title = "t=$(t)"
-    if length(ts[])>2 # to avoid failing autolimits on empty plots
+    if length(ts[]) > 2 # to avoid failing autolimits on empty plots
+        ts_obs[] = ts[]
+        fidXX_obs[] = fidXX[]
+        fidZZ_obs[] = fidZZ[]
         notify(obs)
-        notify(ts)
         autolimits!(ax_fidXX)
         autolimits!(ax_fidZZ)
     end
