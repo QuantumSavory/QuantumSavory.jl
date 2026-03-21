@@ -1,7 +1,5 @@
 # Distributing a GHZ state with a quantum entanglement switch
 
-Live version is available at [areweentangledyet.com/piecemakerswitch/](https://areweentangledyet.com/piecemakerswitch/).
-
 In this setup, multiple nodes (user nodes) connect to a central node (switch node) through bipartite entangled states. The switch node performs fusion operations on these shared states to create a GHZ state among the user nodes. The goal is to do the latter as memory-efficient as possible. Each of the $n$ clients can store one memory qubit in its memory buffer and one qubit at the switch side. In addition the switch's register holds a dedicated 'piecemaker' slot, a qubit in the $|+\rangle$ state, which all successful clients fuse their switch-side qubits with. We term this protocol the _piecemaker_ protocol, see [Prielinger et al., 2025](https://arxiv.org/abs/2508.14737).
 
 In each time step, $n$ entanglement generation processes run in parallel. Upon creation of an entanglement link, it is fused with the piecemaker qubit. Once all clients went through this fusion operation, the piecemaker qubit is measured. This projects the state back to the clients, resulting in the desired shared GHZ state.
@@ -13,7 +11,6 @@ The `setup.jl` file implements all necessary base functionality.
 The other files run the simulation and generate visuals in a number of different circumstances:
 1. `1_simple_run.jl` A single simulator script convenient for exploratory coding, running a number of Monte Carlo simulations;
 2. `2_live_visualization_interactive.jl` A web-app version of the simulator;
-3. `3_static_viz.jl` A script running a number of simulations like the ones in point 1, followed by plotting the fidelity over the protocol's execution time.
 
 Documentation:
 - [The "How To" doc page on setting up this simulation](https://qs.quantumsavory.org/dev/howto/piecemakerswitch/piecemakerswitch)
