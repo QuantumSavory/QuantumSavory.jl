@@ -57,3 +57,9 @@ sequenceDiagram
         end
     end
 ```
+
+## TODO
+
+The code can be slightly simplified if the `Logger` and `PiecemakerProtocol` are
+turned into callable structs (e.g. subtypes of `AbstractProtocol`).
+That permits slightly easier organization of configuration and log data.

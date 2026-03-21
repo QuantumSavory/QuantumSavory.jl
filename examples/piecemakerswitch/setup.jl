@@ -11,20 +11,6 @@ using QuantumClifford: ghz
 const ghzs = [ghz(n) for n in 1:35] # make const in order to not build new every time
 
 """
-    push_to_logging!(logging::Vector, t::Float64, fidelity::Float64)
-
-Append a time-fidelity data point to the logging vector.
-
-# Arguments
-- `logging::Vector`: Vector of `Point2f` storing (time, fidelity) pairs
-- `t::Float64`: Simulation time at which the measurement was taken
-- `fidelity::Float64`: Measured fidelity to the target GHZ state
-"""
-function push_to_logging!(logging::Vector, t::Float64, fidelity::Float64)
-    push!(logging, (t, fidelity))
-end
-
-"""
     fusion(piecemaker_slot::RegRef, client_slot::RegRef)
 
 Perform a fusion operation between a piecemaker qubit and a client qubit.
@@ -75,15 +61,15 @@ the measurement outcome is 2) to correct the client's qubit state.
 end
 
 """
-    Logger(sim, net::RegisterNet, node::Int, n::Int, start_of_round)
+    Logger(sim, net::RegisterNet, node::Int, n::Int, start_of_round, logging)
 
 Resumable function that applies Z corrections and measures final GHZ fidelity.
 
 Waits for a `:updateZ` tag from the switch (sent after measuring the piecemaker
 qubit in the X basis), applies the necessary Z correction if the measurement
 outcome is 2, then measures the fidelity of the resulting n-qubit state to the
-target GHZ state and logs it. Pushes a (time, fidelity) data point to the global
-`logging` vector via `push_to_logging!`
+target GHZ state and logs it.
+Saves a (time, fidelity) data point to the `logging` vector.
 
 # Arguments
 - `sim`: ConcurrentSim simulation environment
@@ -91,8 +77,11 @@ target GHZ state and logs it. Pushes a (time, fidelity) data point to the global
 - `node::Int`: Index of the client node receiving the Z correction
 - `n::Int`: Number of clients in the GHZ state
 - `start_of_round`: Simulation time when the current round started
+- `logging`: A vector in which to store tuples of
+    - `t::Float64`: Simulation time at which the measurement was taken
+    - `fidelity::Float64`: Measured fidelity to the target GHZ state
 """
-@resumable function Logger(sim, net::RegisterNet, node::Int, n::Int, start_of_round)
+@resumable function Logger(sim, net::RegisterNet, node::Int, n::Int, start_of_round, logging)
     msg = querydelete!(net[node], :updateZ, ❓)
     if isnothing(msg)
         error("No message received at node $(node) with tag :updateZ.")
@@ -109,7 +98,7 @@ target GHZ state and logs it. Pushes a (time, fidelity) data point to the global
         fidelity = real(observable([net[i+1][1] for i in 1:n], obs_proj; time = now(sim)))
         t = now(sim) - start_of_round
         @debug "Fidelity: $(fidelity)"
-        push_to_logging!(logging, t, fidelity)
+        push!(logging, (t, fidelity))
     end
 end
 
@@ -133,7 +122,7 @@ function clear_up_qubits!(net::RegisterNet, n::Int)
 end
 
 """
-    PiecemakerProt(sim, n::Int, net::RegisterNet, link_success_prob::Float64, rounds::Int)
+    PiecemakerProt(sim, n::Int, net::RegisterNet, link_success_prob::Float64, rounds::Int, logging)
 
 Main resumable protocol for the piecemaker quantum switching scheme.
 
@@ -151,6 +140,7 @@ a central switch node. Each round:
 - `net::RegisterNet`: Network with star topology (switch at center, clients at leaves)
 - `link_success_prob::Float64`: Probability of successful entanglement per attempt
 - `rounds::Int`: Number of GHZ generation rounds to execute
+- `logging`: An array to store logging data, passed onto `Logger`
 
 # Protocol Overview
 The piecemaker protocol generates multipartite entanglement by:
@@ -159,7 +149,7 @@ The piecemaker protocol generates multipartite entanglement by:
 - Measuring the piecemaker in the X basis to project clients into GHZ
 - Communicating measurement outcomes via tags for local X and Z corrections
 """
-@resumable function PiecemakerProt(sim, n::Int, net::RegisterNet, link_success_prob::Float64, rounds::Int)
+@resumable function PiecemakerProt(sim, n::Int, net::RegisterNet, link_success_prob::Float64, rounds::Int, logging)
     while rounds != 0
         @debug "round $(rounds)"
         start = now(sim)
@@ -181,7 +171,7 @@ The piecemaker protocol generates multipartite entanglement by:
             counter = 0
             while counter < n # until all clients are entangled
                 @yield onchange_tag(net[1])
-                if counter == 0 
+                if counter == 0
                     # Initialize "piecemaker" qubit in |+> state when first qubit arrived
                     initialize!(net[1][n+1], X1, time = now(sim))
                 end
@@ -212,7 +202,7 @@ The piecemaker protocol generates multipartite entanglement by:
             break
         end
 
-        @yield @process Logger(sim, net, 2, n, start)
+        @yield @process Logger(sim, net, 2, n, start, logging)
 
         # cleanup qubits
         clear_up_qubits!(net, n)
@@ -221,7 +211,7 @@ The piecemaker protocol generates multipartite entanglement by:
     end
 end
 
-function prepare_sim(n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing}, 
+function prepare_sim(n::Int, states_representation::AbstractRepresentation, noise_model::Union{AbstractBackground, Nothing},
     link_success_prob::Float64, seed::Int, rounds::Int)
 
     # Set a random seed
@@ -229,12 +219,14 @@ function prepare_sim(n::Int, states_representation::AbstractRepresentation, nois
 
     switch = Register([Qubit() for _ in 1:(n+1)], [states_representation for _ in 1:(n+1)], [noise_model for _ in 1:(n+1)]) # storage qubits at the switch, first qubit is the "piecemaker" qubit
     clients = [Register([Qubit()], [states_representation], [noise_model]) for _ in 1:n] # client qubits
-    
+
     graph = star_graph(n+1)
     net = RegisterNet(graph, [switch, clients...])
     sim = get_time_tracker(net)
 
+    logging = []
+
     # Start the piecemaker protocol
-    @process PiecemakerProt(sim, n, net, link_success_prob, rounds)
-    return sim
+    @process PiecemakerProt(sim, n, net, link_success_prob, rounds, logging)
+    return sim, logging
 end

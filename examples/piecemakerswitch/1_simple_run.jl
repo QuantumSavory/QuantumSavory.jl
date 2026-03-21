@@ -1,7 +1,5 @@
 include("setup.jl")
 using CSV
-using GLMakie
-logging = Point2f[] # TODO: just put this here to avoid error, find better way to share with setup.jl
 
 # mem_depolar_prob = 0.1 # memory depolarization probability
 # decoherence_rate = - log(1 - mem_depolar_prob) # decoherence rates
@@ -11,14 +9,12 @@ rounds = 100 # number of rounds to run
 
 results_per_client = DataFrame(nclients = Int[], Δt = Float64[], fidelity = Float64[])
 for nclients in [5, 10, 15, 20, 25, 30, 35]
-    logging = Tuple[] # for plotting
-
     # Prepare simulation data storage
     distribution_times = Float64[]
     fidelities = Float64[]
     elapsed_times = Float64[]
 
-    sim = prepare_sim(nclients, CliffordRepr(), noise_model, link_success_prob, 42, rounds)
+    sim, logging = prepare_sim(nclients, CliffordRepr(), noise_model, link_success_prob, 42, rounds)
     elapsed_time = @elapsed run(sim)
 
     # Add logging data to DataFrame
