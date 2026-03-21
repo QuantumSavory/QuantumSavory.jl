@@ -3,12 +3,12 @@ using ParallelTestRunner
 
 const TEST_PROJECTS = Dict(
     "plotting" => normpath(joinpath(@__DIR__, "projects", "plotting")),
-    "example" => normpath(joinpath(@__DIR__, "..", "examples")),
+    "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
 
 test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
-                     startswith(name, "examples") ? TEST_PROJECTS["example"] :
+                     startswith(name, "examples") ? TEST_PROJECTS["examples"] :
                      startswith(name, "jet") ? TEST_PROJECTS["jet"] :
                      nothing
 
