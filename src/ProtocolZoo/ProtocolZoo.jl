@@ -414,7 +414,7 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                 end
 
                 if isnothing(updategate)
-                    @debug "EntanglementTracker @$(prot.node): stale delete message=`$msg` is dropped"
+                    @error "EntanglementTracker @$(prot.node): stale delete message=`$msg` is dropped"
                     continue
                 end
 
