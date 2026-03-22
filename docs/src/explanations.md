@@ -25,9 +25,8 @@ Explanation pages answer questions such as:
 4. [Properties](@ref)
 5. [Background Noise Processes](@ref)
 6. [Symbolic Expressions](@ref)
-7. [Backend Simulators](@ref backend)
-8. [Discrete Event Simulator](@ref sim)
-9. [Visualizations](@ref Visualizations)
+7. [Discrete Event Simulator](@ref sim)
+8. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 

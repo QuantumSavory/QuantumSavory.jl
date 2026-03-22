@@ -52,7 +52,6 @@ function main()
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
         "Symbolic Expressions" => "symbolics.md",
-        "Backend Simulators" => "backendsimulator.md",
         "Discrete Event Simulator" => "discreteeventsimulator.md",
         "Visualizations" => "visualizations.md",
     ],

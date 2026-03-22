@@ -79,7 +79,8 @@ everything from scratch.
 ## Where To Go Next
 
 - Read [Register Interface](@ref) for the main high-level operations.
-- Read [Backend Simulators](@ref backend) for the numerical side of the model.
+- Read [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs) for
+  the numerical side of the model.
 - Read [Discrete Event Simulator](@ref sim) for the protocol execution model.
 - Read [Tagging and Querying](@ref tagging-and-querying) for protocol
   coordination.

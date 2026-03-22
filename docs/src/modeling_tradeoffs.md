@@ -35,7 +35,10 @@ Use `QuantumClifford` when your model is close to stabilizer dynamics:
 - large simulations where speed matters.
 
 This is usually the fastest option for repeater-style and error-correction-like
-workflows that stay near the stabilizer regime.
+workflows that stay near the stabilizer regime. In QuantumSavory this backend
+is provided through the [`QuantumClifford`](https://qc.quantumsavory.org/stable/)
+library, which uses tableau-based stabilizer simulation with destabilizer
+improvements.
 
 ### `QuantumOptics`
 
@@ -46,7 +49,10 @@ Use `QuantumOptics` when you need a more general wavefunction-style description:
 - a reference calculation against which to compare faster approximations.
 
 This is the most general built-in path, but it pays for that generality with
-exponential scaling in the generic case.
+exponential scaling in the generic case. In practice, this is the backend to
+reach for when you need the flexibility of the
+[`QuantumOptics`](https://qojulia.org/) state-vector representation and the
+problem size is still manageable.
 
 ### `Gabs`
 
@@ -58,6 +64,15 @@ Use `Gabs` when the system is naturally Gaussian:
 
 For those models, Gaussian simulation can be dramatically cheaper than a
 general wavefunction treatment.
+
+## Backend Extension
+
+QuantumSavory is not limited to the backends listed above. The symbolic
+frontend and register interface are designed so that new numerical backends can
+be integrated without rewriting higher-level models and protocols. This matters
+because new hardware abstractions and new specialized simulation methods keep
+appearing, and a full-stack tool needs to absorb them without forcing users to
+start over.
 
 ## Why The Symbolic Frontend Matters
 
@@ -90,7 +105,6 @@ architecture, but they are not yet first-class options in QuantumSavory.
 
 ## Where To Go Next
 
-- Read [Backend Simulators](@ref backend) for the current backend overview.
 - Read [Properties](@ref) and [Background Noise Processes](@ref) for how
   subsystem types and background processes affect the model.
 - Read [Symbolic Expressions](@ref) for the frontend side of the abstraction.

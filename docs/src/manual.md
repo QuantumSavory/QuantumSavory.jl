@@ -23,8 +23,8 @@ to implement superdense coding. The example is small, but it introduces:
 
 ## Installation
 
-To use QuantumSavory, install Julia 1.10 or later and then add the package from
-the Julia REPL:
+To use QuantumSavory, install the latest Julia version and then add the package
+from the Julia REPL:
 
 ```bash
 $ julia

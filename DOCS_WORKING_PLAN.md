@@ -22,6 +22,8 @@ Branch: `docs-paper-alignment-codex`
   infrastructure, rather than bespoke manual channel plumbing.
 - Prefer language that highlights full-stack codesign, digital twins, and reuse
   across abstraction layers.
+- When mentioning installation, say "latest Julia version" rather than pinning
+  a specific release number in prose.
 
 ## Planned Steps
 
@@ -67,4 +69,9 @@ Branch: `docs-paper-alignment-codex`
 - Keep commits small and sequential.
 - After each completed step, verify the docs build cleanly with:
   `julia -tauto --project=docs docs/make.jl`
+- For local docs builds, prefer upstream dependency branches over downgrading
+  compat bounds. At the moment the docs environment is configured to use
+  `Gabs` from `main` and `QuantumClifford` from `master`.
+- If the local workspace manifest drifts behind those compat bounds, refresh it
+  against the upstream branches rather than relaxing compat in `Project.toml`.
 - Delete this file at the end of the full documentation effort.
