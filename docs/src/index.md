@@ -6,45 +6,38 @@ DocTestSetup = quote
 end
 ```
 
-A multi-formalism simulator for noisy quantum communication and computation hardware with support for symbolic algebra, multiple simulation backends, a variety of noise models, discrete event simulation, optimization, and visualization.
+A multi-formalism simulator for noisy quantum communication and computation
+hardware, with support for symbolic algebra, multiple simulation backends,
+noise models, discrete-event simulation, optimization, and visualization.
 
-### Capabilities
+## Start Here
 
-QuantumSavory offers features such as:
+If this is your first visit, the shortest path is:
 
-- **State, Circuit, and Protocols Zoos**: Collections of pre-built quantum states, circuits, and protocols to support rapid prototyping and application optimization.
-- **Realistic Quantum Network Simulation**: : Support for simulating noise and decoherence effects.
-- **Visualization**: Tools for visualizing register states and experiment metadata, with support for background maps.
+1. Install the package with `pkg> add QuantumSavory`.
+2. Work through the [Getting Started Manual](@ref manual).
+3. Continue into [Explanations](@ref), [Tutorials](@ref), [How-To Guides](@ref),
+   or [References](@ref), depending on what you need next.
 
-The rest of the documentation is [structured](https://diataxis.fr/) as follows:
+## Documentation Map
 
-- [How-To Guides](@ref) - fully fleshed out guides to modeling common quantum hardware setups
-- [Explanations](@ref) - how is the library structured, what are its conventions, and why were they decided upon
-- [Tutorials](@ref) - examples covering a specific small feature of the library
-- [References](@ref) - description of the entire library API
+- [Getting Started Manual](@ref manual): a first guided simulation.
+- [Explanations](@ref): architecture, conventions, and the conceptual model.
+- [Tutorials](@ref): focused lessons on one feature at a time.
+- [How-To Guides](@ref): larger task-oriented workflows.
+- [References](@ref): API lookup and generated module documentation.
 
-Depending on your learning style, you might prefer to start at different locations in the above documentation.
+## Capabilities
 
-## Getting Started
-### Installation
-To use QuantumSavory, make sure you have Julia version 1.10 installed. You can download and install Julia from [the official Julia website](https://julialang.org/downloads/).
+QuantumSavory is particularly useful when you want to combine:
 
-Once Julia is setup, QuantumSavory can be installed with the following command in your in your Julia REPL:
-```bash
-$ julia
-julia> ]
-pkg> add QuantumSavory
-```
-#### Optional Dependencies
-There are optional packages that you need to install to use the full plotting feature.
-- **Makie**: For plotting of registers and processes.
-- **Tyler**: Enables plotting on a real-world map as a background.
+- symbolic descriptions of states and operations,
+- interchangeable numerical backends,
+- explicit noise and time evolution,
+- classical control for LOCC-style protocols, and
+- visualization of states, metadata, and protocol state.
 
-
-### Basic Demo
-Here’s a simple example to demonstrate how you can set up a simulation to generate a set of registers with qubit slots. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
-
-
+## Example Applications
 
 Below we show some of the results of the How-To guides.
 
@@ -60,16 +53,7 @@ Below we show some of the results of the How-To guides.
 <video src="howto/colorcentermodularcluster/colorcentermodularcluster-02.simdashboard.mp4" autoplay loop muted></video>
 ```
 
-!!! warning
-
-    This is a limited public demo of a fraction of some internal research code. Full code is slowly being documented and released.
-
-!!! danger
-
-    This is software is still in a fairly unstable alpha state! The documentation is extremely barebones and current users are expected to read the source code.
-
-A good place to start is the How-To pages.
-For instance, the [implementation of a first generation repeater](@ref First-Generation-Quantum-Repeater).
+For a first runnable example, start with the [Getting Started Manual](@ref manual).
 
 ## Office Hours
 
