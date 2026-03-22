@@ -45,15 +45,11 @@ c2 = Makie.wong_colors()[2]
 scatter!(ax_fidXX,ts_obs,fidXX_obs,label="XX",color=(c1,0.1))
 scatter!(ax_fidZZ,ts_obs,fidZZ_obs,label="ZZ",color=(c2,0.1))
 
-if isinteractive()
-    display(fig)
-end
+display(fig)
 
-step_ts = isinteractive() ? range(0, 1000, step=0.1) : range(0, 20, step=1)
-framerate = isinteractive() ? 50 : 5
-visible = isinteractive()
+step_ts = range(0, 1000, step=0.1)
 
-record(fig, "congestionchain.mp4", step_ts; framerate, visible) do t
+record(fig, "congestionchain.mp4", step_ts; framerate=50, visible=true) do t
     run(sim, t)
     ax.title = "t=$(t)"
     if length(ts[]) > 2 # to avoid failing autolimits on empty plots
