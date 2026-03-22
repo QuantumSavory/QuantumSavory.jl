@@ -32,6 +32,10 @@ function main()
     clean = true,
     warnonly = [:missing_docs],
     sitename = "QuantumSavory.jl",
+    remotes = Dict(
+        normpath(joinpath(@__DIR__, "..")) =>
+            Remotes.GitHub("QuantumSavory", "QuantumSavory.jl"),
+    ),
     format = Documenter.HTML(
         assets=assets
     ),
@@ -42,12 +46,17 @@ function main()
     "Getting Started Manual" => "manual.md",
     "Explanations" => [
         "explanations.md",
-        "Register Interface" => "register_interface.md",
+        "Architecture and Mental Model" => "architecture.md",
+        "Why QuantumSavory Exists" => "why_quantumsavory.md",
+        "Quantum Systems, Subsystems, and Entanglement" =>
+            "quantum_systems.md",
+        "Restricted Formalisms and Efficient Simulation" =>
+            "restricted_formalisms.md",
+        "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
+        "Metadata and Protocol Composition" => "metadata_plane.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
         "Symbolic Expressions" => "symbolics.md",
-        "Tagging and Querying" => "tag_query.md",
-        "Backend Simulators" => "backendsimulator.md",
         "Discrete Event Simulator" => "discreteeventsimulator.md",
         "Visualizations" => "visualizations.md",
     ],
@@ -59,6 +68,7 @@ function main()
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
+        "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
     ],
     "Tutorials" => [
         "tutorial.md",
@@ -69,6 +79,8 @@ function main()
     ],
     "References" => [
         "references.md",
+        "Register Interface API" => "register_interface.md",
+        "Tag and Query API" => "tag_query.md",
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",

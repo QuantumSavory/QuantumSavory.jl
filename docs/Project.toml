@@ -6,7 +6,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterCitations = "daee34ce-89f3-4625-b898-19384cb65244"
 DocumenterMermaid = "a078cd44-4d9c-4618-b545-3ab9d77f9177"
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+Gabs = "0eb812ee-a11f-4f5e-b8d4-bb8a44f06f50"
 GraphMakie = "1ecd5474-83a3-4783-bb4f-06765db800d2"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
@@ -28,4 +28,6 @@ ThreadTools = "dbf13d8f-d36e-4350-8970-f3a99faba1a8"
 Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [sources]
+Gabs = {url = "https://github.com/QuantumSavory/Gabs.jl.git", rev = "main"}
+QuantumClifford = {url = "https://github.com/QuantumSavory/QuantumClifford.jl.git", rev = "master"}
 QuantumSavory = {path = ".."}

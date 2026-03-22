@@ -8,6 +8,14 @@ E.g. take the Barrett-Kok dual-rail heralded entanglement procedure -- it produc
 stateexplorer!(fig, BarrettKokBellPairW)
 ```
 
+![State explorer for the Barrett-Kok entangled pair](../assets/paper_figures/bkslider.png)
+
+This is useful when you want to work with realistic surrogate states without
+digging into the full derivation of the underlying physical model. The sliders
+let you sweep the parameters of the chosen state family, while the plotted
+figures of merit help you see how those choices affect entanglement quality and
+other diagnostics.
+
 Below we embed a live version of this state explorer (hosted at [areweentangledyet.com/state_explorer/](https://areweentangledyet.com/state_explorer/)):
 
 ```@raw html

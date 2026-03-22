@@ -11,8 +11,8 @@ This is particularly useful for live simulation visualizations.
 The [`registernetplot_axis`](@ref) function can be used to draw a given set of registers, together with the quantum states they contain. It also provides interactive tools for inspecting the content of the registers (by hovering or clicking on the corresponding register slot). Here we give an example where we define a network and then plot it:
 
 ```@example vis
-using GLMakie
-GLMakie.activate!()
+using CairoMakie
+CairoMakie.activate!()
 using QuantumSavory
 
 # create a network of qubit registers
@@ -43,8 +43,8 @@ propertynames(plt)
 If your registers have latitude and longitude coordinates (ranging from -180 to 180), you can plot them directly on a map. One way is to use `generate_map` function to create the map as a plotting axis using the package 'Tyler'. Here's how you can do this with the registers defined earlier:
 
 ```@example vis
-using GLMakie # hide
-GLMakie.activate!() # hide
+using CairoMakie # hide
+CairoMakie.activate!() # hide
 net = RegisterNet([Register(2),Register(3),Register(2),Register(5)]) # hide
 initialize!(net[1,1]) # hide
 initialize!(net[2,3], X₁) # hide
@@ -87,6 +87,20 @@ tag!(network[2,3], :otherdata, 3, 4)
 QuantumSavory.showmetadata(fig,ax,plt,2,3)
 fig
 ```
+
+## Protocol-specific visualizations
+
+Visualizations in QuantumSavory are not limited to register contents. Protocols
+from the [ProtocolZoo API](API_ProtocolZoo.md) can also expose bespoke displays
+of their state and expected behavior, which is useful when you are debugging
+protocol parameters or inspecting what a reusable building block is meant to do
+before embedding it into a larger simulation.
+
+![Protocol-specific visualization for EntanglerProt](assets/paper_figures/showmethod.png)
+
+The example above shows an `EntanglerProt` visualization: the protocol is still
+configured through a callable Julia object, but it also provides a compact view
+of the generated state and the protocol's figures of merit.
 
 ## The state of locks and various metadata in the network
 
