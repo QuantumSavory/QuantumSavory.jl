@@ -143,7 +143,7 @@ end;
 # Serve the Makie app
 
 isdefined(Main, :server) && close(server);
-port = parse(Int, get(ENV, "QS_ASYNC_REPEATERGRID_PORT", "8888"))
+port = parse(Int, get(ENV, "QS_ASYNC_REPEATERGRID_PORT", "8894"))
 interface = get(ENV, "QS_ASYNC_REPEATERGRID_IP", "127.0.0.1")
 proxy_url = get(ENV, "QS_ASYNC_REPEATERGRID_PROXY", "")
 server = Bonito.Server(interface, port; proxy_url);
