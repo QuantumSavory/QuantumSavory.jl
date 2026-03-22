@@ -39,6 +39,39 @@ This distinction matters for QuantumSavory because the protocol layer,
 background noise model, and backend choice may all depend on which style of
 network you are trying to study.
 
+## Distillation Versus Error Correction
+
+Another major design choice is how the network improves reliability once noise
+and loss are unavoidable.
+
+```@raw html
+<div style="display:flex; gap:1.5rem; flex-wrap:wrap; align-items:flex-start;">
+  <div style="flex:1 1 320px;">
+    <p><strong>(a) Entanglement distillation</strong></p>
+    <object data="assets/paper_figures/distillation.pdf" type="application/pdf" width="100%" height="240">
+      <a href="assets/paper_figures/distillation.pdf">Open the distillation figure</a>
+    </object>
+  </div>
+  <div style="flex:1 1 320px;">
+    <p><strong>(b) Quantum error correction</strong></p>
+    <object data="assets/paper_figures/correction.pdf" type="application/pdf" width="100%" height="240">
+      <a href="assets/paper_figures/correction.pdf">Open the error-correction figure</a>
+    </object>
+  </div>
+</div>
+```
+
+Entanglement distillation consumes several lower-quality entangled states and
+tries to produce a smaller number of better ones, typically with a probabilistic
+success condition. Quantum error correction instead encodes logical information
+into a larger entangled state so that errors can be detected and corrected over
+time.
+
+These approaches place very different demands on a simulator. Distillation is
+often natural to describe as protocol logic consuming and producing tagged
+resources, while error correction tends to push harder on scale, timing,
+decoder integration, and specialized simulation backends.
+
 ## Where To Go Next
 
 - Read [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs) for
