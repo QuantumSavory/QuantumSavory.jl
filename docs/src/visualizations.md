@@ -88,6 +88,20 @@ QuantumSavory.showmetadata(fig,ax,plt,2,3)
 fig
 ```
 
+## Protocol-specific visualizations
+
+Visualizations in QuantumSavory are not limited to register contents. Protocols
+from the [ProtocolZoo API](API_ProtocolZoo.md) can also expose bespoke displays
+of their state and expected behavior, which is useful when you are debugging
+protocol parameters or inspecting what a reusable building block is meant to do
+before embedding it into a larger simulation.
+
+![Protocol-specific visualization for EntanglerProt](assets/paper_figures/showmethod.png)
+
+The example above shows an `EntanglerProt` visualization: the protocol is still
+configured through a callable Julia object, but it also provides a compact view
+of the generated state and the protocol's figures of merit.
+
 ## The state of locks and various metadata in the network
 
 The [`resourceplot_axis`](@ref) function can be used to draw all locks and resources stored in a meta-graph governing a discrete event simulation. Metadata stored at the vertices is plotted as colored or grayed out dots depending on their state. Metadata stored at the edges is shown as lines.

@@ -36,7 +36,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 7. Move `Figs/overview_ex.png` into the new introductory tutorial / walkthrough.
 - [x] 8. Move `Figs/models.png` into the backend/modeling-tradeoffs explanation.
 - [x] 9. Move `Figs/bkslider.png` into the StateZoo / state explorer docs.
-- [ ] 10. Move `Figs/showmethod.png` into the ProtocolZoo / visualization docs.
+- [x] 10. Move `Figs/showmethod.png` into the ProtocolZoo / visualization docs.
 - [ ] 11. Move `Figs/two-way.pdf` and `Figs/one-way.pdf` into a quantum-networking background explanation.
 - [ ] 12. Move `Figs/distillation.pdf` and `Figs/correction.pdf` into that same networking background page.
 - [ ] 13. Decide whether `Figs/compare.png` belongs in a durable "Why QuantumSavory" page.
