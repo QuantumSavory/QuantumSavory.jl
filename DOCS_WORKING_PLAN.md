@@ -32,7 +32,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 3. Add a new "Architecture and Mental Model" explanation page as the main entry point for understanding the library.
 - [x] 4. Split conceptual material from API material so Explanation stops carrying disguised reference docs.
 - [x] 5. Add a "Choosing a Backend / Modeling Tradeoffs" explanation page.
-- [ ] 6. Move `Figs/qsavory.png` into the new architecture page and probably the homepage.
+- [x] 6. Move `Figs/qsavory.png` into the new architecture page and probably the homepage.
 - [ ] 7. Move `Figs/overview_ex.png` into the new introductory tutorial / walkthrough.
 - [ ] 8. Move `Figs/models.png` into the backend/modeling-tradeoffs explanation.
 - [ ] 9. Move `Figs/bkslider.png` into the StateZoo / state explorer docs.

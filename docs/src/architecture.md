@@ -12,6 +12,13 @@ QuantumSavory is built around a separation of concerns:
 This separation is what lets the same high-level model be reused across
 different simulation strategies.
 
+![QuantumSavory architecture diagram](assets/paper_figures/qsavory.png)
+
+The diagram above summarizes the intended flow: the register interface sits at
+the center, symbolic descriptions and backend simulators stay decoupled, the
+`StatesZoo`, `CircuitZoo`, and `ProtocolZoo` provide reusable building blocks,
+and debugging or visualization can cut across the whole stack.
+
 ## The Main Building Blocks
 
 ### Registers and Register Networks

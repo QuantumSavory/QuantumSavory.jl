@@ -10,6 +10,13 @@ A multi-formalism simulator for noisy quantum communication and computation
 hardware, with support for symbolic algebra, multiple simulation backends,
 noise models, discrete-event simulation, optimization, and visualization.
 
+![QuantumSavory architecture overview](assets/paper_figures/qsavory.png)
+
+The architecture centers on a single register interface that connects symbolic
+modeling, numerical backends, protocol control, and reusable building blocks.
+If you want the full mental model behind that separation of concerns, start
+with [Architecture and Mental Model](@ref architecture).
+
 ## Start Here
 
 If this is your first visit, the shortest path is:
