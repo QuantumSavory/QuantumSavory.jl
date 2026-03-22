@@ -34,7 +34,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 5. Add a "Choosing a Backend / Modeling Tradeoffs" explanation page.
 - [x] 6. Move `Figs/qsavory.png` into the new architecture page and probably the homepage.
 - [x] 7. Move `Figs/overview_ex.png` into the new introductory tutorial / walkthrough.
-- [ ] 8. Move `Figs/models.png` into the backend/modeling-tradeoffs explanation.
+- [x] 8. Move `Figs/models.png` into the backend/modeling-tradeoffs explanation.
 - [ ] 9. Move `Figs/bkslider.png` into the StateZoo / state explorer docs.
 - [ ] 10. Move `Figs/showmethod.png` into the ProtocolZoo / visualization docs.
 - [ ] 11. Move `Figs/two-way.pdf` and `Figs/one-way.pdf` into a quantum-networking background explanation.

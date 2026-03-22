@@ -8,6 +8,13 @@ backend preserves the physics I care about at an acceptable computational
 cost?" The answer depends not only on circuit structure, but also on what type
 of physical system you need to represent.
 
+![Simulation modeling tradeoff axes](assets/paper_figures/models.png)
+
+The figure above highlights two largely independent choices: how you represent
+classical uncertainty and stochastic effects, and how you represent quantum
+correlations. QuantumSavory is designed to let you navigate those axes without
+rewriting the whole model each time you change approximation strategy.
+
 ## Two Important Tradeoffs
 
 There are two largely independent choices in quantum simulation:
