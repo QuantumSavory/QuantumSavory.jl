@@ -50,6 +50,8 @@ function main()
         "Why QuantumSavory Exists" => "why_quantumsavory.md",
         "Quantum Systems, Subsystems, and Entanglement" =>
             "quantum_systems.md",
+        "Restricted Formalisms and Efficient Simulation" =>
+            "restricted_formalisms.md",
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Properties" => "properties.md",

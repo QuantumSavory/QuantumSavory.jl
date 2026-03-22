@@ -112,6 +112,9 @@ architecture, but they are not yet first-class options in QuantumSavory.
 
 ## Where To Go Next
 
+- Read [Restricted Formalisms and Efficient Simulation](@ref
+  restricted-formalisms) for more background on why these backend families are
+  useful.
 - Read [Properties](@ref) and [Background Noise Processes](@ref) for how
   subsystem types and background processes affect the model.
 - Read [Symbolic Expressions](@ref) for the frontend side of the abstraction.

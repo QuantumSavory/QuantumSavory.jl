@@ -22,13 +22,15 @@ Explanation pages answer questions such as:
 1. [Architecture and Mental Model](@ref architecture)
 2. [Why QuantumSavory Exists](@ref why-quantumsavory)
 3. [Quantum Systems, Subsystems, and Entanglement](@ref quantum-systems)
-4. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
-5. [Metadata and Protocol Composition](@ref metadata-plane)
-6. [Properties](@ref)
-7. [Background Noise Processes](@ref)
-8. [Symbolic Expressions](@ref)
-9. [Discrete Event Simulator](@ref sim)
-10. [Visualizations](@ref Visualizations)
+4. [Restricted Formalisms and Efficient Simulation](@ref
+   restricted-formalisms)
+5. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
+6. [Metadata and Protocol Composition](@ref metadata-plane)
+7. [Properties](@ref)
+8. [Background Noise Processes](@ref)
+9. [Symbolic Expressions](@ref)
+10. [Discrete Event Simulator](@ref sim)
+11. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 
