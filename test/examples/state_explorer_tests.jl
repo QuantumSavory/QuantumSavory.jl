@@ -1,14 +1,13 @@
 using Test
 
-try
-    include("../../examples/state_explorer/state_explorer.jl")
-finally
-    if isdefined(@__MODULE__, :server)
-        close(server)
-        wait(server)
-    end
-end
-
 @testset "Examples - state explorer" begin
-    @test true
+    try
+        include("../../examples/state_explorer/state_explorer.jl")
+    finally
+        if isdefined(@__MODULE__, :server)
+            # The example may fail before the server is created.
+            close(server)
+            wait(server)
+        end
+    end
 end
