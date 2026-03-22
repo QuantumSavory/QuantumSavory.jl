@@ -1,13 +1,35 @@
 # Explanations
 
-This section covers how is the library structured, what are its conventions, and why were they decided upon.
+This section is for understanding how QuantumSavory is put together and why it
+works the way it does.
 
-You probably want to cover the:
-- `Register` and `RegisterNet` structures
-- basic interface used by the library
-- symbolic capabilities for formalism-agnostic description
-- metadata tagging and metadata queries for interoperability between protocols
-- available simulator backends
-- discrete event simulations and time-tracking capabilities
-- background noise processes
-- graphical visualization and plotting recipes
+If you are new to the package, first go through the [Manual](@ref manual) for a
+small hands-on example. Then come back here for the conceptual model.
+
+## What Lives Here
+
+Explanation pages answer questions such as:
+
+- What is a `Register`, and how does a `RegisterNet` fit into a simulation?
+- Why does QuantumSavory separate symbolic descriptions from numerical
+  backends?
+- How are background noise processes and time handled?
+- How are classical control, metadata tags, and protocols composed?
+- When should one backend or modeling approach be preferred over another?
+
+## Suggested Reading Order
+
+1. [Register Interface](@ref)
+2. [Properties](@ref)
+3. [Background Noise Processes](@ref)
+4. [Symbolic Expressions](@ref)
+5. [Tagging and Querying](@ref tagging-and-querying)
+6. [Backend Simulators](@ref backend)
+7. [Discrete Event Simulator](@ref sim)
+8. [Visualizations](@ref Visualizations)
+
+## Relationship To Other Sections
+
+- [Tutorials](@ref) are for guided, hands-on learning of a small feature.
+- [How-To Guides](@ref) are for accomplishing concrete tasks.
+- [References](@ref) are for looking up precise APIs and module contents.
