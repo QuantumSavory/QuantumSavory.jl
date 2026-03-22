@@ -5,6 +5,10 @@ DocTestSetup = quote
     using QuantumSavory
 end
 ```
+
+For help deciding which modeling approach to use, start with
+[Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs).
+
 The simulation of quantum dynamics in QuantumSavory can be done through many different backend simulators, depending on the tradeoff between performance and generality that the user needs. By default, it comes with two included simulators: `QuantumClifford` and `QuantumOptics`, but others can be plugged in through our universal quantum register interface.
 
 # QuantumClifford - Stabilizer Formalism
