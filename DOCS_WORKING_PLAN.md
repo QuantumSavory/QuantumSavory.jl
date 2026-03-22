@@ -33,7 +33,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 4. Split conceptual material from API material so Explanation stops carrying disguised reference docs.
 - [x] 5. Add a "Choosing a Backend / Modeling Tradeoffs" explanation page.
 - [x] 6. Move `Figs/qsavory.png` into the new architecture page and probably the homepage.
-- [ ] 7. Move `Figs/overview_ex.png` into the new introductory tutorial / walkthrough.
+- [x] 7. Move `Figs/overview_ex.png` into the new introductory tutorial / walkthrough.
 - [ ] 8. Move `Figs/models.png` into the backend/modeling-tradeoffs explanation.
 - [ ] 9. Move `Figs/bkslider.png` into the StateZoo / state explorer docs.
 - [ ] 10. Move `Figs/showmethod.png` into the ProtocolZoo / visualization docs.

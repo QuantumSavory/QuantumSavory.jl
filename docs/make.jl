@@ -66,6 +66,7 @@ function main()
     ],
     "Tutorials" => [
         "tutorial.md",
+        "Cluster-State Walkthrough" => "tutorial/cluster_state_walkthrough.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
         "State Explorer" => "tutorial/state_explorer.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
