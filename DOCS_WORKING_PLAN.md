@@ -40,7 +40,7 @@ Branch: `docs-paper-alignment-codex`
 - [ ] 11. Move `Figs/two-way.pdf` and `Figs/one-way.pdf` into a quantum-networking background explanation. Skipped.
 - [ ] 12. Move `Figs/distillation.pdf` and `Figs/correction.pdf` into that same networking background page. Skipped.
 - [ ] 13. Decide whether `Figs/compare.png` belongs in a durable "Why QuantumSavory" page.
-- [ ] 14. Rewrite the landing-page language from the paper's introduction: codesign, digital twins, symbolic frontend, interchangeable backends.
+- [x] 14. Rewrite the landing-page language from the paper's introduction: codesign, digital twins, symbolic frontend, interchangeable backends.
 - [ ] 15. Add a "Why QuantumSavory Exists" explanation page from the related-work section.
 - [ ] 16. Add a background explanation page on quantum systems: open systems, subsystem types, entanglement, and why this matters for QSavory.
 - [ ] 17. Add a background explanation page on restricted formalisms: stabilizer, Gaussian, tensor-network, finite-rank / near-Clifford methods.
