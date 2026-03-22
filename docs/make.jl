@@ -48,6 +48,7 @@ function main()
         "explanations.md",
         "Architecture and Mental Model" => "architecture.md",
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
+        "Quantum Networking Background" => "networking_background.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
