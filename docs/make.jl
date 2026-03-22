@@ -47,11 +47,10 @@ function main()
     "Explanations" => [
         "explanations.md",
         "Architecture and Mental Model" => "architecture.md",
-        "Register Interface" => "register_interface.md",
+        "Metadata and Protocol Composition" => "metadata_plane.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
         "Symbolic Expressions" => "symbolics.md",
-        "Tagging and Querying" => "tag_query.md",
         "Backend Simulators" => "backendsimulator.md",
         "Discrete Event Simulator" => "discreteeventsimulator.md",
         "Visualizations" => "visualizations.md",
@@ -74,6 +73,8 @@ function main()
     ],
     "References" => [
         "references.md",
+        "Register Interface API" => "register_interface.md",
+        "Tag and Query API" => "tag_query.md",
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",

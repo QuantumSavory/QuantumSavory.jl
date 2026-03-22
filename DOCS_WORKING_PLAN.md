@@ -10,7 +10,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 1. Turn the Explanation, Tutorial, and Reference landing pages into real hubs with reading order and scope.
 - [x] 2. Split homepage vs onboarding tutorial: keep `index.md` short and directional, and make `manual.md` the first real tutorial.
 - [x] 3. Add a new "Architecture and Mental Model" explanation page as the main entry point for understanding the library.
-- [ ] 4. Split conceptual material from API material so Explanation stops carrying disguised reference docs.
+- [x] 4. Split conceptual material from API material so Explanation stops carrying disguised reference docs.
 - [ ] 5. Add a "Choosing a Backend / Modeling Tradeoffs" explanation page.
 - [ ] 6. Move `Figs/qsavory.png` into the new architecture page and probably the homepage.
 - [ ] 7. Move `Figs/overview_ex.png` into the new introductory tutorial / walkthrough.

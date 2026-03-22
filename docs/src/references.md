@@ -7,6 +7,8 @@ want exact signatures, exported names, or generated API listings.
 
 ## Main Reference Pages
 
+- [Register Interface API](register_interface.md)
+- [Tag and Query API](tag_query.md)
 - [API](@ref Full-API)
 - [CircuitZoo API](API_CircuitZoo.md)
 - [StatesZoo API](@ref Predefined-Models-of-Quantum-States)
@@ -18,6 +20,7 @@ want exact signatures, exported names, or generated API listings.
 Use References when you need:
 
 - exact function and type names,
+- detailed lookup pages for core interfaces,
 - module-level API listings,
 - generated docstrings, or
 - citations used throughout the documentation.

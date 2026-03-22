@@ -20,14 +20,13 @@ Explanation pages answer questions such as:
 ## Suggested Reading Order
 
 1. [Architecture and Mental Model](@ref architecture)
-2. [Register Interface](@ref)
+2. [Metadata and Protocol Composition](@ref metadata-plane)
 3. [Properties](@ref)
 4. [Background Noise Processes](@ref)
 5. [Symbolic Expressions](@ref)
-6. [Tagging and Querying](@ref tagging-and-querying)
-7. [Backend Simulators](@ref backend)
-8. [Discrete Event Simulator](@ref sim)
-9. [Visualizations](@ref Visualizations)
+6. [Backend Simulators](@ref backend)
+7. [Discrete Event Simulator](@ref sim)
+8. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 
