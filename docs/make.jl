@@ -57,13 +57,13 @@ function main()
     ],
     "How-To Guides" => [
         "howto.md",
-        "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
         "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater/firstgenrepeater.md",
         "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
         "1st-gen Repeater - simpler implementation" => "howto/firstgenrepeater_v2/firstgenrepeater_v2.md",
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
+        "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
     ],
     "Tutorials" => [
         "tutorial.md",
