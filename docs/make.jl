@@ -46,6 +46,7 @@ function main()
     "Getting Started Manual" => "manual.md",
     "Explanations" => [
         "explanations.md",
+        "Architecture and Mental Model" => "architecture.md",
         "Register Interface" => "register_interface.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
