@@ -33,19 +33,19 @@ Branch: `docs-paper-alignment-codex`
 - [x] 4. Split conceptual material from API material so Explanation stops carrying disguised reference docs.
 - [x] 5. Add a "Choosing a Backend / Modeling Tradeoffs" explanation page.
 - [x] 6. Move `Figs/qsavory.png` into the new architecture page and probably the homepage.
-- [x] 7. Move `Figs/overview_ex.png` into the new introductory tutorial / walkthrough.
+- [x] 7. Move `Figs/overview_ex.png` into a new cluster-state walkthrough / how-to landing page.
 - [x] 8. Move `Figs/models.png` into the backend/modeling-tradeoffs explanation.
 - [x] 9. Move `Figs/bkslider.png` into the StateZoo / state explorer docs.
 - [x] 10. Move `Figs/showmethod.png` into the ProtocolZoo / visualization docs.
-- [x] 11. Move `Figs/two-way.pdf` and `Figs/one-way.pdf` into a quantum-networking background explanation.
-- [x] 12. Move `Figs/distillation.pdf` and `Figs/correction.pdf` into that same networking background page.
+- [ ] 11. Move `Figs/two-way.pdf` and `Figs/one-way.pdf` into a quantum-networking background explanation. Skipped.
+- [ ] 12. Move `Figs/distillation.pdf` and `Figs/correction.pdf` into that same networking background page. Skipped.
 - [ ] 13. Decide whether `Figs/compare.png` belongs in a durable "Why QuantumSavory" page.
 - [ ] 14. Rewrite the landing-page language from the paper's introduction: codesign, digital twins, symbolic frontend, interchangeable backends.
 - [ ] 15. Add a "Why QuantumSavory Exists" explanation page from the related-work section.
 - [ ] 16. Add a background explanation page on quantum systems: open systems, subsystem types, entanglement, and why this matters for QSavory.
 - [ ] 17. Add a background explanation page on restricted formalisms: stabilizer, Gaussian, tensor-network, finite-rank / near-Clifford methods.
-- [ ] 18. Add a background explanation page on networking design axes: one-way vs two-way, distillation vs error correction.
-- [ ] 19. Turn the cluster-state overview into a real tutorial.
+- [ ] 18. Add a background explanation page on networking design axes: one-way vs two-way, distillation vs error correction. Skipped.
+- [ ] 19. Expand the cluster-state walkthrough into a fuller how-to guide for this full-stack example.
 - [ ] 20. Add a modeling explanation page focused on register composition, factorization, lazy evolution, and declarative noise.
 - [ ] 21. Expand the slot-properties docs so they explain heterogeneous subsystems instead of only listing types.
 - [ ] 22. Expand the background-noise docs so they explain the declarative model and lazy-time semantics.

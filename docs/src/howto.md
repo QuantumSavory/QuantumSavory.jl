@@ -2,6 +2,10 @@
 
 "HowTo"s are fully fleshed out examples of how to use `QuantumSavory` to set up a complete simulation of a system of interest. They do not go into details of how the library is structured internally and do not provide in-depth discussion of APIs, rather they showcase idiomatic use of the library.
 
+## Current How-To Guides
+
+- [Cluster-State Walkthrough](howto/cluster_state_walkthrough.md)
+
 
 #### A simulation of a quantum repeater:
 

@@ -21,13 +21,12 @@ Explanation pages answer questions such as:
 
 1. [Architecture and Mental Model](@ref architecture)
 2. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
-3. [Quantum Networking Background](@ref networking-background)
-4. [Metadata and Protocol Composition](@ref metadata-plane)
-5. [Properties](@ref)
-6. [Background Noise Processes](@ref)
-7. [Symbolic Expressions](@ref)
-8. [Discrete Event Simulator](@ref sim)
-9. [Visualizations](@ref Visualizations)
+3. [Metadata and Protocol Composition](@ref metadata-plane)
+4. [Properties](@ref)
+5. [Background Noise Processes](@ref)
+6. [Symbolic Expressions](@ref)
+7. [Discrete Event Simulator](@ref sim)
+8. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 

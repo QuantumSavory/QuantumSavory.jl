@@ -7,7 +7,6 @@ come back here for focused follow-up topics.
 
 ## Current Tutorials
 
-- [Cluster-State Walkthrough](tutorial/cluster_state_walkthrough.md)
 - [Gate Duration](tutorial/noninstantgate.md)
 - [State Explorer](tutorial/state_explorer.md)
 

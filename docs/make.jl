@@ -48,7 +48,6 @@ function main()
         "explanations.md",
         "Architecture and Mental Model" => "architecture.md",
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
-        "Quantum Networking Background" => "networking_background.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
@@ -58,6 +57,7 @@ function main()
     ],
     "How-To Guides" => [
         "howto.md",
+        "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
         "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater/firstgenrepeater.md",
         "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
         "1st-gen Repeater - simpler implementation" => "howto/firstgenrepeater_v2/firstgenrepeater_v2.md",
@@ -67,7 +67,6 @@ function main()
     ],
     "Tutorials" => [
         "tutorial.md",
-        "Cluster-State Walkthrough" => "tutorial/cluster_state_walkthrough.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
         "State Explorer" => "tutorial/state_explorer.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
