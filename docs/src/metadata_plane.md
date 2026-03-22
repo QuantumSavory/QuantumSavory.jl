@@ -2,14 +2,17 @@
 
 QuantumSavory protocols often need to coordinate without being tightly coupled
 to one another. Instead of passing explicit handles everywhere, the library
-supports a metadata layer built around tags, queries, and message buffers.
+supports a metadata layer built around tags, queries, and message buffers. The
+result is closer to a data-driven control plane from modern classical
+infrastructure than to ad hoc message plumbing between protocol objects.
 
 ## Why This Exists
 
 In a realistic network simulation, one protocol may create an entangled pair,
 another may wait for it, and a third may consume it later. Hard-wiring these
 components together makes reuse difficult. QuantumSavory instead lets protocols
-communicate through structured metadata attached to resources.
+communicate through structured metadata attached to resources and message
+buffers.
 
 ## The Core Idea
 
@@ -41,6 +44,9 @@ consumed state.
 This design lets independently written protocols interoperate as long as they
 agree on the meaning of shared tags and messages. That keeps higher-level
 protocols from needing to know the internal control flow of lower-level ones.
+Instead of manually piping classical channels between every pair of cooperating
+components, protocols can publish and consume semantic facts about resource
+availability, pairing relationships, and outcomes.
 
 ## Where To Go Next
 

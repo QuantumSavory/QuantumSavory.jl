@@ -24,25 +24,42 @@ Each slot can carry its own physical properties and background processes. A
 
 States, operations, and observables can be written symbolically. This lets the
 user describe the intended physics first and defer the numerical representation
-decision to the backend.
+decision to the backend. In practice, this means the user does not need to be
+an expert in the particular mathematics of each backend in order to build and
+compare models.
 
 ### Numerical Backends
 
 The symbolic frontend is not itself a simulator. QuantumSavory lowers symbolic
 objects to concrete representations such as stabilizer tableaux or wavefunctions
-when an operation, measurement, or time update needs them.
+when an operation, measurement, or time update needs them. This is valuable for
+two reasons: it allows the same model to run on fast specialized simulators
+when available, and it makes it possible to work with much more than ideal
+qubits, including bosonic modes and other heterogeneous subsystem types.
 
 ### Discrete-Event Control
 
 Many quantum-networking workflows are not just sequences of gates. They include
 waiting, message exchange, retries, and resource contention. QuantumSavory uses
- discrete-event simulation so protocols can model that control flow directly.
+discrete-event simulation so protocols can model that control flow directly,
+while the bookkeeping of simulated time remains inside the framework rather than
+in ad hoc user code.
 
 ### Metadata, Tags, and Protocol Composition
 
 Protocols do not need to be tightly hard-wired to one another. Instead, they
 can coordinate through metadata attached to register slots or message buffers.
-This is one of the key ideas behind protocol composability in QuantumSavory.
+This is one of the key ideas behind protocol composability in QuantumSavory:
+protocols publish and consume semantic facts about resources rather than being
+glued together with bespoke classical channels and explicit handles.
+
+### Declarative Noise and Time
+
+Noise processes are configured as properties of the simulated hardware model,
+not manually rewritten for each backend. The symbolic layer and register
+interface are responsible for lowering those declarations into the chosen
+representation, while time evolution is tracked by the framework as operations
+and protocol events occur.
 
 ### The Zoos
 

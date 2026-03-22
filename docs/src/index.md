@@ -29,13 +29,34 @@ If this is your first visit, the shortest path is:
 
 ## Capabilities
 
-QuantumSavory is particularly useful when you want to combine:
+QuantumSavory is particularly useful when you need to study a system across
+multiple abstraction layers at once: hardware noise, heterogeneous physical
+subsystems, algorithmic structure, and distributed classical control. The main
+value of the library is that it lets you do that without forcing you to become
+an expert in each backend's mathematical formalism or rebuild the same model
+for every simulator.
 
-- symbolic descriptions of states and operations,
-- interchangeable numerical backends,
-- explicit noise and time evolution,
-- classical control for LOCC-style protocols, and
-- visualization of states, metadata, and protocol state.
+- symbolic descriptions of states, operations, and observables:
+  you describe the intended physics once, in backend-agnostic language, instead
+  of hand-writing tableaux, wavefunctions, phase-space objects, or other
+  backend-specific mathematics
+- interchangeable numerical backends:
+  the same model can be executed with fast specialized methods when they apply,
+  and the library is not limited to ideal qubit-only models; it can support
+  quantum modes, multi-level systems, continuous-variable models, and other
+  physically realistic subsystems
+- declarative noise models and automatic time handling:
+  you specify what noise processes exist and when protocol events happen, while
+  QuantumSavory handles the bookkeeping of evolving those effects in the chosen
+  representation instead of making you manually derive the backend-specific form
+  of each noise process
+- classical control for LOCC-style protocols through a structured metadata API:
+  protocols coordinate by publishing and querying semantic facts about resources
+  and messages, which makes them compose in a lego-like way without bespoke
+  manual piping of classical message channels
+- visualization of states, metadata, and protocol state:
+  the same abstractions used for simulation can also be inspected and debugged
+  visually while developing larger models
 
 ## Example Applications
 

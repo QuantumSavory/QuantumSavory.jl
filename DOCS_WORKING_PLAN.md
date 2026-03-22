@@ -5,6 +5,24 @@ Delete this file at the end of the overall documentation effort.
 
 Branch: `docs-paper-alignment-codex`
 
+## Documentation Principles
+
+- Emphasize why QuantumSavory's capabilities matter, not just that they exist.
+- Present the symbolic frontend as a way to avoid backend-specific mathematical
+  expertise when building models.
+- Present backend diversity as valuable both for performance on classical
+  hardware and for support of heterogeneous physical systems beyond ideal
+  qubits.
+- Use "declarative noise models" and explain that backend-specific noise
+  lowering is handled by the framework.
+- Describe time handling as framework-managed bookkeeping, not something the
+  user must wire manually throughout the model.
+- Describe the classical control layer as a structured metadata and messaging
+  API with lego-like composability, analogous to modern classical
+  infrastructure, rather than bespoke manual channel plumbing.
+- Prefer language that highlights full-stack codesign, digital twins, and reuse
+  across abstraction layers.
+
 ## Planned Steps
 
 - [x] 1. Turn the Explanation, Tutorial, and Reference landing pages into real hubs with reading order and scope.

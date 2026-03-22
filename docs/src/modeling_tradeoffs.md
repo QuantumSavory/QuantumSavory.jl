@@ -5,7 +5,8 @@ single simulator is the right tool for every problem.
 
 The practical question is not "which backend is best in general?", but "which
 backend preserves the physics I care about at an acceptable computational
-cost?"
+cost?" The answer depends not only on circuit structure, but also on what type
+of physical system you need to represent.
 
 ## Two Important Tradeoffs
 
@@ -16,7 +17,11 @@ There are two largely independent choices in quantum simulation:
 
 Dense state vectors and density matrices are the most direct descriptions, but
 they scale poorly. Specialized formalisms become much cheaper by exploiting
-structure in the state, the operations, or the noise model.
+structure in the state, the operations, or the noise model. That is especially
+important in QuantumSavory because the library aims to support more than ideal
+qubits: quantum modes, multi-level systems, continuous-variable models, and
+other heterogeneous hardware abstractions all call for different numerical
+tools.
 
 ## Backend Choices In QuantumSavory
 
@@ -59,6 +64,16 @@ general wavefunction treatment.
 The symbolic frontend lets you describe the intended state or operation first,
 without immediately committing to a specific numerical representation. That is
 what makes it possible to compare backends without rewriting the whole model.
+It also means you do not have to manually encode the same operation, observable,
+or noise process in several different backend-specific mathematical languages.
+
+## Declarative Noise And Time
+
+Noise and time evolution are specified at the model level rather than rederived
+backend by backend. In other words, the user declares what physical processes
+are present and when protocol events happen; QuantumSavory handles the
+representation-specific lowering and time bookkeeping needed to execute that
+model.
 
 ## Practical Guidance
 
