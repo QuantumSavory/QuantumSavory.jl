@@ -1,71 +1,48 @@
-using Pkg
-
-if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
-    @info "skipping plotting tests"
-else
-    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
-end
-
-if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
-    @info "skipping examples with plotting tests"
-else
-    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
-end
-
-if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
-    @info "skipping examples without plotting tests"
-else
-end
-
-if get(ENV,"JET_TEST","")!="true"
-    @info "skipping JET tests"
-else
-    Pkg.add("JET")
-end
-
 using QuantumSavory
-using TestItemRunner
+using ParallelTestRunner
 
-function testfilter(tags)
-    exclude = Symbol[]
-    if get(ENV,"QUANTUMSAVORY_DOWNGRADE_TEST","")=="true"
-        push!(exclude, :aqua)
+const TEST_PROJECTS = Dict(
+    "plotting" => normpath(joinpath(@__DIR__, "projects", "plotting")),
+    "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
+    "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
+)
+
+test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
+                     startswith(name, "examples") ? TEST_PROJECTS["examples"] :
+                     startswith(name, "jet") ? TEST_PROJECTS["jet"] :
+                     nothing
+
+project_init_code(project::String) = quote
+    using Pkg
+    Pkg.activate($project)
+    if occursin("jet", $project) # The JET Project.toml is not included in the main Project.toml workspace because it frequently causes nightly tests to fail
+        Pkg.instantiate()
     end
 
-    if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
-        push!(exclude, :plotting_cairo)
-        push!(exclude, :plotting_gl)
-        push!(exclude, :doctests)
-    else
-        return :plotting_cairo in tags || :plotting_gl in tags || :doctests in tags
-    end
-
-    if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
-        push!(exclude, :examples_plotting)
-    else
-        return :examples_plotting in tags
-    end
-
-    if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
-        push!(exclude, :examples)
-    else
-        return :examples in tags
-    end
-
-    if get(ENV,"JET_TEST","")!="true"
-        push!(exclude, :jet)
-    else
-        return :jet in tags
-    end
-
-    return all(!in(exclude), tags)
+    using Logging # The examples generate a ton of logs
+    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
+    global_logger(logger)
 end
 
-
-println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
-@run_package_tests filter=ti->testfilter(ti.tags) verbose=true
-
-if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-    import GLMakie
-    GLMakie.closeall() # to avoid errors when running headless
+testsuite = find_tests(@__DIR__)
+filter!(testsuite) do (name, _)
+    endswith(name, "_tests")
 end
+
+if !isempty(VERSION.prerelease) || get(ENV, "QUANTUMSAVORY_DOWNGRADE_TEST", "") == "true"
+    delete!(testsuite, "general/aqua_tests")
+end
+
+function test_worker(name)
+    project = test_project(name)
+    project === nothing && return nothing
+    return addworker(; init_worker_code = project_init_code(project))
+end
+
+args = ARGS
+if isempty(args)
+    @info "No test arguments provided; defaulting to `general` tests."
+    args = ["general"]
+end
+
+runtests(QuantumSavory, args; testsuite, test_worker)
