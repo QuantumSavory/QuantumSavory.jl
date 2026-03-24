@@ -24,12 +24,14 @@ Explanation pages answer questions such as:
 3. [Restricted Formalisms and Efficient Simulation](@ref
    restricted-formalisms)
 4. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
-5. [Metadata and Protocol Composition](@ref metadata-plane)
-6. [Properties](@ref)
-7. [Background Noise Processes](@ref)
-8. [Symbolic Expressions](@ref)
-9. [Discrete Event Simulator](@ref sim)
-10. [Visualizations](@ref Visualizations)
+5. [Modeling Registers, Factorization, and Time](@ref
+   modeling-registers-time)
+6. [Metadata and Protocol Composition](@ref metadata-plane)
+7. [Properties](@ref)
+8. [Background Noise Processes](@ref)
+9. [Symbolic Expressions](@ref)
+10. [Discrete Event Simulator](@ref sim)
+11. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 

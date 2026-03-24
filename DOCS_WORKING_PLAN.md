@@ -17,6 +17,9 @@ Branch: `docs-paper-alignment-codex`
   lowering is handled by the framework.
 - Describe time handling as framework-managed bookkeeping, not something the
   user must wire manually throughout the model.
+- When explaining modeling internals, emphasize factorized storage, declarative
+  noise, and demand-driven time evolution as productivity features, not just
+  implementation details.
 - Describe the classical control layer as a structured metadata and messaging
   API with lego-like composability, analogous to modern classical
   infrastructure, rather than bespoke manual channel plumbing.
@@ -46,7 +49,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 17. Add a background explanation page on restricted formalisms: stabilizer, Gaussian, tensor-network, finite-rank / near-Clifford methods.
 - [ ] 18. Add a background explanation page on networking design axes: one-way vs two-way, distillation vs error correction. Skipped.
 - [ ] 19. Expand the cluster-state walkthrough into a fuller how-to guide for this full-stack example. Skipped.
-- [ ] 20. Add a modeling explanation page focused on register composition, factorization, lazy evolution, and declarative noise.
+- [x] 20. Add a modeling explanation page focused on register composition, factorization, lazy evolution, and declarative noise.
 - [ ] 21. Expand the slot-properties docs so they explain heterogeneous subsystems instead of only listing types.
 - [ ] 22. Expand the background-noise docs so they explain the declarative model and lazy-time semantics.
 - [ ] 23. Split symbolic docs into a conceptual "symbolic frontend" explanation plus retained examples/reference.

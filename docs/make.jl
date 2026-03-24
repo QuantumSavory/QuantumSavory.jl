@@ -51,6 +51,8 @@ function main()
         "Restricted Formalisms and Efficient Simulation" =>
             "restricted_formalisms.md",
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
+        "Modeling Registers, Factorization, and Time" =>
+            "modeling_registers_and_time.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
