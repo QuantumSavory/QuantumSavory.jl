@@ -5,10 +5,6 @@ work often depends on restricted formalisms: you give up some generality in
 exchange for much faster simulation on the kinds of states and operations you
 actually need.
 
-This is not just a performance detail. It is a productivity detail too. If the
-physics fits a restricted formalism, you can run larger studies, sweep more
-parameters, and validate design choices much earlier.
-
 ## Stabilizer Simulation
 
 Stabilizer methods are a good fit when the model stays close to Clifford gates,
