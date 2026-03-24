@@ -50,7 +50,7 @@ Branch: `docs-paper-alignment-codex`
 - [ ] 18. Add a background explanation page on networking design axes: one-way vs two-way, distillation vs error correction. Skipped.
 - [ ] 19. Expand the cluster-state walkthrough into a fuller how-to guide for this full-stack example. Skipped.
 - [x] 20. Add a modeling explanation page focused on register composition, factorization, lazy evolution, and declarative noise.
-- [ ] 21. Expand the slot-properties docs so they explain heterogeneous subsystems instead of only listing types.
+- [x] 21. Expand the slot-properties docs so they explain heterogeneous subsystems instead of only listing types.
 - [ ] 22. Expand the background-noise docs so they explain the declarative model and lazy-time semantics.
 - [ ] 23. Split symbolic docs into a conceptual "symbolic frontend" explanation plus retained examples/reference.
 - [ ] 24. Expand backend docs to cover `QuantumClifford`, `QuantumOptics`, `Gabs`, extension points, and when to choose each.
