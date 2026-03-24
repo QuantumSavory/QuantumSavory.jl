@@ -42,10 +42,10 @@ Branch: `docs-paper-alignment-codex`
 - [ ] 13. Decide whether `Figs/compare.png` belongs in a durable "Why QuantumSavory" page.
 - [x] 14. Rewrite the landing-page language from the paper's introduction: codesign, digital twins, symbolic frontend, interchangeable backends.
 - [x] 15. Add a "Why QuantumSavory Exists" explanation page from the related-work section.
-- [x] 16. Add a background explanation page on quantum systems: open systems, subsystem types, entanglement, and why this matters for QSavory.
+- [ ] 16. Add a background explanation page on quantum systems: open systems, subsystem types, entanglement, and why this matters for QSavory. Skipped.
 - [x] 17. Add a background explanation page on restricted formalisms: stabilizer, Gaussian, tensor-network, finite-rank / near-Clifford methods.
 - [ ] 18. Add a background explanation page on networking design axes: one-way vs two-way, distillation vs error correction. Skipped.
-- [ ] 19. Expand the cluster-state walkthrough into a fuller how-to guide for this full-stack example.
+- [ ] 19. Expand the cluster-state walkthrough into a fuller how-to guide for this full-stack example. Skipped.
 - [ ] 20. Add a modeling explanation page focused on register composition, factorization, lazy evolution, and declarative noise.
 - [ ] 21. Expand the slot-properties docs so they explain heterogeneous subsystems instead of only listing types.
 - [ ] 22. Expand the background-noise docs so they explain the declarative model and lazy-time semantics.

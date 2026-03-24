@@ -48,8 +48,6 @@ function main()
         "explanations.md",
         "Architecture and Mental Model" => "architecture.md",
         "Why QuantumSavory Exists" => "why_quantumsavory.md",
-        "Quantum Systems, Subsystems, and Entanglement" =>
-            "quantum_systems.md",
         "Restricted Formalisms and Efficient Simulation" =>
             "restricted_formalisms.md",
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",

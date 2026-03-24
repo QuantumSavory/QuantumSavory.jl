@@ -59,5 +59,5 @@ stable while the numerical strategy changes.
 
 - Read [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs) for
   the backend choices currently exposed in QuantumSavory.
-- Read [Quantum Systems, Subsystems, and Entanglement](@ref quantum-systems) to
-  connect these simulation choices back to the physical system being modeled.
+- Read [Properties](@ref) and [Background Noise Processes](@ref) to connect
+  these simulation choices back to the physical system being modeled.
