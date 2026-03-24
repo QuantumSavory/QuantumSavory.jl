@@ -6,9 +6,9 @@ DocTestSetup = quote
 end
 ```
 
-A multi-formalism simulator for quantum communication and computation hardware.
-QuantumSavory is built for full-stack codesign: it helps you study hardware
-noise, subsystem choices, protocol logic, and classical control in one model.
+A multi-formalism simulator for noisy quantum communication and computation
+hardware, with support for symbolic algebra, multiple simulation backends,
+noise models, discrete-event simulation, optimization, and visualization.
 
 ![QuantumSavory architecture overview](assets/paper_figures/qsavory.png)
 
