@@ -27,6 +27,9 @@ Branch: `docs-paper-alignment-codex`
   across abstraction layers.
 - When mentioning installation, say "latest Julia version" rather than pinning
   a specific release number in prose.
+- When drawing on comparison sections of the paper, restate the capabilities
+  positively and directly without naming other tools or inviting side-by-side
+  comparison in the docs.
 
 ## Planned Steps
 
@@ -63,7 +66,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 31. Add a narrative ProtocolZoo intro explaining protocol structs, composition, and visualization hooks.
 - [x] 32. Reposition visualizations as tutorial/reference material, not core explanation.
 - [x] 33. Expand the reference hub and fix nav coverage for `API_Interface.md` and `API_Symbolics.md`.
-- [ ] 34. Extract only safe material from the SeQuENCe cross-comparison into docs.
+- [x] 34. Extract only safe material from the SeQuENCe cross-comparison into docs.
 - [ ] 35. Add a short "Limitations and Roadmap" page from the conclusion.
 - [ ] 36. Remove or soften front-page language that says the docs are barebones and users should read source code.
 

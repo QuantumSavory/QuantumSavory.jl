@@ -44,7 +44,10 @@ QuantumSavory is particularly useful when you need to study a system across
 multiple abstraction layers at once: hardware noise, heterogeneous physical
 subsystems, algorithmic structure, and distributed classical control. This is
 the situation where many models become slow to build and hard to change. The
-main value of QuantumSavory is that it reduces that friction.
+main value of QuantumSavory is that it reduces that friction. This matters in
+exactly the common case where a study starts with an idealized qubit model and
+later needs a memory model, a photonic mode, a continuous-variable subsystem,
+or a faster restricted approximation.
 
 - symbolic descriptions of states, operations, and observables:
   you describe the intended physics once, in backend-agnostic language, instead
