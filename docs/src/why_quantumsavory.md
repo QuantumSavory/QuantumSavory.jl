@@ -31,10 +31,7 @@ QuantumSavory exists to reduce that rewriting.
 - discrete-event execution and the metadata plane let protocol components
   coordinate without being hard-wired to each other
 
-## What That Changes In Practice
-
-The goal is not abstraction for its own sake. The goal is to keep model changes
-local.
+## What That Approach Changes In Practice
 
 - the same protocol logic can be reused while you switch between a fast
   restricted model and a more general one

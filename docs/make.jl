@@ -40,10 +40,6 @@ function main()
     clean = true,
     warnonly = [:missing_docs],
     sitename = "QuantumSavory.jl",
-    remotes = Dict(
-        normpath(joinpath(@__DIR__, "..")) =>
-            Remotes.GitHub("QuantumSavory", "QuantumSavory.jl"),
-    ),
     format = Documenter.HTML(
         assets=assets
     ),

@@ -38,20 +38,13 @@ If this is your first visit, the shortest path is:
 - [How-To Guides](@ref): larger task-oriented workflows.
 - [References](@ref): API lookup and generated module documentation.
 
-The documentation is meant to be the primary entry point for learning the
-package. The example directories support these guides, but they are not meant
-to replace them.
-
 ## Capabilities
 
 QuantumSavory is particularly useful when you need to study a system across
 multiple abstraction layers at once: hardware noise, heterogeneous physical
 subsystems, algorithmic structure, and distributed classical control. This is
 the situation where many models become slow to build and hard to change. The
-main value of QuantumSavory is that it reduces that friction. This matters in
-exactly the common case where a study starts with an idealized qubit model and
-later needs a memory model, a photonic mode, a continuous-variable subsystem,
-or a faster restricted approximation.
+main value of QuantumSavory is that it reduces that friction.
 
 - symbolic descriptions of states, operations, and observables:
   you describe the intended physics once, in backend-agnostic language, instead
