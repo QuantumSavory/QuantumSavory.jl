@@ -55,7 +55,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 23. Split symbolic docs into a conceptual "symbolic frontend" explanation plus retained examples/reference.
 - [x] 24. Expand backend docs to cover `QuantumClifford`, `QuantumOptics`, `Gabs`, extension points, and when to choose each.
 - [x] 25. Rewrite the discrete-event docs around `@resumable`, `@process`, `AbstractProtocol`, waits, locks, and condition combinators.
-- [ ] 26. Rewrite tags/queries docs around the metadata-plane idea and protocol composability.
+- [x] 26. Rewrite tags/queries docs around the metadata-plane idea and protocol composability.
 - [ ] 27. Add a focused section or page on message buffers, classical links, routing, latency, and the locality-by-convention caveat.
 - [ ] 28. Add a "Zoos as composable building blocks" explanation page.
 - [ ] 29. Rewrite the state-explorer page as a real tutorial with explicit learning goals and steps.
