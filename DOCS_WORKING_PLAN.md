@@ -60,7 +60,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 28. Add a "Zoos as composable building blocks" explanation page.
 - [x] 29. Rewrite the state-explorer page as a real tutorial with explicit learning goals and steps.
 - [x] 30. Add a narrative CircuitZoo intro before the raw autodocs.
-- [ ] 31. Add a narrative ProtocolZoo intro explaining protocol structs, composition, and visualization hooks.
+- [x] 31. Add a narrative ProtocolZoo intro explaining protocol structs, composition, and visualization hooks.
 - [ ] 32. Reposition visualizations as tutorial/reference material, not core explanation.
 - [ ] 33. Expand the reference hub and fix nav coverage for `API_Interface.md` and `API_Symbolics.md`.
 - [ ] 34. Extract only safe material from the SeQuENCe cross-comparison into docs.
