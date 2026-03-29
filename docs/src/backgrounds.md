@@ -2,7 +2,7 @@
 
 Each register slot can also declare which background processes act on it. These
 are long-lived physical effects such as decay, dephasing, or other noise that
-is present whether or not the protocol is actively touching that subsystem.
+is present whether or not someone is actively touching that subsystem.
 
 ```julia
 reg = Register([Qubit(), Qubit()], [T2Dephasing(10.0), nothing])

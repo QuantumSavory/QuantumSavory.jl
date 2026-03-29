@@ -35,7 +35,7 @@ that are closer to the actual hardware. You do not need to flatten everything
 into ideal qubits just to get started, and you do not need to manually track
 which mathematical formalism belongs to each subsystem.
 
-This is also what makes the symbolic frontend practical. You can describe a
+This is also what makes the symbolic frontend important and valuable. You can describe a
 state or operation at the conceptual level and let QuantumSavory lower it using
 the slot properties and chosen backend.
 
