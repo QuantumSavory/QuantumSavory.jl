@@ -6,8 +6,7 @@ QuantumSavory ships three curated collections of reusable components:
 - `CircuitZoo` for reusable quantum circuits,
 - `ProtocolZoo` for reusable discrete-event protocol components.
 
-The point of these "Zoos" is not just convenience. They are a concrete test of
-whether the overall architecture is composable.
+These "Zoos" provide convenience, remove boilerplate, and showcase the ease of composability in this simulation toolkit.
 
 ## Why The Zoos Matter
 
@@ -22,8 +21,7 @@ They reduce work in three ways:
 - they let larger simulations be assembled from components that already speak
   the same register, symbolic, and metadata conventions.
 
-That last point is the important one. The Zoos are useful because they reuse
-the same abstractions as user-written code, not because they are special cases.
+The Zoos reuse the same abstractions available to user-written code -- they are not special and a user can use QuantumSavory's public API to produce similar abstractions of their own.
 
 ## `StatesZoo`
 
