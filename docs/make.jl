@@ -101,6 +101,8 @@ function main()
     )
     deploydocs(
         repo = "github.com/QuantumSavory/QuantumSavory.jl.git",
+        devbranch = "master",
+        deploy_config = Documenter.Buildkite(),
         push_preview = false
     )
 end
