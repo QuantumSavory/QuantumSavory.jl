@@ -35,7 +35,6 @@ Explanation pages answer questions such as:
 10. [Properties](@ref)
 11. [Background Noise Processes](@ref)
 12. [Discrete Event Simulator](@ref sim)
-13. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 

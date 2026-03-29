@@ -1,6 +1,14 @@
 # [Visualizations](@id Visualizations)
 
-We provide many visualization tools build on top of the [Makie.jl](https://docs.makie.org/stable/) framework for interactive visualizations.
+This page is the reference for QuantumSavory's plotting and display helpers.
+
+For a guided interactive example, start with the
+[State Explorer](tutorial/state_explorer.md) tutorial. This page is for looking
+up the available visualization entry points once you already know what you want
+to inspect.
+
+QuantumSavory provides visualization tools built on top of
+[Makie.jl](https://docs.makie.org/stable/).
 
 The plotting functions generally return a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates the plot with the current state of the network without replotting from scratch.

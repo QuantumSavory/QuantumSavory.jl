@@ -60,7 +60,6 @@ function main()
         "Background Noise" => "backgrounds.md",
         "Symbolic Frontend" => "symbolic_frontend.md",
         "Discrete Event Simulator" => "discreteeventsimulator.md",
-        "Visualizations" => "visualizations.md",
     ],
     "How-To Guides" => [
         "howto.md",
@@ -89,6 +88,7 @@ function main()
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",
         "ProtocolZoo API" => "API_ProtocolZoo.md",
+        "Visualizations" => "visualizations.md",
         "Bibliography" => "bibliography.md",
     ],
     ]

@@ -15,6 +15,7 @@ want exact signatures, exported names, or generated API listings.
 - [CircuitZoo API](API_CircuitZoo.md)
 - [StatesZoo API](@ref Predefined-Models-of-Quantum-States)
 - [ProtocolZoo API](API_ProtocolZoo.md)
+- [Visualizations](visualizations.md)
 - [Bibliography](@ref)
 
 ## When To Use This Section
