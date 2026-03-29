@@ -8,11 +8,19 @@ using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
 using QuantumSavory.StatesZoo.Genqo
 using QuantumInterface
+using QuantumSymbolics
 
 DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumSavory.StatesZoo.Genqo); recursive=true)
 
 function main()
-    doc_modules = [QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumInterface]
+    doc_modules = [
+        QuantumSavory,
+        QuantumSavory.StatesZoo,
+        QuantumSavory.ProtocolZoo,
+        QuantumSavory.CircuitZoo,
+        QuantumInterface,
+        QuantumSymbolics,
+    ]
     api_base="https://anythingllm.krastanov.org/api/v1"
     anythingllm_assets = integrate_anythingllm(
         "QuantumSavory",
@@ -88,6 +96,8 @@ function main()
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",
         "ProtocolZoo API" => "API_ProtocolZoo.md",
+        "QuantumInterface API" => "API_Interface.md",
+        "QuantumSymbolics API" => "API_Symbolics.md",
         "Visualizations" => "visualizations.md",
         "Bibliography" => "bibliography.md",
     ],
