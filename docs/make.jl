@@ -54,6 +54,7 @@ function main()
         "Modeling Registers, Factorization, and Time" =>
             "modeling_registers_and_time.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
+        "Classical Messaging and Buffers" => "classical_messaging.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
         "Symbolic Frontend" => "symbolic_frontend.md",

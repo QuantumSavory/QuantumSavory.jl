@@ -30,10 +30,11 @@ Explanation pages answer questions such as:
    modeling-registers-time)
 6. [Symbolic Frontend](@ref symbolic-frontend)
 7. [Metadata and Protocol Composition](@ref metadata-plane)
-8. [Properties](@ref)
-9. [Background Noise Processes](@ref)
-10. [Discrete Event Simulator](@ref sim)
-11. [Visualizations](@ref Visualizations)
+8. [Classical Messaging and Buffers](@ref classical-messaging)
+9. [Properties](@ref)
+10. [Background Noise Processes](@ref)
+11. [Discrete Event Simulator](@ref sim)
+12. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 
