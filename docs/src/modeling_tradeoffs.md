@@ -120,4 +120,6 @@ architecture, but they are not yet first-class options in QuantumSavory.
   register model.
 - Read [Properties](@ref) and [Background Noise Processes](@ref) for how
   subsystem types and background processes affect the model.
-- Read [Symbolic Expressions](@ref) for the frontend side of the abstraction.
+- Read [Symbolic Frontend](@ref symbolic-frontend) for the conceptual role of
+  symbolic modeling, and [Symbolic Expressions Reference](symbolics.md) for the
+  concrete operators and conversion examples.

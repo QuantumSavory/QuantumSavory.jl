@@ -9,6 +9,7 @@ want exact signatures, exported names, or generated API listings.
 
 - [Register Interface API](register_interface.md)
 - [Tag and Query API](tag_query.md)
+- [Symbolic Expressions Reference](symbolics.md)
 - [API](@ref Full-API)
 - [CircuitZoo API](API_CircuitZoo.md)
 - [StatesZoo API](@ref Predefined-Models-of-Quantum-States)

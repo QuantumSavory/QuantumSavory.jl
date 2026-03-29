@@ -14,6 +14,8 @@ Explanation pages answer questions such as:
 - Why does QuantumSavory separate symbolic descriptions from numerical
   backends?
 - How are background noise processes and time handled?
+- How does the symbolic frontend stay backend-agnostic without hiding modeling
+  limits?
 - How are classical control, metadata tags, and protocols composed?
 - When should one backend or modeling approach be preferred over another?
 
@@ -26,10 +28,10 @@ Explanation pages answer questions such as:
 4. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
 5. [Modeling Registers, Factorization, and Time](@ref
    modeling-registers-time)
-6. [Metadata and Protocol Composition](@ref metadata-plane)
-7. [Properties](@ref)
-8. [Background Noise Processes](@ref)
-9. [Symbolic Expressions](@ref)
+6. [Symbolic Frontend](@ref symbolic-frontend)
+7. [Metadata and Protocol Composition](@ref metadata-plane)
+8. [Properties](@ref)
+9. [Background Noise Processes](@ref)
 10. [Discrete Event Simulator](@ref sim)
 11. [Visualizations](@ref Visualizations)
 
