@@ -57,7 +57,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 25. Rewrite the discrete-event docs around `@resumable`, `@process`, `AbstractProtocol`, waits, locks, and condition combinators.
 - [x] 26. Rewrite tags/queries docs around the metadata-plane idea and protocol composability.
 - [x] 27. Add a focused section or page on message buffers, classical links, routing, latency, and the locality-by-convention caveat.
-- [ ] 28. Add a "Zoos as composable building blocks" explanation page.
+- [x] 28. Add a "Zoos as composable building blocks" explanation page.
 - [ ] 29. Rewrite the state-explorer page as a real tutorial with explicit learning goals and steps.
 - [ ] 30. Add a narrative CircuitZoo intro before the raw autodocs.
 - [ ] 31. Add a narrative ProtocolZoo intro explaining protocol structs, composition, and visualization hooks.

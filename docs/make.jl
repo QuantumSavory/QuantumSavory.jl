@@ -55,6 +55,7 @@ function main()
             "modeling_registers_and_time.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Classical Messaging and Buffers" => "classical_messaging.md",
+        "Zoos as Composable Building Blocks" => "zoos_as_building_blocks.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
         "Symbolic Frontend" => "symbolic_frontend.md",

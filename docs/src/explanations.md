@@ -31,10 +31,11 @@ Explanation pages answer questions such as:
 6. [Symbolic Frontend](@ref symbolic-frontend)
 7. [Metadata and Protocol Composition](@ref metadata-plane)
 8. [Classical Messaging and Buffers](@ref classical-messaging)
-9. [Properties](@ref)
-10. [Background Noise Processes](@ref)
-11. [Discrete Event Simulator](@ref sim)
-12. [Visualizations](@ref Visualizations)
+9. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
+10. [Properties](@ref)
+11. [Background Noise Processes](@ref)
+12. [Discrete Event Simulator](@ref sim)
+13. [Visualizations](@ref Visualizations)
 
 ## Relationship To Other Sections
 
