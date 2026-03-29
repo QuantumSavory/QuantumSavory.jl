@@ -53,7 +53,7 @@ Branch: `docs-paper-alignment-codex`
 - [x] 21. Expand the slot-properties docs so they explain heterogeneous subsystems instead of only listing types.
 - [x] 22. Expand the background-noise docs so they explain the declarative model and lazy-time semantics.
 - [x] 23. Split symbolic docs into a conceptual "symbolic frontend" explanation plus retained examples/reference.
-- [ ] 24. Expand backend docs to cover `QuantumClifford`, `QuantumOptics`, `Gabs`, extension points, and when to choose each.
+- [x] 24. Expand backend docs to cover `QuantumClifford`, `QuantumOptics`, `Gabs`, extension points, and when to choose each.
 - [ ] 25. Rewrite the discrete-event docs around `@resumable`, `@process`, `AbstractProtocol`, waits, locks, and condition combinators.
 - [ ] 26. Rewrite tags/queries docs around the metadata-plane idea and protocol composability.
 - [ ] 27. Add a focused section or page on message buffers, classical links, routing, latency, and the locality-by-convention caveat.

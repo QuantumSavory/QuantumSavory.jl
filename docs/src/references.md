@@ -8,6 +8,7 @@ want exact signatures, exported names, or generated API listings.
 ## Main Reference Pages
 
 - [Register Interface API](register_interface.md)
+- [Backend Simulators](backendsimulator.md)
 - [Tag and Query API](tag_query.md)
 - [Symbolic Expressions Reference](symbolics.md)
 - [API](@ref Full-API)

@@ -80,6 +80,7 @@ function main()
     "References" => [
         "references.md",
         "Register Interface API" => "register_interface.md",
+        "Backend Simulators" => "backendsimulator.md",
         "Tag and Query API" => "tag_query.md",
         "Symbolic Expressions Reference" => "symbolics.md",
         "API" => "API.md",
