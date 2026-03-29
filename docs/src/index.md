@@ -38,6 +38,10 @@ If this is your first visit, the shortest path is:
 - [How-To Guides](@ref): larger task-oriented workflows.
 - [References](@ref): API lookup and generated module documentation.
 
+The documentation is meant to be the primary entry point for learning the
+package. The example directories support these guides, but they are not meant
+to replace them.
+
 ## Capabilities
 
 QuantumSavory is particularly useful when you need to study a system across
