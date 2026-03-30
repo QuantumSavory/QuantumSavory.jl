@@ -1,6 +1,9 @@
 env:
   JULIA_NUM_THREADS: auto
 
+secrets:
+  - CODECOV_TOKEN
+
 steps:
   - label: "General Tests"
     plugins:
