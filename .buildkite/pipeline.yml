@@ -1,6 +1,9 @@
 env:
   JULIA_NUM_THREADS: auto
 
+secrets:
+  - CODECOV_TOKEN
+
 steps:
   - label: "General Tests"
     plugins:
@@ -45,6 +48,7 @@ steps:
       - QuantumSavory/julia-xvfb#v1:
     secrets:
       - DOCUMENTER_KEY
+      - ANYTHINGLLM_API_KEY
     command: |
       julia --project=docs -e 'using Pkg; Pkg.instantiate()'
       julia -tauto --project=docs docs/make.jl
