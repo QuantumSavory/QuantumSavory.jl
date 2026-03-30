@@ -11,7 +11,7 @@ All of the above examples simulate the entire wave function of each qubit throug
 
 QuantumSavory permits swapping the backend simulator. In particular it is very easy to run the simulations using the Clifford formalism: the `*_clifford_setup.jl` file implements the few additional steps necessary for a tableau-based simulation, which can be much more efficient; then `5_clifford_full_example.jl` simply re-runs the same code as the wavefunction-based examples from above.
 
-Lastly, `6_compare_formalisms.jl` runs repeated trajectory using either representation and compares their average results. The `*_noplot.jl` file runs the same simulation without creating plots.
+Lastly, `6_compare_formalisms.jl` runs repeated trajectory using either representation and compares their average results. The `*_noplot.jl` file runs the same simulation without creating plots. Additionally, `7_memory_decoherence.jl` demonstrates quantum memory and T2 dephasing effects, showing how entanglement fidelity decays exponentially as qubits undergo decoherence over time.
 
 **Importantly, you probably do not want to use this setup directly if all you want is to run a simple repeater chain!!!** This is a very low-level implementation. You would be better of using already implemented reusable protocols like [`EntanglerProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt). On the other hand, the setup here is a simple way to learn about making discrete event simulations without depending on a lot of extra library functionality and opaque black boxes. The `firstgenrepeater_v2` is a much higher level, easier to reuse, implementation of the same simulation.
 
