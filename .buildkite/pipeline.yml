@@ -1,5 +1,4 @@
 env:
-  CODECOV_TOKEN: 1551efda-9a0d-4cfd-a549-63790fc83605
   JULIA_NUM_THREADS: auto
 
 steps:
@@ -39,8 +38,7 @@ steps:
           test_args: "plotting"
       - JuliaCI/julia-coverage#v1:
           codecov: true
-  - label: "Documentation"
-    slug: docs
+  - label: "Docs"
     plugins:
       - JuliaCI/julia#v1:
           version: "1"
