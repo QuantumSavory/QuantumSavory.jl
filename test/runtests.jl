@@ -5,7 +5,7 @@ const TEST_PROJECTS = Dict(
     "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
-const JET_TEST_PATH = joinpath(@__DIR__, "jet_tests.jl")
+const JET_TEST_PATH = TEST_PROJECTS["jet"]
 
 args = isempty(ARGS) ? ["general"] : ARGS
 jet_only = length(args) == 1 && startswith(only(args), "jet")
@@ -54,8 +54,9 @@ function test_worker(name)
 end
 
 if jet_only
-    # Run JET directly rather than via ParallelTestRunner because JET.report_package
-    # and @resumable currently misbehave inside the worker module created by the runner.
+    # Run JET directly rather than via ParallelTestRunner because
+    # JET does not like being loaded after a Pkg.activate change
+    # (at least not in the presence of menaces like ResumableFunctions.jl)
     include(JET_TEST_PATH)
 else
     using QuantumSavory
