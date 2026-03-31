@@ -22,9 +22,11 @@ function apply!(regs::Vector{Register}, indices::Base.AbstractVecOrTuple{Int}, o
 end
 
 function apply!(r::QuantumClifford.Register, indices::Base.AbstractVecOrTuple{Int}, operation::Symbolic{AbstractOperator}; time=nothing)
-    invoke(apply!, Tuple{QuantumClifford.Register, Base.AbstractVecOrTuple{Int}, Any}, r, indices, operation; time)
+    isnothing(time) || throw(ArgumentError("`time` is not supported for raw `QuantumClifford.Register` objects"))
+    invoke(apply!, Tuple{QuantumClifford.Register, Base.AbstractVecOrTuple{Int}, Any}, r, indices, operation)
 end
 
 function apply!(r::QuantumClifford.Register, indices::Base.AbstractVecOrTuple{Int}, operation::Symbolic{AbstractSuperOperator}; time=nothing)
-    invoke(apply!, Tuple{QuantumClifford.Register, Base.AbstractVecOrTuple{Int}, Any}, r, indices, operation; time)
+    isnothing(time) || throw(ArgumentError("`time` is not supported for raw `QuantumClifford.Register` objects"))
+    invoke(apply!, Tuple{QuantumClifford.Register, Base.AbstractVecOrTuple{Int}, Any}, r, indices, operation)
 end
