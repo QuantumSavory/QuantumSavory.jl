@@ -1,8 +1,8 @@
 using Test
 
-@testset "Examples - firstgenrepeater_v2 2" begin
+@testset "Examples - repeatergrid 2b" begin
     try
-        include("../../examples/firstgenrepeater_v2/2_swapper_example.jl")
+        include("../../examples/repeatergrid/2b_sync_wglmakie_interactive.jl")
     finally
         if isdefined(@__MODULE__, :server)
             # The example may fail before the server is created.
