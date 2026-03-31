@@ -64,8 +64,6 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 - `examples/firstgenrepeater_v2/README.md`
 - `examples/repeatergrid/README.md`
 - `examples/simpleswitch/README.md`
-- `../writeup/zoos.tex`
-- `../writeup/qtcp.tex`
 
 ## Common Mistakes
 

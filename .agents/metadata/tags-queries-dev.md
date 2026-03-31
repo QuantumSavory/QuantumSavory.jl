@@ -64,6 +64,3 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 - `docs/src/metadata_plane.md`
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/classical_messaging.md`
-- `../writeup/Tags.tex`
-- `../writeup/discrete_event.tex`
-- `../writeup/quantumsavory.tex`

@@ -31,8 +31,7 @@ Use `.agents/zoos/circuit-zoo-user.md` for that.
 
 ## Review Checks
 
-- Confirm constructor validation for symbolic parameters like `:X`, `:Y`, `:Z`.
-- Check argument ordering carefully, especially in purification circuits.
+- Check argument ordering carefully.
 - Preserve destructive behavior expectations in tests.
 - Keep circuits backend-agnostic. They should not reach into register internals.
 - `test/general/circuitzoo_api_tests.jl` assumes one callable method per circuit instance; update tests if that contract changes intentionally.
@@ -56,6 +55,3 @@ Use `.agents/zoos/circuit-zoo-user.md` for that.
 - `docs/src/zoos_as_building_blocks.md`
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
-- `../writeup/zoos.tex`
-- `../writeup/Overview.tex`
-- `../writeup/quantumsavory.tex`

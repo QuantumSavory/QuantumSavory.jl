@@ -91,8 +91,6 @@ put!(qchannel(net, 1 => 2), net[1, 1])
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
 - `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
-- `../writeup/Tags.tex`
-- `../writeup/qtcp.tex`
 
 ## Common Mistakes
 

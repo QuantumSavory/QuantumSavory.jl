@@ -47,12 +47,6 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
   - forwarded classical send
 - For quantum transport, confirm entanglement movement is still correct when source slots were part of larger shared states.
 
-## Extension Points
-
-- `QuantumChannel(sim, delay, background, trait)`
-- forwarding logic in `ChannelForwarder` and `take_loop_mb`
-- per-protocol message schemas through custom tag types
-
 ## Source Files To Read
 
 - `src/networks.jl`
@@ -73,7 +67,3 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
 - `docs/src/classical_messaging.md`
 - `docs/src/manual.md`
 - `docs/src/discreteeventsimulator.md`
-- `../writeup/Tags.tex`
-- `../writeup/Overview.tex`
-- `../writeup/qtcp.tex`
-- `../writeup/quantumsavory.tex`

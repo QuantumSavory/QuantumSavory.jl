@@ -38,42 +38,13 @@ Open only the topic files that match the task.
 - Core implementation lives in `src/`.
 - Example scripts live in `examples/`.
 - Regression and behavior anchors live in `test/general/` and `test/examples/`.
-- The paper and writeup sources most relevant to this package live in:
-  - `../writeup/quantumsavory.tex`
-  - `../writeup/Overview.tex`
-  - `../writeup/modeling.tex`
-  - `../writeup/discrete_event.tex`
-  - `../writeup/Tags.tex`
-  - `../writeup/zoos.tex`
-  - `../writeup/qtcp.tex`
 
 ## Repo Workflow
 
-- Work from the package root: `QuantumSavory.jl/`.
 - Prefer targeted tests first, then broader runs if behavior changed across multiple subsystems.
 - When you change public APIs, examples, or user-visible behavior, update the matching `docs/src/` page and the matching `.agents/` topic file.
 - When you change docstrings or documentation structure, build docs with `julia --project=docs docs/make.jl`.
 - Many examples are mirrored by tests in `test/examples/`; use those tests as the safer validation path when possible.
-
-## Review Hotspots
-
-- Register changes:
-  - factorization and `StateRef` backreferences
-  - time monotonicity and `uptotime!`
-  - register-to-state lowering behavior
-- Metadata changes:
-  - query ordering
-  - tag schema compatibility
-  - `locked=` and `assigned=` filtering
-- Protocol changes:
-  - lock release on all paths
-  - tracker and cutoff interactions
-  - nonzero `classical_delay` assumptions
-  - tag/message field ordering
-- Channel changes:
-  - no lost wakeups in `MessageBuffer`
-  - direct-edge versus forwarded classical traffic
-  - empty destination slot requirement for `QuantumChannel`
 
 ## Documentation Boundary
 

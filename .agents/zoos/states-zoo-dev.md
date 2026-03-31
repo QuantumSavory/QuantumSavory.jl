@@ -55,4 +55,3 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 - `docs/src/API_StatesZoo.md`
 - `docs/src/zoos_as_building_blocks.md`
 - `docs/src/tutorial/state_explorer.md`
-- `../writeup/zoos.tex`

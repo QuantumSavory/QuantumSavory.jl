@@ -94,6 +94,3 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - `docs/src/modeling_registers_and_time.md`
 - `docs/src/properties.md`
 - `docs/src/architecture.md`
-- `../writeup/modeling.tex`
-- `../writeup/Overview.tex`
-- `../writeup/quantumsavory.tex`

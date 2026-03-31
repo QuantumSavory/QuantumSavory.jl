@@ -80,7 +80,6 @@ msg = @yield querydelete_wait!(messagebuffer(net, 2), :swap_request)
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/howto/repeatergrid/repeatergrid.md`
 - `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
-- `../writeup/Tags.tex`
 
 ## Common Mistakes
 

@@ -64,7 +64,6 @@ stateexplorer(BarrettKokBellPair)
 - `docs/src/tutorial/state_explorer.md`
 - `examples/state_explorer/README.md`
 - `examples/state_explorer/state_explorer.jl`
-- `../writeup/zoos.tex`
 
 ## Common Mistakes
 

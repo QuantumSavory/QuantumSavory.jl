@@ -74,7 +74,3 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
 - `docs/src/howto/repeatergrid/repeatergrid.md`
 - `docs/src/howto/simpleswitch/simpleswitch.md`
-- `../writeup/zoos.tex`
-- `../writeup/discrete_event.tex`
-- `../writeup/quantumsavory.tex`
-- `../writeup/qtcp.tex`
