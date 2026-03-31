@@ -500,8 +500,17 @@ permits_virtual_edge(::EntanglementConsumer) = true
         untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory or EntanglementDelete and should that be a different EntanglementHistory since the current one is specifically for Swapper
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
-        ob1 = real(observable((q1, q2), Z⊗Z))
-        ob2 = real(observable((q1, q2), X⊗X))
+        ob1 = observable((q1, q2), Z⊗Z)
+        ob2 = observable((q1, q2), X⊗X)
+        if isnothing(ob1) || isnothing(ob2)
+            @error "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): dropping stale pair between .$(q1.idx) and .$(q2.idx)"
+            traceout!(regA[q1.idx], regB[q2.idx])
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+        ob1 = real(ob1)
+        ob2 = real(ob2)
 
         traceout!(regA[q1.idx], regB[q2.idx])
         push!(prot._log, (now(prot.sim), ob1, ob2))
