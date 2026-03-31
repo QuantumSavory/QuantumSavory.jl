@@ -29,25 +29,39 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 - Duplicate tags are allowed.
 - `queryall` is intentionally register-only.
 - Message-buffer `querydelete!` removes by vector depth, not by tag id.
-- `query_wait` and `querydelete_wait!` are wrappers around `query` plus `onchange`.
+- `query_wait` and `querydelete_wait!` query first and only then wait.
+- Because they query first, they provide the same high-level behavior on
+  `Register` and `MessageBuffer` even though raw `onchange(...)` semantics
+  differ between those stores.
 
 ## Event And Waiting Notes
 
 - `onchange(mb, Tag)` currently behaves the same as `onchange(mb)`.
 - Waiting helpers operate on `Register` and `MessageBuffer`, not on a single `RegRef`.
-- Message buffers are not purely edge-triggered:
-  - `tag_waiter` wakes tasks that are already blocked.
-  - `no_wait` stores one pending wakeup per arrival that happened with no active waiter.
-- Keep that queued-wakeup behavior when refactoring waits:
-  - protocol code can inspect/query the buffer and only later call `onchange`
-  - tests also rely on later waits waking immediately for already-buffered arrivals
-  - removing `no_wait` turns buffered arrivals into invisible work for later waiters
+- Register waiting is pure future-edge waiting through `AsymmetricSemaphore`.
+- Message buffers need extra bookkeeping because `AsymmetricSemaphore` is not a
+  counting semaphore:
+  - an `unlock` that happens with zero waiters is forgotten.
+- `MessageBuffer.no_wait` stores one queued wakeup per arrival that happened
+  before any waiter was registered.
+- That queued wakeup is what makes later `onchange(mb)` calls wake immediately
+  for already-buffered arrivals.
+- When possible, prefer `query_wait` or `querydelete_wait!` over
+  `onchange(...)` followed by a query:
+  - that pattern is less timing-sensitive and has the same user-visible
+    semantics everywhere.
 
 ## Review Checks
 
 - Verify a proposed tag schema fits existing `Tag(...)` constructors before documenting it.
 - Do not bless `tag!(register, ...)` or `tag!(messagebuffer, ...)`; both are rejected.
 - Preserve query ordering semantics unless the change is intentional and broadly updated.
+- Preserve the distinction between:
+  - register `onchange`, which waits for future changes;
+  - message-buffer `onchange`, which also consumes queued wakeups from earlier
+    buffered arrivals.
+- Prefer documenting `query_wait` and `querydelete_wait!` as the default waiting
+  API when a concrete predicate is already known.
 - When protocol code queries resources, check whether it should also constrain `locked=` or `assigned=`.
 - Keep user docs honest about the current implementation. The current code does not support arbitrarily rich tag payloads.
 

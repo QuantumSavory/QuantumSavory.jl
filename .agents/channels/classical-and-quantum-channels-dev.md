@@ -20,15 +20,25 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
 
 ## MessageBuffer Invariants
 
-- `tag_waiter` plus `no_wait` deliberately combine two semantics:
-  - `tag_waiter` handles tasks that are already blocked in `wait`/`onchange`
-  - `no_wait` records arrivals that happened before any waiter existed
-- Do not simplify this to a pure semaphore without changing callers and tests.
-  Existing protocol code assumes a later `onchange` still wakes once per
-  already-buffered arrival.
+- `tag_waiter` is edge-triggered:
+  - it wakes tasks that are already blocked in `onchange(mb)` or `wait(mb)`.
+- `no_wait` stores one queued wakeup per arrival that happened while nobody was
+  waiting.
+- `no_wait` is required because `AsymmetricSemaphore` is not a counting
+  semaphore:
+  - an `unlock` with zero waiters is dropped rather than remembered for a later
+    waiter.
+- This is intentionally different from register tag waiting:
+  - register `onchange(reg, Tag)` is future-edge waiting only;
+  - `MessageBuffer` preserves the older contract that a later `onchange(mb)`
+    wakes immediately once per already-buffered arrival.
 - Buffer entries are stored as `(; src, tag)` in arrival order.
 - `tag!(::MessageBuffer, ...)` is deliberately rejected.
 - `onchange(mb, Tag)` is not more selective than `onchange(mb)` today.
+- If code already knows the predicate it wants, prefer `query_wait` or
+  `querydelete_wait!` over `onchange(...)` followed by a query:
+  - the helpers query first and then wait, so they behave consistently on both
+    `Register` and `MessageBuffer`.
 
 ## Quantum Side
 
@@ -44,9 +54,13 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
 ## Review Checks
 
 - Preserve `MessageBuffer` wakeup behavior whenever touching wait logic.
-- When reviewing wait changes, check both cases:
-  - message arrives while a task is already waiting
-  - message arrives before a later `onchange`/`wait`
+- Check both MessageBuffer wait paths:
+  - message arrives while a task is already blocked;
+  - message arrives before any later `onchange(mb)` call.
+- Do not simplify `MessageBuffer` waiting to a pure semaphore without also
+  changing callers and tests.
+- Prefer `query_wait` or `querydelete_wait!` in protocol code when the awaited
+  condition is already known.
 - Keep direct-edge versus forwarded classical paths clearly separate.
 - Check for accidental language in docs or code reviews that implies enforced locality. The framework models locality; it does not enforce it at the Julia level.
 - Watch for hidden timing assumptions between:

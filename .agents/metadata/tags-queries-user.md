@@ -42,6 +42,10 @@ result = @yield query_wait(reg, :ready, W)
 msg = @yield querydelete_wait!(messagebuffer(net, 2), :swap_request)
 ```
 
+When you already know the match you care about, prefer `query_wait` or
+`querydelete_wait!` over `@yield onchange(...)` followed by `query(...)` or
+`querydelete!(...)`.
+
 ## Public APIs To Prefer
 
 - Tagging register slots:
@@ -65,6 +69,11 @@ msg = @yield querydelete_wait!(messagebuffer(net, 2), :swap_request)
 - Use `locked=` and `assigned=` filters when resource availability matters, especially in networking protocols.
 - Use `querydelete!` or `querydelete_wait!` when the tag or message is consumable state.
 - Prefer waiting helpers over manual `while true` polling loops.
+- Prefer `query_wait` and `querydelete_wait!` over `onchange(...)` followed by a
+  query when possible:
+  - the helpers check existing matches first and then wait only if necessary;
+  - this avoids subtle differences between register waits and message-buffer
+    waits.
 
 ## Public Boundary
 
@@ -87,3 +96,5 @@ msg = @yield querydelete_wait!(messagebuffer(net, 2), :swap_request)
 - Using `tag!` on a message buffer instead of `put!`.
 - Forgetting `locked=` or `assigned=` filters when multiple processes compete for slots.
 - Assuming consumed messages should stay in the buffer after handling.
+- Using `onchange(store)` plus a follow-up query when `query_wait` or
+  `querydelete_wait!` already captures the intended condition.
