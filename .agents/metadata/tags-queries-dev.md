@@ -35,7 +35,13 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 
 - `onchange(mb, Tag)` currently behaves the same as `onchange(mb)`.
 - Waiting helpers operate on `Register` and `MessageBuffer`, not on a single `RegRef`.
-- Message buffers use waiter bookkeeping to avoid lost wakeups when messages arrive before a waiter is registered.
+- Message buffers are not purely edge-triggered:
+  - `tag_waiter` wakes tasks that are already blocked.
+  - `no_wait` stores one pending wakeup per arrival that happened with no active waiter.
+- Keep that queued-wakeup behavior when refactoring waits:
+  - protocol code can inspect/query the buffer and only later call `onchange`
+  - tests also rely on later waits waking immediately for already-buffered arrivals
+  - removing `no_wait` turns buffered arrivals into invisible work for later waiters
 
 ## Review Checks
 

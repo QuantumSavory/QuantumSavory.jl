@@ -20,7 +20,12 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
 
 ## MessageBuffer Invariants
 
-- `waiters` plus `no_wait` are there to prevent lost wakeups.
+- `tag_waiter` plus `no_wait` deliberately combine two semantics:
+  - `tag_waiter` handles tasks that are already blocked in `wait`/`onchange`
+  - `no_wait` records arrivals that happened before any waiter existed
+- Do not simplify this to a pure semaphore without changing callers and tests.
+  Existing protocol code assumes a later `onchange` still wakes once per
+  already-buffered arrival.
 - Buffer entries are stored as `(; src, tag)` in arrival order.
 - `tag!(::MessageBuffer, ...)` is deliberately rejected.
 - `onchange(mb, Tag)` is not more selective than `onchange(mb)` today.
@@ -39,6 +44,9 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
 ## Review Checks
 
 - Preserve `MessageBuffer` wakeup behavior whenever touching wait logic.
+- When reviewing wait changes, check both cases:
+  - message arrives while a task is already waiting
+  - message arrives before a later `onchange`/`wait`
 - Keep direct-edge versus forwarded classical paths clearly separate.
 - Check for accidental language in docs or code reviews that implies enforced locality. The framework models locality; it does not enforce it at the Julia level.
 - Watch for hidden timing assumptions between:

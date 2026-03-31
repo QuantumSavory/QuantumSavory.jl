@@ -8,7 +8,12 @@ struct MessageBuffer{T}
     net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
     node::Int
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
+    # `tag_waiter` is edge-triggered: it wakes tasks that are already blocked in
+    # `wait`/`onchange`.
     tag_waiter::AsymmetricSemaphore
+    # `no_wait` counts arrivals that happened while nobody was waiting. This
+    # preserves the long-standing MessageBuffer contract that a later
+    # `wait`/`onchange` must wake immediately once per already-buffered arrival.
     no_wait::Ref{Int}
 end
 
@@ -69,6 +74,10 @@ function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     nbwaiters(mb.tag_waiter) == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
     push!(mb.buffer, (;src,tag));
     if nbwaiters(mb.tag_waiter) == 0
+        # Keep one queued wakeup per arrival when no task is actively blocked on
+        # the semaphore. Protocol code often queries the buffer first and only
+        # then calls `onchange`, so a pure semaphore would miss already-buffered
+        # work and can deadlock those protocols.
         mb.no_wait[] += 1
     else
         unlock(mb.tag_waiter)
@@ -86,6 +95,8 @@ end
 
 @resumable function wait_process(sim, mb)
     if mb.no_wait[] != 0
+        # Consume a queued arrival immediately instead of waiting for a future
+        # edge on `tag_waiter`.
         mb.no_wait[] -= 1
         return
     end
