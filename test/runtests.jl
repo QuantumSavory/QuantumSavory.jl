@@ -6,6 +6,15 @@ const TEST_PROJECTS = Dict(
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
 
+args = isempty(ARGS) ? ["general"] : ARGS
+if isempty(ARGS)
+    @info "No test arguments provided; defaulting to `general` tests."
+elseif args == ["jet"]
+    using Pkg
+    Pkg.activate(TEST_PROJECTS["jet"])
+    Pkg.instantiate()
+end
+
 test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
                      startswith(name, "examples") ? TEST_PROJECTS["examples"] :
                      startswith(name, "jet") ? TEST_PROJECTS["jet"] :
@@ -36,12 +45,6 @@ function test_worker(name)
     project = test_project(name)
     project === nothing && return nothing
     return addworker(; init_worker_code = project_init_code(project))
-end
-
-args = ARGS
-if isempty(args)
-    @info "No test arguments provided; defaulting to `general` tests."
-    args = ["general"]
 end
 
 using QuantumSavory
