@@ -9,6 +9,7 @@ struct MessageBuffer{T}
     node::Int
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
     tag_waiter::AsymmetricSemaphore
+    no_wait::Ref{Int}
 end
 
 function peektags(mb::MessageBuffer)
@@ -65,23 +66,35 @@ end
 
 function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
-    islocked(mb.tag_waiter) || @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
+    nbwaiters(mb.tag_waiter) == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
     push!(mb.buffer, (;src,tag));
-    unlock(mb.tag_waiter)
+    if nbwaiters(mb.tag_waiter) == 0
+        mb.no_wait[] += 1
+    else
+        unlock(mb.tag_waiter)
+    end
 end
 
 function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
     sim = get_time_tracker(net)
-    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], AsymmetricSemaphore(sim))
+    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], AsymmetricSemaphore(sim), Ref(0))
     for (;src, channel) in qs
         @process take_loop_mb(sim, channel, src, mb)
     end
     mb
 end
 
+@resumable function wait_process(sim, mb)
+    if mb.no_wait[] != 0
+        mb.no_wait[] -= 1
+        return
+    end
+    @yield lock(mb.tag_waiter)
+end
+
 function Base.wait(mb::MessageBuffer)
     Base.depwarn("wait(::MessageBuffer) is deprecated, use onchange(::MessageBuffer) instead", :wait)
-    return lock(mb.tag_waiter)
+    return @process wait_process(mb.sim, mb)
 end
 
 """
@@ -91,7 +104,7 @@ E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
 function onchange end
 
 function onchange(mb::MessageBuffer)
-    return lock(mb.tag_waiter)
+    return @process wait_process(mb.sim, mb)
 end
 
 function onchange(mb::MessageBuffer, ::Type{Any})
