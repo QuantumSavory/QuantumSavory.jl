@@ -81,7 +81,7 @@ end
 # same but this time with an entanglement tracker
 
 for i in 1:30, n in 2:30
-    net = RegisterNet([Register(j+3) for j in 1:n])
+    net = RegisterNet([Register(j+3) for j in 1:n]; classical_delay=1e-9)
     sim = get_time_tracker(net)
     for j in vertices(net)
         tracker = EntanglementTracker(sim, net, j)

@@ -69,6 +69,7 @@ put!(qchannel(net, 1 => 2), net[1, 1])
   - `put!`
   - `query`
   - `querydelete!`
+  - `query_wait`
   - `querydelete_wait!`
 - Quantum:
   - `QuantumChannel(sim, delay, background=nothing, trait=Qubit())`
@@ -79,6 +80,11 @@ put!(qchannel(net, 1 => 2), net[1, 1])
 ## Usage Guidance
 
 - Message buffers are the normal receive side for classical protocols.
+- If you already know which message shape you want, prefer `query_wait` or
+  `querydelete_wait!` over `@yield onchange(mb)` followed by `query`:
+  - the waiting helpers first check what is already buffered and then wait for a
+    future arrival if needed;
+  - this gives the same semantics on message buffers and registers.
 - `permit_forward=true` affects only classical traffic.
 - `qchannel(net, ...)` is a direct-edge quantum link, not an automatic repeater or routing layer.
 - The destination slot for `take!` on a quantum channel must be empty.
@@ -98,3 +104,6 @@ put!(qchannel(net, 1 => 2), net[1, 1])
 - Assuming classical forwarding implies any quantum multihop support.
 - Receiving quantum traffic into an already assigned slot.
 - Bypassing the message buffer when the goal is decoupled protocol composition.
+- Writing `@yield onchange(mb); querydelete!(mb, wanted...)` when
+  `querydelete_wait!(mb, wanted...)` says the same thing more directly and more
+  consistently.
