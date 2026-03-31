@@ -5,7 +5,7 @@ const TEST_PROJECTS = Dict(
     "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
-const JET_TEST_PATH = TEST_PROJECTS["jet"]
+const JET_TEST_PATH = joinpath(@__DIR__, "jet_tests.jl")
 
 args = isempty(ARGS) ? ["general"] : ARGS
 jet_only = length(args) == 1 && startswith(only(args), "jet")
