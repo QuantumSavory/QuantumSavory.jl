@@ -1,3 +1,5 @@
+# This file is included directly from `test/runtests.jl` for jet-only runs
+# instead of being dispatched through `ParallelTestRunner`.
 using JET
 using Test
 using QuantumSavory

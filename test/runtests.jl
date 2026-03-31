@@ -5,14 +5,20 @@ const TEST_PROJECTS = Dict(
     "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
+const JET_TEST_PATH = joinpath(@__DIR__, "jet_tests.jl")
 
 args = isempty(ARGS) ? ["general"] : ARGS
+jet_only = length(args) == 1 && startswith(only(args), "jet")
 if isempty(ARGS)
     @info "No test arguments provided; defaulting to `general` tests."
-elseif args == ["jet"]
+end
+if jet_only
+    @info "Routing to direct JET test execution." args project=TEST_PROJECTS["jet"]
     using Pkg
     Pkg.activate(TEST_PROJECTS["jet"])
     Pkg.instantiate()
+else
+    @info "Routing to ParallelTestRunner." args
 end
 
 test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
@@ -47,5 +53,11 @@ function test_worker(name)
     return addworker(; init_worker_code = project_init_code(project))
 end
 
-using QuantumSavory
-runtests(QuantumSavory, args; testsuite, test_worker)
+if jet_only
+    # Run JET directly rather than via ParallelTestRunner because JET.report_package
+    # and @resumable currently misbehave inside the worker module created by the runner.
+    include(JET_TEST_PATH)
+else
+    using QuantumSavory
+    runtests(QuantumSavory, args; testsuite, test_worker)
+end
