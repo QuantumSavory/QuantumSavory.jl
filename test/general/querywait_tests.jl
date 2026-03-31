@@ -163,4 +163,22 @@ end
     @test query(store, :other).tag == Tag(:other)
 end
 
+@testset "querywait wrapper inference" begin
+    reg = Register(1)
+    net = RegisterNet([reg])
+    mb = messagebuffer(reg)
+
+    proc = @inferred query_wait(reg, :wanted, ❓)
+    @test proc isa ConcurrentSim.Process
+
+    proc = @inferred query_wait(mb, :wanted, ❓)
+    @test proc isa ConcurrentSim.Process
+
+    proc = @inferred querydelete_wait!(reg, :wanted, ❓)
+    @test proc isa ConcurrentSim.Process
+
+    proc = @inferred querydelete_wait!(mb, :wanted, ❓)
+    @test proc isa ConcurrentSim.Process
+end
+
 end
