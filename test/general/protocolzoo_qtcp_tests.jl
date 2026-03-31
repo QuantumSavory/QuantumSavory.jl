@@ -191,7 +191,7 @@ end
     registers = [Register(5) for _ in 1:5]
 
     # Create network with registers
-    net = RegisterNet(registers)
+    net = RegisterNet(registers; classical_delay=1e-6)
 
     # Get simulation from network
     sim = get_time_tracker(net)
