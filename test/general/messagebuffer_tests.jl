@@ -179,4 +179,24 @@ end
     @test wake_times == [0.0]
 end
 
+@testset "messagebuffer query wrapper inference" begin
+    reg = Register(1)
+    net = RegisterNet([reg])
+    mb = messagebuffer(reg)
+
+    put!(mb, Tag(:hello))
+    rt = only(Base.return_types(query, Tuple{typeof(mb), Symbol}))
+    @test rt !== Any
+    @test rt <: Union{Nothing, NamedTuple{(:depth, :src, :tag), <:Tuple{Int, Union{Nothing, Int}, Tag}}}
+    result = query(mb, :hello)
+    @test result.tag == Tag(:hello)
+
+    put!(mb, Tag(:goodbye))
+    rt = only(Base.return_types(querydelete!, Tuple{typeof(mb), Symbol}))
+    @test rt !== Any
+    @test rt <: Union{Nothing, NamedTuple{(:src, :tag), Tuple{Union{Nothing, Int}, Tag}}}
+    result = querydelete!(mb, :goodbye)
+    @test result.tag == Tag(:goodbye)
+end
+
 end
