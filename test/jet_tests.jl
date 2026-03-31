@@ -1,3 +1,7 @@
+# This file is included directly from `test/runtests.jl` for jet-only runs
+# instead of being dispatched through `ParallelTestRunner`,
+# because JET does not like being loaded after a Pkg.activate change
+# (at least not in the presence of menaces like ResumableFunctions.jl)
 using JET
 using Test
 using QuantumSavory
