@@ -1,4 +1,3 @@
-using QuantumSavory
 using ParallelTestRunner
 
 const TEST_PROJECTS = Dict(
@@ -6,6 +5,21 @@ const TEST_PROJECTS = Dict(
     "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
+const JET_TEST_PATH = joinpath(@__DIR__, "jet_tests.jl")
+
+args = isempty(ARGS) ? ["general"] : ARGS
+jet_only = length(args) == 1 && startswith(only(args), "jet")
+if isempty(ARGS)
+    @info "No test arguments provided; defaulting to `general` tests."
+end
+if jet_only
+    @info "Routing to direct JET test execution." args project=TEST_PROJECTS["jet"]
+    using Pkg
+    Pkg.activate(TEST_PROJECTS["jet"])
+    Pkg.instantiate()
+else
+    @info "Routing to ParallelTestRunner." args
+end
 
 test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
                      startswith(name, "examples") ? TEST_PROJECTS["examples"] :
@@ -15,9 +29,6 @@ test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
 project_init_code(project::String) = quote
     using Pkg
     Pkg.activate($project)
-    if occursin("jet", $project) # The JET Project.toml is not included in the main Project.toml workspace because it frequently causes nightly tests to fail
-        Pkg.instantiate()
-    end
 
     using Logging # The examples generate a ton of logs
     logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
@@ -39,10 +50,12 @@ function test_worker(name)
     return addworker(; init_worker_code = project_init_code(project))
 end
 
-args = ARGS
-if isempty(args)
-    @info "No test arguments provided; defaulting to `general` tests."
-    args = ["general"]
+if jet_only
+    # Run JET directly rather than via ParallelTestRunner because
+    # JET does not like being loaded after a Pkg.activate change
+    # (at least not in the presence of menaces like ResumableFunctions.jl)
+    include(JET_TEST_PATH)
+else
+    using QuantumSavory
+    runtests(QuantumSavory, args; testsuite, test_worker)
 end
-
-runtests(QuantumSavory, args; testsuite, test_worker)
