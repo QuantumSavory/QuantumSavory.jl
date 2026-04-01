@@ -308,13 +308,7 @@ for v in vertices(net)
     cutoffprot = CutoffProt(sim, net, v, retention_time=10, period=nothing)
     @process cutoffprot()
 end
-try
-    run(sim, 50)
-catch e
-    @test e isa ErrorException
-    @test occursin("does not know how to handle (due to the absence of corresponding `EntanglementCounterpart`", e.msg)
-    @test_broken false # the run above should not fail, but it does due to issue #303 -- this particular bug was hidden until #325 made the cutoff protocol slightly different
-end
+run(sim, 50)
 
 for i in 1:length(consumer._log)
     @test consumer._log[i][2] ≈ 1.0
