@@ -183,7 +183,7 @@ See also: [`querydelete!`](@ref), [`query_wait`](@ref), [`onchange`](@ref), [`ta
 """
 function querydelete_wait! end
 
-for i in 1:10
+for i in 1:10 # explicitly constructing functions with fixed number of args to avoid type-inference difficulties with varargs # TODO benchmark and remove if there is no benefit in future compiler versions
     args = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j)[1:i]
     quote_expr = quote
         @resumable function _querydelete_wait(sim, mb::MessageBuffer, on::Type{On}, $(args...)) where {On}
