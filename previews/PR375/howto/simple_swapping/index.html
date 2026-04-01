@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Simple Entanglement Swapping on Chains and Networks · QuantumSavory.jl</title><meta name="title" content="Simple Entanglement Swapping on Chains and Networks · QuantumSavory.jl"/><meta property="og:title" content="Simple Entanglement Swapping on Chains and Networks · QuantumSavory.jl"/><meta property="twitter:title" content="Simple Entanglement Swapping on Chains and Networks · QuantumSavory.jl"/><meta name="description" content="Documentation for QuantumSavory.jl."/><meta property="og:description" content="Documentation for QuantumSavory.jl."/><meta property="twitter:description" content="Documentation for QuantumSavory.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="QuantumSavory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">QuantumSavory.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">QuantumSavory.jl</a></li><li><a class="tocitem" href="../../manual/">Getting Started Manual</a></li><li><span class="tocitem">Explanations</span><ul><li><a class="tocitem" href="../../explanations/">Explanations</a></li><li><a class="tocitem" href="../../architecture/">Architecture and Mental Model</a></li><li><a class="tocitem" href="../../why_quantumsavory/">Why QuantumSavory Exists</a></li><li><a class="tocitem" href="../../restricted_formalisms/">Restricted Formalisms and Efficient Simulation</a></li><li><a class="tocitem" href="../../modeling_tradeoffs/">Choosing a Backend and Modeling Tradeoffs</a></li><li><a class="tocitem" href="../../modeling_registers_and_time/">Modeling Registers, Factorization, and Time</a></li><li><a class="tocitem" href="../../metadata_plane/">Metadata and Protocol Composition</a></li><li><a class="tocitem" href="../../classical_messaging/">Classical Messaging and Buffers</a></li><li><a class="tocitem" href="../../zoos_as_building_blocks/">Zoos as Composable Building Blocks</a></li><li><a class="tocitem" href="../../properties/">Properties</a></li><li><a class="tocitem" href="../../backgrounds/">Background Noise</a></li><li><a class="tocitem" href="../../symbolic_frontend/">Symbolic Frontend</a></li><li><a class="tocitem" href="../../discreteeventsimulator/">Discrete Event Simulator</a></li></ul></li><li><span class="tocitem">How-To Guides</span><ul><li><a class="tocitem" href="../">How-To Guides</a></li><li class="is-active"><a class="tocitem" href>Simple Entanglement Swapping on Chains and Networks</a><ul class="internal"><li><a class="tocitem" href="#One-link:-EntanglerProt"><span>One link: <code>EntanglerProt</code></span></a></li><li><a class="tocitem" href="#Add-SwapperProt"><span>Add <code>SwapperProt</code></span></a></li><li><a class="tocitem" href="#Add-EntanglementTracker"><span>Add <code>EntanglementTracker</code></span></a></li><li><a class="tocitem" href="#Add-EntanglementConsumer"><span>Add <code>EntanglementConsumer</code></span></a></li><li><a class="tocitem" href="#The-Same-Pattern-On-A-Tiny-Network"><span>The Same Pattern On A Tiny Network</span></a></li><li><a class="tocitem" href="#Issues-And-Workarounds"><span>Issues And Workarounds</span></a></li></ul></li><li><a class="tocitem" href="../firstgenrepeater/firstgenrepeater/">1st-gen Repeater - low level implementation</a></li><li><a class="tocitem" href="../firstgenrepeater/firstgenrepeater-clifford/">1st-gen Repeater - Clifford formalism</a></li><li><a class="tocitem" href="../firstgenrepeater_v2/firstgenrepeater_v2/">1st-gen Repeater - simpler implementation</a></li><li><a class="tocitem" href="../congestionchain/congestionchain/">Congestion on a Repeater Chain</a></li><li><a class="tocitem" href="../colorcentermodularcluster/colorcentermodularcluster/">Cluster States in Atomic Memories</a></li><li><a class="tocitem" href="../simpleswitch/simpleswitch/">Entanglement Switch</a></li><li><a class="tocitem" href="../cluster_state_walkthrough/">Cluster-State Walkthrough</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../../tutorial/">Tutorials</a></li><li><a class="tocitem" href="../../tutorial/noninstantgate/">Gate Duration</a></li><li><a class="tocitem" href="../../tutorial/state_explorer/">State Explorer</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../../references/">References</a></li><li><a class="tocitem" href="../../register_interface/">Register Interface API</a></li><li><a class="tocitem" href="../../backendsimulator/">Backend Simulators</a></li><li><a class="tocitem" href="../../tag_query/">Tag and Query API</a></li><li><a class="tocitem" href="../../symbolics/">Symbolic Expressions Reference</a></li><li><a class="tocitem" href="../../API/">API</a></li><li><a class="tocitem" href="../../API_CircuitZoo/">CircuitZoo API</a></li><li><a class="tocitem" href="../../API_StatesZoo/">StatesZoo API</a></li><li><a class="tocitem" href="../../API_ProtocolZoo/">ProtocolZoo API</a></li><li><a class="tocitem" href="../../API_Interface/">QuantumInterface API</a></li><li><a class="tocitem" href="../../API_Symbolics/">QuantumSymbolics API</a></li><li><a class="tocitem" href="../../visualizations/">Visualizations</a></li><li><a class="tocitem" href="../../bibliography/">Bibliography</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">How-To Guides</a></li><li class="is-active"><a href>Simple Entanglement Swapping on Chains and Networks</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Simple Entanglement Swapping on Chains and Networks</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/QuantumSavory/QuantumSavory.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/docs/src/howto/simple_swapping.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Simple-Entanglement-Swapping"><a class="docs-heading-anchor" href="#Simple-Entanglement-Swapping">Simple Entanglement Swapping on Chains and Networks</a><a id="Simple-Entanglement-Swapping-1"></a><a class="docs-heading-anchor-permalink" href="#Simple-Entanglement-Swapping" title="Permalink"></a></h1><p>This how-to introduces a small protocol family centered around very local knowledge and classical messages passed between neighboring nodes:</p><ul><li><a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt"><code>EntanglerProt</code></a> creates nearest-neighbor entanglement.</li><li><a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.SwapperProt"><code>SwapperProt</code></a> performs local swaps at repeaters.</li><li><a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementTracker"><code>EntanglementTracker</code></a> listens for update and delete messages and keeps the local metadata consistent enough for the rest of the stack to continue.</li><li><a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementConsumer"><code>EntanglementConsumer</code></a> looks for end-to-end pairs and consumes them.</li></ul><p>This is a good baseline for simple repeater-chain and small-network simulations. It is not a universal control plane, and it has known edge cases. The last section of this page shows minimal executed examples of those failure modes.</p><div class="admonition is-info" id="Executed-examples-f79577c891edf6e3"><header class="admonition-header">Executed examples<a class="admonition-anchor" href="#Executed-examples-f79577c891edf6e3" title="Permalink"></a></header><div class="admonition-body"><p>Every code block on this page is executed as part of the documentation build. No mocking is used.</p></div></div><pre><code class="language-julia hljs">using QuantumSavory
+using QuantumSavory.ProtocolZoo
+using Random
+using Logging
+using Graphs
+using ConcurrentSim
+using ResumableFunctions
+
+correlations(a, b) = (
+    ZZ = round(real(observable((a, b), Z⊗Z)); digits = 3),
+    XX = round(real(observable((a, b), X⊗X)); digits = 3),
+)
+
+history_tags(reg) = sort(
+    [entry.tag for entry in queryall(reg, EntanglementHistory, ❓, ❓, ❓, ❓, ❓)];
+    by = string,
+)
+
+rounded_log(rows) = [
+    (
+        t = round(row.t; digits = 3),
+        obs1 = round(row.obs1; digits = 3),
+        obs2 = round(row.obs2; digits = 3),
+    )
+    for row in rows
+]
+
+function captured_error_messages(f)
+    io = IOBuffer()
+    logger = SimpleLogger(io, Logging.Error)
+    with_logger(logger) do
+        f()
+    end
+    [
+        replace(line, r&quot;^┌ Error: &quot; =&gt; &quot;&quot;)
+        for line in split(chomp(String(take!(io))), &quot;\n&quot;)
+        if startswith(line, &quot;┌ Error: &quot;)
+    ]
+end
+
+function check_nodes(net, c_node, node; low = true)
+    n = Int(sqrt(size(net.graph)[1]))
+    c_x = c_node % n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
+    c_y = c_node - n * (c_x - 1)
+    x = node % n == 0 ? node ÷ n : (node ÷ n) + 1
+    y = node - n * (x - 1)
+    low ? (c_x - x) &gt;= 0 &amp;&amp; (c_y - y) &gt;= 0 : (c_x - x) &lt;= 0 &amp;&amp; (c_y - y) &lt;= 0
+end
+
+function distance(n, a, b)
+    x1 = a % n == 0 ? a ÷ n : (a ÷ n) + 1
+    x2 = b % n == 0 ? b ÷ n : (b ÷ n) + 1
+    y1 = a - n * (x1 - 1)
+    y2 = b - n * (x2 - 1)
+    x1 - x2 + y1 - y2
+end
+
+function choose_node(net, node, arr; low = true)
+    grid_size = Int(sqrt(size(net.graph)[1]))
+    low ? argmax(distance.(grid_size, node, arr)) : argmin(distance.(grid_size, node, arr))
+end</code></pre><h2 id="One-link:-EntanglerProt"><a class="docs-heading-anchor" href="#One-link:-EntanglerProt">One link: <code>EntanglerProt</code></a><a id="One-link:-EntanglerProt-1"></a><a class="docs-heading-anchor-permalink" href="#One-link:-EntanglerProt" title="Permalink"></a></h2><p>Start with the smallest possible case: one protocol, one edge, and no message forwarding.</p><pre><code class="language-julia hljs">net = RegisterNet([Register(1), Register(1)]; classical_delay = 0.1)
+sim = get_time_tracker(net)
+
+@process EntanglerProt(
+    sim,
+    net,
+    1,
+    2;
+    success_prob = 1.0,
+    attempt_time = 0.0,
+    rounds = 1,
+)()
+
+run(sim, 0.1)
+
+(
+    left = query(net[1], EntanglementCounterpart, 2, 1).tag,
+    right = query(net[2], EntanglementCounterpart, 1, 1).tag,
+    observables = correlations(net[1][1], net[2][1]),
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(left = Entangled to 2.1, right = Entangled to 1.1, observables = (ZZ = 1.0, XX = 1.0))</code></pre><p><code>EntanglerProt</code> only needs local slot availability on the two adjacent nodes. It leaves matching <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementCounterpart"><code>EntanglementCounterpart</code></a> tags behind so that later protocols can discover the pair.</p><h2 id="Add-SwapperProt"><a class="docs-heading-anchor" href="#Add-SwapperProt">Add <code>SwapperProt</code></a><a id="Add-SwapperProt-1"></a><a class="docs-heading-anchor-permalink" href="#Add-SwapperProt" title="Permalink"></a></h2><p>Now move to a three-node chain. We first create two raw Bell pairs and then let the middle node swap them.</p><pre><code class="language-julia hljs">net = RegisterNet([Register(1), Register(2), Register(1)]; classical_delay = 0.1)
+sim = get_time_tracker(net)
+
+@process EntanglerProt(
+    sim,
+    net,
+    1,
+    2;
+    success_prob = 1.0,
+    attempt_time = 0.0,
+    rounds = 1,
+    chooseslotB = 1,
+)()
+
+@process EntanglerProt(
+    sim,
+    net,
+    2,
+    3;
+    success_prob = 1.0,
+    attempt_time = 0.0,
+    rounds = 1,
+    chooseslotA = 2,
+)()
+
+run(sim, 0.1)
+
+@process SwapperProt(
+    sim,
+    net,
+    2;
+    nodeL = 1,
+    nodeH = 3,
+    rounds = 1,
+    retry_lock_time = nothing,
+)()
+
+run(sim, 0.2)
+
+(
+    node1 = query(net[1], EntanglementCounterpart, 2, 1).tag,
+    repeater = history_tags(net[2]),
+    node3 = query(net[3], EntanglementCounterpart, 2, 2).tag,
+    end_to_end_state = correlations(net[1][1], net[3][1]),
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(node1 = Entangled to 2.1, repeater = Tag[Was entangled to 1.1, but swapped with .2 which was entangled to 3.1, Was entangled to 3.1, but swapped with .1 which was entangled to 1.1], node3 = Entangled to 2.2, end_to_end_state = (ZZ = -1.0, XX = -1.0))</code></pre><p>The quantum state has already been swapped to the ends, but the classical metadata is still local: node 2 now stores <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementHistory"><code>EntanglementHistory</code></a> records, and nodes 1 and 3 still believe they are entangled to node 2. This is why <code>SwapperProt</code> is not enough on its own.</p><h2 id="Add-EntanglementTracker"><a class="docs-heading-anchor" href="#Add-EntanglementTracker">Add <code>EntanglementTracker</code></a><a id="Add-EntanglementTracker-1"></a><a class="docs-heading-anchor-permalink" href="#Add-EntanglementTracker" title="Permalink"></a></h2><p><code>SwapperProt</code> emits update messages. <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementTracker"><code>EntanglementTracker</code></a> is the protocol that consumes those messages and rewrites the local bookkeeping.</p><pre><code class="language-julia hljs">net = RegisterNet([Register(1), Register(2), Register(1)]; classical_delay = 0.1)
+sim = get_time_tracker(net)
+
+for node in 1:3
+    @process EntanglementTracker(sim, net, node)()
+end
+
+@process EntanglerProt(
+    sim,
+    net,
+    1,
+    2;
+    success_prob = 1.0,
+    attempt_time = 0.0,
+    rounds = 1,
+    chooseslotB = 1,
+)()
+
+@process EntanglerProt(
+    sim,
+    net,
+    2,
+    3;
+    success_prob = 1.0,
+    attempt_time = 0.0,
+    rounds = 1,
+    chooseslotA = 2,
+)()
+
+@process SwapperProt(
+    sim,
+    net,
+    2;
+    nodeL = 1,
+    nodeH = 3,
+    rounds = 1,
+    retry_lock_time = nothing,
+)()
+
+run(sim, 1.0)
+
+(
+    node1 = query(net[1], EntanglementCounterpart, 3, 1).tag,
+    repeater = history_tags(net[2]),
+    node3 = query(net[3], EntanglementCounterpart, 1, 1).tag,
+    end_to_end_state = correlations(net[1][1], net[3][1]),
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(node1 = Entangled to 3.1, repeater = Tag[Was entangled to 1.1, but swapped with .2 which was entangled to 3.1, Was entangled to 3.1, but swapped with .1 which was entangled to 1.1], node3 = Entangled to 1.1, end_to_end_state = (ZZ = 1.0, XX = 1.0))</code></pre><p>This is the basic coordination pattern of the protocol family:</p><ol><li>local protocols act on local qubits,</li><li>they emit classical updates,</li><li>trackers reconcile those updates with local metadata,</li><li>downstream protocols discover the new state by querying tags.</li></ol><h2 id="Add-EntanglementConsumer"><a class="docs-heading-anchor" href="#Add-EntanglementConsumer">Add <code>EntanglementConsumer</code></a><a id="Add-EntanglementConsumer-1"></a><a class="docs-heading-anchor-permalink" href="#Add-EntanglementConsumer" title="Permalink"></a></h2><p>The consumer is another coordinator. It does not create or reroute entanglement. It waits for end-to-end <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementCounterpart"><code>EntanglementCounterpart</code></a> tags, checks the corresponding pair, records the result, and traces the pair out.</p><pre><code class="language-julia hljs">net = RegisterNet([Register(4), Register(8), Register(4)]; classical_delay = 0.1)
+sim = get_time_tracker(net)
+
+for node in 1:3
+    @process EntanglementTracker(sim, net, node)()
+end
+
+@process EntanglerProt(
+    sim,
+    net,
+    1,
+    2;
+    success_prob = 1.0,
+    attempt_time = 0.0,
+    rounds = 4,
+    retry_lock_time = nothing,
+)()
+
+@process EntanglerProt(
+    sim,
+    net,
+    2,
+    3;
+    success_prob = 1.0,
+    attempt_time = 0.0,
+    rounds = 4,
+    retry_lock_time = nothing,
+)()
+
+@process SwapperProt(
+    sim,
+    net,
+    2;
+    nodeL = 1,
+    nodeH = 3,
+    rounds = 4,
+    retry_lock_time = nothing,
+)()
+
+consumer = EntanglementConsumer(sim, net, 1, 3; period = nothing)
+@process consumer()
+
+run(sim, 1.0)
+
+rounded_log(consumer._log)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">4-element Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}}:
+ (t = 0.1, obs1 = 1.0, obs2 = 1.0)
+ (t = 0.1, obs1 = 1.0, obs2 = 1.0)
+ (t = 0.1, obs1 = 1.0, obs2 = 1.0)
+ (t = 0.1, obs1 = 1.0, obs2 = 1.0)</code></pre><p>In larger simulations this is the place where an application, benchmark, or higher-level network service would observe the final pair.</p><h2 id="The-Same-Pattern-On-A-Tiny-Network"><a class="docs-heading-anchor" href="#The-Same-Pattern-On-A-Tiny-Network">The Same Pattern On A Tiny Network</a><a id="The-Same-Pattern-On-A-Tiny-Network-1"></a><a class="docs-heading-anchor-permalink" href="#The-Same-Pattern-On-A-Tiny-Network" title="Permalink"></a></h2><p>The same four coordinators can be used on a network instead of a chain. The only extra ingredient is a local policy for <code>SwapperProt</code>: each repeater needs a predicate for what counts as a &quot;low&quot; candidate, what counts as a &quot;high&quot; candidate, and how to choose one from each side.</p><p>The predicates below are the small-grid version of the ones used in <a href="../repeatergrid/repeatergrid/#Entanglement-Generation-On-A-Repeater-Grid">Entanglement Generation On A Repeater Grid</a>.</p><pre><code class="language-julia hljs">graph = grid([2, 2])
+net = RegisterNet(graph, [Register(4) for _ in 1:4]; classical_delay = 1e-9)
+sim = get_time_tracker(net)
+
+for (; src, dst) in edges(net)
+    @process EntanglerProt(
+        sim,
+        net,
+        src,
+        dst;
+        success_prob = 1.0,
+        attempt_time = 0.0,
+        rounds = 1,
+    )()
+end
+
+for node in 2:3
+    l(x) = check_nodes(net, node, x)
+    h(x) = check_nodes(net, node, x; low = false)
+    cL(arr) = choose_node(net, node, arr)
+    cH(arr) = choose_node(net, node, arr; low = false)
+    @process SwapperProt(
+        sim,
+        net,
+        node;
+        nodeL = l,
+        nodeH = h,
+        chooseL = cL,
+        chooseH = cH,
+        rounds = 1,
+        retry_lock_time = nothing,
+    )()
+end
+
+for node in vertices(net)
+    @process EntanglementTracker(sim, net, node)()
+end
+
+run(sim, 1.0)
+
+end_to_end = sort(
+    queryall(net[1], EntanglementCounterpart, 4, ❓);
+    by = entry -&gt; entry.tag[3],
+)
+
+(
+    tags = [entry.tag for entry in end_to_end],
+    observables = [correlations(entry.slot, net[4][entry.tag[3]]) for entry in end_to_end],
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(tags = Tag[Entangled to 4.1, Entangled to 4.2], observables = [(ZZ = 1.0, XX = 1.0), (ZZ = 1.0, XX = 1.0)])</code></pre><p>The network is still controlled locally:</p><ul><li>entanglers know only their edge,</li><li>swappers know only their node and their local low/high policy,</li><li>trackers know only their local tags plus the messages they receive,</li><li>consumers know only the two end nodes they care about.</li></ul><h2 id="Issues-And-Workarounds"><a class="docs-heading-anchor" href="#Issues-And-Workarounds">Issues And Workarounds</a><a id="Issues-And-Workarounds-1"></a><a class="docs-heading-anchor-permalink" href="#Issues-And-Workarounds" title="Permalink"></a></h2><div class="admonition is-warning" id="This-protocol-family-has-known-edge-cases-b1d859caaad7a649"><header class="admonition-header">This protocol family has known edge cases<a class="admonition-anchor" href="#This-protocol-family-has-known-edge-cases-b1d859caaad7a649" title="Permalink"></a></header><div class="admonition-body"><p>The bookkeeping is intentionally local and lightweight. Under enough contention, delayed update/delete messages can refer to slots that have already been reused or reinterpreted. These cases now produce error logs instead of aborting the simulation, but the underlying protocol limitation is still present.</p></div></div><p>The following two examples are minimal executed versions of that behavior, inspired by <a href="https://github.com/QuantumSavory/QuantumSavory.jl/issues/303">issue #303</a>.</p><h3 id="Stale-Tracker-Updates"><a class="docs-heading-anchor" href="#Stale-Tracker-Updates">Stale Tracker Updates</a><a id="Stale-Tracker-Updates-1"></a><a class="docs-heading-anchor-permalink" href="#Stale-Tracker-Updates" title="Permalink"></a></h3><pre><code class="language-julia hljs">function tracker_edge_case_messages()
+    captured_error_messages() do
+        Random.seed!(1)
+        graph = grid([4])
+        noisemodel = Depolarization(1e6)
+        registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
+        net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
+        sim = get_time_tracker(net)
+
+        for node in 1:4
+            @process EntanglementTracker(sim, net, node)()
+        end
+        for node in 2:3
+            @process SwapperProt(sim, net, node; nodeL = &lt;(node), nodeH = &gt;(node), retry_lock_time = nothing)()
+        end
+        for node in 1:3
+            @process EntanglerProt(
+                sim,
+                net,
+                node,
+                node + 1;
+                rate = 10.0,
+                rounds = -1,
+                margin = 1,
+                retry_lock_time = nothing,
+            )()
+        end
+
+        run(sim, 10)
+    end
+end
+
+tracker_edge_case_messages()[1]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">&quot;EntanglementTracker @4: stale update message=`@NamedTuple{src::Union{Nothing, Int64}, tag::Tag}((3, Update slot .18 which used to be entangled to 2.4 to be entangled to 1.20 and apply correction X1))` is dropped&quot;</code></pre><p>This is the current &quot;keep running&quot; behavior: the tracker detects that the forwarded update no longer matches the local bookkeeping and drops the message.</p><h3 id="Stale-Consumer-Pairs"><a class="docs-heading-anchor" href="#Stale-Consumer-Pairs">Stale Consumer Pairs</a><a id="Stale-Consumer-Pairs-1"></a><a class="docs-heading-anchor-permalink" href="#Stale-Consumer-Pairs" title="Permalink"></a></h3><pre><code class="language-julia hljs">function consumer_edge_case_messages()
+    captured_error_messages() do
+        Random.seed!(1)
+        graph = grid([4])
+        noisemodel = Depolarization(1e6)
+        registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
+        net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
+        sim = get_time_tracker(net)
+
+        for node in 1:4
+            @process EntanglementTracker(sim, net, node)()
+        end
+        for node in 2:3
+            @process SwapperProt(sim, net, node; nodeL = &lt;(node), nodeH = &gt;(node), retry_lock_time = nothing)()
+        end
+        for node in 1:3
+            @process EntanglerProt(
+                sim,
+                net,
+                node,
+                node + 1;
+                rate = 10.0,
+                rounds = -1,
+                margin = 1,
+                retry_lock_time = nothing,
+            )()
+        end
+
+        @process EntanglementConsumer(sim, net, 1, 4; period = nothing)()
+        run(sim, 10)
+    end
+end
+
+filter(contains(&quot;EntanglementConsumer&quot;), consumer_edge_case_messages())[1]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">&quot;[2.3163] EntanglementConsumer(Register 1, Register 4): dropping stale pair between .3 and .2&quot;</code></pre><p>Here the consumer found two end-node slots with matching classical tags, but the actual quantum state behind those slots was no longer a clean two-qubit pair. The consumer drops that pair instead of calling <code>real(::Nothing)</code> and aborting the simulation.</p><h3 id="Practical-Workarounds"><a class="docs-heading-anchor" href="#Practical-Workarounds">Practical Workarounds</a><a id="Practical-Workarounds-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Workarounds" title="Permalink"></a></h3><p>These are mitigations, not fixes:</p><ul><li>Keep examples and tests on the happy path with a small positive <code>classical_delay</code> such as <code>1e-9</code> instead of a same-timestamp zero-delay channel.</li><li>Reduce slot-reuse pressure by using larger registers and by leaving slack with <code>margin</code> / <code>hardmargin</code> on <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt"><code>EntanglerProt</code></a>.</li><li>When qubit age matters, combine the <code>agelimit</code> option on <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.SwapperProt"><code>SwapperProt</code></a> with <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.CutoffProt"><code>CutoffProt</code></a>, as in the repeater-grid examples, so that obviously stale pairs are not selected for swaps.</li><li>Treat the emitted error logs as evidence that this baseline coordinator set has reached one of its unsupported races. If your application needs unambiguous matching under heavy contention, this local-message design is too weak on its own.</li></ul><p>For larger end-to-end examples built on the same coordinator family, see <a href="../firstgenrepeater_v2/firstgenrepeater_v2/">1st-gen Repeater - simpler implementation</a> and <a href="../repeatergrid/repeatergrid/#Entanglement-Generation-On-A-Repeater-Grid">Entanglement Generation On A Repeater Grid</a>.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+    startOnLoad: true,
+    theme: "neutral"
+});
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« How-To Guides</a><a class="docs-footer-nextpage" href="../firstgenrepeater/firstgenrepeater/">1st-gen Repeater - low level implementation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 1 April 2026 22:20">Wednesday 1 April 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
