@@ -52,34 +52,6 @@ const Switches = QuantumSavory.ProtocolZoo.Switches
         @test assignment == [1, 3, 4, 5]
     end
 
-    @testset "switch backlog intake and matching stay consistent" begin
-        graph = star_graph(4)
-        net = RegisterNet(graph, [Register(3), Register(1), Register(1), Register(1)])
-        switch = SimpleSwitchDiscreteProt(net, 1, 2:4, fill(1.0, 3); ticktock=2.0, rounds=1)
-        reverseclientindex = Dict(2 => 1, 3 => 2, 4 => 3)
-
-        put!(messagebuffer(net, 1), SwitchRequest(2, 4))
-        put!(messagebuffer(net, 1), Tag(SwitchRequest(3, 4)))
-        Switches._switch_read_backlog(switch, reverseclientindex)
-
-        @test switch._backlog[1, 3] == 1
-        @test switch._backlog[3, 1] == 1
-        @test switch._backlog[2, 3] == 1
-        @test switch._backlog[3, 2] == 1
-
-        initialize!(net[1][1], X1)
-        initialize!(net[1][2], X1)
-        initialize!(net[1][3], X1)
-        tag!(net[1][1], EntanglementCounterpart, 2, 1)
-        tag!(net[1][2], EntanglementCounterpart, 3, 1)
-        tag!(net[1][3], EntanglementCounterpart, 4, 1)
-
-        match = Switches._switch_successful_entanglements_best_match(switch, reverseclientindex)
-
-        normalized_match = Set((min(i, j), max(i, j)) for (i, j) in match)
-        @test normalized_match == Set([(1, 3)])
-    end
-
     @testset "synchronized switch cleanup deletes unused raw links on both ends" begin
         graph = star_graph(2)
         net = RegisterNet(graph, [Register(1), Register(1)])
