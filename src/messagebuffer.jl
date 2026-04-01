@@ -71,9 +71,10 @@ end
 
 function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
-    nbwaiters(mb.tag_waiter) == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
+    nwaiters = nbwaiters(mb.tag_waiter)
+    nwaiters == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
     push!(mb.buffer, (;src,tag));
-    if nbwaiters(mb.tag_waiter) == 0
+    if nwaiters == 0
         # Keep one queued wakeup per arrival when no task is actively blocked on
         # the semaphore. Protocol code often queries the buffer first and only
         # then calls `onchange`, so a pure semaphore would miss already-buffered

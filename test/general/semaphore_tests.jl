@@ -196,6 +196,25 @@ end
     end
 end
 
+@testset "Register tag waiter inference" begin
+    reg = Register(1)
+    waiter = reg.tag_waiter[]
+
+    proc = @inferred onchange(reg)
+    @test proc isa ConcurrentSim.Process
+
+    proc = @inferred onchange(reg[1], Tag)
+    @test proc isa ConcurrentSim.Process
+
+    @test @inferred(unlock(waiter)) === nothing
+
+    id = @inferred tag!(reg[1], :first)
+    @test id isa Int128
+
+    deleted = @inferred untag!(reg, id)
+    @test deleted.tag == Tag(:first)
+end
+
 @testset "MessageBuffer wait - this does NOT use the AsymmetricSemaphore -- an alternative equivalent implementation" begin
     net = RegisterNet([Register(2), Register(2)], classical_delay=1, quantum_delay=1)
     sim = get_time_tracker(net)

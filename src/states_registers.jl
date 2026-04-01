@@ -24,7 +24,7 @@ struct Register # TODO better type description / TODO mutable struct with immuta
     guids::Vector{Int128}
     netparent::Ref{Any}
     netindex::Ref{Int}
-    tag_waiter::Ref{AsymmetricSemaphore} # TODO This being a ref is a bit of code smell... but we also want to be able to have registers that are not linked to a net so we need to be able to have this field un-initialized
+    tag_waiter::Base.RefValue{AsymmetricSemaphore} # TODO This being a ref is a bit of code smell... but we also want to be able to swap the semaphore when a register is attached to a different simulation
 end
 
 function Register(traits, reprs, bg, sr, si, at)

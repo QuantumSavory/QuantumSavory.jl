@@ -178,8 +178,11 @@ $TYPEDSIGNATURES
 You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers.
 """
 function query(mb::MessageBuffer, queryargs::Vararg{QueryTypes,N}) where {N}
-    for (depth, (src, tag)) in pairs(mb.buffer)
-        query_good(tag, queryargs...) && return (;depth, src, tag)
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        entry = buffer[depth]
+        tag = entry.tag
+        query_good(tag, queryargs...) && return (;depth, src=entry.src, tag)
     end
     return nothing
 end
@@ -325,9 +328,12 @@ t=1.0: query returns nothing
 t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node 3
 ```
 """
-function querydelete!(mb::MessageBuffer, args...)
-    r = query(mb, args...)
-    return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
+function querydelete!(mb::MessageBuffer, queryargs::Vararg{QueryTypes,N}) where {N}
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        query_good(buffer[depth].tag, queryargs...) && return popat!(buffer, depth)
+    end
+    return nothing
 end
 
 """
@@ -379,8 +385,18 @@ function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, query::Tag; locked:
     allB ? res : nothing
 end
 function query(mb::MessageBuffer, query::Tag)
-    for (depth, (src, tag)) in pairs(mb.buffer)
-        tag==query && return (;depth, src, tag)
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        entry = buffer[depth]
+        entry.tag == query && return (;depth, src=entry.src, tag=entry.tag)
+    end
+    return nothing
+end
+
+function querydelete!(mb::MessageBuffer, query::Tag)
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        buffer[depth].tag == query && return popat!(buffer, depth)
     end
     return nothing
 end
