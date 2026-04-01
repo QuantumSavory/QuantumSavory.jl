@@ -8,6 +8,8 @@ using Logging
 
 @testset "ProtocolZoo Entanglement Consumer" begin
 
+classical_delay = 1e-9 # avoid common zero-delay tracker races that show up as stale update logs
+
 if isinteractive()
     logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
     global_logger(logger)
@@ -17,7 +19,7 @@ end
 
 for n in 3:30
     regsize = 10
-    net = RegisterNet([Register(regsize) for j in 1:n])
+    net = RegisterNet([Register(regsize) for j in 1:n]; classical_delay)
     sim = get_time_tracker(net)
 
     for e in edges(net)
@@ -69,7 +71,7 @@ end
 
 for n in 3:30
     regsize = 10
-    net = RegisterNet([Register(regsize) for j in 1:n])
+    net = RegisterNet([Register(regsize) for j in 1:n]; classical_delay)
     sim = get_time_tracker(net)
 
     econ = EntanglementConsumer(sim, net, 1, n; period=nothing)
