@@ -16,8 +16,8 @@ steps:
           codecov: true
   - label: "General Tests (alpha)"
     plugins:
-      - JuliaCI/julia#v1:
-          version: "nightly"
+      - Krastanov-agent/julia#bb0dd898e0190fa025fa9eddbf5b39665edc8e6c:
+          version: "alpha"
       - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
           test_args: "general"
