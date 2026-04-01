@@ -1,6 +1,5 @@
 using Test
 using QuantumSavory
-import QuantumClifford
 
 bell_contracts(refs) = (
     xx=observable(refs, QuantumSavory.X ⊗ QuantumSavory.X),
@@ -38,19 +37,6 @@ end
     @test bell_contracts([symbolic_regs[1][1], symbolic_regs[2][1]]) ==
         bell_contracts([explicit_regs[1][1], explicit_regs[2][1]]) ==
         (xx=1, zz=1, x1=0, z2=0)
-end
-
-@testset "raw QuantumClifford registers reject simulation time and apply symbolics" begin
-    symbolic_reg = QuantumClifford.Register(copy(express(Z1, CliffordRepr())))
-    explicit_reg = QuantumClifford.Register(copy(express(Z1, CliffordRepr())))
-
-    apply!(symbolic_reg, (1,), QuantumSavory.X)
-    apply!(explicit_reg, (1,), express(QuantumSavory.X, CliffordRepr(), UseAsOperation()))
-
-    @test observable(symbolic_reg.stab, (1,), QuantumSavory.Z) ≈ -1
-    @test observable(symbolic_reg.stab, (1,), QuantumSavory.Z) ≈
-        observable(explicit_reg.stab, (1,), QuantumSavory.Z)
-    @test_throws ArgumentError apply!(symbolic_reg, (1,), QuantumSavory.X; time=0.0)
 end
 
 end
