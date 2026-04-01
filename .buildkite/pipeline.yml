@@ -14,6 +14,15 @@ steps:
           test_args: "general"
       - JuliaCI/julia-coverage#v1:
           codecov: true
+  - label: "General Tests (alpha)"
+    plugins:
+      - Krastanov-agent/julia#bb0dd898e0190fa025fa9eddbf5b39665edc8e6c:
+          version: "alpha"
+      - QuantumSavory/julia-xvfb#v1:
+      - JuliaCI/julia-test#v1:
+          test_args: "general"
+      - JuliaCI/julia-coverage#v1:
+          codecov: true
   - label: "JET Tests"
     plugins:
       - JuliaCI/julia#v1:
