@@ -26,19 +26,6 @@ rounded_log(rows) = [
     for row in rows
 ]
 
-function captured_error_messages(f)
-    io = IOBuffer()
-    logger = SimpleLogger(io, Logging.Error)
-    with_logger(logger) do
-        f()
-    end
-    [
-        replace(line, r&quot;^┌ Error: &quot; =&gt; &quot;&quot;)
-        for line in split(chomp(String(take!(io))), &quot;\n&quot;)
-        if startswith(line, &quot;┌ Error: &quot;)
-    ]
-end
-
 function check_nodes(net, c_node, node; low = true)
     n = Int(sqrt(size(net.graph)[1]))
     c_x = c_node % n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
@@ -264,74 +251,72 @@ end_to_end = sort(
 (
     tags = [entry.tag for entry in end_to_end],
     observables = [correlations(entry.slot, net[4][entry.tag[3]]) for entry in end_to_end],
-)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(tags = Tag[Entangled to 4.1, Entangled to 4.2], observables = [(ZZ = 1.0, XX = 1.0), (ZZ = 1.0, XX = 1.0)])</code></pre><p>The network is still controlled locally:</p><ul><li>entanglers know only their edge,</li><li>swappers know only their node and their local low/high policy,</li><li>trackers know only their local tags plus the messages they receive,</li><li>consumers know only the two end nodes they care about.</li></ul><h2 id="Issues-And-Workarounds"><a class="docs-heading-anchor" href="#Issues-And-Workarounds">Issues And Workarounds</a><a id="Issues-And-Workarounds-1"></a><a class="docs-heading-anchor-permalink" href="#Issues-And-Workarounds" title="Permalink"></a></h2><div class="admonition is-warning" id="This-protocol-family-has-known-edge-cases-b1d859caaad7a649"><header class="admonition-header">This protocol family has known edge cases<a class="admonition-anchor" href="#This-protocol-family-has-known-edge-cases-b1d859caaad7a649" title="Permalink"></a></header><div class="admonition-body"><p>The bookkeeping is intentionally local and lightweight. Under enough contention, delayed update/delete messages can refer to slots that have already been reused or reinterpreted. These cases now produce error logs instead of aborting the simulation, but the underlying protocol limitation is still present.</p></div></div><p>The following two examples are minimal executed versions of that behavior, inspired by <a href="https://github.com/QuantumSavory/QuantumSavory.jl/issues/303">issue #303</a>.</p><h3 id="Stale-Tracker-Updates"><a class="docs-heading-anchor" href="#Stale-Tracker-Updates">Stale Tracker Updates</a><a id="Stale-Tracker-Updates-1"></a><a class="docs-heading-anchor-permalink" href="#Stale-Tracker-Updates" title="Permalink"></a></h3><pre><code class="language-julia hljs">function tracker_edge_case_messages()
-    captured_error_messages() do
-        Random.seed!(1)
-        graph = grid([4])
-        noisemodel = Depolarization(1e6)
-        registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
-        net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
-        sim = get_time_tracker(net)
+)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">(tags = Tag[Entangled to 4.1, Entangled to 4.2], observables = [(ZZ = 1.0, XX = 1.0), (ZZ = 1.0, XX = 1.0)])</code></pre><p>The network is still controlled locally:</p><ul><li>entanglers know only their edge,</li><li>swappers know only their node and their local low/high policy,</li><li>trackers know only their local tags plus the messages they receive,</li><li>consumers know only the two end nodes they care about.</li></ul><h2 id="Issues-And-Workarounds"><a class="docs-heading-anchor" href="#Issues-And-Workarounds">Issues And Workarounds</a><a id="Issues-And-Workarounds-1"></a><a class="docs-heading-anchor-permalink" href="#Issues-And-Workarounds" title="Permalink"></a></h2><div class="admonition is-warning" id="This-protocol-family-has-known-edge-cases-b1d859caaad7a649"><header class="admonition-header">This protocol family has known edge cases<a class="admonition-anchor" href="#This-protocol-family-has-known-edge-cases-b1d859caaad7a649" title="Permalink"></a></header><div class="admonition-body"><p>The bookkeeping is intentionally local and lightweight. Under enough contention, delayed update/delete messages can refer to slots that have already been reused or reinterpreted. These cases now produce error logs instead of aborting the simulation, but the underlying protocol limitation is still present.</p></div></div><p>The following two examples are minimal executed versions of that behavior, inspired by <a href="https://github.com/QuantumSavory/QuantumSavory.jl/issues/303">issue #303</a>.</p><h3 id="Stale-Tracker-Updates"><a class="docs-heading-anchor" href="#Stale-Tracker-Updates">Stale Tracker Updates</a><a id="Stale-Tracker-Updates-1"></a><a class="docs-heading-anchor-permalink" href="#Stale-Tracker-Updates" title="Permalink"></a></h3><pre><code class="language-julia hljs">logger = ConsoleLogger(stderr, Logging.Error)
+with_logger(logger) do
+    Random.seed!(1)
+    graph = grid([4])
+    noisemodel = Depolarization(1e6)
+    registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
+    net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
+    sim = get_time_tracker(net)
 
-        for node in 1:4
-            @process EntanglementTracker(sim, net, node)()
-        end
-        for node in 2:3
-            @process SwapperProt(sim, net, node; nodeL = &lt;(node), nodeH = &gt;(node), retry_lock_time = nothing)()
-        end
-        for node in 1:3
-            @process EntanglerProt(
-                sim,
-                net,
-                node,
-                node + 1;
-                rate = 10.0,
-                rounds = -1,
-                margin = 1,
-                retry_lock_time = nothing,
-            )()
-        end
-
-        run(sim, 10)
+    for node in 1:4
+        @process EntanglementTracker(sim, net, node)()
     end
-end
-
-tracker_edge_case_messages()[1]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">&quot;EntanglementTracker @4: stale update message=`@NamedTuple{src::Union{Nothing, Int64}, tag::Tag}((3, Update slot .18 which used to be entangled to 2.4 to be entangled to 1.20 and apply correction X1))` is dropped&quot;</code></pre><p>This is the current &quot;keep running&quot; behavior: the tracker detects that the forwarded update no longer matches the local bookkeeping and drops the message.</p><h3 id="Stale-Consumer-Pairs"><a class="docs-heading-anchor" href="#Stale-Consumer-Pairs">Stale Consumer Pairs</a><a id="Stale-Consumer-Pairs-1"></a><a class="docs-heading-anchor-permalink" href="#Stale-Consumer-Pairs" title="Permalink"></a></h3><pre><code class="language-julia hljs">function consumer_edge_case_messages()
-    captured_error_messages() do
-        Random.seed!(1)
-        graph = grid([4])
-        noisemodel = Depolarization(1e6)
-        registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
-        net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
-        sim = get_time_tracker(net)
-
-        for node in 1:4
-            @process EntanglementTracker(sim, net, node)()
-        end
-        for node in 2:3
-            @process SwapperProt(sim, net, node; nodeL = &lt;(node), nodeH = &gt;(node), retry_lock_time = nothing)()
-        end
-        for node in 1:3
-            @process EntanglerProt(
-                sim,
-                net,
-                node,
-                node + 1;
-                rate = 10.0,
-                rounds = -1,
-                margin = 1,
-                retry_lock_time = nothing,
-            )()
-        end
-
-        @process EntanglementConsumer(sim, net, 1, 4; period = nothing)()
-        run(sim, 10)
+    for node in 2:3
+        @process SwapperProt(sim, net, node; nodeL = &lt;(node), nodeH = &gt;(node), retry_lock_time = nothing)()
     end
-end
+    for node in 1:3
+        @process EntanglerProt(
+            sim,
+            net,
+            node,
+            node + 1;
+            rate = 10.0,
+            rounds = -1,
+            margin = 1,
+            retry_lock_time = nothing,
+        )()
+    end
 
-filter(contains(&quot;EntanglementConsumer&quot;), consumer_edge_case_messages())[1]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">&quot;[2.3163] EntanglementConsumer(Register 1, Register 4): dropping stale pair between .3 and .2&quot;</code></pre><p>Here the consumer found two end-node slots with matching classical tags, but the actual quantum state behind those slots was no longer a clean two-qubit pair. The consumer drops that pair instead of calling <code>real(::Nothing)</code> and aborting the simulation.</p><h3 id="Practical-Workarounds"><a class="docs-heading-anchor" href="#Practical-Workarounds">Practical Workarounds</a><a id="Practical-Workarounds-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Workarounds" title="Permalink"></a></h3><p>These are mitigations, not fixes:</p><ul><li>Keep examples and tests on the happy path with a small positive <code>classical_delay</code> such as <code>1e-9</code> instead of a same-timestamp zero-delay channel.</li><li>Reduce slot-reuse pressure by using larger registers and by leaving slack with <code>margin</code> / <code>hardmargin</code> on <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt"><code>EntanglerProt</code></a>.</li><li>When qubit age matters, combine the <code>agelimit</code> option on <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.SwapperProt"><code>SwapperProt</code></a> with <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.CutoffProt"><code>CutoffProt</code></a>, as in the repeater-grid examples, so that obviously stale pairs are not selected for swaps.</li><li>Treat the emitted error logs as evidence that this baseline coordinator set has reached one of its unsupported races. If your application needs unambiguous matching under heavy contention, this local-message design is too weak on its own.</li></ul><p>For larger end-to-end examples built on the same coordinator family, see <a href="../firstgenrepeater_v2/firstgenrepeater_v2/">1st-gen Repeater - simpler implementation</a> and <a href="../repeatergrid/repeatergrid/#Entanglement-Generation-On-A-Repeater-Grid">Entanglement Generation On A Repeater Grid</a>.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+    run(sim, 10)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr91"><span class="sgr1">┌ Error: </span></span>EntanglementTracker @4: stale update message=`@NamedTuple{src::Union{Nothing, Int64}, tag::Tag}((3, Update slot .18 which used to be entangled to 2.4 to be entangled to 1.20 and apply correction X1))` is dropped
+<span class="sgr91"><span class="sgr1">└ </span></span><span class="sgr90">@ QuantumSavory.ProtocolZoo /buildkite/builds/generic-amd-amd-0-1/quantumsavory/quantumsavory-dot-jl/src/ProtocolZoo/ProtocolZoo.jl:421</span></code></pre><p>This is the current &quot;keep running&quot; behavior: the tracker detects that the forwarded update no longer matches the local bookkeeping and drops the message, which is what you see in the example output above.</p><h3 id="Stale-Consumer-Pairs"><a class="docs-heading-anchor" href="#Stale-Consumer-Pairs">Stale Consumer Pairs</a><a id="Stale-Consumer-Pairs-1"></a><a class="docs-heading-anchor-permalink" href="#Stale-Consumer-Pairs" title="Permalink"></a></h3><pre><code class="language-julia hljs">logger = ConsoleLogger(stderr, Logging.Error)
+with_logger(logger) do
+    Random.seed!(1)
+    graph = grid([4])
+    noisemodel = Depolarization(1e6)
+    registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
+    net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
+    sim = get_time_tracker(net)
+
+    for node in 1:4
+        @process EntanglementTracker(sim, net, node)()
+    end
+    for node in 2:3
+        @process SwapperProt(sim, net, node; nodeL = &lt;(node), nodeH = &gt;(node), retry_lock_time = nothing)()
+    end
+    for node in 1:3
+        @process EntanglerProt(
+            sim,
+            net,
+            node,
+            node + 1;
+            rate = 10.0,
+            rounds = -1,
+            margin = 1,
+            retry_lock_time = nothing,
+        )()
+    end
+
+    @process EntanglementConsumer(sim, net, 1, 4; period = nothing)()
+    run(sim, 2.35)
+end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr91"><span class="sgr1">┌ Error: </span></span>[2.3163] EntanglementConsumer(Register 1, Register 4): dropping stale pair between .3 and .2
+<span class="sgr91"><span class="sgr1">└ </span></span><span class="sgr90">@ QuantumSavory.ProtocolZoo /buildkite/builds/generic-amd-amd-0-1/quantumsavory/quantumsavory-dot-jl/src/ProtocolZoo/ProtocolZoo.jl:506</span>
+<span class="sgr91"><span class="sgr1">┌ Error: </span></span>[2.3163] EntanglementConsumer(Register 1, Register 4): dropping stale pair between .6 and .1
+<span class="sgr91"><span class="sgr1">└ </span></span><span class="sgr90">@ QuantumSavory.ProtocolZoo /buildkite/builds/generic-amd-amd-0-1/quantumsavory/quantumsavory-dot-jl/src/ProtocolZoo/ProtocolZoo.jl:506</span></code></pre><p>Here the consumer found two end-node slots with matching classical tags, but the actual quantum state behind those slots was no longer a clean two-qubit pair. The consumer drops that pair instead of calling <code>real(::Nothing)</code> and aborting the simulation, which is what the example output above shows.</p><h3 id="Practical-Workarounds"><a class="docs-heading-anchor" href="#Practical-Workarounds">Practical Workarounds</a><a id="Practical-Workarounds-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Workarounds" title="Permalink"></a></h3><p>These are mitigations, not fixes:</p><ul><li>Keep examples and tests on the happy path with a small positive <code>classical_delay</code> such as <code>1e-9</code> instead of a same-timestamp zero-delay channel.</li><li>Reduce slot-reuse pressure by using larger registers and by leaving slack with <code>margin</code> / <code>hardmargin</code> on <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt"><code>EntanglerProt</code></a>.</li><li>When qubit age matters, combine the <code>agelimit</code> option on <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.SwapperProt"><code>SwapperProt</code></a> with <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.CutoffProt"><code>CutoffProt</code></a>, as in the repeater-grid examples, so that obviously stale pairs are not selected for swaps.</li><li>Treat the emitted error logs as evidence that this baseline coordinator set has reached one of its unsupported races. If your application needs unambiguous matching under heavy contention, this local-message design is too weak on its own.</li></ul><p>For larger end-to-end examples built on the same coordinator family, see <a href="../firstgenrepeater_v2/firstgenrepeater_v2/">1st-gen Repeater - simpler implementation</a> and <a href="../repeatergrid/repeatergrid/#Entanglement-Generation-On-A-Repeater-Grid">Entanglement Generation On A Repeater Grid</a>.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
 mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« How-To Guides</a><a class="docs-footer-nextpage" href="../firstgenrepeater/firstgenrepeater/">1st-gen Repeater - low level implementation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 1 April 2026 22:20">Wednesday 1 April 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« How-To Guides</a><a class="docs-footer-nextpage" href="../firstgenrepeater/firstgenrepeater/">1st-gen Repeater - low level implementation »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 2 April 2026 03:18">Thursday 2 April 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
