@@ -40,19 +40,6 @@ rounded_log(rows) = [
     for row in rows
 ]
 
-function captured_error_messages(f)
-    io = IOBuffer()
-    logger = SimpleLogger(io, Logging.Error)
-    with_logger(logger) do
-        f()
-    end
-    [
-        replace(line, r"^┌ Error: " => "")
-        for line in split(chomp(String(take!(io))), "\n")
-        if startswith(line, "┌ Error: ")
-    ]
-end
-
 function check_nodes(net, c_node, node; low = true)
     n = Int(sqrt(size(net.graph)[1]))
     c_x = c_node % n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
@@ -351,83 +338,81 @@ The following two examples are minimal executed versions of that behavior, inspi
 ### Stale Tracker Updates
 
 ```@example simple-swapping
-function tracker_edge_case_messages()
-    captured_error_messages() do
-        Random.seed!(1)
-        graph = grid([4])
-        noisemodel = Depolarization(1e6)
-        registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
-        net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
-        sim = get_time_tracker(net)
+logger = ConsoleLogger(stderr, Logging.Error)
+with_logger(logger) do
+    Random.seed!(1)
+    graph = grid([4])
+    noisemodel = Depolarization(1e6)
+    registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
+    net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
+    sim = get_time_tracker(net)
 
-        for node in 1:4
-            @process EntanglementTracker(sim, net, node)()
-        end
-        for node in 2:3
-            @process SwapperProt(sim, net, node; nodeL = <(node), nodeH = >(node), retry_lock_time = nothing)()
-        end
-        for node in 1:3
-            @process EntanglerProt(
-                sim,
-                net,
-                node,
-                node + 1;
-                rate = 10.0,
-                rounds = -1,
-                margin = 1,
-                retry_lock_time = nothing,
-            )()
-        end
-
-        run(sim, 10)
+    for node in 1:4
+        @process EntanglementTracker(sim, net, node)()
     end
+    for node in 2:3
+        @process SwapperProt(sim, net, node; nodeL = <(node), nodeH = >(node), retry_lock_time = nothing)()
+    end
+    for node in 1:3
+        @process EntanglerProt(
+            sim,
+            net,
+            node,
+            node + 1;
+            rate = 10.0,
+            rounds = -1,
+            margin = 1,
+            retry_lock_time = nothing,
+        )()
+    end
+
+    run(sim, 10)
 end
 
-tracker_edge_case_messages()[1]
+nothing # hide
 ```
 
-This is the current "keep running" behavior: the tracker detects that the forwarded update no longer matches the local bookkeeping and drops the message.
+This is the current "keep running" behavior: the tracker detects that the forwarded update no longer matches the local bookkeeping and drops the message, which is what you see in the example output above.
 
 ### Stale Consumer Pairs
 
 ```@example simple-swapping
-function consumer_edge_case_messages()
-    captured_error_messages() do
-        Random.seed!(1)
-        graph = grid([4])
-        noisemodel = Depolarization(1e6)
-        registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
-        net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
-        sim = get_time_tracker(net)
+logger = ConsoleLogger(stderr, Logging.Error)
+with_logger(logger) do
+    Random.seed!(1)
+    graph = grid([4])
+    noisemodel = Depolarization(1e6)
+    registers = vcat([Register(20)], [Register(4, noisemodel) for _ in 1:2], [Register(20)])
+    net = RegisterNet(graph, registers; classical_delay = 20.0 / 2e8 * 1e6)
+    sim = get_time_tracker(net)
 
-        for node in 1:4
-            @process EntanglementTracker(sim, net, node)()
-        end
-        for node in 2:3
-            @process SwapperProt(sim, net, node; nodeL = <(node), nodeH = >(node), retry_lock_time = nothing)()
-        end
-        for node in 1:3
-            @process EntanglerProt(
-                sim,
-                net,
-                node,
-                node + 1;
-                rate = 10.0,
-                rounds = -1,
-                margin = 1,
-                retry_lock_time = nothing,
-            )()
-        end
-
-        @process EntanglementConsumer(sim, net, 1, 4; period = nothing)()
-        run(sim, 10)
+    for node in 1:4
+        @process EntanglementTracker(sim, net, node)()
     end
+    for node in 2:3
+        @process SwapperProt(sim, net, node; nodeL = <(node), nodeH = >(node), retry_lock_time = nothing)()
+    end
+    for node in 1:3
+        @process EntanglerProt(
+            sim,
+            net,
+            node,
+            node + 1;
+            rate = 10.0,
+            rounds = -1,
+            margin = 1,
+            retry_lock_time = nothing,
+        )()
+    end
+
+    @process EntanglementConsumer(sim, net, 1, 4; period = nothing)()
+    run(sim, 2.35)
 end
 
-filter(contains("EntanglementConsumer"), consumer_edge_case_messages())[1]
+nothing # hide
 ```
 
-Here the consumer found two end-node slots with matching classical tags, but the actual quantum state behind those slots was no longer a clean two-qubit pair. The consumer drops that pair instead of calling `real(::Nothing)` and aborting the simulation.
+Here the consumer found two end-node slots with matching classical tags, but the actual quantum state behind those slots was no longer a clean two-qubit pair. The consumer drops that pair instead of calling `real(::Nothing)` and aborting the simulation, which is what the example output above shows.
 
 ### Practical Workarounds
 
