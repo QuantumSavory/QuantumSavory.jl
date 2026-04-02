@@ -33,9 +33,8 @@ usually the right choice for classical messages.
 Use `onchange(...)` only when you genuinely want a more open-ended “something
 changed” wait and will inspect the state afterward.
 
-Two related caveats from `.agents`:
+Two related caveats:
 
 - `queryall` is register-only, not for message buffers;
 - if resource availability matters, add `locked=` or `assigned=` filters rather
   than matching on tags alone.
-

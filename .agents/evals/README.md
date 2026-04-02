@@ -9,7 +9,7 @@ Each entry uses three files:
 - `<name>.yaml`: metadata
 
 The current dataset is staged to keep coverage broad while preserving the
-public-vs-internal boundaries documented in `docs/` and `.agents/`.
+project's public-vs-internal boundaries.
 
 ## Coverage Plan
 
@@ -44,4 +44,3 @@ public-vs-internal boundaries documented in `docs/` and `.agents/`.
 - Keep code snippets small and idiomatic.
 - Preserve documented caveats such as weighted states, direct-edge quantum
   channels, and `query_wait`/`querydelete_wait!` semantics.
-

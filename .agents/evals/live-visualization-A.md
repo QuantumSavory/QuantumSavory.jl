@@ -38,6 +38,4 @@ Other useful details from the docs:
 - `registercoords` can place registers on custom layouts or maps;
 - protocol-specific visualizations also exist for some `ProtocolZoo` objects.
 
-See `docs/src/visualizations.md` and the visualization examples under
-`examples/`.
-
+See the "Visualizations" page and the bundled visualization examples.

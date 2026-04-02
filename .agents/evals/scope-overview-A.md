@@ -34,6 +34,5 @@ It is probably the wrong tool when you only need one narrow simulator directly:
 - if you do not need protocol timing, metadata, channels, or reusable building
   blocks, the full stack may be more than you need.
 
-Good next reads are `docs/src/architecture.md`,
-`docs/src/why_quantumsavory.md`, and `docs/src/modeling_tradeoffs.md`.
-
+Good next reads are "Architecture and Mental Model", "Why QuantumSavory
+Exists", and "Choosing a Backend and Modeling Tradeoffs".

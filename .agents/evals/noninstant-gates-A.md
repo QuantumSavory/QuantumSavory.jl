@@ -31,5 +31,4 @@ So the selection rule is:
 - use Hamiltonian evolution when you need the gate process itself to carry the
   physics.
 
-See `docs/src/tutorial/noninstantgate.md` for the full comparison.
-
+See the non-instant gate tutorial for the full comparison.

@@ -12,22 +12,16 @@ The documented extension contract is:
 The explorer assumptions matter:
 
 - it is meant for two-qubit state families;
-- the explorer interface is declared in `src/StatesZoo/state_explorer.jl`;
-- the Makie UI lives in `ext/QuantumSavoryMakie/state_explorer.jl`;
+- the explorer is built around a fixed two-qubit family interface;
 - default values and slider sweep ranges come directly from
   `stateparametersrange`.
 
-The review checks called out in `.agents` are:
+The main review checks are:
 
 - keep `tr(state)` consistent with the expressed representation;
 - keep weighted and normalized semantics explicit in docs and examples;
 - keep constructor signatures synchronized with `stateparameters`;
 - review parameter ranges for physical sanity, not just API shape.
 
-Tests and examples worth using as anchors:
-
-- `test/general/stateszoo_api_tests.jl`
-- `test/examples/state_explorer_tests.jl`
-- `examples/state_explorer/README.md`
-- `examples/state_explorer/state_explorer.jl`
-
+Validation should stay anchored to the existing API coverage for `StatesZoo`
+families and the state explorer workflow.

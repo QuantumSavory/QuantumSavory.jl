@@ -30,6 +30,5 @@ So the right mental model is:
 - symbolic objects describe what you want;
 - the backend decides whether and how that object can be executed well.
 
-Good next reads are `docs/src/symbolic_frontend.md`,
-`docs/src/modeling_tradeoffs.md`, and `docs/src/symbolics.md`.
-
+Good next reads are "Symbolic Frontend", "Choosing a Backend and Modeling
+Tradeoffs", and "Symbolic Expressions Reference".

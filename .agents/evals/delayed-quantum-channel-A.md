@@ -48,5 +48,4 @@ Two practical rules from the docs:
 - the destination slot for `take!` must be empty;
 - if in-transit noise matters, construct the channel with a background process.
 
-If you want the exact source of this pattern, read `docs/src/manual.md`.
-
+If you want the full walkthrough for this pattern, read the Manual.

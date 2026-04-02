@@ -31,10 +31,5 @@ shared tags and message buffers, not hard-wired protocol-to-protocol calls.
 If all you need is local quantum logic inside a larger custom protocol, use
 `CircuitZoo` for that part and `ProtocolZoo` for the control flow around it.
 
-The best concrete examples are:
-
-- `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
-- `docs/src/howto/repeatergrid/repeatergrid.md`
-- `examples/firstgenrepeater_v2/README.md`
-- `examples/repeatergrid/README.md`
-
+The best concrete examples are the simpler first-generation repeater write-up,
+the repeater grid write-up, and their corresponding bundled examples.

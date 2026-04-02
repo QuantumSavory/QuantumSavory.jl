@@ -1,5 +1,4 @@
-The contributor guidance in `.agents/zoos/protocol-zoo-dev.md` is a good
-checklist.
+The main contributor guidance boils down to a small checklist.
 
 Basic structure:
 
@@ -16,7 +15,7 @@ The main review checks are:
 - treat field-position access like `tag[2]` or `tag[3]` as brittle hotspots;
 - for tracker-related behavior, cross-check nonzero `classical_delay`,
   `CutoffProt.retention_time`, and `SwapperProt.agelimit`;
-- keep shorthand constructors aligned with tests;
+- keep shorthand constructors aligned with the existing validation coverage;
 - if the protocol intentionally works across non-physical edges, define
   `permits_virtual_edge(::MyProt) = true`.
 
@@ -28,17 +27,10 @@ The shared schemas explicitly called out for reuse are:
 - `EntanglementUpdateZ`
 - `EntanglementDelete`
 
-Tests worth treating as anchors:
-
-- `test/general/protocolzoo_entangler_tests.jl`
-- `test/general/protocolzoo_entanglement_tracker_tests.jl`
-- `test/general/protocolzoo_cutoffprot_tests.jl`
-- `test/general/protocolzoo_swapper_chooseslots_tests.jl`
-- `test/general/protocolzoo_switch_tests.jl`
-- `test/general/protocolzoo_qtcp_tests.jl`
-- `test/general/protocolzoo_virtual_edge_tests.jl`
+Areas worth treating as anchors are the existing checks around entanglers,
+trackers, cutoff behavior, swapper slot choice, switches, QTCP, and virtual
+edges.
 
 So the high-level rule is: review concurrency, metadata contracts, and tracker
 interactions first. Those are the places where subtle protocol bugs tend to
 hide.
-

@@ -12,8 +12,7 @@ In practice that usually means defining:
 - and, if the backend supports background evolution, `uptotime!` plus whatever
   helpers it needs such as `paulinoise`, `krausops`, or `lindbladop`.
 
-The internal invariants called out in `.agents/registers/register-internals-and-backend-hooks.md`
-are:
+The key internal invariants are:
 
 - `staterefs[i]` and `stateindices[i]` must agree on assignment state;
 - `StateRef.registers` and `StateRef.registerindices` must keep correct
@@ -26,21 +25,10 @@ Two review cautions worth keeping in mind:
 
 - user-facing code should stay on public register operations rather than reach
   into `StateRef`;
-- current docs are a bit more general than the implementation in at least one
-  place: `.agents` notes that register-level `observable` currently requires the
-  touched slots to already share one `StateRef`.
+- be careful not to overstate behavior in user-facing docs: one current caveat
+  is that register-level `observable` expects the touched slots to already
+  share one state object.
 
-The source files and tests explicitly recommended for this work are:
-
-- `src/states_registers.jl`
-- `src/baseops/initialize.jl`
-- `src/baseops/apply.jl`
-- `src/baseops/observable.jl`
-- `src/baseops/traceout.jl`
-- `src/baseops/subsystemcompose.jl`
-- `src/baseops/uptotime.jl`
-- `test/general/register_interface_tests.jl`
-- `test/general/apply_tests.jl`
-- `test/general/observable_tests.jl`
-- `test/general/project_traceout_tests.jl`
-
+In practice, review the existing register operations, factorization logic, time
+evolution paths, and the current validation coverage around register interface,
+`apply!`, `observable`, and `project_traceout!`.

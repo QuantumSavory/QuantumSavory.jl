@@ -34,9 +34,6 @@ Background noise:
 That keeps protocol code focused on protocol logic instead of manually doing
 “wait, evolve, apply, evolve again” bookkeeping.
 
-If you want the precise API after the mental model, read:
-
-- `docs/src/modeling_registers_and_time.md`
-- `docs/src/backgrounds.md`
-- `docs/src/register_interface.md`
-
+If you want the precise API after the mental model, read "Modeling Registers,
+Factorization, and Time", "Background Noise Processes", and "Register
+Interface".

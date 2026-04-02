@@ -34,6 +34,5 @@ initialize!(reg[1:2], BarrettKokBellPairW(0.8, 0.8, 1e-6, 0.9, 0.95))
 That is the main point of the explorer: it is inspecting the same reusable
 state families that the rest of QuantumSavory consumes.
 
-Useful follow-ups are `docs/src/tutorial/state_explorer.md`,
-`docs/src/API_StatesZoo.md`, and `examples/state_explorer/README.md`.
-
+Useful follow-ups are the state explorer tutorial, the `StatesZoo` API page,
+and the bundled state explorer example.

@@ -26,6 +26,5 @@ The simplest rule is:
 - local reusable circuit -> `CircuitZoo`
 - time-dependent protocol component -> `ProtocolZoo`
 
-One extra caveat from `.agents`: if you need scheduling, resource discovery, or
-retries, use `ProtocolZoo`, not `CircuitZoo`.
-
+One extra caveat: if you need scheduling, resource discovery, or retries, use
+`ProtocolZoo`, not `CircuitZoo`.
