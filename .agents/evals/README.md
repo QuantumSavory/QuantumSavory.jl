@@ -59,7 +59,7 @@ The evaluator:
 - deletes each thread after use
 - switches models between batches with `/v1/system/update-env`
 - stores one CSV row per `(model, prompt)` pair
-- can optionally render bar plots for grade counts, total score, and runtime
+- can later read that CSV to render plots or generate markdown summaries
 
 ### Usage Notes
 
@@ -72,8 +72,14 @@ The evaluator:
   script will pause and wait for the user to switch the model manually.
 - The script strips `<think>...</think>` blocks before sending answers to the
   evaluator by default. Pass `--keep-think-tags` to grade the raw answer text.
+- `--csv-file` is the handoff between data generation and analysis.
+- If `--plot-file` or `--summary-file` is provided, the script reads results
+  from `--csv-file`, even if the CSV was generated in the same invocation.
+- `--summary-file` produces a markdown report with PrettyTables-rendered tables
+  for the most commonly wrong, right, and meh queries. If `--plot-file` is
+  also provided, the markdown embeds the plot image.
 
-### Example Command
+### Generate Data
 
 ```bash
 julia --project=.agents/evals .agents/evals/evaluate_anythingllm.jl \
@@ -81,6 +87,23 @@ julia --project=.agents/evals .agents/evals/evaluate_anythingllm.jl \
   --api-token YOUR_TOKEN \
   --workspace-slug quantumsavory-dev \
   --llm deepseek-r1:8b \
+  --llm qwen3.5:35b \
+  --llm gemma4:31b \
+  --llm glm-4.7-flash:q8_0 \
+  --llm devstral-small-2:latest \
+  --llm qwen3:30b-instruct \
+  --llm gpt-oss:20b \
+  --llm phi4-reasoning:plus \
+  --llm magistral:24b \
   --setting LLMProvider=ollama \
-  --plot
+  --csv-file .agents/evals/anythingllm-eval-results.csv
+```
+
+### Analyze Existing Data
+
+```bash
+julia --project=.agents/evals .agents/evals/evaluate_anythingllm.jl \
+  --csv-file .agents/evals/anythingllm-eval-results.csv \
+  --plot-file .agents/evals/anythingllm-eval-results.png \
+  --summary-file .agents/evals/anythingllm-eval-results.md
 ```
