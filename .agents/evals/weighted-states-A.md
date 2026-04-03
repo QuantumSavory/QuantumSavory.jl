@@ -30,8 +30,3 @@ If you want a quick inspection workflow first, use:
 ```julia
 stateexplorer(BarrettKokBellPairW)
 ```
-
-One more caveat: the `Genqo` families are optional-dependency models and rely
-on Python tooling, so treat failures there as possible dependency issues before
-assuming a modeling bug.
-
