@@ -93,7 +93,7 @@ function parse_commandline()
             default = "fallback"
         "--dataset-dir"
             help = "Directory containing <name>-Q.md, <name>-A.md, and <name>.yaml files."
-            default = @__DIR__
+            default = joinpath(@__DIR__, "dataset")
         "--case"
             help = "Specific case name to run. Repeatable."
             action = :append_arg
@@ -691,6 +691,7 @@ function main()
     base_url = normalize_base_url(something(get(args, "api-base-url", nothing), ""))
     token = something(get(args, "api-token", nothing), "")
     workspace_slug = something(get(args, "workspace-slug", nothing), "")
+    evals_dir = abspath(@__DIR__)
     dataset_dir = abspath(args["dataset-dir"])
     llms = normalize_list(something(get(args, "llm", nothing), String[]))
     selected_cases = normalize_list(something(get(args, "case", nothing), String[]))
@@ -712,7 +713,7 @@ function main()
 
     if isempty(csv_file)
         if want_generation
-            csv_file = default_output_path(dataset_dir, "evaluator-results", "csv")
+            csv_file = default_output_path(evals_dir, "evaluator-results", "csv")
         else
             error("--csv-file is required when using --plot-file or --summary-file without generation.")
         end

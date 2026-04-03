@@ -1,8 +1,11 @@
 # QuantumSavory Agent Evals
 
-This folder contains evaluation cases for documentation-facing LLM agents.
+This folder contains the evaluator tooling and generated analysis artifacts for
+documentation-facing LLM agents.
 
-Each entry uses three files:
+The dataset itself lives in `dataset/`.
+
+Each dataset entry in `dataset/` uses three files:
 
 - `<name>-Q.md`: the user prompt
 - `<name>-A.md`: a strong reference answer
@@ -53,7 +56,7 @@ returned answers with `codex exec`.
 
 The evaluator:
 
-- loads all `*-Q.md`, `*-A.md`, and `.yaml` entries in this folder
+- loads all `*-Q.md`, `*-A.md`, and `.yaml` entries in `dataset/` by default
 - creates a fresh AnythingLLM thread per prompt
 - queries `/v1/workspace/{slug}/thread/{threadSlug}/chat`
 - deletes each thread after use
@@ -72,6 +75,7 @@ The evaluator:
   script will pause and wait for the user to switch the model manually.
 - The script strips `<think>...</think>` blocks before sending answers to the
   evaluator by default. Pass `--keep-think-tags` to grade the raw answer text.
+- The default dataset folder is `.agents/evals/dataset`.
 - `--csv-file` is the handoff between data generation and analysis.
 - If `--plot-file` or `--summary-file` is provided, the script reads results
   from `--csv-file`, even if the CSV was generated in the same invocation.
@@ -86,6 +90,7 @@ julia --project=.agents/evals .agents/evals/evaluate_anythingllm.jl \
   --api-base-url https://anythingllm.example.org/api \
   --api-token YOUR_TOKEN \
   --workspace-slug quantumsavory-dev \
+  --dataset-dir .agents/evals/dataset \
   --llm deepseek-r1:8b \
   --llm qwen3.5:35b \
   --llm gemma4:31b \
