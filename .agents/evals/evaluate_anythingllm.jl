@@ -1,0 +1,757 @@
+#!/usr/bin/env julia
+
+using AlgebraOfGraphics
+using ArgParse
+using CSV
+using CairoMakie
+using DataFrames
+using Dates
+using HTTP
+using JSON3
+using Printf
+using YAML
+
+const MODEL_SETTING_KEY_BY_PROVIDER = Dict(
+    "openai" => "OpenAiModelPref",
+    "azure" => "AzureOpenAiModelPref",
+    "anthropic" => "AnthropicModelPref",
+    "gemini" => "GeminiLLMModelPref",
+    "lmstudio" => "LMStudioModelPref",
+    "localai" => "LocalAiModelPref",
+    "ollama" => "OllamaLLMModelPref",
+    "groq" => "GroqModelPref",
+    "togetherai" => "TogetherAiModelPref",
+    "mistral" => "MistralModelPref",
+    "huggingface" => "HuggingFaceLLMEndpoint",
+    "perplexity" => "PerplexityModelPref",
+    "openrouter" => "OpenRouterModelPref",
+    "novita" => "NovitaLLMModelPref",
+    "koboldcpp" => "KoboldCPPModelPref",
+    "litellm" => "LiteLLMModelPref",
+    "generic-openai" => "GenericOpenAiModelPref",
+    "bedrock" => "AwsBedrockLLMModel",
+    "fireworksai" => "FireworksAiLLMModelPref",
+    "deepseek" => "DeepSeekModelPref",
+    "apipie" => "ApipieLLMModelPref",
+    "xai" => "XAIModelPref",
+    "nvidia-nim" => "NvidiaNimLLMModelPref",
+    "dpais" => "DellProAiStudioModelPref",
+    "moonshotai" => "MoonshotModelPref",
+    "cometapi" => "CometApiLLMModelPref",
+    "zai" => "ZAIModelPref",
+    "giteeai" => "GiteeAiModelPref",
+    "docker-model-runner" => "DockerModelRunnerLLMModelPref",
+    "privatemode" => "PrivateModeModelPref",
+    "sambanova" => "SambaNovaLLMModelPref",
+    "lemonade" => "LemonadeLLMModelPref",
+)
+
+struct EvalCase
+    name::String
+    question::String
+    reference_answer::String
+    tags::Vector{String}
+end
+
+struct SwitchResult
+    provider::String
+    model_setting_key::String
+    switch_method::String
+    switched::Bool
+end
+
+struct GradeResult
+    grade::Int
+    rationale::String
+end
+
+function parse_commandline()
+    settings = ArgParseSettings(
+        description = "Evaluate AnythingLLM-backed documentation assistants against the eval corpus.",
+    )
+
+    @add_arg_table! settings begin
+        "--api-base-url"
+            help = "AnythingLLM API base URL, for example https://host.example/api"
+            required = true
+        "--api-token"
+            help = "AnythingLLM API bearer token"
+            required = true
+        "--workspace-slug"
+            help = "Workspace slug to query"
+            required = true
+        "--llm"
+            help = "LLM model name to evaluate. Repeat or provide comma-separated values."
+            action = :append_arg
+            required = true
+        "--setting"
+            help = "Additional AnythingLLM system setting as KEY=VALUE. Repeatable."
+            action = :append_arg
+        "--model-setting-key"
+            help = "Explicit AnythingLLM setting key used to switch models. Use 'auto' to infer it from the provider."
+            default = "auto"
+        "--manual-model-switch"
+            help = "Model switching mode: never, fallback, or always."
+            default = "fallback"
+        "--dataset-dir"
+            help = "Directory containing <name>-Q.md, <name>-A.md, and <name>.yaml files."
+            default = @__DIR__
+        "--case"
+            help = "Specific case name to run. Repeatable."
+            action = :append_arg
+        "--limit"
+            help = "Limit the number of eval cases after filtering. Zero means no limit."
+            arg_type = Int
+            default = 0
+        "--request-mode"
+            help = "AnythingLLM thread chat mode to use."
+            default = "query"
+        "--switch-wait-seconds"
+            help = "Seconds to wait after a successful model switch before querying."
+            arg_type = Float64
+            default = 1.0
+        "--keep-think-tags"
+            help = "Keep any <think>...</think> blocks in the answer passed to the evaluator."
+            action = :store_true
+        "--codex-bin"
+            help = "Path to the codex executable."
+            default = "codex"
+        "--codex-workdir"
+            help = "Working directory passed to codex exec."
+            default = abspath(joinpath(@__DIR__, "..", ".."))
+        "--output-csv"
+            help = "CSV file path for detailed results. Defaults to a timestamped file in the dataset directory."
+            default = ""
+        "--plot"
+            help = "Generate a plot figure."
+            action = :store_true
+        "--plot-file"
+            help = "Image file path for the plot. Defaults to a timestamped PNG in the dataset directory."
+            default = ""
+        "--no-restore-original-settings"
+            help = "Do not attempt to restore the original AnythingLLM settings at the end."
+            action = :store_true
+    end
+
+    return parse_args(settings)
+end
+
+timestamp_utc() = Dates.format(now(UTC), dateformat"yyyymmdd-HHMMSS")
+
+function normalize_base_url(url::AbstractString)
+    return replace(strip(url), r"/+$" => "")
+end
+
+function normalize_list(values)
+    items = String[]
+    for value in something(values, String[])
+        for piece in split(value, ',')
+            cleaned = strip(piece)
+            isempty(cleaned) || push!(items, cleaned)
+        end
+    end
+    return unique(items)
+end
+
+function parse_key_value_args(values)
+    parsed = Dict{String, String}()
+    for value in something(values, String[])
+        parts = split(value, '='; limit = 2)
+        length(parts) == 2 || error("Expected KEY=VALUE, got: $value")
+        key = strip(parts[1])
+        val = strip(parts[2])
+        isempty(key) && error("Empty key in setting: $value")
+        parsed[key] = val
+    end
+    return parsed
+end
+
+function read_markdown(path::AbstractString)
+    return strip(read(path, String))
+end
+
+function load_eval_cases(dataset_dir::AbstractString; selected_cases = String[], limit::Int = 0)
+    question_paths = sort(filter(name -> endswith(name, "-Q.md"), readdir(dataset_dir; join = true)))
+    cases = EvalCase[]
+    selected = Set(selected_cases)
+
+    for question_path in question_paths
+        base = replace(basename(question_path), r"-Q\.md$" => "")
+        if !isempty(selected) && !(base in selected)
+            continue
+        end
+
+        answer_path = joinpath(dataset_dir, "$(base)-A.md")
+        yaml_path = joinpath(dataset_dir, "$(base).yaml")
+        isfile(answer_path) || error("Missing answer file for $base")
+        isfile(yaml_path) || error("Missing metadata file for $base")
+
+        metadata = YAML.load_file(yaml_path)
+        raw_tags = get(metadata, "tags", Any[])
+        tags = [string(tag) for tag in raw_tags]
+        push!(cases, EvalCase(base, read_markdown(question_path), read_markdown(answer_path), tags))
+    end
+
+    if limit > 0
+        return first(cases, min(limit, length(cases)))
+    end
+    return cases
+end
+
+function auth_headers(token::AbstractString; json::Bool = false)
+    headers = ["Authorization" => "Bearer $(strip(token))", "Accept" => "application/json"]
+    if json
+        push!(headers, "Content-Type" => "application/json")
+    end
+    return headers
+end
+
+function response_text(response::HTTP.Messages.Response)
+    return String(response.body)
+end
+
+function parse_json_body(response::HTTP.Messages.Response)
+    body = strip(response_text(response))
+    isempty(body) && return Dict{String, Any}()
+    return JSON3.read(body, Dict{String, Any})
+end
+
+function request_json(method::AbstractString, url::AbstractString, token::AbstractString;
+    body = nothing,
+    allow_empty::Bool = false,
+)
+    response = if body === nothing
+        HTTP.request(method, url, auth_headers(token))
+    else
+        HTTP.request(method, url, auth_headers(token; json = true), JSON3.write(body))
+    end
+    if response.status < 200 || response.status >= 300
+        snippet = first(replace(response_text(response), '\n' => ' '), 300)
+        error("HTTP $(response.status) for $method $url: $snippet")
+    end
+    if allow_empty
+        return strip(response_text(response))
+    end
+    return parse_json_body(response)
+end
+
+function get_system_settings(base_url::AbstractString, token::AbstractString)
+    data = request_json("GET", "$(base_url)/v1/system", token)
+    settings = get(data, "settings", nothing)
+    settings isa Dict || error("Unexpected /v1/system response shape")
+    return settings
+end
+
+function infer_provider(current_settings::Dict{String, Any}, extra_settings::Dict{String, String})
+    return string(get(extra_settings, "LLMProvider", get(current_settings, "LLMProvider", "")))
+end
+
+function infer_model_setting_key(provider::AbstractString)
+    haskey(MODEL_SETTING_KEY_BY_PROVIDER, provider) || return nothing
+    return MODEL_SETTING_KEY_BY_PROVIDER[provider]
+end
+
+function extract_original_values(settings::Dict{String, Any}, keys_to_capture)
+    originals = Dict{String, String}()
+    for key in keys_to_capture
+        value = get(settings, key, nothing)
+        value === nothing && continue
+        originals[key] = string(value)
+    end
+    return originals
+end
+
+function verify_model_setting(settings::Dict{String, Any}, desired_model::AbstractString,
+    provider::AbstractString, setting_key::AbstractString)
+    current_model = string(get(settings, "LLMModel", ""))
+    current_key_value = string(get(settings, setting_key, ""))
+    provider_key = something(infer_model_setting_key(provider), "")
+    provider_key_value = isempty(provider_key) ? "" : string(get(settings, provider_key, ""))
+    return desired_model == current_model ||
+           desired_model == current_key_value ||
+           desired_model == provider_key_value
+end
+
+function prompt_for_manual_switch(provider::AbstractString, desired_model::AbstractString)
+    isinteractive() || error("Manual model switching requires an interactive terminal.")
+    println()
+    println("Manual switch required.")
+    println("Please change the AnythingLLM provider/model to:")
+    println("  provider: $(provider)")
+    println("  model:    $(desired_model)")
+    println("Press Enter to continue, or type 'skip' to skip this model.")
+    answer = readline(stdin)
+    return lowercase(strip(answer)) != "skip"
+end
+
+function update_settings!(base_url::AbstractString, token::AbstractString, payload::Dict{String, String})
+    isempty(payload) && return Dict{String, Any}()
+    return request_json("POST", "$(base_url)/v1/system/update-env", token; body = payload)
+end
+
+function maybe_sleep(seconds::Float64)
+    seconds > 0 || return
+    sleep(seconds)
+end
+
+function ensure_model_selected(base_url::AbstractString, token::AbstractString, desired_model::AbstractString,
+    extra_settings::Dict{String, String}, explicit_model_key::AbstractString,
+    manual_mode::AbstractString, switch_wait_seconds::Float64)
+
+    current_settings = get_system_settings(base_url, token)
+    provider = infer_provider(current_settings, extra_settings)
+    isempty(provider) && error("Could not determine the active AnythingLLM provider.")
+
+    if manual_mode == "always"
+        confirmed = prompt_for_manual_switch(provider, desired_model)
+        confirmed || return SwitchResult(provider, explicit_model_key == "auto" ? "manual" : explicit_model_key, "manual-skip", false)
+        verified = get_system_settings(base_url, token)
+        key = explicit_model_key == "auto" ? something(infer_model_setting_key(provider), "manual") : explicit_model_key
+        return SwitchResult(provider, key, "manual", verify_model_setting(verified, desired_model, provider, key))
+    end
+
+    chosen_key = explicit_model_key == "auto" ? something(infer_model_setting_key(provider), "") : explicit_model_key
+    fallback_key = something(infer_model_setting_key(provider), "")
+
+    if isempty(chosen_key)
+        if manual_mode == "fallback"
+            confirmed = prompt_for_manual_switch(provider, desired_model)
+            confirmed || return SwitchResult(provider, "manual", "manual-skip", false)
+            verified = get_system_settings(base_url, token)
+            return SwitchResult(provider, "manual", "manual", verify_model_setting(verified, desired_model, provider, "manual"))
+        end
+        error("No writable model setting key is known for provider '$provider'. Supply --model-setting-key or use --manual-model-switch fallback.")
+    end
+
+    payload = copy(extra_settings)
+    payload[chosen_key] = desired_model
+    update_settings!(base_url, token, payload)
+    maybe_sleep(switch_wait_seconds)
+    refreshed = get_system_settings(base_url, token)
+    if verify_model_setting(refreshed, desired_model, provider, chosen_key)
+        return SwitchResult(provider, chosen_key, "api", true)
+    end
+
+    if !isempty(fallback_key) && fallback_key != chosen_key
+        payload = copy(extra_settings)
+        payload[fallback_key] = desired_model
+        update_settings!(base_url, token, payload)
+        maybe_sleep(switch_wait_seconds)
+        refreshed = get_system_settings(base_url, token)
+        if verify_model_setting(refreshed, desired_model, provider, fallback_key)
+            return SwitchResult(provider, fallback_key, "api-fallback-key", true)
+        end
+    end
+
+    if manual_mode == "fallback"
+        confirmed = prompt_for_manual_switch(provider, desired_model)
+        confirmed || return SwitchResult(provider, chosen_key, "manual-skip", false)
+        refreshed = get_system_settings(base_url, token)
+        return SwitchResult(provider, chosen_key, "manual-fallback", verify_model_setting(refreshed, desired_model, provider, chosen_key))
+    end
+
+    error("Model switch to '$desired_model' did not take effect. Last attempted key: $chosen_key")
+end
+
+function create_thread(base_url::AbstractString, token::AbstractString, workspace_slug::AbstractString,
+    thread_name::AbstractString)
+    payload = Dict("name" => thread_name)
+    data = request_json("POST", "$(base_url)/v1/workspace/$(workspace_slug)/thread/new", token; body = payload)
+    thread = get(data, "thread", nothing)
+    thread isa Dict || error("Unexpected thread creation response shape")
+    slug = get(thread, "slug", nothing)
+    slug === nothing && error("Thread creation response did not contain a slug.")
+    return string(slug)
+end
+
+function delete_thread(base_url::AbstractString, token::AbstractString, workspace_slug::AbstractString,
+    thread_slug::AbstractString)
+    request_json(
+        "DELETE",
+        "$(base_url)/v1/workspace/$(workspace_slug)/thread/$(thread_slug)",
+        token;
+        allow_empty = true,
+    )
+    return nothing
+end
+
+function ask_thread(base_url::AbstractString, token::AbstractString, workspace_slug::AbstractString,
+    thread_slug::AbstractString, question::AbstractString, mode::AbstractString)
+    payload = Dict("message" => question, "mode" => mode, "reset" => false)
+    return request_json(
+        "POST",
+        "$(base_url)/v1/workspace/$(workspace_slug)/thread/$(thread_slug)/chat",
+        token;
+        body = payload,
+    )
+end
+
+function answer_text(api_response::Dict{String, Any})
+    return string(get(api_response, "textResponse", ""))
+end
+
+function source_count(api_response::Dict{String, Any})
+    sources = get(api_response, "sources", Any[])
+    return sources isa AbstractVector ? length(sources) : 0
+end
+
+function strip_think_tags(text::AbstractString)
+    stripped = replace(text, r"(?s)<think>.*?</think>\s*" => "")
+    return strip(stripped)
+end
+
+function grade_schema_path()
+    return joinpath(@__DIR__, "codex-grade-schema.json")
+end
+
+function build_grader_prompt(eval_case::EvalCase, candidate_answer::AbstractString)
+    tags_text = isempty(eval_case.tags) ? "(none)" : join(eval_case.tags, ", ")
+    return """
+You are grading a documentation assistant answer.
+
+Use this rubric exactly:
+- grade = 1 for a correct or mostly correct answer. It can be incomplete.
+- grade = 0 for an answer that does not know or does not really answer, but is not misleading.
+- grade = -1 for an answer that contains confabulations, false specifics, or misleading guidance.
+
+Judge factual helpfulness, not style. Be tolerant of partial answers. Use the reference answer as the authoritative target.
+
+Return only a JSON object matching the provided schema.
+
+Case: $(eval_case.name)
+Tags: $(tags_text)
+
+User question:
+$(eval_case.question)
+
+Reference answer:
+$(eval_case.reference_answer)
+
+Candidate answer:
+$(candidate_answer)
+"""
+end
+
+function run_grader(codex_bin::AbstractString, codex_workdir::AbstractString,
+    eval_case::EvalCase, candidate_answer::AbstractString)
+    prompt = build_grader_prompt(eval_case, candidate_answer)
+    cmd = Cmd([
+        codex_bin,
+        "exec",
+        "--ephemeral",
+        "--color",
+        "never",
+        "--sandbox",
+        "read-only",
+        "--skip-git-repo-check",
+        "--output-schema",
+        grade_schema_path(),
+        "-C",
+        codex_workdir,
+        prompt,
+    ])
+    raw = read(pipeline(cmd; stderr = devnull), String)
+    parsed = JSON3.read(strip(raw), Dict{String, Any})
+    grade = Int(parsed["grade"])
+    grade in (-1, 0, 1) || error("Unexpected grade from codex: $(parsed["grade"])")
+    rationale = strip(string(parsed["rationale"]))
+    return GradeResult(grade, rationale)
+end
+
+function grade_label(value)
+    value == 1 && return "+1"
+    value == 0 && return "0"
+    value == -1 && return "-1"
+    return string(value)
+end
+
+function print_model_summary(model::AbstractString, counts::Dict{Int, Int}, seconds::Float64)
+    @printf(
+        "Model complete: %s | +1=%d  0=%d  -1=%d | score=%d | %.1fs\n",
+        model,
+        get(counts, 1, 0),
+        get(counts, 0, 0),
+        get(counts, -1, 0),
+        get(counts, 1, 0) - get(counts, -1, 0),
+        seconds,
+    )
+end
+
+function default_output_path(dataset_dir::AbstractString, prefix::AbstractString, extension::AbstractString)
+    return joinpath(dataset_dir, "$(prefix)-$(timestamp_utc()).$(extension)")
+end
+
+function ensure_parent_dir(path::AbstractString)
+    mkpath(dirname(abspath(path)))
+    return abspath(path)
+end
+
+function write_results_csv(rows, output_csv::AbstractString)
+    dataframe = DataFrame(rows)
+    CSV.write(output_csv, dataframe)
+    return dataframe
+end
+
+function render_plots(results::DataFrame, plot_file::AbstractString)
+    grade_counts = combine(groupby(results, [:llm_model, :grade]), nrow => :count)
+    transform!(grade_counts, :grade => ByRow(grade_label) => :grade_label)
+
+    summary = combine(
+        groupby(results, :llm_model),
+        :grade => sum => :total_score,
+        :model_elapsed_seconds => maximum => :model_elapsed_seconds,
+    )
+
+    llm_order = unique(results.llm_model)
+
+    fig = CairoMakie.Figure(size = (1800, 1200))
+    ax1 = CairoMakie.Axis(fig[1, 1], title = "Grade Counts By Model", ylabel = "Count")
+    ax2 = CairoMakie.Axis(fig[2, 1], title = "Total Grade By Model", ylabel = "Grade Sum")
+    ax3 = CairoMakie.Axis(fig[3, 1], title = "Time To Completion By Model", ylabel = "Seconds")
+
+    spec1 = AlgebraOfGraphics.data(grade_counts) *
+            AlgebraOfGraphics.mapping(
+                :llm_model,
+                :count;
+                color = :grade_label,
+                dodge = :grade_label,
+            ) *
+            AlgebraOfGraphics.visual(BarPlot)
+    spec2 = AlgebraOfGraphics.data(summary) *
+            AlgebraOfGraphics.mapping(:llm_model, :total_score) *
+            AlgebraOfGraphics.visual(BarPlot)
+    spec3 = AlgebraOfGraphics.data(summary) *
+            AlgebraOfGraphics.mapping(:llm_model, :model_elapsed_seconds) *
+            AlgebraOfGraphics.visual(BarPlot)
+
+    AlgebraOfGraphics.draw!(ax1, spec1)
+    AlgebraOfGraphics.draw!(ax2, spec2)
+    AlgebraOfGraphics.draw!(ax3, spec3)
+
+    for ax in (ax1, ax2, ax3)
+        ax.xticklabelrotation = pi / 6
+        ax.xticks = (1:length(llm_order), llm_order)
+    end
+
+    CairoMakie.save(plot_file, fig)
+    return nothing
+end
+
+function main()
+    args = parse_commandline()
+
+    base_url = normalize_base_url(args["api-base-url"])
+    token = args["api-token"]
+    workspace_slug = args["workspace-slug"]
+    dataset_dir = abspath(args["dataset-dir"])
+    llms = normalize_list(args["llm"])
+    selected_cases = normalize_list(get(args, "case", String[]))
+    extra_settings = parse_key_value_args(get(args, "setting", String[]))
+    manual_mode = lowercase(strip(args["manual-model-switch"]))
+    manual_mode in ("never", "fallback", "always") ||
+        error("--manual-model-switch must be one of: never, fallback, always")
+
+    cases = load_eval_cases(dataset_dir; selected_cases = selected_cases, limit = args["limit"])
+    isempty(cases) && error("No eval cases selected.")
+    isempty(llms) && error("No LLM models selected.")
+
+    output_csv = isempty(args["output-csv"]) ?
+                 default_output_path(dataset_dir, "evaluator-results", "csv") :
+                 args["output-csv"]
+    output_csv = ensure_parent_dir(output_csv)
+
+    want_plot = args["plot"] || !isempty(args["plot-file"])
+    plot_file = isempty(args["plot-file"]) ?
+                default_output_path(dataset_dir, "evaluator-results", "png") :
+                args["plot-file"]
+    want_plot && ensure_parent_dir(plot_file)
+
+    strip_reasoning = !args["keep-think-tags"]
+    restore_settings = !args["no-restore-original-settings"]
+
+    initial_settings = get_system_settings(base_url, token)
+    initial_provider = infer_provider(initial_settings, extra_settings)
+    initial_model_key = args["model-setting-key"] == "auto" ?
+                        something(infer_model_setting_key(initial_provider), "") :
+                        args["model-setting-key"]
+
+    restore_keys = union(collect(keys(extra_settings)), isempty(initial_model_key) ? String[] : [initial_model_key])
+    restore_payload = extract_original_values(initial_settings, restore_keys)
+
+    total_queries = length(cases) * length(llms)
+    println("Loaded $(length(cases)) eval cases from $(dataset_dir)")
+    println("Evaluating $(length(llms)) models across $(total_queries) total prompts")
+    println("CSV output: $(output_csv)")
+    want_plot && println("Plot output: $(abspath(plot_file))")
+
+    all_rows = NamedTuple[]
+    overall_started = time()
+    global_counter = 0
+
+    try
+        for (model_index, llm_model) in enumerate(llms)
+            println()
+            println("[$(model_index)/$(length(llms))] Preparing model $(llm_model)")
+            switch_result = ensure_model_selected(
+                base_url,
+                token,
+                llm_model,
+                extra_settings,
+                args["model-setting-key"],
+                manual_mode,
+                args["switch-wait-seconds"],
+            )
+
+            if !switch_result.switched && occursin("skip", switch_result.switch_method)
+                println("Skipping model $(llm_model) by user request.")
+                continue
+            end
+
+            model_started = time()
+            model_counts = Dict(-1 => 0, 0 => 0, 1 => 0)
+            model_rows = NamedTuple[]
+
+            for (case_index, eval_case) in enumerate(cases)
+                global_counter += 1
+                query_started = time()
+                thread_slug = ""
+                api_error = ""
+                response_type = ""
+                raw_answer = ""
+                grading_answer = ""
+                sources = 0
+                grade = 0
+                rationale = ""
+                query_seconds = 0.0
+                eval_seconds = 0.0
+
+                println("[$(global_counter)/$(total_queries)] $(llm_model) -> $(eval_case.name)")
+
+                try
+                    thread_name = "eval $(llm_model) $(eval_case.name)"
+                    thread_slug = create_thread(base_url, token, workspace_slug, thread_name)
+                    api_response = ask_thread(
+                        base_url,
+                        token,
+                        workspace_slug,
+                        thread_slug,
+                        eval_case.question,
+                        args["request-mode"],
+                    )
+                    raw_answer = answer_text(api_response)
+                    grading_answer = strip_reasoning ? strip_think_tags(raw_answer) : strip(raw_answer)
+                    response_type = string(get(api_response, "type", ""))
+                    sources = source_count(api_response)
+                    error_field = get(api_response, "error", nothing)
+                    if error_field !== nothing && strip(string(error_field)) != "" && strip(string(error_field)) != "null"
+                        api_error = strip(string(error_field))
+                    end
+                catch err
+                    api_error = sprint(showerror, err)
+                finally
+                    query_seconds = time() - query_started
+                    if !isempty(thread_slug)
+                        try
+                            delete_thread(base_url, token, workspace_slug, thread_slug)
+                        catch delete_err
+                            api_error = isempty(api_error) ? "Delete thread failed: $(sprint(showerror, delete_err))" :
+                                        api_error * " | Delete thread failed: $(sprint(showerror, delete_err))"
+                        end
+                    end
+                end
+
+                if isempty(strip(grading_answer))
+                    grade = 0
+                    rationale = isempty(api_error) ?
+                                "No usable answer was returned." :
+                                "No usable answer was returned because the API call failed."
+                else
+                    evaluator_started = time()
+                    grade_result = run_grader(
+                        args["codex-bin"],
+                        args["codex-workdir"],
+                        eval_case,
+                        grading_answer,
+                    )
+                    eval_seconds = time() - evaluator_started
+                    grade = grade_result.grade
+                    rationale = grade_result.rationale
+                end
+
+                model_counts[grade] = get(model_counts, grade, 0) + 1
+
+                @printf(
+                    "  grade=%+d | query=%.1fs | eval=%.1fs | counts(+1=%d 0=%d -1=%d)\n",
+                    grade,
+                    query_seconds,
+                    eval_seconds,
+                    get(model_counts, 1, 0),
+                    get(model_counts, 0, 0),
+                    get(model_counts, -1, 0),
+                )
+
+                push!(model_rows, (
+                    run_started_utc = string(now(UTC)),
+                    api_base_url = base_url,
+                    workspace_slug = workspace_slug,
+                    llm_model = llm_model,
+                    llm_provider = switch_result.provider,
+                    model_setting_key = switch_result.model_setting_key,
+                    model_switch_method = switch_result.switch_method,
+                    case_name = eval_case.name,
+                    tags = join(eval_case.tags, ";"),
+                    question = eval_case.question,
+                    reference_answer = eval_case.reference_answer,
+                    assistant_answer_raw = raw_answer,
+                    assistant_answer_for_grading = grading_answer,
+                    api_response_type = response_type,
+                    api_error = api_error,
+                    sources_count = sources,
+                    request_mode = args["request-mode"],
+                    query_elapsed_seconds = query_seconds,
+                    eval_elapsed_seconds = eval_seconds,
+                    total_elapsed_seconds = query_seconds + eval_seconds,
+                    grade = grade,
+                    grade_label = grade_label(grade),
+                    evaluator_rationale = rationale,
+                ))
+            end
+
+            model_elapsed = time() - model_started
+            for row in model_rows
+                push!(all_rows, merge(row, (
+                    model_elapsed_seconds = model_elapsed,
+                    model_positive_count = get(model_counts, 1, 0),
+                    model_zero_count = get(model_counts, 0, 0),
+                    model_negative_count = get(model_counts, -1, 0),
+                    model_total_score = get(model_counts, 1, 0) - get(model_counts, -1, 0),
+                )))
+            end
+            print_model_summary(llm_model, model_counts, model_elapsed)
+        end
+    finally
+        if restore_settings && !isempty(restore_payload)
+            println()
+            println("Restoring original AnythingLLM settings where possible.")
+            try
+                update_settings!(base_url, token, restore_payload)
+            catch err
+                println("Failed to restore settings automatically: $(sprint(showerror, err))")
+            end
+        end
+    end
+
+    results = write_results_csv(all_rows, output_csv)
+    total_runtime = time() - overall_started
+    println()
+    @printf("Finished in %.1fs\n", total_runtime)
+
+    if want_plot
+        render_plots(results, abspath(plot_file))
+        println("Saved plot to $(abspath(plot_file))")
+    end
+
+    println("Saved CSV to $(output_csv)")
+end
+
+main()

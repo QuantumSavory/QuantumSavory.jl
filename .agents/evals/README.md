@@ -44,3 +44,43 @@ project's public-vs-internal boundaries.
 - Keep code snippets small and idiomatic.
 - Preserve documented caveats such as weighted states, direct-edge quantum
   channels, and `query_wait`/`querydelete_wait!` semantics.
+
+## Evaluator Script
+
+This folder also contains `evaluate_anythingllm.jl`, a Julia script for
+running the eval corpus against an AnythingLLM workspace and grading the
+returned answers with `codex exec`.
+
+The evaluator:
+
+- loads all `*-Q.md`, `*-A.md`, and `.yaml` entries in this folder
+- creates a fresh AnythingLLM thread per prompt
+- queries `/v1/workspace/{slug}/thread/{threadSlug}/chat`
+- deletes each thread after use
+- switches models between batches with `/v1/system/update-env`
+- stores one CSV row per `(model, prompt)` pair
+- can optionally render bar plots for grade counts, total score, and runtime
+
+### Usage Notes
+
+- Some AnythingLLM deployments expose the active model as `LLMModel` in
+  `/v1/system`, but the writable setting key can still be provider-specific.
+  The script defaults to `--model-setting-key auto` and maps the current
+  provider to the correct writable preference key when possible.
+- If automatic model switching does not work, use
+  `--manual-model-switch fallback` or `--manual-model-switch always` and the
+  script will pause and wait for the user to switch the model manually.
+- The script strips `<think>...</think>` blocks before sending answers to the
+  evaluator by default. Pass `--keep-think-tags` to grade the raw answer text.
+
+### Example Command
+
+```bash
+julia --project=.agents/evals .agents/evals/evaluate_anythingllm.jl \
+  --api-base-url https://anythingllm.example.org/api \
+  --api-token YOUR_TOKEN \
+  --workspace-slug quantumsavory-dev \
+  --llm deepseek-r1:8b \
+  --setting LLMProvider=ollama \
+  --plot
+```
