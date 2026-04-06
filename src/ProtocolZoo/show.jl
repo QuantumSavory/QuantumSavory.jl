@@ -28,13 +28,13 @@ function Base.show(io::IO, m::MIME"text/html", p::EntanglerProt)
 end
 
 function Base.show(io::IO, m::MIME"text/html", p::EntanglementConsumer)
-    consumedpairs = length(p._log)
-    total_time = length(p._log) > 0 ? last(p._log).t : 0.0
+    consumedpairs = length(p._log.time)
+    total_time = length(p._log.time) > 0 ? last(p._log.time) : 0.0
     average_time_between_pairs = total_time / consumedpairs
     observable1 = "ZZ"
     observable2 = "XX"
-    observable1_average = length(p._log) > 0 ? sum(x -> x.obs1, p._log) / length(p._log) : 0.0
-    observable2_average = length(p._log) > 0 ? sum(x -> x.obs2, p._log) / length(p._log) : 0.0
+    observable1_average = length(p._log.time) > 0 ? sum(p._log.obs1) / length(p._log.obs1) : 0.0
+    observable2_average = length(p._log.time) > 0 ? sum(p._log.obs2) / length(p._log.obs2) : 0.0
     print(io,
     """
     <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_entanglement_consumer">
@@ -51,7 +51,7 @@ function Base.show(io::IO, m::MIME"text/html", p::EntanglementConsumer)
     <dd>$(observable1_average) | $(observable2_average)</dd>
     </dl>
     <h2>Log</h2>
-    $(pretty_table(String, p._log, column_labels=["Time", "Observable 1", "Observable 2"], formatters=[PrettyTables.fmt__printf("%5.3f")], backend=:html, maximum_number_of_rows=25))
+    $(pretty_table(String, hcat(p._log.time, p._log.obs1, p._log.obs2), column_labels=["Time", "Observable 1", "Observable 2"], formatters=[PrettyTables.fmt__printf("%5.3f")], backend=:html, maximum_number_of_rows=25))
     </div>
     """)
 end
