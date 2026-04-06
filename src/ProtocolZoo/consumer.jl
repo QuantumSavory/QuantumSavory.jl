@@ -53,10 +53,7 @@ end
 
 permits_virtual_edge(::EntanglementConsumer) = true
 
-@resumable function (prot::EntanglementConsumer)(metadata::Dict{String,Any} = Dict{String,Any}())
-    regA = prot.net[prot.nodeA]
-    regB = prot.net[prot.nodeB]
-
+function _reset_entanglement_consumer_log!(prot::EntanglementConsumer, metadata::Dict{String,Any})
     empty!(prot._log.time)
     empty!(prot._log.obs1)
     empty!(prot._log.obs2)
@@ -65,7 +62,13 @@ permits_virtual_edge(::EntanglementConsumer) = true
     for key in keys(metadata)
         prot._log.metadata[key] = metadata[key]
     end
+end
 
+@resumable function (prot::EntanglementConsumer)(metadata::Dict{String,Any} = Dict{String,Any}())
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
+    _reset_entanglement_consumer_log!(prot, metadata)
+    
     while true
         query1 = query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
