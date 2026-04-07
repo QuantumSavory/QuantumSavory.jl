@@ -1,4 +1,4 @@
-module QuantumSavorySaveFormats
+module QuantumSavoryFileIO
 
 import QuantumSavory
 using QuantumSavory.ProtocolZoo

@@ -45,7 +45,7 @@ REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [extensions]
-QuantumSavorySaveFormats = "FileIO"
+QuantumSavoryFileIO = "FileIO"
 QuantumSavoryCSV = ["FileIO", "CSV", "DataFrames"]
 QuantumSavoryHDF5 = ["FileIO", "HDF5"]
 QuantumSavoryInteractiveUtils = ["InteractiveUtils", "REPL"]
