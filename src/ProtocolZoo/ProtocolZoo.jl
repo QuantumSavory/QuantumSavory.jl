@@ -27,10 +27,7 @@ export
     QDatagram, Flow, LinkLevelRequest,
     QTCPPairBegin, QTCPPairEnd,
     LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
-    NetworkNodeController, EndNodeController, LinkController,
-    # save and load entanglement consumer logs
-    EntanglementConsumerLog, save_entanglement_consumer_log, load_entanglement_consumer_log
-
+    NetworkNodeController, EndNodeController, LinkController
 abstract type AbstractProtocol end
 
 """
