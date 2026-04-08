@@ -22,7 +22,7 @@ $FIELDS
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
-    """stores any additional metadata that should be logged alongside the time and observables"""
+    """stores any additional metadata that should be logged alongside the time and observables, this is only applicable for `.h5` save format."""
     _metadata::Union{Dict{String,Any},Nothing} = nothing
     """file name to save the log to when the protocol finishes (supports `.h5` and `.csv` formats). If `nothing`, the log will not be saved to a file."""
     _file_name::Union{String,Nothing} = nothing

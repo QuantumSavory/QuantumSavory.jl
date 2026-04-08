@@ -103,9 +103,8 @@ end
         @test occursin("4.0", entangler_html)
 
         consumer = EntanglementConsumer(sim, net, 1, 2)
-        append!(consumer._log.time, [1.0, 3.0])
-        append!(consumer._log.obs1, [1.0, -1.0])
-        append!(consumer._log.obs2, [-1.0, 1.0])
+        push!(consumer._log, (1.0, 1.0, -1.0))
+        push!(consumer._log, (3.0, -1.0, 1.0))
 
         consumer_html = sprint(show, MIME"text/html"(), consumer)
         @test occursin("Consumed pairs", consumer_html)

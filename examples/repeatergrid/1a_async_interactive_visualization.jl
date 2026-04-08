@@ -13,9 +13,9 @@ _, ax, _, obs = registernetplot_axis(fig[1:2,1], net;registercoords=layout)
 
 # the performance log part of the visualization
 entlog = Observable(consumer._log) # Observables are used by Makie to update the visualization in real-time in an automated reactive way
-ts = @lift $entlog.time  # TODO this needs a better interface, something less cluncky, maybe also a whole Makie recipe
-tzzs = @lift [Point2f($entlog.time[i],$entlog.obs1[i]) for i in eachindex($entlog.time)]
-txxs = @lift [Point2f($entlog.time[i],$entlog.obs2[i]) for i in eachindex($entlog.time)]
+ts = @lift [e.t for e in $entlog]  # TODO this needs a better interface, something less cluncky, maybe also a whole Makie recipe
+tzzs = @lift [Point2f(e.t,e.obs1) for e in $entlog]
+txxs = @lift [Point2f(e.t,e.obs2) for e in $entlog]
 Δts = @lift length($ts)>1 ? $ts[2:end] .- $ts[1:end-1] : [0.0]
 entlogaxis = Axis(fig[1,2], xlabel="Time", ylabel="Entanglement", title="Entanglement Successes")
 ylims!(entlogaxis, (-1.04,1.04))
@@ -23,12 +23,12 @@ stem!(entlogaxis, txxs)
 histaxis = Axis(fig[2,2], xlabel="ΔTime", title="Histogram of Time to Successes")
 hist!(histaxis, Δts)
 
-avg_fids = @lift cumsum($entlog.obs2)./cumsum(ones(length($entlog.time))) #avg fidelity per unit time
+avg_fids = @lift cumsum([e.obs2 for e in $entlog])./cumsum(ones(length($entlog))) #avg fidelity per unit time
 fid_info = @lift [Point2f(t,f) for (t,f) in zip($ts, $avg_fids)]
 fid_axis = Axis(fig[3,1], xlabel="Time", ylabel="Avg. Fidelity", title="Time evolution of Average Fidelity")
 lines!(fid_axis, fid_info)
 
-num_epr = @lift cumsum(ones(length($entlog.time)))./($ts) #avg number of pairs per unit time
+num_epr = @lift cumsum(ones(length($entlog)))./($ts) #avg number of pairs per unit time
 num_epr_info = @lift [Point2f(t,n) for (t,n) in zip($ts, $num_epr)]
 num_epr_axis = Axis(fig[3,2], xlabel="Time", title="Avg. Number of Entangled Pairs between Alice and Bob")
 lines!(num_epr_axis, num_epr_info)

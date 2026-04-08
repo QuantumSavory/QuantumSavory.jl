@@ -9,3 +9,4 @@ function QuantumSavory.ProtocolZoo._save_entanglement_consumer_log(file_name::St
 end
 
 end
+

@@ -67,7 +67,7 @@ for t in step_ts
     push!(sim_time[],t)
     push!(backlog[], sum(switch_protocol._backlog)/(n-1)/(n-2)/2)
     for (i, consumer) in enumerate(consumers)
-        consumed[][i] = length(consumer._log.time)
+        consumed[][i] = length(consumer._log)
     end
     for (l,(i, j)) in enumerate(client_unordered_pairs)
         backlog_perpair[][l] = switch_protocol._backlog[i-1,j-1]
