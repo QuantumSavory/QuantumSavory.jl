@@ -6,7 +6,7 @@ using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol
 using QuantumSavory.CircuitZoo: LocalEntanglementSwap
 import ConcurrentSim
-using ConcurrentSim: Simulation, @yield, timeout, @process, now, Process
+using ConcurrentSim: Simulation, @yield, timeout, @process, now, Process, Resource
 import ResumableFunctions
 using ResumableFunctions: @resumable
 using DocStringExtensions
@@ -441,10 +441,34 @@ end
 end
 
 
+@resumable function _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
+    @yield lock(link_resource)
+    entangler = EntanglerProt(;
+        sim, net,
+        nodeA, nodeB,
+        tag=nothing,
+        rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
+    )
+    # TODO have a timeout on how long to wait for an entangler to complete
+    proc = @process entangler()
+    _, slotA, _, slotB = @yield proc
+    unlock(link_resource)
+    # slotA is at nodeA, slotB is at nodeB.
+    # Map to originator/destination so each node gets its own local slot.
+    originator_slot, destination_slot = if originator_node == nodeA
+        slotA, slotB
+    else
+        slotB, slotA
+    end
+    put!(net[originator_node], LinkLevelReply(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=originator_slot))
+    put!(net[destination_node], LinkLevelReplyAtHop(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=destination_slot))
+end
+
 @resumable function (prot::LinkController)()
     (;sim, net, nodeA, nodeB) = prot
     mbA = messagebuffer(net, nodeA)
     mbB = messagebuffer(net, nodeB)
+    link_resource = Resource(sim, 1)
 
     while true
         workwasdone = true
@@ -461,37 +485,7 @@ end
                 workwasdone = true
                 @assert originator_node != destination_node "LinkController $(nodeA) $(nodeB) has a link request with originator node $(originator_node) equal to the destination node $(destination_node)"
                 _, flow_uuid, seq_num, remote_node = llrequest.tag
-                entangler = EntanglerProt(;
-                    sim, net,
-                    nodeA, nodeB,
-                    tag=nothing,
-                    rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
-                )
-                # TODO have a timeout on how long to wait for an entangler to complete
-                proc = @process entangler()
-                _, slotA, _, slotB = @yield proc
-                # slotA is at nodeA, slotB is at nodeB.
-                # Map to originator/destination so each node gets its own local slot.
-                originator_slot, destination_slot = if originator_node == nodeA
-                    slotA, slotB
-                else
-                    slotB, slotA
-                end
-                # Create the reply with the flow information and memory slot
-                reply = LinkLevelReply(
-                    flow_uuid=flow_uuid,
-                    seq_num=seq_num,
-                    memory_slot=originator_slot
-                )
-                reply_at_destination = LinkLevelReplyAtHop(
-                    flow_uuid=flow_uuid,
-                    seq_num=seq_num,
-                    memory_slot=destination_slot
-                )
-
-                # Put the reply in the appropriate node's message buffer
-                put!(net[originator_node], reply)
-                put!(net[destination_node], reply_at_destination)
+                @process _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
             end
         end
         # wait until we have received a message
