@@ -22,10 +22,6 @@ $FIELDS
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
-    """stores any additional metadata that should be logged alongside the time and observables, this is only applicable for `.h5` save format."""
-    _metadata::Union{Dict{String,Any},Nothing} = nothing
-    """file name to save the log to when the protocol finishes (supports `.h5` and `.csv` formats). If `nothing`, the log will not be saved to a file."""
-    _file_name::Union{String,Nothing} = nothing
 end
 
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
@@ -37,20 +33,9 @@ end
 
 permits_virtual_edge(::EntanglementConsumer) = true
 
-function _save_entanglement_consumer_log(prot::EntanglementConsumer)
-    try
-        _save_entanglement_consumer_log(prot._file_name, prot)
-    catch
-        if !isdefined(Main, :FileIO)
-            @error "Attempted to save an EntanglementConsumer log to a file, but FileIO.jl is not loaded. Please load FileIO.jl to enable saving logs to files."
-        end
-    end
-end
-
 @resumable function (prot::EntanglementConsumer)()
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
-    empty!(prot._log)
     
     while true
         query1 = query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
@@ -105,10 +90,6 @@ end
         if !isnothing(prot.period)
             @yield timeout(prot.sim, prot.period::Float64)
         end
-    end
-
-    if !isnothing(prot._file_name)
-        _save_entanglement_consumer_log(prot) # TODO this is never reached (the loop above never exits)!!!
     end
 end
 
