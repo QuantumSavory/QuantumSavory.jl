@@ -42,11 +42,10 @@ struct DummyProtocol <: QuantumSavory.ProtocolZoo.AbstractProtocol end
             net=net,
             nodeA=1,
             nodeB=2,
-            _log=EntanglementConsumerLog(
-                time=[2.0, 4.0],
-                obs1=[1.0, 0.0],
-                obs2=[0.5, -0.5],
-            ),
+            _log=[
+                (t=2.0, obs1=1.0, obs2=0.5),
+                (t=4.0, obs1=0.0, obs2=-0.5),
+            ],
         )
         logged_html = repr(MIME"text/html"(), logged_consumer)
 
