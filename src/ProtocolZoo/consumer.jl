@@ -35,13 +35,17 @@ function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs..
     return EntanglementConsumer(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 end
 
+permits_virtual_edge(::EntanglementConsumer) = true
+
 function _save_entanglement_consumer_log(prot::EntanglementConsumer)
-    if !isnothing(prot._file_name)
+    try
         _save_entanglement_consumer_log(prot._file_name, prot)
+    catch
+        if !isdefined(Main, :FileIO)
+            @error "Attempted to save an EntanglementConsumer log to a file, but FileIO.jl is not loaded. Please load FileIO.jl to enable saving logs to files."
+        end
     end
 end
-
-permits_virtual_edge(::EntanglementConsumer) = true
 
 @resumable function (prot::EntanglementConsumer)()
     regA = prot.net[prot.nodeA]
