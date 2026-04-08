@@ -79,7 +79,7 @@ for n in 3:30
 
     run(sim, 100)
 
-    @test econ._log[1].t > 0 # the process should start after 5
+    @test econ._log[1].t > 5 # the process should start after 5
     for log in econ._log
         @test log.obs1 ≈ 1.0
         @test log.obs2 ≈ 1.0
