@@ -8,11 +8,19 @@ using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
 using QuantumSavory.StatesZoo.Genqo
 using QuantumInterface
+using QuantumSymbolics
 
 DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumSavory.StatesZoo.Genqo); recursive=true)
 
 function main()
-    doc_modules = [QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumInterface]
+    doc_modules = [
+        QuantumSavory,
+        QuantumSavory.StatesZoo,
+        QuantumSavory.ProtocolZoo,
+        QuantumSavory.CircuitZoo,
+        QuantumInterface,
+        QuantumSymbolics,
+    ]
     api_base="https://anythingllm.krastanov.org/api/v1"
     anythingllm_assets = integrate_anythingllm(
         "QuantumSavory",
@@ -42,14 +50,20 @@ function main()
     "Getting Started Manual" => "manual.md",
     "Explanations" => [
         "explanations.md",
-        "Register Interface" => "register_interface.md",
+        "Architecture and Mental Model" => "architecture.md",
+        "Why QuantumSavory Exists" => "why_quantumsavory.md",
+        "Restricted Formalisms and Efficient Simulation" =>
+            "restricted_formalisms.md",
+        "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
+        "Modeling Registers, Factorization, and Time" =>
+            "modeling_registers_and_time.md",
+        "Metadata and Protocol Composition" => "metadata_plane.md",
+        "Classical Messaging and Buffers" => "classical_messaging.md",
+        "Zoos as Composable Building Blocks" => "zoos_as_building_blocks.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
-        "Symbolic Expressions" => "symbolics.md",
-        "Tagging and Querying" => "tag_query.md",
-        "Backend Simulators" => "backendsimulator.md",
+        "Symbolic Frontend" => "symbolic_frontend.md",
         "Discrete Event Simulator" => "discreteeventsimulator.md",
-        "Visualizations" => "visualizations.md",
     ],
     "How-To Guides" => [
         "howto.md",
@@ -59,6 +73,7 @@ function main()
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
+        "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
     ],
     "Tutorials" => [
         "tutorial.md",
@@ -69,17 +84,26 @@ function main()
     ],
     "References" => [
         "references.md",
+        "Register Interface API" => "register_interface.md",
+        "Backend Simulators" => "backendsimulator.md",
+        "Tag and Query API" => "tag_query.md",
+        "Symbolic Expressions Reference" => "symbolics.md",
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",
         "ProtocolZoo API" => "API_ProtocolZoo.md",
+        "QuantumInterface API" => "API_Interface.md",
+        "QuantumSymbolics API" => "API_Symbolics.md",
+        "Visualizations" => "visualizations.md",
         "Bibliography" => "bibliography.md",
     ],
     ]
     )
     deploydocs(
         repo = "github.com/QuantumSavory/QuantumSavory.jl.git",
-        push_preview = false
+        devbranch = "master",
+        deploy_config = Documenter.Buildkite(),
+        push_preview = true
     )
 end
 

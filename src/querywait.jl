@@ -68,29 +68,46 @@ See also: [`query`](@ref), [`querydelete_wait!`](@ref), [`onchange`](@ref), [`ta
 """
 function query_wait end
 
-# TODO weird ordering of what should be kwargs due to https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/135
-@resumable function _query_wait(sim, reg::Register, on, locked::Union{Nothing,Bool}, assigned::Union{Nothing,Bool}, args...)
-    q = query(reg, args...; locked, assigned)
-    while isnothing(q)
-        @yield onchange(reg, on)
-        q = query(reg, args...; locked, assigned)
+# ResumableFunctions currently loses inference on these vararg kernels, so we
+# provide the common fixed-arity cases explicitly.
+for i in 1:10
+    args = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j)[1:i]
+    quote_expr = quote
+        @resumable function _query_wait(sim, mb::MessageBuffer, on::Type{On}, $(args...)) where {On}
+            while true
+                q = query(mb, $(args...))
+                !isnothing(q) && return q
+                @yield onchange(mb, on)
+            end
+        end
+        function query_wait(store::MessageBuffer, $(args...); on::Type{On}=Any) where {On}
+            return @process _query_wait(get_time_tracker(store), store, on, $(args...))
+        end
     end
-    return q
+    eval(quote_expr)
 end
-function query_wait(store::Register, args...; on=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing)
+
+# TODO weird ordering of what should be kwargs due to https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/135
+@resumable function _query_wait(sim, reg::Register, on::Type{On}, locked::Union{Nothing,Bool}, assigned::Union{Nothing,Bool}, args...) where {On}
+    while true
+        q = query(reg, args...; locked, assigned)
+        !isnothing(q) && return q
+        @yield onchange(reg, on)
+    end
+end
+function query_wait(store::Register, args...; on::Type{On}=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {On}
     # TODO weird ordering of what should be kwargs due to https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/135
     return @process _query_wait(get_time_tracker(store), store, on, locked, assigned, args...)
 end
 
-@resumable function _query_wait(sim, mb::MessageBuffer, on, args...)
-    q = query(mb, args...)
-    while isnothing(q)
-        @yield onchange(mb, on)
+@resumable function _query_wait(sim, mb::MessageBuffer, on::Type{On}, args...) where {On}
+    while true
         q = query(mb, args...)
+        !isnothing(q) && return q
+        @yield onchange(mb, on)
     end
-    return q
 end
-function query_wait(store::MessageBuffer, args...; on=Any)
+function query_wait(store::MessageBuffer, args...; on::Type{On}=Any) where {On}
     return @process _query_wait(get_time_tracker(store), store, on, args...)
 end
 
@@ -166,26 +183,43 @@ See also: [`querydelete!`](@ref), [`query_wait`](@ref), [`onchange`](@ref), [`ta
 """
 function querydelete_wait! end
 
-@resumable function _querydelete_wait(sim, mb::Register, on, locked::Union{Nothing,Bool}, assigned::Union{Nothing,Bool}, args...)
-    q = querydelete!(mb, args...; locked, assigned)
-    while isnothing(q)
-        @yield onchange(mb, on)
-        q = querydelete!(mb, args...; locked, assigned)
+# ResumableFunctions currently loses inference on these vararg kernels, so we
+# provide the common fixed-arity cases explicitly.
+for i in 1:10
+    args = (:a, :b, :c, :d, :e, :f, :g, :h, :i, :j)[1:i]
+    quote_expr = quote
+        @resumable function _querydelete_wait(sim, mb::MessageBuffer, on::Type{On}, $(args...)) where {On}
+            while true
+                q = querydelete!(mb, $(args...))
+                !isnothing(q) && return q
+                @yield onchange(mb, on)
+            end
+        end
+        function querydelete_wait!(store::MessageBuffer, $(args...); on::Type{On}=Any) where {On}
+            return @process _querydelete_wait(get_time_tracker(store), store, on, $(args...))
+        end
     end
-    return q
+    eval(quote_expr)
 end
-function querydelete_wait!(store::Register, args...; on=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing)
+
+@resumable function _querydelete_wait(sim, mb::Register, on::Type{On}, locked::Union{Nothing,Bool}, assigned::Union{Nothing,Bool}, args...) where {On}
+    while true
+        q = querydelete!(mb, args...; locked, assigned)
+        !isnothing(q) && return q
+        @yield onchange(mb, on)
+    end
+end
+function querydelete_wait!(store::Register, args...; on::Type{On}=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {On}
     return @process _querydelete_wait(get_time_tracker(store), store, on, locked, assigned, args...)
 end
 
-@resumable function _querydelete_wait(sim, mb::MessageBuffer, on, args...)
-    q = querydelete!(mb, args...)
-    while isnothing(q)
-        @yield onchange(mb, on)
+@resumable function _querydelete_wait(sim, mb::MessageBuffer, on::Type{On}, args...) where {On}
+    while true
         q = querydelete!(mb, args...)
+        !isnothing(q) && return q
+        @yield onchange(mb, on)
     end
-    return q
 end
-function querydelete_wait!(store::MessageBuffer, args...; on=Any)
+function querydelete_wait!(store::MessageBuffer, args...; on::Type{On}=Any) where {On}
     return @process _querydelete_wait(get_time_tracker(store), store, on, args...)
 end

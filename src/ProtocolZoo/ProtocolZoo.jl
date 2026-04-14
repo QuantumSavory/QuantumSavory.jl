@@ -413,7 +413,13 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                     continue
                 end
 
-                error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might happen due to a race condition from infinitely fast classical messages. Make sure that `classical_delay` in `RegisterNet` is not zero. This might also happen due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retention times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise, this is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
+                # Protocol bug tracked in issue #303:
+                # https://github.com/QuantumSavory/QuantumSavory.jl/issues/303
+                # Stale update/delete messages can still arrive after the corresponding local
+                # bookkeeping has already been cleared or superseded.
+                stale_kind = isnothing(updategate) ? "delete" : "update"
+                @error "EntanglementTracker @$(prot.node): stale $(stale_kind) message=`$msg` is dropped"
+                continue
             end
         end
         @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
@@ -494,8 +500,17 @@ permits_virtual_edge(::EntanglementConsumer) = true
         untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory or EntanglementDelete and should that be a different EntanglementHistory since the current one is specifically for Swapper
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
-        ob1 = real(observable((q1, q2), Z⊗Z))
-        ob2 = real(observable((q1, q2), X⊗X))
+        ob1 = observable((q1, q2), Z⊗Z)
+        ob2 = observable((q1, q2), X⊗X)
+        if isnothing(ob1) || isnothing(ob2)
+            @error "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): dropping stale pair between .$(q1.idx) and .$(q2.idx)"
+            traceout!(regA[q1.idx], regB[q2.idx])
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+        ob1 = real(ob1)
+        ob2 = real(ob2)
 
         traceout!(regA[q1.idx], regB[q2.idx])
         push!(prot._log, (now(prot.sim), ob1, ob2))

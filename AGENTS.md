@@ -1,61 +1,53 @@
-# QuantumSavory.jl
+# QuantumSavory.jl Agent Guide
 
-QuantumSavory.jl is a full-stack simulator for quantum hardware and quantum
-networks (quantum dynamics, classical control, message passing, event
-simulation, and protocol modeling).
+This file is the entry point for work inside `QuantumSavory.jl`.
+Do not load the whole `.agents/` tree by default.
+Open only the topic files that match the task.
 
-Documentation: https://qs.quantumsavory.org/dev/
+## First Pass
 
-## Repository Landmarks
+- Decide whether the task is primarily user-facing, contributor-facing, or review-heavy.
+- Start from public docs and examples for user behavior, then confirm in source if anything looks ambiguous.
+- Start from source and tests for internal changes, review, or bug hunting.
+- Cross-check public claims against the implementation before editing docs. A few docs intentionally simplify internals, and a few details lag the code.
 
-- `src/` core package code
-- `src/CircuitZoo/`, `src/ProtocolZoo/`, `src/StatesZoo/` domain libraries
-- `ext/` optional extensions (`QuantumSavoryMakie`, `QuantumSavoryTylerMakie`, `QuantumSavoryInteractiveUtils`)
-- `test/` full test suite
-- `examples/` example workflows
-- `docs/` Documenter sources
-- `benchmark/` benchmarks
+## Topic Router
 
-## QuantumSavory-Specific Commands
+- Register API, factorization, time semantics, backend hooks:
+  - user: `.agents/registers/register-interface-user.md`
+  - dev/review: `.agents/registers/register-internals-and-backend-hooks.md`
+- Tags, queries, metadata plane, waiting on tags/messages:
+  - user: `.agents/metadata/tags-queries-user.md`
+  - dev/review: `.agents/metadata/tags-queries-dev.md`
+- Classical messaging, message buffers, quantum transport:
+  - user: `.agents/channels/classical-and-quantum-channels-user.md`
+  - dev/review: `.agents/channels/classical-and-quantum-channels-dev.md`
+- `StatesZoo`:
+  - user: `.agents/zoos/states-zoo-user.md`
+  - dev/review: `.agents/zoos/states-zoo-dev.md`
+- `CircuitZoo`:
+  - user: `.agents/zoos/circuit-zoo-user.md`
+  - dev/review: `.agents/zoos/circuit-zoo-dev.md`
+- `ProtocolZoo`:
+  - user: `.agents/zoos/protocol-zoo-user.md`
+  - dev/review: `.agents/zoos/protocol-zoo-dev.md`
 
-```bash
-# Instantiate package environment
-julia -tauto --project=. -e "using Pkg; Pkg.instantiate()"
+## Shared Source Map
 
-# Default tests
-julia -tauto --project=. -e "using Pkg; Pkg.test()"
+- Public docs live in `docs/src/`.
+- Core implementation lives in `src/`.
+- Example scripts live in `examples/`.
+- Regression and behavior anchors live in `test/general/` and `test/examples/`.
 
-# JET-only tests
-JET_TEST=true julia -tauto --project=. -e "using Pkg; Pkg.test()"
+## Repo Workflow
 
-# Example tests
-QUANTUMSAVORY_EXAMPLES_TEST=true julia -tauto --project=. -e "using Pkg; Pkg.test()"
+- Prefer targeted tests first, then broader runs if behavior changed across multiple subsystems.
+- When you change public APIs, examples, or user-visible behavior, update the matching `docs/src/` page and the matching `.agents/` topic file.
+- When you change docstrings or documentation structure, build docs with `julia --project=docs docs/make.jl`.
+- Many examples are mirrored by tests in `test/examples/`; use those tests as the safer validation path when possible.
 
-# Example+plot tests (headless)
-QUANTUMSAVORY_EXAMPLES_PLOT_TEST=true DISPLAY=:0 xvfb-run -e /dev/null -s '-screen 0 1024x768x24' julia -tauto --project=. -e "using Pkg; Pkg.test()"
+## Documentation Boundary
 
-# Plot tests (headless)
-QUANTUMSAVORY_PLOT_TEST=true DISPLAY=:0 xvfb-run -e /dev/null -s '-screen 0 1024x768x24' julia -tauto --project=. -e "using Pkg; Pkg.test()"
-
-# Build docs
-julia -tauto --project=docs -e "using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()"
-julia -tauto --project=docs docs/make.jl
-```
-
-Rules:
-- Do not run individual `test/*.jl` files directly; use `Pkg.test()`.
-- Do not edit `Manifest*.toml` manually.
-
-## Use Installed Skills For Generic Workflow
-
-The workspace already includes reusable Julia skills. Prefer those instead of
-duplicating process details here:
-
-- `julia-package-dev` for package development setup and dependency management
-- `julia-tests-run` and `julia-tests-write` for test execution and test authoring
-- `julia-docs`, `julia-docstrings`, `julia-doctests`, `julia-doccitations` for docs work
-- `julia-github` for remotes, branching, and PR workflow
-- `julia-multipackage` for coordinated multi-repo development
-- `julia-pkgextension` and `julia-makie-recipes` for extension and plotting work
-- `julia-bench-quick`, `julia-bench-write`, `julia-bench-run` for benchmarking
-- `whitespace` for whitespace/newline cleanup
+- User files under `.agents/` should stay on public APIs, examples, and mental models.
+- Dev files under `.agents/` should cover internals, invariants, tests, and review checks.
+- If a detail is only useful for contributors or reviewers, keep it out of the user files.

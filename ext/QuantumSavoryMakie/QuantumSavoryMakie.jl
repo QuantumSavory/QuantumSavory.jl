@@ -309,6 +309,7 @@ the plot with the current state of the network."""
 function registernetplot_axis end
 
 function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infocli=true, datainspector=true, autolimits=false, kwargs...)
+    registersobservable = registersobservable isa Observable ? registersobservable : Observable(registersobservable)
     p = registernetplot!(ax, registersobservable; kwargs...)
     ax.aspect = Makie.DataAspect()
     if hasmethod(Makie.hidedecorations!, Tuple{typeof(ax)})
@@ -332,7 +333,7 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
     end
     # translating the plot so that it is in front of the background map
     Makie.translate!(p, 0, 0, 10)
-    ax.parent, ax, p, p[1]
+    ax.parent, ax, p, registersobservable
 end
 
 # subfig::Union{GridPosition, GridSubposition} but maybe other as well, so leave it unspecified
