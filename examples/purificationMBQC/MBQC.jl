@@ -18,7 +18,7 @@ const mixed_dm = MixedState(perfect_pair_dm)
 #     p = (4*F-1)/3
 #     return noisy_pair_func_depol(p)
 # end
-noisy_pair_func(F) = DepolarizedBellPair(F=F)
+noisy_pair_func(F) = DepolarizedBellPair(;F)
 
 @kwdef struct MBQCSetUp
     node::Int

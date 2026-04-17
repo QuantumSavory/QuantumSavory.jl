@@ -14,7 +14,7 @@ const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
 # noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolarization helper
-noisy_pair_func(F) = DepolarizedBellPair(F=F)
+noisy_pair_func(F) = DepolarizedBellPair(;F)
 
 
 # Qclifford repr
