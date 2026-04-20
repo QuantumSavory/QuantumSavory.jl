@@ -121,10 +121,10 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+@testitem "Circuit Zoo Purification - 3to1 -- Random Fidelity" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [QuantumOpticsRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
@@ -143,15 +143,15 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+@testitem "Circuit Zoo Purification - 3to1 -- Zero Fidelity" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [CliffordRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
                     r = Register(6, rep())
-                    noisy_pair = stab_noisy_pair_func(0)
+                    noisy_pair = noisy_pair_func(0)
                     initialize!(r[1:2], noisy_pair)
                     initialize!(r[3:4], noisy_pair)
                     initialize!(r[5:6], noisy_pair)
@@ -216,10 +216,10 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+@testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [QuantumOpticsRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
@@ -240,15 +240,15 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+@testitem "Circuit Zoo Purification - 3to1 -- Node - Zero Fidelity" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [CliffordRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
                     r = Register(6, rep())
-                    noisy_pair = stab_noisy_pair_func(0)
+                    noisy_pair = noisy_pair_func(0)
                     initialize!(r[1:2], noisy_pair)
                     initialize!(r[3:4], noisy_pair)
                     initialize!(r[5:6], noisy_pair)
@@ -276,10 +276,10 @@ end
     end
     end
 
-    @testitem "Circuit Zoo Purification - Stringent - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+    @testitem "Circuit Zoo Purification - Stringent - Random Fidelity" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [QuantumOpticsRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         r = Register(26, rep())
         rnd = rand() / 4 + 0.5
         noisy_pair = noisy_pair_func(rnd)
@@ -292,12 +292,12 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
+@testitem "Circuit Zoo Purification - Stringent - Zero Fidelity" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [CliffordRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         r = Register(26, rep())
-        noisy_pair = stab_noisy_pair_func(0)
+        noisy_pair = noisy_pair_func(0)
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
@@ -310,7 +310,7 @@ end
 @testitem "Circuit Zoo Purification - Expedient" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [CliffordRepr, QuantumOpticsRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         r = Register(22, rep())
         for i in 1:11
             initialize!(r[(2*i-1):(2*i)], bell)
@@ -320,10 +320,10 @@ end
     end
 end
 
-@testitem "Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" tags=[:circuitzoo_purification] begin
+@testitem "Circuit Zoo Purification - Expedient - Fidelity" tags=[:circuitzoo_purification] begin
     include("setup_circuitzoo_purification.jl")
 
-    for rep in [QuantumOpticsRepr]
+    for rep in [QuantumOpticsRepr, CliffordRepr]
         r = Register(22, rep())
         rnd = rand() / 4 + 0.5
         noisy_pair = noisy_pair_func(rnd)
@@ -332,21 +332,6 @@ end
         end
         if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
             @test real(observable(r[1:2], projector(bell))) > rnd
-        end
-    end
-end
-
-@testitem "Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" tags=[:circuitzoo_purification] begin
-    include("setup_circuitzoo_purification.jl")
-
-    for rep in [CliffordRepr]
-        r = Register(22, rep())
-        noisy_pair = stab_noisy_pair_func(0)
-        for i in 1:11
-            initialize!(r[(2*i-1):(2*i)], noisy_pair)
-        end
-        if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
-            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
         end
     end
 end

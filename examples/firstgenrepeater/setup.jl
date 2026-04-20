@@ -64,8 +64,10 @@ end
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
-# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm # TODO make a depolarization helper
 noisy_pair_func(F) = DepolarizedBellPair(;F)
+# Here is how you can do it manually if you want to have a more general state provided by QuantumSymbolics.
+# Check out also the StatesZoo as a source of other predefined types of noisy Bell pairs:
+# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 const XX = X⊗X
 const ZZ = Z⊗Z
 const YY = Y⊗Y
