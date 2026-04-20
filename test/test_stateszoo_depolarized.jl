@@ -3,6 +3,7 @@ using Test
 using QuantumSavory
 using QuantumSavory.StatesZoo
 using QuantumOpticsBase
+using QuantumClifford
 using LinearAlgebra
 
 # p-constructor and fidelity-constructor consistency
@@ -21,7 +22,10 @@ end
 # at p=1, pure Bell state: ⟨ZZ⟩ = 1
 reg = Register(2)
 initialize!(reg[1:2], DepolarizedBellPair(1.0))
-@test observable(reg[1:2], Z⊗Z) ≈ 1
+@test observable(reg[1:2], QuantumSymbolics.Z⊗QuantumSymbolics.Z) ≈ 1
+reg_c = Register(2, CliffordRepr())
+initialize!(reg_c[1:2], DepolarizedBellPair(1.0))
+@test observable(reg_c[1:2], QuantumSymbolics.Z⊗QuantumSymbolics.Z) ≈ 1
 
 # at p=0, maximally mixed: density matrix = I/4
 dm_mixed = express(DepolarizedBellPair(0.0))
