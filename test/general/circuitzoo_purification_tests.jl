@@ -212,7 +212,7 @@ end
     end
 end
 
-@testset "Circuit Zoo Purification - 3to1 -- Node - Fidelity" begin
+@testset "Circuit Zoo Purification - 3to1 -- Node - Random Fidelity" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
@@ -310,7 +310,7 @@ end
     end
 end
 
-@testset "Circuit Zoo Purification - Expedient - Fidelity" begin
+@testset "Circuit Zoo Purification - Expedient - Random Fidelity" begin
 
     for rep in [QuantumOpticsRepr, CliffordRepr]
         r = Register(22, rep())
