@@ -191,7 +191,7 @@ A symbolic representation of the noisy Bell pair state obtained in a Barrett-Kok
 - **m**: Parity bit from click pattern
 
 ### Genqo ZALM (Zero Added Loss Multiplexed)
-Heralded multiplexed cascaded source for generating Bell pairs. Uses the Python `genqo` package for calculations.
+Heralded multiplexed cascaded source for generating Bell pairs. Uses the `Genqo.jl` package for calculations.
 
 **Key Parameters:**
 - **etab**: Bell state measurement transmissivity
@@ -212,7 +212,7 @@ Unheralded spontaneous parametric down-conversion Bell pair source, as described
 ## Notes
 
 - The density matrices are returned as separate real and imaginary parts to ensure JSON compatibility
-- For Genqo states, the Python `genqo` package must be installed and accessible
+- For Genqo states, `Genqo.jl` must be available in the active Julia environment
 - All states represent two-qubit systems with 4×4 density matrices
 - Parameter validation is performed server-side with appropriate error messages
 - The weighted versions return unnormalized density matrices where the trace represents the success probability
