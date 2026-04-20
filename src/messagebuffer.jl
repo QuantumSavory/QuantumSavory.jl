@@ -8,8 +8,13 @@ struct MessageBuffer{T}
     net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
     node::Int
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
-    waiters::IdDict{Resource,Resource}
-    no_wait::Ref{Int} # keeps track of the situation when something is pushed in the buffer and no waiters are present. In that case, when the waiters are available after it they would get locked while the code that was supposed to unlock them has already run. So, we keep track the number of times this happens and put no lock on the waiters in this situation.
+    # `tag_waiter` is edge-triggered: it wakes tasks that are already blocked in
+    # `wait`/`onchange`.
+    tag_waiter::AsymmetricSemaphore
+    # `no_wait` counts arrivals that happened while nobody was waiting. This
+    # preserves the long-standing MessageBuffer contract that a later
+    # `wait`/`onchange` must wake immediately once per already-buffered arrival.
+    no_wait::Ref{Int}
 end
 
 function peektags(mb::MessageBuffer)
@@ -34,6 +39,7 @@ function Base.put!(mb::MessageBuffer, tag)
     put_and_unlock_waiters(mb, nothing, convert(Tag,tag))
     nothing
 end
+Base.put!(mb::MessageBuffer, args...) = put!(mb, Tag(args...))
 
 tag!(::MessageBuffer, args...) = throw(ArgumentError("MessageBuffer does not support `tag!`. Use `put!(::MessageBuffer, Tag(...))` instead."))
 
@@ -65,21 +71,23 @@ end
 
 function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
-    length(mb.waiters) == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
-    if length(mb.waiters) == 0
-        mb.no_wait[] += 1
-    end
+    nwaiters = nbwaiters(mb.tag_waiter)
+    nwaiters == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
     push!(mb.buffer, (;src,tag));
-    for waiter in keys(mb.waiters)
-        unlock(waiter)
+    if nwaiters == 0
+        # Keep one queued wakeup per arrival when no task is actively blocked on
+        # the semaphore. Protocol code often queries the buffer first and only
+        # then calls `onchange`, so a pure semaphore would miss already-buffered
+        # work and can deadlock those protocols.
+        mb.no_wait[] += 1
+    else
+        unlock(mb.tag_waiter)
     end
 end
 
 function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
     sim = get_time_tracker(net)
-    signal = IdDict{Resource,Resource}()
-    no_wait = Ref{Int}(0)
-    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], signal, no_wait)
+    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], AsymmetricSemaphore(sim), Ref(0))
     for (;src, channel) in qs
         @process take_loop_mb(sim, channel, src, mb)
     end
@@ -87,20 +95,18 @@ function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tu
 end
 
 @resumable function wait_process(sim, mb)
-    if mb.no_wait[] != 0 # This happens only in the specific case when something is put in the buffer before there any waiters.
+    if mb.no_wait[] != 0
+        # Consume a queued arrival immediately instead of waiting for a future
+        # edge on `tag_waiter`.
         mb.no_wait[] -= 1
         return
     end
-    waitresource = Resource(sim)
-    lock(waitresource)
-    mb.waiters[waitresource] = waitresource
-    @yield lock(waitresource)
-    pop!(mb.waiters, waitresource)
+    @yield lock(mb.tag_waiter)
 end
 
 function Base.wait(mb::MessageBuffer)
     Base.depwarn("wait(::MessageBuffer) is deprecated, use onchange(::MessageBuffer) instead", :wait)
-    @process wait_process(mb.sim, mb)
+    return @process wait_process(mb.sim, mb)
 end
 
 """
@@ -110,7 +116,7 @@ E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
 function onchange end
 
 function onchange(mb::MessageBuffer)
-    @process wait_process(mb.sim, mb)
+    return @process wait_process(mb.sim, mb)
 end
 
 function onchange(mb::MessageBuffer, ::Type{Any})

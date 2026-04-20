@@ -77,22 +77,22 @@ $TYPEDSIGNATURES
 
 A query function that returns all slots of a register that have a given tag, with support for predicates and wildcards.
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
 
 julia> queryall(r, :symbol, ❓, ❓)
-2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
- (slot = Slot 1, id = 1, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 15531193455478883312.2, id = 16, tag = SymbolIntInt(:symbol, 4, 5)::Tag, time = 0.0)
+ (slot = 15531193455478883312.1, id = 15, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 
 julia> queryall(r, :symbol, ❓, >(4))
-1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 2, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 15531193455478883312.2, id = 16, tag = SymbolIntInt(:symbol, 4, 5)::Tag, time = 0.0)
 
 julia> queryall(r, :symbol, ❓, >(5))
-@NamedTuple{slot::RegRef, id::Int128, tag::Tag}[]
+@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}[]
 ```
 """
 queryall(reg::RegOrRegRef, queryargs::Vararg{QueryTypes,N}; filo=true, kwargs...) where {N} = _query(reg, Val{true}(), Val{filo}(), queryargs...; kwargs...)
@@ -112,14 +112,14 @@ whether the given slot is locked or whether it contains a quantum state.
 The keyword argument `filo` can be used to specify whether the search should be done in a FIFO or FILO order,
 defaulting to `filo=true` (i.e. a stack-like behavior).
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> r = Register(10);
        tag!(r[1], :symbol, 2, 3);
        tag!(r[2], :symbol, 4, 5);
 
 
 julia> query(r, :symbol, 4, 5)
-(slot = Slot 2, id = 4, tag = SymbolIntInt(:symbol, 4, 5)::Tag)
+(slot = 1043859625813851568.2, id = 4, tag = SymbolIntInt(:symbol, 4, 5)::Tag, time = 0.0)
 
 julia> lock(r[1]);
 
@@ -127,7 +127,7 @@ julia> query(r, :symbol, 4, 5; locked=false) |> isnothing
 false
 
 julia> query(r, :symbol, ❓, 3)
-(slot = Slot 1, id = 3, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = 1043859625813851568.1, id = 3, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 
 julia> query(r, :symbol, ❓, 3; assigned=true) |> isnothing
 true
@@ -144,25 +144,25 @@ julia> query(r, Int, 4, >(7)) |> isnothing
 true
 
 julia> query(r, Int, 4, <(7))
-(slot = Slot 5, id = 5, tag = TypeIntInt(Int64, 4, 5)::Tag)
+(slot = 1043859625813851568.5, id = 5, tag = TypeIntInt(Int64, 4, 5)::Tag, time = 0.0)
 ```
 
 A [`query`](@ref) can be on on a single slot of a register:
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> r = Register(5);
 
 julia> tag!(r[2], :symbol, 2, 3);
 
 julia> query(r[2], :symbol, 2, 3)
-(slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+(slot = 2589040728030450388.2, id = 14, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 
 julia> query(r[3], :symbol, 2, 3) === nothing
 true
 
 julia> queryall(r[2], :symbol, 2, 3)
-1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 6, tag = SymbolIntInt(:symbol, 2, 3)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 2589040728030450388.2, id = 14, tag = SymbolIntInt(:symbol, 2, 3)::Tag, time = 0.0)
 ```
 
 See also: [`queryall`](@ref), [`tag!`](@ref), [`W`](@ref), [`❓`](@ref)
@@ -178,8 +178,11 @@ $TYPEDSIGNATURES
 You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers.
 """
 function query(mb::MessageBuffer, queryargs::Vararg{QueryTypes,N}) where {N}
-    for (depth, (src, tag)) in pairs(mb.buffer)
-        query_good(tag, queryargs...) && return (;depth, src, tag)
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        entry = buffer[depth]
+        tag = entry.tag
+        query_good(tag, queryargs...) && return (;depth, src=entry.src, tag)
     end
     return nothing
 end
@@ -325,9 +328,12 @@ t=1.0: query returns nothing
 t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node 3
 ```
 """
-function querydelete!(mb::MessageBuffer, args...)
-    r = query(mb, args...)
-    return isnothing(r) ? nothing : popat!(mb.buffer, r.depth)
+function querydelete!(mb::MessageBuffer, queryargs::Vararg{QueryTypes,N}) where {N}
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        query_good(buffer[depth].tag, queryargs...) && return popat!(buffer, depth)
+    end
+    return nothing
 end
 
 """
@@ -335,23 +341,23 @@ $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RegRef`](@ref)) that also deletes the tag.
 
-```jldoctest; filter = r"id = (\\d*), "
+```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> reg = Register(3)
        tag!(reg[1], :tagA, 1, 2, 3)
        tag!(reg[2], :tagA, 10, 20, 30)
        tag!(reg[2], :tagB, 6, 7, 8);
 
 julia> queryall(reg, :tagA, ❓, ❓, ❓)
-2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
- (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+2-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 767672459337976635.2, id = 19, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag, time = 0.0)
+ (slot = 767672459337976635.1, id = 18, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag, time = 0.0)
 
 julia> querydelete!(reg, :tagA, ❓, ❓, ❓)
-(slot = Slot 2, id = 4, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag)
+(slot = 767672459337976635.2, id = 19, tag = SymbolIntIntInt(:tagA, 10, 20, 30)::Tag, time = 0.0)
 
 julia> queryall(reg, :tagA, ❓, ❓, ❓)
-1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag}}:
- (slot = Slot 1, id = 3, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag)
+1-element Vector{@NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}:
+ (slot = 767672459337976635.1, id = 18, tag = SymbolIntIntInt(:tagA, 1, 2, 3)::Tag, time = 0.0)
 ```
 """
 function querydelete!(reg::RegOrRegRef, args...; kwa...)
@@ -379,8 +385,18 @@ function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, query::Tag; locked:
     allB ? res : nothing
 end
 function query(mb::MessageBuffer, query::Tag)
-    for (depth, (src, tag)) in pairs(mb.buffer)
-        tag==query && return (;depth, src, tag)
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        entry = buffer[depth]
+        entry.tag == query && return (;depth, src=entry.src, tag=entry.tag)
+    end
+    return nothing
+end
+
+function querydelete!(mb::MessageBuffer, query::Tag)
+    buffer = mb.buffer
+    @inbounds for depth in eachindex(buffer)
+        buffer[depth].tag == query && return popat!(buffer, depth)
     end
     return nothing
 end

@@ -25,10 +25,11 @@ end
 end
 
 function unlock(s::SimpleAsymmetricSemaphore)
-    if s.nbwaiters[] > 0
+    if s.nbwaiters > 0
         s.unlocking = true
         unlock(s.lock)
     end
+    return nothing
 end
 
 function islocked(s::SimpleAsymmetricSemaphore)
@@ -58,6 +59,7 @@ function unlock(s::AsymmetricSemaphore)
         s.current_semaphore = 3 - s.current_semaphore
         unlock(sem)
     end
+    return nothing
 end
 
 function islocked(s::AsymmetricSemaphore)
