@@ -20,7 +20,7 @@ Private = false
 
 ## API list for the `QuantumSavory.StatesZoo.Genqo` states
 
-Implemented as wrappers to the `genqo` python package.
+Implemented as wrappers to the `Genqo.jl` package.
 
 ```@autodocs
 Modules = [QuantumSavory.StatesZoo.Genqo]
