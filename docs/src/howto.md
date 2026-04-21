@@ -4,6 +4,7 @@
 
 ## Current How-To Guides
 
+- [Simple Entanglement Swapping on Chains and Networks](howto/simple_swapping.md)
 - [1st-gen Repeater - low level implementation](howto/firstgenrepeater/firstgenrepeater.md)
 - [1st-gen Repeater - Clifford formalism](howto/firstgenrepeater/firstgenrepeater-clifford.md)
 - [1st-gen Repeater - simpler implementation](howto/firstgenrepeater_v2/firstgenrepeater_v2.md)

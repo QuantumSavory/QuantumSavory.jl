@@ -7,4 +7,6 @@ Compared to [the lower-level implementation `firstgenrepeater`](@ref First-Gener
 
 It is instructive to compare this simple-to-use setup with the much lengthier but equivalent implementation in [`firstgenrepeater`](@ref First-Generation-Quantum-Repeater), especially if one wants to develop reusable protocols of their own.
 
+For a protocol-by-protocol walkthrough of this same coordinator family, including minimal executed examples and known failure modes, see [Simple Entanglement Swapping on Chains and Networks](@ref Simple-Entanglement-Swapping).
+
 The source code is in the [`examples/firstgenrepeater_v2`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater_v2) folder.
