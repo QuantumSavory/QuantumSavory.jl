@@ -3,9 +3,11 @@
 ## v0.6.0 - unreleased
 
 - **(breaking)** Some fields of EntanglerProt were renamed for consistency with other protocols. More such renaming is to be expected, for consistency's sake.
-- **(breaking)** The `StatesZoo` now integrates with the `genqo` python package, to provide high accuracy models of the ZALM entanglement source. The previous implementation of the ZALM source was removed.
+- **(breaking)** The `StatesZoo` now integrates with the `Genqo.jl` package, to provide high accuracy models of the ZALM entanglement source. The previous implementation of the ZALM source was removed.
 - **(breaking)** Renaming `wait(::MessageBuffer)` and `onchange_tag(::Register)` to `onchange`.
 - **(fix)** `observable` used to incorrectly handle subsystem permutations on some backends in some edge cases, giving wrong results.
+- **(fix)** Stale `EntanglementDelete` messages in `EntanglementTracker` are now dropped as a workaround for protocol bookkeeping issue #303.
+- **(fix)** Tensor products of operators are now better supported in `apply!` for `CliffordRepr`
 - Querying functions now also return the time at which a tag was tagged.
 - `query_wait` now exists as a much simpler alternative to `onchange` followed by `query`.
 - `GraphStateConstructor` protocol and related tooling for modeling of the iterative construction of a graph state out of Bell pairs.
@@ -14,6 +16,11 @@
 - Protocols (subtypes of `AbstractProtocol` in the `ProtocolZoo`) now have rich `show` methods for the `image/png` and `text/html` MIME types
 - Unexported function `permits_virtual_edge` to describe whether a protocol can run between two nodes that are not directly connected.
 - Non-public functions `parent`, `parentindex`, `name`, `namestr`, `timestr`, `compactstr`,  `available_protocol_types`, `available_slot_types`, `available_background_types`, `constructor_metadata` for better introspection capabilities and cleaner printing.
+- `T1T2` noise has been added.
+- Support for Gaussian states, unitaries, and channels through `GabsRepr` as the default for QModes.
+- `HomodyneMeasurement` has been added for Gaussian-state measurements.
+- New assisted continuous-variable teleportation example.
+- New piecemaker GHZ-switch example.
 
 ## v0.5.1 - 2025-07-14
 

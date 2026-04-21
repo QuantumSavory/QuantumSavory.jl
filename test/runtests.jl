@@ -1,71 +1,61 @@
-using Pkg
+using ParallelTestRunner
 
-if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
-    @info "skipping plotting tests"
+const TEST_PROJECTS = Dict(
+    "plotting" => normpath(joinpath(@__DIR__, "projects", "plotting")),
+    "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
+    "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
+)
+const JET_TEST_PATH = joinpath(@__DIR__, "jet_tests.jl")
+
+args = isempty(ARGS) ? ["general"] : ARGS
+jet_only = length(args) == 1 && startswith(only(args), "jet")
+if isempty(ARGS)
+    @info "No test arguments provided; defaulting to `general` tests."
+end
+if jet_only
+    @info "Routing to direct JET test execution." args project=TEST_PROJECTS["jet"]
+    using Pkg
+    Pkg.activate(TEST_PROJECTS["jet"])
+    Pkg.instantiate()
 else
-    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
+    @info "Routing to ParallelTestRunner." args
 end
 
-if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
-    @info "skipping examples with plotting tests"
+test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
+                     startswith(name, "examples") ? TEST_PROJECTS["examples"] :
+                     startswith(name, "jet") ? TEST_PROJECTS["jet"] :
+                     nothing
+
+project_init_code(project::String) = quote
+    using Pkg
+    Pkg.activate($project)
+
+    using Logging # The examples generate a ton of logs
+    logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
+    global_logger(logger)
+end
+
+testsuite = find_tests(@__DIR__)
+filter!(testsuite) do (name, _)
+    endswith(name, "_tests")
+end
+
+if !isempty(VERSION.prerelease) || get(ENV, "QUANTUMSAVORY_DOWNGRADE_TEST", "") == "true"
+    delete!(testsuite, "general/aqua_tests")
+end
+
+function test_worker(name)
+    project = test_project(name)
+    project === nothing && return nothing
+    return addworker(; init_worker_code = project_init_code(project))
+end
+
+if jet_only
+    # Run JET directly rather than via ParallelTestRunner because
+    # JET does not like being loaded after a Pkg.activate change
+    # (at least not in the presence of menaces like ResumableFunctions.jl)
+    include(JET_TEST_PATH)
 else
-    Pkg.add(["GLMakie", "CairoMakie", "NetworkLayout", "Tyler", "Makie"])
-end
-
-if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
-    @info "skipping examples without plotting tests"
-else
-end
-
-if get(ENV,"JET_TEST","")!="true"
-    @info "skipping JET tests"
-else
-    Pkg.add("JET")
-end
-
-using QuantumSavory
-using TestItemRunner
-
-function testfilter(tags)
-    exclude = Symbol[]
-    if get(ENV,"QUANTUMSAVORY_DOWNGRADE_TEST","")=="true"
-        push!(exclude, :aqua)
-    end
-
-    if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")!="true"
-        push!(exclude, :plotting_cairo)
-        push!(exclude, :plotting_gl)
-        push!(exclude, :doctests)
-    else
-        return :plotting_cairo in tags || :plotting_gl in tags || :doctests in tags
-    end
-
-    if get(ENV,"QUANTUMSAVORY_EXAMPLES_PLOT_TEST","")!="true"
-        push!(exclude, :examples_plotting)
-    else
-        return :examples_plotting in tags
-    end
-
-    if get(ENV,"QUANTUMSAVORY_EXAMPLES_TEST","")!="true"
-        push!(exclude, :examples)
-    else
-        return :examples in tags
-    end
-
-    if get(ENV,"JET_TEST","")!="true"
-        push!(exclude, :jet)
-    else
-        return :jet in tags
-    end
-
-    return all(!in(exclude), tags)
-end
-
-
-println("Starting tests with $(Threads.nthreads()) threads out of `Sys.CPU_THREADS = $(Sys.CPU_THREADS)`...")
-@run_package_tests filter=ti->testfilter(ti.tags) verbose=true
-
-if get(ENV,"QUANTUMSAVORY_PLOT_TEST","")=="true"
-    import GLMakie
-    GLMakie.closeall() # to avoid errors when running headless
+    using QuantumSavory
+    runtests(QuantumSavory, args; testsuite, test_worker)
 end

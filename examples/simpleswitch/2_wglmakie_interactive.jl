@@ -150,7 +150,7 @@ end;
 # Serve the Makie app
 
 isdefined(Main, :server) && close(server);
-port = parse(Int, get(ENV, "QS_SIMPLESWITCH_PORT", "8888"))
+port = parse(Int, get(ENV, "QS_SIMPLESWITCH_PORT", "8893"))
 interface = get(ENV, "QS_SIMPLESWITCH_IP", "127.0.0.1")
 proxy_url = get(ENV, "QS_SIMPLESWITCH_PROXY", "")
 server = Bonito.Server(interface, port; proxy_url);
@@ -161,4 +161,6 @@ Bonito.route!(server, "/" => landing);
 
 @info "app server is running on http://$(interface):$(port) | proxy_url=`$(proxy_url)`"
 
-wait(server)
+if abspath(PROGRAM_FILE) == @__FILE__
+    wait(server)
+end
