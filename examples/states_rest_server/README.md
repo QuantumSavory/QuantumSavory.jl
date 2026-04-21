@@ -191,7 +191,7 @@ A symbolic representation of the noisy Bell pair state obtained in a Barrett-Kok
 - **m**: Parity bit from click pattern
 
 ### Genqo ZALM (Zero Added Loss Multiplexed)
-Heralded multiplexed cascaded source for generating Bell pairs. Uses the `Genqo.jl` package for calculations.
+Heralded multiplexed cascaded source for generating Bell pairs.
 
 **Key Parameters:**
 - **etab**: Bell state measurement transmissivity
