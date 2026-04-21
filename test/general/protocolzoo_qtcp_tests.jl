@@ -5,6 +5,36 @@ using Graphs
 using Random
 using Test
 
+function count_matching_tags!(mb, tag_type, pattern...)
+    n = 0
+    while !isnothing(querydelete!(mb, tag_type, pattern...))
+        n += 1
+    end
+    return n
+end
+
+function setup_qtcp_network(graph, regsize; classical_delay=1e-6, end_nodes=nothing, EndNodeControllerType=EndNodeController)
+    registers = [Register(regsize) for _ in vertices(graph)]
+    net = RegisterNet(graph, registers; classical_delay)
+    sim = get_time_tracker(net)
+
+    if isnothing(end_nodes)
+        end_nodes = collect(vertices(graph))
+    end
+
+    for node in end_nodes
+        @process EndNodeControllerType(net, node)()
+    end
+    for node in vertices(graph)
+        @process NetworkNodeController(net, node)()
+    end
+    for edge in edges(net)
+        @process LinkController(net, edge.src, edge.dst)()
+    end
+
+    return sim, net
+end
+
 @testset "QTCP" begin
 
 ##
@@ -249,6 +279,50 @@ end
     end
     @test isempty(mb1.buffer)
     @test isempty(mb5.buffer)
+end
+
+##
+
+@testset "Concurrent flows on a grid stay correctly matched" begin
+    graph = grid([3, 3])
+    sim, net = setup_qtcp_network(graph, 10; classical_delay=1e-6, end_nodes=[1, 3, 7, 9])
+
+    put!(net[1], Flow(src=1, dst=3, npairs=2, uuid=101))
+    put!(net[7], Flow(src=7, dst=9, npairs=2, uuid=202))
+
+    run(sim, 200.0)
+
+    mb1 = messagebuffer(net, 1)
+    mb3 = messagebuffer(net, 3)
+    mb7 = messagebuffer(net, 7)
+    mb9 = messagebuffer(net, 9)
+
+    @test count_matching_tags!(mb1, QTCPPairBegin, 101, ❓, ❓, ❓, ❓, ❓) == 2
+    @test count_matching_tags!(mb3, QTCPPairEnd, 101, ❓, ❓, ❓, ❓, ❓) == 2
+    @test count_matching_tags!(mb7, QTCPPairBegin, 202, ❓, ❓, ❓, ❓, ❓) == 2
+    @test count_matching_tags!(mb9, QTCPPairEnd, 202, ❓, ❓, ❓, ❓, ❓) == 2
+end
+
+##
+
+@testset "Concurrent flows on the same repeater chain stay correctly matched" begin
+    graph = grid([5])
+    sim, net = setup_qtcp_network(graph, 12; classical_delay=1e-6, end_nodes=[1, 2, 4, 5])
+
+    put!(net[1], Flow(src=1, dst=5, npairs=2, uuid=301))
+    put!(net[2], Flow(src=2, dst=4, npairs=2, uuid=302))
+
+    run(sim, 250.0)
+
+    mb1 = messagebuffer(net, 1)
+    mb2 = messagebuffer(net, 2)
+    mb4 = messagebuffer(net, 4)
+    mb5 = messagebuffer(net, 5)
+
+    @test count_matching_tags!(mb1, QTCPPairBegin, 301, ❓, ❓, ❓, ❓, ❓) == 2
+    @test count_matching_tags!(mb5, QTCPPairEnd, 301, ❓, ❓, ❓, ❓, ❓) == 2
+    @test count_matching_tags!(mb2, QTCPPairBegin, 302, ❓, ❓, ❓, ❓, ❓) == 2
+    @test count_matching_tags!(mb4, QTCPPairEnd, 302, ❓, ❓, ❓, ❓, ❓) == 2
 end
 
 ##

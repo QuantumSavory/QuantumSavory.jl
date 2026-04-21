@@ -6,7 +6,7 @@ using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol
 using QuantumSavory.CircuitZoo: LocalEntanglementSwap
 import ConcurrentSim
-using ConcurrentSim: Simulation, @yield, timeout, @process, now, Process
+using ConcurrentSim: Simulation, @yield, timeout, @process, now, Process, Resource
 import ResumableFunctions
 using ResumableFunctions: @resumable
 using DocStringExtensions
@@ -285,78 +285,86 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
     WINDOW = 3 # TODO per flow
 
     while true
-        # check if there is an approved flow and start it
-        flow = querydelete!(mb, Flow, node, ❓, ❓, ❓)
-        if !isnothing(flow)
-            _, _, dst, npairs, uuid = flow.tag
-            push!(current_flows, uuid)
-            qdatagrams_in_flight[uuid]   = 0
-            qdatagrams_sent[uuid]        = 0
-            pairs_left_to_fulfill[uuid] = npairs
-            destination[uuid]            = dst
-            @debug "[$(now(sim))]: flow $(uuid) started"
-        end
+        workwasdone = true
+        while workwasdone
+            workwasdone = false
 
-        # check if there are datagram acknowledgements
-        success = querydelete!(mb, QDatagramSuccess, ❓, ❓, ❓)
-        if !isnothing(success)
-            # TODO implement drop detection and window modification
-            _, flow_uuid, seq_num, start_time = success.tag
-            start_time = start_time::Float64
-            qdatagrams_in_flight[flow_uuid]   -= 1
-            pairs_left_to_fulfill[flow_uuid] -= 1
-
-            # Check if there are any LinkLevelReplyAtSource messages and turn them into QTCPPairBegin messages
-            link_reply = querydelete!(mb, LinkLevelReplyAtSource, ❓, ❓, ❓)
-            @assert !isnothing(link_reply) "No LinkLevelReplyAtSource message found after the success of flow $(flow_uuid), sequence $(seq_num) at node $(node)"
-            _, flow_uuid, seq_num, memory_slot = link_reply.tag
-            pair_begin = QTCPPairBegin(;
-                flow_uuid,
-                flow_src=node,
-                flow_dst=success.src,
-                seq_num,
-                memory_slot,
-                start_time
-            )
-            put!(net[node], pair_begin)
-            @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node"
-
-            # if we have fulfilled all pairs, remove the flow in every data structure
-            if pairs_left_to_fulfill[flow_uuid] == 0
-                delete!(current_flows, flow_uuid)
-                delete!(qdatagrams_in_flight, flow_uuid)
-                delete!(qdatagrams_sent, flow_uuid)
-                delete!(pairs_left_to_fulfill, flow_uuid)
-                delete!(destination, flow_uuid)
-                current_time = now(sim)
-                @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated"
+            # check if there is an approved flow and start it
+            flow = querydelete!(mb, Flow, node, ❓, ❓, ❓)
+            if !isnothing(flow)
+                workwasdone = true
+                _, _, dst, npairs, uuid = flow.tag
+                push!(current_flows, uuid)
+                qdatagrams_in_flight[uuid]   = 0
+                qdatagrams_sent[uuid]        = 0
+                pairs_left_to_fulfill[uuid] = npairs
+                destination[uuid]            = dst
+                @debug "[$(now(sim))]: flow $(uuid) started"
             end
-        end
 
-        # check if we just received a qdatagram for which we are the flow destination
-        qdatagram = querydelete!(mb, QDatagram, ❓, ❓, node, ❓, ❓, ❓)
-        if !isnothing(qdatagram)
-            # We need to generate a QDatagramSuccess message and send it back to the flow source
-            _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = qdatagram.tag
-            start_time = start_time::Float64
-            qdatagram_success = QDatagramSuccess(flow_uuid, seq_num, start_time)
-            put!(channel(net, node=>flow_src; permit_forward=true), qdatagram_success)
-            # TODO implement Pauli corrections
+            # check if there are datagram acknowledgements
+            success = querydelete!(mb, QDatagramSuccess, ❓, ❓, ❓)
+            if !isnothing(success)
+                workwasdone = true
+                # TODO implement drop detection and window modification
+                _, flow_uuid, seq_num, start_time = success.tag
+                start_time = start_time::Float64
+                qdatagrams_in_flight[flow_uuid]   -= 1
+                pairs_left_to_fulfill[flow_uuid] -= 1
 
-            # Check if there are any LinkLevelReplyAtHop messages and turn them into QTCPPairEnd messages
-            link_reply = querydelete!(mb, LinkLevelReplyAtHop, ❓, ❓, ❓)
-            @assert !isnothing(link_reply) "No LinkLevelReplyAtHop message found after the success of flow $(flow_uuid), sequence $(seq_num) at node $(node)"
-            _, flow_uuid, seq_num, memory_slot = link_reply.tag
-            pair_end = QTCPPairEnd(;
-                flow_uuid,
-                flow_src=0, # TODO we do not actually know the source node, it is not something that was kept track of
-                flow_dst=node,
-                seq_num,
-                memory_slot,
-                start_time
-            )
-            put!(net[node], pair_end)
-            @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination"
+                # Check if there are any LinkLevelReplyAtSource messages and turn them into QTCPPairBegin messages
+                link_reply = querydelete!(mb, LinkLevelReplyAtSource, flow_uuid, seq_num, ❓)
+                @assert !isnothing(link_reply) "No LinkLevelReplyAtSource message found after the success of flow $(flow_uuid), sequence $(seq_num) at node $(node)"
+                _, _, _, memory_slot = link_reply.tag
+                pair_begin = QTCPPairBegin(;
+                    flow_uuid,
+                    flow_src=node,
+                    flow_dst=success.src,
+                    seq_num,
+                    memory_slot,
+                    start_time
+                )
+                put!(net[node], pair_begin)
+                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node"
+
+                # if we have fulfilled all pairs, remove the flow in every data structure
+                if pairs_left_to_fulfill[flow_uuid] == 0
+                    delete!(current_flows, flow_uuid)
+                    delete!(qdatagrams_in_flight, flow_uuid)
+                    delete!(qdatagrams_sent, flow_uuid)
+                    delete!(pairs_left_to_fulfill, flow_uuid)
+                    delete!(destination, flow_uuid)
+                    current_time = now(sim)
+                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated"
+                end
+            end
+
+            # check if we just received a qdatagram for which we are the flow destination
+            qdatagram = querydelete!(mb, QDatagram, ❓, ❓, node, ❓, ❓, ❓)
+            if !isnothing(qdatagram)
+                workwasdone = true
+                # We need to generate a QDatagramSuccess message and send it back to the flow source
+                _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = qdatagram.tag
+                start_time = start_time::Float64
+                qdatagram_success = QDatagramSuccess(flow_uuid, seq_num, start_time)
+                put!(channel(net, node=>flow_src; permit_forward=true), qdatagram_success)
+                # TODO implement Pauli corrections
+
+                # Check if there are any LinkLevelReplyAtHop messages and turn them into QTCPPairEnd messages
+                link_reply = querydelete!(mb, LinkLevelReplyAtHop, flow_uuid, seq_num, ❓)
+                @assert !isnothing(link_reply) "No LinkLevelReplyAtHop message found after the success of flow $(flow_uuid), sequence $(seq_num) at node $(node)"
+                _, _, _, memory_slot = link_reply.tag
+                pair_end = QTCPPairEnd(;
+                    flow_uuid,
+                    flow_src=flow_src,
+                    flow_dst=node,
+                    seq_num,
+                    memory_slot,
+                    start_time
+                )
+                put!(net[node], pair_end)
+                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination"
+            end
         end
 
         # send qdatagrams
@@ -383,41 +391,48 @@ end
     mb = messagebuffer(net, node)
     datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int}}() # keyed by flow_uuid, seq_num; storing datagram tag and next hop
     while true
-        incoming_qdatagram = querydelete!(mb, QDatagram, ❓, ❓, !=(node), ❓, ❓, ❓)
-        if !isnothing(incoming_qdatagram)
-            _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = incoming_qdatagram.tag
-            nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
-            request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
-            datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop)
-            put!(mb, request)
-        end
+        workwasdone = true
+        while workwasdone
+            workwasdone = false
 
-        # Check for LinkLevelReply messages
-        # TODO have timeouts on how long to wait for a reply
-        llreply = querydelete!(mb, LinkLevelReply, ❓, ❓, ❓)
-        if !isnothing(llreply)
-            _, flow_uuid, seq_num, memory_slot = llreply.tag
-            # Find the corresponding QDatagram that matches this reply
-            queued_tag, nexthop = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
-            # Process the entanglement and forward the datagram
-            _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = queued_tag
-
-            # Perform entanglement swapping
-            if node == flow_src
-                put!(net[node], LinkLevelReplyAtSource(flow_uuid, seq_num, memory_slot))
-            else
-                # Find the corresponding LinkLevelReplyAtHop message from the previous hop (when the current node was the destination node)
-                llreply_at_destination = querydelete!(mb, LinkLevelReplyAtHop, ❓, ❓, ❓)
-                @assert !isnothing(llreply_at_destination) "No LinkLevelReplyAtHop message found for flow $(flow_uuid), sequence $(seq_num) at node $(node)"
-                _, _, _, memory_slot_at_destination = llreply_at_destination.tag
-                swapcircuit = LocalEntanglementSwap()
-                xmeas, zmeas = swapcircuit(net[node,memory_slot], net[node,memory_slot_at_destination])
-                # TODO: use xmeas and zmeas to add a correction to the datagram
+            incoming_qdatagram = querydelete!(mb, QDatagram, ❓, ❓, !=(node), ❓, ❓, ❓)
+            if !isnothing(incoming_qdatagram)
+                workwasdone = true
+                _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = incoming_qdatagram.tag
+                nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
+                request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
+                datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop)
+                put!(mb, request)
             end
 
-            # Forward the datagram to the next node in the path
-            new_qdatagram = QDatagram(flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time)
-            put!(channel(net, node=>nexthop; permit_forward=false), new_qdatagram)
+            # Check for LinkLevelReply messages
+            # TODO have timeouts on how long to wait for a reply
+            llreply = querydelete!(mb, LinkLevelReply, ❓, ❓, ❓)
+            if !isnothing(llreply)
+                workwasdone = true
+                _, flow_uuid, seq_num, memory_slot = llreply.tag
+                # Find the corresponding QDatagram that matches this reply
+                queued_tag, nexthop = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
+                # Process the entanglement and forward the datagram
+                _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = queued_tag
+
+                # Perform entanglement swapping
+                if node == flow_src
+                    put!(net[node], LinkLevelReplyAtSource(flow_uuid, seq_num, memory_slot))
+                else
+                    # Find the corresponding LinkLevelReplyAtHop message from the previous hop (when the current node was the destination node)
+                    llreply_at_destination = querydelete!(mb, LinkLevelReplyAtHop, flow_uuid, seq_num, ❓)
+                    @assert !isnothing(llreply_at_destination) "No LinkLevelReplyAtHop message found for flow $(flow_uuid), sequence $(seq_num) at node $(node)"
+                    _, _, _, memory_slot_at_destination = llreply_at_destination.tag
+                    swapcircuit = LocalEntanglementSwap()
+                    xmeas, zmeas = swapcircuit(net[node,memory_slot], net[node,memory_slot_at_destination])
+                    # TODO: use xmeas and zmeas to add a correction to the datagram
+                end
+
+                # Forward the datagram to the next node in the path
+                new_qdatagram = QDatagram(flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time)
+                put!(channel(net, node=>nexthop; permit_forward=false), new_qdatagram)
+            end
         end
 
         # Wait until we have received a message
@@ -426,45 +441,52 @@ end
 end
 
 
+@resumable function _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
+    @yield lock(link_resource)
+    entangler = EntanglerProt(;
+        sim, net,
+        nodeA, nodeB,
+        tag=nothing,
+        rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
+    )
+    # TODO have a timeout on how long to wait for an entangler to complete
+    proc = @process entangler()
+    _, slotA, _, slotB = @yield proc
+    unlock(link_resource)
+    # slotA is at nodeA, slotB is at nodeB.
+    # Map to originator/destination so each node gets its own local slot.
+    originator_slot, destination_slot = if originator_node == nodeA
+        slotA, slotB
+    else
+        slotB, slotA
+    end
+    put!(net[originator_node], LinkLevelReply(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=originator_slot))
+    put!(net[destination_node], LinkLevelReplyAtHop(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=destination_slot))
+end
+
 @resumable function (prot::LinkController)()
     (;sim, net, nodeA, nodeB) = prot
     mbA = messagebuffer(net, nodeA)
     mbB = messagebuffer(net, nodeB)
+    link_resource = Resource(sim, 1)
 
     while true
-        llrequestA = querydelete!(mbA, LinkLevelRequest, ❓, ❓, nodeB)
-        llrequest, originator_node, destination_node = if isnothing(llrequestA)
-            querydelete!(mbB, LinkLevelRequest, ❓, ❓, nodeA), nodeB, nodeA
-        else
-            llrequestA, nodeA, nodeB
-        end
-        if !isnothing(llrequest)
-            @assert originator_node != destination_node "LinkController $(nodeA) $(nodeB) has a link request with originator node $(originator_node) equal to the destination node $(destination_node)"
-            _, flow_uuid, seq_num, remote_node = llrequest.tag
-            entangler = EntanglerProt(;
-                sim, net,
-                nodeA, nodeB,
-                tag=nothing,
-                rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
-            )
-            # TODO have a timeout on how long to wait for an entangler to complete
-            proc = @process entangler()
-            _, slotA, _, slotB = @yield proc
-            # Create the reply with the flow information and memory slot
-            reply = LinkLevelReply(
-                flow_uuid=flow_uuid,
-                seq_num=seq_num,
-                memory_slot=slotA
-            )
-            reply_at_destination = LinkLevelReplyAtHop(
-                flow_uuid=flow_uuid,
-                seq_num=seq_num,
-                memory_slot=slotB
-            )
+        workwasdone = true
+        while workwasdone
+            workwasdone = false
 
-            # Put the reply in the appropriate node's message buffer
-            put!(net[originator_node], reply)
-            put!(net[destination_node], reply_at_destination)
+            llrequestA = querydelete!(mbA, LinkLevelRequest, ❓, ❓, nodeB)
+            llrequest, originator_node, destination_node = if isnothing(llrequestA)
+                querydelete!(mbB, LinkLevelRequest, ❓, ❓, nodeA), nodeB, nodeA
+            else
+                llrequestA, nodeA, nodeB
+            end
+            if !isnothing(llrequest)
+                workwasdone = true
+                @assert originator_node != destination_node "LinkController $(nodeA) $(nodeB) has a link request with originator node $(originator_node) equal to the destination node $(destination_node)"
+                _, flow_uuid, seq_num, remote_node = llrequest.tag
+                @process _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
+            end
         end
         # wait until we have received a message
         @yield (onchange(mbA) | onchange(mbB))
