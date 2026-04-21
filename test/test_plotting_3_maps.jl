@@ -10,7 +10,7 @@ for s in sizes
     push!(registers, Register(traits,bg))
 end
 network = RegisterNet(registers)
-map_axis = generate_map()
+fig, map_axis, map = generate_map()
 coords = [Point2f(-71, 42), Point2f(-111, 34), Point2f(-122, 37)]
 _, _, plt, netobs = registernetplot_axis(map_axis, network, registercoords=coords)
 save(File{format"PNG"}(mktemp()[1]), fig)
@@ -25,8 +25,10 @@ notify(netobs)
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 display(fig)
+close(map)
 
 fig = Figure()
-map_axis = generate_map(fig[1, 1])
+fig, map_axis, map = generate_map()
 _, _, plt, netobs = registernetplot_axis(map_axis, network, registercoords=coords)
 save(File{format"PNG"}(mktemp()[1]), fig)
+close(map)

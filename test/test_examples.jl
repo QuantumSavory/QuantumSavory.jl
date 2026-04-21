@@ -1,4 +1,9 @@
-@testitem "Examples - colorcentermodularcluster 1" tags=[:examples] begin
+using Logging
+logger = ConsoleLogger(Logging.Warn; meta_formatter=(args...)->(:black,"",""))
+
+with_logger(logger) do
+
+@testitem "Examples - colorcentermodularcluster 1" tags=[:examples_plotting] begin
     include("../examples/colorcentermodularcluster/1_time_to_connected.jl")
 end
 
@@ -40,7 +45,6 @@ end
 end
 
 @testitem "Examples - simpleswitch" tags=[:examples_plotting] begin
-    # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
     include("../examples/simpleswitch/1_interactive_visualization.jl")
 end
 
@@ -50,3 +54,5 @@ end
 @safetestset "Examples - repeatergrid 2a" tags=[:examples_plotting] begin
     include("../examples/repeatergrid/2a_sync_interactive_visualization.jl")
 end
+
+end # with_logger

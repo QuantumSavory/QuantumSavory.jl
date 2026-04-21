@@ -3,14 +3,16 @@ module Switches
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, AbstractProtocol
-using Graphs: edges, complete_graph, neighbors
-#using GraphsMatching: maximum_weight_matching # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
+using Graphs: nv, edges, complete_graph, neighbors, adjacency_matrix
+using GraphsMatching: maximum_weight_matching
 using Combinatorics: combinations
 using DocStringExtensions: TYPEDEF, TYPEDFIELDS
 using ConcurrentSim: @process, timeout, Simulation, Process
 #using ResumableFunctions: @resumable, @yield # TODO serious bug that makes it not work without full `using`
 using ResumableFunctions
 using Random
+using JuMP: optimizer_with_attributes, MOI
+using HiGHS: HiGHS
 
 export SimpleSwitchDiscreteProt, SwitchRequest
 
@@ -64,9 +66,6 @@ julia> let
 ```
 """
 function promponas_bruteforce_choice(M,N,backlog,eprobs) # TODO mark as public but unexported
-    @warn "The switch optimization routine is using a random placeholder optimization method due to issues with installing the BlossomV algorithm. Do not rely on this code to validate research results."
-    return randperm(N)[1:M]
-    #= TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
     best_weight = 0.0
     best_assignment = zeros(Int, M)
     graphs = [complete_graph(i) for i in 1:M] # preallocating them to avoid expensive allocations in the inner loop
@@ -91,10 +90,8 @@ function promponas_bruteforce_choice(M,N,backlog,eprobs) # TODO mark as public b
         end
     end
     return found ? best_assignment : nothing
-    =#
 end
 
-#= TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
 """
 Perform the match of clients in `entangled_nodes` based on matching weights from `backlog`.
 `g` and `w` are just preallocated buffers.
@@ -103,17 +100,17 @@ Perform the match of clients in `entangled_nodes` based on matching weights from
 Returns the weight of the best matching and the list of pairs of matched nodes.
 """
 function match_entangled_pattern(backlog, entangled_nodes, g, w)
+    nv(g)<=1 && return (;weight=0.0, mate=Tuple{Int,Int}[])
     # w .= 0 # not needed because g is a complete graph
     for (;src, dst) in edges(g)
         w[src,dst] = backlog[entangled_nodes[src], entangled_nodes[dst]]
     end
-    opt = optimizer_with_attributes(Cbc.Optimizer, "LogLevel" => 0, MOI.Silent() => true)
+    opt = optimizer_with_attributes(HiGHS.Optimizer, MOI.Silent() => true)
     match = capture_stdout() do; maximum_weight_matching(g,opt,w); end
     weight = match.weight
     mate = [(entangled_nodes[i],entangled_nodes[j]) for (i,j) in enumerate(match.mate) if i<j]
     return (;weight, mate)
 end
-=#
 
 """Some of the external optimizers we use create a ton of junk console output. This function redirects stdout to hide the junk."""
 function capture_stdout(f)
@@ -143,7 +140,7 @@ By default we use the `QuantumSavory.ProtocolZoo.Switches.promponas_bruteforce_c
 
 $TYPEDFIELDS
 """
-@kwdef struct SimpleSwitchDiscreteProt{AA} <: AbstractProtocol where {AA}
+@kwdef struct SimpleSwitchDiscreteProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation # TODO check that
     """a network graph of registers"""
@@ -159,23 +156,23 @@ $TYPEDFIELDS
     """how many rounds of this protocol to run (`-1` for infinite)"""
     rounds::Int = -1
     """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
-    assignment_algorithm::AA = promponas_bruteforce_choice
-    backlog::SymMatrix{Matrix{Int}}
-    function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, backlog)
+    assignment_algorithm::Function = promponas_bruteforce_choice
+    _backlog::SymMatrix{Matrix{Int}}
+    function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
         all(in(neighbors(net, switchnode)), clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be directly connected to the `switchnode`!"))
         0 < ticktock || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested protocol period `ticktock` must be positive!"))
         0 < rounds || rounds == -1 || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested number of rounds `rounds` must be positive or `-1` for infinite!"))
         length(clientnodes) == length(success_probs) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `success_probs` must have the same length as `clientnodes`!"))
         all(0 .<= success_probs .<= 1) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `success_probs` must be in the range [0,1]!"))
-        new{typeof(assignment_algorithm)}(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, backlog)
+        new(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
     end
 end
 
 function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs; kwrags...)
     n = length(clientnodes)
-    backlog = SymMatrix(zeros(Int, n, n))
-    SimpleSwitchDiscreteProt(;sim, net, switchnode, clientnodes=collect(clientnodes), success_probs=collect(success_probs), backlog, kwrags...)
+    _backlog = SymMatrix(zeros(Int, n, n))
+    SimpleSwitchDiscreteProt(;sim, net, switchnode, clientnodes=collect(clientnodes), success_probs=collect(success_probs), _backlog, kwrags...)
 end
 SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...) = SimpleSwitchDiscreteProt(get_time_tracker(net), net, switchnode, clientnodes, success_probs; kwrags...)
 
@@ -185,7 +182,7 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
     net = prot.net
     clientnodes = prot.clientnodes
     switchnode = prot.switchnode
-    backlog = prot.backlog
+    _backlog = prot._backlog
     n = length(clientnodes)
     m = nsubsystems(net[switchnode])
     reverseclientindex = Dict{Int,Int}(c=>i for (i,c) in enumerate(clientnodes))
@@ -201,7 +198,7 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
         _switch_read_backlog(prot, reverseclientindex)
 
         # pick a set of client nodes to which to assign local memory slots
-        assignment = prot.assignment_algorithm(m,n,backlog,prot.success_probs)
+        assignment = prot.assignment_algorithm(m,n,_backlog,prot.success_probs)
         if isnothing(assignment)
             @debug "Switch $switchnode found no useful memory slot assignments"
             @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
@@ -266,7 +263,7 @@ function _switch_read_backlog(prot, reverseclientindex)
         tag = switchrequest.tag
         i = reverseclientindex[tag[2]]
         j = reverseclientindex[tag[3]]
-        prot.backlog[i,j] += 1
+        prot._backlog[i,j] += 1
     end
 end
 
@@ -303,13 +300,10 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     end
     # get the maximum match for the actually connected nodes
     ne = length(entangled_clients)
-    if ne < 2 return nothing end
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
     @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" # (indexed as $entangled_clients_revindex)"
 
-    # TODO-MATCHING due to the dependence on BlossomV.jl this has trouble installing. See https://github.com/JuliaGraphs/GraphsMatching.jl/issues/14
-    # (;weight, mate) = match_entangled_pattern(prot.backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
-    mate = collect(zip(entangled_clients_revindex[1:2:end], entangled_clients_revindex[2:2:end]))
+    (;weight, mate) = match_entangled_pattern(prot._backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
 
     isempty(mate) && return nothing
     return mate
@@ -327,7 +321,7 @@ function _switch_run_swaps(prot, match)
             nodeL=prot.clientnodes[i], nodeH=prot.clientnodes[j],
             rounds=1
         )
-        prot.backlog[i,j] -= 1
+        prot._backlog[i,j] -= 1
         @process swapper()
     end
 end

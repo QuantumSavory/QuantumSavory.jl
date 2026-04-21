@@ -3,17 +3,24 @@ module QuantumSavoryMakie
 using QuantumSavory
 using Graphs
 using NetworkLayout
-import ConcurrentSim
-import Makie
-import Makie: Theme, Figure, Axis, Axis3,
+using ConcurrentSim: ConcurrentSim
+using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
-    scatter!, poly!, linesegments!, lines!, vlines!, mesh!,
+    scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
     xlims!, ylims!, zlims!,
+    xticks!, yticks!,
+    hidedecorations!, hidespines!,
     deregister_interaction!, interactions,
-    DataInspector, Slider, Colorbar
+    DataInspector, Slider, Colorbar, axislegend
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
+using QuantumSavory: compactstr
+using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
+
+using QuantumClifford: QuantumClifford
+using QuantumOpticsBase: QuantumOpticsBase, dm
+
 
 ##
 
@@ -387,5 +394,7 @@ end
 ##
 
 include("state_explorer.jl")
+include("show_state.jl")
+include("show_protocol.jl")
 
 end

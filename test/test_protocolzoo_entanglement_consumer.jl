@@ -39,9 +39,9 @@ for n in 3:30
     run(sim, 100)
 
 
-    for i in 1:length(econ.log)
-        @test econ.log[i][2] ≈ 1.0
-        @test econ.log[i][3] ≈ 1.0
+    for i in 1:length(econ._log)
+        @test econ._log[i][2] ≈ 1.0
+        @test econ._log[i][3] ≈ 1.0
     end
 end
 
@@ -76,10 +76,10 @@ for n in 3:30
 
     run(sim, 100)
 
-    @test econ.log[1][1] > 5 # the process should start after 5
-    for i in 1:length(econ.log)
-        @test econ.log[i][2] ≈ 1.0
-        @test econ.log[i][3] ≈ 1.0
+    @test econ._log[1][1] > 5 # the process should start after 5
+    for i in 1:length(econ._log)
+        @test econ._log[i][2] ≈ 1.0
+        @test econ._log[i][3] ≈ 1.0
     end
 end
 end

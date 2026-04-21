@@ -3,7 +3,7 @@ module StatesZoo
 using DocStringExtensions
 using QuantumSymbolics, QuantumOpticsBase
 using QuantumSymbolics: @withmetadata, Metadata
-import QuantumSymbolics: express_nolookup
+import QuantumSymbolics: express_nolookup, symbollabel
 
 import LinearAlgebra
 import LinearAlgebra: tr
@@ -11,14 +11,11 @@ import LinearAlgebra: tr
 export BarrettKokBellPair, BarrettKokBellPairW,
     stateexplorer, stateexplorer!, stateparameters, stateparametersrange
 
-if VERSION >= v"1.12.0-DEV.2047"
-    export MultiplexedCascadedBellPair, MultiplexedCascadedBellPairW
-end
-
 
 # TODO this abstract type should specify isexpr()==false
 abstract type AbstractTwoQubitState <: QuantumSymbolics.AbstractTwoQubitOp end #For representing density matrices
 Base.show(io::IO, x::AbstractTwoQubitState) = print(io, "$(symbollabel(x))")
+symbollabel(x::AbstractTwoQubitState) = "ρᵖᵃⁱʳ"
 
 _bspin = SpinBasis(1//2)
 
@@ -33,9 +30,7 @@ stateparametersrange(::Any) = ()
 
 include("barrett_kok.jl")
 
-if VERSION >= v"1.12.0-DEV.2047"
-    include("zalm/zalm.jl")
-end
+include("genqo.jl")
 
 include("state_explorer.jl")
 

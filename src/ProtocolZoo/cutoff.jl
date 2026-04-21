@@ -13,7 +13,7 @@ to act on such messages.
 
 $FIELDS
 """
-@kwdef struct CutoffProt{LT} <: AbstractProtocol where {LT<:Union{Float64,Nothing}}
+@kwdef struct CutoffProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
@@ -21,7 +21,7 @@ $FIELDS
     """the vertex index of the node on which the protocol is running"""
     node::Int
     """time period between successive queries on the node (`nothing` for queuing up)"""
-    period::LT = 0.1
+    period::Union{Float64,Nothing} = 0.1
     """time after which a slot is emptied"""
     retention_time::Float64 = 5.0
     """if `true`, synchronization messages are sent after a deletion to the node containing the other entangled qubit"""
@@ -31,6 +31,8 @@ end
 function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return CutoffProt(;sim, net, node, kwargs...)
 end
+
+CutoffProt(net::RegisterNet, node::Int; kwargs...) = CutoffProt(get_time_tracker(net), net, node; kwargs...)
 
 @resumable function (prot::CutoffProt)()
     reg = prot.net[prot.node]
@@ -70,9 +72,9 @@ end
             unlock(slot)
         end
         if isnothing(prot.period)
-            @yield onchange_tag(reg)
+            @yield onchange(reg, Tag)
         else
-            @yield timeout(prot.sim, prot.period)
+            @yield timeout(prot.sim, prot.period::Float64)
         end
     end
 end

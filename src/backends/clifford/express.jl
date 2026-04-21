@@ -14,7 +14,7 @@ express_qc_proj(::YGate) = QuantumClifford.projectY! # should be project*rand! i
 express_qc_proj(::ZGate) = QuantumClifford.projectZ! # should be project*rand! if ispadded()=true
 
 function observable(state::QuantumClifford.MixedDestabilizer, indices::Base.AbstractVecOrTuple{Int}, operation)
-    operation = express(operation, CliffordRepr(), UseAsObservable())
+    operation = express(operation, CliffordRepr(), UseAsObservable())::QuantumClifford.PauliOperator
     op = embed(QuantumClifford.nqubits(state), indices, operation)
     QuantumClifford.expect(op, state)
 end

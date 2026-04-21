@@ -1,5 +1,6 @@
 using QuantumSavory.StatesZoo: stateparametersrange, stateparameters
 import QuantumSavory.StatesZoo: stateexplorer, stateexplorer!
+import Printf: @sprintf
 
 const lls = express.([L0⊗L0,L1⊗L0,L0⊗L1,L1⊗L1])
 const bells = express.([L0⊗L0+L1⊗L1,L0⊗L0-L1⊗L1,L0⊗L1+L1⊗L0,L0⊗L1-L1⊗L0]) ./ sqrt(2)
@@ -13,12 +14,14 @@ function stateexplorer(S)
     sliders = length(stateparameters(S))
     rows = (sliders-1)÷PARAMCOLS+1
     yplot = 220
+    ytext = 40
     ysliders = 230*rows
-    y = yplot+ysliders
+    y = yplot+ytext+ysliders
     fig = Figure(size=(600,y))
     ret = stateexplorer!(fig,S)
     Makie.rowsize!(fig.layout, 1, Makie.Relative(yplot/y))
-    Makie.rowsize!(fig.layout, 2, Makie.Relative(ysliders/y))
+    Makie.rowsize!(fig.layout, 2, Makie.Relative(ytext/y))
+    Makie.rowsize!(fig.layout, 3, Makie.Relative(ysliders/y))
     ret
 end
 
@@ -26,19 +29,28 @@ function stateexplorer!(fig,S)
     params = stateparameters(S)
     paramdict = stateparametersrange(S)
 
-    if !isempty(params)
-        perfect = express(S((paramdict[p].good for p in params)...))
-        perfect = perfect/tr(perfect)
-    end
-
     colormap=:cyclic_mrybm_35_75_c68_n256
     colorrange=(-pi,pi)
     nbxpoints = 30
     εf = 0.0001
 
+    slowcompute = false
+    slowthreshold = 1.0/nbxpoints
+
+
+    if !isempty(params)
+        timed_result = @timed express(S((paramdict[p].good for p in params)...))
+        @info "timing first state computation" timed_result
+        slowcompute = timed_result.time > slowthreshold
+        @info "triggering slowcompute?" slowcompute
+        perfect = timed_result.value
+        perfect = perfect/tr(perfect)
+    end
+
     f3dρ = fig[1,1]
     fcb = f3dρ[1,3]
-    fparams = fig[2,1]
+    ftext = fig[2,1]
+    fparams = fig[3,1]
     #fparamsF = fig[3,1:2]
     #fparamsTr = fig[4,1:2]
     #fparamsS = fig[5,1:2]
@@ -55,14 +67,23 @@ function stateexplorer!(fig,S)
         slider = Slider(subfparam[3,1], range=xs, startvalue=good)
         push!(sliders, slider)
 
-        af = Axis(subfparam[1,1] , xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, ylabel = i==1 ? "F" : "")
-        at = Axis(subfparam[2,1], xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, xlabel=string(param), ylabel= i==1 ? "tr(ρ)" : "")
+        if !slowcompute
+        af = Axis(subfparam[1,1] , xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, ylabel = i==1 ? "F" : "", xticklabelrotation=pi/4*2/3)
+        at = Axis(subfparam[2,1], xticks=[min,max], yticks=([0,0.5,1],["0","½","1"]), xgridvisible=true, ygridvisible=true, xlabel=string(param), ylabel= i==1 ? "tr(ρ)" : "", xticklabelrotation=pi/4*2/3)
         xlims!(af, min, max)
         xlims!(at, min, max)
         push!(aparamsF, af)
         push!(aparamsTr, at)
+        else
+        at = Axis(subfparam[1:2,1], xticks=[min,max], xgridvisible=false, ygridvisible=false, xlabel=string(param), ylabel="", xticklabelrotation=pi/4*2/3)
+        xlims!(at, min, max)
+        Makie.hideydecorations!(at)
+        Makie.hidespines!(at, :t,:r,:l)
+        end
     end
+    slowcompute && Makie.Label(ftext[1,4], "This model is slow!\n Skipping parameter sweep plots.", tellheight=false, tellwidth=false)
 
+    if !slowcompute
     for (i, (aparamF, aparamTr, slider, param)) in enumerate(zip(aparamsF, aparamsTr, sliders, params))
         (;min,max,good) = paramdict[param]
         ε = (max-min)*εf
@@ -89,6 +110,7 @@ function stateexplorer!(fig,S)
         lines!(aparamTr, xs, Trs)
         vlines!(aparamTr, good, color=:gray80)
         scatter!(aparamTr, good, Trgood, marker=:x, color=:black)
+    end
     end
 
     for a in [aparamsF..., aparamsTr...]
@@ -126,10 +148,14 @@ function stateexplorer!(fig,S)
         ρsym = lift((s.value for s in sliders)...) do parameters...
             S(parameters...)
         end
-        ρ = lift(ρsym) do ρsym
-            ρ = express(ρsym)
-            return (ρ/tr(ρ))
+        ρnotnormalized = lift(ρsym) do ρsym
+            return express(ρsym)
         end
+        Tr = @lift abs(tr($ρnotnormalized))
+        ρ = lift(ρnotnormalized, Tr) do ρnotnormalized, Tr
+            return ρnotnormalized/Tr
+        end
+        F = @lift abs(tr($ρ*perfect'))
         ρdata = @lift $(ρ).data
         ρBdata = @lift (B*$ρ*B').data
         for ij in keys(ρdata[])
@@ -138,12 +164,16 @@ function stateexplorer!(fig,S)
         for ij in keys(ρdata[])
             mesh!(a3dρB, @lift Rect3f((ij[1],ij[2],0),(0.9,0.9,abs($(ρBdata)[ij])+1e-4)); color=(@lift angleifnotε($(ρBdata)[ij])), colorrange, colormap)
         end
+        textF = @lift "F="*@sprintf("%g",$F)
+        textTr = @lift "Tr="*@sprintf("%g",$Tr)
+        Makie.Label(ftext[1,1], textF, tellheight=false, tellwidth=false, halign=:left)
+        Makie.Label(ftext[1,2], textTr, tellheight=false, tellwidth=false, halign=:left)
     end
 
-    zlims!(a3dρ,0,1)
-    zlims!(a3dρB,0,1)
+    zlims!(a3dρ,-0.001,1.001)
+    zlims!(a3dρB,-0.001,1.001)
 
-    Colorbar(fcb; colorrange, colormap, ticks=([-π,0,π],["-π","0","π"]), label="phase")
+    Colorbar(fcb; colorrange, colormap, ticks=([-π,0,π],["-π","0","π"]), label="phase", tellheight=false)
 
     fig
 end

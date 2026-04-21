@@ -6,7 +6,7 @@ using DocStringExtensions
 export EntanglementSwap, LocalEntanglementSwap,
     Purify2to1, Purify2to1Node, Purify3to1, Purify3to1Node,
     PurifyStringent, PurifyStringentNode, PurifyExpedient, PurifyExpedientNode,
-    SDDecode, SDEncode
+    SDDecode, SDEncode, Fusion
 
 abstract type AbstractCircuit end
 
@@ -936,6 +936,42 @@ function (circuit::SDDecode)(rrefA, rrefB)
     b1 = project_traceout!(rrefA, Z)
     b2 = project_traceout!(rrefB, Z)
     return b1-1, b2-1
+end
+
+"""
+$TYPEDEF
+
+Fields:
+
+$FIELDS
+
+Performs the type-I fusion operation between two registers. The registers are assumed to be in the same fridge.
+"""
+struct Fusion <: AbstractCircuit
+end
+
+inputqubits(circuit::Fusion) = 4
+
+function (circuit::Fusion)(regA, regB, communication_slot, storage_slot)
+    if !isassigned(regA[storage_slot])
+        initialize!(regA[storage_slot], X1)
+    end
+    if !isassigned(regB[storage_slot])
+        initialize!(regB[storage_slot], X1)
+    end
+
+    apply!((regA[storage_slot], regA[communication_slot]), CPHASE)
+    apply!((regB[storage_slot], regB[communication_slot]), CPHASE)
+
+    mA = project_traceout!(regA[communication_slot], X)
+    mB = project_traceout!(regB[communication_slot], X)
+
+    if mA == 2
+        apply!(regB[storage_slot], Z)
+    end
+    if mB == 2
+        apply!(regA[storage_slot], Z)
+    end
 end
 
 end # module

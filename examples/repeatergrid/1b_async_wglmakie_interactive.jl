@@ -19,7 +19,7 @@ function prepare_singlerun()
     _, ax, _, obs = registernetplot_axis(fig[1:2,1], net;registercoords=layout)
 
     # the performance log part of the visualization
-    entlog = Observable(consumer.log) # Observables are used by Makie to update the visualization in real-time in an automated reactive way
+    entlog = Observable(consumer._log) # Observables are used by Makie to update the visualization in real-time in an automated reactive way
     ts = @lift [e[1] for e in $entlog]  # TODO this needs a better interface, something less cluncky, maybe also a whole Makie recipe
     tzzs = @lift [Point2f(e[1],e[2]) for e in $entlog]
     txxs = @lift [Point2f(e[1],e[3]) for e in $entlog]

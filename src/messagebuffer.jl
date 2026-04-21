@@ -1,3 +1,8 @@
+"""
+A a buffer for classical messages. Usually a part of a [`Register`](@ref) structure.
+
+See also: [`channel`](@ref), [`messagebuffer`](@ref)
+"""
 struct MessageBuffer{T}
     sim::Simulation
     net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
@@ -94,5 +99,21 @@ end
 end
 
 function Base.wait(mb::MessageBuffer)
+    Base.depwarn("wait(::MessageBuffer) is deprecated, use onchange(::MessageBuffer) instead", :wait)
     @process wait_process(mb.sim, mb)
+end
+
+"""
+Wait for changes to occur on a [`MessageBuffer`](@ref) or [`Register`](@ref). By specifying a second argument, you can filter what type of events are waited on.
+E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
+"""
+function onchange end
+
+function onchange(mb::MessageBuffer)
+    @process wait_process(mb.sim, mb)
+end
+
+function onchange(mb::MessageBuffer, ::Type{Tag})
+    # For now, this behaves the same as the basic version
+    onchange(mb)
 end

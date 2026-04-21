@@ -3,21 +3,25 @@ function random_index(arr)
 end
 
 
-function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high; agelimit=nothing)
+function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high, chooseslots; agelimit=nothing)
     reg = net[node]
-    low_nodes  = [
+    low_queryresults  = [
         n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
-    high_nodes = [
+    high_queryresults = [
         n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
 
-    (isempty(low_nodes) || isempty(high_nodes)) && return nothing
-    il = choose_low((n.tag[2] for n in low_nodes)) # TODO make [2] into a nice named property
-    ih = choose_high((n.tag[2] for n in high_nodes))
-    return (low_nodes[il], high_nodes[ih])
+    choosefunc = chooseslots isa Vector{Int} ? in(chooseslots) : chooseslots
+    low_queryresults = [qr for qr in low_queryresults if choosefunc(qr.slot.idx)]
+    high_queryresults = [qr for qr in high_queryresults if choosefunc(qr.slot.idx)]
+
+    (isempty(low_queryresults) || isempty(high_queryresults)) && return nothing
+    il = choose_low((qr.tag[2] for qr in low_queryresults)) # TODO make [2] into a nice named property
+    ih = choose_high((qr.tag[2] for qr in high_queryresults))
+    return (low_queryresults[il], high_queryresults[ih])
 end
 
 
@@ -32,25 +36,27 @@ which deletes qubits that are about to go past their cutoff/retention time.
 
 $TYPEDFIELDS
 """
-@kwdef struct SwapperProt{NL,NH,CL,CH,LT} <: AbstractProtocol where {NL<:Union{Int,<:Function,Wildcard}, NH<:Union{Int,<:Function,Wildcard}, CL<:Function, CH<:Function, LT<:Union{Float64,Nothing}}
+@kwdef struct SwapperProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation
     """a network graph of registers"""
     net::RegisterNet
     """the vertex of the node where swapping is happening"""
     node::Int
+    """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among swappable slots in the node"""
+    chooseslots::Union{Vector{Int},Function} = alwaystrue
     """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
-    nodeL::NL = ❓
+    nodeL::QueryArgs = ❓
     """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
-    nodeH::NH = ❓
+    nodeH::QueryArgs = ❓
     """the `nodeL` predicate can return many positive candidates; `chooseL` picks one of them (by index into the array of filtered `nodeL` results), defaults to a random pick `arr->rand(keys(arr))`; if you are working on a repeater chain a good choice is `argmin`, i.e. the node furthest to the "left" """
-    chooseL::CL = random_index
+    chooseL::Function = random_index
     """the `nodeH` counterpart for `chooseH`; if you are working on a repeater chain a good choice is `argmax`, i.e. the node furthest to the "right" """
-    chooseH::CH = random_index
+    chooseH::Function = random_index
     """fixed "busy time" duration immediately before starting entanglement generation attempts"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
-    retry_lock_time::LT = 0.1
+    retry_lock_time::Union{Float64,Nothing} = 0.1
     """how many rounds of this protocol to run (`-1` for infinite))"""
     rounds::Int = -1
     """what is the oldest a qubit should be to be picked for a swap (to avoid swapping with qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
@@ -62,18 +68,20 @@ function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return SwapperProt(;sim, net, node, kwargs...)
 end
 
+SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_tracker(net), net, node; kwargs...)
+
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH; agelimit=prot.agelimit)
+        qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH, prot.chooseslots; agelimit=prot.agelimit)
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
                 @debug "SwapperProt: no swappable qubits found. Waiting for tag change..."
-                @yield onchange_tag(prot.net[prot.node])
+                @yield onchange(prot.net[prot.node], Tag)
             else
                 @debug "SwapperProt: no swappable qubits found. Waiting a fixed amount of time..."
-                @yield timeout(prot.sim, prot.retry_lock_time)
+                @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
         end
