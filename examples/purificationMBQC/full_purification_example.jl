@@ -5,6 +5,7 @@ using ConcurrentSim
 using Graphs
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
+using QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation
 import QuantumClifford
 import QuantumOpticsBase
 

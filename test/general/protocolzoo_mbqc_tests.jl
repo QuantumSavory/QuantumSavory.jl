@@ -1,6 +1,7 @@
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
+using QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation
 using ConcurrentSim
 using ResumableFunctions
 using Graphs
