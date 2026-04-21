@@ -21,6 +21,7 @@
 - `HomodyneMeasurement` has been added for Gaussian-state measurements.
 - New assisted continuous-variable teleportation example.
 - New piecemaker GHZ-switch example.
+- `DepolarizedBellPair` added to `StatesZoo`, representing a depolarized Bell state `p|Φ⁺⟩⟨Φ⁺| + (1-p)I/4`, constructible from either the depolarization parameter `p` or fidelity `F`.
 
 ## v0.5.1 - 2025-07-14
 

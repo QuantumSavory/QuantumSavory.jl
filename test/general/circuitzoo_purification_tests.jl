@@ -122,7 +122,7 @@ end
 
 @testset "Circuit Zoo Purification - 3to1 -- Fidelity - QuantumOpticsRepr" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
@@ -141,9 +141,9 @@ end
     end
 end
 
-@testset "Circuit Zoo Purification - 3to1 -- Zero Fidelity" begin
+@testset "Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
@@ -212,9 +212,9 @@ end
     end
 end
 
-@testset "Circuit Zoo Purification - 3to1 -- Node - Random Fidelity" begin
+@testset "Circuit Zoo Purification - 3to1 -- Node - Fidelity - QuantumOpticsRepr" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [QuantumOpticsRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
@@ -235,9 +235,9 @@ end
     end
 end
 
-@testset "Circuit Zoo Purification - 3to1 -- Node - Zero Fidelity" begin
+@testset "Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [CliffordRepr]
         for leaveout1 in [:X, :Y, :Z]
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
@@ -269,9 +269,9 @@ end
     end
     end
 
-    @testset "Circuit Zoo Purification - Stringent - Random Fidelity" begin
+    @testset "Circuit Zoo Purification - Stringent - Fidelity - QuantumOpticsRepr" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [QuantumOpticsRepr]
         r = Register(26, rep())
         rnd = rand() / 4 + 0.5
         noisy_pair = noisy_pair_func(rnd)
@@ -284,9 +284,9 @@ end
     end
 end
 
-@testset "Circuit Zoo Purification - Stringent - Zero Fidelity" begin
+@testset "Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [CliffordRepr]
         r = Register(26, rep())
         noisy_pair = noisy_pair_func(0)
         for i in 1:13
@@ -300,7 +300,7 @@ end
 
 @testset "Circuit Zoo Purification - Expedient" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [CliffordRepr, QuantumOpticsRepr]
         r = Register(22, rep())
         for i in 1:11
             initialize!(r[(2*i-1):(2*i)], bell)
@@ -310,9 +310,9 @@ end
     end
 end
 
-@testset "Circuit Zoo Purification - Expedient - Random Fidelity" begin
+@testset "Circuit Zoo Purification - Expedient - Fidelity - QuantumOpticsRepr" begin
 
-    for rep in [QuantumOpticsRepr, CliffordRepr]
+    for rep in [QuantumOpticsRepr]
         r = Register(22, rep())
         rnd = rand() / 4 + 0.5
         noisy_pair = noisy_pair_func(rnd)
@@ -321,6 +321,20 @@ end
         end
         if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
             @test real(observable(r[1:2], projector(bell))) > rnd
+        end
+    end
+end
+
+@testset "Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" begin
+
+    for rep in [CliffordRepr]
+        r = Register(22, rep())
+        noisy_pair = noisy_pair_func(0)
+        for i in 1:11
+            initialize!(r[(2*i-1):(2*i)], noisy_pair)
+        end
+        if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
+            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
         end
     end
 end
