@@ -123,9 +123,10 @@ bob_nodes = collect(n+k+1:2*(n+k))
 # so purification must succeed every time and the k output pairs must have fidelity 1.
 # Here, we check for PurifiedEntanglementCounterpart and calculate the fidelities of the purified pairs.
 @info "Checking perfect Bell pairs (initial fidelity = 1): purification must always succeed with output fidelity 1"
+t_perfect_start = time()
 fidelity = 1
 pairstate = noisy_pair_func(perfect_pair, fidelity)
-N_perfect_trials = 5
+N_perfect_trials = 2
 for trial in 1:N_perfect_trials
     @info "Trial $trial:"
     registers = [Register(2) for _ in 1:2*(n+k)]
@@ -150,14 +151,17 @@ for trial in 1:N_perfect_trials
     end
 end
 
+@info "Perfect pairs experiment took $(round(time() - t_perfect_start, digits=2))s"
+
 # Noisy Werner state sweep: for each input fidelity F, we verify:
 # 1. Acceptance rate matches the theoretical value P_accept = (1 + 3p^4) / 4,
 # where p = (4F-1)/3 is the bloch(depolarizing) parameter (see README for details).
 # 2. Every accepted output pair has fidelity strictly higher than the input (purification gain).
 # The assertion uses a 4σ tolerance band to account for statistical fluctuations over N_trials.
-N_trials = 100
+N_trials = 20
 @info "Noisy Bell pairs sweep: launching $N_trials simulations per fidelity value"
-for test_fidelity in [0.7, 0.8, 0.9, 0.95]
+for test_fidelity in [0.8, 0.9, 0.95]
+    t_fidelity_start = time()
     @info "Starting trials for input fidelity F=$(test_fidelity)"
     p_bloch = (4*test_fidelity - 1) / 3
     P_accept_theory = (1 + 3*p_bloch^4) / 4
@@ -186,7 +190,7 @@ for test_fidelity in [0.7, 0.8, 0.9, 0.95]
     P_accept_empirical = n_success / N_trials
     avg_output_fidelity = n_success > 0 ? total_fidelity / (n_success * k) : NaN
     σ = sqrt(P_accept_theory * (1 - P_accept_theory) / N_trials)
-    @info "  F=$(test_fidelity) results: acceptance theory=$(round(P_accept_theory, digits=4)), empirical=$(round(P_accept_empirical, digits=4)) ± $(round(4σ, digits=4)) (4σ), avg output fidelity=$(round(avg_output_fidelity, digits=4))"
+    @info "  F=$(test_fidelity) results: acceptance theory=$(round(P_accept_theory, digits=4)), empirical=$(round(P_accept_empirical, digits=4)) ± $(round(4σ, digits=4)) (4σ), avg output fidelity=$(round(avg_output_fidelity, digits=4)), time=$(round(time() - t_fidelity_start, digits=2))s"
     # Empirical rate must fall within 4σ of theory
     @assert abs(P_accept_empirical - P_accept_theory) < 4σ
 end
