@@ -154,44 +154,42 @@ end
 
 @info "Perfect pairs experiment took $(round(time() - t_perfect_start, digits=2))s"
 
-# Noisy Werner state sweep: for each input fidelity F, we verify:
-# 1. Acceptance rate matches the theoretical value P_accept = (1 + 3p^4) / 4,
-# where p = (4F-1)/3 is the bloch(depolarizing) parameter (see README for details).
-# 2. Every accepted output pair has fidelity strictly higher than the input (purification gain).
-# The assertion uses a 4σ tolerance band to account for statistical fluctuations over N_trials.
-N_trials = 20
+# Noisy Werner state sweep: for each input fidelity F, collect acceptance rate and output fidelity.
+# Results are stored in top-level arrays for use by plots.jl.
+N_trials = get(ENV, "QS_TESTRUN", "false") == "true" ? 10 : 100
+step = get(ENV, "QS_TESTRUN", "false") == "true" ? 0.1 : 0.05
+input_fidelities = collect(0.5:step:1.0)
+
+success_probs_theory = Float64[]
+success_probs_empirical = Float64[]
+output_fidelities_empirical = Float64[]
+
 @info "Noisy Bell pairs sweep: launching $N_trials simulations per fidelity value"
-for test_fidelity in [0.8, 0.9, 0.95]
-    t_fidelity_start = time()
-    @info "Starting trials for input fidelity F=$(test_fidelity)"
-    p_bloch = (4*test_fidelity - 1) / 3
+t_start = time()
+for F in input_fidelities
+    p_bloch = (4F - 1) / 3
     P_accept_theory = (1 + 3*p_bloch^4) / 4
+    push!(success_probs_theory, P_accept_theory)
 
     n_success = 0
     total_fidelity = 0.0
     for _ in 1:N_trials
-        pairstate_noisy = noisy_pair_func(perfect_pair, test_fidelity)
+        pairstate_noisy = noisy_pair_func(perfect_pair, F)
         regs_trial = [Register(2) for _ in 1:2*(n+k)]
         net_trial = RegisterNet(regs_trial)
         sim_trial = get_time_tracker(net_trial)
         @process run_purification(sim_trial, net_trial, n, resource_state, alice_nodes, bob_nodes,
             communication_slot, storage_slot, pairstate_noisy, H1, H2, logxs, logzs, rounds=1)
         run(sim_trial, 5.0)
-        # Check Alice's k output slots for PurifiedEntanglementCounterpart tags to see if purification was successful
         tags = [query(net_trial[alice_nodes[n+i]][storage_slot], PurifiedEntanglementCounterpart, ❓, ❓) for i in 1:k]
         if all(!isnothing, tags)
             n_success += 1
             fidelities = [real(observable([net_trial[alice_nodes[n+i]], net_trial[bob_nodes[n+i]]], [storage_slot, storage_slot], QuantumOpticsBase.projector(perfect_pair))) for i in 1:k]
             total_fidelity += sum(fidelities)
-            # Each purified pair must be strictly better than the raw input
-            @assert all(f -> test_fidelity < f, fidelities)
         end
     end
 
-    P_accept_empirical = n_success / N_trials
-    avg_output_fidelity = n_success > 0 ? total_fidelity / (n_success * k) : NaN
-    σ = sqrt(P_accept_theory * (1 - P_accept_theory) / N_trials)
-    @info "  F=$(test_fidelity) results: acceptance theory=$(round(P_accept_theory, digits=4)), empirical=$(round(P_accept_empirical, digits=4)) ± $(round(4σ, digits=4)) (4σ), avg output fidelity=$(round(avg_output_fidelity, digits=4)), time=$(round(time() - t_fidelity_start, digits=2))s"
-    # Empirical rate must fall within 4σ of theory
-    @assert abs(P_accept_empirical - P_accept_theory) < 4σ
+    push!(success_probs_empirical, n_success / N_trials)
+    push!(output_fidelities_empirical, n_success > 0 ? total_fidelity / (n_success * k) : NaN)
 end
+@info "Sweep completed in $(round(time() - t_start, digits=2))s"

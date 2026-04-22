@@ -9,7 +9,7 @@ The protocol uses a [n, k, d] CSS code to distill k high-fidelity Bell pairs fro
 3. **Bell pair distribution**: Distribute noisy entangled pairs between Alice and Bob (`EntanglerProt`);
 4. **Purification**: Perform Bell measurements and syndrome-based error detection to identify successfully purified pairs (`PurifierBellMeasurements`, `MBQCPurificationTracker`).
 
-The `full_purification_example.jl` file runs the complete pipeline and verifies the output fidelity of the purified pairs using a [4, 2, 2] code.
+The `full_purification_example.jl` file runs the complete pipeline and verifies the output fidelity of the purified pairs using a [4, 2, 2] code. It also sweeps over a range of input fidelities, and `plots.jl` graphs the success probability and output fidelity against the input fidelity.
 
 Note that the ordering of steps shown in the example (e.g. long-range entanglement generation/graph state generation) is somewhat arbitrary and may vary depending on hardware constraints.
 
