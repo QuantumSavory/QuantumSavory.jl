@@ -9,6 +9,7 @@ import LinearAlgebra
 import LinearAlgebra: tr
 
 export BarrettKokBellPair, BarrettKokBellPairW,
+    DepolarizedBellPair,
     stateexplorer, stateexplorer!, stateparameters, stateparametersrange
 
 
@@ -29,6 +30,8 @@ stateparameters(::Any) = ()
 stateparametersrange(::Any) = ()
 
 include("barrett_kok.jl")
+
+include("depolarized.jl")
 
 include("genqo.jl")
 

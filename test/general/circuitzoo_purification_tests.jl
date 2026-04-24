@@ -148,7 +148,7 @@ end
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
                     r = Register(6, rep())
-                    noisy_pair = stab_noisy_pair_func(0)
+                    noisy_pair = noisy_pair_func(0)
                     initialize!(r[1:2], noisy_pair)
                     initialize!(r[3:4], noisy_pair)
                     initialize!(r[5:6], noisy_pair)
@@ -242,7 +242,7 @@ end
             for leaveout2 in [:X, :Y, :Z]
                 if (leaveout1 != leaveout2)
                     r = Register(6, rep())
-                    noisy_pair = stab_noisy_pair_func(0)
+                    noisy_pair = noisy_pair_func(0)
                     initialize!(r[1:2], noisy_pair)
                     initialize!(r[3:4], noisy_pair)
                     initialize!(r[5:6], noisy_pair)
@@ -288,7 +288,7 @@ end
 
     for rep in [CliffordRepr]
         r = Register(26, rep())
-        noisy_pair = stab_noisy_pair_func(0)
+        noisy_pair = noisy_pair_func(0)
         for i in 1:13
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
@@ -329,7 +329,7 @@ end
 
     for rep in [CliffordRepr]
         r = Register(22, rep())
-        noisy_pair = stab_noisy_pair_func(0)
+        noisy_pair = noisy_pair_func(0)
         for i in 1:11
             initialize!(r[(2*i-1):(2*i)], noisy_pair)
         end
