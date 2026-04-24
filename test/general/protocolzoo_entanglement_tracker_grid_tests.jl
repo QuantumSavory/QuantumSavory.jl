@@ -310,8 +310,8 @@ for v in vertices(net)
 end
 run(sim, 50)
 
-for i in 1:length(consumer._log)
-    @test consumer._log[i][2] ≈ 1.0
-    @test consumer._log[i][3] ≈ 1.0
+for log in consumer._log
+    @test log.obs1 ≈ 1.0
+    @test log.obs2 ≈ 1.0
 end
 end
