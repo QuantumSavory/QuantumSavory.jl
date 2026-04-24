@@ -529,6 +529,8 @@ include("switches.jl")
 using .Switches
 include("qtcp.jl")
 using .QTCP
+include("mbqc.jl")
+using .MBQCEntanglementDistillation
 
 include("show.jl")
 
