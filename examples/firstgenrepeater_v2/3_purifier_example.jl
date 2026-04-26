@@ -7,7 +7,7 @@ GLMakie.activate!()
 # Demo all three components, Entangler, Swapper, and Purifer working together
 ##
 
-sizes = [2,3,4,3,2]        # Number of qubits in each register
+sizes = [4, 4, 4]#[2,3,4,3,2]        # Number of qubits in each register
 T2 = 10.0                  # T2 dephasing time of all qubits
 F = 0.9                    # Fidelity of the raw Bell pairs
 entangler_wait_time = 0.1  # How long to wait if all qubits are busy before retrying entangling

@@ -84,7 +84,7 @@ const YY = Y⊗Y
     purifier_wait_time,# The wait time in case there are no pairs available for purification
     purifier_busy_time # The duration of the purification circuit
     )
-    round = 0
+    nround = 0
     while true
         pairs_of_bellpairs = findqubitstopurify(network, nodea, nodeb)
         if isnothing(pairs_of_bellpairs)
@@ -95,16 +95,16 @@ const YY = Y⊗Y
         qa1, qa2, qb1, qb2 = pairs_of_bellpairs
         @yield lock(qa1.slot) & lock(qa2.slot) & lock(qb1.slot) & lock(qb2.slot)
         @yield timeout(sim, purifier_busy_time)
-        purifyerror = (:X, :Z)[round%2+1]
+        purifyerror = (:X, :Z)[nround%2+1]
         purificationcircuit = Purify2to1(purifyerror)
         success = purificationcircuit(qa1.slot, qb1.slot, qa2.slot, qb2.slot)
         if !success
             untag!(qa1.slot, qa1.id)
             untag!(qb1.slot, qb1.id)
-            @info sim "failed purification at $(nodea):$(qa1.slot.idx)&$(qa2.slot.idx) and $(nodeb):$(qb1.slot.idx)&$(qb2.slot.idx)"
+            @info "$(round(now(sim), digits=2)): failed purification at $(nodea):$(qa1.slot.idx) & $(qa2.slot.idx) and $(nodeb):$(qb1.slot.idx) & $(qb2.slot.idx)"
         else
-            round += 1
-            @info "purification at $(nodea):$(qa1.slot.idx) $(nodeb):$(qb1.slot.idx) by sacrifice of $(nodea):$(qa2.slot.idx) $(nodeb):$(qb2.slot.idx)"
+            nround += 1
+            @info "$(round(now(sim), digits=2)): purification at $(nodea):$(qa1.slot.idx) $(nodeb):$(qb1.slot.idx) by sacrifice of $(nodea):$(qa2.slot.idx) $(nodeb):$(qb2.slot.idx)"
         end
         untag!(qa2.slot, qa2.id)
         untag!(qb2.slot, qb2.id)
