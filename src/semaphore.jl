@@ -10,11 +10,11 @@ end
 SimpleAsymmetricSemaphore(sim) = SimpleAsymmetricSemaphore(0, false, Resource(sim,1,level=1)) # start locked
 
 function Base.lock(s::SimpleAsymmetricSemaphore)
+    s.nbwaiters += 1
     return @process _lock(s.lock.env, s)
 end
 
 @resumable function _lock(sim, s::SimpleAsymmetricSemaphore)
-    s.nbwaiters += 1
     @yield lock(s.lock)
     s.nbwaiters -= 1
     if s.nbwaiters > 0
