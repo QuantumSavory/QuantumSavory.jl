@@ -3,7 +3,7 @@
 // Bad workaround for Documenter + require.js clashing with AnythingLLM.
 // Render the widget inside a sandboxed iframe overlay to isolate globals.
 (function() {
-  const embedId = "ea8c5483-1eea-4778-9f30-4dd18d1be921";
+  const embedId = "15228dab-01c6-4a06-9c87-a7e36f938e40";
   const apiBase = "https://anythingllm.krastanov.org/api/embed";
   const src = "https://anythingllm.krastanov.org/embed/anythingllm-chat-widget.min.js";
 
@@ -68,11 +68,11 @@ julia&gt; Tag(EntanglementHistory, 1, 2, 3, 4, 5)
 Was entangled to 1.2, but swapped with .5 which was entangled to 3.4</code></pre><p>See also: <a href="../API/#QuantumSavory.tag!-Tuple{RegRef, Any}"><code>tag!</code></a>, <a href="../API/#QuantumSavory.query-Union{Tuple{N}, Tuple{MessageBuffer, Vararg{Union{QuantumSavory.Wildcard, Int64, DataType, Function, Symbol}, N}}} where N"><code>query</code></a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/QuantumSavory/QuantumSavory.jl/blob/7cd295957b9ea681bbf9a55fe8171101951bb1ea/src/tags.jl#L3-L23">source</a></section></details></article><p>The currently supported concrete tag signatures are:</p><pre><code class="language-julia hljs">[tuple(m.sig.types[2:end]...) for m in methods(Tag) if m.sig.types[2] ∈ (Symbol, DataType)]</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">24-element Vector{Tuple{DataType, Vararg{DataType}}}:
  (Symbol, Float64)
  (Symbol, Float64, Float64)
+ (Symbol, Int64, Int64, Int64, Int64, Int64)
  (Symbol, Int64, Int64, Int64, Int64)
  (Symbol, Int64)
  (Symbol, Int64, Int64)
  (Symbol, Int64, Int64, Int64)
- (Symbol, Int64, Int64, Int64, Int64, Int64)
  (Symbol, Int64, Int64, Int64, Int64, Int64, Int64)
  (Symbol,)
  (DataType, Symbol, Int64, Int64)
@@ -253,4 +253,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../backendsimulator/">« Backend Simulators</a><a class="docs-footer-nextpage" href="../symbolics/">Symbolic Expressions Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 6 May 2026 04:27">Wednesday 6 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../backendsimulator/">« Backend Simulators</a><a class="docs-footer-nextpage" href="../symbolics/">Symbolic Expressions Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 6 May 2026 14:49">Wednesday 6 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
