@@ -2,7 +2,7 @@
 
 ## v0.6.1 - unreleased
 
-- **(fix)** Solving edge cases of deadlocks when simulataneously tagging and waiting on tags.
+- **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
 
 ## v0.6.0 - 2026-05-05
 
