@@ -1,6 +1,10 @@
 # News
 
-## v0.6.0 - unreleased
+## v0.6.1 - unreleased
+
+- **(fix)** Solving edge cases of deadlocks when simulataneously tagging and waiting on tags.
+
+## v0.6.0 - 2026-05-05
 
 - **(breaking)** Some fields of EntanglerProt were renamed for consistency with other protocols. More such renaming is to be expected, for consistency's sake.
 - **(breaking)** The `StatesZoo` now integrates with the `Genqo.jl` package, to provide high accuracy models of the ZALM entanglement source. The previous implementation of the ZALM source was removed.
