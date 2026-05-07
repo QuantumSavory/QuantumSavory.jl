@@ -163,6 +163,99 @@ end
     @test query(store, :other).tag == Tag(:other)
 end
 
+@testset "query_wait on a Register is non-consuming for simultaneous waiters" begin
+    @resumable function shared_tag_sender(sim, reg)
+        @yield timeout(sim, 1.0)
+        tag!(reg[1], :shared, 1)
+    end
+    @resumable function shared_tag_query_receiver(sim, reg, LOG, receiver_id)
+        result = @yield query_wait(reg, :shared, ❓)
+        push!(LOG, (receiver_id, result))
+    end
+
+    reg = Register(1)
+    net = RegisterNet([reg])
+    sim = get_time_tracker(net)
+    LOG = []
+
+    @process shared_tag_query_receiver(sim, reg, LOG, 1)
+    @process shared_tag_query_receiver(sim, reg, LOG, 2)
+    @process shared_tag_sender(sim, reg)
+    run(sim, 1.1)
+
+    @test length(LOG) == 2
+    @test LOG[1][2].id == LOG[2][2].id
+    @test query(reg, :shared, 1) !== nothing
+end
+
+@testset "querydelete_wait! on a Register consumes one tag per waiter" begin
+    @resumable function two_tag_sender(sim, reg)
+        @yield timeout(sim, 1.0)
+        tag!(reg[1], :consume, 1)
+        @yield timeout(sim, 1.0)
+        tag!(reg[1], :consume, 2)
+    end
+    @resumable function deleting_query_receiver(sim, reg, LOG, receiver_id)
+        result = @yield querydelete_wait!(reg, :consume, ❓)
+        push!(LOG, (receiver_id, result.tag[2], now(sim)))
+    end
+
+    reg = Register(1)
+    net = RegisterNet([reg])
+    sim = get_time_tracker(net)
+    LOG = []
+
+    @process deleting_query_receiver(sim, reg, LOG, 1)
+    @process deleting_query_receiver(sim, reg, LOG, 2)
+    @process two_tag_sender(sim, reg)
+
+    run(sim, 1.1)
+    @test length(LOG) == 1
+    @test query(reg, :consume, 1) === nothing
+
+    run(sim, 2.1)
+    @test length(LOG) == 2
+    @test sort!([entry[2] for entry in LOG]) == [1, 2]
+    @test query(reg, :consume, 2) === nothing
+end
+
+@testset "query_wait consumers can retry after a stale checked deletion" begin
+    @resumable function checked_delete_sender(sim, reg)
+        @yield timeout(sim, 1.0)
+        tag!(reg[1], :checked, 1)
+        @yield timeout(sim, 1.0)
+        tag!(reg[1], :checked, 2)
+    end
+    @resumable function checked_delete_receiver(sim, reg, LOG, receiver_id)
+        while true
+            result = @yield query_wait(reg, :checked, ❓)
+            deleted = querydelete!(result.slot, result.tag)
+            if !isnothing(deleted)
+                push!(LOG, (receiver_id, deleted.tag[2], now(sim)))
+                return
+            end
+        end
+    end
+
+    reg = Register(1)
+    net = RegisterNet([reg])
+    sim = get_time_tracker(net)
+    LOG = []
+
+    @process checked_delete_receiver(sim, reg, LOG, 1)
+    @process checked_delete_receiver(sim, reg, LOG, 2)
+    @process checked_delete_sender(sim, reg)
+
+    run(sim, 1.1)
+    @test length(LOG) == 1
+    @test query(reg, :checked, 1) === nothing
+
+    run(sim, 2.1)
+    @test length(LOG) == 2
+    @test sort!([entry[2] for entry in LOG]) == [1, 2]
+    @test query(reg, :checked, 2) === nothing
+end
+
 @testset "querywait wrapper inference" begin
     reg = Register(1)
     net = RegisterNet([reg])
