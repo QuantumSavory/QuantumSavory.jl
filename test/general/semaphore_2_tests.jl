@@ -48,3 +48,38 @@ import Base: lock, unlock
     @test semaphore.nbwaiters == 0
     @test !semaphore.unlocking
 end
+
+# Public-API companion to the direct semaphore probe above.
+#
+# The public contract is that a task already waiting on a register slot's tag
+# changes should wake when `tag!` happens at the same simulation timestamp. This
+# test intentionally avoids SimpleAsymmetricSemaphore and AsymmetricSemaphore so
+# it remains useful even if `onchange(::RegRef, Tag)` is later implemented with
+# a different synchronization primitive.
+@testset "register slot onchange wakes for a same-timestamp tag" begin
+    reg = Register(1)
+    slot = reg[1]
+    sim = get_time_tracker(reg)
+    log = Symbol[]
+
+    @resumable function watcher(sim)
+        @yield timeout(sim, 1)
+        push!(log, :wait_requested)
+        @yield onchange(slot, Tag)
+        push!(log, :wait_finished)
+    end
+
+    @resumable function tagger(sim)
+        @yield timeout(sim, 1)
+        tag!(slot, :ready)
+        push!(log, :tagged)
+    end
+
+    @process watcher(sim)
+    @process tagger(sim)
+
+    run(sim, 2)
+
+    @test log == [:wait_requested, :tagged, :wait_finished]
+    @test query(slot, :ready).tag == Tag(:ready)
+end

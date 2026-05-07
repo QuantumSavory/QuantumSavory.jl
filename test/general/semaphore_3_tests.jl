@@ -82,3 +82,65 @@ import Base: lock, unlock
         :second_wake,
     ]
 end
+
+# Public-API companion to the direct parent-semaphore probe above.
+#
+# This keeps the same essential interleaving, but expresses it as register slot
+# tag notifications. A watcher wakes for the first `tag!`, immediately waits
+# again on the same slot, and schedules a second same-timestamp `tag!` while
+# other watchers are still being woken by the first tag. This is the user-facing
+# behavior that must remain correct even if register tag waiting stops using
+# AsymmetricSemaphore internally.
+@testset "register slot onchange wakes after re-wait during tag cascade" begin
+    reg = Register(1)
+    slot = reg[1]
+    sim = get_time_tracker(reg)
+    log = Symbol[]
+
+    @resumable function second_tagger(sim)
+        @yield timeout(sim, 0)
+        tag!(slot, :second)
+        push!(log, :second_tag)
+    end
+
+    function rewatch_and_schedule_tag(sim)
+        p = onchange(slot, Tag)
+        @process second_tagger(sim)
+        return p
+    end
+
+    @resumable function rewatcher(sim)
+        @yield onchange(slot, Tag)
+        push!(log, :first_wake)
+        @yield rewatch_and_schedule_tag(sim)
+        push!(log, :second_wake)
+    end
+
+    @resumable function passive_watcher(sim, i)
+        @yield onchange(slot, Tag)
+        push!(log, Symbol(:passive_wake_, i))
+    end
+
+    @resumable function first_tagger(sim)
+        @yield timeout(sim, 1)
+        tag!(slot, :first)
+        push!(log, :first_tag)
+    end
+
+    @process rewatcher(sim)
+    @process passive_watcher(sim, 1)
+    @process passive_watcher(sim, 2)
+    @process first_tagger(sim)
+
+    run(sim, 2)
+
+    @test log == [
+        :first_tag,
+        :first_wake,
+        :passive_wake_1,
+        :second_tag,
+        :passive_wake_2,
+        :second_wake,
+    ]
+    @test query(slot, :second).tag == Tag(:second)
+end
