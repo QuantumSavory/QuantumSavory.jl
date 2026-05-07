@@ -88,15 +88,26 @@ SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_track
         # The compiler is not smart enough to figure out that qubit_pair_ is not nothing, so we need to tell it explicitly. A new variable name is needed due to @resumable.
         qubit_pair = qubit_pair_::NTuple{2, QueryOnRegResult}
 
-        (q1, id1, tag1) = qubit_pair[1].slot, qubit_pair[1].id, qubit_pair[1].tag
-        (q2, id2, tag2) = qubit_pair[2].slot, qubit_pair[2].id, qubit_pair[2].tag
+        (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
+        (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
 
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits` which queries only for unlocked qubits, but it is better to be defensive
-        untag!(q1, id1)
+
+        current1_ = query(q1, tag1; assigned=true)
+        current2_ = query(q2, tag2; assigned=true)
+        if isnothing(current1_) || isnothing(current2_)
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+        current1 = current1_::QueryOnRegResult
+        current2 = current2_::QueryOnRegResult
+
+        untag!(q1, current1.id)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
 
-        untag!(q2, id2)
+        untag!(q2, current2.id)
         # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
         tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
 
