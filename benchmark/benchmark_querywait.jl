@@ -18,10 +18,11 @@ SUITE["querywait"] = BenchmarkGroup(["querywait"])
 end
 
 @resumable function _querywait_waiter(sim, reg, tagsymbol, nwaits)
-    for _ in 1:nwaits
+    consumed = 0
+    while consumed < nwaits
         result = @yield query_wait(reg, tagsymbol, ❓, ❓)
-        # consume the tag so next iteration waits again
-        untag!(reg, result.id)
+        deleted = querydelete!(result.slot, result.tag)
+        isnothing(deleted) || (consumed += 1)
     end
 end
 
