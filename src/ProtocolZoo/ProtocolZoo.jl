@@ -494,6 +494,14 @@ permits_virtual_edge(::EntanglementConsumer) = true
         q1 = query1.slot
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
+        query1 = query(q1, prot.tag, prot.nodeB, q2.idx; locked=true, assigned=true)
+        query2 = query(q2, prot.tag, prot.nodeA, q1.idx; locked=true, assigned=true)
+        if isnothing(query1) || isnothing(query2)
+            @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): queries stale after locking, retrying."
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
 
         @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx)"
         untag!(q1, query1.id)
