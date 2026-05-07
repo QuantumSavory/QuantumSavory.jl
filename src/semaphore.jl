@@ -1,8 +1,48 @@
+"""Private edge-triggered change notification for `onchange`.
+
+Each call to `lock` attaches to the current generation. `unlock` rotates to a
+fresh generation before succeeding the old event, so tasks that wake and
+immediately wait again are waiting for the next change, not for the same
+notification cascade.
+"""
+mutable struct ChangeGeneration
+    const event::ConcurrentSim.Event
+    waiters::Int
+end
+ChangeGeneration(sim) = ChangeGeneration(ConcurrentSim.Event(sim), 0)
+
+mutable struct ChangeNotifier
+    current::ChangeGeneration
+end
+ChangeNotifier(sim::ConcurrentSim.Environment) = ChangeNotifier(ChangeGeneration(sim))
+
+function Base.lock(n::ChangeNotifier)
+    generation = n.current
+    generation.waiters += 1
+    return @process _wait_change(ConcurrentSim.environment(generation.event), generation)
+end
+
+@resumable function _wait_change(sim, generation::ChangeGeneration)
+    @yield generation.event
+end
+
+function unlock(n::ChangeNotifier)
+    generation = n.current
+    generation.waiters == 0 && return nothing
+
+    n.current = ChangeGeneration(ConcurrentSim.environment(generation.event))
+    ConcurrentSim.succeed(generation.event)
+    return nothing
+end
+
+nbwaiters(n::ChangeNotifier) = n.current.waiters
+
+
 """Multiple processes can wait on this semaphore for a permission to run given by another process.
 
 However, if a process is waiting on the semaphore and then immediately starts waiting on it again, it will cause an infinite loop,
 because the semaphore will continue unlocking processes until all waiting processes are unlocked."""
-mutable struct SimpleAsymmetricSemaphore # An equivalent, allocating, simpler implementation of this capability is in wait(::MessageBuffer)
+mutable struct SimpleAsymmetricSemaphore # Unused by public onchange paths; kept for now for internal tests/benchmarks.
     nbwaiters::Int
     unlocking::Bool
     parent::Any                       # back-pointer to the owning AsymmetricSemaphore (or nothing)
@@ -55,7 +95,7 @@ Unlock calls that arrive while a cascade is in progress are queued in
 `pending_unlocks` and replayed when the cascade ends, so wakeup signals are
 never silently dropped.
 """
-mutable struct AsymmetricSemaphore # An equivalent, allocating, simpler implementation of this capability is in wait(::MessageBuffer)
+mutable struct AsymmetricSemaphore # Unused by public onchange paths; kept for now for internal tests/benchmarks.
     current_semaphore::Int
     pending_unlocks::Int
     const semaphorepair::Tuple{SimpleAsymmetricSemaphore, SimpleAsymmetricSemaphore}

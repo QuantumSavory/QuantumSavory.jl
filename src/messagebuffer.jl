@@ -10,7 +10,7 @@ struct MessageBuffer{T}
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
     # `tag_waiter` is edge-triggered: it wakes tasks that are already blocked in
     # `wait`/`onchange`.
-    tag_waiter::AsymmetricSemaphore
+    tag_waiter::ChangeNotifier
     # `no_wait` counts arrivals that happened while nobody was waiting. This
     # preserves the long-standing MessageBuffer contract that a later
     # `wait`/`onchange` must wake immediately once per already-buffered arrival.
@@ -87,7 +87,7 @@ end
 
 function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
     sim = get_time_tracker(net)
-    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], AsymmetricSemaphore(sim), Ref(0))
+    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], ChangeNotifier(sim), Ref(0))
     for (;src, channel) in qs
         @process take_loop_mb(sim, channel, src, mb)
     end
