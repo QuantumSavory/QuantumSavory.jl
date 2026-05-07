@@ -76,9 +76,9 @@ function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     push!(mb.buffer, (;src,tag));
     if nwaiters == 0
         # Keep one queued wakeup per arrival when no task is actively blocked on
-        # the semaphore. Protocol code often queries the buffer first and only
-        # then calls `onchange`, so a pure semaphore would miss already-buffered
-        # work and can deadlock those protocols.
+        # the notifier. Protocol code often queries the buffer first and only
+        # then calls `onchange`, so a pure edge-triggered notifier would miss
+        # already-buffered work and can deadlock those protocols.
         mb.no_wait[] += 1
     else
         unlock(mb.tag_waiter)
