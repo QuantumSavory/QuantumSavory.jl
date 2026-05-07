@@ -33,6 +33,9 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 - Because they query first, they provide the same high-level behavior on
   `Register` and `MessageBuffer` even though raw `onchange(...)` semantics
   differ between those stores.
+- `query_wait` is not consuming. Multiple waiters can observe the same register
+  tag. If the caller will remove the tag, use `querydelete_wait!` or retry with
+  checked `querydelete!`.
 
 ## Event And Waiting Notes
 
@@ -63,6 +66,13 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 - Prefer documenting `query_wait` and `querydelete_wait!` as the default waiting
   API when a concrete predicate is already known.
 - When protocol code queries resources, check whether it should also constrain `locked=` or `assigned=`.
+- Treat register query results as snapshots. If code crosses `@yield`, `lock`,
+  `timeout`, `onchange`, or a process wait before deleting or acting on the
+  result, re-query under the relevant locks before `untag!`, `traceout!`,
+  `observable`, or replacement `tag!`.
+- Do not call `untag!(..., result.id)` on a result that may have crossed an
+  async boundary. Prefer `querydelete!`/`querydelete_wait!`, or check that a
+  fresh query still matches after acquiring locks.
 - Keep user docs honest about the current implementation. The current code does not support arbitrarily rich tag payloads.
 
 ## Source Files To Read

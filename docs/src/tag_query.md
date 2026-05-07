@@ -86,6 +86,25 @@ For message buffers:
 If you want to wait until a match exists, use `query_wait` or
 `querydelete_wait!` from the discrete-event layer.
 
+## Consuming Register Tags In Protocols
+
+Register query results are snapshots. They include a tag id and a slot, but
+another process can run after any `@yield`, lock acquisition, timeout, or
+message wait. By the time your protocol resumes, the tag may have been consumed
+or the slot may have changed.
+
+Use these rules in protocol code:
+
+- use `querydelete!` or `querydelete_wait!` when the tag is consumable state;
+- do not carry a `query` or `queryall` result across a yield and then call
+  `untag!` with the old id;
+- if you need to lock a slot before acting, acquire the lock and then re-query
+  the slot before deleting the tag or using the result;
+- for paired resources, re-check both sides before deleting either side.
+
+`query_wait` is useful for observing that a matching tag exists. It is not a
+claim on that tag.
+
 ## Filtering By Resource State
 
 Register queries can also filter by slot state:

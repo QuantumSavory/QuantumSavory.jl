@@ -86,11 +86,23 @@ end
 
     a = query(net[node], EntanglementCounterpart, alice, ❓)
     b = query(net[node], EntanglementCounterpart, charlie, ❓)
+    (isnothing(a) || isnothing(b)) && return nothing
 
-    @yield lock(a.slot) & lock(b.slot)
-    x, y = LocalEntanglementSwap()(a.slot, b.slot)
-    unlock(a.slot)
-    unlock(b.slot)
+    slot_a = a.slot
+    slot_b = b.slot
+    @yield lock(slot_a) & lock(slot_b)
+    a_current = query(slot_a, a.tag)
+    b_current = query(slot_b, b.tag)
+    if isnothing(a_current) || isnothing(b_current)
+        unlock(slot_a)
+        unlock(slot_b)
+        return nothing
+    end
+    untag!(slot_a, a_current.id)
+    untag!(slot_b, b_current.id)
+    x, y = LocalEntanglementSwap()(slot_a, slot_b)
+    unlock(slot_a)
+    unlock(slot_b)
     return x, y
 end
 ```
@@ -111,7 +123,9 @@ The most important wait sources are:
 - `lock(regref)` for resource acquisition.
 
 The `query_wait` helpers are especially useful because they combine the common
-"wait for change, query again, repeat" pattern into one call.
+"wait for change, query again, repeat" pattern into one call. `query_wait` is
+not a claim on a register tag. If the protocol will consume a tag, use
+`querydelete_wait!` or re-query after acquiring locks.
 
 ## Condition Combinators
 
