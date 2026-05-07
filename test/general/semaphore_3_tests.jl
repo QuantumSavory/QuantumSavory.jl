@@ -140,6 +140,7 @@ end
         :passive_wake_1,
         :second_tag,
         :passive_wake_2,
+        # passive_wake_2 will happen even if there was no second_tag
         :second_wake,
     ]
     @test query(slot, :second).tag == Tag(:second)
