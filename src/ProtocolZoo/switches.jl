@@ -313,16 +313,21 @@ end
 Assuming the pairs in `match` are entangled,
 perform swaps to connect them and decrement the backlog counter.
 """
+@resumable function _switch_run_accounted_swap(sim, prot, i, j)
+    swapper = SwapperProt( # TODO be more careful about how much simulated time this takes
+        sim=sim, net=prot.net, node=prot.switchnode,
+        nodeL=prot.clientnodes[i], nodeH=prot.clientnodes[j],
+        rounds=1
+    )
+    proc = @process swapper()
+    @yield proc
+    prot._backlog[i,j] -= 1
+end
+
 function _switch_run_swaps(prot, match)
     @debug "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])"
     for (i,j) in match
-        swapper = SwapperProt( # TODO be more careful about how much simulated time this takes
-            sim=prot.sim, net=prot.net, node=prot.switchnode,
-            nodeL=prot.clientnodes[i], nodeH=prot.clientnodes[j],
-            rounds=1
-        )
-        prot._backlog[i,j] -= 1
-        @process swapper()
+        @process _switch_run_accounted_swap(prot.sim, prot, i, j)
     end
 end
 
