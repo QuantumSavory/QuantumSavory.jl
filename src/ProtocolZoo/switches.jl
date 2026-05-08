@@ -321,6 +321,11 @@ perform swaps to connect them and decrement the backlog counter.
     )
     proc = @process swapper()
     @yield proc
+    # TODO it is possible that an external event has
+    # destroyed i and j, in which case this proc
+    # will hang and potentially restart in the next
+    # round of the switch, messing up other processes started
+    # in that round.
     prot._backlog[i,j] -= 1
 end
 

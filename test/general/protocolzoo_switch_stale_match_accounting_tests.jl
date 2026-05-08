@@ -8,6 +8,12 @@ using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory
 const Switches = QuantumSavory.ProtocolZoo.Switches
 
 @testset "ProtocolZoo Switch stale match accounting" begin
+    # This test is extremely contrived:
+    # It tests that the swapper called by the switch is resilient to a situation
+    # in which an async unrelated process has destroyed the qubits that were about to be swappe.
+    # However, permitting situation like that in the first place would be a failure of
+    # protocol parameter choice and a failure to properly lock qubits.
+
     net = RegisterNet(star_graph(3), [Register(2), Register(1), Register(1)])
     sim = get_time_tracker(net)
     switch = SimpleSwitchDiscreteProt(net, 1, [2, 3], [1.0, 1.0]; ticktock=1.0, rounds=1)
