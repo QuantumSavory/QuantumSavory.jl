@@ -8,6 +8,22 @@ function nondistilled(reg::Register)
 end
 
 """
+Pick two distinct random elements from a vector of candidate Bell pairs.
+
+This is the default `choose_pairs` strategy for [`BBPSSWProt`](@ref): given
+the list of Bell pairs available for distillation, return a tuple
+`(distilled, sacrificed)` of two distinct pairs chosen uniformly at random.
+The caller is responsible for ensuring `length(pairs) >= 2`.
+"""
+function random_pair(pairs)
+    n = length(pairs)
+    i = rand(1:n)
+    j = rand(1:(n - 1))
+    j >= i && (j += 1)
+    return (pairs[i], pairs[j])
+end
+
+"""
 $TYPEDEF
 
 This tag is used to mark a register slot when the stored qubit
@@ -63,6 +79,8 @@ See also: [`Purify2to1`](@ref)
     chooseslotsA::Union{Vector{Int}, Function}
     """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node"""
     chooseslotsB::Union{Vector{Int}, Function}
+    """policy for selecting which two Bell pairs to consume in each distillation round. Receives a `Vector` of valid candidate pairs (each a `Tuple{QueryOnRegResult, QueryOnRegResult}` for the slot at `nodeA` and at `nodeB`) and returns a tuple `(distilled, sacrificed)` of two distinct pairs from that vector. Defaults to [`random_pair`](@ref); override to implement strategies like oldest/youngest, highest fidelity, etc."""
+    choose_pairs::Function = random_pair
     """what is the oldest a qubit should be to be picked for distillation (to avoid distilling qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
     agelimit::Union{Nothing, Float64} = nothing
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
@@ -120,7 +138,7 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
     rounds = prot.rounds
     round = 1
     while rounds != 0
-        two_qubit_pairs_ = finddistillablequbits(prot.net, prot.nodeA, prot.nodeB, prot.chooseslotsA, prot.chooseslotsB; agelimit=prot.agelimit)
+        two_qubit_pairs_ = finddistillablequbits(prot.net, prot.nodeA, prot.nodeB, prot.chooseslotsA, prot.chooseslotsB, prot.choose_pairs; agelimit=prot.agelimit)
         if isnothing(two_qubit_pairs_)
             if isnothing(prot.retry_lock_time)
                 @debug "BBPSSWProt: no distillable qubits found. Waiting for tag change..."
@@ -185,7 +203,7 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
     
 end
 
-function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB; agelimit=nothing)
+function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB, choose_pairs; agelimit=nothing)
     regA = net[nodeA]
     regB = net[nodeB]
     low_queryresults  = [
@@ -201,23 +219,21 @@ function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB; ag
     choosefuncB = chooseslotsB isa Vector{Int} ? in(chooseslotsB) : chooseslotsB
     low_queryresults = [qr for qr in low_queryresults if choosefuncA(qr.slot.idx)]
     high_queryresults = [qr for qr in high_queryresults if choosefuncB(qr.slot.idx)]
-    
+
     (isempty(low_queryresults) || isempty(high_queryresults)) && return nothing
     @debug "Found $(length(low_queryresults)) candidate qubits in node $nodeA and $(length(high_queryresults)) candidate qubits in node $nodeB for distillation."
-    distilled = nothing
-    sacrificed = nothing
-    res = nothing
-    # iterate through low_queryresults list and find two matching pairs (4 qubits total). TODO: make this search customizable, e.g., oldest/youngest qubits, highest fidelity, random, ...
-    for il in eachindex(low_queryresults)
-        for ih in eachindex(high_queryresults)
-            if low_queryresults[il].slot.idx == high_queryresults[ih].tag[3]
-                sacrificed = !isnothing(distilled) ? (low_queryresults[il], high_queryresults[ih]) : sacrificed
-                distilled = isnothing(distilled) ? (low_queryresults[il], high_queryresults[ih]) : distilled
+
+    # Build the list of valid Bell pairs (low_qr, high_qr) where the two slots are entangled with each other
+    pairs = NTuple{2, QueryOnRegResult}[]
+    for low_qr in low_queryresults
+        for high_qr in high_queryresults
+            if low_qr.slot.idx == high_qr.tag[3]
+                push!(pairs, (low_qr, high_qr))
                 break
             end
         end
-        !isnothing(sacrificed) && break
     end
 
-    return isnothing(distilled) || isnothing(sacrificed) ? nothing : (distilled, sacrificed)
+    length(pairs) < 2 && return nothing
+    return choose_pairs(pairs)::NTuple{2, NTuple{2, QueryOnRegResult}}
 end
