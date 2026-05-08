@@ -16,6 +16,6 @@ using Graphs
     mb1 = messagebuffer(net, 1)
     mb5 = messagebuffer(net, 5)
 
-    @test count_tags(mb1, QTCPPairBegin) == 15
-    @test count_tags(mb5, QTCPPairEnd) == 15
+    @test count_tags!(mb1, QTCPPairBegin) == 15
+    @test count_tags!(mb5, QTCPPairEnd) == 15
 end

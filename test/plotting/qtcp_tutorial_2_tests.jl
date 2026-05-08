@@ -1,9 +1,10 @@
 using Test
 
-@testset "Examples - qtcp tutorial 2" begin
+@testset "Plotting - qtcp tutorial 2" begin
     tmpdir = mktempdir()
     output_path = joinpath(tmpdir, "qtcp_chain.mp4")
     ENV["QSAVORY_QTCP_TUTORIAL_2_OUTPUT"] = output_path
+    ENV["QSAVORY_QTCP_TUTORIAL_2_STEP"] = "0.5"
     try
         include("../../examples/qtcp_tutorial/2_chain_visualization.jl")
 
@@ -12,5 +13,6 @@ using Test
         @test isfile(output_path)
     finally
         delete!(ENV, "QSAVORY_QTCP_TUTORIAL_2_OUTPUT")
+        delete!(ENV, "QSAVORY_QTCP_TUTORIAL_2_STEP")
     end
 end

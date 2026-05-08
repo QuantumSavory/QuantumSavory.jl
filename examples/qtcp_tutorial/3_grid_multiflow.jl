@@ -38,7 +38,7 @@ put!(net[n_nodes - n_cols + 1], flow2)
 run(sim, 300.0)
 
 # --- Verify results ---
-function count_tags(mb, tag_type)
+function count_tags!(mb, tag_type)
     n = 0
     while !isnothing(querydelete!(mb, tag_type, ❓, ❓, ❓, ❓, ❓, ❓))
         n += 1
@@ -51,18 +51,18 @@ mb4   = messagebuffer(net, n_cols)
 mb13  = messagebuffer(net, n_nodes - n_cols + 1)
 mb16  = messagebuffer(net, n_nodes)
 
-flow1_src = count_tags(mb1, QTCPPairBegin)
-flow1_dst = count_tags(mb4, QTCPPairEnd)
-flow2_src = count_tags(mb13, QTCPPairBegin)
-flow2_dst = count_tags(mb16, QTCPPairEnd)
+flow1_src = count_tags!(mb1, QTCPPairBegin)
+flow1_dst = count_tags!(mb4, QTCPPairEnd)
+flow2_src = count_tags!(mb13, QTCPPairBegin)
+flow2_dst = count_tags!(mb16, QTCPPairEnd)
 
-println("\n=== Flow 1: node 1 → node $(n_cols) ===")
-println("QTCPPairBegin at src: $flow1_src")
-println("QTCPPairEnd at dst:   $flow1_dst")
+@info "=== Flow 1: node 1 → node $(n_cols) ==="
+@info "QTCPPairBegin at src: $flow1_src"
+@info "QTCPPairEnd at dst:   $flow1_dst"
 
-println("\n=== Flow 2: node $(n_nodes-n_cols+1) → node $(n_nodes) ===")
-println("QTCPPairBegin at src: $flow2_src")
-println("QTCPPairEnd at dst:   $flow2_dst")
+@info "=== Flow 2: node $(n_nodes-n_cols+1) → node $(n_nodes) ==="
+@info "QTCPPairBegin at src: $flow2_src"
+@info "QTCPPairEnd at dst:   $flow2_dst"
 
 @assert flow1_src == flow1.npairs "Expected $(flow1.npairs) pairs at flow 1 source, got $flow1_src"
 @assert flow1_dst == flow1.npairs "Expected $(flow1.npairs) pairs at flow 1 destination, got $flow1_dst"

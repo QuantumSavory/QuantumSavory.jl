@@ -42,7 +42,7 @@ run(sim, 200.0)
 mb_src = messagebuffer(net, 1)
 mb_dst = messagebuffer(net, n_nodes)
 
-function count_delivered(mb, tag_type)
+function count_delivered!(mb, tag_type)
     n = 0
     while !isnothing(querydelete!(mb, tag_type, ❓, ❓, ❓, ❓, ❓, ❓))
         n += 1
@@ -50,16 +50,16 @@ function count_delivered(mb, tag_type)
     return n
 end
 
-n_delivered_src = count_delivered(mb_src, QTCPPairBegin)
-n_delivered_dst = count_delivered(mb_dst, QTCPPairEnd)
+n_delivered_src = count_delivered!(mb_src, QTCPPairBegin)
+n_delivered_dst = count_delivered!(mb_dst, QTCPPairEnd)
 
-println("=== QTCP Chain Simulation Results ===")
-println("Chain length:       $n_nodes nodes")
-println("Requested pairs:    $(flow.npairs)")
-println("Delivered at source: $n_delivered_src")
-println("Delivered at dest:   $n_delivered_dst")
-println("Simulation time:     $(round(now(sim), digits=2))")
+@info "=== QTCP Chain Simulation Results ==="
+@info "Chain length:       $n_nodes nodes"
+@info "Requested pairs:    $(flow.npairs)"
+@info "Delivered at source: $n_delivered_src"
+@info "Delivered at dest:   $n_delivered_dst"
+@info "Simulation time:     $(round(now(sim), digits=2))"
 
 @assert n_delivered_src == flow.npairs "Expected $(flow.npairs) pairs at source, got $n_delivered_src"
 @assert n_delivered_dst == flow.npairs "Expected $(flow.npairs) pairs at destination, got $n_delivered_dst"
-println("\nAll $(flow.npairs) Bell pairs successfully delivered!")
+@info "All $(flow.npairs) Bell pairs successfully delivered!"

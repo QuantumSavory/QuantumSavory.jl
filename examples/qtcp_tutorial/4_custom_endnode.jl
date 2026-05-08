@@ -190,7 +190,7 @@ end
 # Run a comparison: default vs. custom controller on a 5-node chain
 # ====================================================================
 
-function count_tags(mb, tag_type)
+function count_tags!(mb, tag_type)
     n = 0
     while !isnothing(querydelete!(mb, tag_type, ❓, ❓, ❓, ❓, ❓, ❓))
         n += 1
@@ -207,8 +207,8 @@ function run_and_measure_nth_delivery(sim, net, src, dst; npairs, milestone_pair
 
     for t in step:step:deadline
         run(sim, t)
-        delivered_src += count_tags(mb_src, QTCPPairBegin)
-        delivered_dst += count_tags(mb_dst, QTCPPairEnd)
+        delivered_src += count_tags!(mb_src, QTCPPairBegin)
+        delivered_dst += count_tags!(mb_dst, QTCPPairEnd)
 
         if isnothing(milestone_time) && delivered_src >= milestone_pair && delivered_dst >= milestone_pair
             milestone_time = now(sim)
@@ -223,7 +223,7 @@ function run_and_measure_nth_delivery(sim, net, src, dst; npairs, milestone_pair
 end
 
 function main()
-    println("=== Default EndNodeController (fixed window = 3) ===")
+    @info "=== Default EndNodeController (fixed window = 3) ==="
     begin
         graph = grid([5]); regsize = 20
         sim, net = simulation_setup(graph, regsize; T2=100.0)
@@ -231,11 +231,11 @@ function main()
         put!(net[1], flow)
         n_src, n_dst, milestone_time = run_and_measure_nth_delivery(sim, net, 1, 5; npairs=flow.npairs, milestone_pair=15)
         @assert !isnothing(milestone_time) "The 15th pair was never delivered for the default controller"
-        println("  Delivered: src=$n_src, dst=$n_dst / 15")
-        println("  15th pair delivered at t ≈ $(round(milestone_time, digits=1))")
+        @info "  Delivered: src=$n_src, dst=$n_dst / 15"
+        @info "  15th pair delivered at t ≈ $(round(milestone_time, digits=1))"
     end
 
-    println("\n=== Custom EndNodeController (window 1 → 5, growth every 2 pairs) ===")
+    @info "=== Custom EndNodeController (window 1 → 5, growth every 2 pairs) ==="
     begin
         graph = grid([5]); regsize = 20
         sim, net = simulation_setup(graph, regsize; T2=100.0, EndNodeControllerType=CustomEndNodeController)
@@ -243,8 +243,8 @@ function main()
         put!(net[1], flow)
         n_src, n_dst, milestone_time = run_and_measure_nth_delivery(sim, net, 1, 5; npairs=flow.npairs, milestone_pair=15)
         @assert !isnothing(milestone_time) "The 15th pair was never delivered for the custom controller"
-        println("  Delivered: src=$n_src, dst=$n_dst / 15")
-        println("  15th pair delivered at t ≈ $(round(milestone_time, digits=1))")
+        @info "  Delivered: src=$n_src, dst=$n_dst / 15"
+        @info "  15th pair delivered at t ≈ $(round(milestone_time, digits=1))"
     end
 end
 

@@ -31,7 +31,10 @@ ax.title = "QTCP on a 5-node repeater chain"
 display(fig)
 
 # --- Run and animate ---
-step_ts = range(0, 25, step=0.05)
+# Frame step is configurable via ENV so the example renders smoothly when
+# run interactively, but tests can request a coarser step to keep CI fast.
+step_size = parse(Float64, get(ENV, "QSAVORY_QTCP_TUTORIAL_2_STEP", "0.05"))
+step_ts = range(0, 25, step=step_size)
 output_path = get(ENV, "QSAVORY_QTCP_TUTORIAL_2_OUTPUT", "qtcp_chain.mp4")
 
 # The `record` function runs the simulation in steps, updating the visualization at each step.
@@ -42,7 +45,7 @@ record(fig, output_path, step_ts; framerate=30, visible=true) do t
     notify(obs)
 end
 
-function count_delivered(mb, tag_type)
+function count_delivered!(mb, tag_type)
     n = 0
     while !isnothing(querydelete!(mb, tag_type, ❓, ❓, ❓, ❓, ❓, ❓))
         n += 1
@@ -52,11 +55,11 @@ end
 
 mb_src = messagebuffer(net, 1)
 mb_dst = messagebuffer(net, n_nodes)
-n_delivered_src = count_delivered(mb_src, QTCPPairBegin)
-n_delivered_dst = count_delivered(mb_dst, QTCPPairEnd)
+n_delivered_src = count_delivered!(mb_src, QTCPPairBegin)
+n_delivered_dst = count_delivered!(mb_dst, QTCPPairEnd)
 
 @assert n_delivered_src == flow.npairs "Expected $(flow.npairs) pairs at source, got $n_delivered_src"
 @assert n_delivered_dst == flow.npairs "Expected $(flow.npairs) pairs at destination, got $n_delivered_dst"
 @assert isfile(output_path) "Expected visualization output $(output_path) to be created"
 
-println("Animation saved to $(output_path)")
+@info "Animation saved to $(output_path)"
