@@ -86,10 +86,6 @@ Expected outcome:
 - A complete run of the chain example
 - An animation file showing the evolution of the network state
 
-Important note:
-- The output path for the MP4 is configurable through `ENV["QSAVORY_QTCP_TUTORIAL_2_OUTPUT"]`
-- If the variable is not set, the script defaults to `qtcp_chain.mp4`
-
 ## Step 3: Grid Topology with Multiple Flows
 
 File:
@@ -159,25 +155,3 @@ Expected outcome:
 3. Run `2_chain_visualization.jl` to build intuition for the runtime behavior.
 4. Run `3_grid_multiflow.jl` to see concurrent flows on a larger topology.
 5. Run `4_custom_endnode.jl` to see tutorial-level customization.
-
-## Tutorial Tests
-
-Each tutorial step now has a corresponding example test under `test/examples/`:
-
-- `test/examples/qtcp_tutorial_1_tests.jl`
-  - Covers `examples/qtcp_tutorial/1_chain_basic.jl`
-  - Checks that the source and destination each see all 10 requested pairs
-
-- `test/examples/qtcp_tutorial_2_tests.jl`
-  - Covers `examples/qtcp_tutorial/2_chain_visualization.jl`
-  - Checks that the source and destination each see all 10 requested pairs
-  - Checks that the animation file is created
-  - Redirects the MP4 output into a temporary directory during the test
-
-- `test/examples/qtcp_tutorial_3_tests.jl`
-  - Covers `examples/qtcp_tutorial/3_grid_multiflow.jl`
-  - Checks that both flows deliver all 5 requested pairs at both endpoints
-
-- `test/examples/qtcp_tutorial_4_tests.jl`
-  - Covers `examples/qtcp_tutorial/4_custom_endnode.jl`
-  - Checks that the custom controller delivers all 15 requested pairs at both endpoints

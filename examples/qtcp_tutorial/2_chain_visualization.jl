@@ -31,11 +31,9 @@ ax.title = "QTCP on a 5-node repeater chain"
 display(fig)
 
 # --- Run and animate ---
-# Frame step is configurable via ENV so the example renders smoothly when
-# run interactively, but tests can request a coarser step to keep CI fast.
-step_size = parse(Float64, get(ENV, "QSAVORY_QTCP_TUTORIAL_2_STEP", "0.05"))
+step_size = 0.05
 step_ts = range(0, 25, step=step_size)
-output_path = get(ENV, "QSAVORY_QTCP_TUTORIAL_2_OUTPUT", "qtcp_chain.mp4")
+output_path = "qtcp_chain.mp4"
 
 # The `record` function runs the simulation in steps, updating the visualization at each step.
 # It is provided by GLMakie and handles the animation recording.
