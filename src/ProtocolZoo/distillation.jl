@@ -75,7 +75,7 @@ See also: [`Purify2to1`](@ref)
     chooseslotsA::Union{Vector{Int}, Function}
     """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node"""
     chooseslotsB::Union{Vector{Int}, Function}
-    """policy for selecting which two Bell pairs to consume in each distillation round. Receives a `Vector` of valid candidate pairs (each a `Tuple{QueryOnRegResult, QueryOnRegResult}` for the slot at `nodeA` and at `nodeB`) and returns a tuple `(distilled, sacrificed)` of two distinct pairs from that vector. Defaults to [`random_pair`](@ref); override to implement strategies like oldest/youngest, highest fidelity, etc."""
+    """policy for selecting which two Bell pairs to consume in each distillation round. Receives a `Vector` of valid candidate pairs (each a `Tuple{QueryOnRegResult, QueryOnRegResult}` for the slot at `nodeA` and at `nodeB`) and returns a tuple `(distilled, sacrificed)` of two distinct pairs from that vector. Defaults to `random_pair`; override to implement strategies like oldest/youngest, highest fidelity, etc."""
     choose_pairs::Function = random_pair
     """what is the oldest a qubit should be to be picked for distillation (to avoid distilling qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
     agelimit::Union{Nothing, Float64} = nothing
