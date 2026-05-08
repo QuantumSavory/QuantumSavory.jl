@@ -22,6 +22,17 @@ For example, see also: [`BBPSSWProt`](@ref)
 """
 $TYPEDEF
 
+Classical message exchanged between the two parties of [`BBPSSWProt`](@ref)
+carrying the outcome of one distillation round. It is used as a `Tag` token
+(`Tag(BBPSSWMessage, sender_node, success_bit)`) so that neither side commits
+the per-pair bookkeeping before the classical-channel delay between the nodes
+has elapsed.
+"""
+struct BBPSSWMessage end
+
+"""
+$TYPEDEF
+
 A protocol implementing the BBPSSW [Bennett et al. 1996]
 entanglement distillation protocol. It purifies 2 Bell
 pairs into 1 pair. It traces out the
@@ -104,6 +115,7 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
 @resumable function(prot::BBPSSWProt)()
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
+    mbB = messagebuffer(prot.net, prot.nodeB)
 
     rounds = prot.rounds
     round = 1
@@ -120,8 +132,8 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
             continue
         end
         # The compiler is not smart enough to figure out that qubit_pair_ is not nothing, so we need to tell it explicitly. A new variable name is needed due to @resumable.
-        distilled_pair = two_qubit_pairs_[1]::NTuple{2, Base.NamedTuple{(:slot, :id, :tag), Base.Tuple{RegRef, Int128, Tag}}} # TODO: replace by `NTuple{2, @NamedTuple{slot::RegRef, id::Int128, tag::Tag}}` once https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/104 is resolved
-        sacrificed_pair = two_qubit_pairs_[2]::NTuple{2, Base.NamedTuple{(:slot, :id, :tag), Base.Tuple{RegRef, Int128, Tag}}} # TODO: replace by `NTuple{2, @NamedTuple{slot::RegRef, id::Int128, tag::Tag}}` once
+        distilled_pair = two_qubit_pairs_[1]::NTuple{2, Base.NamedTuple{(:slot, :id, :tag, :time), Base.Tuple{RegRef, Int128, Tag, Float64}}} # TODO: replace by `NTuple{2, @NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}` once https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/104 is resolved
+        sacrificed_pair = two_qubit_pairs_[2]::NTuple{2, Base.NamedTuple{(:slot, :id, :tag, :time), Base.Tuple{RegRef, Int128, Tag, Float64}}} # TODO: replace by `NTuple{2, @NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}` once
 
         (q1, id1, tag1) = distilled_pair[1].slot, distilled_pair[1].id, distilled_pair[1].tag
         (q2, id2, tag2) = distilled_pair[2].slot, distilled_pair[2].id, distilled_pair[2].tag
@@ -140,6 +152,14 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
         untag!(q3, id3)
         untag!(q4, id4)
 
+        # Communicate the outcome from nodeA to nodeB over the classical
+        # channel; the per-pair bookkeeping below only commits once nodeB
+        # has received the message, which captures the channel delay.
+        outcome_msg = Tag(BBPSSWMessage, prot.nodeA, success ? 1 : 0)
+        put!(channel(prot.net, prot.nodeA => prot.nodeB; permit_forward=true), outcome_msg)
+        @debug "BBPSSWProt @$(prot.nodeA)→$(prot.nodeB) round $(round): outcome=$(success) sent at $(now(prot.sim))"
+        @yield querydelete_wait!(mbB, BBPSSWMessage, prot.nodeA, ❓)
+
         if success
             # Mark distilled qubits with DistilledTag
             tag!(q1, prot.tag)
@@ -151,8 +171,6 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
             untag!(q2, id2)
             @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation failed on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx)). Released."
         end
-        
-        # TODO: emulate classical communication time here?
 
         !isnothing(prot.local_busy_time) && @yield timeout(prot.sim, prot.local_busy_time)
         unlock(q1)
