@@ -1,9 +1,13 @@
 # News
 
-## v0.6.0 - unreleased
+## v0.6.1 - unreleased
+
+- **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+
+## v0.6.0 - 2026-05-05
 
 - **(breaking)** Some fields of EntanglerProt were renamed for consistency with other protocols. More such renaming is to be expected, for consistency's sake.
-- **(breaking)** The `StatesZoo` now integrates with the `genqo` python package, to provide high accuracy models of the ZALM entanglement source. The previous implementation of the ZALM source was removed.
+- **(breaking)** The `StatesZoo` now integrates with the `Genqo.jl` package, to provide high accuracy models of the ZALM entanglement source. The previous implementation of the ZALM source was removed.
 - **(breaking)** Renaming `wait(::MessageBuffer)` and `onchange_tag(::Register)` to `onchange`.
 - **(fix)** `observable` used to incorrectly handle subsystem permutations on some backends in some edge cases, giving wrong results.
 - **(fix)** Stale `EntanglementDelete` messages in `EntanglementTracker` are now dropped as a workaround for protocol bookkeeping issue #303.
@@ -21,11 +25,12 @@
 - `HomodyneMeasurement` has been added for Gaussian-state measurements.
 - New assisted continuous-variable teleportation example.
 - New piecemaker GHZ-switch example.
+- `DepolarizedBellPair` added to `StatesZoo`, representing a depolarized Bell state `p|Φ⁺⟩⟨Φ⁺| + (1-p)I/4`, constructible from either the depolarization parameter `p` or fidelity `F`.
 
 ## v0.5.1 - 2025-07-14
 
 - Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
-- `onchange_tag` now permits a protocol to wait for any change to the tag metadata. Implemented thanks to the new `AsymmetricSemaphore`, a resource object that allows multiple processes to wait for an update.
+- `onchange_tag` now permits a protocol to wait for any change to the tag metadata.
 - Plots of networks can now overlay real-world maps (see `generate_map`).
 - A "state explorer" tool was added to the plotting submodule and as an interactive example, to heal visualize many of the states in StatesZoo.
 - Additional filtering and decision capabilities in `EntanglerProt`.

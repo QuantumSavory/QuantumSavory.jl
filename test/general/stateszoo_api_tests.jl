@@ -12,6 +12,7 @@ _evalf(x) = express(x)
 
 for S in [BarrettKokBellPair, BarrettKokBellPairW,
     GenqoUnheraldedSPDCBellPairW, GenqoMultiplexedCascadedBellPairW,
+    DepolarizedBellPair
     ] # TODO use some abstract supertype to automatically get all of these
     params = QuantumSavory.StatesZoo.stateparameters(S)
     paramdict = QuantumSavory.StatesZoo.stateparametersrange(S)

@@ -24,12 +24,12 @@ struct Register # TODO better type description / TODO mutable struct with immuta
     guids::Vector{Int128}
     netparent::Ref{Any}
     netindex::Ref{Int}
-    tag_waiter::Base.RefValue{AsymmetricSemaphore} # TODO This being a ref is a bit of code smell... but we also want to be able to swap the semaphore when a register is attached to a different simulation
+    tag_waiter::Base.RefValue{ChangeNotifier} # TODO This being a ref is a bit of code smell... but we also want to be able to swap the notifier when a register is attached to a different simulation
 end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), Int128[], nothing, 0, Ref(AsymmetricSemaphore(env)))
+    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), Int128[], nothing, 0, Ref(ChangeNotifier(env)))
 end
 
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
