@@ -16,6 +16,8 @@ const Switches = QuantumSavory.ProtocolZoo.Switches
     tag!(net[1][1], EntanglementCounterpart, 2, 1)
     tag!(net[2][1], EntanglementCounterpart, 1, 1)
 
+    # this represents a misbehaving client that has done something
+    # with the entanglement that has been promised to the switch
     querydelete!(net[2][1], EntanglementCounterpart, 1, 1)
     tag!(net[2][1], EntanglementCounterpart, 3, 1)
 

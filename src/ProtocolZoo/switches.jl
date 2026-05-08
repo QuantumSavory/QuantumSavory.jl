@@ -245,6 +245,9 @@ QuantumSavory.get_time_tracker(deleter::_SwitchSynchronizedDelete) = get_time_tr
             clientslot = res.tag[3]
             @debug "Switch $(prot.switchnode).$(switchslot) deletes unused entanglement with client $(clientnode).$(clientslot)"
             clientres = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot)
+            # We expect `clientres` to not be nothing because the client should not have destroyed entanglement 
+            # that has been promised for use by the switch -- but just so we are a bit more resilient to misbehaving clients
+            # let's guard against such an eventuality and double check that the client has not lost the qubit
             if isnothing(clientres)
                 traceout!(res.slot)
                 untag!(res.slot, res.id)
