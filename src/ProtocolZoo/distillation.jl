@@ -128,11 +128,9 @@ Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) 
 - `nodeB::Int`: the vertex index of node B
 - `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
 """
-BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get_time_tracker(net), net, nodeA=nodeA, nodeB=nodeB; kwargs...)
+BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 
 @resumable function(prot::BBPSSWProt)()
-    regA = prot.net[prot.nodeA]
-    regB = prot.net[prot.nodeB]
     mbB = messagebuffer(prot.net, prot.nodeB)
 
     rounds = prot.rounds
@@ -149,15 +147,16 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
             end
             continue
         end
-        # The compiler is not smart enough to figure out that qubit_pair_ is not nothing, so we need to tell it explicitly. A new variable name is needed due to @resumable.
-        distilled_pair = two_qubit_pairs_[1]::NTuple{2, Base.NamedTuple{(:slot, :id, :tag, :time), Base.Tuple{RegRef, Int128, Tag, Float64}}} # TODO: replace by `NTuple{2, @NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}` once https://github.com/JuliaDynamics/ResumableFunctions.jl/issues/104 is resolved
-        sacrificed_pair = two_qubit_pairs_[2]::NTuple{2, Base.NamedTuple{(:slot, :id, :tag, :time), Base.Tuple{RegRef, Int128, Tag, Float64}}} # TODO: replace by `NTuple{2, @NamedTuple{slot::RegRef, id::Int128, tag::Tag, time::Float64}}` once
+        # The compiler is not smart enough to figure out that two_qubit_pairs_ is not nothing, so we need to tell it explicitly. A new variable name is needed due to @resumable.
+        two_qubit_pairs = two_qubit_pairs_::Tuple{NTuple{2, QueryOnRegResult}, NTuple{2, QueryOnRegResult}}
+        distilled_pair = two_qubit_pairs[1]
+        sacrificed_pair = two_qubit_pairs[2]
 
-        (q1, id1, tag1) = distilled_pair[1].slot, distilled_pair[1].id, distilled_pair[1].tag
-        (q2, id2, tag2) = distilled_pair[2].slot, distilled_pair[2].id, distilled_pair[2].tag
+        (q1, id1) = distilled_pair[1].slot, distilled_pair[1].id
+        (q2, id2) = distilled_pair[2].slot, distilled_pair[2].id
 
-        (q3, id3, tag3) = sacrificed_pair[1].slot, sacrificed_pair[1].id, sacrificed_pair[1].tag
-        (q4, id4, tag4) = sacrificed_pair[2].slot, sacrificed_pair[2].id, sacrificed_pair[2].tag
+        (q3, id3) = sacrificed_pair[1].slot, sacrificed_pair[1].id
+        (q4, id4) = sacrificed_pair[2].slot, sacrificed_pair[2].id
 
         @yield lock(q1) & lock(q2) & lock(q3) & lock(q4)  # this should not really need a yield thanks to `finddistillablequbits` which queries only for unlocked qubits, but it is better to be defensive
 
@@ -182,6 +181,13 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
             # Mark distilled qubits with DistilledTag
             tag!(q1, prot.tag)
             tag!(q2, prot.tag)
+            # TODO: apply a bilateral twirl to (q1, q2) here so the surviving
+            # pair is symmetrized into Werner form, as specified in the
+            # original BBPSSW protocol (Bennett et al. 1996). Today we cannot
+            # express the full single-qubit Clifford group via `apply!` — it
+            # requires a symbolic phase/`S` gate that QuantumSymbolics does
+            # not yet export. Wire this up once QuantumSymbolics PR #95
+            # (rotation gates) lands.
             @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation succeeded on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx))."
         else
             # untag distilled qubits if distillation failed
@@ -190,7 +196,9 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
             @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation failed on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx)). Released."
         end
 
-        !isnothing(prot.local_busy_time) && @yield timeout(prot.sim, prot.local_busy_time)
+        if !isnothing(prot.local_busy_time)
+            @yield timeout(prot.sim, prot.local_busy_time::Float64)
+        end
         unlock(q1)
         unlock(q2)
         unlock(q3)
