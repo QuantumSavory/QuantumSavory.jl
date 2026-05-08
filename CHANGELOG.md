@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- New `BBPSSWProt` distillation protocol in `ProtocolZoo`, plus the `DistilledTag` and `BBPSSWMessage` tag types. Includes a customizable `choose_pairs` selection strategy and explicit classical-channel communication of the per-round distillation outcome.
 
 ## v0.6.0 - 2026-05-05
 
