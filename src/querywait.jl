@@ -24,6 +24,11 @@ result = @yield query_wait(register, :my_tag, ❓)
 # do something with result
 ```
 
+`query_wait` does not consume the matching tag. Multiple waiters can observe the
+same register tag. If your protocol will remove the tag, prefer
+[`querydelete_wait!`](@ref), or re-query/check with [`querydelete!`](@ref) after
+acquiring any needed locks.
+
 The `on` keyword argument is passed to [`onchange`](@ref) to control what type of events are waited on.
 The `locked` and `assigned` keyword arguments are passed through to [`query`](@ref) for register queries.
 
