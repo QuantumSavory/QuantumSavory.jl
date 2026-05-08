@@ -93,6 +93,8 @@ SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_track
 
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits` which queries only for unlocked qubits, but it is better to be defensive
 
+        # double check that in between the initial query and the lock
+        # we did not have another process use these qubits for something else
         current1_ = query(q1, tag1; assigned=true)
         current2_ = query(q2, tag2; assigned=true)
         if isnothing(current1_) || isnothing(current2_)
