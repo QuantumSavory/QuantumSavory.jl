@@ -1,10 +1,6 @@
-# pick slots in reg without a DistilledTag
-function nondistilled(reg::Register)
-    return (slot) -> begin
-        regref = reg[slot]
-        dist = query(regref, DistilledTag)
-        return isnothing(dist)
-    end
+# pick slots in reg without the given distillation tag (defaults to DistilledTag)
+function nondistilled(reg::Register, tag::DataType=DistilledTag)
+    return (slot) -> isnothing(query(reg[slot], tag))
 end
 
 """
@@ -71,8 +67,8 @@ See also: [`Purify2to1`](@ref)
     nodeA::Int
     """the vertex index of node B"""
     nodeB::Int
-    """Tag to be added to the entangled qubits or nothing to not add any tag. The tag should not have any field. Defaults to `DistilledTag`."""
-    tag::DataType = DistilledTag
+    """Tag to be added to the entangled qubits, or `nothing` to skip tagging. The tag should not have any field. Defaults to `DistilledTag`."""
+    tag::Union{DataType, Nothing} = DistilledTag
     """how many rounds of this protocol to run (`-1` for infinite)"""
     rounds::Int = -1
     """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node"""
@@ -91,21 +87,6 @@ end
 
 """
 Convenience constructor for `BBPSSWProt`.
-Defaults for missing fields are described in the [`BBPSSWProt`](@ref) docstring.
-- `sim::Simulation`: time-and-schedule-tracking instance from `ConcurrentSim`
-- `net::RegisterNet`: a network graph of registers
-- `nodeA::Int`: the vertex index of node A
-- `nodeB::Int`: the vertex index of node B
-- `chooseslotsA::Union{Vector{Int}, Function}`: function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node
-- `chooseslotsB::Union{Vector{Int}, Function}`: function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node
-- `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
-"""
-function BBPSSWProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int, chooseslotsA::Union{Vector{Int}, Function}, chooseslotsB::Union{Vector{Int}, Function}; kwargs...)
-    return BBPSSWProt(sim, net, nodeA, nodeB; chooseslotsA=chooseslotsA, chooseslotsB=chooseslotsB, kwargs...)
-end
-
-"""
-Convenience constructor for `BBPSSWProt`. 
 Defaults for missing `chooseslotsA` and `chooseslotsB` are set to filter for slots that have no distillation tag (`DistilledTag` by default).
 Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) docstring.
 - `sim::Simulation`: time-and-schedule-tracking instance from `ConcurrentSim`
@@ -115,7 +96,10 @@ Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) 
 - `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
 """
 function BBPSSWProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
-    return BBPSSWProt(;sim, net, nodeA, nodeB, chooseslotsA=nondistilled(net[nodeA]), chooseslotsB=nondistilled(net[nodeB]), kwargs...)
+    tag = get(kwargs, :tag, DistilledTag)
+    chooseslotsA = isnothing(tag) ? alwaystrue : nondistilled(net[nodeA], tag::DataType)
+    chooseslotsB = isnothing(tag) ? alwaystrue : nondistilled(net[nodeB], tag::DataType)
+    return BBPSSWProt(; sim, net, nodeA, nodeB, chooseslotsA, chooseslotsB, kwargs...)
 end
 
 """
@@ -152,13 +136,29 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
         distilled_pair = two_qubit_pairs[1]
         sacrificed_pair = two_qubit_pairs[2]
 
-        (q1, id1) = distilled_pair[1].slot, distilled_pair[1].id
-        (q2, id2) = distilled_pair[2].slot, distilled_pair[2].id
-
-        (q3, id3) = sacrificed_pair[1].slot, sacrificed_pair[1].id
-        (q4, id4) = sacrificed_pair[2].slot, sacrificed_pair[2].id
+        q1 = distilled_pair[1].slot
+        q2 = distilled_pair[2].slot
+        q3 = sacrificed_pair[1].slot
+        q4 = sacrificed_pair[2].slot
 
         @yield lock(q1) & lock(q2) & lock(q3) & lock(q4)  # this should not really need a yield thanks to `finddistillablequbits` which queries only for unlocked qubits, but it is better to be defensive
+
+        # Across the lock yield, another process could have consumed the
+        # tagged entanglement; re-query under the locks to confirm the
+        # reciprocal tags are still present and to capture fresh ids that
+        # are safe to pass to `untag!` later in the round.
+        fresh1 = query(q1, distilled_pair[1].tag;  assigned=true)
+        fresh2 = query(q2, distilled_pair[2].tag;  assigned=true)
+        fresh3 = query(q3, sacrificed_pair[1].tag; assigned=true)
+        fresh4 = query(q4, sacrificed_pair[2].tag; assigned=true)
+        if isnothing(fresh1) || isnothing(fresh2) || isnothing(fresh3) || isnothing(fresh4)
+            unlock(q1); unlock(q2); unlock(q3); unlock(q4)
+            continue
+        end
+        id1 = (fresh1::QueryOnRegResult).id
+        id2 = (fresh2::QueryOnRegResult).id
+        id3 = (fresh3::QueryOnRegResult).id
+        id4 = (fresh4::QueryOnRegResult).id
 
         uptotime!((q1, q2, q3, q4), now(prot.sim))
 
@@ -178,9 +178,11 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
         @yield querydelete_wait!(mbB, BBPSSWMessage, prot.nodeA, ❓)
 
         if success
-            # Mark distilled qubits with DistilledTag
-            tag!(q1, prot.tag)
-            tag!(q2, prot.tag)
+            # Mark distilled qubits with the configured tag (if any)
+            if !isnothing(prot.tag)
+                tag!(q1, prot.tag::DataType)
+                tag!(q2, prot.tag::DataType)
+            end
             # TODO: apply a bilateral twirl to (q1, q2) here so the surviving
             # pair is symmetrized into Werner form, as specified in the
             # original BBPSSW protocol (Bennett et al. 1996). Today we cannot
@@ -231,11 +233,14 @@ function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB, ch
     (isempty(low_queryresults) || isempty(high_queryresults)) && return nothing
     @debug "Found $(length(low_queryresults)) candidate qubits in node $nodeA and $(length(high_queryresults)) candidate qubits in node $nodeB for distillation."
 
-    # Build the list of valid Bell pairs (low_qr, high_qr) where the two slots are entangled with each other
+    # Build the list of valid Bell pairs (low_qr, high_qr) where the two slots
+    # are reciprocally entangled with each other; checking both directions
+    # avoids pairing on stale/half-updated tags (e.g. after a swap whose
+    # update has only reached one side).
     pairs = NTuple{2, QueryOnRegResult}[]
     for low_qr in low_queryresults
         for high_qr in high_queryresults
-            if low_qr.slot.idx == high_qr.tag[3]
+            if low_qr.slot.idx == high_qr.tag[3] && high_qr.slot.idx == low_qr.tag[3]
                 push!(pairs, (low_qr, high_qr))
                 break
             end
