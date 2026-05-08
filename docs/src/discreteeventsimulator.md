@@ -89,7 +89,7 @@ end
 
     @yield lock(a.slot) & lock(b.slot)
     # strictly speaking, we should be checking that
-    # by the time the locks are aquired
+    # by the time the locks are acquired
     # alice and charlie still have the properties we have queried for
     # (someone else might have consumed the entanglement in between)
     x, y = LocalEntanglementSwap()(a.slot, b.slot)
