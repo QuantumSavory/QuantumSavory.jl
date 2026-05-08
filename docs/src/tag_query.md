@@ -95,15 +95,14 @@ or the slot may have changed.
 
 Use these rules in protocol code:
 
-- use `querydelete!` or `querydelete_wait!` when the tag is consumable state;
+- use `querydelete!` or `querydelete_wait!` when the tag is meant to be consumed;
 - do not carry a `query` or `queryall` result across a yield and then call
-  `untag!` with the old id;
+  `untag!` with the potentially oudated tag id;
 - if you need to lock a slot before acting, acquire the lock and then re-query
   the slot before deleting the tag or using the result;
-- for paired resources, re-check both sides before deleting either side.
+- for paired resources, re-check both sides before deleting either side (e.g. in an entanglement swapper that needs to lock two qubits).
 
-`query_wait` is useful for observing that a matching tag exists. It is not a
-claim on that tag.
+`query_wait` is useful for observing that a matching tag exists. It is going to lock or reserve the tag it returns (or the register in which that tag is).
 
 ## Filtering By Resource State
 
