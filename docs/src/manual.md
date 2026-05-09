@@ -6,28 +6,43 @@ DocTestSetup = quote
 end
 ```
 
-## Getting Started
+This manual is the first guided tutorial for QuantumSavory. It walks through a
+small, complete simulation so you can see the core pieces of the package
+together before moving on to more specialized pages.
 
-### Installation
+## What You Will Build
 
-To use QuantumSavory, make sure you have Julia version 1.10 installed. You can download and install Julia from [the official Julia website](https://julialang.org/downloads/).
+In this tutorial, Alice and Bob use a shared Bell pair plus a transmitted qubit
+to implement superdense coding. The example is small, but it introduces:
 
-Once Julia is setup, QuantumSavory can be installed with the following command in your in your Julia REPL:
+- registers and register slots,
+- symbolic state initialization,
+- a quantum channel with delay,
+- `@resumable` processes, and
+- running a discrete-event simulation.
+
+## Installation
+
+To use QuantumSavory, install the latest Julia version and then add the package
+from the Julia REPL:
+
 ```bash
 $ julia
 julia> ]
 pkg> add QuantumSavory
 ```
 
-#### Optional Dependencies
+### Optional Dependencies
 
 There are optional packages that you need to install to use the full plotting feature.
 - **Makie**: For plotting of registers and processes.
 - **Tyler**: Enables plotting on a real-world map as a background.
 
-## Basic Demo
+## First Simulation
 
-Here’s a simple example to demonstrate how superdense coding can be implemented. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
+Paste the example below into a fresh Julia session. It creates the simulation,
+sets up the initial entanglement resource, defines the local processes for
+Alice and Bob, and runs the event loop.
 
 ```@example
 using QuantumSavory
@@ -69,3 +84,21 @@ end
 @process bob(sim, qc)
 run(sim)
 ```
+
+Bob should decode the two classical bits that Alice encoded into her half of
+the Bell pair.
+
+## What To Notice
+
+- The initial Bell pair is expressed symbolically.
+- The channel delay is handled by the discrete-event simulator.
+- Alice and Bob are written as resumable processes rather than ordinary
+  blocking code.
+- The example is small, but it already uses the same abstractions as larger
+  protocol simulations.
+
+## Where To Go Next
+
+- Continue with [Explanations](@ref) if you want the conceptual model.
+- Continue with [Tutorials](@ref) for focused follow-up lessons.
+- Continue with [How-To Guides](@ref) for larger end-to-end workflows.

@@ -75,7 +75,7 @@ julia> Purify2to1(:X)(a[1], b[1], a[2], b[2])
 true
 
 julia> observable((a[1], b[1]), projector(bell))
-1.0 + 0.0im
+1.0
 ```
 
 However, an error might have occurred on the initial state. If the error is detectable,
@@ -93,7 +93,7 @@ julia> Purify2to1(:X)(a[1], b[1], a[2], b[2])
 false
 
 julia> a
-Register with 2 slots: [ Qubit | Qubit ]
+Register  with 2 slots: [ Qubit | Qubit ]
   Slots:
     nothing
     nothing
@@ -115,7 +115,7 @@ julia> Purify2to1(:X)(a[1], b[1], a[2], b[2])
 true
 
 julia> observable((a[1], b[1]), projector(bell))
-0.0 + 0.0im
+0.0
 ```
 
 See also: [`Purify2to1Node`](@ref), [`Purify3to1`](@ref), [`PurifyExpedient`](@ref), [`PurifyStringent`](@ref)
@@ -244,16 +244,14 @@ If no error was detected, the circuit returns `true`.
 The sacrificial qubits are removed from the register.
 
 ```jldoctest
-julia> a = Register(2)
-       b = Register(2)
-       c = Register(2)
+julia> a = Register(3)
+       b = Register(3)
        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
-       initialize!(a[1:2], bell)
-       initialize!(b[1:2], bell)
-       initialize!(c[1:2], bell);
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell)
+       initialize!((a[3], b[3]), bell);
 
-
-julia> Purify3to1(:Z, :Y)(a[1], a[2], b[1], c[1], b[2], c[2])
+julia> Purify3to1(:Z, :Y)(a[1], b[1], a[2], a[3], b[2], b[3])
 true
 ```
 """
@@ -328,15 +326,14 @@ This circuit is the same as the Purifiy3to1 one but it works on individual qubit
 This algorithm is detailed in [keisuke2009doubleselection](@cite)
 
 ```jldoctest
-julia> a = Register(2)
-       b = Register(2)
-       c = Register(2)
+julia> a = Register(3)
+       b = Register(3)
        bell = (Z₁⊗Z₁+Z₂⊗Z₂)/√2
-       initialize!(a[1:2], bell)
-       initialize!(b[1:2], bell)
-       initialize!(c[1:2], bell);
+       initialize!((a[1], b[1]), bell)
+       initialize!((a[2], b[2]), bell)
+       initialize!((a[3], b[3]), bell);
 
-julia> Purify3to1Node(:Z, :Y)(a[1], b[1], c[1]) == Purify3to1Node(:Z, :Y)(a[2], b[2], c[2])
+julia> Purify3to1Node(:Z, :Y)(a[1], a[2], a[3]) == Purify3to1Node(:Z, :Y)(b[1], b[2], b[3])
 true
 ```
 """

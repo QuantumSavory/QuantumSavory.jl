@@ -1,14 +1,26 @@
 env:
-  CODECOV_TOKEN: 1551efda-9a0d-4cfd-a549-63790fc83605
   JULIA_NUM_THREADS: auto
 
+secrets:
+  - CODECOV_TOKEN
+
 steps:
-  - label: "Package Tests"
+  - label: "General Tests"
     plugins:
       - JuliaCI/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
-      - JuliaCI/julia-test#v1: ~
+      - JuliaCI/julia-test#v1:
+          test_args: "general"
+      - JuliaCI/julia-coverage#v1:
+          codecov: true
+  - label: "General Tests (alpha)"
+    plugins:
+      - Krastanov-agent/julia#bb0dd898e0190fa025fa9eddbf5b39665edc8e6c:
+          version: "alpha"
+      - QuantumSavory/julia-xvfb#v1:
+      - JuliaCI/julia-test#v1:
+          test_args: "general"
       - JuliaCI/julia-coverage#v1:
           codecov: true
   - label: "JET Tests"
@@ -16,38 +28,36 @@ steps:
       - JuliaCI/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
-      - JuliaCI/julia-test#v1: ~
+      - JuliaCI/julia-test#v1:
+          test_args: "jet"
       - JuliaCI/julia-coverage#v1:
           codecov: true
-    env:
-      JET_TEST: true
-  - label: "Examples without Plotting Tests"
+  - label: "Example Tests"
     plugins:
       - JuliaCI/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
-      - JuliaCI/julia-test#v1: ~
+      - JuliaCI/julia-test#v1:
+          test_args: "example"
       - JuliaCI/julia-coverage#v1:
           codecov: true
-    env:
-      QUANTUMSAVORY_EXAMPLES_TEST: true
-  - label: "Examples with PlottingTests"
-    plugins:
-      - JuliaCI/julia#v1:
-          version: "1"
-      - QuantumSavory/julia-xvfb#v1:
-      - JuliaCI/julia-test#v1: ~
-      - JuliaCI/julia-coverage#v1:
-          codecov: true
-    env:
-      QUANTUMSAVORY_EXAMPLES_PLOT_TEST: true
   - label: "Plotting Tests"
     plugins:
       - JuliaCI/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
-      - JuliaCI/julia-test#v1: ~
+      - JuliaCI/julia-test#v1:
+          test_args: "plotting"
       - JuliaCI/julia-coverage#v1:
           codecov: true
-    env:
-      QUANTUMSAVORY_PLOT_TEST: true
+  - label: "Docs"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "1"
+      - QuantumSavory/julia-xvfb#v1:
+    secrets:
+      - DOCUMENTER_KEY
+      - ANYTHINGLLM_API_KEY
+    command: |
+      julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      julia -tauto --project=docs docs/make.jl

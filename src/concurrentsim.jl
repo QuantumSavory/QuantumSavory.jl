@@ -49,6 +49,9 @@ end
 function get_time_tracker(r::RegRef)
     get_time_tracker(r.reg)
 end
+function get_time_tracker(mb::MessageBuffer)
+    mb.sim
+end
 
 ##
 

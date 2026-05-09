@@ -38,6 +38,8 @@ import QuantumOpticsBase: StateVector, Ket, Operator,
 import QuantumOptics
 import QuantumOptics: timeevolution
 
+import Gabs
+
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, permutesystems,
     projector, identityoperator, embed, dm, expect, ptrace,
     AbstractOperator, AbstractKet, AbstractSuperOperator,
@@ -73,16 +75,19 @@ export
     observable,
     # uptotime.jl
     uptotime!, overwritetime!,
-    # tags.jl and queries.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, findfreeslot,
+    # tags.jl and queries.jl and querywait.jl
+    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    findfreeslot,
     #messagebuffer.jl
     MessageBuffer,
     # quantumchannel.jl
     QuantumChannel,
     # backgrounds.jl
-    T1Decay, T2Dephasing, Depolarization, PauliNoise, AmplitudeDamping,
+    T1Decay, T2Dephasing, T1T2Noise, Depolarization, PauliNoise, AmplitudeDamping,
     # noninstant.jl
     AbstractNoninstantOperation, NonInstantGate, ConstantHamiltonianEvolution,
+    # measurements.jl
+    HomodyneMeasurement,
     # plots.jl
     registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, generate_map,
     # backends/quantumoptics
@@ -142,13 +147,17 @@ include("baseops/uptotime.jl")
 include("baseops/observable.jl")
 
 include("queries.jl")
+include("querywait.jl")
 
 include("representations.jl")
 include("backgrounds.jl")
 include("noninstant.jl")
+include("measurements.jl")
 
 include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
+include("backends/gabs/gabs.jl")
+include("backends/gabs/should_upstream.jl")
 
 include("ambiguity_fix.jl")
 

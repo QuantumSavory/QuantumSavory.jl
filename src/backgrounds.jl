@@ -36,8 +36,15 @@ end
     τ::Float64 = 1e9 # TODO consider parameterizing the type
 end
 
+"""A background combining both T₁ decay and T₂ dephasing."""
+@kwdef struct T1T2Noise <: AbstractBackground
+    "The T₁ time of the two-level system."
+    t1::Float64 = 1e9
+    "The T₂ time of the two-level system."
+    t2::Float64 = 1e9
+end
+
 # TODO
-# T1T2Noise
 # T1TwirledDecay
 # T1T2TwirledNoise
 

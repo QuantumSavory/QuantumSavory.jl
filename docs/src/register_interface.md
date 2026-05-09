@@ -1,5 +1,7 @@
 # Register Interface
 
+This page is the API-focused reference for the high-level register operations.
+
 A rather diverse set of simulation libraries is used under the hood. Long term the Julia Quantum Science community might be able to converge to a common interface that would slightly simplify work between the libraries, but in the interim the Julia multimethod paradigm is sufficient. Below we describe the interface that enables us to operate with many distinct underlying simulators.
 
 ## `initialize!`
@@ -12,7 +14,7 @@ initialize!
 
 #### `initialize!(refs::Vector{RegRef}, state; time)`
 
-Store a `state` in the given register slots.
+Store a `state` in the given register slots. When using representations that support it (like [`QuantumOpticsRepr`](@ref)), `initialize!` checks if a `state` is separable, i.e. a simple tensor product. In this case ``2n`` complex numbers are used to store the state in its separable form. Otherwise, since in general it is computationally too expensive to check for seperability, `initialize!` defaults to the full representation of a `state` storing ``2^n`` complex values.
 
 `refs` can also be `Tuple{Vararg{RegRef, N}}` or a single [`RegRef`](@ref).
 

@@ -1,18 +1,11 @@
 module Genqo
 
+import Genqo: zalm, spdc
 import QuantumSavory.StatesZoo: AbstractTwoQubitState, stateparameters, stateparametersrange, _bspin
 import QuantumSymbolics: Metadata # TODO fix the @withmetadata macro to not require this import
 import QuantumSymbolics: @withmetadata, symbollabel, QuantumOpticsRepr, express_nolookup, ⊗
 import QuantumOpticsBase
-import PythonCall
-import LinearAlgebra: tr
 using DocStringExtensions
-
-const gq = PythonCall.pynew()
-
-function __init__()
-    PythonCall.pycopy!(gq, PythonCall.pyimport("genqo"))
-end
 
 """
 $TYPEDEF
@@ -29,7 +22,7 @@ Based on the cascaded source from [prajit2022heralded](@cite) and [kevin2023zero
 
 Functions are included for both the photon-photon state as well as the spin-spin state following loading using Duan-Kimble style quantum memories
 
-Implemented as a wrapper around the `genqo` Python package.
+Implemented as a wrapper around the `Genqo.jl` package.
 """
 @withmetadata struct GenqoMultiplexedCascadedBellPairW <: AbstractTwoQubitState
     """Loss (transmissivity) in the Bell state measurement at the source (modes 3, 4, 5, 6), ∈[0,1]"""
@@ -55,23 +48,16 @@ stateparametersrange(::Type{GenqoMultiplexedCascadedBellPairW}) = (
 
 function _express_spin_spin_matrix(x::GenqoMultiplexedCascadedBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
-    (;ηᵇ, ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.ZALM()
-    state.params["bsm_efficiency"] = ηᵇ
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_density_operator(gq.np.array([1,0,1,1,0,0,1,0]))
-    return state.results["output_state"]
+    # `Pᵈ` remains part of the wrapper API for compatibility, but Genqo.jl's
+    # spin-density-matrix backend does not currently take dark counts.
+    (;ηᵇ, ηᵈ, ηᵗ, N) = x
+    return zalm.spin_density_matrix(N, ηᵗ, ηᵈ, ηᵇ, [1,0,1,1,0,0,1,0])
 end
 
 symbollabel(x::GenqoMultiplexedCascadedBellPairW) = "ρᶻᵃˡᵐ"
 
 function express_nolookup(x::GenqoMultiplexedCascadedBellPairW, ::QuantumOpticsRepr)
-    mat = Array(PythonCall.PyArray(_express_spin_spin_matrix(x)))
+    mat = _express_spin_spin_matrix(x)
     return QuantumOpticsBase.SparseOperator(_bspin⊗_bspin, mat)
 end
 
@@ -86,7 +72,7 @@ Unheralded source of polarization Bell pairs, as described by [kwiat1995new](@ci
 
 Functions are included for both the photon-photon state as well as the spin-spin state following loading using Duan-Kimble style quantum memories
 
-Implemented as a wrapper around the `genqo` Python package.
+Implemented as a wrapper around the `Genqo.jl` package.
 """
 @withmetadata struct GenqoUnheraldedSPDCBellPairW <: AbstractTwoQubitState
     """Loss (transmissivity) in all of the detectors, ∈[0,1]"""
@@ -109,22 +95,16 @@ stateparametersrange(::Type{GenqoUnheraldedSPDCBellPairW}) = (
 
 function _express_spin_spin_matrix(x::GenqoUnheraldedSPDCBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
-    (;ηᵈ, ηᵗ, N, Pᵈ) = x
-
-    state = gq.SPDC()
-    state.params["outcoupling_efficiency"] = ηᵗ
-    state.params["detection_efficiency"] = ηᵈ
-    state.params["dark_counts"] = Pᵈ
-    state.params["mean_photon"] = N
-    state.run()
-    state.calculate_density_operator(gq.np.array([0,1,0,1]))
-    return state.results["output_state"]
+    # `Pᵈ` remains part of the wrapper API for compatibility, but Genqo.jl's
+    # spin-density-matrix backend does not currently take dark counts.
+    (;ηᵈ, ηᵗ, N) = x
+    return spdc.spin_density_matrix(N, ηᵗ, ηᵈ, [0,1,0,1])
 end
 
 symbollabel(x::GenqoUnheraldedSPDCBellPairW) = "ρˢᵖᵈᶜ"
 
 function express_nolookup(x::GenqoUnheraldedSPDCBellPairW, ::QuantumOpticsRepr)
-    mat = Array(PythonCall.PyArray(_express_spin_spin_matrix(x)))
+    mat = _express_spin_spin_matrix(x)
     return QuantumOpticsBase.SparseOperator(_bspin⊗_bspin, mat)
 end
 

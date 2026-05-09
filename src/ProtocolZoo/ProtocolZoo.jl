@@ -1,7 +1,7 @@
 module ProtocolZoo
 
 using QuantumSavory
-import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange
+import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange, QueryOnRegResult
 using QuantumSavory: Wildcard, alwaystrue
 using QuantumSavory: timestr, compactstr
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
@@ -239,7 +239,9 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
     while rounds != 0
-        isentangled = !isnothing(prot.tag) && !isnothing(query(regA, prot.tag, prot.nodeB, ❓; assigned=true))
+        tagtype = prot.tag
+        isentangled = !isnothing(tagtype) &&
+                      !isnothing(query(regA, tagtype::DataType, prot.nodeB, ❓; assigned=true))
         margin = isentangled ? prot.margin : prot.hardmargin
         (; chooseslotA, chooseslotB, randomize, uselock) = prot
         a_ = findfreeslot(regA; chooseslot=chooseslotA, randomize=randomize, locked=!uselock, margin=margin)
@@ -276,10 +278,10 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
             @yield timeout(prot.sim, prot.local_busy_time_post)
 
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b
-            isnothing(prot.tag) || tag!(a, prot.tag, prot.nodeB, b.idx)
+            isnothing(tagtype) || tag!(a, tagtype::DataType, prot.nodeB, b.idx)
             last_a = a.idx
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a
-            isnothing(prot.tag) || tag!(b, prot.tag, prot.nodeA, a.idx)
+            isnothing(tagtype) || tag!(b, tagtype::DataType, prot.nodeA, a.idx)
             last_b = b.idx
 
             @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Entangled .$(a.idx) and .$(b.idx)"
@@ -411,7 +413,13 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                     continue
                 end
 
-                error("`EntanglementTracker` on node $(prot.node) received a message $(msg) that it does not know how to handle (due to the absence of corresponding `EntanglementCounterpart` or `EntanglementHistory` or `EntanglementDelete` tags). This might have happened due to `CutoffProt` deleting qubits while swaps are happening. Make sure that the retention times in `CutoffProt` are sufficiently larger than the `agelimit` in `SwapperProt`. Otherwise, this is a bug in the protocol and should not happen -- please report an issue at QuantumSavory's repository.")
+                # Protocol bug tracked in issue #303:
+                # https://github.com/QuantumSavory/QuantumSavory.jl/issues/303
+                # Stale update/delete messages can still arrive after the corresponding local
+                # bookkeeping has already been cleared or superseded.
+                stale_kind = isnothing(updategate) ? "delete" : "update"
+                @error "EntanglementTracker @$(prot.node): stale $(stale_kind) message=`$msg` is dropped"
+                continue
             end
         end
         @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
@@ -492,15 +500,24 @@ permits_virtual_edge(::EntanglementConsumer) = true
         untag!(q2, query2.id)
         # TODO do we need to add EntanglementHistory or EntanglementDelete and should that be a different EntanglementHistory since the current one is specifically for Swapper
         # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
-        ob1 = real(observable((q1, q2), Z⊗Z))
-        ob2 = real(observable((q1, q2), X⊗X))
+        ob1 = observable((q1, q2), Z⊗Z)
+        ob2 = observable((q1, q2), X⊗X)
+        if isnothing(ob1) || isnothing(ob2)
+            @error "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): dropping stale pair between .$(q1.idx) and .$(q2.idx)"
+            traceout!(regA[q1.idx], regB[q2.idx])
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+        ob1 = real(ob1)
+        ob2 = real(ob2)
 
         traceout!(regA[q1.idx], regB[q2.idx])
         push!(prot._log, (now(prot.sim), ob1, ob2))
         unlock(q1)
         unlock(q2)
         if !isnothing(prot.period)
-            @yield timeout(prot.sim, prot.period)
+            @yield timeout(prot.sim, prot.period::Float64)
         end
     end
 end

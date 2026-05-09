@@ -71,27 +71,17 @@ julia> graph = grid([2,2]) # from Graphs.jl
 
 julia> registers = [Register(1), Register(2), Register(1), Register(2)]
 4-element Vector{Register}:
- Register with 1 slots: [ Qubit ]
-  Slots:
-    nothing
- Register with 2 slots: [ Qubit | Qubit ]
-  Slots:
-    nothing
-    nothing
- Register with 1 slots: [ Qubit ]
-  Slots:
-    nothing
- Register with 2 slots: [ Qubit | Qubit ]
-  Slots:
-    nothing
-    nothing
+ Register
+ Register
+ Register
+ Register
 
 julia> net = RegisterNet(graph, registers)
 A network of 4 registers in a graph of 4 edges
 
 
 julia> neighbors(net, 1) # from Graphs.jl
-2-element Vector{Int64}:
+2-element Graphs.FrozenVector{Int64}:
  2
  3
 ```
@@ -112,7 +102,7 @@ julia> net = RegisterNet([Register(2), Register(4), Register(2)])
 A network of 3 registers in a graph of 2 edges
 
 julia> neighbors(net,2) # from Graphs.jl
-2-element Vector{Int64}:
+2-element Graphs.FrozenVector{Int64}:
  1
  3
 ```
@@ -205,8 +195,10 @@ See also: [`channel`](@ref)
 """
 function messagebuffer(ref::RegOrRegRef)
     reg = get_register(ref)
-    net = reg.netparent[]
-    return messagebuffer(net, net.reverse_lookup[reg])
+    net = parent(reg)
+    idx = parentindex(reg)
+    isnothing(net) && throw(ArgumentError("The register does not have a parent network and thus it does not have an assigned message buffer."))
+    return messagebuffer(net, idx)
 end
 
 function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{:C}; permit_forward=false)

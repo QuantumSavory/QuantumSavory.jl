@@ -9,3 +9,4 @@ coverage
 .venv
 .vscode
 dev
+.csv

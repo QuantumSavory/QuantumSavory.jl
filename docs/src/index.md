@@ -6,45 +6,73 @@ DocTestSetup = quote
 end
 ```
 
-A multi-formalism simulator for noisy quantum communication and computation hardware with support for symbolic algebra, multiple simulation backends, a variety of noise models, discrete event simulation, optimization, and visualization.
+A multi-formalism simulator for noisy quantum communication and computation
+hardware, with support for symbolic algebra, multiple simulation backends,
+noise models, discrete-event simulation, optimization, and visualization.
 
-### Capabilities
+![QuantumSavory architecture overview](assets/paper_figures/qsavory.png)
 
-QuantumSavory offers features such as:
+The architecture centers on a single register interface that connects symbolic
+modeling, numerical backends, protocol control, and reusable building blocks.
+The main productivity gain is simple: you describe the physics once in a
+symbolic language, then reuse that model across different simulation backends
+instead of rewriting it for each formalism. That makes it much easier to build
+digital twins and compare modeling assumptions without starting over.
+If you want the full mental model behind that separation of concerns, start
+with [Architecture and Mental Model](@ref architecture).
 
-- **State, Circuit, and Protocols Zoos**: Collections of pre-built quantum states, circuits, and protocols to support rapid prototyping and application optimization.
-- **Realistic Quantum Network Simulation**: : Support for simulating noise and decoherence effects.
-- **Visualization**: Tools for visualizing register states and experiment metadata, with support for background maps.
+## Start Here
 
-The rest of the documentation is [structured](https://diataxis.fr/) as follows:
+If this is your first visit, the shortest path is:
 
-- [How-To Guides](@ref) - fully fleshed out guides to modeling common quantum hardware setups
-- [Explanations](@ref) - how is the library structured, what are its conventions, and why were they decided upon
-- [Tutorials](@ref) - examples covering a specific small feature of the library
-- [References](@ref) - description of the entire library API
+1. Install the package with `pkg> add QuantumSavory`.
+2. Work through the [Getting Started Manual](@ref manual).
+3. Continue into [Explanations](@ref), [Tutorials](@ref), [How-To Guides](@ref),
+   or [References](@ref), depending on what you need next.
 
-Depending on your learning style, you might prefer to start at different locations in the above documentation.
+## Documentation Map
 
-## Getting Started
-### Installation
-To use QuantumSavory, make sure you have Julia version 1.10 installed. You can download and install Julia from [the official Julia website](https://julialang.org/downloads/).
+- [Getting Started Manual](@ref manual): a first guided simulation.
+- [Explanations](@ref): architecture, conventions, and the conceptual model.
+- [Tutorials](@ref): focused lessons on one feature at a time.
+- [How-To Guides](@ref): larger task-oriented workflows.
+- [References](@ref): API lookup and generated module documentation.
 
-Once Julia is setup, QuantumSavory can be installed with the following command in your in your Julia REPL:
-```bash
-$ julia
-julia> ]
-pkg> add QuantumSavory
-```
-#### Optional Dependencies
-There are optional packages that you need to install to use the full plotting feature.
-- **Makie**: For plotting of registers and processes.
-- **Tyler**: Enables plotting on a real-world map as a background.
+## Capabilities
 
+QuantumSavory is particularly useful when you need to study a system across
+multiple abstraction layers at once: hardware noise, heterogeneous physical
+subsystems, algorithmic structure, and distributed classical control. This is
+the situation where many models become slow to build and hard to change. The
+main value of QuantumSavory is that it reduces that friction.
 
-### Basic Demo
-Here’s a simple example to demonstrate how you can set up a simulation to generate a set of registers with qubit slots. For more advanced examples and detailed guide, see[How-To Guides](@ref) and [Tutorials](@ref) sections.
+- symbolic descriptions of states, operations, and observables:
+  you describe the intended physics once, in backend-agnostic language, instead
+  of hand-writing tableaux, wavefunctions, phase-space objects, or other
+  backend-specific mathematics; this lets you work productively even when the
+  right backend uses math you would not want to write by hand
+- interchangeable numerical backends:
+  the same model can be executed with fast specialized methods when they apply,
+  and the library is not limited to ideal qubit-only models; it can support
+  quantum modes, multi-level systems, continuous-variable models, and other
+  physically realistic subsystems; this makes it practical to compare accuracy,
+  speed, and physical realism without rebuilding the simulation
+- declarative noise models and automatic time handling:
+  you specify what noise processes exist and when protocol events happen, while
+  QuantumSavory handles the bookkeeping of evolving those effects in the chosen
+  representation instead of making you manually derive the backend-specific form
+  of each noise process; this keeps physical detail from turning into repetitive
+  simulator-specific glue code
+- classical control for LOCC-style protocols through a structured metadata API:
+  protocols coordinate by publishing and querying semantic facts about resources
+  and messages, which makes them compose in a lego-like way without bespoke
+  manual piping of classical message channels; this makes larger protocol stacks
+  easier to extend and reuse
+- visualization of states, metadata, and protocol state:
+  the same abstractions used for simulation can also be inspected and debugged
+  visually while developing larger models
 
-
+## Example Applications
 
 Below we show some of the results of the How-To guides.
 
@@ -60,16 +88,7 @@ Below we show some of the results of the How-To guides.
 <video src="howto/colorcentermodularcluster/colorcentermodularcluster-02.simdashboard.mp4" autoplay loop muted></video>
 ```
 
-!!! warning
-
-    This is a limited public demo of a fraction of some internal research code. Full code is slowly being documented and released.
-
-!!! danger
-
-    This is software is still in a fairly unstable alpha state! The documentation is extremely barebones and current users are expected to read the source code.
-
-A good place to start is the How-To pages.
-For instance, the [implementation of a first generation repeater](@ref First-Generation-Quantum-Repeater).
+For a first runnable example, start with the [Getting Started Manual](@ref manual).
 
 ## Office Hours
 

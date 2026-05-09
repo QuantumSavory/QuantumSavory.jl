@@ -31,7 +31,9 @@ end
 function observable(state::Union{<:Ket,<:Operator}, indices::Base.AbstractVecOrTuple{Int}, proj::SProjector)
     projket = express(proj.ket, QOR)
     if nsubsystems(projket) == length(indices) == nsubsystems(state)
-        1:length(indices) != indices && (projket = permutesystems(projket, indices))
+        if 1:length(indices) != indices
+            state = permutesystems(state, indices)
+        end
         return _observable(state, projket)
     else # TODO this branch still uses an outer product because we do not have a convenient contraction operation implemented when the dimensions differ
         return observable(state, indices, express(proj, QOR))

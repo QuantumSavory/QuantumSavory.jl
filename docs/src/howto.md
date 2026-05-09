@@ -2,6 +2,16 @@
 
 "HowTo"s are fully fleshed out examples of how to use `QuantumSavory` to set up a complete simulation of a system of interest. They do not go into details of how the library is structured internally and do not provide in-depth discussion of APIs, rather they showcase idiomatic use of the library.
 
+## Current How-To Guides
+
+- [1st-gen Repeater - low level implementation](howto/firstgenrepeater/firstgenrepeater.md)
+- [1st-gen Repeater - Clifford formalism](howto/firstgenrepeater/firstgenrepeater-clifford.md)
+- [1st-gen Repeater - simpler implementation](howto/firstgenrepeater_v2/firstgenrepeater_v2.md)
+- [Congestion on a Repeater Chain](howto/congestionchain/congestionchain.md)
+- [Cluster States in Atomic Memories](howto/colorcentermodularcluster/colorcentermodularcluster.md)
+- [Entanglement Switch](howto/simpleswitch/simpleswitch.md)
+- [Cluster-State Walkthrough](howto/cluster_state_walkthrough.md)
+
 
 #### A simulation of a quantum repeater:
 
