@@ -465,10 +465,12 @@ end
             continue
         end
 
-        msg_data = querydelete!(mb, PurifierBellMeasurementResults, ❓, ❓, ❓)
+        msg_data = querydelete!(mb, PurifierBellMeasurementResults, remote_chief_idx, ❓, ❓)
+        isnothing(msg_data) && continue
         local_measurements_XX = local_tag.tag[3]
         local_measurements_ZZ = local_tag.tag[4]
-        _, (_, remote_node, remote_measurements_XX, remote_measurements_ZZ) = msg_data
+        remote_measurements_XX = msg_data.tag[3]
+        remote_measurements_ZZ = msg_data.tag[4]
 
         s_int = xor(local_measurements_XX, remote_measurements_XX)
         t_int = xor(local_measurements_ZZ, remote_measurements_ZZ)
