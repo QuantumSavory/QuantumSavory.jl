@@ -2,6 +2,7 @@
 
 ## v0.6.1 - unreleased
 
+- **(feat)** Register-network plots now show direct markers for tagged slots, while preserving full tag details in hover metadata.
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
 
 ## v0.6.0 - 2026-05-05

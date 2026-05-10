@@ -41,6 +41,9 @@ using QuantumOpticsBase: QuantumOpticsBase, dm
         state_markercolor = :black,
         state_linecolor = :gray90,
         lock_marker = '⚿',
+        tag_marker = :circle,
+        tag_markercolor = :orange,
+        tag_markersize = 0.22,
         registercoords = nothing,
         observables = nothing,
     )
@@ -54,6 +57,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     register_slots_coords = Observable(Point2f[])  # Makie marker locations that will be plotted for each register slot
     state_coords = Observable(Point2f[])           # Makie marker locations for each slot that contains a state subsystem
     lock_coords = Observable(Point2f[])            # Makie marker locations for each lock
+    tag_coords = Observable(Point2f[])             # Makie marker locations for directly plotted tags
     state_links = Observable(Point2f[])            # The lines connecting the state subsystem markers corresponding to the same composite system
     observables_coords = Observable(Point2f[])     # Makie marker locations that will be plotted for each subsystem on which an observable is evaluated
     observables_links = Observable(Point2f[])      # The links between observed subsystems
@@ -61,12 +65,14 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     observables_linkvals = Observable(Float64[])   # Values of the observables (stored per link)
     register_backref = Observable(Any[])           # A backreference to the register object for register square
     register_slots_coords_backref = Observable(Tuple{Any,Int,Int}[]) # A backreference to the register object and reference indices for each register slot marker
+    tag_coords_backref = Observable(Tuple{QuantumSavory.Tag,Any,Int,Int}[]) # A backreference to the tag, register object, and reference indices for each tag marker
     state_coords_backref = Observable(Tuple{Any,Any,Int,Int,Int}[])  # A backreference to the state object and register object and reference indices for each state marker
     observables_backref = Observable(Tuple{Any,Float64}[])           # A backreference to the observable (and its value) for each colored dot visualizing an observable
     observables_links_backref = Observable(Tuple{Any,Float64}[])     # same as above but for the links
     _extras = Dict{Symbol, Any}(
         :register_backref => register_backref,
         :register_slots_coords_backref => register_slots_coords_backref,
+        :tag_coords_backref => tag_coords_backref,
         :state_coords_backref => state_coords_backref,
         :observables_backref => observables_backref,
         :observables_links_backref => observables_links_backref,
@@ -118,7 +124,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         all_nodes = [ # TODO it is rather wasteful to replot everything... do it smarter
             register_rectangles, register_slots_coords,
             state_coords, state_links, lock_coords,
-            register_slots_coords_backref, state_coords_backref,
+            tag_coords,
+            register_slots_coords_backref, tag_coords_backref, state_coords_backref,
             observables_coords, observables_links, observables_vals, observables_linkvals
         ]
         for a in all_nodes # using a naive `lift` would allocate, so instead we just empty each array and refill it; can still be done more elegantly with lift and preallocation
@@ -137,6 +144,11 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 yˢˡᵒᵗ = registercoords[iʳᵉᵍ][2]+(iˢˡᵒᵗ-1)*rn[:scale][]
                 push!(register_slots_coords[], Point2f(xˢˡᵒᵗ,yˢˡᵒᵗ))
                 push!(register_slots_coords_backref[], (reg,iʳᵉᵍ,iˢˡᵒᵗ))
+                visible_tags = filter(showonplot, QuantumSavory.peektags(reg[iˢˡᵒᵗ]))
+                for (iᵗᵃᵍ, tag) in enumerate(visible_tags)
+                    push!(tag_coords[], Point2f(xˢˡᵒᵗ,yˢˡᵒᵗ) + tag_marker_offset(tag, iᵗᵃᵍ, length(visible_tags), rn[:scale][]))
+                    push!(tag_coords_backref[], (tag, reg, iʳᵉᵍ, iˢˡᵒᵗ))
+                end
                 if reg.locks[iˢˡᵒᵗ].level >= 1
                     push!(lock_coords[], Point2f(xˢˡᵒᵗ, yˢˡᵒᵗ))
                 end
@@ -207,6 +219,11 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         marker=rn[:slotmarker], markersize=rn[:slotsize][]*rn[:scale][], color=slotcolor_resolved,
         markerspace=:data,
         inspector_label = (self, i, p) -> get_slots_vis_string(register_slots_coords_backref[],i))
+    tag_scatterplot = scatter!(
+        rn, tag_coords,
+        marker=rn[:tag_marker], markersize=rn[:tag_markersize][]*rn[:scale][], color=rn[:tag_markercolor],
+        markerspace=:data,
+        inspector_label = (self, i, p) -> get_tag_vis_string(tag_coords_backref[],i))
     observables_scatterplot = scatter!(
         rn, observables_coords,
         marker=rn[:observables_marker], markersize=rn[:observables_markersize][]*rn[:scale][], markerspace=:data,
@@ -233,6 +250,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     # TODO all of these should be wrapped into their own types in order to simplify DataInspector and process_interaction
     _extras[:register_polyplot] = register_polyplot
     _extras[:register_slots_scatterplot] = register_slots_scatterplot
+    _extras[:tag_coords] = tag_coords
+    _extras[:tag_scatterplot] = tag_scatterplot
     _extras[:observables_scatterplot] = observables_scatterplot
     _extras[:observables_linesegmentsplot] = observables_linesegments
     _extras[:state_scatterplot] = state_scatterplot
@@ -245,6 +264,26 @@ end
 function get_observables_vis_string(backrefs, i)
     o, val = backrefs[i]
     return "Observable ⟨$(o)⟩ = $(val)"
+end
+
+function tag_visual_key(tag::QuantumSavory.Tag)
+    head = tag[1]
+    head isa Symbol && return Val(head)
+    head isa DataType && return head
+    return typeof(head)
+end
+
+showonplot(tag::QuantumSavory.Tag) = showonplot(tag_visual_key(tag), tag)
+showonplot(::Any, tag::QuantumSavory.Tag) = true
+
+tag_marker_offset(tag::QuantumSavory.Tag, index, total, scale) = tag_marker_offset(tag_visual_key(tag), tag, index, total, scale)
+function tag_marker_offset(::Any, tag::QuantumSavory.Tag, index, total, scale)
+    return Point2f(0.33f0 * scale, (index - (total + 1) / 2) * 0.18f0 * scale)
+end
+
+function get_tag_vis_string(backrefs, i)
+    tag, register, registeridx, slot = backrefs[i]
+    return "Tag on Register $(registeridx) | Slot $(slot)\n $(tag)"
 end
 
 function get_slots_vis_string(backrefs, i)
@@ -295,6 +334,10 @@ function Makie.process_interaction(handler::RNHandler, event::Makie.MouseEvent, 
         o, val = extras[:observables_backref][][index]
         try run(`clear`) catch end
         println("Observable $(o) has value $(val)")
+    elseif plot===extras[:tag_scatterplot]
+        tag, reg, registeridx, slot = extras[:tag_coords_backref][][index]
+        try run(`clear`) catch end
+        println("Tag on Register $(registeridx) | Slot $(slot)\n $(tag)")
     end
     false
 end

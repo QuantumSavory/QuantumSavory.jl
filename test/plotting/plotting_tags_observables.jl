@@ -89,8 +89,30 @@ fig = Figure()
 net = RegisterNet([Register(2),Register(2),Register(2), Register(1)])
 initialize!((net[1,1], net[2,2], net[3,2]), X1⊗X1⊗X1)
 initialize!((net[1,2], net[3,1]), X1⊗X1)
+QuantumSavory.showonplot(::Val{:hoveronly}, tag::QuantumSavory.Tag) = false
+tag!(net[1,1], Tag(:hoveronly))
 tag!(net[4,1], Tag(:mytag, 1, 2))
 tag!(net[3,1], Tag(:sometag, 10, 20))
 initialize!(net[2,1], X1)
-p = registernetplot_axis(fig[1,1], net, observables=[(X, ((1,2),)), (X⊗X⊗X, ((1,1),(2,2),(3,2)))], infocli=false)
+_, _, p, _ = registernetplot_axis(fig[1,1], net, observables=[(X, ((1,2),)), (X⊗X⊗X, ((1,1),(2,2),(3,2)))], infocli=false)
+makie_ext = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
+tag_backrefs = p._extras[][:tag_coords_backref][]
+@test first.(tag_backrefs) == [Tag(:sometag, 10, 20), Tag(:mytag, 1, 2)]
+@test Tag(:hoveronly) ∉ first.(tag_backrefs)
+@test length(p._extras[][:tag_coords][]) == 2
+@test makie_ext.tag_visual_key(Tag(:sometag, 10, 20)) == Val(:sometag)
+@test QuantumSavory.showonplot(Tag(:sometag, 10, 20))
+@test !QuantumSavory.showonplot(Tag(:hoveronly))
+@test occursin("Tag on Register 3 | Slot 1", makie_ext.get_tag_vis_string(tag_backrefs, 1))
+@test occursin("sometag", makie_ext.get_tag_vis_string(tag_backrefs, 1))
+slot_tooltip = makie_ext.get_slots_vis_string([(net[1], 1, 1)], 1)
+@test occursin("hoveronly", slot_tooltip)
 display(fig)
+
+net = RegisterNet([Register(1)])
+fig = Figure()
+_, _, p, netobs = registernetplot_axis(fig[1,1], net, infocli=false)
+@test isempty(p._extras[][:tag_coords][])
+tag!(net[1,1], Tag(:late_tag))
+notify(netobs)
+@test first.(p._extras[][:tag_coords_backref][]) == [Tag(:late_tag)]

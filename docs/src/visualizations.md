@@ -87,7 +87,12 @@ QuantumSavory.showmetadata(fig,ax,plt,1,1)
 fig
 ```
 
-And here with some extra tag metadata.
+And here with some extra tag metadata. Tagged slots are marked directly on
+the plot, while the hover metadata continues to show the full tag contents,
+including tags that have been specialized to appear only on hover. The default
+direct tag marker can be changed with the `tag_marker`, `tag_markercolor`, and
+`tag_markersize` plotting keywords; advanced extensions can specialize
+`showonplot` to customize whether a tag should be shown permanently.
 
 ```@example vis
 tag!(network[2,3], :specialplace, 1, 2)
