@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- **(feature)** Register network plots now show tagged slots with small badges and include pending message-buffer contents in slot hover panels.
 
 ## v0.6.0 - 2026-05-05
 

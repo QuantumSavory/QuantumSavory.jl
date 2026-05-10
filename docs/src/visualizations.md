@@ -67,7 +67,7 @@ fig
 In general, if you have a custom background axis, you can use it as the axis parameter in `registerplot_axis`.
 ## State and tag metadata in interactive visualizations
 
-When working with interactive plots, you can also hover over different parts of the visualization to see the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying).
+When working with interactive plots, you can also hover over different parts of the visualization to see the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying). Slots that carry tags are marked with a small badge, and slot hover panels also include pending messages from that register's message buffer when the register belongs to a network.
 
 Here is what the data panels look like. (`showmetada` is used to force-show the panel, but when working interactively you simply need to hover with the cursor)
 
