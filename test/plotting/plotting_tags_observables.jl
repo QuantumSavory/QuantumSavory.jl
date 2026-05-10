@@ -114,5 +114,7 @@ slot_text = qs_makie.get_slots_vis_string([(net[1], 1, 1)], 1)
 @test occursin("message buffer", slot_text)
 tag_text = qs_makie.get_tags_vis_string([(net[1], 1, 1, QuantumSavory.peektags(net[1,1]))], 1)
 @test occursin("slot_tag", tag_text)
+empty_tag_text = qs_makie.get_tags_vis_string([(empty_net[1], 1, 1, Any[])], 1)
+@test occursin("not tagged", empty_tag_text)
 @test length(p._extras[][:tag_coords_backref][]) == 1
 display(fig)
