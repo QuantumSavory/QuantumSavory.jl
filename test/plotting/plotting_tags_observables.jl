@@ -2,6 +2,7 @@
 #using GLMakie
 using Graphs
 using FileIO
+using ConcurrentSim
 
 ##
 
@@ -94,3 +95,28 @@ tag!(net[3,1], Tag(:sometag, 10, 20))
 initialize!(net[2,1], X1)
 p = registernetplot_axis(fig[1,1], net, observables=[(X, ((1,2),)), (X⊗X⊗X, ((1,1),(2,2),(3,2)))], infocli=false)
 display(fig)
+
+##
+
+net = RegisterNet([Register(1), Register(1)])
+put!(messagebuffer(net, 1), Tag(:local_notice))
+put!(channel(net, 2=>1), Tag(:remote_notice, 7))
+ConcurrentSim.run(QuantumSavory.get_time_tracker(net), 1)
+makie_ext = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
+slot_tooltip = makie_ext.get_slots_vis_string([(net[1], 1, 1)], 1)
+@test occursin("message buffer:", slot_tooltip)
+@test occursin("local", slot_tooltip)
+@test occursin("from 2", slot_tooltip)
+@test occursin("remote_notice", slot_tooltip)
+
+state_ref = initialize!(net[1,1], X1)
+state_tooltip = makie_ext.get_state_vis_string([(state_ref, net[1], 1, 1, 1)], 1)
+@test occursin("message buffer:", state_tooltip)
+@test occursin("remote_notice", state_tooltip)
+
+empty_tooltip = makie_ext.get_slots_vis_string([(net[2], 2, 1)], 1)
+@test occursin("message buffer: empty", empty_tooltip)
+
+standalone_register = Register(1)
+unavailable_tooltip = makie_ext.get_slots_vis_string([(standalone_register, 3, 1)], 1)
+@test occursin("message buffer: unavailable", unavailable_tooltip)

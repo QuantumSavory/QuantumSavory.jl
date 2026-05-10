@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- Register network hover tooltips now include each register's classical message buffer contents.
 
 ## v0.6.0 - 2026-05-05
 

@@ -67,7 +67,7 @@ fig
 In general, if you have a custom background axis, you can use it as the axis parameter in `registerplot_axis`.
 ## State and tag metadata in interactive visualizations
 
-When working with interactive plots, you can also hover over different parts of the visualization to see the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying).
+When working with interactive plots, you can also hover over different parts of the visualization to see the registers, what is stored in them, whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying), and any queued classical messages in the register's message buffer.
 
 Here is what the data panels look like. (`showmetada` is used to force-show the panel, but when working interactively you simply need to hover with the cursor)
 
@@ -92,6 +92,7 @@ And here with some extra tag metadata.
 ```@example vis
 tag!(network[2,3], :specialplace, 1, 2)
 tag!(network[2,3], :otherdata, 3, 4)
+put!(messagebuffer(network, 2), Tag(:queued_message, 7))
 QuantumSavory.showmetadata(fig,ax,plt,2,3)
 fig
 ```

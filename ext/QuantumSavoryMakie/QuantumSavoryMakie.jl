@@ -255,7 +255,25 @@ function get_slots_vis_string(backrefs, i)
     else
         "tagged with:\n"*join((" • $(t)" for t in tags), "\n")
     end
-    return "Register $(registeridx) | Slot $(slot)\n $(tags_str)"
+    message_buffer_str = get_message_buffer_vis_string(register)
+    return "Register $(registeridx) | Slot $(slot)\n $(tags_str)\n $(message_buffer_str)"
+end
+
+function get_message_buffer_vis_string(register)
+    mb = try
+        QuantumSavory.messagebuffer(register)
+    catch err
+        err isa ArgumentError || rethrow()
+        nothing
+    end
+    isnothing(mb) && return "message buffer: unavailable"
+    isempty(mb.buffer) && return "message buffer: empty"
+
+    messages = map(mb.buffer) do (;src, tag)
+        prefix = isnothing(src) ? "local" : "from $(src)"
+        " • $(prefix): $(tag)"
+    end
+    return "message buffer:\n"*join(messages, "\n")
 end
 
 function get_state_vis_string(backrefs, i)
@@ -266,7 +284,8 @@ function get_state_vis_string(backrefs, i)
     else
         "tagged with:\n"*join((" • $(t)" for t in tags), "\n")
     end
-    return "Subsystem $(subsystem) of a state of $(nsubsystems(state)) subsystems, stored in\nRegister $(registeridx) | Slot $(slot)\n $(tags_str)"
+    message_buffer_str = get_message_buffer_vis_string(register)
+    return "Subsystem $(subsystem) of a state of $(nsubsystems(state)) subsystems, stored in\nRegister $(registeridx) | Slot $(slot)\n $(tags_str)\n $(message_buffer_str)"
 end
 
 abstract type RegisterNetGraphHandler end

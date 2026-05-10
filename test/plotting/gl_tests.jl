@@ -30,7 +30,7 @@ end
 
     # check the data inspector tooltip functionality
     backref = plt._extras[][:state_coords_backref][]
-    @test Base.get_extension(QuantumSavory, :QuantumSavoryMakie).get_state_vis_string(backref,1) == "Subsystem 1 of a state of 1 subsystems, stored in\nRegister 1 | Slot 1\n not tagged"
+    @test Base.get_extension(QuantumSavory, :QuantumSavoryMakie).get_state_vis_string(backref,1) == "Subsystem 1 of a state of 1 subsystems, stored in\nRegister 1 | Slot 1\n not tagged\n message buffer: empty"
 end
 end
 
