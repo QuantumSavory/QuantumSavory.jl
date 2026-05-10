@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **(feature)** Register network plots now show tagged slots with small badges and include pending message-buffer contents in slot hover panels.
 - Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
 - Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.
