@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- Added support for saving the logged data of an `EntanglementConsumer` instance. Supported file formats are CSV and HDF5.
 
 ## v0.6.0 - 2026-05-05
 
