@@ -2,6 +2,15 @@
 #using GLMakie
 using Graphs
 using FileIO
+using QuantumSavory.ProtocolZoo: EntanglementCounterpart
+
+if !isdefined(@__MODULE__, :TagPickScene)
+    @eval struct TagPickScene
+        plot
+        index::Int
+    end
+    @eval Makie.pick(scene::TagPickScene) = (scene.plot, scene.index)
+end
 
 ##
 
@@ -101,10 +110,19 @@ tag_backrefs = p._extras[][:tag_coords_backref][]
 @test Tag(:hoveronly) ∉ first.(tag_backrefs)
 @test length(p._extras[][:tag_coords][]) == 2
 @test makie_ext.tag_visual_key(Tag(:sometag, 10, 20)) == Val(:sometag)
+@test makie_ext.tag_visual_key(Tag(EntanglementCounterpart, 1, 2)) == EntanglementCounterpart
+@test makie_ext.tag_visual_key(Tag(Tag(:nested), 1)) == QuantumSavory.Tag
 @test QuantumSavory.showonplot(Tag(:sometag, 10, 20))
+@test QuantumSavory.showonplot(Tag(EntanglementCounterpart, 1, 2))
 @test !QuantumSavory.showonplot(Tag(:hoveronly))
+@test makie_ext.tag_marker_offset(Tag(Tag(:nested), 1), 2, 3, 2.0) == Makie.Point2f(0.66, 0.0)
 @test occursin("Tag on Register 3 | Slot 1", makie_ext.get_tag_vis_string(tag_backrefs, 1))
 @test occursin("sometag", makie_ext.get_tag_vis_string(tag_backrefs, 1))
+tag_pick_event = Makie.MouseEvent(Makie.MouseEventTypes.leftclick, 0.0, Makie.Point2d(0, 0), Makie.Point2f(0, 0), 0.0, Makie.Point2d(0, 0), Makie.Point2f(0, 0))
+tag_interaction_result = redirect_stdout(devnull) do
+    Makie.process_interaction(makie_ext.RNHandler(p), tag_pick_event, (; scene=TagPickScene(p._extras[][:tag_scatterplot], 1)))
+end
+@test !tag_interaction_result
 slot_tooltip = makie_ext.get_slots_vis_string([(net[1], 1, 1)], 1)
 @test occursin("hoveronly", slot_tooltip)
 display(fig)
