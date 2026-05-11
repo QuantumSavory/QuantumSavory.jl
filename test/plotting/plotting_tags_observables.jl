@@ -94,3 +94,12 @@ tag!(net[3,1], Tag(:sometag, 10, 20))
 initialize!(net[2,1], X1)
 p = registernetplot_axis(fig[1,1], net, observables=[(X, ((1,2),)), (X⊗X⊗X, ((1,1),(2,2),(3,2)))], infocli=false)
 display(fig)
+
+fig = Figure()
+net = RegisterNet([Register(1), Register(1)])
+initialize!((net[1,1], net[2,1]), (Z1⊗Z1 + Z2⊗Z2) / sqrt(2.0))
+_, _, p, _ = registernetplot_axis(fig[1,1], net; state_linewidth=4, infocli=false, datainspector=false)
+state_lineplot = p._extras[][:state_linesegmentsplot]
+@test length(state_lineplot[1][]) == 2
+@test state_lineplot.linewidth[] == 4.0f0
+display(fig)

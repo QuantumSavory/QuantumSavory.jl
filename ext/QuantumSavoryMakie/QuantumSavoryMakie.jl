@@ -39,7 +39,8 @@ using QuantumOpticsBase: QuantumOpticsBase, dm
         state_markersize = 0.4,
         state_marker = :diamond,
         state_markercolor = :black,
-        state_linecolor = :gray90,
+        state_linecolor = :gray55,
+        state_linewidth = 3,
         lock_marker = '⚿',
         registercoords = nothing,
         observables = nothing,
@@ -222,7 +223,9 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         marker=rn[:state_marker], markersize=rn[:state_markersize][]*rn[:scale][], color=rn[:state_markercolor],
         markerspace=:data,
         inspector_label = (self, i, p) -> get_state_vis_string(state_coords_backref[],i))
-    state_linesegmentsplot = linesegments!(rn, state_links, color=rn[:state_linecolor])
+    state_linesegmentsplot = linesegments!(
+        rn, state_links,
+        linewidth=rn[:state_linewidth][]*rn[:scale][], color=rn[:state_linecolor])
     state_linesegmentsplot.inspectable[] = false
     lock_scatterplot = scatter!(
         rn, lock_coords,

@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- **(fix)** Make entanglement links in register-network plots visible again with a darker default line and configurable line width.
 
 ## v0.6.0 - 2026-05-05
 
