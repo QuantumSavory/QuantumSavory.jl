@@ -69,6 +69,9 @@ When you already know the match you care about, prefer `query_wait` or
 - Use `locked=` and `assigned=` filters when resource availability matters, especially in networking protocols.
 - Use `querydelete!` or `querydelete_wait!` when the tag or message is consumable state.
 - Prefer waiting helpers over manual `while true` polling loops.
+- `registernetplot_axis` visualizes tagged register slots with small badges, and
+  slot hover panels include pending message-buffer entries for network-attached
+  registers.
 - Prefer `query_wait` and `querydelete_wait!` over `onchange(...)` followed by a
   query when possible:
   - the helpers check existing matches first and then wait only if necessary;
