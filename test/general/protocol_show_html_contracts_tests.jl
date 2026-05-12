@@ -58,4 +58,55 @@ struct DummyProtocol <: QuantumSavory.ProtocolZoo.AbstractProtocol end
         @test occursin("Observable 1", logged_html)
         @test occursin("Observable 2", logged_html)
     end
+
+    @testset "QTCP controllers render protocol-specific summaries" begin
+        qtcp_net = RegisterNet(
+            [Register(3), Register(3), Register(3)];
+            name="qtcp-line",
+            names=["source", "repeater", "sink"],
+        )
+        qtcp_sim = get_time_tracker(qtcp_net)
+
+        put!(qtcp_net[1], Flow(src=1, dst=3, npairs=2, uuid=7))
+        put!(qtcp_net[1], QTCPPairBegin(flow_uuid=7, flow_src=1, flow_dst=3, seq_num=1, memory_slot=1, start_time=0.0))
+        put!(qtcp_net[2], QDatagram(flow_uuid=7, flow_src=1, flow_dst=3, correction=0, seq_num=1, start_time=0.0))
+        put!(qtcp_net[1], LinkLevelRequest(flow_uuid=7, seq_num=1, remote_node=2))
+
+        end_controller = EndNodeController(qtcp_sim, qtcp_net, 1)
+        end_text = sprint(show, end_controller)
+        end_html = repr(MIME"text/html"(), end_controller)
+
+        @test occursin("EndNodeController", end_text)
+        @test occursin("node: 1", end_text)
+        @test occursin("Flow=1", end_text)
+        @test occursin("completed pair tags", end_text)
+        @test occursin("quantumsavory_protocol_qtcp_end_node", end_html)
+        @test occursin("Flow", end_html)
+        @test occursin("QTCPPairBegin", end_html)
+        @test !occursin("quantumsavory_protocol_unknown", end_html)
+
+        network_controller = NetworkNodeController(qtcp_sim, qtcp_net, 2)
+        network_text = sprint(show, network_controller)
+        network_html = repr(MIME"text/html"(), network_controller)
+
+        @test occursin("NetworkNodeController", network_text)
+        @test occursin("neighbors", network_text)
+        @test occursin("QDatagram=1", network_text)
+        @test occursin("Visible QDatagram routes", network_html)
+        @test occursin("7.1", network_html)
+        @test occursin("Next hop", network_html)
+        @test !occursin("quantumsavory_protocol_unknown", network_html)
+
+        link_controller = LinkController(qtcp_sim, qtcp_net, 1, 2)
+        link_text = sprint(show, link_controller)
+        link_html = repr(MIME"text/html"(), link_controller)
+
+        @test occursin("LinkController", link_text)
+        @test occursin("endpoints", link_text)
+        @test occursin("LinkLevelRequest=1", link_text)
+        @test occursin("Endpoint registers", link_html)
+        @test occursin("Endpoint qTCP message buffers", link_html)
+        @test occursin("LinkLevelRequest", link_html)
+        @test !occursin("quantumsavory_protocol_unknown", link_html)
+    end
 end

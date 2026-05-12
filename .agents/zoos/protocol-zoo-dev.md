@@ -72,6 +72,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `test/general/protocolzoo_qtcp_tests.jl`
 - `test/general/protocolzoo_shorthand_constructors_tests.jl`
 - `test/general/protocolzoo_virtual_edge_tests.jl`
+- `test/general/protocol_show_html_contracts_tests.jl`
 
 ## Public Docs And Paper To Cross-Check
 

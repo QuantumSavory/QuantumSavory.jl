@@ -51,6 +51,9 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 - Launch protocol objects with `@process prot()`.
 - Compose protocols over one `RegisterNet`.
 - If a workflow depends on swap updates or deletion notices, include `EntanglementTracker`.
+- Use `show(stdout, prot)` or `repr(MIME"text/html"(), prot)` to inspect
+  protocol-specific summaries. QTCP controllers summarize their node or link,
+  current simulation time, and visible qTCP message buffers.
 - Use `CircuitZoo` instead when all you need is a local gate sequence.
 
 ## Good Docs And Examples To Open Next

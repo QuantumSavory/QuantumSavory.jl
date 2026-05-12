@@ -43,3 +43,23 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     Makie.vlines!(ah, avg, color=:gray)
     Makie.text!(ah, avg, 0.0, text=" Mean time:\n$(@sprintf " %.4g" avg)", color=:black)
 end
+
+function _qtcp_summary_image(subfig, prot)
+    Label(subfig[1,1], text=first(QuantumSavory.ProtocolZoo._qtcp_text_lines(prot)), tellwidth=false)
+    a = Axis(subfig[2,1])
+    hidedecorations!(a)
+    hidespines!(a)
+    text!(a, 0, 0; text=QuantumSavory.ProtocolZoo._qtcp_text_summary(prot), align=(:left, :center))
+end
+
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EndNodeController)
+    _qtcp_summary_image(subfig, prot)
+end
+
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.NetworkNodeController)
+    _qtcp_summary_image(subfig, prot)
+end
+
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.LinkController)
+    _qtcp_summary_image(subfig, prot)
+end

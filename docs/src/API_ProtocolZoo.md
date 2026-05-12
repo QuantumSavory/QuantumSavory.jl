@@ -59,6 +59,30 @@ Those displays are not part of the protocol logic itself, but they are useful
 for debugging configuration and inspecting the expected behavior of a protocol
 before embedding it into a larger simulation.
 
+The qTCP controllers also provide protocol-specific text and HTML summaries.
+These displays intentionally summarize the visible message buffers and endpoint
+metadata rather than exposing process-local state from inside the resumable
+controller bodies.
+
+```julia
+using QuantumSavory
+using QuantumSavory.ProtocolZoo
+
+net = RegisterNet([Register(5), Register(5), Register(5)])
+sim = get_time_tracker(net)
+
+end_node = EndNodeController(sim, net, 1)
+network_node = NetworkNodeController(sim, net, 2)
+link = LinkController(sim, net, 1, 2)
+
+show(stdout, end_node)
+repr(MIME"text/html"(), network_node)
+repr(MIME"text/html"(), link)
+```
+
+When a Makie backend is loaded, `repr(MIME"image/png"(), controller)` follows
+the same compact summary policy for these qTCP controllers.
+
 ## Typical Contents
 
 The current `ProtocolZoo` includes:
