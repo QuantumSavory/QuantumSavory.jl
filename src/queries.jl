@@ -35,6 +35,9 @@ end
 Remove the tag with the given id from a [`RegRef`](@ref) or a [`Register`](@ref).
 
 To remove a tag based on a query, use [`querydelete!`](@ref) instead.
+In asynchronous protocols, do not keep a query result across a yield and later
+call `untag!` with the old id. Another process may already have consumed that
+tag. Re-query under the relevant locks or use a consuming query helper.
 
 See also: [`querydelete!`](@ref), [`query`](@ref), [`tag!`](@ref)
 """
@@ -340,6 +343,10 @@ end
 $TYPEDSIGNATURES
 
 A [`query`](@ref) for [`Register`](@ref) or a register slot (i.e. a [`RegRef`](@ref)) that also deletes the tag.
+
+For register protocol code, this is safer than `query` followed by `untag!`.
+If the result will be used after an `@yield` or lock acquisition, re-query after
+the wait before deleting or acting on the tag.
 
 ```jldoctest; filter = [r"id = (\\d*), ", r"slot = (\\d*)"]
 julia> reg = Register(3)
