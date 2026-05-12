@@ -88,6 +88,10 @@ end
     b = query(net[node], EntanglementCounterpart, charlie, ❓)
 
     @yield lock(a.slot) & lock(b.slot)
+    # strictly speaking, we should be checking that
+    # by the time the locks are acquired
+    # alice and charlie still have the properties we have queried for
+    # (someone else might have consumed the entanglement in between)
     x, y = LocalEntanglementSwap()(a.slot, b.slot)
     unlock(a.slot)
     unlock(b.slot)
@@ -111,7 +115,9 @@ The most important wait sources are:
 - `lock(regref)` for resource acquisition.
 
 The `query_wait` helpers are especially useful because they combine the common
-"wait for change, query again, repeat" pattern into one call.
+"wait for change, query again, repeat" pattern into one call. `query_wait` on its own does not lock
+a register or its tags -- if the protocol will consume a tag, use
+`querydelete_wait!` or re-query after acquiring locks.
 
 ## Condition Combinators
 
