@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- Add focused register microbenchmarks covering creation, network construction, initialization, and CNOT application.
 
 ## v0.6.0 - 2026-05-05
 
