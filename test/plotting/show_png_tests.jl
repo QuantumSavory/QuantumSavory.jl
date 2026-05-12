@@ -42,4 +42,26 @@ show(out, MIME"image/png"(), QuantumSavory.stateof(reg1[1]))
 prot = EntanglerProt(get_time_tracker(net), net, 1, 2)
 show(out, MIME"image/png"(), prot)
 
+qtcp_net = RegisterNet(
+    [Register(3), Register(3), Register(3)];
+    name="qtcp-line",
+    names=["source", "repeater", "sink"],
+)
+qtcp_sim = get_time_tracker(qtcp_net)
+
+put!(qtcp_net[1], Flow(src=1, dst=3, npairs=2, uuid=7))
+put!(qtcp_net[1], QTCPPairBegin(flow_uuid=7, flow_src=1, flow_dst=3, seq_num=1, memory_slot=1, start_time=0.0))
+put!(qtcp_net[2], QDatagram(flow_uuid=7, flow_src=1, flow_dst=3, correction=0, seq_num=1, start_time=0.0))
+put!(qtcp_net[1], LinkLevelRequest(flow_uuid=7, seq_num=1, remote_node=2))
+
+for prot in (
+    EndNodeController(qtcp_sim, qtcp_net, 1),
+    NetworkNodeController(qtcp_sim, qtcp_net, 2),
+    LinkController(qtcp_sim, qtcp_net, 1, 2),
+)
+    old_position = position(out)
+    show(out, MIME"image/png"(), prot)
+    @test position(out) > old_position
+end
+
 end
