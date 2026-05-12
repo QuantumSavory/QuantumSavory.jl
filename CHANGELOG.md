@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- Add QuantumChannel benchmarks for creation, `put!`, and simulated transfer.
 
 ## v0.6.0 - 2026-05-05
 
