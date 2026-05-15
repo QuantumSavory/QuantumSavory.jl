@@ -57,6 +57,8 @@ sender, consumes one Bell pair between the sender and receiver, transmits the
 sender's half over the direct quantum channel, and emits a `SuperdenseDelivery`
 at the receiver. The receiver needs an additional free slot for the transmitted
 qubit; its original Bell-pair slot is kept for decoding.
+The delivered bits are Bob's decoded measurement result, so noisy or malformed
+Bell resources can produce a delivery that differs from the requested payload.
 
 ```julia
 using QuantumSavory

@@ -79,10 +79,56 @@ function _check_superdense_bits(bits::NTuple{2,Int})
     return bits
 end
 
+_normalize_superdense_bits(bits) = _check_superdense_bits((Int(bits[1]), Int(bits[2])))
+
 _is_superdense_bit(bit::Int) = bit == 0 || bit == 1
 _is_superdense_bit(_) = false
 _is_superdense_uuid(uuid::Int) = true
 _is_superdense_uuid(_) = false
+
+function _unlock_superdense_resources(send_slot, entangled_slot, receive_slot, qchannel_resource)
+    unlock(send_slot)
+    unlock(entangled_slot)
+    unlock(receive_slot)
+    unlock(qchannel_resource)
+    return nothing
+end
+
+function _send_superdense_qubit!(send_slot, bits, qc, entangled_slot, receive_slot, qchannel_resource)
+    try
+        SDEncode()(send_slot, bits)
+        put!(qc, send_slot)
+    catch err
+        _unlock_superdense_resources(send_slot, entangled_slot, receive_slot, qchannel_resource)
+        rethrow(err)
+    end
+    return nothing
+end
+
+function _finish_superdense_delivery!(prot, regB, send_slot, entangled_slot, receive_slot, qchannel_resource, uuid, start_time)
+    try
+        decoded_bits = _normalize_superdense_bits(SDDecode()(receive_slot, entangled_slot))
+        finish_time = now(prot.sim)::Float64
+
+        put!(regB, SuperdenseDelivery(prot.nodeA, prot.nodeB, decoded_bits, uuid, finish_time))
+        push!(
+            prot._log,
+            (;
+                start_time,
+                finish_time,
+                uuid,
+                bits=decoded_bits,
+                send_slot=send_slot.idx,
+                entangled_slot=entangled_slot.idx,
+                receive_slot=receive_slot.idx,
+            ),
+        )
+    catch err
+        _unlock_superdense_resources(send_slot, entangled_slot, receive_slot, qchannel_resource)
+        rethrow(err)
+    end
+    return nothing
+end
 
 const SuperdenseLogEntry = @NamedTuple{
     start_time::Float64,
@@ -246,19 +292,13 @@ end
         queryA = query(send_slot, prot.tag, prot.nodeB, entangled_slot.idx; locked=true, assigned=true)
         queryB = query(entangled_slot, prot.tag, prot.nodeA, send_slot.idx; locked=true, assigned=true)
         if isnothing(queryA) || isnothing(queryB) || isassigned(receive_slot)
-            unlock(send_slot)
-            unlock(entangled_slot)
-            unlock(receive_slot)
-            unlock(qchannel_resource)
+            _unlock_superdense_resources(send_slot, entangled_slot, receive_slot, qchannel_resource)
             continue
         end
 
         msg = querydelete!(mbA, SuperdenseMessage, prot.nodeA, prot.nodeB, bit1, bit2, uuid)
         if isnothing(msg)
-            unlock(send_slot)
-            unlock(entangled_slot)
-            unlock(receive_slot)
-            unlock(qchannel_resource)
+            _unlock_superdense_resources(send_slot, entangled_slot, receive_slot, qchannel_resource)
             continue
         end
 
@@ -267,29 +307,10 @@ end
         untag!(send_slot, queryA.id)
         untag!(entangled_slot, queryB.id)
 
-        SDEncode()(send_slot, bits)
-        put!(qc, send_slot)
+        _send_superdense_qubit!(send_slot, bits, qc, entangled_slot, receive_slot, qchannel_resource)
         @yield take!(qc, receive_slot)
-        decoded_bits = SDDecode()(receive_slot, entangled_slot)
-        finish_time = now(prot.sim)::Float64
+        _finish_superdense_delivery!(prot, regB, send_slot, entangled_slot, receive_slot, qchannel_resource, uuid, start_time)
 
-        put!(regB, SuperdenseDelivery(prot.nodeA, prot.nodeB, decoded_bits, uuid, finish_time))
-        push!(
-            prot._log,
-            (;
-                start_time,
-                finish_time,
-                uuid,
-                bits=decoded_bits,
-                send_slot=send_slot.idx,
-                entangled_slot=entangled_slot.idx,
-                receive_slot=receive_slot.idx,
-            ),
-        )
-
-        unlock(send_slot)
-        unlock(entangled_slot)
-        unlock(receive_slot)
-        unlock(qchannel_resource)
+        _unlock_superdense_resources(send_slot, entangled_slot, receive_slot, qchannel_resource)
     end
 end
