@@ -30,7 +30,12 @@ end
 
     # check the data inspector tooltip functionality
     backref = plt._extras[][:state_coords_backref][]
-    @test Base.get_extension(QuantumSavory, :QuantumSavoryMakie).get_state_vis_string(backref,1) == "Subsystem 1 of a state of 1 subsystems, stored in\nRegister 1 | Slot 1\n not tagged"
+    makie_extension = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
+    tooltip = makie_extension.get_state_vis_string(backref,1)
+    @test occursin("Subsystem 1 of a state of 1 subsystems", tooltip)
+    @test occursin("State: $(makie_extension.state_summary(backref[1][1]))", tooltip)
+    @test occursin("Stored in Register 1 | Slot 1", tooltip)
+    @test occursin("not tagged", tooltip)
 end
 end
 

@@ -247,6 +247,8 @@ function get_observables_vis_string(backrefs, i)
     return "Observable ⟨$(o)⟩ = $(val)"
 end
 
+state_summary(stateref) = replace(compactstr(QuantumSavory.quantumstate(stateref)), '\n' => " ")
+
 function get_slots_vis_string(backrefs, i)
     register, registeridx, slot = backrefs[i]
     tags = QuantumSavory.peektags(register[slot])
@@ -266,7 +268,7 @@ function get_state_vis_string(backrefs, i)
     else
         "tagged with:\n"*join((" • $(t)" for t in tags), "\n")
     end
-    return "Subsystem $(subsystem) of a state of $(nsubsystems(state)) subsystems, stored in\nRegister $(registeridx) | Slot $(slot)\n $(tags_str)"
+    return "Subsystem $(subsystem) of a state of $(nsubsystems(state)) subsystems\nState: $(state_summary(state))\nStored in Register $(registeridx) | Slot $(slot)\n $(tags_str)"
 end
 
 abstract type RegisterNetGraphHandler end
@@ -290,7 +292,7 @@ function Makie.process_interaction(handler::RNHandler, event::Makie.MouseEvent, 
     elseif plot===extras[:state_scatterplot]
         state, reg, registeridx, slot, subsystem = extras[:state_coords_backref][][index]
         try run(`clear`) catch end
-        println("Subsystem stored in Register $(registeridx) | Slot $(slot)\n Subsystem $(subsystem) of $(state)")
+        println("Subsystem stored in Register $(registeridx) | Slot $(slot)\n Subsystem $(subsystem) of $(state)\n State: $(state_summary(state))")
     elseif plot===extras[:observables_scatterplot]
         o, val = extras[:observables_backref][][index]
         try run(`clear`) catch end
