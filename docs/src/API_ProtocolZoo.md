@@ -55,7 +55,8 @@ does not depend on bespoke peer-to-peer wiring.
 of shared entanglement. It listens for `SuperdenseMessage` requests at the
 sender, consumes one Bell pair between the sender and receiver, transmits the
 sender's half over the direct quantum channel, and emits a `SuperdenseDelivery`
-at the receiver.
+at the receiver. The receiver needs an additional free slot for the transmitted
+qubit; its original Bell-pair slot is kept for decoding.
 
 ```julia
 using QuantumSavory

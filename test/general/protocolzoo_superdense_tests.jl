@@ -82,6 +82,23 @@ end
         @test only(prot._log).finish_time == 3.0
     end
 
+    @testset "requires a direct quantum channel" begin
+        net = RegisterNet([Register(1), Register(1), Register(2)]; quantum_delay=0.1)
+        sim = get_time_tracker(net)
+
+        prot = SuperdenseCodingProt(net, 1, 3; chooseslotB=2)
+        @process prot()
+
+        err = try
+            run(sim, 0.1)
+            nothing
+        catch err
+            err
+        end
+        @test err isa ArgumentError
+        @test occursin("direct quantum channel", sprint(showerror, err))
+    end
+
     @testset "waits until matching entanglement exists" begin
         net = RegisterNet([Register(1), Register(2)]; quantum_delay=0.1)
         sim = get_time_tracker(net)
@@ -163,6 +180,32 @@ end
         delivery = take_delivery!(net, (1, 1), 10)
         @test !isnothing(delivery)
         @test delivery.tag[7] >= 0.6
+    end
+
+    @testset "retries locked entanglement resources when period is nothing" begin
+        net = RegisterNet([Register(1), Register(2)]; quantum_delay=0.1)
+        sim = get_time_tracker(net)
+        add_superdense_pair!(net, 1)
+        lock(net[1, 1])
+
+        @resumable function release_locked_pair(sim, slot)
+            @yield timeout(sim, 0.5)
+            unlock(slot)
+        end
+
+        prot = SuperdenseCodingProt(net, 1, 2; chooseslotB=2, period=nothing, resource_retry_time=0.1)
+        @process prot()
+        @process release_locked_pair(sim, net[1, 1])
+        put!(net[1], SuperdenseMessage(1, 2, (0, 0), 20))
+
+        run(sim, 0.4)
+        @test take_delivery!(net, (0, 0), 20) === nothing
+
+        run(sim, 2.0)
+        delivery = take_delivery!(net, (0, 0), 20)
+        @test !isnothing(delivery)
+        @test delivery.tag[7] >= 0.6
+        @test !islocked(net[1, 1])
     end
 
     @testset "retries receive-slot availability when period is nothing" begin

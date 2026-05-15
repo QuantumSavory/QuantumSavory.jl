@@ -111,7 +111,8 @@ network's directed-edge metadata.
 
 The protocol requires a direct quantum channel between `nodeA` and `nodeB`, and
 the tagged entangled resource is expected to be in the Bell-pair convention used
-by [`SDEncode`](@ref) and [`SDDecode`](@ref).
+by [`SDEncode`](@ref) and [`SDDecode`](@ref). Bob also needs one additional
+free receive slot; his tagged Bell-pair half remains in place for decoding.
 
 $TYPEDFIELDS
 """
@@ -126,6 +127,8 @@ $TYPEDFIELDS
     nodeB::Int
     """time period between resource retries (`nothing` for waiting on message/tag events)"""
     period::Union{Float64,Nothing} = 0.1
+    """time between entanglement-resource retries when `period === nothing`; unlocks are not tag events"""
+    resource_retry_time::Float64 = 0.1
     """time between receive-slot retries when `period === nothing`; slot availability is not a tag event"""
     receive_slot_retry_time::Float64 = 0.1
     """tag type used to identify shared entanglement; defaults to `EntanglementCounterpart`"""
@@ -156,7 +159,7 @@ end
 
 function _wait_for_superdense_resources(prot::SuperdenseCodingProt, regA::Register, regB::Register)
     if isnothing(prot.period)
-        return onchange(regA, Tag) | onchange(regB, Tag)
+        return onchange(regA, Tag) | onchange(regB, Tag) | timeout(prot.sim, prot.resource_retry_time)
     else
         return onchange(regA, Tag) | onchange(regB, Tag) | timeout(prot.sim, prot.period::Float64)
     end
@@ -179,6 +182,13 @@ function _superdense_qchannel_resource(prot::SuperdenseCodingProt)
     end::Resource
 end
 
+function _superdense_qchannel(prot::SuperdenseCodingProt)
+    edge = prot.nodeA => prot.nodeB
+    haskey(prot.net.qchannels, edge) ||
+        throw(ArgumentError("SuperdenseCodingProt requires a direct quantum channel from node $(prot.nodeA) to node $(prot.nodeB)."))
+    return qchannel(prot.net, edge)
+end
+
 function _query_superdense_pair(prot::SuperdenseCodingProt, regA::Register, regB::Register)
     for queryA in queryall(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true)
         remote_slot = queryA.tag[3]
@@ -194,7 +204,7 @@ end
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
     mbA = messagebuffer(prot.net, prot.nodeA)
-    qc = qchannel(prot.net, prot.nodeA => prot.nodeB)
+    qc = _superdense_qchannel(prot)
     qchannel_resource = _superdense_qchannel_resource(prot)
 
     while true
