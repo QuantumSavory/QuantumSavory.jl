@@ -3,7 +3,8 @@ using ConcurrentSim
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglementCounterpart, EntanglementHistory,
-    EntanglementUpdateX, EntanglementUpdateZ
+    EntanglementUpdateX, EntanglementUpdateZ, EntanglementUUID, EntanglementUUIDAlias,
+    EntanglementUUIDRoute, EntanglementUUIDUpdateX, EntanglementUUIDUpdateZ, EntanglementUUIDDelete
 using QuantumSavory.ProtocolZoo: EntanglementDelete
 
 function assert_tag_surface_contract(value, expected_tag, expected_text)
@@ -41,6 +42,36 @@ end
             EntanglementDelete(2, 3, 4, 5),
             Tag(EntanglementDelete, 2, 3, 4, 5),
             "Deleted 2.3",
+        )
+        assert_tag_surface_contract(
+            EntanglementUUID(10, 2, 3),
+            Tag(EntanglementUUID, 10, 2, 3),
+            "Entangled UUID 10",
+        )
+        assert_tag_surface_contract(
+            EntanglementUUIDAlias(10, 20),
+            Tag(EntanglementUUIDAlias, 10, 20),
+            "UUID alias 10 -> 20",
+        )
+        assert_tag_surface_contract(
+            EntanglementUUIDRoute(10, 2, 3, 20),
+            Tag(EntanglementUUIDRoute, 10, 2, 3, 20),
+            "Route UUID 10",
+        )
+        assert_tag_surface_contract(
+            EntanglementUUIDUpdateX(10, 20, 3, 4, 2),
+            Tag(EntanglementUUIDUpdateX, 10, 20, 3, 4, 2),
+            "apply correction Z2",
+        )
+        assert_tag_surface_contract(
+            EntanglementUUIDUpdateZ(10, 20, 3, 4, 1),
+            Tag(EntanglementUUIDUpdateZ, 10, 20, 3, 4, 1),
+            "apply correction X1",
+        )
+        assert_tag_surface_contract(
+            EntanglementUUIDDelete(10),
+            Tag(EntanglementUUIDDelete, 10),
+            "Delete UUID 10",
         )
     end
 

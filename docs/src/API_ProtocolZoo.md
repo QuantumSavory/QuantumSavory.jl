@@ -49,6 +49,26 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
+## UUID-Based Tracking
+
+`EntanglerProtUUID`, `SwapperProtUUID`, and `EntanglementTrackerUUID` provide an
+alternative to the history-based tracker. They identify logical Bell pairs by
+integer UUIDs in update and delete messages, and they keep route tags for
+measured-out swapper slots. This lets late messages resolve by Bell-pair
+identity even if the physical slot has already been reused.
+
+```julia
+net = RegisterNet([Register(1), Register(2), Register(1)])
+
+@process EntanglerProtUUID(net, 1, 2; success_prob = 1.0, rounds = 1)()
+@process EntanglerProtUUID(net, 2, 3; success_prob = 1.0, rounds = 1)()
+for node in 1:3
+    @process EntanglementTrackerUUID(net, node)()
+end
+@process SwapperProtUUID(net, 2; nodeL = 1, nodeH = 3, rounds = 1)()
+run(get_time_tracker(net), 1.0)
+```
+
 ## Visualization Hooks
 
 Some protocols also expose richer visualization through `show` methods.
