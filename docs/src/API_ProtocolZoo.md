@@ -49,6 +49,28 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
+## Teleporting A State
+
+`TeleportationProt` consumes a tagged Bell pair, measures the sender's input and
+local Bell-pair qubit, sends the classical correction message through the
+network, and leaves the restored state at the receiver.
+
+```julia
+using ConcurrentSim
+using QuantumSavory
+using QuantumSavory.ProtocolZoo
+
+net = RegisterNet([Register(2), Register(1)])
+initialize!(net[1, 1], X1)
+initialize!((net[1, 2], net[2, 1]), StabilizerState("ZZ XX"))
+tag!(net[1, 2], EntanglementCounterpart, 2, 1)
+tag!(net[2, 1], EntanglementCounterpart, 1, 2)
+
+prot = TeleportationProt(net, 1, 2, 1; entangledslot = 2)
+@process prot()
+run(get_time_tracker(net), 1.0)
+```
+
 ## Visualization Hooks
 
 Some protocols also expose richer visualization through `show` methods.
@@ -64,6 +86,7 @@ before embedding it into a larger simulation.
 The current `ProtocolZoo` includes:
 
 - entanglement generation and swapping protocols,
+- qubit teleportation over a tagged Bell pair,
 - metadata tracking helpers,
 - consumer and cutoff protocols,
 - switch-style protocols,

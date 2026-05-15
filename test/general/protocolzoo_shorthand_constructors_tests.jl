@@ -1,6 +1,6 @@
 using Test
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, TeleportationProt, EntanglementTracker, EntanglementConsumer, CutoffProt
 using QuantumSavory.ProtocolZoo.QTCP: EndNodeController, NetworkNodeController, LinkController
 using ConcurrentSim
 
@@ -24,6 +24,10 @@ econsumer = EntanglementConsumer(net, 1, 3; period=0.2)
 # Test SwapperProt shorthand constructor
 swapper = SwapperProt(net, 2; rounds=5, local_busy_time=0.1)
 @test swapper.sim === get_time_tracker(net)
+
+# Test TeleportationProt shorthand constructor
+teleport = TeleportationProt(net, 1, 3, 1; rounds=1)
+@test teleport.sim === get_time_tracker(net)
 
 # Test CutoffProt shorthand constructor
 cutoff = CutoffProt(net, 3; period=0.05, retention_time=10.0)

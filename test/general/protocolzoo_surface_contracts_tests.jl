@@ -3,7 +3,7 @@ using ConcurrentSim
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglementCounterpart, EntanglementHistory,
-    EntanglementUpdateX, EntanglementUpdateZ
+    EntanglementUpdateX, EntanglementUpdateZ, TeleportationCorrection, TeleportedState
 using QuantumSavory.ProtocolZoo: EntanglementDelete
 
 function assert_tag_surface_contract(value, expected_tag, expected_text)
@@ -41,6 +41,16 @@ end
             EntanglementDelete(2, 3, 4, 5),
             Tag(EntanglementDelete, 2, 3, 4, 5),
             "Deleted 2.3",
+        )
+        assert_tag_surface_contract(
+            TeleportationCorrection(1, 2, 3, 4, 2, 1),
+            Tag(TeleportationCorrection, 1, 2, 3, 4, 2, 1),
+            "Teleportation correction from 1.2",
+        )
+        assert_tag_surface_contract(
+            TeleportedState(1, 2, 3, 4),
+            Tag(TeleportedState, 1, 2, 3, 4),
+            "Teleported state from 1.2",
         )
     end
 

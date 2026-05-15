@@ -2,6 +2,7 @@
 
 ## v0.6.1 - unreleased
 
+- New `ProtocolZoo.TeleportationProt` primitive for qubit teleportation over a tagged Bell pair, with correction and output-state tags.
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
 - New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.
 
