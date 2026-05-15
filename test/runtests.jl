@@ -1,3 +1,4 @@
+ENV["QS_TESTRUN"] = "true"
 using ParallelTestRunner
 
 const TEST_PROJECTS = Dict(
