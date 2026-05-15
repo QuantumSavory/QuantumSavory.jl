@@ -16,6 +16,20 @@ function take_delivery!(net, bits, uuid)
 end
 
 @testset "SuperdenseCodingProt" begin
+    @testset "constructs message and delivery tags" begin
+        msg = SuperdenseMessage(1, 2, 0, 1, 7)
+        @test msg.bits == (0, 1)
+        @test SuperdenseMessage(src=1, dst=2, bits=(1, 0), uuid=8).bits == (1, 0)
+
+        delivery = SuperdenseDelivery(1, 2, 1, 0, 9, 1.5)
+        @test delivery.bits == (1, 0)
+        @test SuperdenseDelivery(src=1, dst=2, bits=(0, 1), uuid=10, finish_time=2.5).finish_time == 2.5
+
+        @test QuantumSavory.ProtocolZoo._is_superdense_bit(:bad) === false
+        @test QuantumSavory.ProtocolZoo._is_superdense_uuid(11) === true
+        @test QuantumSavory.ProtocolZoo._is_superdense_uuid(:bad) === false
+    end
+
     @testset "delivers all two-bit payloads and consumes the Bell pairs" begin
         net = RegisterNet([Register(4), Register(5)]; quantum_delay=0.25)
         sim = get_time_tracker(net)
