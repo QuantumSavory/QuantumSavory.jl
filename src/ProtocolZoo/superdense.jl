@@ -177,7 +177,7 @@ $TYPEDFIELDS
     resource_retry_time::Float64 = 0.1
     """time between receive-slot retries when `period === nothing`; slot availability is not a tag event"""
     receive_slot_retry_time::Float64 = 0.1
-    """tag type used to identify shared entanglement; defaults to `EntanglementCounterpart`"""
+    """tag constructor used to identify shared entanglement as `Tag(tag, remote_node, remote_slot)`"""
     tag::Any = EntanglementCounterpart
     """function `Int->Bool` or an integer slot number for Bob's receive slot"""
     chooseslotB::Union{Int,Function} = alwaystrue
@@ -223,7 +223,7 @@ function _superdense_qchannel_resource(prot::SuperdenseCodingProt)
     metadata = get!(prot.net.directed_edge_metadata, prot.nodeA => prot.nodeB) do
         Dict{Symbol,Any}()
     end
-    return get!(metadata, :qchannel_resource) do
+    return get!(metadata, :superdense_qchannel_resource) do
         Resource(prot.sim, 1)
     end::Resource
 end
