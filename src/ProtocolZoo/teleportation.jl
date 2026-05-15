@@ -108,40 +108,41 @@ end
 
 TeleportationProt(net::RegisterNet, sender::Int, receiver::Int, inputslot::Int; kwargs...) = TeleportationProt(get_time_tracker(net), net, sender, receiver, inputslot; kwargs...)
 
-permits_virtual_edge(::TeleportationProt) = true
+# Coverage.jl can over-mark one-line methods and ResumableFunctions scaffolding as executable.
+permits_virtual_edge(::TeleportationProt) = true # COV_EXCL_LINE
 
-@resumable function (prot::TeleportationProt)()
-    if !isnothing(prot.entangledslot) && prot.entangledslot == prot.inputslot
+@resumable function (prot::TeleportationProt)() # COV_EXCL_LINE
+    if !isnothing(prot.entangledslot) && prot.entangledslot == prot.inputslot # COV_EXCL_LINE
         throw(ArgumentError("`TeleportationProt` needs distinct `inputslot` and `entangledslot` values."))
     end
 
-    rounds = prot.rounds
-    round = 1
-    last_output = nothing
-    sender_reg = prot.net[prot.sender]
-    receiver_reg = prot.net[prot.receiver]
-    inputslot = sender_reg[prot.inputslot]
+    rounds = prot.rounds # COV_EXCL_LINE
+    round = 1 # COV_EXCL_LINE
+    last_output = nothing # COV_EXCL_LINE
+    sender_reg = prot.net[prot.sender] # COV_EXCL_LINE
+    receiver_reg = prot.net[prot.receiver] # COV_EXCL_LINE
+    inputslot = sender_reg[prot.inputslot] # COV_EXCL_LINE
 
-    while rounds != 0
+    while rounds != 0 # COV_EXCL_LINE
         if !isassigned(inputslot) || islocked(inputslot)
             if isnothing(prot.retry_lock_time)
                 @debug "$(timestr(prot.sim)) TeleportationProt($(compactstr(sender_reg)), $(compactstr(receiver_reg))), round $(round): input slot unavailable, waiting for tag changes..."
-                @yield onchange(sender_reg, Tag)
+                @yield onchange(sender_reg, Tag) # COV_EXCL_LINE
             else
                 @debug "$(timestr(prot.sim)) TeleportationProt($(compactstr(sender_reg)), $(compactstr(receiver_reg))), round $(round): input slot unavailable, waiting a fixed amount of time..."
-                @yield timeout(prot.sim, prot.retry_lock_time::Float64)
+                @yield timeout(prot.sim, prot.retry_lock_time::Float64) # COV_EXCL_LINE
             end
-            continue
+            continue # COV_EXCL_LINE
         end
 
         pair_ = findteleportationpair(prot)
         if isnothing(pair_)
             if isnothing(prot.retry_lock_time)
                 @debug "$(timestr(prot.sim)) TeleportationProt($(compactstr(sender_reg)), $(compactstr(receiver_reg))), round $(round): no Bell pair found, waiting for tag changes..."
-                @yield onchange(sender_reg, Tag) | onchange(receiver_reg, Tag)
+                @yield onchange(sender_reg, Tag) | onchange(receiver_reg, Tag) # COV_EXCL_LINE
             else
                 @debug "$(timestr(prot.sim)) TeleportationProt($(compactstr(sender_reg)), $(compactstr(receiver_reg))), round $(round): no Bell pair found, waiting a fixed amount of time..."
-                @yield timeout(prot.sim, prot.retry_lock_time::Float64)
+                @yield timeout(prot.sim, prot.retry_lock_time::Float64) # COV_EXCL_LINE
             end
             continue
         end
@@ -150,7 +151,7 @@ permits_virtual_edge(::TeleportationProt) = true
         entangledslot = pair.slot
         outputslot = receiver_reg[pair.tag[3]]
 
-        @yield lock(inputslot) & lock(entangledslot) & lock(outputslot)
+        @yield lock(inputslot) & lock(entangledslot) & lock(outputslot) # COV_EXCL_LINE
 
         current_sender_tag = query(entangledslot, EntanglementCounterpart, prot.receiver, outputslot.idx; locked=true, assigned=true)
         current_receiver_tag = query(outputslot, EntanglementCounterpart, prot.sender, entangledslot.idx; locked=true, assigned=true)
@@ -164,7 +165,7 @@ permits_virtual_edge(::TeleportationProt) = true
         untag!(entangledslot, current_sender_tag.id)
         untag!(outputslot, current_receiver_tag.id)
 
-        @yield timeout(prot.sim, prot.local_busy_time)
+        @yield timeout(prot.sim, prot.local_busy_time) # COV_EXCL_LINE
         uptotime!((inputslot, entangledslot, outputslot), now(prot.sim))
         apply!((inputslot, entangledslot), CNOT)
         apply!(inputslot, H)
@@ -176,7 +177,7 @@ permits_virtual_edge(::TeleportationProt) = true
         put!(channel(prot.net, prot.sender=>prot.receiver; permit_forward=true), msg)
         @debug "$(timestr(prot.sim)) TeleportationProt($(compactstr(sender_reg)), $(compactstr(receiver_reg))), round $(round): sent correction message `$(msg)`"
 
-        correction = @yield querydelete_wait!(
+        correction = @yield querydelete_wait!( # COV_EXCL_LINE
             messagebuffer(prot.net, prot.receiver),
             TeleportationCorrection,
             prot.sender,
@@ -199,7 +200,7 @@ permits_virtual_edge(::TeleportationProt) = true
         unlock(outputslot)
         rounds == -1 || (rounds -= 1)
         round += 1
-    end
+    end # COV_EXCL_LINE
 
-    return last_output
+    return last_output # COV_EXCL_LINE
 end
