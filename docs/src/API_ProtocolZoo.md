@@ -49,6 +49,32 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
+## Entanglement-Assisted Messages
+
+`SuperdenseCodingProt` is an application-level protocol primitive built on top
+of shared entanglement. It listens for `SuperdenseMessage` requests at the
+sender, consumes one Bell pair between the sender and receiver, transmits the
+sender's half over the direct quantum channel, and emits a `SuperdenseDelivery`
+at the receiver.
+
+```julia
+using QuantumSavory
+using QuantumSavory.ProtocolZoo
+using ConcurrentSim
+
+net = RegisterNet([Register(2), Register(3)]; quantum_delay=1.0)
+initialize!((net[1, 1], net[2, 1]), StabilizerState("ZZ XX"))
+tag!(net[1, 1], EntanglementCounterpart, 2, 1)
+tag!(net[2, 1], EntanglementCounterpart, 1, 1)
+
+prot = SuperdenseCodingProt(net, 1, 2; chooseslotB=3)
+@process prot()
+
+put!(net[1], SuperdenseMessage(1, 2, (1, 0), 42))
+run(get_time_tracker(net), 2.0)
+delivery = querydelete!(messagebuffer(net, 2), SuperdenseDelivery, 1, 2, 1, 0, 42, ❓)
+```
+
 ## Visualization Hooks
 
 Some protocols also expose richer visualization through `show` methods.
@@ -66,6 +92,7 @@ The current `ProtocolZoo` includes:
 - entanglement generation and swapping protocols,
 - metadata tracking helpers,
 - consumer and cutoff protocols,
+- entanglement-assisted application protocols,
 - switch-style protocols,
 - and QTCP-related controllers and message types.
 

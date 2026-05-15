@@ -4,12 +4,12 @@ using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange, QueryOnRegResult
 using QuantumSavory: Wildcard, alwaystrue
 using QuantumSavory: timestr, compactstr
-using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
+using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap, SDEncode, SDDecode
 
 using DocStringExtensions
 
 using Distributions: Geometric
-using ConcurrentSim: Simulation, @yield, timeout, @process, now
+using ConcurrentSim: Simulation, @yield, timeout, @process, now, Resource
 import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
@@ -19,8 +19,10 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    SuperdenseCodingProt,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    SuperdenseMessage, SuperdenseDelivery,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # from QTCP
@@ -533,6 +535,7 @@ include("switches.jl")
 using .Switches
 include("qtcp.jl")
 using .QTCP
+include("superdense.jl")
 
 include("show.jl")
 

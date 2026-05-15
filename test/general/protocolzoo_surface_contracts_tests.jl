@@ -42,6 +42,16 @@ end
             Tag(EntanglementDelete, 2, 3, 4, 5),
             "Deleted 2.3",
         )
+        assert_tag_surface_contract(
+            SuperdenseMessage(1, 2, (1, 0), 42),
+            Tag(SuperdenseMessage, 1, 2, 1, 0, 42),
+            "SuperdenseMessage `42`",
+        )
+        assert_tag_surface_contract(
+            SuperdenseDelivery(1, 2, (1, 0), 42, 3.5),
+            Tag(SuperdenseDelivery, 1, 2, 1, 0, 42, 3.5),
+            "SuperdenseDelivery `42`",
+        )
     end
 
     @testset "QTCP control messages preserve their human-readable metadata" begin
@@ -119,5 +129,6 @@ end
         @test get_time_tracker(EndNodeController(net, 1)) === sim
         @test get_time_tracker(NetworkNodeController(net, 1)) === sim
         @test get_time_tracker(LinkController(net, 1, 2)) === sim
+        @test get_time_tracker(SuperdenseCodingProt(net, 1, 2)) === sim
     end
 end
