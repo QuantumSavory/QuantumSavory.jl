@@ -34,6 +34,12 @@ end
 end
 
 @testset "ProtocolZoo - UUID entanglement tracking" begin
+    @testset "uuid generator returns positive integer ids" begin
+        uuid = generate_pair_uuid()
+        @test uuid isa Int
+        @test uuid > 0
+    end
+
     @testset "entangler assigns matching UUIDs to both halves" begin
         net = RegisterNet([Register(1), Register(1)])
         sim = get_time_tracker(net)
