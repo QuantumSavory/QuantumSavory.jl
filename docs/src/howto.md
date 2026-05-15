@@ -10,6 +10,7 @@
 - [Congestion on a Repeater Chain](howto/congestionchain/congestionchain.md)
 - [Cluster States in Atomic Memories](howto/colorcentermodularcluster/colorcentermodularcluster.md)
 - [Entanglement Switch](howto/simpleswitch/simpleswitch.md)
+- [Assisted Continuous-Variable Teleportation](howto/assisted_cvteleportation/assisted_cvteleportation.md)
 - [Cluster-State Walkthrough](howto/cluster_state_walkthrough.md)
 
 

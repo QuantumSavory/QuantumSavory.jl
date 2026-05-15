@@ -29,6 +29,21 @@ difference coming from finite squeezing in the shared resource.
 The squeezing strength is controlled by the `RESOURCE_SQUEEZE` constant near the
 top of `setup.jl`. Increasing it makes the teleportation closer to ideal.
 
+## Interactive Visualization
+
+The `1_interactive_visualization.jl` script serves a WGLMakie dashboard for the
+same protocol:
+
+```julia
+julia --project=examples examples/assisted_cvteleportation/1_interactive_visualization.jl
+```
+
+The dashboard lets you vary the coherent input state's amplitude and phase, and
+the squeezing strength of the three shared resource modes. Each run plots the
+input and teleported output Wigner functions side by side, shows their residual
+difference, and reports the Gaussian-state fidelity together with mean and
+covariance errors.
+
 ## What QuantumSavory Features It Teaches
 
 This example is also a compact tutorial for several low-level QuantumSavory
@@ -50,6 +65,8 @@ interfaces:
    simple sanity checks at the end of an example. This is an introspection tool,
    you should not use it to modify the state of the simulation as it provides
    god-like unphysical access.
+8. How to wrap the same simulation into an interactive WGLMakie application that
+   recomputes and visualizes the output state as parameters change.
 
 Documentation:
 

@@ -3,7 +3,7 @@ using QuantumSavory.ProtocolZoo: AbstractProtocol
 using ConcurrentSim
 using ResumableFunctions
 using Gabs
-using Revise
+isinteractive() && @eval using Revise
 
 """
     RESOURCE_SQUEEZE
@@ -14,6 +14,13 @@ Larger values make the teleportation closer to the ideal protocol, while smaller
 values leave more finite-squeezing noise in Bob's output mode.
 """
 const RESOURCE_SQUEEZE = 5.5
+
+"""
+    DEFAULT_INPUT_AMPLITUDE
+
+Coherent-state amplitude used by the script-mode demonstration and tests.
+"""
+const DEFAULT_INPUT_AMPLITUDE = 0.35 + 0.2im
 
 ###
 # Use Gabs.jl as a numerical backend for `Qumode`s and build the three-node network.
@@ -38,6 +45,16 @@ function simulation_setup(; repr = GabsRepr(QuadBlockBasis))
     sim = get_time_tracker(network)
     return sim, network
 end
+
+"""
+    coherent_input_state(amplitude, phase)
+
+Create the coherent input state used by the interactive visualization.
+
+The two real parameters are separated so that UI sliders can control radius and
+angle without exposing users to complex-number syntax.
+"""
+coherent_input_state(amplitude::Real, phase::Real) = CoherentState(amplitude * cis(phase))
 
 """
     prepare_states!(net, input_state; squeezes)
@@ -155,29 +172,43 @@ so that they can be used as functions with neatly packaged configuration options
     apply!(regB[1], D)
 end
 
-###
-# Run the actual simulation!
-# A single teleportation instance for a random coherent input state.
-###
+"""
+    run_assisted_teleportation(; input_state, squeezes)
 
-sim, net = simulation_setup()
-initial_state = CoherentState(rand(ComplexF64))
-prepare_states!(
-    net,
-    initial_state;
-    squeezes = fill(RESOURCE_SQUEEZE, 3)
+Run one assisted continuous-variable teleportation round and return the final
+state together with diagnostics.
+
+The returned named tuple contains the simulator and network for visualization,
+the input and teleported Gaussian states in the Gabs backend representation,
+their fidelity, and simple mean/covariance errors.
+"""
+function run_assisted_teleportation(;
+    input_state = CoherentState(DEFAULT_INPUT_AMPLITUDE),
+    squeezes = fill(RESOURCE_SQUEEZE, 3),
+    repr = GabsRepr(QuadBlockBasis),
 )
-teleport = AssistedTeleport(sim, net, 1, 2, 3)
-@process teleport()
+    sim, net = simulation_setup(; repr)
+    prepare_states!(net, input_state; squeezes)
+    teleport = AssistedTeleport(sim, net, 1, 2, 3)
+    @process teleport()
+    run(sim)
 
-run(sim)
+    initial_state = express(input_state, repr)
+    teleported_state = QuantumSavory.stateof(net[2, 1]).state[]
 
-###
-# Compare the input state with Bob's final output state.
-# For sufficiently large `RESOURCE_SQUEEZE`, these should be very similar.
-###
+    return (
+        sim = sim,
+        net = net,
+        initial_state = initial_state,
+        teleported_state = teleported_state,
+        fidelity = fidelity(initial_state, teleported_state),
+        mean_error = maximum(abs.(initial_state.mean .- teleported_state.mean)),
+        covariance_error = maximum(abs.(initial_state.covar .- teleported_state.covar)),
+    )
+end
 
-initial_state = express(initial_state, GabsRepr(QuadBlockBasis))
-teleported_state = QuantumSavory.stateof(net[2,1]).state[]
-
-@assert ≈(initial_state, teleported_state, atol=1e-2)
+if abspath(PROGRAM_FILE) == @__FILE__
+    result = run_assisted_teleportation()
+    @info "assisted CV teleportation complete" fidelity = result.fidelity mean_error = result.mean_error covariance_error = result.covariance_error
+    @assert ≈(result.initial_state, result.teleported_state, atol=1e-2)
+end
