@@ -95,11 +95,18 @@ const YY = Y⊗Y
         csv_path = "entanglement_consumer_log.csv"
         hdf5_path = "entanglement_consumer_log.h5"
         metadata = Dict(
+            # Optional metadata
             "sizes" => sizes,
             "T2" => T2,
             "F" => F,
             "entangler_wait_time" => entangler_wait_time,
-            "entangler_busy_time" => entangler_busy_time
+            "entangler_busy_time" => entangler_busy_time,
+            
+            # Mandatory metadata
+            "description" => "Simulation of a quantum network with $(nv(network)) nodes and $(ne(network)) edges, using the specified parameters.",
+            "simulator" => "QuantumSavory.jl",
+            "reference_state" => "bell_pair",
+            "log_format" => "pauli_observables"
         )
 
         function test_log_file(file_path::String)
