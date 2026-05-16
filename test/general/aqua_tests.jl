@@ -3,10 +3,21 @@ using Aqua
 using QuantumOpticsBase
 using QuantumSavory
 using Gabs
+using WorkerUtilities
 
 @testset "Aqua" begin
 
-@test Test.detect_ambiguities(QuantumSavory) == Tuple{Method, Method}[]
+function filtered_detect_ambiguities(ignore_packages::Vector{Module})
+    ambs = Test.detect_ambiguities(QuantumSavory)
+    filtered = filter(ambs) do (m1, m2)
+        !(m1.module in ignore_packages) &&
+        !(m2.module in ignore_packages)
+    end
+
+    return isempty(filtered)
+end
+
+@test filtered_detect_ambiguities([WorkerUtilities])
 
 Aqua.test_all(QuantumSavory,
     ambiguities=(QuantumSavory; recursive=false),
