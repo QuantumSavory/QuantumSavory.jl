@@ -154,6 +154,18 @@ id3 = tag!(reg[4], :symB, 4, 5)
 @test untag!(reg, id2).tag == Tag(:symB, 2, 3)
 @test_throws "Attempted to delete a nonexistent" untag!(reg, -1)
 
+if Base.Threads.nthreads() > 1
+    regs = [Register(1) for _ in 1:min(Base.Threads.nthreads(), 4)]
+    Base.Threads.@threads for i in eachindex(regs)
+        for _ in 1:50_000
+            tag!(regs[i][1], :threaded)
+        end
+    end
+    # Tag ids are global, even when independent registers are tagged in parallel.
+    guids = vcat((reg.guids for reg in regs)...)
+    @test length(guids) == length(unique(guids))
+end
+
 ##
 # findfreeslot tests
 reg = Register(5)
