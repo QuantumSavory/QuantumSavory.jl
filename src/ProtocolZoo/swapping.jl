@@ -90,6 +90,16 @@ SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_track
 
         (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
         (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
+        if q1.idx == q2.idx
+            @error "SwapperProt @$(prot.node): one slot has multiple " *
+                   "`EntanglementCounterpart` tags" slot=q1 tag1 tag2
+            if isnothing(prot.retry_lock_time)
+                @yield onchange(prot.net[prot.node], Tag)
+            else
+                @yield timeout(prot.sim, prot.retry_lock_time::Float64)
+            end
+            continue
+        end
 
         @yield lock(q1) & lock(q2) # this should not really need a yield thanks to `findswapablequbits` which queries only for unlocked qubits, but it is better to be defensive
 
