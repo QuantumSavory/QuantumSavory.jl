@@ -45,4 +45,31 @@ using ConcurrentSim
         @test all(entry -> entry.yy ≈ -1.0, sampler._log)
         @test all(entry -> entry.fidelity ≈ 1.0, sampler._log)
     end
+
+    @testset "sampler waits when no complete pair is available" begin
+        net = RegisterNet([Register(2), Register(2)])
+        sim = get_time_tracker(net)
+
+        sampler = BellPairSampler(sim, net, 1, 2; period=0.2, rounds=1)
+        @process sampler()
+        run(sim, 0.5)
+
+        @test isempty(sampler._log)
+    end
+
+    @testset "sampler waits for reciprocal counterpart metadata" begin
+        net = RegisterNet([Register(2), Register(2)])
+        sim = get_time_tracker(net)
+
+        initialize!((net[1][1], net[2][1]), StabilizerState("ZZ XX"))
+        tag!(net[1][1], EntanglementCounterpart, 2, 1)
+
+        sampler = BellPairSampler(sim, net, 1, 2; period=0.2, rounds=1)
+        @process sampler()
+        run(sim, 0.5)
+
+        @test isempty(sampler._log)
+        @test isassigned(net[1][1])
+        @test isassigned(net[2][1])
+    end
 end
