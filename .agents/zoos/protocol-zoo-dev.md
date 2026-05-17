@@ -14,6 +14,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 
 - `AbstractProtocol` is a callable-struct convention plus a `Process(prot::AbstractProtocol, ...)` bridge.
 - `src/ProtocolZoo/ProtocolZoo.jl` defines the common entanglement tag schema and core protocols.
+- `BellPairSampler` intentionally mirrors the lock/re-query/delete pattern of `EntanglementConsumer`, but logs `ZZ`/`XX`/`YY` and `|Φ⁺⟩` fidelity statistics before tracing out the pair.
 - `src/ProtocolZoo/swapping.jl` contains slot-selection and swapper logic.
 - `src/ProtocolZoo/cutoff.jl` handles stale-entanglement cleanup.
 - `src/ProtocolZoo/qtcp.jl` is a higher-level protocol stack built on the same tag/message model.
@@ -43,6 +44,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   the acquired locks before `untag!`. Avoid deleting one side of a pair before
   confirming the other side is still current.
 - Verify whether the protocol only behaves correctly when paired with `EntanglementTracker`.
+- For sink-like protocols such as `EntanglementConsumer` and `BellPairSampler`, verify both sides of an entanglement tag again after acquiring locks, because query results are snapshots.
 - Treat field-position access like `tag[2]` and `tag[3]` as brittle review hotspots.
 - For tracker-related changes, cross-check:
   - nonzero `classical_delay`

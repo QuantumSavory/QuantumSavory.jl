@@ -46,7 +46,8 @@ sequence of gates each time.
 ## `ProtocolZoo`
 
 `ProtocolZoo` provides reusable control-plane components such as entanglers,
-swappers, trackers, consumers, and switch-style controllers.
+swappers, trackers, consumers, Bell-pair samplers, and switch-style
+controllers.
 
 These are full discrete-event processes packaged as `AbstractProtocol`
 implementations. They compose through the metadata and messaging interfaces
@@ -54,6 +55,12 @@ rather than by requiring direct knowledge of each other's internal state.
 
 That is what makes them a practical building-block layer instead of a bag of
 isolated examples.
+
+For example, `BellPairSampler` can be attached to the endpoints of a repeater
+chain to turn delivered entanglement into a compact log of delivery time,
+stabilizer correlations, and Bell-state fidelity estimates. It is a sink
+protocol like `EntanglementConsumer`, but keeps enough statistics to compare
+network configurations.
 
 ## Why The Three Zoos Fit Together
 

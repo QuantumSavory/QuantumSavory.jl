@@ -1,6 +1,6 @@
 using Test
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, BellPairSampler, CutoffProt
 using QuantumSavory.ProtocolZoo.QTCP: EndNodeController, NetworkNodeController, LinkController
 using ConcurrentSim
 
@@ -20,6 +20,10 @@ etracker = EntanglementTracker(net, 2)
 # Test EntanglementConsumer shorthand constructor (should already exist)
 econsumer = EntanglementConsumer(net, 1, 3; period=0.2)
 @test econsumer.sim === get_time_tracker(net)
+
+# Test BellPairSampler shorthand constructor
+sampler = BellPairSampler(net, 1, 3; period=0.2, rounds=2)
+@test sampler.sim === get_time_tracker(net)
 
 # Test SwapperProt shorthand constructor
 swapper = SwapperProt(net, 2; rounds=5, local_busy_time=0.1)

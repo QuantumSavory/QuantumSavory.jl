@@ -65,9 +65,14 @@ The current `ProtocolZoo` includes:
 
 - entanglement generation and swapping protocols,
 - metadata tracking helpers,
-- consumer and cutoff protocols,
+- consumer, Bell-pair sampling, and cutoff protocols,
 - switch-style protocols,
 - and QTCP-related controllers and message types.
+
+`BellPairSampler` is the recommended lightweight sink when a simulation needs
+delivery-time and Bell-fidelity statistics rather than only consuming pairs. It
+can be attached to any two nodes, including virtual endpoints connected through
+repeaters or switches.
 
 The autodocs below are the exact API reference.
 

@@ -18,7 +18,7 @@ using PrettyTables: PrettyTables, pretty_table
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, BellPairSampler, CutoffProt,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     # from Switches
@@ -521,6 +521,125 @@ permits_virtual_edge(::EntanglementConsumer) = true
         unlock(q1)
         unlock(q2)
         if !isnothing(prot.period)
+            @yield timeout(prot.sim, prot.period::Float64)
+        end
+    end
+end
+
+"""
+$TYPEDEF
+
+A protocol running between two nodes that consumes available Bell pairs and logs
+the `ZZ`, `XX`, and `YY` stabilizer expectations together with the corresponding
+`|Φ⁺⟩` fidelity estimate `(1 + XX - YY + ZZ) / 4`.
+
+`BellPairSampler` is useful as a lightweight network benchmarking primitive: it
+can sit at the end of a direct link, repeater chain, or switch fabric and turn
+delivered entanglement into a time-series log without assuming the two nodes are
+physically adjacent.
+
+This protocol permits virtual edges, meaning it can operate between any two
+nodes in the network regardless of whether they are physically connected by an
+edge.
+
+$FIELDS
+"""
+@kwdef struct BellPairSampler <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of node A"""
+    nodeA::Int
+    """the vertex index of node B"""
+    nodeB::Int
+    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    period::Union{Float64,Nothing} = 0.1
+    """how many Bell pairs to sample (`-1` for infinite)"""
+    rounds::Int = -1
+    """tag type which the sampler is looking for; defaults to `EntanglementCounterpart`"""
+    tag::Any = EntanglementCounterpart
+    """stores sampled Bell-pair delivery time, stabilizers, and `|Φ⁺⟩` fidelity estimate"""
+    _log::Vector{@NamedTuple{t::Float64, zz::Float64, xx::Float64, yy::Float64, fidelity::Float64}} =
+        @NamedTuple{t::Float64, zz::Float64, xx::Float64, yy::Float64, fidelity::Float64}[]
+end
+
+function BellPairSampler(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return BellPairSampler(;sim, net, nodeA, nodeB, kwargs...)
+end
+function BellPairSampler(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return BellPairSampler(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+end
+
+permits_virtual_edge(::BellPairSampler) = true
+
+@resumable function (prot::BellPairSampler)()
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
+    rounds = prot.rounds
+    while rounds != 0
+        query1 = query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true)
+        if isnothing(query1)
+            if isnothing(prot.period)
+                @debug "$(timestr(prot.sim)) BellPairSampler($(compactstr(regA)), $(compactstr(regB))): query on first node found no entanglement. Waiting on tag updates in $(compactstr(regA))."
+                @yield onchange(regA, Tag)
+            else
+                @debug "$(timestr(prot.sim)) BellPairSampler($(compactstr(regA)), $(compactstr(regB))): query on first node found no entanglement. Waiting a fixed amount of time."
+                @yield timeout(prot.sim, prot.period::Float64)
+            end
+            continue
+        end
+
+        query2 = query(regB, prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+        if isnothing(query2)
+            if isnothing(prot.period)
+                @debug "$(timestr(prot.sim)) BellPairSampler($(compactstr(regA)), $(compactstr(regB))): query on second node found no entanglement yet. Waiting on tag updates in $(compactstr(regB))."
+                @yield onchange(regB, Tag)
+            else
+                @debug "$(timestr(prot.sim)) BellPairSampler($(compactstr(regA)), $(compactstr(regB))): query on second node found no entanglement yet. Waiting a fixed amount of time."
+                @yield timeout(prot.sim, prot.period::Float64)
+            end
+            continue
+        end
+
+        q1 = query1.slot
+        q2 = query2.slot
+        @yield lock(q1) & lock(q2)
+        query1 = query(q1, prot.tag, prot.nodeB, q2.idx; locked=true, assigned=true)
+        query2 = query(q2, prot.tag, prot.nodeA, q1.idx; locked=true, assigned=true)
+        if isnothing(query1) || isnothing(query2)
+            @debug "$(timestr(prot.sim)) BellPairSampler($(compactstr(regA)), $(compactstr(regB))): queries stale after locking, retrying."
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+
+        untag!(q1, query1.id)
+        untag!(q2, query2.id)
+        zz = observable((q1, q2), Z⊗Z; something=0.0, time=now(prot.sim))
+        xx = observable((q1, q2), X⊗X; something=0.0, time=now(prot.sim))
+        yy = observable((q1, q2), Y⊗Y; something=0.0, time=now(prot.sim))
+
+        if isnothing(zz) || isnothing(xx) || isnothing(yy)
+            @error "$(timestr(prot.sim)) BellPairSampler($(compactstr(regA)), $(compactstr(regB))): dropping stale pair between .$(q1.idx) and .$(q2.idx)"
+            traceout!(regA[q1.idx], regB[q2.idx])
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+
+        zz = real(zz)
+        xx = real(xx)
+        yy = real(yy)
+        fidelity = (1 + xx - yy + zz) / 4
+
+        traceout!(regA[q1.idx], regB[q2.idx])
+        push!(prot._log, (now(prot.sim), zz, xx, yy, fidelity))
+        unlock(q1)
+        unlock(q2)
+
+        rounds == -1 || (rounds -= 1)
+        if !isnothing(prot.period) && rounds != 0
             @yield timeout(prot.sim, prot.period::Float64)
         end
     end

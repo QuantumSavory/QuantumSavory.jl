@@ -58,4 +58,32 @@ struct DummyProtocol <: QuantumSavory.ProtocolZoo.AbstractProtocol end
         @test occursin("Observable 1", logged_html)
         @test occursin("Observable 2", logged_html)
     end
+
+    @testset "BellPairSampler HTML handles empty and populated logs" begin
+        empty_sampler = BellPairSampler(sim=sim, net=net, nodeA=1, nodeB=2)
+        empty_html = repr(MIME"text/html"(), empty_sampler)
+
+        @test occursin("BellPairSampler", empty_html)
+        @test occursin("Sampled pairs", empty_html)
+        @test occursin(">0<", empty_html)
+        @test !occursin("NaN", empty_html)
+
+        logged_sampler = BellPairSampler(
+            sim=sim,
+            net=net,
+            nodeA=1,
+            nodeB=2,
+            _log=[
+                (t=1.0, zz=1.0, xx=1.0, yy=-1.0, fidelity=1.0),
+                (t=3.0, zz=0.8, xx=0.6, yy=-0.4, fidelity=0.7),
+            ],
+        )
+        logged_html = repr(MIME"text/html"(), logged_sampler)
+
+        @test occursin("Average Bell fidelity estimate", logged_html)
+        @test occursin(">0.85<", logged_html)
+        @test occursin("Average stabilizers ZZ | XX | YY", logged_html)
+        @test occursin("0.9 | 0.8 | -0.7", logged_html)
+        @test occursin("Fidelity", logged_html)
+    end
 end

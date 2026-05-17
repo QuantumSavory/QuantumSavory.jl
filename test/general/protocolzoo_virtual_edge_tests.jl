@@ -1,6 +1,6 @@
 using Test
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, permits_virtual_edge
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, BellPairSampler, CutoffProt, permits_virtual_edge
 using ConcurrentSim
 
 @testset "ProtocolZoo Virtual Edge Detection" begin
@@ -13,10 +13,13 @@ using ConcurrentSim
 
 # Test EntanglementConsumer permits virtual edges
 @test permits_virtual_edge(EntanglementConsumer(sim=Simulation(), net=RegisterNet([Register(2), Register(2)]), nodeA=1, nodeB=2)) == true
+@test permits_virtual_edge(BellPairSampler(sim=Simulation(), net=RegisterNet([Register(2), Register(2)]), nodeA=1, nodeB=2)) == true
 
 # Test with different constructor variants for EntanglementConsumer
 net = RegisterNet([Register(2), Register(2)])
 @test permits_virtual_edge(EntanglementConsumer(net, 1, 2)) == true
 @test permits_virtual_edge(EntanglementConsumer(get_time_tracker(net), net, 1, 2)) == true
+@test permits_virtual_edge(BellPairSampler(net, 1, 2)) == true
+@test permits_virtual_edge(BellPairSampler(get_time_tracker(net), net, 1, 2)) == true
 
 end

@@ -27,6 +27,7 @@ Use `.agents/zoos/protocol-zoo-dev.md` for those.
 - `EntanglementTracker` keeps remote metadata and corrections coherent after swaps and deletions.
 - `CutoffProt` removes stale entanglement.
 - `EntanglementConsumer` acts as a sink or observer for completed long-range pairs.
+- `BellPairSampler` consumes completed long-range pairs and records delivery time, `ZZ`/`XX`/`YY` stabilizers, and a Bell fidelity estimate.
 
 Other specialized families:
 
@@ -51,6 +52,7 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 - Launch protocol objects with `@process prot()`.
 - Compose protocols over one `RegisterNet`.
 - If a workflow depends on swap updates or deletion notices, include `EntanglementTracker`.
+- Use `BellPairSampler` instead of `EntanglementConsumer` when you want fidelity or stabilizer time-series data from delivered pairs.
 - Use `CircuitZoo` instead when all you need is a local gate sequence.
 
 ## Good Docs And Examples To Open Next
