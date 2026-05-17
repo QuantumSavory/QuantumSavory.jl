@@ -2,6 +2,7 @@ using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: BellPairSampler, EntanglerProt, EntanglementCounterpart, EntanglementTracker, SwapperProt
 using ConcurrentSim
+using ResumableFunctions
 
 @testset "ProtocolZoo BellPairSampler" begin
     @testset "direct link samples Bell stabilizers and fidelity" begin
@@ -71,5 +72,77 @@ using ConcurrentSim
         @test isempty(sampler._log)
         @test isassigned(net[1][1])
         @test isassigned(net[2][1])
+    end
+
+    @testset "event-driven sampler resumes when reciprocal metadata arrives" begin
+        net = RegisterNet([Register(2), Register(2)])
+        sim = get_time_tracker(net)
+
+        initialize!((net[1][1], net[2][1]), StabilizerState("ZZ XX"))
+        tag!(net[1][1], EntanglementCounterpart, 2, 1)
+
+        @resumable function add_reciprocal_tag(sim)
+            @yield timeout(sim, 0.1)
+            tag!(net[2][1], EntanglementCounterpart, 1, 1)
+        end
+
+        sampler = BellPairSampler(sim, net, 1, 2; period=nothing, rounds=1)
+        @process sampler()
+        @process add_reciprocal_tag(sim)
+        run(sim, 0.5)
+
+        @test length(sampler._log) == 1
+        @test only(sampler._log).fidelity ≈ 1.0
+        @test !isassigned(net[1][1])
+        @test !isassigned(net[2][1])
+    end
+
+    @testset "event-driven sampler waits for first available pair" begin
+        net = RegisterNet([Register(2), Register(2)])
+        sim = get_time_tracker(net)
+
+        @resumable function add_pair(sim)
+            @yield timeout(sim, 0.1)
+            initialize!((net[1][1], net[2][1]), StabilizerState("ZZ XX"))
+            tag!(net[1][1], EntanglementCounterpart, 2, 1)
+            tag!(net[2][1], EntanglementCounterpart, 1, 1)
+        end
+
+        sampler = BellPairSampler(sim, net, 1, 2; period=nothing, rounds=1)
+        @process sampler()
+        @process add_pair(sim)
+        run(sim, 0.5)
+
+        @test length(sampler._log) == 1
+        @test only(sampler._log).fidelity ≈ 1.0
+    end
+
+    @testset "sampler unlocks and retries when tags go stale after query" begin
+        net = RegisterNet([Register(2), Register(2)])
+        sim = get_time_tracker(net)
+
+        initialize!((net[1][1], net[2][1]), StabilizerState("ZZ XX"))
+        stale_id = tag!(net[1][1], EntanglementCounterpart, 2, 1)
+        tag!(net[2][1], EntanglementCounterpart, 1, 1)
+
+        @resumable function delete_tag_while_sampler_waits_for_lock(sim)
+            request(net[1][1])
+            @yield timeout(sim, 0.1)
+            untag!(net[1][1], stale_id)
+            unlock(net[1][1])
+        end
+
+        sampler = BellPairSampler(sim, net, 1, 2; period=0.2, rounds=1)
+        @process delete_tag_while_sampler_waits_for_lock(sim)
+        @process sampler()
+        run(sim, 0.5)
+
+        @test isempty(sampler._log)
+        @test !islocked(net[1][1])
+        @test !islocked(net[2][1])
+        @test isassigned(net[1][1])
+        @test isassigned(net[2][1])
+        @test isnothing(query(net[1][1], EntanglementCounterpart, 2, 1))
+        @test !isnothing(query(net[2][1], EntanglementCounterpart, 1, 1))
     end
 end
