@@ -9,6 +9,7 @@ come back here for focused follow-up topics.
 
 - [Gate Duration](tutorial/noninstantgate.md)
 - [State Explorer](tutorial/state_explorer.md)
+- [Bell Memory Explorer](tutorial/bell_memory_explorer.md)
 
 ## What To Expect
 

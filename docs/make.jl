@@ -79,6 +79,7 @@ function main()
         "tutorial.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
         "State Explorer" => "tutorial/state_explorer.md",
+        "Bell Memory Explorer" => "tutorial/bell_memory_explorer.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
         #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
     ],
