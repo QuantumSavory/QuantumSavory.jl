@@ -1,6 +1,6 @@
 using Test
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: BellPairSampler, EntanglerProt, SwapperProt, EntanglementTracker
+using QuantumSavory.ProtocolZoo: BellPairSampler, EntanglerProt, EntanglementCounterpart, EntanglementTracker, SwapperProt
 using ConcurrentSim
 
 @testset "ProtocolZoo BellPairSampler" begin
