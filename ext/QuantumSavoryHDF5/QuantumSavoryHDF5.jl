@@ -38,7 +38,7 @@ reference_state_types_enum_dict = enum_to_dict(reference_state_types)
 log_format_types_enum_dict = enum_to_dict(log_format_types)
 
 mandatory_qnet_group_attribute_keys = ["reference_state", "log_format"]
-mandatory_qnet_group_metadata_keys = ["description", "simulator"]
+mandatory_metadata_group_attribute_keys = ["description", "simulator"]
 
 function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, prot::EntanglementConsumer; metadata::Union{Dict{String,Any},Nothing} = nothing)
     HDF5.h5open(save_file.filename, "w") do file
@@ -52,9 +52,9 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
                 end
             end
 
-            for mandatory_key in mandatory_qnet_group_metadata_keys
+            for mandatory_key in mandatory_metadata_group_attribute_keys
                 if !haskey(metadata, mandatory_key)
-                    throw(ArgumentError("Metadata must contain the following keys: " * string(mandatory_qnet_group_metadata_keys) * "."))
+                    throw(ArgumentError("Metadata must contain the following keys: " * string(mandatory_metadata_group_attribute_keys) * "."))
                 end
             end
 
@@ -62,13 +62,14 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
             log_format = log_format_types_enum_dict[metadata["log_format"]]
         else
             throw(ArgumentError("Metadata must contain the following attribute keys: " * string(mandatory_qnet_group_attribute_keys)))
-            throw(ArgumentError("Metadata must contain the following metadata keys: " * string(mandatory_qnet_group_metadata_keys)))
+            throw(ArgumentError("Metadata must contain the following metadata keys: " * string(mandatory_metadata_group_attribute_keys)))
         end
 
         qnet_group = HDF5.create_group(file, "qnet")
         metadata_group = HDF5.create_group(qnet_group, "metadata")
         simulation_log_group = HDF5.create_group(qnet_group, "simulation_log")
         quantumsavory_group = HDF5.create_group(metadata_group, "quantumsavory")
+        user_optinal_group = HDF5.create_group(metadata_group, "user_optional")
 
         ref_dt = make_enum_type_uint8(reference_state_types_enum_dict)
         log_dt = make_enum_type_uint8(log_format_types_enum_dict)
@@ -100,8 +101,8 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
             end
         end
 
-        for metadata_key in setdiff(keys(metadata), mandatory_qnet_group_attribute_keys, mandatory_qnet_group_metadata_keys)
-            HDF5.write_attribute(quantumsavory_group, metadata_key, metadata[metadata_key])
+        for metadata_key in setdiff(keys(metadata), mandatory_qnet_group_attribute_keys, mandatory_metadata_group_attribute_keys)
+            HDF5.write_attribute(user_optinal_group, metadata_key, metadata[metadata_key])
         end
     end
 end
