@@ -69,7 +69,7 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
         metadata_group = HDF5.create_group(qnet_group, "metadata")
         simulation_log_group = HDF5.create_group(qnet_group, "simulation_log")
         quantumsavory_group = HDF5.create_group(metadata_group, "quantumsavory")
-        user_optinal_group = HDF5.create_group(metadata_group, "user_optional")
+        user_optional_group = HDF5.create_group(metadata_group, "user_optional")
 
         ref_dt = make_enum_type_uint8(reference_state_types_enum_dict)
         log_dt = make_enum_type_uint8(log_format_types_enum_dict)
@@ -102,7 +102,7 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
         end
 
         for metadata_key in setdiff(keys(metadata), mandatory_qnet_group_attribute_keys, mandatory_metadata_group_attribute_keys)
-            HDF5.write_attribute(user_optinal_group, metadata_key, metadata[metadata_key])
+            HDF5.write_attribute(user_optional_group, metadata_key, metadata[metadata_key])
         end
     end
 end
