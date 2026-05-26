@@ -13,6 +13,10 @@ function _set_metadata_default_values(metadata::Dict{String,Any})
         metadata["log_format"] = "pauli_observables"
     end
 
+    if !haskey(metadata, "simulation_mode")
+        metadata["simulation_mode"] = "stateful"
+    end
+
     if !haskey(metadata, "description")
         metadata["description"] = ""
     end

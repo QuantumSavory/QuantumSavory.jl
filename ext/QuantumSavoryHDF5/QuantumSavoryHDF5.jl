@@ -34,16 +34,23 @@ end
     pauli_observables   = 4
 end
 
+@enum simulation_mode::UInt8 begin
+    repeated_single_shot = 0
+    stateful = 1
+end
+
 reference_state_types_enum_dict = enum_to_dict(reference_state_types)
 log_format_types_enum_dict = enum_to_dict(log_format_types)
+simulation_mode_enum_dict = enum_to_dict(simulation_mode)
 
-mandatory_qnet_group_attribute_keys = ["reference_state", "log_format"]
+mandatory_qnet_group_attribute_keys = ["reference_state", "log_format", "simulation_mode"]
 mandatory_metadata_group_attribute_keys = ["description", "simulator"]
 
 function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, prot::EntanglementConsumer; metadata::Union{Dict{String,Any},Nothing} = nothing)
     HDF5.h5open(save_file.filename, "w") do file
         reference_state = bell_pair
         log_format = pauli_observables
+        simulation_mode = stateful
 
         if !isnothing(metadata)
             for mandatory_key in mandatory_qnet_group_attribute_keys
@@ -60,6 +67,7 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
 
             reference_state = reference_state_types_enum_dict[metadata["reference_state"]]
             log_format = log_format_types_enum_dict[metadata["log_format"]]
+            simulation_mode = simulation_mode_enum_dict[metadata["simulation_mode"]]
         else
             throw(ArgumentError("Metadata must contain the following attribute keys: " * string(mandatory_qnet_group_attribute_keys)))
             throw(ArgumentError("Metadata must contain the following metadata keys: " * string(mandatory_metadata_group_attribute_keys)))
@@ -73,13 +81,16 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
 
         ref_dt = make_enum_type_uint8(reference_state_types_enum_dict)
         log_dt = make_enum_type_uint8(log_format_types_enum_dict)
+        sim_dt = make_enum_type_uint8(simulation_mode_enum_dict)
         scalar_space = HDF5.Dataspace(HDF5.API.h5s_create(HDF5.API.H5S_SCALAR))
 
         attr_ref = HDF5.create_attribute(qnet_group, "reference_state", ref_dt, scalar_space)
         attr_log = HDF5.create_attribute(qnet_group, "log_format", log_dt, scalar_space)
+        attr_sim = HDF5.create_attribute(qnet_group, "simulation_mode", sim_dt, scalar_space)
 
         HDF5.write_attribute(attr_ref, ref_dt, UInt8(reference_state))
         HDF5.write_attribute(attr_log, log_dt, UInt8(log_format))
+        HDF5.write_attribute(attr_sim, sim_dt, UInt8(simulation_mode))
 
         HDF5.write_attribute(qnet_group, "format_version", format_version)
         HDF5.write_attribute(qnet_group, "format_version_minor", format_version_minor)
