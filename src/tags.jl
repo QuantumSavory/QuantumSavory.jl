@@ -77,6 +77,11 @@ end
 Base.convert(::Type{Tag}, x::Tag) = x
 Base.convert(::Type{Tag}, x) = Tag(x)
 
+@inline _indexable_tag_head(head) = head isa TagElementTypes ? head : nothing
+@inline _tag_index_head(tag::Tag) = isempty(tag) ? nothing : _indexable_tag_head(tag[1])
+@inline _query_index_head(head::TagElementTypes) = head
+@inline _query_index_head(_) = nothing
+
 # Create a constructor for each tag variant
 for (tagsymbol, tagvariant) in pairs(tag_types)
     sig = methods(tagvariant)[1].sig.parameters[2:end]

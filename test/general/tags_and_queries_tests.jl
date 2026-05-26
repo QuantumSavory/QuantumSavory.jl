@@ -167,6 +167,32 @@ if Base.Threads.nthreads() > 1
 end
 
 ##
+# index maintenance tests
+
+reg = Register(4)
+id1 = tag!(reg[1], :indexed, 1)
+id2 = tag!(reg[2], :indexed, 2)
+id3 = tag!(reg[2], :other, 3)
+
+@test reg.tag_ids_by_slot[1] == [id1]
+@test reg.tag_ids_by_slot[2] == [id2, id3]
+@test reg.tag_ids_by_head[:indexed] == [id1, id2]
+@test reg.tag_ids_by_head[:other] == [id3]
+
+@test strip_id(query(reg[2], :indexed, ❓)) == (slot=reg[2], tag=Tag(:indexed, 2))
+@test strip_id(query(reg, :indexed, ❓; filo=false)) == (slot=reg[1], tag=Tag(:indexed, 1))
+@test strip_id(query(reg, :indexed, ❓; filo=true)) == (slot=reg[2], tag=Tag(:indexed, 2))
+
+@test querydelete!(reg[2], :indexed, 2).id == id2
+@test reg.tag_ids_by_slot[2] == [id3]
+@test reg.tag_ids_by_head[:indexed] == [id1]
+@test query(reg[2], :indexed, ❓) === nothing
+@test strip_id(query(reg, :indexed, ❓)) == (slot=reg[1], tag=Tag(:indexed, 1))
+
+@test untag!(reg[1], id1).tag == Tag(:indexed, 1)
+@test !haskey(reg.tag_ids_by_head, :indexed)
+
+##
 # findfreeslot tests
 reg = Register(5)
 initialize!(reg[1], X)
