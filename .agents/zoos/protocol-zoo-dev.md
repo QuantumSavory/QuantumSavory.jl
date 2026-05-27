@@ -15,6 +15,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `AbstractProtocol` is a callable-struct convention plus a `Process(prot::AbstractProtocol, ...)` bridge.
 - `src/ProtocolZoo/ProtocolZoo.jl` defines the common entanglement tag schema and core protocols.
 - `src/ProtocolZoo/swapping.jl` contains slot-selection and swapper logic.
+- `src/ProtocolZoo/ghz_projection.jl` contains hub-side GHZ projection and endpoint delivery tagging.
 - `src/ProtocolZoo/cutoff.jl` handles stale-entanglement cleanup.
 - `src/ProtocolZoo/qtcp.jl` is a higher-level protocol stack built on the same tag/message model.
 - `src/ProtocolZoo/switches.jl` is a separate subsystem with its own request and matching machinery.
@@ -30,6 +31,8 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   - `EntanglementUpdateX`
   - `EntanglementUpdateZ`
   - `EntanglementDelete`
+  - `GHZReady`
+  - `GHZMember`
 - If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::MyProt) = true`.
 
 ## Review Checks
@@ -55,6 +58,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 
 - `src/ProtocolZoo/ProtocolZoo.jl`
 - `src/ProtocolZoo/swapping.jl`
+- `src/ProtocolZoo/ghz_projection.jl`
 - `src/ProtocolZoo/cutoff.jl`
 - `src/ProtocolZoo/qtcp.jl`
 - `src/ProtocolZoo/switches.jl`
@@ -65,6 +69,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `test/general/protocolzoo_entangler_tests.jl`
 - `test/general/protocolzoo_entanglement_tracker_tests.jl`
 - `test/general/protocolzoo_cutoffprot_tests.jl`
+- `test/general/protocolzoo_ghz_projection_tests.jl`
 - `test/general/protocolzoo_entanglement_consumer_tests.jl`
 - `test/general/protocolzoo_swapper_chooseslots_tests.jl`
 - `test/general/protocolzoo_switch_tests.jl`

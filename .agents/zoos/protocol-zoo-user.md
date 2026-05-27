@@ -27,6 +27,7 @@ Use `.agents/zoos/protocol-zoo-dev.md` for those.
 - `EntanglementTracker` keeps remote metadata and corrections coherent after swaps and deletions.
 - `CutoffProt` removes stale entanglement.
 - `EntanglementConsumer` acts as a sink or observer for completed long-range pairs.
+- `GHZProjectionProt` and `GHZReceiverProt` turn hub-and-spoke Bell pairs into a tagged multipartite GHZ state.
 
 Other specialized families:
 
@@ -68,5 +69,6 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 ## Common Mistakes
 
 - Launching a swapper or cutoff flow without the metadata-tracking logic it depends on.
+- Launching `GHZReceiverProt` without `EntanglementTracker`; the receiver records delivery metadata, but the tracker applies the correction messages.
 - Re-implementing standard control logic when a zoo protocol already exists.
 - Treating a protocol object like a pure function instead of a long-running process.

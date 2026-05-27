@@ -3,7 +3,7 @@ using ConcurrentSim
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglementCounterpart, EntanglementHistory,
-    EntanglementUpdateX, EntanglementUpdateZ
+    EntanglementUpdateX, EntanglementUpdateZ, GHZReady, GHZMember
 using QuantumSavory.ProtocolZoo: EntanglementDelete
 
 function assert_tag_surface_contract(value, expected_tag, expected_text)
@@ -41,6 +41,16 @@ end
             EntanglementDelete(2, 3, 4, 5),
             Tag(EntanglementDelete, 2, 3, 4, 5),
             "Deleted 2.3",
+        )
+        assert_tag_surface_contract(
+            GHZReady(9, 4, 2, 1, 1, 3),
+            Tag(GHZReady, 9, 4, 2, 1, 1, 3),
+            "GHZReady `9`",
+        )
+        assert_tag_surface_contract(
+            GHZMember(9, 4, 1, 3),
+            Tag(GHZMember, 9, 4, 1, 3),
+            "GHZMember `9`",
         )
     end
 
@@ -110,6 +120,12 @@ end
         @test occursin(">2<", consumer_html)
         @test occursin("1.5", consumer_html)
         @test occursin("0.0 | 0.0", consumer_html)
+
+        ghz_projection = GHZProjectionProt(sim, RegisterNet([Register(1), Register(1), Register(2)]), 3, [1, 2])
+        push!(ghz_projection._log, (t=2.0, ghz_id=7, hub_slots=[1, 2], member_nodes=[1, 2], member_slots=[1, 1], x_outcome=1, z_outcomes=[2]))
+        ghz_projection_html = sprint(show, MIME"text/html"(), ghz_projection)
+        @test occursin("GHZProjectionProt", ghz_projection_html)
+        @test occursin("Delivered GHZ states", ghz_projection_html)
     end
 
     @testset "QTCP shorthand constructors inherit the network simulation" begin

@@ -65,9 +65,48 @@ The current `ProtocolZoo` includes:
 
 - entanglement generation and swapping protocols,
 - metadata tracking helpers,
+- multipartite GHZ projection and receiver protocols,
 - consumer and cutoff protocols,
 - switch-style protocols,
 - and QTCP-related controllers and message types.
+
+## Multipartite GHZ Projection
+
+`GHZProjectionProt` turns a star of Bell pairs into a GHZ state shared by the
+remote member nodes. The hub node consumes one Bell-pair half per member,
+performs the local GHZ-basis projection, and sends the needed Pauli correction
+messages through the same tracker machinery used by entanglement swapping.
+
+Each member node should run both `EntanglementTracker` and `GHZReceiverProt`.
+The tracker applies the corrections, while the receiver records the delivered
+GHZ metadata by tagging the endpoint slot with `GHZMember`.
+
+```julia
+members = [1, 2, 3]
+hub = 4
+net = RegisterNet([[Register(1) for _ in members]; Register(length(members))])
+sim = get_time_tracker(net)
+
+for member in members
+    @process EntanglementTracker(sim, net, member)()
+    @process GHZReceiverProt(sim, net, member; rounds=1)()
+    @process EntanglerProt(
+        sim,
+        net,
+        member,
+        hub;
+        pairstate=StabilizerState("XX ZZ"),
+        chooseslotA=1,
+        chooseslotB=member,
+        rounds=1,
+        success_prob=1.0,
+    )()
+end
+
+projection = GHZProjectionProt(sim, net, hub, members; rounds=1, retry_lock_time=nothing)
+@process projection()
+run(sim, 10)
+```
 
 The autodocs below are the exact API reference.
 

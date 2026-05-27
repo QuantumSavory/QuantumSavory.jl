@@ -55,3 +55,40 @@ function Base.show(io::IO, m::MIME"text/html", p::EntanglementConsumer)
     </div>
     """)
 end
+
+function Base.show(io::IO, m::MIME"text/html", p::GHZProjectionProt)
+    delivered = length(p._log)
+    last_id = delivered > 0 ? last(p._log).ghz_id : p.first_ghz_id - 1
+    print(io,
+    """
+    <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_ghz_projection">
+    <h1><code class="quantumsavory_typename quantumsavory_protocol_typename">GHZProjectionProt</code> protocol</h1>
+    <address>hub $(compactstr(p.net[p.hub])) to members $(join(p.members, ", "))</address>
+    <dl>
+    <dt>Delivered GHZ states</dt>
+    <dd>$(delivered)</dd>
+    <dt>Last GHZ id</dt>
+    <dd>$(last_id)</dd>
+    </dl>
+    <h2>Log</h2>
+    $(pretty_table(String, p._log, column_labels=["Time", "GHZ id", "Hub slots", "Member nodes", "Member slots", "X outcome", "Z outcomes"], backend=:html, maximum_number_of_rows=25))
+    </div>
+    """)
+end
+
+function Base.show(io::IO, m::MIME"text/html", p::GHZReceiverProt)
+    received = length(p._log)
+    print(io,
+    """
+    <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_ghz_receiver">
+    <h1><code class="quantumsavory_typename quantumsavory_protocol_typename">GHZReceiverProt</code> protocol</h1>
+    <address>on $(compactstr(p.net[p.node]))</address>
+    <dl>
+    <dt>Received GHZ member announcements</dt>
+    <dd>$(received)</dd>
+    </dl>
+    <h2>Log</h2>
+    $(pretty_table(String, p._log, column_labels=["Time", "GHZ id", "Member slot", "Member index", "Member count"], backend=:html, maximum_number_of_rows=25))
+    </div>
+    """)
+end

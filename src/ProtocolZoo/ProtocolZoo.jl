@@ -19,8 +19,10 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    GHZProjectionProt, GHZReceiverProt,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
+    GHZReady, GHZMember,
     # from Switches
     SimpleSwitchDiscreteProt, SwitchRequest,
     # from QTCP
@@ -529,6 +531,7 @@ end
 
 include("cutoff.jl")
 include("swapping.jl")
+include("ghz_projection.jl")
 include("switches.jl")
 using .Switches
 include("qtcp.jl")
