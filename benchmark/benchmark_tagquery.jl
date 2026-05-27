@@ -151,18 +151,18 @@ SUITE["tagquery"]["index_selectivity"] = BenchmarkGroup(["index_selectivity"])
 
 function build_register_head_selective(n)
     reg = Register(2)
-    tag!(reg[1], :target, 1)
+    tag!(reg[1], :distilled, 1)
     for i in 1:n
-        tag!(reg[2], :noise, i)
+        tag!(reg[2], :noisy, i)
     end
     return reg
 end
 
 function build_register_slot_selective(n)
     reg = Register(2)
-    tag!(reg[1], :common, 1)
+    tag!(reg[1], :entangled, 1)
     for i in 1:n
-        tag!(reg[2], :common, i + 1)
+        tag!(reg[2], :entangled, i + 1)
     end
     return reg
 end
@@ -170,10 +170,10 @@ end
 function build_register_queryall_selective(n, k)
     reg = Register(2)
     for i in 1:k
-        tag!(reg[1], :target, i)
+        tag!(reg[1], :distilled, i)
     end
     for i in 1:n
-        tag!(reg[2], :noise, i)
+        tag!(reg[2], :noisy, i)
     end
     return reg
 end
@@ -182,10 +182,10 @@ function build_messagebuffer_head_selective(n, k=1)
     net = RegisterNet([Register(1)])
     mb = messagebuffer(net[1])
     for i in 1:n
-        put!(mb, Tag(:noise, i))
+        put!(mb, Tag(:noisy, i))
     end
     for i in 1:k
-        put!(mb, Tag(:target, i))
+        put!(mb, Tag(:distilled, i))
     end
     return mb
 end
@@ -194,7 +194,7 @@ function build_messagebuffer_miss(n)
     net = RegisterNet([Register(1)])
     mb = messagebuffer(net[1])
     for i in 1:n
-        put!(mb, Tag(:noise, i))
+        put!(mb, Tag(:noisy, i))
     end
     return mb
 end
@@ -207,13 +207,13 @@ reg_slot_selective = build_register_slot_selective(selectivity_n)
 reg_queryall_selective = build_register_queryall_selective(selectivity_n, selectivity_k)
 mb_head_selective = build_messagebuffer_head_selective(selectivity_n)
 mb_head_selective_miss = build_messagebuffer_head_selective(selectivity_n, selectivity_k)
-mb_absent_selective = build_messagebuffer_miss(selectivity_n)
+mb_missing_head_selective = build_messagebuffer_miss(selectivity_n)
 
-SUITE["tagquery"]["index_selectivity"]["register_head_query_rare"] = @benchmarkable query(reg_head_selective, :target, 1)
-SUITE["tagquery"]["index_selectivity"]["register_head_queryall_rare"] = @benchmarkable queryall(reg_queryall_selective, :target, ❓)
-SUITE["tagquery"]["index_selectivity"]["register_slot_query_rare"] = @benchmarkable query(reg_slot_selective[1], :common, 1)
-SUITE["tagquery"]["index_selectivity"]["register_slot_queryall_rare"] = @benchmarkable queryall(reg_slot_selective[1], :common, ❓)
-SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_rare_back"] = @benchmarkable query(mb_head_selective, :target, 1)
-SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_rare_miss"] = @benchmarkable query(mb_head_selective_miss, :target, 999)
-SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_absent_head"] = @benchmarkable query(mb_absent_selective, :absent, ❓)
-SUITE["tagquery"]["index_selectivity"]["messagebuffer_querydelete_rare_back"] = @benchmarkable querydelete!(_mb, :target, 1) setup=(_mb = deepcopy(mb_head_selective)) evals=1
+SUITE["tagquery"]["index_selectivity"]["register_head_query_rare"] = @benchmarkable query(reg_head_selective, :distilled, 1)
+SUITE["tagquery"]["index_selectivity"]["register_head_queryall_rare"] = @benchmarkable queryall(reg_queryall_selective, :distilled, ❓)
+SUITE["tagquery"]["index_selectivity"]["register_slot_query_rare"] = @benchmarkable query(reg_slot_selective[1], :entangled, 1)
+SUITE["tagquery"]["index_selectivity"]["register_slot_queryall_rare"] = @benchmarkable queryall(reg_slot_selective[1], :entangled, ❓)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_rare_back"] = @benchmarkable query(mb_head_selective, :distilled, 1)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_rare_miss"] = @benchmarkable query(mb_head_selective_miss, :distilled, 999)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_missing_head"] = @benchmarkable query(mb_missing_head_selective, :error_corrected, ❓)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_querydelete_rare_back"] = @benchmarkable querydelete!(_mb, :distilled, 1) setup=(_mb = deepcopy(mb_head_selective)) evals=1
