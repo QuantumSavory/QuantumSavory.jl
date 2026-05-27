@@ -144,3 +144,76 @@ SUITE["tagquery"]["messagebuffer"]["query_miss"] = @benchmarkable query(mb_back,
 SUITE["tagquery"]["messagebuffer"]["querydelete_front"] = @benchmarkable querydelete!(_mb, :flow, 1, 2, 3, 4, 5, 6) setup=(_mb = deepcopy(mb_front)) evals=1
 SUITE["tagquery"]["messagebuffer"]["querydelete_back"] = @benchmarkable querydelete!(_mb, :flow, 1, 2, 3, 4, 5, 6) setup=(_mb = deepcopy(mb_back)) evals=1
 SUITE["tagquery"]["messagebuffer"]["querydelete_miss"] = @benchmarkable querydelete!(_mb, :flow, 10, 20, 30, 40, 50, 60) setup=(_mb = deepcopy(mb_back)) evals=1
+
+# Selective lookup stress cases for query implementations that maintain
+# secondary indexes by tag head or register slot.
+SUITE["tagquery"]["index_selectivity"] = BenchmarkGroup(["index_selectivity"])
+
+function build_register_head_selective(n)
+    reg = Register(2)
+    tag!(reg[1], :target, 1)
+    for i in 1:n
+        tag!(reg[2], :noise, i)
+    end
+    return reg
+end
+
+function build_register_slot_selective(n)
+    reg = Register(2)
+    tag!(reg[1], :common, 1)
+    for i in 1:n
+        tag!(reg[2], :common, i + 1)
+    end
+    return reg
+end
+
+function build_register_queryall_selective(n, k)
+    reg = Register(2)
+    for i in 1:k
+        tag!(reg[1], :target, i)
+    end
+    for i in 1:n
+        tag!(reg[2], :noise, i)
+    end
+    return reg
+end
+
+function build_messagebuffer_head_selective(n, k=1)
+    net = RegisterNet([Register(1)])
+    mb = messagebuffer(net[1])
+    for i in 1:n
+        put!(mb, Tag(:noise, i))
+    end
+    for i in 1:k
+        put!(mb, Tag(:target, i))
+    end
+    return mb
+end
+
+function build_messagebuffer_miss(n)
+    net = RegisterNet([Register(1)])
+    mb = messagebuffer(net[1])
+    for i in 1:n
+        put!(mb, Tag(:noise, i))
+    end
+    return mb
+end
+
+selectivity_n = 10_000
+selectivity_k = 8
+
+reg_head_selective = build_register_head_selective(selectivity_n)
+reg_slot_selective = build_register_slot_selective(selectivity_n)
+reg_queryall_selective = build_register_queryall_selective(selectivity_n, selectivity_k)
+mb_head_selective = build_messagebuffer_head_selective(selectivity_n)
+mb_head_selective_miss = build_messagebuffer_head_selective(selectivity_n, selectivity_k)
+mb_absent_selective = build_messagebuffer_miss(selectivity_n)
+
+SUITE["tagquery"]["index_selectivity"]["register_head_query_rare"] = @benchmarkable query(reg_head_selective, :target, 1)
+SUITE["tagquery"]["index_selectivity"]["register_head_queryall_rare"] = @benchmarkable queryall(reg_queryall_selective, :target, ❓)
+SUITE["tagquery"]["index_selectivity"]["register_slot_query_rare"] = @benchmarkable query(reg_slot_selective[1], :common, 1)
+SUITE["tagquery"]["index_selectivity"]["register_slot_queryall_rare"] = @benchmarkable queryall(reg_slot_selective[1], :common, ❓)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_rare_back"] = @benchmarkable query(mb_head_selective, :target, 1)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_rare_miss"] = @benchmarkable query(mb_head_selective_miss, :target, 999)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_query_absent_head"] = @benchmarkable query(mb_absent_selective, :absent, ❓)
+SUITE["tagquery"]["index_selectivity"]["messagebuffer_querydelete_rare_back"] = @benchmarkable querydelete!(_mb, :target, 1) setup=(_mb = deepcopy(mb_head_selective)) evals=1
