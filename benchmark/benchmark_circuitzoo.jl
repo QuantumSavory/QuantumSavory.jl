@@ -18,12 +18,18 @@ end
 function run_entanglement_swap!(net)
     EntanglementSwap()(net[2][1], net[1][1], net[2][2], net[3][1])
     @assert !isassigned(net[2][1]) && !isassigned(net[2][2])
+    @assert observable((net[1][1], net[3][1]), Z⊗Z) ≈ 1
+    @assert observable((net[1][1], net[3][1]), X⊗X) ≈ 1
     return nothing
 end
 
 function run_local_entanglement_swap!(net)
-    LocalEntanglementSwap()(net[2][1], net[2][2])
+    mx, mz = LocalEntanglementSwap()(net[2][1], net[2][2])
+    mx == 2 && apply!(net[1][1], Z)
+    mz == 2 && apply!(net[3][1], X)
     @assert !isassigned(net[2][1]) && !isassigned(net[2][2])
+    @assert observable((net[1][1], net[3][1]), Z⊗Z) ≈ 1
+    @assert observable((net[1][1], net[3][1]), X⊗X) ≈ 1
     return nothing
 end
 
