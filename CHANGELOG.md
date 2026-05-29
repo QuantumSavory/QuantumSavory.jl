@@ -3,6 +3,7 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- Expanded the benchmark suite to cover basic operations, background noise evolution, and quantum-channel transport.
 - New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.
 
 ## v0.6.0 - 2026-05-05
