@@ -84,8 +84,8 @@ end
     mb = messagebuffer(net, node)
     @yield querydelete_wait!(mb, :swap_request)
 
-    a = query(net[node], EntanglementCounterpart, alice, ❓)
-    b = query(net[node], EntanglementCounterpart, charlie, ❓)
+    a = query(net[node], EntanglementCounterpart, alice, ❓, ❓)
+    b = query(net[node], EntanglementCounterpart, charlie, ❓, ❓)
 
     @yield lock(a.slot) & lock(b.slot)
     # strictly speaking, we should be checking that

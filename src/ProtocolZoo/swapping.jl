@@ -6,11 +6,11 @@ end
 function findswapablequbits(net, node, pred_low, pred_high, choose_low, choose_high, chooseslots; agelimit=nothing)
     reg = net[node]
     low_queryresults  = [
-        n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓; locked=false, assigned=true)
+        n for n in queryall(reg, EntanglementCounterpart, pred_low, ❓, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
     high_queryresults = [
-        n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓; locked=false, assigned=true)
+        n for n in queryall(reg, EntanglementCounterpart, pred_high, ❓, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
 
@@ -61,6 +61,8 @@ $TYPEDFIELDS
     rounds::Int = -1
     """what is the oldest a qubit should be to be picked for a swap (to avoid swapping with qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
     agelimit::Union{Float64,Nothing} = nothing
+    """maximum number of history tags to retain per slot, in FIFO order"""
+    max_history_per_slot::Int = 3
 end
 
 #TODO "convenience constructor for the missing things and finish this docstring"
@@ -69,6 +71,15 @@ function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
 end
 
 SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_tracker(net), net, node; kwargs...)
+
+function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Int)
+    max_history_per_slot < 0 && throw(ArgumentError("max_history_per_slot must be nonnegative"))
+    histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
+    for history in Iterators.take(histories, max(0, length(histories) - max_history_per_slot))
+        untag!(slot, history.id)
+    end
+    return nothing
+end
 
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
@@ -106,24 +117,26 @@ SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_track
         current2 = current2_::QueryOnRegResult
 
         untag!(q1, current1.id)
-        # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx)
+        # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx, local_chunk_id, swapped_chunk_id
+        tag!(q1, EntanglementHistory, tag1[2], tag1[3], tag2[2], tag2[3], q2.idx, tag1[4], tag2[4])
+        _enforce_history_cap!(q1, prot.max_history_per_slot)
 
         untag!(q2, current2.id)
-        # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx
-        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx)
+        # store a history of whom we were entangled to: remote_node_idx, remote_slot_idx, remote_swapnode_idx, remote_swapslot_idx, local_swap_idx, local_chunk_id, swapped_chunk_id
+        tag!(q2, EntanglementHistory, tag2[2], tag2[3], tag1[2], tag1[3], q1.idx, tag2[4], tag1[4])
+        _enforce_history_cap!(q2, prot.max_history_per_slot)
 
         uptotime!((q1, q2), now(prot.sim))
         swapcircuit = LocalEntanglementSwap()
         xmeas, zmeas = swapcircuit(q1, q2)
         # send from here to new entanglement counterpart:
-        # tag with EntanglementUpdateX past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
-        msg1 = Tag(EntanglementUpdateX, prot.node, q1.idx, tag1[3], tag2[2], tag2[3], Int(xmeas))
+        # tag with EntanglementUpdateX target_pair_id, other_pair_id, past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
+        msg1 = Tag(EntanglementUpdateX, tag1[4], tag2[4], prot.node, q1.idx, tag1[3], tag2[2], tag2[3], Int(xmeas))
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
         @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1` | time = $(now(prot.sim))"
         # send from here to new entanglement counterpart:
-        # tag with EntanglementUpdateZ past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
-        msg2 = Tag(EntanglementUpdateZ, prot.node, q2.idx, tag2[3], tag1[2], tag1[3], Int(zmeas))
+        # tag with EntanglementUpdateZ target_pair_id, other_pair_id, past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
+        msg2 = Tag(EntanglementUpdateZ, tag2[4], tag1[4], prot.node, q2.idx, tag2[3], tag1[2], tag1[3], Int(zmeas))
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
         @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
         @yield timeout(prot.sim, prot.local_busy_time)

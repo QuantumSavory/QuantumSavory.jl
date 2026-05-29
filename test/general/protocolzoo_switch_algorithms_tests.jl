@@ -57,17 +57,18 @@ const Switches = QuantumSavory.ProtocolZoo.Switches
         net = RegisterNet(graph, [Register(1), Register(1)])
         sim = get_time_tracker(net)
         switch = SimpleSwitchDiscreteProt(net, 1, [2], [1.0]; ticktock=1.0, rounds=1)
+        pair_id = 101
 
         initialize!((net[1][1], net[2][1]), (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2.0))
-        tag!(net[1][1], EntanglementCounterpart, 2, 1)
-        tag!(net[2][1], EntanglementCounterpart, 1, 1)
+        tag!(net[1][1], EntanglementCounterpart, 2, 1, pair_id)
+        tag!(net[2][1], EntanglementCounterpart, 1, 1, pair_id)
 
         @process Switches._SwitchSynchronizedDelete(switch)()
         run(sim, 1.1)
 
         @test !isassigned(net[1][1])
         @test !isassigned(net[2][1])
-        @test isnothing(query(net[1][1], EntanglementCounterpart, 2, 1))
-        @test isnothing(query(net[2][1], EntanglementCounterpart, 1, 1))
+        @test isnothing(query(net[1][1], EntanglementCounterpart, 2, 1, pair_id))
+        @test isnothing(query(net[2][1], EntanglementCounterpart, 1, 1, pair_id))
     end
 end

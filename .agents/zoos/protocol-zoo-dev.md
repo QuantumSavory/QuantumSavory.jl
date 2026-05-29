@@ -14,6 +14,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 
 - `AbstractProtocol` is a callable-struct convention plus a `Process(prot::AbstractProtocol, ...)` bridge.
 - `src/ProtocolZoo/ProtocolZoo.jl` defines the common entanglement tag schema and core protocols.
+- `src/ProtocolZoo/entanglement_ids.jl` defines pair ID generation and the commutative/associative accumulator used by the tracker.
 - `src/ProtocolZoo/swapping.jl` contains slot-selection and swapper logic.
 - `src/ProtocolZoo/cutoff.jl` handles stale-entanglement cleanup.
 - `src/ProtocolZoo/qtcp.jl` is a higher-level protocol stack built on the same tag/message model.
@@ -25,11 +26,11 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - Store `sim` and `net` in the protocol object.
 - Implement `@resumable function (prot::MyProt)()`.
 - Reuse existing tag/message schemas when possible:
-  - `EntanglementCounterpart`
-  - `EntanglementHistory`
-  - `EntanglementUpdateX`
-  - `EntanglementUpdateZ`
-  - `EntanglementDelete`
+  - `EntanglementCounterpart(remote_node, remote_slot, pair_id)`
+  - `EntanglementHistory(remote_node, remote_slot, swap_remote_node, swap_remote_slot, swapped_local, local_chunk_id, swapped_chunk_id)`
+  - `EntanglementUpdateX(target_pair_id, other_pair_id, past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)`
+  - `EntanglementUpdateZ(target_pair_id, other_pair_id, past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)`
+  - `EntanglementDelete(target_pair_id, send_node, send_slot, rec_node, rec_slot)`
 - If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::MyProt) = true`.
 
 ## Review Checks
@@ -48,12 +49,14 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   - nonzero `classical_delay`
   - `CutoffProt.retention_time`
   - `SwapperProt.agelimit`
+  - `SwapperProt.max_history_per_slot`
 - Keep shorthand constructors like `Prot(net, ...)` aligned with tests.
 - For QTCP changes, review the `Tag(...)` serialization and matching query shape together.
 
 ## Source Files To Read
 
 - `src/ProtocolZoo/ProtocolZoo.jl`
+- `src/ProtocolZoo/entanglement_ids.jl`
 - `src/ProtocolZoo/swapping.jl`
 - `src/ProtocolZoo/cutoff.jl`
 - `src/ProtocolZoo/qtcp.jl`

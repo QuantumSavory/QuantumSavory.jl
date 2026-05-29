@@ -52,7 +52,7 @@ end
             end
         end
         @yield lock(slot)
-        info = query(slot, EntanglementCounterpart, ❓, ❓)
+        info = query(slot, EntanglementCounterpart, ❓, ❓, ❓)
         sim_time = now(sim)::Float64
         if isnothing(info) || sim_time - info.time < prot.retention_time
             empty_query = true
@@ -62,22 +62,22 @@ end
 
         untag!(slot, info.id)
         traceout!(slot)
-        msg = Tag(EntanglementDelete, prot.node, slot.idx, info.tag[2], info.tag[3])
+        msg = Tag(EntanglementDelete, info.tag[4], prot.node, slot.idx, info.tag[2], info.tag[3])
         tag!(slot, msg)
-        (prot.announce) && put!(channel(prot.net, prot.node=>msg[4]; permit_forward=true), msg)
-        @debug "CutoffProt @$(prot.node): Send message to $(msg[4]) | message=`$msg` | time=$(now(prot.sim))"
+        (prot.announce) && put!(channel(prot.net, prot.node=>msg[5]; permit_forward=true), msg)
+        @debug "CutoffProt @$(prot.node): Send message to $(msg[5]) | message=`$msg` | time=$(now(prot.sim))"
 
         # TODO the tag deletions below are not necessary when announce=true and EntanglementTracker is running on other nodes. Verify the veracity of that statement, make tests for both cases, and document.
 
         # delete old history tags
-        info = query(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓;filo=false) # TODO we should have a warning if `queryall` returns more than one result -- what does it even mean to have multiple history tags here
+        info = query(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓;filo=false) # TODO we should have a warning if `queryall` returns more than one result -- what does it even mean to have multiple history tags here
         if !isnothing(info) && now(prot.sim) - info.time > prot.retention_time
             untag!(slot, info.id)
         end
 
         # delete old EntanglementDelete tags
         # TODO Why do we have separate entanglementhistory and entanglementupdate but we have only a single entanglementdelete that serves both roles? We should probably have both be pairs of tags, for consistency and ease of reasoning
-        info = query(slot, EntanglementDelete, prot.node, slot.idx , ❓, ❓) # TODO we should have a warning if `queryall` returns more than one result -- what does it even mean to have multiple delete tags here
+        info = query(slot, EntanglementDelete, ❓, prot.node, slot.idx , ❓, ❓) # TODO we should have a warning if `queryall` returns more than one result -- what does it even mean to have multiple delete tags here
         if !isnothing(info) && now(prot.sim) - info.time > prot.retention_time
             untag!(slot, info.id)
         end

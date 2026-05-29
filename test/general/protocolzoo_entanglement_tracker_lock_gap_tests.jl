@@ -13,8 +13,8 @@ end
 @resumable function traceout_if_tracker_dropped_lock_gap(sim, slot, gap_observed)
     @yield lock(slot)
 
-    old_counterpart = query(slot, EntanglementCounterpart, 2, 1)
-    new_counterpart = query(slot, EntanglementCounterpart, 3, 1)
+    old_counterpart = query(slot, EntanglementCounterpart, 2, 1, ❓)
+    new_counterpart = query(slot, EntanglementCounterpart, 3, 1, ❓)
     if isnothing(old_counterpart) && isnothing(new_counterpart)
         gap_observed[] = true
         traceout!(slot)
@@ -27,11 +27,13 @@ end
     net = RegisterNet([Register(1), Register(1), Register(1)])
     sim = get_time_tracker(net)
     localslot = net[1][1]
+    pair_id = 101
+    other_pair_id = 202
     gap_observed = Ref(false)
 
     initialize!(localslot)
-    tag!(localslot, EntanglementCounterpart, 2, 1)
-    put!(messagebuffer(net, 1), Tag(EntanglementUpdateX, 2, 1, 1, 3, 1, 1))
+    tag!(localslot, EntanglementCounterpart, 2, 1, pair_id)
+    put!(messagebuffer(net, 1), Tag(EntanglementUpdateX, pair_id, other_pair_id, 2, 1, 1, 3, 1, 1))
 
     lock(localslot)
     @process EntanglementTracker(sim, net, 1)()
@@ -48,7 +50,7 @@ end
     @test run_error === nothing
     @test !gap_observed[]
     @test isassigned(localslot)
-    @test isnothing(query(localslot, EntanglementCounterpart, 2, 1))
-    @test !isnothing(query(localslot, EntanglementCounterpart, 3, 1))
+    @test isnothing(query(localslot, EntanglementCounterpart, 2, 1, pair_id))
+    @test !isnothing(query(localslot, EntanglementCounterpart, 3, 1, pair_id + other_pair_id))
     @test !islocked(localslot)
 end

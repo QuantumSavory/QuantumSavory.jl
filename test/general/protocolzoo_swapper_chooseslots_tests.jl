@@ -51,8 +51,8 @@ for i in 1:10
     run(sim, 200)
 
     # Check that swap happened on tagged slots (1 and 2)
-    q1 = query(net[1], EntanglementCounterpart, n, ❓)
-    q2 = query(net[n], EntanglementCounterpart, 1, ❓)
+    q1 = query(net[1], EntanglementCounterpart, n, ❓, ❓)
+    q2 = isnothing(q1) ? nothing : query(net[n], EntanglementCounterpart, 1, q1.slot.idx, q1.tag[4])
     @test q1.tag[2] == n
     @test q2.tag[2] == 1
     @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1
@@ -98,8 +98,8 @@ for i in 1:10
     run(sim, 200)
 
     # Check that swap happened on allowed slots (1 and 2)
-    q1 = query(net[1], EntanglementCounterpart, n, ❓)
-    q2 = query(net[n], EntanglementCounterpart, 1, ❓)
+    q1 = query(net[1], EntanglementCounterpart, n, ❓, ❓)
+    q2 = isnothing(q1) ? nothing : query(net[n], EntanglementCounterpart, 1, q1.slot.idx, q1.tag[4])
     @test q1.tag[2] == n
     @test q2.tag[2] == 1
     @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1

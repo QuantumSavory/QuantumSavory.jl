@@ -466,7 +466,7 @@ end
 
 function isolderthan(slot::RegRef, age::Float64)
     if !isassigned(slot) throw(NotAssignedError("Slot must be assigned with a quantum state before checking coherence.", isolderthan)) end
-    id = query(slot, QuantumSavory.ProtocolZoo.EntanglementCounterpart, ❓, ❓).id
+    id = query(slot, QuantumSavory.ProtocolZoo.EntanglementCounterpart, ❓, ❓, ❓).id
     slot_time  = slot.reg.tag_info[id][3]
     return (now(get_time_tracker(slot))) - slot_time > age
 end
