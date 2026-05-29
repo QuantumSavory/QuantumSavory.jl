@@ -38,6 +38,8 @@ See also: [`tag!`](@ref), [`query`](@ref)
     TypeIntIntIntInt(::DataType, ::Int, ::Int, ::Int, ::Int)
     TypeIntIntIntIntInt(::DataType, ::Int, ::Int, ::Int, ::Int, ::Int)
     TypeIntIntIntIntIntInt(::DataType, ::Int, ::Int, ::Int, ::Int, ::Int, ::Int)
+    TypeIntIntIntIntIntIntInt(::DataType, ::Int, ::Int, ::Int, ::Int, ::Int, ::Int, ::Int)
+    TypeIntIntIntIntIntIntIntInt(::DataType, ::Int, ::Int, ::Int, ::Int, ::Int, ::Int, ::Int, ::Int)
     TypeIntFloat(::DataType, ::Int, ::Float64)
     TypeIntIntFloat(::DataType, ::Int, ::Int, ::Float64)
     TypeIntIntIntFloat(::DataType, ::Int, ::Int, ::Int, ::Float64)
@@ -80,7 +82,7 @@ Base.convert(::Type{Tag}, x) = Tag(x)
 # Create a constructor for each tag variant
 for (tagsymbol, tagvariant) in pairs(tag_types)
     sig = methods(tagvariant)[1].sig.parameters[2:end]
-    args = (:a, :b, :c, :d, :e, :f, :g)[1:length(sig)]
+    args = (:a, :b, :c, :d, :e, :f, :g, :h, :i)[1:length(sig)]
     argssig = [:($a::$t) for (a,t) in zip(args, sig)]
     eval(quote function Tag($(argssig...))
         ($tagvariant)($(args...))
