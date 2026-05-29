@@ -103,8 +103,8 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
 
             if log_format == pauli_observables
                 state = zeros(Float64, 2, length(prot._log))
-                state[1, :] = [getfield(log, :obs1) for log in prot._log]
-                state[2, :] = [getfield(log, :obs2) for log in prot._log]
+                state[1,:] = [getfield(log, :obs1) for log in prot._log]
+                state[2,:] = [getfield(log, :obs2) for log in prot._log]
                 HDF5.write(simulation_log_group, "state", state)
             else
                 display([log_format, pauli_observables])
