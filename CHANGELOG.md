@@ -4,6 +4,7 @@
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
 - New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.
+- Add benchmark coverage for channel access/delivery, package import/startup, and headless QTCP tutorial example runtimes.
 
 ## v0.6.0 - 2026-05-05
 
