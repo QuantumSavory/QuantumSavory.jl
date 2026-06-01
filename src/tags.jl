@@ -16,7 +16,7 @@ A tag can have a custom `DataType` as first argument, in which case additional c
 julia> using QuantumSavory.ProtocolZoo: EntanglementHistory
 
 julia> Tag(EntanglementHistory, 1, 2, 3, 4, 5)
-Was entangled to 1.2, but swapped with .5 which was entangled to 3.4
+Was entangled to 1.2 with chunk id 0, but swapped with .5 which was entangled to 3.4 with chunk id 0
 ```
 
 See also: [`tag!`](@ref), [`query`](@ref)
