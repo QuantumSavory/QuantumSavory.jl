@@ -342,33 +342,37 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                 localslot = nodereg[localslotid]
 
                 # Check if the local slot is still present and believed to be entangled.
-                # We will need to perform a correction operation due to the swap or a deletion due to the qubit being thrown out,
-                # but there will be no message forwarding necessary.
-                @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart requesting lock at $(now(prot.sim))"
-                @yield lock(localslot)
-                @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart getting lock at $(now(prot.sim))"
-                counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
+                # The physical slot lock is only needed when we may mutate the live qubit.
+                # If the counterpart tag is absent, fall through to the history metadata path
+                # without waiting behind unrelated physical reuse of an already-empty slot.
+                counterpart = query(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
                 if !isnothing(counterpart)
-                    if !isassigned(localslot)
+                    @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart requesting lock at $(now(prot.sim))"
+                    @yield lock(localslot)
+                    @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart getting lock at $(now(prot.sim))"
+                    counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
+                    if !isnothing(counterpart)
+                        if !isassigned(localslot)
+                            unlock(localslot)
+                            error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
+                        end
+                        if !isnothing(updategate) # EntanglementUpdate
+                            # Pauli frame correction gate
+                            if correction==2
+                                apply!(localslot, updategate)
+                            end
+                            if newremotenode != -1 #TODO: this is a bit hacky
+                                # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
+                                tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
+                            end
+                        else # EntanglementDelete
+                            traceout!(localslot)
+                        end
                         unlock(localslot)
-                        error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
-                    end
-                    if !isnothing(updategate) # EntanglementUpdate
-                        # Pauli frame correction gate
-                        if correction==2
-                            apply!(localslot, updategate)
-                        end
-                        if newremotenode != -1 #TODO: this is a bit hacky
-                            # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                            tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid)
-                        end
-                    else # EntanglementDelete
-                        traceout!(localslot)
+                        continue
                     end
                     unlock(localslot)
-                    continue
                 end
-                unlock(localslot)
 
                 # If there is nothing still stored locally, check if we have a record of the entanglement being swapped to a different remote node,
                 # and forward the message to that node.
