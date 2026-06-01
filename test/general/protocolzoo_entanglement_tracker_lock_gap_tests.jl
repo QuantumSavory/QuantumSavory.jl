@@ -3,7 +3,7 @@ using QuantumSavory
 using ConcurrentSim
 using ResumableFunctions
 using QuantumSavory.ProtocolZoo
-using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementUpdateX
+using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX
 
 @resumable function release_initial_lock(sim, slot)
     @yield timeout(sim, 1.0)
@@ -21,6 +21,33 @@ end
     end
 
     unlock(slot)
+end
+
+@testset "EntanglementTracker forwards history updates without waiting on an empty slot lock" begin
+    net = RegisterNet([Register(5) for _ in 1:4]; classical_delay=0.0)
+    sim = get_time_tracker(net)
+    localslot = net[2][2]
+
+    # This is the reduced simultaneous-swap case: the physical qubit at the
+    # local slot has already been swapped away, but the slot still carries the
+    # history metadata needed to forward a delayed update to the new endpoint.
+    tag!(localslot, EntanglementHistory, 1, 5, 4, 3, 1)
+    put!(messagebuffer(net, 2), EntanglementUpdateX, 1, 5, 2, 3, 4, 1)
+
+    lock(localslot)
+    @process EntanglementTracker(sim, net, 2)()
+    @process release_initial_lock(sim, localslot)
+
+    run(sim, 0.5)
+
+    forwarded = query(messagebuffer(net, 4), EntanglementUpdateX, ❓, ❓, ❓, ❓, ❓, ❓)
+    @test !isnothing(forwarded)
+    @test forwarded.tag == Tag(EntanglementUpdateX, 1, 5, 3, 3, 4, 1)
+    @test !isnothing(query(localslot, EntanglementHistory, 3, 4, 4, 3, 1))
+    @test islocked(localslot)
+
+    run(sim, 1.0)
+    @test !islocked(localslot)
 end
 
 @testset "EntanglementTracker keeps consumed counterpart locked until update" begin
