@@ -177,7 +177,7 @@ The piecemaker protocol generates multipartite entanglement by:
                 end
 
                 while true
-                    counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+                    counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓, ❓)
                     if !isnothing(counterpart)
                         slot, _, _ = counterpart
 
