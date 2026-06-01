@@ -392,58 +392,68 @@ end
                 workwasdone = true
                 localslot = nodereg[localslotid]
 
-                # Check if the local slot is still present and believed to be entangled.
-                # We will need to perform a correction operation due to the swap or a deletion due to the qubit being thrown out,
-                # but there will be no message forwarding necessary.
-                @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart requesting lock at $(now(prot.sim))"
-                @yield lock(localslot)
-                @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart getting lock at $(now(prot.sim))"
                 new_pair_id = isnothing(updategate) ? target_pair_id : _combine_entanglement_id_fields(target_pair_id, other_pair_id)
-                counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
-                if !isnothing(counterpart)
-                    if !isassigned(localslot)
-                        unlock(localslot)
-                        error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
-                    end
-                    if !isnothing(updategate) # EntanglementUpdate
-                        # Pauli frame correction gate
-                        if correction==2
-                            apply!(localslot, updategate)
-                        end
-                        if newremotenode != -1 #TODO: this is a bit hacky
-                            # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                            tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
-                        else
-                            tag!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
-                        end
-                    else # EntanglementDelete
-                        traceout!(localslot)
-                    end
-                    unlock(localslot)
-                    continue
-                end
 
-                if !isnothing(updategate) && newremotenode != -1
-                    already_updated_counterpart = querydelete!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
-                    if !isnothing(already_updated_counterpart)
+                # Check if the local slot is still present and believed to be entangled.
+                # The physical slot lock is only needed when we may mutate the live qubit.
+                # If no matching counterpart tag is present, fall through to the history
+                # metadata path without waiting behind unrelated reuse of an empty slot.
+                counterpart = query(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
+                already_updated_counterpart = if !isnothing(updategate) && newremotenode != -1
+                    query(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
+                else
+                    nothing
+                end
+                if !isnothing(counterpart) || !isnothing(already_updated_counterpart)
+                    @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart requesting lock at $(now(prot.sim))"
+                    @yield lock(localslot)
+                    @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart getting lock at $(now(prot.sim))"
+                    counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
+                    if !isnothing(counterpart)
                         if !isassigned(localslot)
                             unlock(localslot)
-                            error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We found an already-updated counterpart tag for an unassigned slot.")
+                            error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
                         end
-                        # The same remote swap can generate both X and Z
-                        # correction messages for the same identity update. If
-                        # one correction already advanced the pair ID, the other
-                        # correction must still be applied without combining the
-                        # same `other_pair_id` twice.
-                        if correction==2
-                            apply!(localslot, updategate)
+                        if !isnothing(updategate) # EntanglementUpdate
+                            # Pauli frame correction gate
+                            if correction==2
+                                apply!(localslot, updategate)
+                            end
+                            if newremotenode != -1 #TODO: this is a bit hacky
+                                # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
+                                tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
+                            else
+                                tag!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
+                            end
+                        else # EntanglementDelete
+                            traceout!(localslot)
                         end
-                        tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
                         unlock(localslot)
                         continue
                     end
+
+                    if !isnothing(updategate) && newremotenode != -1
+                        already_updated_counterpart = querydelete!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
+                        if !isnothing(already_updated_counterpart)
+                            if !isassigned(localslot)
+                                unlock(localslot)
+                                error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We found an already-updated counterpart tag for an unassigned slot.")
+                            end
+                            # The same remote swap can generate both X and Z
+                            # correction messages for the same identity update. If
+                            # one correction already advanced the pair ID, the other
+                            # correction must still be applied without combining the
+                            # same `other_pair_id` twice.
+                            if correction==2
+                                apply!(localslot, updategate)
+                            end
+                            tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
+                            unlock(localslot)
+                            continue
+                        end
+                    end
+                    unlock(localslot)
                 end
-                unlock(localslot)
 
                 # If there is nothing still stored locally, check if we have a record of the entanglement being swapped to a different remote node,
                 # and forward the message to that node.
