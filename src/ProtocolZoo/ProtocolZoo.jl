@@ -239,7 +239,7 @@ $TYPEDFIELDS
     margin::Int = 0
     """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
     hardmargin::Int = 0
-    """Tag to be added to the entangled qubits or nothing to not add any tag. Tags are called as `tag(remote_node, remote_slot, pair_id)`."""
+    """Tag to be added to the entangled qubits or nothing to not add any tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
     tag::Union{DataType,Nothing} = EntanglementCounterpart
 end
 
@@ -267,7 +267,7 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
         isentangled = !isnothing(tagtype) && (
             tagtype === EntanglementCounterpart ?
             !isnothing(query(regA, tagtype::DataType, prot.nodeB, ❓, ❓; assigned=true)) :
-            !isnothing(query(regA, tagtype::DataType, prot.nodeB, ❓, ❓; assigned=true))
+            !isnothing(query(regA, tagtype::DataType, prot.nodeB, ❓; assigned=true))
         )
         margin = isentangled ? prot.margin : prot.hardmargin
         (; chooseslotA, chooseslotB, randomize, uselock) = prot
@@ -310,14 +310,14 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
             if tagtype === EntanglementCounterpart
                 tag!(a, tagtype::DataType, prot.nodeB, b.idx, pair_id)
             elseif !isnothing(tagtype)
-                tag!(a, tagtype::DataType, prot.nodeB, b.idx, pair_id)
+                tag!(a, tagtype::DataType, prot.nodeB, b.idx)
             end
             last_a = a.idx
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a pair_id
             if tagtype === EntanglementCounterpart
                 tag!(b, tagtype::DataType, prot.nodeA, a.idx, pair_id)
             elseif !isnothing(tagtype)
-                tag!(b, tagtype::DataType, prot.nodeA, a.idx, pair_id)
+                tag!(b, tagtype::DataType, prot.nodeA, a.idx)
             end
             last_b = b.idx
 
@@ -388,7 +388,7 @@ end
                     correction = 0
                 end
 
-                @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(msg.tag[4]) | message=`$(msg.tag)` | time=$(now(prot.sim))"
+                @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(pastremoteslotid) | message=`$(msg.tag)` | time=$(now(prot.sim))"
                 workwasdone = true
                 localslot = nodereg[localslotid]
 

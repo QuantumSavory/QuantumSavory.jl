@@ -42,17 +42,17 @@ struct CustomEntanglerTag end
         @test_throws ArgumentError _enforce_history_cap!(slot, -1)
     end
 
-    @testset "EntanglerProt passes pair ID to custom tags" begin
+    @testset "EntanglerProt keeps custom tags at legacy arity" begin
         net = RegisterNet([Register(1), Register(1)])
         sim = get_time_tracker(net)
 
         @process EntanglerProt(sim, net, 1, 2; tag=CustomEntanglerTag, success_prob=1.0, rounds=1)()
         run(sim, 1.0)
 
-        tag1 = query(net[1][1], CustomEntanglerTag, 2, 1, ❓)
+        tag1 = query(net[1][1], CustomEntanglerTag, 2, 1)
         @test !isnothing(tag1)
-        @test tag1.tag[4] != NO_ENTANGLEMENT_ID
-        @test !isnothing(query(net[2][1], CustomEntanglerTag, 1, 1, tag1.tag[4]))
+        @test length(tag1.tag) == 3
+        @test !isnothing(query(net[2][1], CustomEntanglerTag, 1, 1))
     end
 
     @testset "Duplicate X and Z updates advance pair ID once" begin
