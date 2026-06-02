@@ -10,7 +10,7 @@ struct MessageBuffer{T}
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
     buffer_ids::Vector{Int128}
     buffer_depth_by_id::Dict{Int128, Int}
-    buffer_ids_by_head::Dict{Any, Vector{Int128}}
+    buffer_ids_by_head::Dict{TagElementTypes, Vector{Int128}}
     # `tag_waiter` is edge-triggered: it wakes tasks that are already blocked in
     # `wait`/`onchange`.
     tag_waiter::ChangeNotifier
@@ -118,7 +118,7 @@ function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tu
         NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}[],
         Int128[],
         Dict{Int128, Int}(),
-        Dict{Any, Vector{Int128}}(),
+        Dict{TagElementTypes, Vector{Int128}}(),
         ChangeNotifier(sim),
         Ref(0)
     )

@@ -103,7 +103,7 @@ end
 function _query_candidate_ids(reg::Register, ref::Union{Nothing,RegRef}, firstarg)
     slot_ids = isnothing(ref) ? nothing : reg.tag_ids_by_slot[ref.idx]
     head = _query_index_head(firstarg)
-    head_ids = isnothing(head) ? nothing : get(reg.tag_ids_by_head, head, Int128[])
+    head_ids = isnothing(head) ? nothing : get(reg.tag_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
     if isnothing(slot_ids)
         return isnothing(head_ids) ? reg.guids : head_ids
     elseif isnothing(head_ids)
@@ -116,7 +116,7 @@ end
 function _query_candidate_ids(reg::Register, ref::Union{Nothing,RegRef}, query::Tag)
     slot_ids = isnothing(ref) ? nothing : reg.tag_ids_by_slot[ref.idx]
     head = _tag_index_head(query)
-    head_ids = isnothing(head) ? nothing : get(reg.tag_ids_by_head, head, Int128[])
+    head_ids = isnothing(head) ? nothing : get(reg.tag_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
     if isnothing(slot_ids)
         return isnothing(head_ids) ? reg.guids : head_ids
     elseif isnothing(head_ids)
@@ -245,12 +245,12 @@ end
 
 function _messagebuffer_query_ids(mb::MessageBuffer, firstarg)
     head = _query_index_head(firstarg)
-    return isnothing(head) ? mb.buffer_ids : get(mb.buffer_ids_by_head, head, Int128[])
+    return isnothing(head) ? mb.buffer_ids : get(mb.buffer_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
 end
 
 function _messagebuffer_query_ids(mb::MessageBuffer, query::Tag)
     head = _tag_index_head(query)
-    return isnothing(head) ? mb.buffer_ids : get(mb.buffer_ids_by_head, head, Int128[])
+    return isnothing(head) ? mb.buffer_ids : get(mb.buffer_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
 end
 
 function _pop_messagebuffer_at!(mb::MessageBuffer, depth::Int)
