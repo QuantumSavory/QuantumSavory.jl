@@ -48,6 +48,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - For tracker-related changes, cross-check:
   - nonzero `classical_delay`
   - `CutoffProt.retention_time`
+  - `CutoffProt.max_delete_per_slot`
   - `SwapperProt.agelimit`
   - `SwapperProt.max_history_per_slot`
 - Keep shorthand constructors like `Prot(net, ...)` aligned with tests.

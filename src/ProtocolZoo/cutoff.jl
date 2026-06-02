@@ -26,6 +26,8 @@ $FIELDS
     retention_time::Float64 = 5.0
     """if `true`, synchronization messages are sent after a deletion to the node containing the other entangled qubit"""
     announce::Bool = true
+    """maximum number of delete tags to retain per local slot, in FIFO order"""
+    max_delete_per_slot::Int = 3
 end
 
 function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
@@ -33,6 +35,15 @@ function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
 end
 
 CutoffProt(net::RegisterNet, node::Int; kwargs...) = CutoffProt(get_time_tracker(net), net, node; kwargs...)
+
+function _enforce_delete_cap!(slot::RegRef, node::Int, max_delete_per_slot::Int)
+    max_delete_per_slot < 0 && throw(ArgumentError("max_delete_per_slot must be nonnegative"))
+    delete_tags = queryall(slot, EntanglementDelete, ❓, node, slot.idx, ❓, ❓; filo=false)
+    for delete_tag in Iterators.take(delete_tags, max(0, length(delete_tags) - max_delete_per_slot))
+        untag!(slot, delete_tag.id)
+    end
+    return nothing
+end
 
 @resumable function (prot::CutoffProt)()
     reg = prot.net[prot.node]
@@ -64,23 +75,10 @@ end
         traceout!(slot)
         msg = Tag(EntanglementDelete, info.tag[4], prot.node, slot.idx, info.tag[2], info.tag[3])
         tag!(slot, msg)
+        # TODO Why do we have separate entanglementhistory and entanglementupdate but we have only a single entanglementdelete that serves both roles? We should probably have both be pairs of tags, for consistency and ease of reasoning
+        _enforce_delete_cap!(slot, prot.node, prot.max_delete_per_slot)
         (prot.announce) && put!(channel(prot.net, prot.node=>msg[5]; permit_forward=true), msg)
         @debug "CutoffProt @$(prot.node): Send message to $(msg[5]) | message=`$msg` | time=$(now(prot.sim))"
-
-        # TODO the tag deletions below are not necessary when announce=true and EntanglementTracker is running on other nodes. Verify the veracity of that statement, make tests for both cases, and document.
-
-        # delete old history tags
-        info = query(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓;filo=false) # TODO we should have a warning if `queryall` returns more than one result -- what does it even mean to have multiple history tags here
-        if !isnothing(info) && now(prot.sim) - info.time > prot.retention_time
-            untag!(slot, info.id)
-        end
-
-        # delete old EntanglementDelete tags
-        # TODO Why do we have separate entanglementhistory and entanglementupdate but we have only a single entanglementdelete that serves both roles? We should probably have both be pairs of tags, for consistency and ease of reasoning
-        info = query(slot, EntanglementDelete, ❓, prot.node, slot.idx , ❓, ❓) # TODO we should have a warning if `queryall` returns more than one result -- what does it even mean to have multiple delete tags here
-        if !isnothing(info) && now(prot.sim) - info.time > prot.retention_time
-            untag!(slot, info.id)
-        end
 
         unlock(slot)
     end

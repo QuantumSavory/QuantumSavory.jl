@@ -39,6 +39,9 @@ struct CustomEntanglerTag end
         @test [history.tag[7] for history in histories] == [3, 4, 5]
         @test SwapperProt(get_time_tracker(net), net, 1; max_history_per_slot=2).max_history_per_slot == 2
         @test SwapperProt(net, 1; max_history_per_slot=2).max_history_per_slot == 2
+
+        _enforce_history_cap!(slot, 0)
+        @test isempty(queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓))
         @test_throws ArgumentError _enforce_history_cap!(slot, -1)
     end
 
