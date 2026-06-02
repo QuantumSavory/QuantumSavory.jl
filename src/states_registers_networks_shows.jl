@@ -11,6 +11,7 @@ function Base.show(io::IO, s::StateRef)
                 print(IOContext(io, :compact => true), "\n    ",(r[i]))
             end
         end
+        stateshow(io, MIME"text/plain"(), quantumstate(s), s)
     end
 end
 
@@ -130,3 +131,8 @@ function stateshow(io, ::MIME"text/html", state, stateref)
     </div>
     """)
 end
+
+function stateshow(io, ::MIME"text/plain", state, stateref)
+    # Default fallback does nothing, as the basic info is already printed
+end
+

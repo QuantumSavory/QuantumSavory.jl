@@ -8,6 +8,7 @@ using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
     scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
+    heatmap!, barplot!,
     xlims!, ylims!, zlims!,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
@@ -18,6 +19,7 @@ import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, r
 using QuantumSavory: compactstr
 using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
 
+using Gabs: Gabs
 using QuantumClifford: QuantumClifford
 using QuantumOpticsBase: QuantumOpticsBase, dm
 

@@ -53,6 +53,23 @@ Use it when:
 This is the right backend for continuous-variable models that would be awkward
 or expensive to force into a generic wavefunction description.
 
+#### Inspecting Gaussian States
+
+When you inspect a Gaussian state stored in a QuantumSavory register (using `show` or in a notebook or terminal), the following details are displayed:
+- **Basis type**: The Gabs basis, such as `QuadBlockBasis` (all $x$ quadratures, then all $p$ quadratures: $x_1, x_2, \dots, p_1, p_2, \dots$) or `QuadPairBasis` ($x_1, p_1, x_2, p_2, \dots$).
+- **First moments**: The displacement vector, if available. The order of entries matches the specified basis.
+- **Covariance matrix**: A summary of the covariance matrix dimensions. For visual interfaces like HTML or PNG, a heatmap or styled table is displayed, highlighting diagonal elements and inter-mode correlations.
+- **Purity**: An indication of state purity or a cheap mixedness indicator, such as the trace of the covariance matrix.
+
+A minimal register example using `GabsRepr(...)`:
+```julia
+using QuantumSavory
+using Gabs
+reg = Register([Qumode(), Qumode()], [GabsRepr(QuadBlockBasis), GabsRepr(QuadBlockBasis)])
+# View the underlying Gabs state with rich visualization:
+state = QuantumSavory.stateof(reg[1])
+show(stdout, state)
+```
 ## Choosing Precisely
 
 The three built-in families answer different needs:

@@ -28,3 +28,5 @@ end
 function default_repr(state::Gabs.GaussianChannel)
     return GabsRepr(typeof(state.basis))
 end
+
+include("show.jl")

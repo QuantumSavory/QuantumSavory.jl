@@ -13,4 +13,7 @@ end
 @testset "background map" begin
     include("plotting_maps.jl")
 end
+@testset "Gabs Gaussian PNG" begin
+    include("gabs_show_png_tests.jl")
+end
 end
