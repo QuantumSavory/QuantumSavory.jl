@@ -6,7 +6,7 @@ const _ENTANGLEMENT_ID_MASK = UInt(typemax(EntanglementID))
 const NO_ENTANGLEMENT_ID = zero(EntanglementID)
 
 @inline normalize_entanglement_id(id::EntanglementID) =
-    EntanglementID(UInt(id) & _ENTANGLEMENT_ID_MASK)
+    EntanglementID(reinterpret(UInt, id) & _ENTANGLEMENT_ID_MASK)
 
 """
 Generate a random entanglement ID
@@ -29,7 +29,7 @@ function combine_entanglement_ids(a::EntanglementID, b::EntanglementID)
     # Entanglement IDs are stored in `Tag` integer fields, so keep the value in
     # the nonnegative Int range and combine modulo typemax(Int)+1 without signed
     # overflow.
-    ua = UInt(a) & _ENTANGLEMENT_ID_MASK
-    ub = UInt(b) & _ENTANGLEMENT_ID_MASK
+    ua = UInt(normalize_entanglement_id(a))
+    ub = UInt(normalize_entanglement_id(b))
     return EntanglementID((ua + ub) & _ENTANGLEMENT_ID_MASK)
 end
