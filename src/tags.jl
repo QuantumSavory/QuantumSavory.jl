@@ -1,4 +1,5 @@
 const TagElementTypes = Union{Symbol, Int, DataType}
+const EMPTY_TAG_ID_VECTOR = Int128[]
 
 """
 Tags are used to represent classical metadata describing the state (or even history) of nodes and their registers. The library allows the construction of custom tags using the `Tag` constructor. Currently tags are implemented as instances of a [sum type](https://github.com/MasonProtter/SumTypes.jl) and have fairly constrained structure. Most of them are constrained to contain only Symbol instances and integers.
@@ -76,6 +77,33 @@ end
 
 Base.convert(::Type{Tag}, x::Tag) = x
 Base.convert(::Type{Tag}, x) = Tag(x)
+
+@inline _indexable_tag_head(head) = head isa TagElementTypes ? head : nothing
+@inline _query_index_head(head::TagElementTypes) = head
+@inline _query_index_head(_) = nothing
+
+# Generate allocation-free head extraction from a tag. The generic
+# Tag accessors go through SumTypes.unwrap and allocate on this hot query path.
+let
+    cases = []
+    for (tagsymbol, tagvariant) in pairs(tag_types)
+        sig = methods(tagvariant)[1].sig.parameters[2:end]
+        args = (:head, :b, :c, :d, :e, :f, :g)[1:length(sig)]
+        if !isempty(sig) && sig[1] <: TagElementTypes
+            push!(cases, :($tagsymbol($(args...)) => head))
+        else
+            push!(cases, :($tagsymbol($(args...)) => nothing))
+        end
+    end
+
+    eval(quote
+        @inline function _tag_index_head(tag::Tag)
+            @cases tag begin
+                $(cases...)
+            end
+        end
+    end)
+end
 
 # Create a constructor for each tag variant
 for (tagsymbol, tagvariant) in pairs(tag_types)
