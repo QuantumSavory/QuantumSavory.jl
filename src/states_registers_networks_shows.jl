@@ -11,7 +11,8 @@ function Base.show(io::IO, s::StateRef)
                 print(IOContext(io, :compact => true), "\n    ",(r[i]))
             end
         end
-        stateshow(io, MIME"text/plain"(), quantumstate(s), s)
+        state = quantumstate(s)
+        state isa Gabs.GaussianState && stateshow(io, MIME"text/plain"(), state, s)
     end
 end
 
@@ -130,9 +131,5 @@ function stateshow(io, ::MIME"text/html", state, stateref)
     state of type <pre class="quantumsavory_typename quantumsavory_numericalstate_typename">$(typeof(state))</pre> does not support rich visualization in HTML
     </div>
     """)
-end
-
-function stateshow(io, ::MIME"text/plain", state, stateref)
-    # Default fallback does nothing, as the basic info is already printed
 end
 

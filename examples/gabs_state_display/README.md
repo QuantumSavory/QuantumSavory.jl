@@ -11,4 +11,4 @@ julia --project=test/projects/plotting -e 'using Pkg; Pkg.instantiate()'
 julia --project=test/projects/plotting examples/gabs_state_display/demo.jl
 ```
 
-Outputs land in `examples/gabs_state_display/output/` (`*.html`, `*.png`).
+The demo writes `output/*.html` and `output/*.png` locally (gitignored).
