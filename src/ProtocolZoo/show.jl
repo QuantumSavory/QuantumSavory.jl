@@ -59,7 +59,7 @@ end
 const _QTCP_MESSAGE_HEADS = (
     Flow,
     QDatagram,
-    QTCP.QDatagramSuccess,
+    QDatagramSuccess,
     LinkLevelRequest,
     LinkLevelReply,
     LinkLevelReplyAtHop,
@@ -69,9 +69,9 @@ const _QTCP_MESSAGE_HEADS = (
 )
 
 function _qtcp_message_counts(mb)
-    counts = Dict{Any, Int}(head => 0 for head in _QTCP_MESSAGE_HEADS)
+    counts = Dict{DataType, Int}(head => 0 for head in _QTCP_MESSAGE_HEADS)
     for entry in mb.buffer
-        head = first(collect(entry.tag))
+        head = typeof(entry.tag)
         if haskey(counts, head)
             counts[head] += 1
         end
@@ -84,9 +84,9 @@ _qtcp_count(counts, head) = get(counts, head, 0)
 function _qtcp_pair_summaries(mb, pair_head; limit=6)
     pairs = String[]
     for entry in mb.buffer
-        values = collect(entry.tag)
-        values[1] === pair_head || continue
-        push!(pairs, "$(values[2]).$(values[5])@slot$(values[6])")
+        tag = entry.tag
+        tag isa pair_head || continue
+        push!(pairs, "$(tag.flow_uuid).$(tag.seq_num)@slot$(tag.memory_slot)")
         length(pairs) >= limit && break
     end
     return pairs
@@ -95,13 +95,13 @@ end
 function _qtcp_visible_qdatagrams(mb)
     datagrams = NamedTuple{(:flow_uuid, :flow_src, :flow_dst, :seq_num), Tuple{Int, Int, Int, Int}}[]
     for entry in mb.buffer
-        values = collect(entry.tag)
-        values[1] === QDatagram || continue
+        tag = entry.tag
+        tag isa QDatagram || continue
         push!(datagrams, (
-            flow_uuid = values[2],
-            flow_src = values[3],
-            flow_dst = values[4],
-            seq_num = values[6],
+            flow_uuid = tag.flow_uuid,
+            flow_src = tag.flow_src,
+            flow_dst = tag.flow_dst,
+            seq_num = tag.seq_num,
         ))
     end
     return datagrams
@@ -115,7 +115,8 @@ function _qtcp_inferred_next_hops(graph, node, datagrams)
         try
             path = Graphs.a_star(graph, node, d.flow_dst)
             isempty(path) || (hops[key] = first(path).dst)
-        catch
+    catch err
+      @debug "qTCP display next-hop inference failed" node d.flow_dst exception=err
         end
     end
     return hops
@@ -129,7 +130,7 @@ function Base.show(io::IO, p::EndNodeController)
     print(io,
         "EndNodeController(node=$(p.node), time=$(now(p.sim)), register=$(compactstr(p.net[p.node]))) ",
         "Flow=$(_qtcp_count(counts, Flow)), QDatagram=$(_qtcp_count(counts, QDatagram)), ",
-        "QDatagramSuccess=$(_qtcp_count(counts, QTCP.QDatagramSuccess)), ",
+        "QDatagramSuccess=$(_qtcp_count(counts, QDatagramSuccess)), ",
         "LinkLevelReplyAtSource=$(_qtcp_count(counts, LinkLevelReplyAtSource)), ",
         "QTCPPairBegin=$(_qtcp_count(counts, QTCPPairBegin)), QTCPPairEnd=$(_qtcp_count(counts, QTCPPairEnd))",
     )
@@ -146,8 +147,9 @@ function Base.show(io::IO, p::NetworkNodeController)
     outgoing = count(d -> d.flow_src == p.node, datagrams)
     next_hops = _qtcp_inferred_next_hops(p.net.graph, p.node, datagrams)
     next_hops_str = isempty(next_hops) ? "none" : join(("$(flow_uuid).$(seq_num)->$(hop)" for ((flow_uuid, seq_num, _), hop) in sort(collect(next_hops); by=first)), ", ")
+    neighbors = sort!(collect(Graphs.neighbors(p.net.graph, p.node)))
     print(io,
-        "NetworkNodeController(node=$(p.node), degree=$(Graphs.degree(p.net.graph, p.node)), neighbors=$(collect(Graphs.neighbors(p.net.graph, p.node)))) ",
+        "NetworkNodeController(node=$(p.node), degree=$(Graphs.degree(p.net.graph, p.node)), neighbors=$(neighbors)) ",
         "QDatagram(in=$incoming, out=$outgoing), ",
         "LinkLevelReply=$(_qtcp_count(counts, LinkLevelReply)), ",
         "LinkLevelReplyAtHop=$(_qtcp_count(counts, LinkLevelReplyAtHop)), next_hops=$next_hops_str",
@@ -187,7 +189,7 @@ function Base.show(io::IO, m::MIME"text/html", p::EndNodeController)
         <tbody>
           <tr><td>Flow</td><td>$(_qtcp_count(counts, Flow))</td></tr>
           <tr><td>QDatagram</td><td>$(_qtcp_count(counts, QDatagram))</td></tr>
-          <tr><td>QDatagramSuccess</td><td>$(_qtcp_count(counts, QTCP.QDatagramSuccess))</td></tr>
+          <tr><td>QDatagramSuccess</td><td>$(_qtcp_count(counts, QDatagramSuccess))</td></tr>
           <tr><td>LinkLevelReplyAtSource</td><td>$(_qtcp_count(counts, LinkLevelReplyAtSource))</td></tr>
           <tr><td>QTCPPairBegin</td><td>$(_qtcp_count(counts, QTCPPairBegin))</td></tr>
           <tr><td>QTCPPairEnd</td><td>$(_qtcp_count(counts, QTCPPairEnd))</td></tr>
@@ -206,6 +208,7 @@ function Base.show(io::IO, m::MIME"text/html", p::NetworkNodeController)
     outgoing = count(d -> d.flow_src == p.node, datagrams)
     next_hops = _qtcp_inferred_next_hops(p.net.graph, p.node, datagrams)
     next_hops_str = isempty(next_hops) ? "none" : join(("$(flow_uuid).$(seq_num)->$(hop)" for ((flow_uuid, seq_num, _), hop) in sort(collect(next_hops); by=first)), ", ")
+    neighbors = sort!(collect(Graphs.neighbors(p.net.graph, p.node)))
     print(io,
     """
     <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_qtcp_network_node">
@@ -215,7 +218,7 @@ function Base.show(io::IO, m::MIME"text/html", p::NetworkNodeController)
         <dt>Degree</dt>
         <dd>$(Graphs.degree(p.net.graph, p.node))</dd>
         <dt>Neighbors</dt>
-        <dd>$(join(sort(collect(Graphs.neighbors(p.net.graph, p.node))), ", "))</dd>
+        <dd>$(join(neighbors, ", "))</dd>
         <dt>Visible QDatagram traffic</dt>
         <dd>incoming $(incoming), outgoing $(outgoing)</dd>
         <dt>Inferred next hops</dt>

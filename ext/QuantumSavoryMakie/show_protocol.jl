@@ -61,6 +61,8 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EndNodeController
     a = Axis(subfig[2,1])
     hidedecorations!(a)
     hidespines!(a)
+    xlims!(a, 0, 1)
+    ylims!(a, 0, 1)
     Makie.text!(a, 0, 0, text=text_summary, align=(:left, :top))
 end
 
@@ -84,6 +86,8 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.NetworkNodeContro
     a = Axis(subfig[2,1])
     hidedecorations!(a)
     hidespines!(a)
+    xlims!(a, 0, 1)
+    ylims!(a, 0, 1)
     Makie.text!(a, 0, 0, text=text_summary, align=(:left, :top))
 end
 
@@ -103,5 +107,7 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.LinkController)
     a = Axis(subfig[2,1])
     hidedecorations!(a)
     hidespines!(a)
+    xlims!(a, 0, 1)
+    ylims!(a, 0, 1)
     Makie.text!(a, 0, 0, text=text_summary, align=(:left, :top))
 end

@@ -42,4 +42,14 @@ show(out, MIME"image/png"(), QuantumSavory.stateof(reg1[1]))
 prot = EntanglerProt(get_time_tracker(net), net, 1, 2)
 show(out, MIME"image/png"(), prot)
 
+# qTCP controller PNG smoke tests
+net2 = RegisterNet([reg1, reg2, reg1])
+sim2 = get_time_tracker(net2)
+end_controller = QuantumSavory.ProtocolZoo.EndNodeController(sim2, net2, 1)
+network_controller = QuantumSavory.ProtocolZoo.NetworkNodeController(sim2, net2, 2)
+link_controller = QuantumSavory.ProtocolZoo.LinkController(sim2, net2, 1, 2)
+show(out, MIME"image/png"(), end_controller)
+show(out, MIME"image/png"(), network_controller)
+show(out, MIME"image/png"(), link_controller)
+
 end
