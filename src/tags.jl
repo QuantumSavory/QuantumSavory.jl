@@ -90,7 +90,7 @@ let
     cases = []
     for (tagsymbol, tagvariant) in pairs(tag_types)
         sig = methods(tagvariant)[1].sig.parameters[2:end]
-        args = (:head, :b, :c, :d, :e, :f, :g)[1:length(sig)]
+        args = (:head, :b, :c, :d, :e, :f, :g, :h, :i)[1:length(sig)]
         if !isempty(sig) && sig[1] <: TagElementTypes
             push!(cases, :($tagsymbol($(args...)) => head))
         else
