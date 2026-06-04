@@ -29,8 +29,6 @@ function stateexplorer!(fig,S)
     params = stateparameters(S)
     paramdict = stateparametersrange(S)
 
-    colormap=:cyclic_mrybm_35_75_c68_n256
-    colorrange=(-pi,pi)
     nbxpoints = 30
     εf = 0.0001
 
@@ -47,8 +45,6 @@ function stateexplorer!(fig,S)
         perfect = perfect/tr(perfect)
     end
 
-    f3dρ = fig[1,1]
-    fcb = f3dρ[1,3]
     ftext = fig[2,1]
     fparams = fig[3,1]
     #fparamsF = fig[3,1:2]
@@ -118,6 +114,22 @@ function stateexplorer!(fig,S)
         deregister_interaction!.((a,), keys(interactions(a)))
     end
 
+    draw_state(fig, S; params, sliders, perfect)
+
+    fig
+end
+
+function draw_state!(fig, S; params=tuple(), sliders=[], perfect=nothing)
+    if S isa Ket
+        S = dm(S)
+    end
+    colormap=:cyclic_mrybm_35_75_c68_n256
+    colorrange=(-pi,pi)
+
+    f3dρ = fig[1,1]
+    fcb = f3dρ[1,3]
+    ftext = fig[2,1]
+
     ρticks = ((1:4).+0.5, ["00","10","01","11"])
     ρBticks = ((1:4).+0.5, ["Φ+","Φ-","Ψ+","Ψ-"])
     a3dρ = Axis3(f3dρ[1,1],
@@ -174,6 +186,4 @@ function stateexplorer!(fig,S)
     zlims!(a3dρB,-0.001,1.001)
 
     Colorbar(fcb; colorrange, colormap, ticks=([-π,0,π],["-π","0","π"]), label="phase", tellheight=false)
-
-    fig
 end

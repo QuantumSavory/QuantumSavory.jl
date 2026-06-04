@@ -1,4 +1,5 @@
 include("show_bloch.jl")
+include("state_explorer.jl") # must put in its own file - use better naming
 
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
     f = Figure()
@@ -24,6 +25,7 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
         colgap!(subfig.layout, 0)
         colsize!(subfig.layout, 1, Relative(0.664))
     elseif nsubsystems(state) == 2
+        draw_state!(subfig, state)
     else
         ax = Axis(subfig[1,1])
         hidedecorations!(ax)
@@ -32,7 +34,6 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
         text!(ax,0,0;text,align=(:center,:center))
     end
 end
-stateshowimage(subfig, state::StateVector, stateref) = stateshowimage(subfig, dm(state), stateref)
 
 function stateshowimage(subfig, state::QuantumClifford.MixedDestabilizer, stateref)
     stab = QuantumClifford.stabilizerview(state)
