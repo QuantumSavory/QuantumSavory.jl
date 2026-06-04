@@ -22,6 +22,8 @@ struct Register # TODO better type description / TODO mutable struct with immuta
     locks::Vector{Any}
     tag_info::Dict{Int128, @NamedTuple{tag::Tag, slot::Int, time::Float64}}
     guids::Vector{Int128}
+    tag_ids_by_slot::Vector{Vector{Int128}}
+    tag_ids_by_head::Dict{TagElementTypes, Vector{Int128}}
     netparent::Ref{Any}
     netindex::Ref{Int}
     tag_waiter::Base.RefValue{ChangeNotifier} # TODO This being a ref is a bit of code smell... but we also want to be able to swap the notifier when a register is attached to a different simulation
@@ -29,7 +31,15 @@ end
 
 function Register(traits, reprs, bg, sr, si, at)
     env = ConcurrentSim.Simulation()
-    Register(traits, reprs, bg, sr, si, at, [ConcurrentSim.Resource(env) for _ in traits], Dict{Int128, Tuple{Tag, Int64, Float64}}(), Int128[], nothing, 0, Ref(ChangeNotifier(env)))
+    Register(
+        traits, reprs, bg, sr, si, at,
+        [ConcurrentSim.Resource(env) for _ in traits],
+        Dict{Int128, @NamedTuple{tag::Tag, slot::Int, time::Float64}}(),
+        Int128[],
+        [Int128[] for _ in traits],
+        Dict{TagElementTypes, Vector{Int128}}(),
+        nothing, 0, Ref(ChangeNotifier(env))
+    )
 end
 
 Register(traits,reprs,bg,sr,si) = Register(traits,reprs,bg,sr,si,zeros(length(traits)))
