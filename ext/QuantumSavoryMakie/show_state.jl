@@ -1,5 +1,12 @@
+get_statedata(state::Ket) = state.data
+get_statedata(state::Bra) = state.data
+get_statedata(state::Operator) = state.data
+get_statedata(state::LazyKet) = get_statedata(Ket(state))
+get_statedata(state) = nothing
+
 include("show_bloch.jl")
 include("state_explorer.jl") # must put in its own file - use better naming
+include("show_amplhistogram.jl")
 
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
     f = Figure()
@@ -18,14 +25,17 @@ end
 
 function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, stateref)
     set_theme!(theme_latexfonts())
-    update_theme!(Theme(figure_padding=0))
     if nsubsystems(state) == 1
+        update_theme!(Theme(figure_padding=0))
         draw_bloch!(subfig[1,1], state)
         draw_stateinfo!(subfig[1, 1:2], state)
         colgap!(subfig.layout, 0)
         colsize!(subfig.layout, 1, Relative(0.664))
     elseif nsubsystems(state) == 2
+        update_theme!(Theme(figure_padding=0))
         draw_state!(subfig, state)
+    elseif 3 <= nsubsystems(state) <= 5
+        draw_amplhistogram!(subfig, state)
     else
         ax = Axis(subfig[1,1])
         hidedecorations!(ax)
