@@ -55,6 +55,26 @@ Some protocols also expose richer visualization through `show` methods.
 `EntanglerProt`, for example, can render protocol-specific summaries in HTML or
 PNG form.
 
+The QTCP controllers (`EndNodeController`, `NetworkNodeController`, and
+`LinkController`) also provide protocol-specific text and HTML summaries, and
+PNG summaries when a Makie backend is loaded.
+
+```julia
+using QuantumSavory
+using QuantumSavory.ProtocolZoo
+
+net = RegisterNet([Register(5) for _ in 1:3])
+sim = get_time_tracker(net)
+
+end_node = EndNodeController(sim, net, 1)
+network_node = NetworkNodeController(sim, net, 2)
+link = LinkController(sim, net, 1, 2)
+
+show(stdout, end_node)
+repr(MIME"text/html"(), network_node)
+repr(MIME"text/html"(), link)
+```
+
 Those displays are not part of the protocol logic itself, but they are useful
 for debugging configuration and inspecting the expected behavior of a protocol
 before embedding it into a larger simulation.

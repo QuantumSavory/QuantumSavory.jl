@@ -7,6 +7,7 @@ using QuantumSavory: timestr, compactstr
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
+import Graphs
 
 using Distributions: Geometric
 using ConcurrentSim: Simulation, @yield, timeout, @process, now
