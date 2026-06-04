@@ -59,7 +59,7 @@ end
 const _QTCP_MESSAGE_HEADS = (
     Flow,
     QDatagram,
-    QDatagramSuccess,
+    QTCP.QDatagramSuccess,
     LinkLevelRequest,
     LinkLevelReply,
     LinkLevelReplyAtHop,
@@ -130,7 +130,7 @@ function Base.show(io::IO, p::EndNodeController)
     print(io,
         "EndNodeController(node=$(p.node), time=$(now(p.sim)), register=$(compactstr(p.net[p.node]))) ",
         "Flow=$(_qtcp_count(counts, Flow)), QDatagram=$(_qtcp_count(counts, QDatagram)), ",
-        "QDatagramSuccess=$(_qtcp_count(counts, QDatagramSuccess)), ",
+        "QDatagramSuccess=$(_qtcp_count(counts, QTCP.QDatagramSuccess)), ",
         "LinkLevelReplyAtSource=$(_qtcp_count(counts, LinkLevelReplyAtSource)), ",
         "QTCPPairBegin=$(_qtcp_count(counts, QTCPPairBegin)), QTCPPairEnd=$(_qtcp_count(counts, QTCPPairEnd))",
     )
@@ -189,7 +189,7 @@ function Base.show(io::IO, m::MIME"text/html", p::EndNodeController)
         <tbody>
           <tr><td>Flow</td><td>$(_qtcp_count(counts, Flow))</td></tr>
           <tr><td>QDatagram</td><td>$(_qtcp_count(counts, QDatagram))</td></tr>
-          <tr><td>QDatagramSuccess</td><td>$(_qtcp_count(counts, QDatagramSuccess))</td></tr>
+          <tr><td>QDatagramSuccess</td><td>$(_qtcp_count(counts, QTCP.QDatagramSuccess))</td></tr>
           <tr><td>LinkLevelReplyAtSource</td><td>$(_qtcp_count(counts, LinkLevelReplyAtSource))</td></tr>
           <tr><td>QTCPPairBegin</td><td>$(_qtcp_count(counts, QTCPPairBegin))</td></tr>
           <tr><td>QTCPPairEnd</td><td>$(_qtcp_count(counts, QTCPPairEnd))</td></tr>

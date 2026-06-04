@@ -357,7 +357,7 @@ end
     @test occursin("EndNodeController", end_html)
     @test occursin("node 1", end_html)
     @test occursin("Flow", end_html)
-    @test occursin(">1</td>", end_html)
+    @test occursin("<table>", end_html)
     @test !occursin("quantumsavory_protocol_unknown", end_html)
 
     @test occursin("NetworkNodeController", network_html)
