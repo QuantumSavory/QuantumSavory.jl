@@ -1,4 +1,3 @@
-using QuantumInterface: StateVector, AbstractOperator
 include("show_bloch.jl")
 
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
