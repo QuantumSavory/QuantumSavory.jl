@@ -8,9 +8,12 @@ struct MessageBuffer{T}
     net # TODO ::RegisterNet -- this can not be typed due to circular dependency, see https://github.com/JuliaLang/julia/issues/269
     node::Int
     buffer::Vector{NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}}
+    buffer_ids::Vector{Int128}
+    buffer_depth_by_id::Dict{Int128, Int}
+    buffer_ids_by_head::Dict{TagElementTypes, Vector{Int128}}
     # `tag_waiter` is edge-triggered: it wakes tasks that are already blocked in
     # `wait`/`onchange`.
-    tag_waiter::AsymmetricSemaphore
+    tag_waiter::ChangeNotifier
     # `no_wait` counts arrivals that happened while nobody was waiting. This
     # preserves the long-standing MessageBuffer contract that a later
     # `wait`/`onchange` must wake immediately once per already-buffered arrival.
@@ -19,6 +22,25 @@ end
 
 function peektags(mb::MessageBuffer)
     [b.tag for b in mb.buffer]
+end
+
+function _index_messagebuffer_id!(mb::MessageBuffer, id::Int128, tag::Tag)
+    head = _tag_index_head(tag)
+    isnothing(head) || push!(get!(Vector{Int128}, mb.buffer_ids_by_head, head), id)
+    return nothing
+end
+
+function _unindex_messagebuffer_id!(mb::MessageBuffer, id::Int128, tag::Tag)
+    head = _tag_index_head(tag)
+    if !isnothing(head)
+        ids = get(mb.buffer_ids_by_head, head, nothing)
+        if !isnothing(ids)
+            i = findfirst(==(id), ids)
+            isnothing(i) || deleteat!(ids, i)
+            isempty(ids) && delete!(mb.buffer_ids_by_head, head)
+        end
+    end
+    return nothing
 end
 
 struct ChannelForwarder
@@ -73,12 +95,16 @@ function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`"
     nwaiters = nbwaiters(mb.tag_waiter)
     nwaiters == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`."
+    id = guid()
     push!(mb.buffer, (;src,tag));
+    push!(mb.buffer_ids, id)
+    mb.buffer_depth_by_id[id] = length(mb.buffer)
+    _index_messagebuffer_id!(mb, id, tag)
     if nwaiters == 0
         # Keep one queued wakeup per arrival when no task is actively blocked on
-        # the semaphore. Protocol code often queries the buffer first and only
-        # then calls `onchange`, so a pure semaphore would miss already-buffered
-        # work and can deadlock those protocols.
+        # the notifier. Protocol code often queries the buffer first and only
+        # then calls `onchange`, so a pure edge-triggered notifier would miss
+        # already-buffered work and can deadlock those protocols.
         mb.no_wait[] += 1
     else
         unlock(mb.tag_waiter)
@@ -87,7 +113,15 @@ end
 
 function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
     sim = get_time_tracker(net)
-    mb = MessageBuffer{T}(sim, net, node, Tuple{Int,T}[], AsymmetricSemaphore(sim), Ref(0))
+    mb = MessageBuffer{T}(
+        sim, net, node,
+        NamedTuple{(:src,:tag), Tuple{Union{Nothing, Int},T}}[],
+        Int128[],
+        Dict{Int128, Int}(),
+        Dict{TagElementTypes, Vector{Int128}}(),
+        ChangeNotifier(sim),
+        Ref(0)
+    )
     for (;src, channel) in qs
         @process take_loop_mb(sim, channel, src, mb)
     end

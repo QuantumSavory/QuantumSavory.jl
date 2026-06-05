@@ -348,12 +348,7 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                 @yield lock(localslot)
                 @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart getting lock at $(now(prot.sim))"
                 counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid)
-                unlock(localslot)
                 if !isnothing(counterpart)
-                    # time_before_lock = now(prot.sim)
-                    @yield lock(localslot)
-                    # time_after_lock = now(prot.sim)
-                    # time_before_lock != time_after_lock && @debug "EntanglementTracker @$(prot.node): Needed Δt=$(time_after_lock-time_before_lock) to get a lock"
                     if !isassigned(localslot)
                         unlock(localslot)
                         error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We were attempting to forward a classical message from a node that performed a swap to the remote entangled node. However, on reception of that message it was found that the remote node has lost track of its part of the entangled state although it still keeps a `Tag` as a record of it being present.") # TODO make it configurable whether an error is thrown and plug it into the logging module
@@ -373,6 +368,7 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                     unlock(localslot)
                     continue
                 end
+                unlock(localslot)
 
                 # If there is nothing still stored locally, check if we have a record of the entanglement being swapped to a different remote node,
                 # and forward the message to that node.
@@ -494,6 +490,14 @@ permits_virtual_edge(::EntanglementConsumer) = true
         q1 = query1.slot
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
+        query1 = query(q1, prot.tag, prot.nodeB, q2.idx; locked=true, assigned=true)
+        query2 = query(q2, prot.tag, prot.nodeA, q1.idx; locked=true, assigned=true)
+        if isnothing(query1) || isnothing(query2)
+            @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): queries stale after locking, retrying."
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
 
         @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): queries successful, consuming entanglement between .$(q1.idx) and .$(q2.idx)"
         untag!(q1, query1.id)
@@ -529,6 +533,8 @@ include("switches.jl")
 using .Switches
 include("qtcp.jl")
 using .QTCP
+include("mbqc.jl")
+using .MBQCEntanglementDistillation
 
 include("show.jl")
 

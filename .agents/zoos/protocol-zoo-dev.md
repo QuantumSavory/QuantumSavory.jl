@@ -35,6 +35,13 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 ## Review Checks
 
 - Check lock acquisition and release on every path.
+- Check every `query`/`queryall` result that is used after `@yield`, `lock`,
+  `timeout`, `onchange`, or a spawned process runs. Register query results are
+  snapshots; ids and slot/tag relations can be stale by the time the protocol
+  resumes.
+- If a protocol consumes a tag, prefer `querydelete_wait!` or re-query under
+  the acquired locks before `untag!`. Avoid deleting one side of a pair before
+  confirming the other side is still current.
 - Verify whether the protocol only behaves correctly when paired with `EntanglementTracker`.
 - Treat field-position access like `tag[2]` and `tag[3]` as brittle review hotspots.
 - For tracker-related changes, cross-check:

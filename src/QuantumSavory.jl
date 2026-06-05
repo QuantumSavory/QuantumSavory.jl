@@ -1,9 +1,9 @@
 module QuantumSavory
 
-const glcnt = Ref{Int128}(0)
+const glcnt = Base.Threads.Atomic{Int128}(0)
 
 function guid()
-    glcnt[] += 1
+    Base.Threads.atomic_add!(glcnt, Int128(1)) + 1
 end
 
 using Reexport

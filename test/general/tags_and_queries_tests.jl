@@ -23,6 +23,9 @@ tag!(r[3], :symbol1, 4, 1)
 tag!(r[5], Int, 4, 5)
 
 @test Tag(:symbol1, 2, 3) == tag_types.SymbolIntInt(:symbol1, 2, 3)
+@test QuantumSavory._tag_index_head(Tag(:symbol1, 2, 3)) == :symbol1
+@test QuantumSavory._tag_index_head(Tag(Int, 4, 5)) == Int
+@test QuantumSavory._tag_index_head(tag_types.Forward(Tag(:symbol1), 2)) === nothing
 @test strip_id(query(r, :symbol1, 4, ❓)) == (slot=r[3], tag=tag_types.SymbolIntInt(:symbol1, 4, 1))
 @test strip_id(query(r, :symbol1, 4, 5)) == (slot=r[2], tag=tag_types.SymbolIntInt(:symbol1, 4, 5))
 @test strip_id(query(r, :symbol1, ❓, ❓)) == (slot=r[3], tag=tag_types.SymbolIntInt(:symbol1, 4, 1)) #returns latest tag in filo order
@@ -153,6 +156,44 @@ id3 = tag!(reg[4], :symB, 4, 5)
 @test untag!(reg[1], id1).tag == Tag(:symA, 1, 2)
 @test untag!(reg, id2).tag == Tag(:symB, 2, 3)
 @test_throws "Attempted to delete a nonexistent" untag!(reg, -1)
+
+if Base.Threads.nthreads() > 1
+    regs = [Register(1) for _ in 1:min(Base.Threads.nthreads(), 4)]
+    Base.Threads.@threads for i in eachindex(regs)
+        for _ in 1:50_000
+            tag!(regs[i][1], :threaded)
+        end
+    end
+    # Tag ids are global, even when independent registers are tagged in parallel.
+    guids = vcat((reg.guids for reg in regs)...)
+    @test length(guids) == length(unique(guids))
+end
+
+##
+# index maintenance tests
+
+reg = Register(4)
+id1 = tag!(reg[1], :indexed, 1)
+id2 = tag!(reg[2], :indexed, 2)
+id3 = tag!(reg[2], :other, 3)
+
+@test reg.tag_ids_by_slot[1] == [id1]
+@test reg.tag_ids_by_slot[2] == [id2, id3]
+@test reg.tag_ids_by_head[:indexed] == [id1, id2]
+@test reg.tag_ids_by_head[:other] == [id3]
+
+@test strip_id(query(reg[2], :indexed, ❓)) == (slot=reg[2], tag=Tag(:indexed, 2))
+@test strip_id(query(reg, :indexed, ❓; filo=false)) == (slot=reg[1], tag=Tag(:indexed, 1))
+@test strip_id(query(reg, :indexed, ❓; filo=true)) == (slot=reg[2], tag=Tag(:indexed, 2))
+
+@test querydelete!(reg[2], :indexed, 2).id == id2
+@test reg.tag_ids_by_slot[2] == [id3]
+@test reg.tag_ids_by_head[:indexed] == [id1]
+@test query(reg[2], :indexed, ❓) === nothing
+@test strip_id(query(reg, :indexed, ❓)) == (slot=reg[1], tag=Tag(:indexed, 1))
+
+@test untag!(reg[1], id1).tag == Tag(:indexed, 1)
+@test !haskey(reg.tag_ids_by_head, :indexed)
 
 ##
 # findfreeslot tests

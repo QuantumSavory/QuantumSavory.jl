@@ -244,10 +244,18 @@ QuantumSavory.get_time_tracker(deleter::_SwitchSynchronizedDelete) = get_time_tr
             clientnode = res.tag[2]
             clientslot = res.tag[3]
             @debug "Switch $(prot.switchnode).$(switchslot) deletes unused entanglement with client $(clientnode).$(clientslot)"
-            traceout!(res.slot, prot.net[clientnode][clientslot])
+            clientres = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot)
+            # We expect `clientres` to not be nothing because the client should not have destroyed entanglement 
+            # that has been promised for use by the switch -- but just so we are a bit more resilient to misbehaving clients
+            # let's guard against such an eventuality and double check that the client has not lost the qubit
+            if isnothing(clientres)
+                traceout!(res.slot)
+                untag!(res.slot, res.id)
+                continue
+            end
+            traceout!(res.slot, clientres.slot)
             untag!(res.slot, res.id)
-            res = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot)
-            untag!(prot.net[clientnode][clientslot], res.id)
+            untag!(clientres.slot, clientres.id)
         end
     end
 end
@@ -313,16 +321,26 @@ end
 Assuming the pairs in `match` are entangled,
 perform swaps to connect them and decrement the backlog counter.
 """
+@resumable function _switch_run_accounted_swap(sim, prot, i, j)
+    swapper = SwapperProt( # TODO be more careful about how much simulated time this takes
+        sim=sim, net=prot.net, node=prot.switchnode,
+        nodeL=prot.clientnodes[i], nodeH=prot.clientnodes[j],
+        rounds=1
+    )
+    proc = @process swapper()
+    @yield proc
+    # TODO it is possible that an external event has
+    # destroyed i and j, in which case this proc
+    # will hang and potentially restart in the next
+    # round of the switch, messing up other processes started
+    # in that round.
+    prot._backlog[i,j] -= 1
+end
+
 function _switch_run_swaps(prot, match)
     @debug "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])"
     for (i,j) in match
-        swapper = SwapperProt( # TODO be more careful about how much simulated time this takes
-            sim=prot.sim, net=prot.net, node=prot.switchnode,
-            nodeL=prot.clientnodes[i], nodeH=prot.clientnodes[j],
-            rounds=1
-        )
-        prot._backlog[i,j] -= 1
-        @process swapper()
+        @process _switch_run_accounted_swap(prot.sim, prot, i, j)
     end
 end
 

@@ -3,6 +3,8 @@
 ## v0.6.1 - unreleased
 
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- Significant performance improvements to queries on registers or buffers that already contain many tags.
+- New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.
 
 ## v0.6.0 - 2026-05-05
 
@@ -30,7 +32,7 @@
 ## v0.5.1 - 2025-07-14
 
 - Add `classical_delay` and `quantum_delay` as keyword arguments to the `RegisterNet` constructor to set a default global network edge latency.
-- `onchange_tag` now permits a protocol to wait for any change to the tag metadata. Implemented thanks to the new `AsymmetricSemaphore`, a resource object that allows multiple processes to wait for an update.
+- `onchange_tag` now permits a protocol to wait for any change to the tag metadata.
 - Plots of networks can now overlay real-world maps (see `generate_map`).
 - A "state explorer" tool was added to the plotting submodule and as an interactive example, to heal visualize many of the states in StatesZoo.
 - Additional filtering and decision capabilities in `EntanglerProt`.
