@@ -66,7 +66,7 @@ A minimal register example using `GabsRepr(...)`:
 using QuantumSavory
 using Gabs
 reg = Register([Qumode(), Qumode()], [GabsRepr(QuadBlockBasis), GabsRepr(QuadBlockBasis)])
-# View the underlying Gabs state with rich visualization:
+initialize!(reg[1:2], TwoSqueezedState(0.45))
 state = QuantumSavory.stateof(reg[1])
 show(stdout, state)
 ```

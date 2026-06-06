@@ -4,6 +4,7 @@ using Gabs
 using CairoMakie
 
 const GABS_QBLOCK = GabsRepr(QuadBlockBasis)
+const GABS_QPAIR  = GabsRepr(QuadPairBasis)
 const PNG_MAGIC = UInt8[0x89, 0x50, 0x4e, 0x47]
 
 function png_bytes(stateref)
@@ -23,6 +24,14 @@ end
 
     @testset "two-mode squeezed state" begin
         reg = Register(fill(Qumode(), 2), fill(GABS_QBLOCK, 2))
+        initialize!(reg[1:2], TwoSqueezedState(0.45))
+        png = png_bytes(QuantumSavory.stateof(reg[1]))
+        @test length(png) > 1000
+        @test png[1:4] == PNG_MAGIC
+    end
+
+    @testset "QuadPairBasis two-mode squeezed state" begin
+        reg = Register(fill(Qumode(), 2), fill(GABS_QPAIR, 2))
         initialize!(reg[1:2], TwoSqueezedState(0.45))
         png = png_bytes(QuantumSavory.stateof(reg[1]))
         @test length(png) > 1000

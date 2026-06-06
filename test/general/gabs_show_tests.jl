@@ -3,6 +3,7 @@ using QuantumSavory
 using Gabs
 
 const GABS_QBLOCK = GabsRepr(QuadBlockBasis)
+const GABS_QPAIR  = GabsRepr(QuadPairBasis)
 
 function show_plain(stateref)
     io = IOBuffer()
@@ -47,6 +48,34 @@ end
         @test occursin("mode 1:", plain)
         @test occursin("mode 2:", plain)
         @test !occursin("does not support rich visualization", html)
+        @test occursin("Per-mode marginals", html)
+    end
+
+    @testset "QuadPairBasis one-mode coherent state" begin
+        reg = Register([Qumode()], [GABS_QPAIR])
+        initialize!(reg[1], CoherentState(0.5 + 0.2im))
+        sref = QuantumSavory.stateof(reg[1])
+        plain = show_plain(sref)
+        html = show_html(sref)
+
+        @test occursin("Gaussian state of 1 mode", plain)
+        @test occursin("First moments", plain)
+        @test !occursin("does not support rich visualization", plain)
+        @test !occursin("does not support rich visualization", html)
+        @test occursin("<table", html)
+    end
+
+    @testset "QuadPairBasis two-mode squeezed state" begin
+        reg = Register(fill(Qumode(), 2), fill(GABS_QPAIR, 2))
+        initialize!(reg[1:2], TwoSqueezedState(0.45))
+        sref = QuantumSavory.stateof(reg[1])
+        plain = show_plain(sref)
+        html = show_html(sref)
+
+        @test occursin("Gaussian state of 2 modes", plain)
+        @test occursin("Per-mode marginals", plain)
+        @test occursin("mode 1:", plain)
+        @test occursin("mode 2:", plain)
         @test occursin("Per-mode marginals", html)
     end
 

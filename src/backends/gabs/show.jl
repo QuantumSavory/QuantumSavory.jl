@@ -1,26 +1,35 @@
 """Indices of the two quadratures belonging to `mode` in `basis`."""
+function _gabs_mode_quadrature_indices(basis::Gabs.QuadBlockBasis, mode::Int)
+    n = Gabs.nmodes(basis)
+    @assert 1 <= mode <= n
+    return mode, mode + n
+end
+
+function _gabs_mode_quadrature_indices(basis::Gabs.QuadPairBasis, mode::Int)
+    n = Gabs.nmodes(basis)
+    @assert 1 <= mode <= n
+    return 2 * mode - 1, 2 * mode
+end
+
 function _gabs_mode_quadrature_indices(basis, mode::Int)
     n = Gabs.nmodes(basis)
     @assert 1 <= mode <= n
-    if basis isa Gabs.QuadBlockBasis
-        return mode, mode + n
-    elseif basis isa Gabs.QuadPairBasis
-        return 2 * mode - 1, 2 * mode
-    else
-        return mode, mode + n
-    end
+    return mode, mode + n
 end
 
 """Bosonic mode index for quadrature component `idx` in `basis`."""
+function _gabs_quadrature_mode_index(basis::Gabs.QuadBlockBasis, idx::Int)
+    n = Gabs.nmodes(basis)
+    return idx <= n ? idx : idx - n
+end
+
+function _gabs_quadrature_mode_index(::Gabs.QuadPairBasis, idx::Int)
+    return (idx + 1) ÷ 2
+end
+
 function _gabs_quadrature_mode_index(basis, idx::Int)
     n = Gabs.nmodes(basis)
-    if basis isa Gabs.QuadBlockBasis
-        return idx <= n ? idx : idx - n
-    elseif basis isa Gabs.QuadPairBasis
-        return (idx + 1) ÷ 2
-    else
-        return idx <= n ? idx : idx - n
-    end
+    return idx <= n ? idx : idx - n
 end
 
 function _gabs_mode_marginal(state::Gabs.GaussianState, mode::Int)
@@ -33,7 +42,7 @@ end
 function _gabs_covariance_summary(covar::AbstractMatrix)
     n = size(covar, 1)
     diag_part = [covar[i, i] for i in 1:n]
-    max_offdiag = 0.0
+    max_offdiag = zero(eltype(covar))
     for i in 1:n, j in 1:n
         i == j && continue
         max_offdiag = max(max_offdiag, abs(covar[i, j]))
@@ -42,9 +51,9 @@ function _gabs_covariance_summary(covar::AbstractMatrix)
 end
 
 function _gabs_purity_or_mixedness(state::Gabs.GaussianState)
-    try
+    if applicable(Gabs.purity, state)
         return "Purity: $(round(Gabs.purity(state); digits=4))"
-    catch
+    else
         diag_part, _ = _gabs_covariance_summary(state.covar)
         return "Tr(cov): $(round(sum(diag_part); digits=4))"
     end
@@ -116,7 +125,7 @@ function QuantumSavory.stateshow(io::IO, ::MIME"text/html", state::Gabs.Gaussian
             μ, V = _gabs_mode_marginal(state, mode)
             print(io, "<div>Mode $mode</div><table style=\"border-collapse: collapse; margin-bottom: 0.5em;\">")
             print(io, "<tr><th></th><th>mean</th><th>var(q)</th><th>var(p)</th><th>cov(q,p)</th></tr>")
-            print(io, "<tr><td></td><td>$(round.(μ; digits=4))</td><td>$(round(V[1,1]; digits=4))</td>",
+            print(io, "<tr><td></td><td>($(round(μ[1]; digits=4)), $(round(μ[2]; digits=4)))</td><td>$(round(V[1,1]; digits=4))</td>",
                 "<td>$(round(V[2,2]; digits=4))</td><td>$(round(V[1,2]; digits=4))</td></tr>")
             print(io, "</table>")
         end

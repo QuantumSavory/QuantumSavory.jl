@@ -4,26 +4,9 @@ function Base.show(io::IO, m::MIME"image/png", s::StateRef)
     show(io, m, f)
 end
 
-"""Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy. Instead of an IO instance, it takes a Makie axis."""
-function _gabs_covariance_separators!(a, basis, nm::Int)
-    if basis isa Gabs.QuadBlockBasis
-        vlines!(a, nm + 0.5; color=(:black, 0.35), linestyle=:dash)
-        hlines!(a, nm + 0.5; color=(:black, 0.35), linestyle=:dash)
-        for k in 1:nm - 1
-            vlines!(a, [k, nm + k] .+ 0.5; color=(:black, 0.2), linestyle=:dot)
-            hlines!(a, [k, nm + k] .+ 0.5; color=(:black, 0.2), linestyle=:dot)
-        end
-    else
-        for k in 1:nm - 1
-            boundary = 2k + 0.5
-            vlines!(a, boundary; color=(:black, 0.35), linestyle=:dash)
-            hlines!(a, boundary; color=(:black, 0.35), linestyle=:dash)
-        end
-    end
-end
-
+"""Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy. Instead of an IO instance, it takes a Makie figure."""
 function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
-    nm = Gabs.nmodes(state.basis)
+    nm = QuantumSavory.nsubsystems(state)
     a = Axis(subfig[1, 1], title="Covariance matrix ($nm mode$(nm == 1 ? "" : "s"))",
         aspect=Makie.DataAspect(), yreversed=true)
     max_val = max(1e-5, maximum(abs, state.covar))
@@ -56,4 +39,21 @@ function stateshowimage(subfig, state::QuantumClifford.MixedDestabilizer, stater
     ax.xticklabelrotation = pi/2*0.8
     ax.yticks = (Int[], String[])
     subfig
+end
+
+function _gabs_covariance_separators!(a, ::Gabs.QuadBlockBasis, nm::Int)
+    vlines!(a, nm + 0.5; color=(:black, 0.35), linestyle=:dash)
+    hlines!(a, nm + 0.5; color=(:black, 0.35), linestyle=:dash)
+    for k in 1:nm - 1
+        vlines!(a, [k, nm + k] .+ 0.5; color=(:black, 0.2), linestyle=:dot)
+        hlines!(a, [k, nm + k] .+ 0.5; color=(:black, 0.2), linestyle=:dot)
+    end
+end
+
+function _gabs_covariance_separators!(a, basis, nm::Int)
+    for k in 1:nm - 1
+        boundary = 2k + 0.5
+        vlines!(a, boundary; color=(:black, 0.35), linestyle=:dash)
+        hlines!(a, boundary; color=(:black, 0.35), linestyle=:dash)
+    end
 end

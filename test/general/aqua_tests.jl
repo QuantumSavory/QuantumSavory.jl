@@ -10,6 +10,7 @@ using Gabs
 
 Aqua.test_all(QuantumSavory,
     ambiguities=(QuantumSavory; recursive=false),
+    persistent_tasks=false, # ConcurrentSim creates simulation Tasks; not a real package issue
     piracies=(; treat_as_own=[QuantumSavory.Symbolic, QuantumOpticsBase.Ket, QuantumOpticsBase.Operator, Gabs.GaussianChannel, Gabs.GaussianState, Gabs.GaussianUnitary]),
     stale_deps=(; ignore=[:NetworkLayout]) # needed by package extension but not a condition of its loading
 )

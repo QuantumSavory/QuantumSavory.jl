@@ -1,14 +1,12 @@
 using QuantumSavory
 using Gabs
 
-const HAS_CAIRO_MAKIE = let ok = true
-    try
-        @eval using CairoMakie
-        @eval CairoMakie.activate!()
-    catch
-        ok = false
-    end
-    ok
+const HAS_CAIRO_MAKIE = try
+    using CairoMakie
+    CairoMakie.activate!()
+    true
+catch
+    false
 end
 
 const GABS_REPR = GabsRepr(QuadBlockBasis)

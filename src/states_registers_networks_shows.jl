@@ -11,8 +11,7 @@ function Base.show(io::IO, s::StateRef)
                 print(IOContext(io, :compact => true), "\n    ",(r[i]))
             end
         end
-        state = quantumstate(s)
-        state isa Gabs.GaussianState && stateshow(io, MIME"text/plain"(), state, s)
+        stateshow(io, MIME"text/plain"(), quantumstate(s), s)
     end
 end
 
@@ -124,6 +123,9 @@ function Base.show(io::IO, m::MIME"text/html", s::StateRef)
 end
 
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""
+function stateshow(io, ::MIME"text/plain", state, stateref)
+end
+
 function stateshow(io, ::MIME"text/html", state, stateref)
     print(io,
     """
