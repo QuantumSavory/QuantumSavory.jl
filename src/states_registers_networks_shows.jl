@@ -11,6 +11,7 @@ function Base.show(io::IO, s::StateRef)
                 print(IOContext(io, :compact => true), "\n    ",(r[i]))
             end
         end
+        stateshow(io, MIME"text/plain"(), quantumstate(s), s)
     end
 end
 
