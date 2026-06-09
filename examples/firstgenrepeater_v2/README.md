@@ -14,27 +14,27 @@ Three example scripts then build on top of it:
 The simplest possible demonstration: `EntanglerProt` runs on every edge of the chain and continuously generates raw Bell pairs between neighboring nodes. No swapping or purification is performed, thus the simulation locks up pretty quickly because there are no empty slots left after all neighbors get entangled.
 
 ```bash
-julia --project=examples/firstgenrepeater_v2 examples/firstgenrepeater_v2/1_entangler_example.jl
+julia --project=examples examples/firstgenrepeater_v2/1_entangler_example.jl
 ```
 
 This produces a short animation (`firstgenrepeater_v2-01.entangler.mp4`) showing the entanglement links building up over time.
 
 ## Example 2 — Swapper interactive web app
 
-A full interactive demo that adds `SwapperProt` and `EntanglementTracker` on top of the entangler. Configuration sliders let you adjust both simulation parameters (chain length, register size, T₂, success probability, …) and the `GenqoMultiplexedCascadedBellPairW` entanglement source parameters in real time. The vast majority of the code in this demo is dedicated to setting up a web UI using an external library from the Makie plotting ecosystem. The demo is meant to showcase the ease with which you can make an interactive bespoke simulation that runs on the web.
+A full interactive demo that adds `SwapperProt` on top of the entangler. Configuration sliders let you adjust both simulation parameters (chain length, register size, T₂, success probability, …) and the `BarrettKokBellPair` entanglement source parameters in real time. The vast majority of the code in this demo is dedicated to setting up a web UI using an external library from the Makie plotting ecosystem. The demo is meant to showcase the ease with which you can make an interactive bespoke simulation that runs on the web.
 
 ```bash
-julia --project=examples/firstgenrepeater_v2 examples/firstgenrepeater_v2/2_swapper_example.jl
+julia --project=examples examples/firstgenrepeater_v2/2_swapper_example.jl
 ```
 
-This launches a WGLMakie web app (default `http://127.0.0.1:8890`). Configure the repeater chain and Genqo source, then press **Run simulation** to watch entanglement propagate end-to-end. Purification is not included in this example.
+This launches a WGLMakie web app (default `http://127.0.0.1:8890`). Configure the repeater chain and Barrett-Kok source, then press **Run simulation** to watch entanglement propagate end-to-end. Purification is not included in this example.
 
 ## Example 3 — Purifier
 
 Adds a purification step to example 2. All three protocol layers run together: `EntanglerProt` generates raw pairs on each link, `SwapperProt` extends entanglement across the chain, and a custom `purifier` process distills pairs between every node pair that shares two or more Bell pairs. This example is meant to showcase how to build a very simple custom protocol without committing to the entirety of the AbstractProtocol machinery behind ProtocolZoo.
 
 ```bash
-julia --project=examples/firstgenrepeater_v2 examples/firstgenrepeater_v2/3_purifier_example.jl
+julia --project=examples examples/firstgenrepeater_v2/3_purifier_example.jl
 ```
 
 This records an animation (`firstgenrepeaterv2.purifier.mp4`) over 30 simulated time units showing entanglement generation, swapping, and purification all operating concurrently.

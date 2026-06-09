@@ -22,7 +22,7 @@ noisy_pair = noisy_pair_func(F)
 sim, network = simulation_setup(sizes, T2)
 
 for (;src, dst) in edges(network)
-    eprot = EntanglerProt(sim, network, src, dst; pairstate=noisy_pair)
+    eprot = EntanglerProt(sim, network, src, dst; pairstate=noisy_pair, local_busy_time_post=entangler_busy_time, retry_lock_time=entangler_wait_time)
     @process eprot()
 end
 

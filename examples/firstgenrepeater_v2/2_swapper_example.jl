@@ -72,6 +72,7 @@ function run_swapping_simulation!(sim, network, observables, axes, running; stop
         run(sim, t)
         notify.(observables)
         axes[1].title = "t=$(round(t; digits = 2))"
+        sleep(0.05)
     end
     running[] = false
 end
@@ -83,10 +84,7 @@ function state_summary(state_conf::Dict{Symbol,Float64}, order)
     )
 end
 
-function add_configuration_controls(block)
-    container = GridLayout(tellwidth = false)
-    block[1, 1] = container
-
+function add_configuration_controls(block1, block2)
     config_defaults = Dict{Symbol,Any}(
         :len => 5,
         :regsize => 3,
@@ -105,7 +103,7 @@ function add_configuration_controls(block)
     state_defaults = Dict{Symbol,Float64}(p => Float64(state_ranges[p].good) for p in state_params)
     state_obs = Observable(copy(state_defaults))
 
-    config_section = container[1, 1] = GridLayout(tellwidth = false)
+    config_section = block1[1, 1] = GridLayout(tellwidth = false)
     Makie.Label(config_section[1, 1], "Simulation settings", fontsize = 16, color = (:white, 0.85))
 
     sim_slider_grid = SliderGrid(
@@ -119,7 +117,7 @@ function add_configuration_controls(block)
         (label = "swapper busy", range = 0.0:0.05:1.0, format = "{:.2f}", startvalue = config_defaults[:swapper_local_busy_time]),
         (label = "swapper retry", range = 0.01:0.01:1.0, format = "{:.2f}", startvalue = config_defaults[:swapper_retry_lock_time]),
         (label = "simulation horizon", range = 5.0:1.0:120.0, format = "{:d}", startvalue = config_defaults[:stop_time]),
-        width = 520,
+        width = 360,
     )
 
     chain_label = Makie.Label(
@@ -158,7 +156,7 @@ function add_configuration_controls(block)
         end
     end
 
-    state_section = container[2, 1] = GridLayout(tellwidth = false)
+    state_section = block2[1, 1] = GridLayout(tellwidth = false)
     Makie.Label(state_section[1, 1], "Barrett-Kok source parameters", fontsize = 16, color = (:white, 0.85))
 
     state_slider_specs = [
@@ -170,7 +168,7 @@ function add_configuration_controls(block)
         )
         for param in state_params
     ]
-    state_slider_grid = SliderGrid(state_section[2, 1], state_slider_specs...; width = 520)
+    state_slider_grid = SliderGrid(state_section[2, 1], state_slider_specs...; width = 360)
 
     state_label = Makie.Label(
         state_section[3, 1],
@@ -198,13 +196,13 @@ function add_configuration_controls(block)
 end
 
 landing = Bonito.App() do
-    fig = Figure(size = (900, 640))
-    fig[1, 1] = controls = GridLayout(tellwidth = false)
+    fig = Figure(size = (1100, 900))
+
+    config_obs, state_obs = add_configuration_controls(fig[1, 1], fig[1, 3])
 
     running = Observable(false)
-    controls[1, 1] = button = Makie.Button(fig, label = @lift($running ? "Running..." : "Run simulation"))
-
-    config_obs, state_obs = add_configuration_controls(controls[1, 2])
+    fig[1, 2] = button_area = GridLayout(tellwidth = false, tellheight = false)
+    button_area[1, 1] = button = Makie.Button(fig, label = @lift($running ? "Running..." : "Run simulation"))
 
     on(button.clicks) do _
         if !running[]
@@ -217,13 +215,8 @@ landing = Bonito.App() do
             config = deepcopy(config_obs[])
             state_config = deepcopy(state_obs[])
 
-            fig[2, 1] = display_area = GridLayout()
-            # display_area[1, 1] = inner_fig = Figure(size = (640, 420))
-            rowsize!(display_area, 1, Fixed(420))
-            colsize!(display_area, 1, Fixed(640))
-
             sim, network, obs, ax = prepare_swapping_simulation(
-                display_area[1, 1]; #inner_fig;
+                fig[2, 1:3];
                 config = config,
                 state_config = state_config,
             )
