@@ -250,7 +250,7 @@ landing = Bonito.App() do
 
     This interactive demo runs the first-generation repeater chain while sourcing raw Bell pairs from the Barrett-Kok model. Adjust both network parameters and state physics to see how the repeater behavior changes in real time.
 
-    [View source for this example.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater_v2)
+    [View source for this example.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater_protocolzoo)
     """
     Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
 end

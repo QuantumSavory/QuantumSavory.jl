@@ -13,9 +13,9 @@ QuantumSavory permits swapping the backend simulator. In particular it is very e
 
 Lastly, `6_compare_formalisms.jl` runs repeated trajectory using either representation and compares their average results. The `*_noplot.jl` file runs the same simulation without creating plots.
 
-**Importantly, you probably do not want to use this setup directly if all you want is to run a simple repeater chain!!!** This is a very low-level implementation. You would be better of using already implemented reusable protocols like [`EntanglerProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt). On the other hand, the setup here is a simple way to learn about making discrete event simulations without depending on a lot of extra library functionality and opaque black boxes. The `firstgenrepeater_v2` is a much higher level, easier to reuse, implementation of the same simulation.
+**Importantly, you probably do not want to use this setup directly if all you want is to run a simple repeater chain!!!** This is a very low-level implementation. You would be better of using already implemented reusable protocols like [`EntanglerProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt). On the other hand, the setup here is a simple way to learn about making discrete event simulations without depending on a lot of extra library functionality and opaque black boxes. The `firstgenrepeater_protocolzoo` is a much higher level, easier to reuse, implementation of the same simulation.
 
 Documentation:
 
 - [The "How To" doc page on setting up this simulation of a repeater chain](https://qs.quantumsavory.org/dev/howto/firstgenrepeater/firstgenrepeater)
-- [The same simulation but done with way less code thanks to better higher-level tools in QuantumSavory](https://qs.quantumsavory.org/dev/howto/firstgenrepeater_v2/firstgenrepeater_v2)
+- [The same simulation but done with way less code thanks to better higher-level tools in QuantumSavory](https://qs.quantumsavory.org/dev/howto/firstgenrepeater_protocolzoo/firstgenrepeater_protocolzoo)

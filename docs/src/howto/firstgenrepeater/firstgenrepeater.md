@@ -31,7 +31,7 @@ The user does not need to know much about these libraries, but if they wish, it 
 The full simulation script is available at the bottom.
 
 !!! info "Low Level Implementation"
-    This is a very low-level implementation. You would be better of using already implemented reusable protocols like [`EntanglerProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt) like done in the second version of this example [`firstgenrepeater_v2`](https://qs.quantumsavory.org/dev/howto/firstgenrepeater_v2/firstgenrepeater_v2). On the other hand, the setup here is a simple way to learn about making discrete event simulations without depending on a lot of extra library functionality and opaque black boxes.
+    This is a very low-level implementation. You would be better of using already implemented reusable protocols like [`EntanglerProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt) like done in the second version of this example [`firstgenrepeater_protocolzoo`](https://qs.quantumsavory.org/dev/howto/firstgenrepeater_protocolzoo/firstgenrepeater_protocolzoo). On the other hand, the setup here is a simple way to learn about making discrete event simulations without depending on a lot of extra library functionality and opaque black boxes.
 
 ## The Underlying Data Structures
 
