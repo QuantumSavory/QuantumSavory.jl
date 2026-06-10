@@ -9,7 +9,7 @@ A hub (vertex `S+1`) is connected to `S` remote sensors in a star network. A GHZ
 3. **Correction**: Based on the measurement outcomes, the hub sends classical X/Z correction tags to the sensors (`EntanglementUpdateX`, `EntanglementUpdateZ`);
 4. **Pauli frame update**: Each sensor applies the announced corrections so the entangled sensors share a proper GHZ state (`EntanglementTracker`).
 
-The two protocols differ only in *when* the hub decides the entanglement-generation phase is over. The `f_tmbl.jl` and `v_tmbl.jl` files each run one round and report the number of entangled sensors and the resulting GHZ fidelity; `plots.jl` runs a Monte-Carlo comparison and graphs the count / time / fidelity distributions. All three files share the parameters and helpers in `setup.jl`.
+The two protocols differ only in *when* the hub decides the entanglement-generation phase is over. The `f_tmbl.jl` and `v_tmbl.jl` files each run one round and report the number of entangled sensors and the resulting GHZ fidelity. Both files share the parameters and helpers in `setup.jl`.
 
 All protocols used are from `QuantumSavory.ProtocolZoo`.
 ## Fixed-Time vs Variable-Time
