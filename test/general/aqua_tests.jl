@@ -11,7 +11,8 @@ using Gabs
 Aqua.test_all(QuantumSavory,
     ambiguities=(QuantumSavory; recursive=false),
     piracies=(; treat_as_own=[QuantumSavory.Symbolic, QuantumOpticsBase.Ket, QuantumOpticsBase.Operator, Gabs.GaussianChannel, Gabs.GaussianState, Gabs.GaussianUnitary]),
-    stale_deps=(; ignore=[:NetworkLayout]) # needed by package extension but not a condition of its loading
+    stale_deps=(; ignore=[:NetworkLayout]), # needed by package extension but not a condition of its loading
+    persistent_tasks=false, # false positive in CI due package precompilation bookkeeping across platforms
 )
 
 @test length(Aqua.Piracy.hunt(QuantumSavory)) == 8 # TODO upstream the sources of piracies
