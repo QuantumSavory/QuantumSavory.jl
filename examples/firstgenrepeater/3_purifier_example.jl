@@ -61,7 +61,7 @@ display(fig)
 
 # record the simulation progress
 step_ts = range(0, 30, step=0.1)
-record(fig, "firstgenrepeaterv2.purifier.mp4", step_ts, framerate=10, visible=true) do t
+record(fig, "firstgenrepeater-03.purifier.mp4", step_ts, framerate=10, visible=true) do t
     run(sim, t)
     notify(obs)
     ax.title = "t=$(t)"

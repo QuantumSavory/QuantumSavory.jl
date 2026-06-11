@@ -37,7 +37,7 @@ Adds a purification step to example 2. All three protocol layers run together: `
 julia --project=examples examples/firstgenrepeater/3_purifier_example.jl
 ```
 
-This records an animation (`firstgenrepeaterv2.purifier.mp4`) over 30 simulated time units showing entanglement generation, swapping, and purification all operating concurrently.
+This records an animation (`firstgenrepeater-03.purifier.mp4`) over 30 simulated time units showing entanglement generation, swapping, and purification all operating concurrently.
 
 Documentation:
 

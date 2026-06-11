@@ -13,9 +13,9 @@ using the high-level protocol abstractions from [`QuantumSavory.ProtocolZoo`](@r
 We simulate the same physical setup as the low-level guide:
 
 - A chain of quantum repeater nodes, each holding a small register of qubits;
-- Nearest-neighbor entanglement is generated probabilistically by an [`EntanglerProt`](@ref QuantumSavory.ProtocolZoo.EntanglerProt);
-- Entanglement is extended end-to-end by a [`SwapperProt`](@ref QuantumSavory.ProtocolZoo.SwapperProt) running on every intermediate node;
-- Classical metadata (who is entangled with whom) is kept consistent across the network by an [`EntanglementTracker`](@ref QuantumSavory.ProtocolZoo.EntanglementTracker);
+- Nearest-neighbor entanglement is generated probabilistically by an [`EntanglerProt`](@ref);
+- Entanglement is extended end-to-end by a [`SwapperProt`](@ref) running on every intermediate node;
+- Classical metadata (who is entangled with whom) is kept consistent across the network by an [`EntanglementTracker`](@ref);
 - A custom purifier process distills higher-fidelity pairs whenever two Bell pairs are shared between the same node pair.
 
 The source code is in the [`examples/firstgenrepeater`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater) folder.
@@ -34,7 +34,7 @@ Each qubit is assigned a [`T2Dephasing`](@ref) background process so that stored
 
 ## Entangler
 
-[`EntanglerProt`](@ref QuantumSavory.ProtocolZoo.EntanglerProt) is a pre-built process that continuously tries to establish a Bell pair between two neighboring nodes.
+[`EntanglerProt`](@ref) is a pre-built process that continuously tries to establish a Bell pair between two neighboring nodes.
 One instance runs on every edge of the network:
 
 ```julia
@@ -45,7 +45,7 @@ end
 ```
 
 ```@raw html
-<video src="../firstgenrepeater_v2-01.entangler.mp4" autoplay loop muted></video>
+<video src="../firstgenrepeater-01.entangler.mp4" autoplay loop muted></video>
 ```
 
 Internally it searches for a free qubit slot on each endpoint, locks them, waits for the
@@ -55,7 +55,7 @@ All of that bookkeeping is hidden behind the protocol — compare with the
 what is being abstracted away.
 
 The `pairstate` argument accepts any symbolic or numerical two-qubit state.
-Here we use [`BarrettKokBellPair`](@ref QuantumSavory.StatesZoo.BarrettKokBellPair) from [`StatesZoo`](@ref),
+Here we use [`BarrettKokBellPair`](@ref) from [`StatesZoo`](@ref Predefined-Models-of-Quantum-States),
 a physically motivated noisy Bell state parametrized by the optical channel efficiencies and dark-count probability of the Barrett-Kok scheme:
 
 ```julia
@@ -64,7 +64,7 @@ pairstate = BarrettKokBellPair(ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱)
 
 ## Swapper
 
-[`SwapperProt`](@ref QuantumSavory.ProtocolZoo.SwapperProt) extends entanglement across the chain by performing Bell measurements on local qubits that are each half of a separate Bell pair.
+[`SwapperProt`](@ref) extends entanglement across the chain by performing Bell measurements on local qubits that are each half of a separate Bell pair.
 One instance runs on every node:
 
 ```julia
@@ -80,7 +80,7 @@ end
 ```
 
 ```@raw html
-<video src="../firstgenrepeater_v2-02.swapper.mp4" autoplay loop muted></video>
+<video src="../firstgenrepeater-02.swapper.mp4" autoplay loop muted></video>
 ```
 
 The `nodeL`/`nodeH` predicates tell the swapper which nodes count as "left" and "right"
@@ -92,7 +92,7 @@ farthest available neighbour on each side, which maximises the reach of the resu
 
 After a swap, the two remote endpoints of the newly created long-range link need to be
 informed about their new counterpart so that they can coordinate future operations.
-[`EntanglementTracker`](@ref QuantumSavory.ProtocolZoo.EntanglementTracker) handles all of this classical messaging automatically:
+[`EntanglementTracker`](@ref) handles all of this classical messaging automatically:
 
 ```julia
 for node in vertices(network)
@@ -138,7 +138,7 @@ end
 ```
 
 The key difference from the low-level purifier is the use of the **tag system**:
-`queryall` and `query` find qubits by their [`EntanglementCounterpart`](@ref QuantumSavory.ProtocolZoo.EntanglementCounterpart) tag rather than by manually inspecting `:enttrackers` arrays,
+`queryall` and `query` find qubits by their [`EntanglementCounterpart`](@ref) tag rather than by manually inspecting `:enttrackers` arrays,
 and `untag!` removes the tag from consumed qubits rather than writing `nothing` into tracker arrays.
 
 Purifiers are started on every pair of nodes:
@@ -178,9 +178,9 @@ The three scripts in the `examples/firstgenrepeater` folder build on top of each
 | Tool | Role |
 |------|------|
 | [`Register`](@ref) / [`RegisterNet`](@ref) | Quantum state storage and network topology |
-| [`EntanglerProt`](@ref QuantumSavory.ProtocolZoo.EntanglerProt) | Probabilistic nearest-neighbor Bell pair generation |
-| [`SwapperProt`](@ref QuantumSavory.ProtocolZoo.SwapperProt) | Entanglement swapping to extend links |
-| [`EntanglementTracker`](@ref QuantumSavory.ProtocolZoo.EntanglementTracker) | Classical messaging to keep metadata consistent after swaps |
-| [`Purify2to1`](@ref QuantumSavory.CircuitZoo.Purify2to1) | Two-to-one purification circuit |
+| [`EntanglerProt`](@ref) | Probabilistic nearest-neighbor Bell pair generation |
+| [`SwapperProt`](@ref) | Entanglement swapping to extend links |
+| [`EntanglementTracker`](@ref) | Classical messaging to keep metadata consistent after swaps |
+| [`Purify2to1`](@ref) | Two-to-one purification circuit |
 | [`T2Dephasing`](@ref) | Background dephasing noise on stored qubits |
-| [`BarrettKokBellPair`](@ref QuantumSavory.StatesZoo.BarrettKokBellPair) | Physically motivated noisy entangled state |
+| [`BarrettKokBellPair`](@ref) | Physically motivated noisy entangled state |
