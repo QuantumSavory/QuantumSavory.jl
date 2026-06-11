@@ -96,7 +96,7 @@ put!(qchannel(net, 1 => 2), net[1, 1])
 - `docs/src/classical_messaging.md`
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md`
-- `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
+- `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
 
 ## Common Mistakes
 
