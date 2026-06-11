@@ -112,6 +112,10 @@ to illustrate how simple it is to build a custom process on top of the ProtocolZ
 It searches for any two Bell pairs shared between the same pair of nodes and
 distills them into a single higher-fidelity pair:
 
+```@raw html
+<video src="../firstgenrepeater-03.purifier.mp4" autoplay loop muted></video>
+```
+
 ```julia
 @resumable function purifier(sim, network, nodea, nodeb,
                               purifier_wait_time, purifier_busy_time)
@@ -173,14 +177,3 @@ The three scripts in the `examples/firstgenrepeater` folder build on top of each
 2. **`2_swapper_example.jl`** — entanglement generation and swapping, as an interactive web app with Barrett-Kok source sliders;
 3. **`3_purifier_example.jl`** — all three layers running together.
 
-## Summary of QuantumSavory Tools
-
-| Tool | Role |
-|------|------|
-| [`Register`](@ref) / [`RegisterNet`](@ref) | Quantum state storage and network topology |
-| [`EntanglerProt`](@ref) | Probabilistic nearest-neighbor Bell pair generation |
-| [`SwapperProt`](@ref) | Entanglement swapping to extend links |
-| [`EntanglementTracker`](@ref) | Classical messaging to keep metadata consistent after swaps |
-| [`Purify2to1`](@ref) | Two-to-one purification circuit |
-| [`T2Dephasing`](@ref) | Background dephasing noise on stored qubits |
-| [`BarrettKokBellPair`](@ref) | Physically motivated noisy entangled state |
