@@ -4,9 +4,9 @@
 
 ## Current How-To Guides
 
-- [1st-gen Repeater - low level implementation](howto/firstgenrepeater/firstgenrepeater.md)
-- [1st-gen Repeater - Clifford formalism](howto/firstgenrepeater/firstgenrepeater-clifford.md)
-- [1st-gen Repeater - simpler implementation](howto/firstgenrepeater_protocolzoo/firstgenrepeater_protocolzoo.md)
+- [1st-gen Repeater](howto/firstgenrepeater/firstgenrepeater.md)
+- [1st-gen Repeater - low level implementation](howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md)
+- [1st-gen Repeater - Clifford formalism](howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md)
 - [Congestion on a Repeater Chain](howto/congestionchain/congestionchain.md)
 - [Cluster States in Atomic Memories](howto/colorcentermodularcluster/colorcentermodularcluster.md)
 - [Entanglement Switch](howto/simpleswitch/simpleswitch.md)
@@ -16,7 +16,7 @@
 #### A simulation of a quantum repeater:
 
 ```@raw html
-<video src="firstgenrepeater/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
+<video src="firstgenrepeater_lowlevel/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
 ```
 
 #### A simulation of the generation of a cluster state in color-center memories:

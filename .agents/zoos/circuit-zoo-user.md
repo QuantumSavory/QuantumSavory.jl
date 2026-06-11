@@ -63,7 +63,7 @@ ok = Purify3to1(:Z, :Y)(a[1], b[1], a[2], a[3], b[2], b[3])
 
 - `docs/src/API_CircuitZoo.md`
 - `docs/src/zoos_as_building_blocks.md`
-- `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
+- `docs/src/howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md`
 
 ## Common Mistakes
 
