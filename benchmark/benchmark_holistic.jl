@@ -1,18 +1,18 @@
 SUITE["holistic"] = BenchmarkGroup(["holistic"])
 
-const BENCHMARK_REPO_ROOT = pkgdir(QuantumSavory)
-const JULIA_CMD = Base.julia_cmd()
+benchmark_repo_root() = pkgdir(QuantumSavory)
+julia_cmd() = Base.julia_cmd()
 
 function run_cold_import()
     script = "using QuantumSavory; println(\"IMPORT_OK\")"
-    cmd = `$JULIA_CMD --project=$(BENCHMARK_REPO_ROOT) -e $script`
+    cmd = `$(julia_cmd()) --project=$(benchmark_repo_root()) -e $script`
     run(cmd)
     return nothing
 end
 
 function run_qtcp_tutorial_minirun()
     script = join([
-        "include(joinpath($(repr(BENCHMARK_REPO_ROOT)), \"examples\", \"qtcp_tutorial\", \"setup.jl\"))",
+        "include(joinpath($(repr(benchmark_repo_root())), \"examples\", \"qtcp_tutorial\", \"setup.jl\"))",
         "graph = grid([3])",
         "sim, net = simulation_setup(graph, 4; T2=100.0)",
         "flow = Flow(src=1, dst=3, npairs=1, uuid=1)",
@@ -31,7 +31,7 @@ function run_qtcp_tutorial_minirun()
         "@assert count_delivered!(mb_dst, QTCPPairEnd) == 1",
         "println(\"QTCP_OK\")",
     ], "; ")
-    cmd = `$JULIA_CMD --project=$(BENCHMARK_REPO_ROOT) -e $script`
+    cmd = `$(julia_cmd()) --project=$(benchmark_repo_root()) -e $script`
     run(cmd)
     return nothing
 end
