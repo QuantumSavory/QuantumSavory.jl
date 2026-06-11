@@ -75,6 +75,16 @@ EntanglementCounterpart(remote_node::Int, remote_slot::Int) = EntanglementCounte
 Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot) with id $(tag.pair_id)")
 Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot, tag.pair_id)
 
+function _tag_entanglement_counterpart!(slot, remote_node, remote_slot, pair_id, protocol)
+    existing = query(slot, EntanglementCounterpart, ❓, ❓, ❓)
+    if !isnothing(existing)
+        new_tag = Tag(EntanglementCounterpart, remote_node, remote_slot, pair_id)
+        @error "$(protocol): adding `$new_tag` to a slot that already has an " *
+               "`EntanglementCounterpart` tag" slot existing
+    end
+    tag!(slot, EntanglementCounterpart, remote_node, remote_slot, pair_id)
+end
+
 """
 $TYPEDEF
 
@@ -308,14 +318,14 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
             pair_id = fresh_entanglement_id()
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b pair_id
             if tagtype === EntanglementCounterpart
-                tag!(a, tagtype::DataType, prot.nodeB, b.idx, pair_id)
+                _tag_entanglement_counterpart!(a, prot.nodeB, b.idx, pair_id, "EntanglerProt")
             elseif !isnothing(tagtype)
                 tag!(a, tagtype::DataType, prot.nodeB, b.idx)
             end
             last_a = a.idx
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a pair_id
             if tagtype === EntanglementCounterpart
-                tag!(b, tagtype::DataType, prot.nodeA, a.idx, pair_id)
+                _tag_entanglement_counterpart!(b, prot.nodeA, a.idx, pair_id, "EntanglerProt")
             elseif !isnothing(tagtype)
                 tag!(b, tagtype::DataType, prot.nodeA, a.idx)
             end
@@ -421,9 +431,15 @@ end
                             end
                             if newremotenode != -1 #TODO: this is a bit hacky
                                 # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                                tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
+                                _tag_entanglement_counterpart!(
+                                    localslot, newremotenode, newremoteslotid,
+                                    new_pair_id, "EntanglementTracker"
+                                )
                             else
-                                tag!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
+                                _tag_entanglement_counterpart!(
+                                    localslot, pastremotenode, pastremoteslotid,
+                                    target_pair_id, "EntanglementTracker"
+                                )
                             end
                         else # EntanglementDelete
                             traceout!(localslot)
@@ -447,7 +463,10 @@ end
                             if correction==2
                                 apply!(localslot, updategate)
                             end
-                            tag!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
+                            _tag_entanglement_counterpart!(
+                                localslot, newremotenode, newremoteslotid,
+                                new_pair_id, "EntanglementTracker"
+                            )
                             unlock(localslot)
                             continue
                         end
