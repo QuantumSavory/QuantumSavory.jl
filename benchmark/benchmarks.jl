@@ -16,8 +16,12 @@ M = Pkg.Operations.Context().env.manifest
 V = M[findfirst(v -> v.name == "QuantumSavory", M)].version
 
 include("benchmark_register.jl")
+include("benchmark_backend_registers.jl")
 include("benchmark_tagquery.jl")
 include("benchmark_semaphore.jl")
 include("benchmark_onchange.jl")
 include("benchmark_querywait.jl")
+include("benchmark_locks_channels.jl")
+include("benchmark_imports.jl")
+include("benchmark_examples.jl")
 include("benchmark_quantumstates.jl")
