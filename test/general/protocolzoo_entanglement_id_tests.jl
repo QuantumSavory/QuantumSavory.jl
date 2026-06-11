@@ -171,8 +171,31 @@ struct CustomEntanglerTag end
         run(sim, 1.0)
 
         @test !isnothing(query(messagebuffer(net, 4), EntanglementDelete, forwarded_pair_id, 2, 1, 4, 3))
-        @test !isnothing(query(slot, EntanglementDelete, forwarded_pair_id, 1, 1, 4, 3))
+        @test !isnothing(query(slot, EntanglementDelete, local_chunk_id, 1, 1, 2, 1))
         @test isnothing(query(slot, EntanglementHistory, 2, 1, 4, 3, 1, local_chunk_id, swapped_chunk_id))
+    end
+
+    @testset "Update after history delete advances delete marker" begin
+        net = RegisterNet([Register(1), Register(1), Register(1), Register(3), Register(1)]; classical_delay=0.0)
+        sim = get_time_tracker(net)
+        slot = net[1][1]
+        local_chunk_id = 101
+        swapped_chunk_id = 202
+        other_pair_id = 404
+        forwarded_pair_id = combine_entanglement_ids(local_chunk_id, swapped_chunk_id)
+        updated_local_id = combine_entanglement_ids(local_chunk_id, other_pair_id)
+
+        tag!(slot, EntanglementHistory, 2, 1, 4, 3, 1, local_chunk_id, swapped_chunk_id)
+        put!(messagebuffer(net, 1), Tag(EntanglementDelete, local_chunk_id, 2, 1, 1, 1))
+
+        @process EntanglementTracker(sim, net, 1)()
+        run(sim, 1.0)
+        put!(messagebuffer(net, 1), Tag(EntanglementUpdateX, local_chunk_id, other_pair_id, 2, 1, 1, 5, 1, 1))
+        run(sim, 2.0)
+
+        @test !isnothing(query(messagebuffer(net, 4), EntanglementDelete, forwarded_pair_id, 2, 1, 4, 3))
+        @test isnothing(query(slot, EntanglementDelete, local_chunk_id, 1, 1, 2, 1))
+        @test !isnothing(query(slot, EntanglementDelete, updated_local_id, 1, 1, 5, 1))
     end
 
     @testset "Already advanced history forwards correction-only updates" begin
