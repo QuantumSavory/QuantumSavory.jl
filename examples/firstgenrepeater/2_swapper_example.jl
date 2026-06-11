@@ -201,11 +201,12 @@ landing = Bonito.App() do
     config_obs, state_obs = add_configuration_controls(fig[1, 1], fig[1, 3])
 
     running = Observable(false)
+    done = Observable(false)
     fig[1, 2] = button_area = GridLayout(tellwidth = false, tellheight = false)
-    button_area[1, 1] = button = Makie.Button(fig, label = @lift($running ? "Running..." : "Run simulation"))
+    button_area[1, 1] = button = Makie.Button(fig, label = @lift($running ? "Running..." : ($done ? "Done" : "Run simulation")))
 
     on(button.clicks) do _
-        if !running[]
+        if !running[] && !done[]
             running[] = true
         end
     end
@@ -237,6 +238,7 @@ landing = Bonito.App() do
                     @error "swapper simulation exited with error" err
                     running[] = false
                 end
+                done[] = true
             end
         end
     end
