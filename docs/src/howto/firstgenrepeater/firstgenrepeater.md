@@ -88,6 +88,9 @@ neighbours respectively.
 `chooseL = argmin` and `chooseH = argmax` instruct it to prefer swapping with the
 farthest available neighbour on each side, which maximises the reach of the resulting long-range link.
 
+The second example script (`2_swapper_example.jl`) runs this same setup as an interactive web app built with WGLMakie and Bonito, with sliders to adjust both the network parameters and the Barrett-Kok source parameters in real time.
+The video above was recorded from that live demo.
+
 ## Entanglement Tracker
 
 After a swap, the two remote endpoints of the newly created long-range link need to be
