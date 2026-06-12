@@ -5,6 +5,7 @@
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
 - Significant performance improvements to queries on registers or buffers that already contain many tags.
 - New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.
+- Added support for saving the logged data of an `EntanglementConsumer` instance. Supported file formats are CSV and HDF5.
 
 ## v0.6.0 - 2026-05-05
 
