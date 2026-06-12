@@ -365,13 +365,6 @@ end
 
 EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
-@inline function _combine_entanglement_id_fields(a, b)
-    if a isa EntanglementID && b isa EntanglementID
-        return combine_entanglement_ids(a, b)
-    end
-    throw(ArgumentError("Entanglement ID fields must be integers. Got $(typeof(a)) and $(typeof(b))."))
-end
-
 @resumable function (prot::EntanglementTracker)()
     nodereg = prot.net[prot.node]
     mb = messagebuffer(prot.net, prot.node)
@@ -402,19 +395,14 @@ end
                 workwasdone = true
                 localslot = nodereg[localslotid]
 
-                new_pair_id = isnothing(updategate) ? target_pair_id : _combine_entanglement_id_fields(target_pair_id, other_pair_id)
+                new_pair_id = isnothing(updategate) ? target_pair_id : combine_entanglement_ids(target_pair_id, other_pair_id)
 
                 # Check if the local slot is still present and believed to be entangled.
                 # The physical slot lock is only needed when we may mutate the live qubit.
                 # If no matching counterpart tag is present, fall through to the history
                 # metadata path without waiting behind unrelated reuse of an empty slot.
                 counterpart = query(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
-                already_updated_counterpart = if !isnothing(updategate) && newremotenode != -1
-                    query(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
-                else
-                    nothing
-                end
-                if !isnothing(counterpart) || !isnothing(already_updated_counterpart)
+                if !isnothing(counterpart)
                     @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart requesting lock at $(now(prot.sim))"
                     @yield lock(localslot)
                     @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart getting lock at $(now(prot.sim))"
@@ -447,30 +435,6 @@ end
                         unlock(localslot)
                         continue
                     end
-
-                    if !isnothing(updategate) && newremotenode != -1
-                        already_updated_counterpart = querydelete!(localslot, EntanglementCounterpart, newremotenode, newremoteslotid, new_pair_id)
-                        if !isnothing(already_updated_counterpart)
-                            if !isassigned(localslot)
-                                unlock(localslot)
-                                error("There was an error in the entanglement tracking protocol `EntanglementTracker`. We found an already-updated counterpart tag for an unassigned slot.")
-                            end
-                            # The same remote swap can generate both X and Z
-                            # correction messages for the same identity update. If
-                            # one correction already advanced the pair ID, the other
-                            # correction must still be applied without combining the
-                            # same `other_pair_id` twice.
-                            if correction==2
-                                apply!(localslot, updategate)
-                            end
-                            _tag_entanglement_counterpart!(
-                                localslot, newremotenode, newremoteslotid,
-                                new_pair_id, "EntanglementTracker"
-                            )
-                            unlock(localslot)
-                            continue
-                        end
-                    end
                     unlock(localslot)
                 end
 
@@ -485,13 +449,13 @@ end
                     _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx, local_chunk_id, swapped_chunk_id = history.tag
                     local_chunk_id = local_chunk_id::EntanglementID
                     swapped_chunk_id = swapped_chunk_id::EntanglementID
-                    forwarded_target_pair_id = _combine_entanglement_id_fields(local_chunk_id, swapped_chunk_id)
+                    forwarded_target_pair_id = combine_entanglement_ids(local_chunk_id, swapped_chunk_id)
                     if !isnothing(updategate) # EntanglementUpdate
                         # A history tag stores the two chunks joined by the
                         # local swap. An update from this side advances only
                         # this side's chunk; the end-to-end ID is recomputed
                         # when notifying the opposite side.
-                        updated_local_chunk_id = _combine_entanglement_id_fields(local_chunk_id, other_pair_id)
+                        updated_local_chunk_id = combine_entanglement_ids(local_chunk_id, other_pair_id)
                         tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx, updated_local_chunk_id, swapped_chunk_id)
                         @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                         msghist = Tag(updatetagsymbol, forwarded_target_pair_id, other_pair_id, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
@@ -506,33 +470,13 @@ end
                     continue
                 end
 
-                if !isnothing(updategate) && newremotenode != -1
-                    updated_local_chunk_id = _combine_entanglement_id_fields(target_pair_id, other_pair_id)
-                    history = querydelete!(localslot, EntanglementHistory,
-                                        newremotenode, newremoteslotid,
-                                        ❓, ❓,
-                                        ❓,
-                                        updated_local_chunk_id, ❓)
-                    if !isnothing(history)
-                        _, _, _, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx, local_chunk_id, swapped_chunk_id = history.tag
-                        local_chunk_id = local_chunk_id::EntanglementID
-                        swapped_chunk_id = swapped_chunk_id::EntanglementID
-                        current_pair_id = _combine_entanglement_id_fields(local_chunk_id, swapped_chunk_id)
-                        tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx, local_chunk_id, swapped_chunk_id)
-                        @debug "EntanglementTracker @$(prot.node): history already advanced for message=`$msg`; forwarding correction-only update to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
-                        msghist = Tag(updatetagsymbol, current_pair_id, NO_ENTANGLEMENT_ID, newremotenode, newremoteslotid, whoweswappedwith_slotidx, -1, -1, correction)
-                        put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
-                        continue
-                    end
-                end
-
                 # Finally, if there the history of a swap is not present in the log anymore,
                 # it must be because a delete message was received, and forwarded,
                 # and the entanglement history was deleted, and replaced with an entanglement delete tag.
                 if !isnothing(querydelete!(localslot, EntanglementDelete, target_pair_id, prot.node, localslot.idx, pastremotenode, pastremoteslotid)) #deletion from both sides of the swap, deletion msg when both qubits of a pair are deleted, or when EU arrives after ED at swap node with two simultaneous swaps and deletion on one side
                     if !(isnothing(updategate)) # EntanglementUpdate
                         # to handle a possible delete-swap-swap case, we need to update the EntanglementDelete tag
-                        tag!(localslot, EntanglementDelete, _combine_entanglement_id_fields(target_pair_id, other_pair_id), prot.node, localslot.idx, newremotenode, newremoteslotid)
+                        tag!(localslot, EntanglementDelete, combine_entanglement_ids(target_pair_id, other_pair_id), prot.node, localslot.idx, newremotenode, newremoteslotid)
                         @debug "EntanglementTracker @$(prot.node): message=`$msg` for deleted qubit handled and EntanglementDelete tag updated"
                     else # EntanglementDelete
                         # when the message is EntanglementDelete and the slot history also has an EntanglementDelete tag (both qubits were deleted), do nothing
