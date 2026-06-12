@@ -78,6 +78,6 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `docs/src/API_ProtocolZoo.md`
 - `docs/src/zoos_as_building_blocks.md`
 - `docs/src/discreteeventsimulator.md`
-- `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
+- `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
 - `docs/src/howto/repeatergrid/repeatergrid.md`
 - `docs/src/howto/simpleswitch/simpleswitch.md`
