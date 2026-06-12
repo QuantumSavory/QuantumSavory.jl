@@ -177,14 +177,16 @@ The piecemaker protocol generates multipartite entanglement by:
                 end
 
                 while true
-                    counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓)
+                    counterpart = querydelete!(net[1], EntanglementCounterpart, ❓, ❓, ❓)
                     if !isnothing(counterpart)
                         slot, _, _ = counterpart
+                        pair_id = counterpart.tag[4]
 
                         # fuse the qubit with the piecemaker qubit
                         @yield lock(net[1][n+1]) & lock(net[1][slot.idx])
                         res = fusion(net[1][n+1], net[1][slot.idx])
                         unlock(net[1][n+1]); unlock(net[1][slot.idx])
+                        querydelete!(net[1 + slot.idx][1], EntanglementCounterpart, 1, slot.idx, pair_id)
                         tag!(net[1 + slot.idx][1], Tag(:updateX, Int(res))) # communicate change to client node
                         counter += 1
                         @debug "Fused client $(slot.idx) with piecemaker qubit"

@@ -115,11 +115,11 @@ end
 function findqubitstopurify(network, nodea, nodeb)
     rega = network[nodea]
     regb = network[nodeb]
-    results_a = queryall(rega, EntanglementCounterpart, nodeb, ❓; locked=false, assigned=true)
+    results_a = queryall(rega, EntanglementCounterpart, nodeb, ❓, ❓; locked=false, assigned=true)
     if length(results_a) >= 2
         qa1, qa2 = results_a[end-1], results_a[end]
-        qb1 = query(regb, EntanglementCounterpart, nodea, qa1.slot.idx; locked=false, assigned=true)
-        qb2 = query(regb, EntanglementCounterpart, nodea, qa2.slot.idx; locked=false, assigned=true)
+        qb1 = query(regb, EntanglementCounterpart, nodea, qa1.slot.idx, qa1.tag[4]; locked=false, assigned=true)
+        qb2 = query(regb, EntanglementCounterpart, nodea, qa2.slot.idx, qa2.tag[4]; locked=false, assigned=true)
         @assert !isnothing(qb1) && !isnothing(qb2)
         return qa1, qa2, qb1, qb2
     else

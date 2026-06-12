@@ -27,7 +27,7 @@ noisy_pair = noisy_pair_func(F)
         incomplete = false
         # check & wait for all entanglements
         for i in 1:S
-            q = query(net[hub_idx], EntanglementCounterpart, i, ❓; locked=false, assigned=true)
+            q = query(net[hub_idx], EntanglementCounterpart, i, ❓, ❓; locked=false, assigned=true)
             if isnothing(q)
                 @yield timeout(sim, 0.1)
                 incomplete = true

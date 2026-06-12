@@ -238,13 +238,13 @@ QuantumSavory.get_time_tracker(deleter::_SwitchSynchronizedDelete) = get_time_tr
     while true
         @yield timeout(prot.sim, prot.ticktock)
         while true
-            res = query(prot.net[prot.switchnode], EntanglementCounterpart, in(prot.clientnodes), ❓)
+            res = query(prot.net[prot.switchnode], EntanglementCounterpart, in(prot.clientnodes), ❓, ❓)
             isnothing(res) && break
             switchslot = res.slot.idx
             clientnode = res.tag[2]
             clientslot = res.tag[3]
             @debug "Switch $(prot.switchnode).$(switchslot) deletes unused entanglement with client $(clientnode).$(clientslot)"
-            clientres = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot)
+            clientres = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot, res.tag[4])
             # We expect `clientres` to not be nothing because the client should not have destroyed entanglement 
             # that has been promised for use by the switch -- but just so we are a bit more resilient to misbehaving clients
             # let's guard against such an eventuality and double check that the client has not lost the qubit
@@ -300,7 +300,7 @@ and return the best match given the current backlog of requests.
 """
 function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     switch = prot.net[prot.switchnode]
-    successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓)
+    successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓, ❓)
     entangled_clients = [r.tag[2] for r in successes]
     if isempty(entangled_clients)
         @debug "Switch $(prot.switchnode) failed to entangle with any clients"
