@@ -15,8 +15,7 @@ using QuantumSavory.StatesZoo
 
 # Predefined useful circuits
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt
-
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementCounterpart
 ##
 # Create a handful of qubit registers in a chain
 ##
@@ -85,47 +84,44 @@ const YY = Y⊗Y
     purifier_wait_time,# The wait time in case there are no pairs available for purification
     purifier_busy_time # The duration of the purification circuit
     )
-    round = 0
+    nround = 0
     while true
-        pairs_of_bellpairs = findqubitstopurify(network,nodea,nodeb)
+        pairs_of_bellpairs = findqubitstopurify(network, nodea, nodeb)
         if isnothing(pairs_of_bellpairs)
             @yield timeout(sim, purifier_wait_time)
             continue
         end
-        pair1qa, pair1qb, pair2qa, pair2qb = pairs_of_bellpairs
-        locks = [network[nodea][[pair1qa,pair2qa]];
-                 network[nodeb][[pair1qb,pair2qb]]]
-        @yield mapreduce(request, &, locks)
+        # pairs_of_bellpairs = pairs_of_bellpairs::NTuple{4, QueryOnRegResult} # is this needed?
+        qa1, qa2, qb1, qb2 = pairs_of_bellpairs
+        @yield lock(qa1.slot) & lock(qa2.slot) & lock(qb1.slot) & lock(qb2.slot)
         @yield timeout(sim, purifier_busy_time)
-        rega = network[nodea]
-        regb = network[nodeb]
-        purifyerror =  (:X, :Z)[round%2+1]
+        purifyerror = (:X, :Z)[nround%2+1]
         purificationcircuit = Purify2to1(purifyerror)
-        success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb])
+        success = purificationcircuit(qa1.slot, qb1.slot, qa2.slot, qb2.slot)
         if !success
-            network[nodea,:enttrackers][pair1qa] = nothing
-            network[nodeb,:enttrackers][pair1qb] = nothing
-            @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa) and $(nodeb):$(pair1qb)&$(pair2qb)"
+            untag!(qa1.slot, qa1.id)
+            untag!(qb1.slot, qb1.id)
+            @info "$(round(now(sim), digits=2)): failed purification at $(nodea):$(qa1.slot.idx) & $(qa2.slot.idx) and $(nodeb):$(qb1.slot.idx) & $(qb2.slot.idx)"
         else
-            round += 1
-            @simlog sim "purification at $(nodea):$(pair1qa) $(nodeb):$(pair1qb) by sacrifice of $(nodea):$(pair1qa) $(nodeb):$(pair1qb)"
+            nround += 1
+            @info "$(round(now(sim), digits=2)): purification at $(nodea):$(qa1.slot.idx) $(nodeb):$(qb1.slot.idx) by sacrifice of $(nodea):$(qa2.slot.idx) $(nodeb):$(qb2.slot.idx)"
         end
-        network[nodea,:enttrackers][pair2qa] = nothing
-        network[nodeb,:enttrackers][pair2qb] = nothing
-        release.(locks)
+        untag!(qa2.slot, qa2.id)
+        untag!(qb2.slot, qb2.id)
+        unlock(qa1.slot); unlock(qa2.slot); unlock(qb1.slot); unlock(qb2.slot)
     end
 end
 
-function findqubitstopurify(network,nodea,nodeb)
-    enttrackers = network[nodea,:enttrackers]
+function findqubitstopurify(network, nodea, nodeb)
     rega = network[nodea]
     regb = network[nodeb]
-    enttrackers = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node==nodeb && !islocked(rega[i]) && !islocked(regb[n.slot])]
-    if length(enttrackers)>=2
-        aqubits = [n.i for n in enttrackers[end-1:end]]
-        bqubits = [n.slot for n in enttrackers[end-1:end]]
-        return aqubits[2], bqubits[2], aqubits[1], bqubits[1]
+    results_a = queryall(rega, EntanglementCounterpart, nodeb, ❓; locked=false, assigned=true)
+    if length(results_a) >= 2
+        qa1, qa2 = results_a[end-1], results_a[end]
+        qb1 = query(regb, EntanglementCounterpart, nodea, qa1.slot.idx; locked=false, assigned=true)
+        qb2 = query(regb, EntanglementCounterpart, nodea, qa2.slot.idx; locked=false, assigned=true)
+        @assert !isnothing(qb1) && !isnothing(qb2)
+        return qa1, qa2, qb1, qb2
     else
         return nothing
     end
