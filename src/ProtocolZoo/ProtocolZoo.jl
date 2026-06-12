@@ -481,7 +481,7 @@ end
                         # We have a delete message but the qubit was swapped so add a tag and forward to swapped node
                         @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
                         msghist = Tag(updatetagsymbol, forwarded_target_pair_id, pastremotenode, pastremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx)
-                        tag!(localslot, updatetagsymbol, forwarded_target_pair_id, prot.node, localslot.idx, whoweswappedwith_node, whoweswappedwith_slotidx)
+                        tag!(localslot, updatetagsymbol, target_pair_id, prot.node, localslot.idx, pastremotenode, pastremoteslotid)
                         put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
                     end
                     continue
