@@ -26,8 +26,8 @@ $FIELDS
     retention_time::Float64 = 5.0
     """if `true`, synchronization messages are sent after a deletion to the node containing the other entangled qubit"""
     announce::Bool = true
-    """maximum number of delete tags to retain per local slot, in FIFO order"""
-    max_delete_per_slot::Int = 3
+    """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
+    max_delete_per_slot::Union{Int,Nothing} = 3
 end
 
 function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
@@ -36,7 +36,8 @@ end
 
 CutoffProt(net::RegisterNet, node::Int; kwargs...) = CutoffProt(get_time_tracker(net), net, node; kwargs...)
 
-function _enforce_delete_cap!(slot::RegRef, node::Int, max_delete_per_slot::Int)
+function _enforce_delete_cap!(slot::RegRef, node::Int, max_delete_per_slot::Union{Int,Nothing})
+    isnothing(max_delete_per_slot) && return nothing
     max_delete_per_slot < 0 && throw(ArgumentError("max_delete_per_slot must be nonnegative"))
     delete_tags = queryall(slot, EntanglementDelete, ❓, node, slot.idx, ❓, ❓; filo=false)
     for delete_tag in Iterators.take(delete_tags, max(0, length(delete_tags) - max_delete_per_slot))

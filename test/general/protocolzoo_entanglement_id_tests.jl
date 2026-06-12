@@ -41,9 +41,17 @@ struct CustomEntanglerTag end
         @test [history.tag[7] for history in histories] == [3, 4, 5]
         @test SwapperProt(get_time_tracker(net), net, 1; max_history_per_slot=2).max_history_per_slot == 2
         @test SwapperProt(net, 1; max_history_per_slot=2).max_history_per_slot == 2
+        @test SwapperProt(net, 1; max_history_per_slot=nothing).max_history_per_slot === nothing
 
         _enforce_history_cap!(slot, 0)
         @test isempty(queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓))
+
+        for i in 1:5
+            tag!(slot, EntanglementHistory, i, i + 10, i + 20, i + 30, i + 40, i, i + 100)
+        end
+        _enforce_history_cap!(slot, nothing)
+        histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
+        @test [history.tag[7] for history in histories] == collect(1:5)
         @test_throws ArgumentError _enforce_history_cap!(slot, -1)
     end
 

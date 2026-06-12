@@ -49,6 +49,11 @@ using QuantumSavory.ProtocolZoo: EntanglementDelete, _enforce_delete_cap!
 
         @test CutoffProt(get_time_tracker(net), net, 1; max_delete_per_slot=2).max_delete_per_slot == 2
         @test CutoffProt(net, 1; max_delete_per_slot=2).max_delete_per_slot == 2
+        @test CutoffProt(net, 1; max_delete_per_slot=nothing).max_delete_per_slot === nothing
+
+        _enforce_delete_cap!(slot, 1, nothing)
+        delete_tags = queryall(slot, EntanglementDelete, ❓, 1, 1, ❓, ❓; filo=false)
+        @test [delete_tag.tag[2] for delete_tag in delete_tags] == [3, 4, 5]
         @test_throws ArgumentError _enforce_delete_cap!(slot, 1, -1)
     end
 

@@ -61,8 +61,8 @@ $TYPEDFIELDS
     rounds::Int = -1
     """what is the oldest a qubit should be to be picked for a swap (to avoid swapping with qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
     agelimit::Union{Float64,Nothing} = nothing
-    """maximum number of history tags to retain per slot, in FIFO order"""
-    max_history_per_slot::Int = 3
+    """maximum number of history tags to retain per slot in FIFO order (`nothing` for unbounded retention)"""
+    max_history_per_slot::Union{Int,Nothing} = 3
 end
 
 #TODO "convenience constructor for the missing things and finish this docstring"
@@ -72,7 +72,8 @@ end
 
 SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_tracker(net), net, node; kwargs...)
 
-function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Int)
+function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Union{Int,Nothing})
+    isnothing(max_history_per_slot) && return nothing
     max_history_per_slot < 0 && throw(ArgumentError("max_history_per_slot must be nonnegative"))
     histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
     for history in Iterators.take(histories, max(0, length(histories) - max_history_per_slot))
