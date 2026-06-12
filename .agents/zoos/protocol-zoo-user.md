@@ -33,6 +33,12 @@ Other specialized families:
 - `SimpleSwitchDiscreteProt` for switch-style setups.
 - `EndNodeController`, `NetworkNodeController`, and `LinkController` for the QTCP stack.
 
+Display notes:
+
+- `EndNodeController`, `NetworkNodeController`, and `LinkController` include protocol-specific `show` summaries.
+- In notebooks, use `repr(MIME"text/html"(), prot)` for richer HTML output.
+- With `QuantumSavoryMakie` loaded, `repr(MIME"image/png"(), prot)` provides a PNG summary for these QTCP controllers.
+
 ## Common Workflow
 
 ```julia

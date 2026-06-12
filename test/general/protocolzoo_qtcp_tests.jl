@@ -327,4 +327,59 @@ end
 
 ##
 
+@testset "qTCP protocol displays expose protocol-specific summaries" begin
+    net = RegisterNet([Register(6), Register(6), Register(6)]; name="qtcp-display-net", names=["n1", "n2", "n3"])
+    sim = get_time_tracker(net)
+
+    put!(net[1], Flow(src=1, dst=3, npairs=2, uuid=11))
+    put!(net[1], QDatagram(flow_uuid=11, flow_src=1, flow_dst=3, correction=0, seq_num=1, start_time=0.0))
+    put!(net[1], QuantumSavory.ProtocolZoo.QTCP.QDatagramSuccess(flow_uuid=11, seq_num=1, start_time=0.0))
+    put!(net[1], LinkLevelReplyAtSource(flow_uuid=11, seq_num=1, memory_slot=2))
+    put!(net[1], QTCPPairBegin(flow_uuid=11, flow_src=1, flow_dst=3, seq_num=1, memory_slot=2, start_time=0.0))
+
+    put!(net[2], QDatagram(flow_uuid=21, flow_src=1, flow_dst=3, correction=0, seq_num=4, start_time=1.0))
+    put!(net[2], LinkLevelReply(flow_uuid=21, seq_num=4, memory_slot=1))
+    put!(net[2], LinkLevelReplyAtHop(flow_uuid=21, seq_num=4, memory_slot=5))
+
+    put!(net[1], LinkLevelRequest(flow_uuid=33, seq_num=1, remote_node=2))
+    put!(net[1], LinkLevelReply(flow_uuid=33, seq_num=1, memory_slot=3))
+    put!(net[2], LinkLevelRequest(flow_uuid=33, seq_num=1, remote_node=1))
+    put!(net[2], LinkLevelReplyAtHop(flow_uuid=33, seq_num=1, memory_slot=4))
+
+    end_node = EndNodeController(sim, net, 1)
+    network_node = NetworkNodeController(sim, net, 2)
+    link = LinkController(sim, net, 1, 2)
+
+    end_html = repr(MIME"text/html"(), end_node)
+    network_html = repr(MIME"text/html"(), network_node)
+    link_html = repr(MIME"text/html"(), link)
+
+    @test occursin("EndNodeController", end_html)
+    @test occursin("node 1", end_html)
+    @test occursin("Flow", end_html)
+    @test occursin("<table>", end_html)
+    @test !occursin("quantumsavory_protocol_unknown", end_html)
+
+    @test occursin("NetworkNodeController", network_html)
+    @test occursin("node 2", network_html)
+    @test occursin("Degree", network_html)
+    @test occursin("Inferred next hops", network_html)
+    @test !occursin("quantumsavory_protocol_unknown", network_html)
+
+    @test occursin("LinkController", link_html)
+    @test occursin("endpoints 1 and 2", link_html)
+    @test occursin("LinkLevelRequest", link_html)
+    @test occursin("Slots", link_html)
+    @test !occursin("quantumsavory_protocol_unknown", link_html)
+
+    end_text = repr(end_node)
+    network_text = repr(network_node)
+    link_text = repr(link)
+    @test occursin("EndNodeController", end_text)
+    @test occursin("NetworkNodeController", network_text)
+    @test occursin("LinkController", link_text)
+end
+
+##
+
 end
