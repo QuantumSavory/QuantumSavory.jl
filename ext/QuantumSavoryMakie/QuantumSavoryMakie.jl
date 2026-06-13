@@ -7,7 +7,7 @@ using ConcurrentSim: ConcurrentSim
 using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
-    scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
+    scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!, barplot!,
     xlims!, ylims!, zlims!,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
