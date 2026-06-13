@@ -59,6 +59,35 @@ Those displays are not part of the protocol logic itself, but they are useful
 for debugging configuration and inspecting the expected behavior of a protocol
 before embedding it into a larger simulation.
 
+### qTCP controller displays
+
+The qTCP controllers render protocol-specific summaries, framed as the quantum
+analog of the TCP/IP control plane: `EndNodeController` shows the endpoint's open
+flows and datagram queue, `NetworkNodeController` shows the router's neighbors and
+inferred next-hop table, and `LinkController` shows the link's two endpoint
+registers and pending link-level messages. Each works in text, HTML (notebooks
+and documentation), and, when a Makie backend is loaded, PNG.
+
+```@example qtcpshow
+using QuantumSavory
+using QuantumSavory.ProtocolZoo
+
+net = RegisterNet([Register(5) for _ in 1:3]; names=["n1", "n2", "n3"])
+sim = get_time_tracker(net)
+
+end_node     = EndNodeController(sim, net, 1)
+network_node = NetworkNodeController(sim, net, 2)
+link         = LinkController(sim, net, 1, 2)
+
+show(stdout, end_node) # concise text summary
+```
+
+The HTML summaries (`repr(MIME"text/html"(), end_node)`,
+`repr(MIME"text/html"(), network_node)`, `repr(MIME"text/html"(), link)`) are
+image-free and render as tables in notebooks and the documentation. The message
+counts come from a read-only snapshot of each node's message buffer, so the
+displays are safe to call during a live simulation.
+
 ## Typical Contents
 
 The current `ProtocolZoo` includes:

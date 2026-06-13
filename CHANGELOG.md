@@ -2,6 +2,7 @@
 
 ## v0.7.0 - 2026-06-12
 
+- Protocol-specific text, HTML, and (through the `QuantumSavoryMakie` extension) PNG `show` summaries for the qTCP controllers `EndNodeController`, `NetworkNodeController`, and `LinkController`, framed as the quantum analog of the TCP/IP control plane (endpoint flow table, router next-hop table, link endpoint table), summarizing the qTCP messages visible in the relevant message buffers.
 - **(breaking)** **(fix)** The `ProtocolZoo` entanglement-tracking tags and messages now carry entanglement pair IDs, fixing a class of bookkeeping bugs (#303) where stale update messages could be applied to the wrong Bell pair after a physical slot was reused. See the porting guide below.
 - **(fix)** `EntanglementTracker` no longer waits on the physical slot lock when an incoming update only needs `EntanglementHistory` metadata of an empty slot, fixing a race (#448) where valid in-flight updates were dropped as stale because history forwarding was serialized behind slot reuse by an `EntanglerProt`.
 - `SwapperProt` gained a `max_history_per_slot` option and `CutoffProt` gained a `max_delete_per_slot` option, enforcing FIFO caps on accumulated `EntanglementHistory` and `EntanglementDelete` metadata. `CutoffProt` no longer deletes old `EntanglementHistory` tags itself; history cleanup is now owned by the swapper that creates those tags.
