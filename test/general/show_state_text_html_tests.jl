@@ -36,7 +36,7 @@ using QuantumSavory
     @test !occursin("does not support rich visualization", txt)
 
     reg = Register(3)
-    initialize!((reg[1], reg[2], reg[3]), X1⊗Z1⊗X1)
+    initialize!((reg[1], reg[2], reg[3]), Z1⊗Z1⊗Z1 + Z2⊗Z2⊗Z2)
     state = QuantumSavory.stateof(reg[1])
     show(out, state)
     txt = String(take!(out))
@@ -82,7 +82,7 @@ end
     @test !occursin("does not support rich visualization", html)
 
     reg = Register(3)
-    initialize!((reg[1], reg[2], reg[3]), X1⊗Z1⊗X1)
+    initialize!((reg[1], reg[2], reg[3]), Z1⊗Z1⊗Z1 + Z2⊗Z2⊗Z2)
     state = QuantumSavory.stateof(reg[1])
     show(out, MIME"text/html"(), state)
     html = String(take!(out))
