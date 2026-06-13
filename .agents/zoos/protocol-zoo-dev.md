@@ -74,8 +74,11 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `test/general/protocolzoo_switch_tests.jl`
 - `test/general/protocolzoo_throws_tests.jl`
 - `test/general/protocolzoo_qtcp_tests.jl`
+- `test/general/protocolzoo_qtcp_show_tests.jl`
 - `test/general/protocolzoo_shorthand_constructors_tests.jl`
 - `test/general/protocolzoo_virtual_edge_tests.jl`
+
+qTCP controller `show` methods (`src/ProtocolZoo/show.jl`, PNG in `ext/QuantumSavoryMakie/show_protocol.jl`) summarize the qTCP messages visible in a node's message buffer via a read-only `peektags` snapshot (helper `_qtcp_message_counts`), framed as the quantum analog of the TCP/IP control plane. Keep them read-only and side-effect-free so they are safe during a live simulation; `queryall` is unsupported on `MessageBuffer`, so use `peektags`.
 
 ## Public Docs And Paper To Cross-Check
 
