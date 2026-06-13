@@ -136,6 +136,7 @@ include("messagebuffer.jl")
 include("networks.jl")
 include("states_registers_networks_getset.jl")
 include("states_registers_networks_shows.jl")
+include("state_show_helpers.jl")
 include("show.jl")
 
 

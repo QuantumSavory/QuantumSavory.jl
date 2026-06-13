@@ -1,5 +1,9 @@
 # News
 
+## [Unreleased]
+
+- State registers now have rich text, HTML, and Makie visualization support instead of showing a generic unsupported message.
+
 ## v0.7.0 - 2026-06-12
 
 - **(breaking)** **(fix)** The `ProtocolZoo` entanglement-tracking tags and messages now carry entanglement pair IDs, fixing a class of bookkeeping bugs (#303) where stale update messages could be applied to the wrong Bell pair after a physical slot was reused. See the porting guide below.

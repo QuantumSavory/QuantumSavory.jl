@@ -14,6 +14,42 @@ The plotting functions generally return a tuple of (subfigure, axis, plot, obser
 The observable can be used to issue a `notify` call that updates the plot with the current state of the network without replotting from scratch.
 This is particularly useful for live simulation visualizations.
 
+## State display
+
+`StateRef` objects support rich display via `show` for `text/plain`, `text/html`,
+and `image/png` (the last requires a Makie backend such as `CairoMakie`).
+
+The amount of information shown depends on the number of qubits:
+
+| Qubits | Text / HTML | PNG (Makie) |
+|--------|-------------|-------------|
+| 1 | Bloch vector, Pauli expectations, density matrix, purity, entropy | Bloch sphere with state arrow |
+| 2 | 4×4 density matrix, reduced single-qubit summaries, purity, entropy | Density matrix bar charts in computational and Bell bases |
+| 3–5 | Top amplitudes or probabilities, purity, entropy | Amplitude histogram with phase coloring |
+| >5 | Compact summary: qubit count, dimension, purity, top-k components | Text-only summary (avoids exponential memory) |
+| Clifford | Stabilizer generators | Stabilizer tableau plot |
+
+```@example stateshow
+using QuantumSavory
+
+reg = Register(2)
+initialize!((reg[1], reg[2]), X1⊗Z1 + Z1⊗X1)
+state = QuantumSavory.stateof(reg[1])
+show(stdout, state)
+```
+
+```@example stateshow
+repr(MIME"text/html"(), state)
+```
+
+For PNG display, load a Makie backend first:
+
+```julia
+using CairoMakie
+repr(MIME"image/png"(), state)  # returns PNG bytes
+```
+
+
 ## The quantum registers in the network
 
 The [`registernetplot_axis`](@ref) function can be used to draw a given set of registers, together with the quantum states they contain. It also provides interactive tools for inspecting the content of the registers (by hovering or clicking on the corresponding register slot). Here we give an example where we define a network and then plot it:

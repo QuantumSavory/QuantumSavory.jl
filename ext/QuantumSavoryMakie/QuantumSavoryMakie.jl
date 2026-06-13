@@ -19,7 +19,8 @@ using QuantumSavory: compactstr
 using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
 
 using QuantumClifford: QuantumClifford
-using QuantumOpticsBase: QuantumOpticsBase, dm
+using QuantumOpticsBase: QuantumOpticsBase, dm, Ket, Operator
+import Printf: @sprintf
 
 
 ##
