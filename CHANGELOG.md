@@ -1,6 +1,6 @@
 # News
 
-## v0.7.0 - unreleased
+## v0.7.0 - 2026-06-12
 
 - **(breaking)** **(fix)** The `ProtocolZoo` entanglement-tracking tags and messages now carry entanglement pair IDs, fixing a class of bookkeeping bugs (#303) where stale update messages could be applied to the wrong Bell pair after a physical slot was reused. See the porting guide below.
 - **(fix)** `EntanglementTracker` no longer waits on the physical slot lock when an incoming update only needs `EntanglementHistory` metadata of an empty slot, fixing a race (#448) where valid in-flight updates were dropped as stale because history forwarding was serialized behind slot reuse by an `EntanglerProt`.
