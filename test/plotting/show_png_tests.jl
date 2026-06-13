@@ -42,4 +42,17 @@ show(out, MIME"image/png"(), QuantumSavory.stateof(reg1[1]))
 prot = EntanglerProt(get_time_tracker(net), net, 1, 2)
 show(out, MIME"image/png"(), prot)
 
+# 1-qubit QO state — Bloch sphere path
+reg_1q = Register(1)
+initialize!(reg_1q[1], X1)
+show(out, MIME"image/png"(), QuantumSavory.stateof(reg_1q[1]))
+@test position(out) > 0
+
+# 3-qubit pure state — bar chart path
+reg_3q = Register(3)
+initialize!((reg_3q[1], reg_3q[2], reg_3q[3]), X1⊗Z1⊗X1)
+take!(out)
+show(out, MIME"image/png"(), QuantumSavory.stateof(reg_3q[1]))
+@test position(out) > 0
+
 end
