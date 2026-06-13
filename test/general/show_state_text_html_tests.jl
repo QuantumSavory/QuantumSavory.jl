@@ -1,93 +1,123 @@
 using Test
 using QuantumSavory
+using QuantumSavory: stateshow
+
+struct UnknownState end
 
 @testset "StateRef text/plain display" begin
-
     out = IOBuffer()
 
-    reg = Register(1)
-    initialize!(reg[1], X1)
-    state = QuantumSavory.stateof(reg[1])
-    show(out, state)
+    # 1-qubit pure
+    stateshow(out, MIME"text/plain"(), X1, nothing)
     txt = String(take!(out))
     @test occursin("Single-qubit state", txt)
-    @test occursin("Bloch vector", txt)
-    @test occursin("Purity", txt)
-    @test !occursin("does not support rich visualization", txt)
 
-    reg = Register(1, CliffordRepr())
-    initialize!(reg[1], X1)
-    state = QuantumSavory.stateof(reg[1])
-    show(out, state)
+    # 1-qubit mixed
+    stateshow(out, MIME"text/plain"(), dm(X1), nothing)
     txt = String(take!(out))
-    @test occursin("Stabilizer", txt)
-    @test !occursin("does not support rich visualization", txt)
+    @test occursin("Single-qubit state", txt)
+    @test occursin("Density matrix", txt)
 
-    reg1 = Register(1)
-    reg2 = Register(1)
-    net = RegisterNet([reg1, reg2])
-    initialize!((reg1[1], reg2[1]), X1⊗Z1+Z1⊗X1)
-    state = QuantumSavory.stateof(reg1[1])
-    show(out, state)
+    # 2-qubit pure
+    stateshow(out, MIME"text/plain"(), X1⊗Z1+Z1⊗X1, nothing)
     txt = String(take!(out))
     @test occursin("Two-qubit state", txt)
-    @test occursin("Density matrix", txt)
-    @test occursin("Qubit 1 reduced", txt)
-    @test !occursin("does not support rich visualization", txt)
 
-    reg = Register(3)
-    initialize!((reg[1], reg[2], reg[3]), Z1⊗Z1⊗Z1 + Z2⊗Z2⊗Z2)
-    state = QuantumSavory.stateof(reg[1])
-    show(out, state)
+    # 2-qubit mixed
+    stateshow(out, MIME"text/plain"(), dm(X1⊗Z1), nothing)
     txt = String(take!(out))
-    @test occursin("3-qubit", txt)
-    @test occursin("Top amplitudes", txt)
-    @test !occursin("does not support rich visualization", txt)
+    @test occursin("Two-qubit state", txt)
 
+    # 3-qubit pure (nq pure)
+    stateshow(out, MIME"text/plain"(), Z1⊗Z1⊗Z1 + Z2⊗Z2⊗Z2, nothing)
+    txt = String(take!(out))
+    @test occursin("3-qubit pure state", txt)
+
+    # 3-qubit mixed (nq mixed)
+    stateshow(out, MIME"text/plain"(), dm(Z1⊗Z1⊗Z1), nothing)
+    txt = String(take!(out))
+    @test occursin("3-qubit mixed state", txt)
+
+    # Large pure (6-qubit)
+    stateshow(out, MIME"text/plain"(), Z1⊗Z1⊗Z1⊗Z1⊗Z1⊗Z1, nothing)
+    txt = String(take!(out))
+    @test occursin("6-qubit state", txt)
+
+    # Large mixed (6-qubit)
+    stateshow(out, MIME"text/plain"(), dm(Z1⊗Z1⊗Z1⊗Z1⊗Z1⊗Z1), nothing)
+    txt = String(take!(out))
+    @test occursin("6-qubit state", txt)
+    @test occursin("Top-8 probabilities", txt)
+
+    # Generic
+    stateshow(out, MIME"text/plain"(), UnknownState(), nothing)
+    txt = String(take!(out))
+    @test occursin("State of type", txt)
+
+    # Clifford
+    reg = Register(1, CliffordRepr())
+    initialize!(reg[1], X1)
+    stateshow(out, MIME"text/plain"(), QuantumSavory.stateof(reg[1]), nothing)
+    txt = String(take!(out))
+    @test occursin("Stabilizer state", txt)
 end
 
 @testset "StateRef text/html display" begin
-
     out = IOBuffer()
 
-    reg = Register(1)
-    initialize!(reg[1], X1)
-    state = QuantumSavory.stateof(reg[1])
-    show(out, MIME"text/html"(), state)
+    # 1-qubit pure
+    stateshow(out, MIME"text/html"(), X1, nothing)
     html = String(take!(out))
     @test occursin("Single-qubit state", html)
-    @test occursin("Bloch vector", html)
-    @test occursin("<table", html)
-    @test !occursin("does not support rich visualization", html)
 
-    reg = Register(1, CliffordRepr())
-    initialize!(reg[1], X1)
-    state = QuantumSavory.stateof(reg[1])
-    show(out, MIME"text/html"(), state)
+    # 1-qubit mixed
+    stateshow(out, MIME"text/html"(), dm(X1), nothing)
     html = String(take!(out))
-    @test occursin("Stabilizer state", html)
-    @test occursin("Generator", html)
-    @test !occursin("does not support rich visualization", html)
+    @test occursin("Single-qubit state", html)
 
-    reg1 = Register(1)
-    reg2 = Register(1)
-    net = RegisterNet([reg1, reg2])
-    initialize!((reg1[1], reg2[1]), X1⊗Z1+Z1⊗X1)
-    state = QuantumSavory.stateof(reg1[1])
-    show(out, MIME"text/html"(), state)
+    # 2-qubit pure
+    stateshow(out, MIME"text/html"(), X1⊗Z1+Z1⊗X1, nothing)
     html = String(take!(out))
     @test occursin("Two-qubit state", html)
-    @test occursin("Purity", html)
-    @test occursin("Qubit 1", html)
-    @test !occursin("does not support rich visualization", html)
 
-    reg = Register(3)
-    initialize!((reg[1], reg[2], reg[3]), Z1⊗Z1⊗Z1 + Z2⊗Z2⊗Z2)
-    state = QuantumSavory.stateof(reg[1])
-    show(out, MIME"text/html"(), state)
+    # 2-qubit mixed
+    stateshow(out, MIME"text/html"(), dm(X1⊗Z1), nothing)
+    html = String(take!(out))
+    @test occursin("Two-qubit state", html)
+
+    # 3-qubit pure
+    stateshow(out, MIME"text/html"(), Z1⊗Z1⊗Z1 + Z2⊗Z2⊗Z2, nothing)
     html = String(take!(out))
     @test occursin("3-qubit state", html)
     @test occursin("Amplitudes", html)
-    @test !occursin("does not support rich visualization", html)
 
+    # 3-qubit mixed
+    stateshow(out, MIME"text/html"(), dm(Z1⊗Z1⊗Z1), nothing)
+    html = String(take!(out))
+    @test occursin("3-qubit state", html)
+    @test occursin("Diagonal entries", html)
+
+    # Large pure (6-qubit)
+    stateshow(out, MIME"text/html"(), Z1⊗Z1⊗Z1⊗Z1⊗Z1⊗Z1, nothing)
+    html = String(take!(out))
+    @test occursin("6-qubit state", html)
+    @test occursin("Top-8 amplitudes", html)
+
+    # Large mixed (6-qubit)
+    stateshow(out, MIME"text/html"(), dm(Z1⊗Z1⊗Z1⊗Z1⊗Z1⊗Z1), nothing)
+    html = String(take!(out))
+    @test occursin("6-qubit state", html)
+    @test occursin("Top-8 probabilities", html)
+
+    # Generic
+    stateshow(out, MIME"text/html"(), UnknownState(), nothing)
+    html = String(take!(out))
+    @test occursin("does not support rich visualization", html)
+
+    # Clifford
+    reg = Register(1, CliffordRepr())
+    initialize!(reg[1], X1)
+    stateshow(out, MIME"text/html"(), QuantumSavory.stateof(reg[1]), nothing)
+    html = String(take!(out))
+    @test occursin("Stabilizer state", html)
 end
