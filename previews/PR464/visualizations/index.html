@@ -27,7 +27,7 @@ fig</code></pre><img src="7f2b9d37-002.png" alt="Example block output"/><h2 id="
 initialize!(one_qubit[1], X₁)
 show(stdout, QuantumSavory.stateof(one_qubit[1]))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">State containing 1 subsystems in QuantumOpticsBase implementation
   In registers:
-    15652803596650925890.1
+    6502055575480308309.1
   State summary:
     backend: QuantumOpticsBase Ket
     subsystems: 1; basis dimensions: 2
@@ -41,8 +41,8 @@ right = Register([Qubit()], [QuantumOpticsRepr()])
 initialize!((left[1], right[1]), X₁⊗Z₁ + Z₁⊗X₁)
 show(stdout, QuantumSavory.stateof(left[1]))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">State containing 2 subsystems in QuantumOpticsBase implementation
   In registers:
-    5935559055636049017.1
-    1056975732308064465.1
+    11454688071050739045.1
+    13495924891859777951.1
   State summary:
     backend: QuantumOpticsBase Ket
     subsystems: 2; basis dimensions: 2 x 2
@@ -79,9 +79,9 @@ resourceplot_axis(fig[1,1],net,
     [:bool,:resource],          # list of vertex metadata
     registercoords=plt[:registercoords] # optionally, reuse register coordinates
 )
-fig</code></pre><img src="689cd010.png" alt="Example block output"/><h2 id="Updating-the-plots"><a class="docs-heading-anchor" href="#Updating-the-plots">Updating the plots</a><a id="Updating-the-plots-1"></a><a class="docs-heading-anchor-permalink" href="#Updating-the-plots" title="Permalink"></a></h2><p>You can call <code>notify</code> on the returned plot object to replot the state of the network after a change.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+fig</code></pre><img src="4da82716.png" alt="Example block output"/><h2 id="Updating-the-plots"><a class="docs-heading-anchor" href="#Updating-the-plots">Updating the plots</a><a id="Updating-the-plots-1"></a><a class="docs-heading-anchor-permalink" href="#Updating-the-plots" title="Permalink"></a></h2><p>You can call <code>notify</code> on the returned plot object to replot the state of the network after a change.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
 mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../API_Symbolics/">« QuantumSymbolics API</a><a class="docs-footer-nextpage" href="../bibliography/">Bibliography »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 14 June 2026 07:35">Sunday 14 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../API_Symbolics/">« QuantumSymbolics API</a><a class="docs-footer-nextpage" href="../bibliography/">Bibliography »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 14 June 2026 13:14">Sunday 14 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
