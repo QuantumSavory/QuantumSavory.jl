@@ -30,21 +30,21 @@ function stateshow(io, ::MIME"text/plain", state::Gabs.GaussianState, stateref::
 end
 
 function _mode_mean(state::Gabs.GaussianState{<:Gabs.QuadPairBasis,M,V}, n::Int64, N::Int64) where {M,V}
-    return @view state.mean[(2n-1):2n]
+    return round.(state.mean[(2n-1):2n]; digits=5)
 end
 
 function _mode_mean(state::Gabs.GaussianState{<:Gabs.QuadBlockBasis,M,V}, n::Int64, N::Int64) where {M,V}
-    return @view state.mean[[n, N+n]]
+    return round.(state.mean[[n, N+n]]; digits=5)
 end
 
 function _mode_covariance(state::Gabs.GaussianState{<:Gabs.QuadPairBasis,M,V}, n::Int64, N::Int64) where {M,V}
-    return @view state.covar[(2n-1):2n, (2n-1):2n]
+    return round.(state.covar[(2n-1):2n, (2n-1):2n]; digits=5)
 end
 
 function _mode_covariance(state::Gabs.GaussianState{<:Gabs.QuadBlockBasis,M,V}, n::Int64, N::Int64) where {M,V}
-    return @view state.covar[[n, N+n], [n, N+n]]
+    return round.(state.covar[[n, N+n], [n, N+n]]; digits=5)
 end
 
 function _mode_purity(covar::AbstractMatrix{Float64})
-    return 1 / (2 * sqrt(det(covar)))
+    return round(1 / (2 * sqrt(det(covar))); digits=5)
 end
