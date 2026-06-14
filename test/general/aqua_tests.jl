@@ -11,6 +11,7 @@ using Gabs
 Aqua.test_all(QuantumSavory,
     ambiguities=(QuantumSavory; recursive=false),
     piracies=(; treat_as_own=[QuantumSavory.Symbolic, QuantumOpticsBase.Ket, QuantumOpticsBase.Operator, Gabs.GaussianChannel, Gabs.GaussianState, Gabs.GaussianUnitary]),
+    persistent_tasks=(; tmax=30),
     stale_deps=(; ignore=[:NetworkLayout]) # needed by package extension but not a condition of its loading
 )
 
