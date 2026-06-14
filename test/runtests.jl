@@ -9,6 +9,7 @@ const TEST_PROJECTS = Dict(
 const JET_TEST_PATH = joinpath(@__DIR__, "jet_tests.jl")
 
 args = isempty(ARGS) ? ["general"] : ARGS
+parsed_args = parse_args(args)
 jet_only = length(args) == 1 && startswith(only(args), "jet")
 if isempty(ARGS)
     @info "No test arguments provided; defaulting to `general` tests."
@@ -41,8 +42,18 @@ filter!(testsuite) do (name, _)
     endswith(name, "_tests")
 end
 
+const AQUA_TEST_NAME = "general/aqua_tests"
+aqua_test = get(testsuite, AQUA_TEST_NAME, nothing)
+run_aqua_serially = false
+
 if !isempty(VERSION.prerelease) || get(ENV, "QUANTUMSAVORY_DOWNGRADE_TEST", "") == "true"
-    delete!(testsuite, "general/aqua_tests")
+    delete!(testsuite, AQUA_TEST_NAME)
+elseif parsed_args.list === nothing && haskey(testsuite, AQUA_TEST_NAME)
+    positions = parsed_args.positionals
+    if isempty(positions) || any(arg -> startswith(AQUA_TEST_NAME, arg), positions)
+        run_aqua_serially = true
+        delete!(testsuite, AQUA_TEST_NAME)
+    end
 end
 
 function test_worker(name)
@@ -58,5 +69,18 @@ if jet_only
     include(JET_TEST_PATH)
 else
     using QuantumSavory
-    runtests(QuantumSavory, args; testsuite, test_worker)
+    if parsed_args.list !== nothing
+        runtests(QuantumSavory, parsed_args; testsuite, test_worker)
+    else
+        parallel_testsuite = copy(testsuite)
+        filter_tests!(parallel_testsuite, parsed_args)
+        if !isempty(parallel_testsuite)
+            runtests(QuantumSavory, parsed_args; testsuite, test_worker)
+        end
+        if run_aqua_serially
+            @info "Running Aqua tests serially after the parallel test set."
+            aqua_args = parse_args(["--jobs=1", AQUA_TEST_NAME])
+            runtests(QuantumSavory, aqua_args; testsuite=Dict(AQUA_TEST_NAME => aqua_test), test_worker)
+        end
+    end
 end
