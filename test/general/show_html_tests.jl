@@ -40,7 +40,12 @@ qo_op_html = sprint(QuantumSavory.stateshow, MIME"text/html"(), qo_op, qoref)
 @test occursin("quantumsavory_density_matrix", qo_op_html)
 
 fallback_html = sprint(QuantumSavory.stateshow, MIME"text/html"(), "unsupported", qoref)
+fallback_text = sprint(QuantumSavory.stateshowtext, "unsupported", qoref)
 @test occursin("does not support rich visualization in HTML", fallback_html)
+@test occursin("type: String", fallback_text)
+@test QuantumSavory._basis_label(3, [2, 3]) == "|0,2>"
+@test QuantumSavory._format_complex(1 - 2im) == "1 - 2im"
+@test QuantumSavory._format_complex(2im) == "2im"
 
 reg1 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
 reg2 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
@@ -51,7 +56,10 @@ initialize!((reg1[1],reg2[1]), X1⊗Z1+Z1⊗X1)
 show(out, MIME"text/html"(), reg1[1])
 show(out, MIME"text/html"(), reg2[2])
 show(out, MIME"text/html"(), QuantumSavory.stateof(reg1[1]))
+twoqubit_text = sprint(show, QuantumSavory.stateof(reg1[1]))
 twoqubit_html = sprint(show, MIME"text/html"(), QuantumSavory.stateof(reg1[1]))
+@test occursin("reduced qubit 1", twoqubit_text)
+@test occursin("Pauli correlations", twoqubit_text)
 @test occursin("Pauli correlations", twoqubit_html)
 @test occursin("density_matrix", twoqubit_html)
 @test !occursin("does not support rich visualization in HTML", twoqubit_html)
