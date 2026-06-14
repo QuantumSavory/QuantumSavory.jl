@@ -14,7 +14,6 @@ import ConcurrentSim: Process
 import ResumableFunctions
 using ResumableFunctions: @resumable
 import SumTypes
-using PrettyTables: PrettyTables, pretty_table
 
 export
     # protocols
