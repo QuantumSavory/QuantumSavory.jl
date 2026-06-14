@@ -33,6 +33,16 @@ qo_png = show_png_bytes(QuantumSavory.stateof(qoreg[1]))
 @test length(qo_png) > 1000
 @test qo_png[1:8] == png_signature
 
+qoref = QuantumSavory.stateof(qoreg[1])
+zero_operator = 0 * QuantumSavory.dm(QuantumSavory.quantumstate(qoref))
+makie_ext = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
+@test !isnothing(makie_ext)
+zero_operator_fig = Figure(size=(360, 240))
+makie_ext.stateshowimage(zero_operator_fig[1,1], zero_operator, qoref)
+zero_operator_png = show_png_bytes(zero_operator_fig)
+@test length(zero_operator_png) > 1000
+@test zero_operator_png[1:8] == png_signature
+
 reg1 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
 reg2 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
 net = RegisterNet([reg1, reg2])

@@ -22,13 +22,25 @@ clifford_html = sprint(show, MIME"text/html"(), QuantumSavory.stateof(reg[1]))
 
 qoreg = Register([Qubit()], [QuantumOpticsRepr()])
 initialize!(qoreg[1], X1)
-qo_text = sprint(show, QuantumSavory.stateof(qoreg[1]))
-qo_html = sprint(show, MIME"text/html"(), QuantumSavory.stateof(qoreg[1]))
+qoref = QuantumSavory.stateof(qoreg[1])
+qo_state = QuantumSavory.quantumstate(qoref)
+qo_text = sprint(show, qoref)
+qo_html = sprint(show, MIME"text/html"(), qoref)
 @test occursin("QuantumOpticsBase", qo_text)
 @test occursin("Bloch vector / Pauli expectations", qo_text)
 @test occursin("QuantumOpticsBase state summary", qo_html)
 @test occursin("Pauli", qo_html)
 @test !occursin("does not support rich visualization in HTML", qo_html)
+
+qo_op = QuantumSavory.dm(qo_state)
+qo_op_text = sprint(QuantumSavory.stateshowtext, qo_op, qoref)
+qo_op_html = sprint(QuantumSavory.stateshow, MIME"text/html"(), qo_op, qoref)
+@test occursin("backend: QuantumOpticsBase Operator", qo_op_text)
+@test occursin("QuantumOpticsBase state summary", qo_op_html)
+@test occursin("quantumsavory_density_matrix", qo_op_html)
+
+fallback_html = sprint(QuantumSavory.stateshow, MIME"text/html"(), "unsupported", qoref)
+@test occursin("does not support rich visualization in HTML", fallback_html)
 
 reg1 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
 reg2 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
@@ -43,6 +55,18 @@ twoqubit_html = sprint(show, MIME"text/html"(), QuantumSavory.stateof(reg1[1]))
 @test occursin("Pauli correlations", twoqubit_html)
 @test occursin("density_matrix", twoqubit_html)
 @test !occursin("does not support rich visualization in HTML", twoqubit_html)
+
+big = Register([Qubit() for _ in 1:6], [QuantumOpticsRepr() for _ in 1:6])
+initialize!(
+    Tuple(big[i] for i in 1:6),
+    reduce(⊗, [X1 for _ in 1:6]) + reduce(⊗, [Z1 for _ in 1:6]),
+)
+bigref = QuantumSavory.stateof(big[1])
+big_text = sprint(show, bigref)
+big_html = sprint(show, MIME"text/html"(), bigref)
+@test occursin("dimension 64 exceeds", big_text)
+@test occursin("Density matrix omitted for dimension 64", big_html)
+@test occursin("top probabilities", big_text)
 
 
 reg1 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
