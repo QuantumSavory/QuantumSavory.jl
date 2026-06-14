@@ -157,6 +157,7 @@ include("measurements.jl")
 include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
 include("backends/gabs/gabs.jl")
+include("backends/gabs/show.jl")
 include("backends/gabs/should_upstream.jl")
 
 include("ambiguity_fix.jl")

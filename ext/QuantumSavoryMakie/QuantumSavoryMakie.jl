@@ -20,6 +20,7 @@ using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsume
 
 using QuantumClifford: QuantumClifford
 using QuantumOpticsBase: QuantumOpticsBase, dm
+using Gabs: Gabs
 
 
 ##

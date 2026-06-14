@@ -27,3 +27,24 @@ function stateshowimage(subfig, state::QuantumClifford.MixedDestabilizer, stater
     ax.yticks = (Int[], String[])
     subfig
 end
+
+function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
+    labels = QuantumSavory._gabs_quadrature_labels(state)
+    covar = Matrix(state.covar)
+    ax = Axis(subfig[1, 1], title = "Gaussian covariance")
+    hm = Makie.heatmap!(ax, 1:length(labels), 1:length(labels), covar; colormap = :balance)
+    ax.xticks = (1:length(labels), labels)
+    ax.yticks = (1:length(labels), labels)
+    ax.xticklabelrotation = pi / 4
+    Colorbar(subfig[1, 2], hm)
+
+    mean = collect(state.mean)
+    if any(!iszero, mean)
+        ax_mean = Axis(subfig[2, 1], title = "First moments")
+        Makie.barplot!(ax_mean, 1:length(mean), mean)
+        ax_mean.xticks = (1:length(labels), labels)
+        ax_mean.xticklabelrotation = pi / 4
+        hlines!(ax_mean, [0], color = :gray60, linewidth = 1)
+    end
+    subfig
+end

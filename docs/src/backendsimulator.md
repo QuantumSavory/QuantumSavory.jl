@@ -53,6 +53,23 @@ Use it when:
 This is the right backend for continuous-variable models that would be awkward
 or expensive to force into a generic wavefunction description.
 
+Gaussian register states have rich text, HTML, and PNG displays. The text and
+HTML displays summarize the number of modes, first moments, covariance blocks,
+purity, and per-mode marginal structure without loading Makie. When a Makie
+backend is loaded, PNG display renders the covariance matrix and first moments:
+
+```julia
+using QuantumSavory
+using Gabs
+
+reg = Register(fill(Qumode(), 2), fill(GabsRepr(QuadBlockBasis), 2))
+initialize!(reg[1:2], TwoSqueezedState(0.45))
+
+state = QuantumSavory.stateof(reg[1])
+show(stdout, state)
+repr(MIME"text/html"(), state)
+```
+
 ## Choosing Precisely
 
 The three built-in families answer different needs:

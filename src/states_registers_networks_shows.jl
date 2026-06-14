@@ -11,6 +11,7 @@ function Base.show(io::IO, s::StateRef)
                 print(IOContext(io, :compact => true), "\n    ",(r[i]))
             end
         end
+        stateshow(io, MIME"text/plain"(), quantumstate(s), s)
     end
 end
 
@@ -119,6 +120,11 @@ function Base.show(io::IO, m::MIME"text/html", s::StateRef)
     </div>
     </div>
     """)
+end
+
+"""Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""
+function stateshow(io, ::MIME"text/plain", state, stateref)
+    return nothing
 end
 
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""

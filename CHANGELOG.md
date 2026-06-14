@@ -4,6 +4,7 @@
 
 - **(breaking)** **(fix)** The `ProtocolZoo` entanglement-tracking tags and messages now carry entanglement pair IDs, fixing a class of bookkeeping bugs (#303) where stale update messages could be applied to the wrong Bell pair after a physical slot was reused. See the porting guide below.
 - **(fix)** `EntanglementTracker` no longer waits on the physical slot lock when an incoming update only needs `EntanglementHistory` metadata of an empty slot, fixing a race (#448) where valid in-flight updates were dropped as stale because history forwarding was serialized behind slot reuse by an `EntanglerProt`.
+- Gaussian states stored in registers now have text, HTML, and Makie PNG displays with first-moment and covariance summaries.
 - `SwapperProt` gained a `max_history_per_slot` option and `CutoffProt` gained a `max_delete_per_slot` option, enforcing FIFO caps on accumulated `EntanglementHistory` and `EntanglementDelete` metadata. `CutoffProt` no longer deletes old `EntanglementHistory` tags itself; history cleanup is now owned by the swapper that creates those tags.
 - Stale update/delete messages dropped by `EntanglementTracker` are now logged at `@warn` level instead of `@error`, as with pair IDs such drops are expected only under benign circumstances (e.g. history garbage collection).
 
