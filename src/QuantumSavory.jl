@@ -11,6 +11,7 @@ using Reexport
 import Base: unlock, lock, islocked
 
 using DocStringExtensions
+using PrettyTables: PrettyTables, pretty_table
 using IterTools
 import LinearAlgebra
 using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot, det
