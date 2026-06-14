@@ -96,6 +96,38 @@ QuantumSavory.showmetadata(fig,ax,plt,2,3)
 fig
 ```
 
+## Rich display of register state contents
+
+Register state objects also provide rich `show` methods for quick inspection in
+the REPL, notebooks, and environments that request `text/html` or `image/png`
+representations.
+
+```@example vis
+one_qubit = Register([Qubit()], [QuantumOpticsRepr()])
+initialize!(one_qubit[1], X₁)
+show(stdout, QuantumSavory.stateof(one_qubit[1]))
+```
+
+For `QuantumOpticsBase` qubit states, the text and HTML displays include the
+basis dimensions, purity, von Neumann entropy, density matrix entries for small
+states, Bloch-vector/Pauli expectations for one qubit, reduced one-qubit
+summaries and Pauli correlations for two qubits, and the largest basis-state
+probabilities. Larger dense states are summarized with top probabilities instead
+of a full matrix table.
+
+```@example vis
+left = Register([Qubit()], [QuantumOpticsRepr()])
+right = Register([Qubit()], [QuantumOpticsRepr()])
+initialize!((left[1], right[1]), X₁⊗Z₁ + Z₁⊗X₁)
+show(stdout, QuantumSavory.stateof(left[1]))
+```
+
+When a Makie backend such as CairoMakie is loaded, the `image/png` display shows
+the same numerical summary next to a compact visual summary: a Bloch-vector plot
+for one-qubit states and a probability chart for larger dense states. Stabilizer
+states stored through `QuantumClifford` use a compact stabilizer-tableau summary
+in text and HTML, and the existing stabilizer-tableau plot for PNG output.
+
 ## Protocol-specific visualizations
 
 Visualizations in QuantumSavory are not limited to register contents. Protocols

@@ -71,6 +71,7 @@ initialize!((net[1, 1], net[2, 1]), StabilizerState("XX ZZ"))
 - Prefer symbolic states and operations unless you explicitly need a backend object.
 - Put subsystem traits, preferred representations, and background processes on the register at construction time.
 - Write protocol code against `RegRef`s, not backend state objects.
+- Use ordinary display of `stateof(reg[i])` for debugging summaries in the REPL or notebooks; do not treat the returned `StateRef` internals as a stable data API.
 - Use `RegisterNet` early if registers will participate in one simulation. It unifies time tracking and networking APIs.
 - Use locks when multiple simulated processes can touch the same slot.
 

@@ -34,6 +34,7 @@ Required changes, in decreasing order of likelihood that they affect you:
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
 - Significant performance improvements to queries on registers or buffers that already contain many tags.
 - New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.
+- Rich text, HTML, and PNG displays for register states now summarize small QuantumOpticsBase states and QuantumClifford stabilizer states.
 
 ## v0.6.0 - 2026-05-05
 
