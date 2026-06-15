@@ -18,7 +18,7 @@ $FIELDS
     nodeB::Int
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::Union{Float64,Nothing} = 0.1
-    """tag type which the consumer is looking for -- the consumer query will be `query(node, EntanglementConsumer.tag, remote_node)` and it will be expected that `remote_node` possesses the symmetric reciprocal tag; defaults to `EntanglementCounterpart`"""
+    """tag type which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
     tag::Any = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
@@ -37,7 +37,12 @@ permits_virtual_edge(::EntanglementConsumer) = true
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
     while true
-        query1 = query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true) # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        use_pair_id = prot.tag === EntanglementCounterpart
+        query1 = if use_pair_id
+            query(regA, prot.tag, prot.nodeB, ❓, ❓; locked=false, assigned=true)
+        else
+            query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true)
+        end # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
         if isnothing(query1)
             if isnothing(prot.period)
                 @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on first node found no entanglement. Waiting on tag updates in $(compactstr(regA))."
@@ -48,7 +53,12 @@ permits_virtual_edge(::EntanglementConsumer) = true
             end
             continue
         else
-            query2 = query(regB, prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+            pair_id = use_pair_id ? query1.tag[4] : nothing
+            query2 = if use_pair_id
+                query(regB, prot.tag, prot.nodeA, query1.slot.idx, pair_id; locked=false, assigned=true)
+            else
+                query(regB, prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+            end
             if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
                 if isnothing(prot.period)
                     @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): query on second node found no entanglement (yet...). Waiting on tag updates in $(compactstr(regB))."
@@ -64,8 +74,18 @@ permits_virtual_edge(::EntanglementConsumer) = true
         q1 = query1.slot
         q2 = query2.slot
         @yield lock(q1) & lock(q2)
-        query1 = query(q1, prot.tag, prot.nodeB, q2.idx; locked=true, assigned=true)
-        query2 = query(q2, prot.tag, prot.nodeA, q1.idx; locked=true, assigned=true)
+        # Re-query under lock and require reciprocal pair IDs. The slot tuple is
+        # routing metadata; `pair_id` is the actual entangled-pair identity.
+        query1 = if use_pair_id
+            query(q1, prot.tag, prot.nodeB, q2.idx, pair_id; locked=true, assigned=true)
+        else
+            query(q1, prot.tag, prot.nodeB, q2.idx; locked=true, assigned=true)
+        end
+        query2 = if use_pair_id
+            query(q2, prot.tag, prot.nodeA, q1.idx, pair_id; locked=true, assigned=true)
+        else
+            query(q2, prot.tag, prot.nodeA, q1.idx; locked=true, assigned=true)
+        end
         if isnothing(query1) || isnothing(query2)
             @debug "$(timestr(prot.sim)) EntanglementConsumer($(compactstr(regA)), $(compactstr(regB))): queries stale after locking, retrying."
             unlock(q1)
