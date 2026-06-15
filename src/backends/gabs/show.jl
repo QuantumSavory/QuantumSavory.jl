@@ -90,7 +90,7 @@ end
 function _covariance_table_helper(state::Gabs.GaussianState{<:Gabs.QuadPairBasis,M,V}, N::Int64) where {M,V}
     # grey out the non-block-diagonal entries
     hl_blocks = PrettyTables.HtmlHighlighter(
-        (data, i, j) -> mod1(i, N) != mod1(j, N),
+        (data, i, j) -> isodd(abs(i-j)),
         ["opacity" => "0.3"]
     )
     # bold the diagonal entries
