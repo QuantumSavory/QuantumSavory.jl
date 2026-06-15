@@ -3,7 +3,7 @@ using ConcurrentSim
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglementCounterpart, EntanglementHistory,
-    EntanglementUpdateX, EntanglementUpdateZ
+    EntanglementUpdateX, EntanglementUpdateZ, NO_ENTANGLEMENT_ID
 using QuantumSavory.ProtocolZoo: EntanglementDelete
 
 function assert_tag_surface_contract(value, expected_tag, expected_text)
@@ -19,28 +19,28 @@ end
     @testset "protocol tag values round-trip through Tag and show" begin
         assert_tag_surface_contract(
             EntanglementCounterpart(2, 3),
-            Tag(EntanglementCounterpart, 2, 3),
+            Tag(EntanglementCounterpart, 2, 3, NO_ENTANGLEMENT_ID),
             "Entangled to 2.3",
         )
         assert_tag_surface_contract(
             EntanglementHistory(2, 3, 4, 5, 6),
-            Tag(EntanglementHistory, 2, 3, 4, 5, 6),
+            Tag(EntanglementHistory, 2, 3, 4, 5, 6, NO_ENTANGLEMENT_ID, NO_ENTANGLEMENT_ID),
             "Was entangled to 2.3",
         )
         assert_tag_surface_contract(
             EntanglementUpdateX(2, 3, 4, 5, 6, 2),
-            Tag(EntanglementUpdateX, 2, 3, 4, 5, 6, 2),
+            Tag(EntanglementUpdateX, NO_ENTANGLEMENT_ID, NO_ENTANGLEMENT_ID, 2, 3, 4, 5, 6, 2),
             "apply correction Z2",
         )
         assert_tag_surface_contract(
             EntanglementUpdateZ(2, 3, 4, 5, 6, 1),
-            Tag(EntanglementUpdateZ, 2, 3, 4, 5, 6, 1),
+            Tag(EntanglementUpdateZ, NO_ENTANGLEMENT_ID, NO_ENTANGLEMENT_ID, 2, 3, 4, 5, 6, 1),
             "apply correction X1",
         )
         assert_tag_surface_contract(
             EntanglementDelete(2, 3, 4, 5),
-            Tag(EntanglementDelete, 2, 3, 4, 5),
-            "Deleted 2.3",
+            Tag(EntanglementDelete, NO_ENTANGLEMENT_ID, 2, 3, 4, 5),
+            "Deleted pair",
         )
     end
 
