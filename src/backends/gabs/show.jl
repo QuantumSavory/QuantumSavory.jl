@@ -12,14 +12,14 @@ function stateshow(io, ::MIME"text/plain", state::Gabs.GaussianState, stateref::
     if N == 1
         print(io, "\n  Mean: ", _mode_mean(state, 1, N))
         print(io, "\n  Covariance Matrix:\n")
-        Base.print_matrix(stdout, _mode_covariance(state, 1, N), "    ")
+        Base.print_matrix(io, _mode_covariance(state, 1, N), "    ")
     elseif N > 1
         # [TODO] covariance matrix summary
         print(io, "\n\nPer-mode Marginals:")
         for n in 1:N
             covar = _mode_covariance(state, n, N)
             print(io, "\n  ", N > 1 ? "Mode $n: " : "")
-            print(
+            print(io,
                 "Mean = $(_mode_mean(state, n, N))", " | ",
                 "Var(x) = $(covar[1, 1])", " | ",
                 "Var(p) = $(covar[2, 2])", " | ",
