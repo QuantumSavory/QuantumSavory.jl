@@ -30,7 +30,7 @@ end
 # Configure and run the simulation.
 ##
 
-fixed_time = 0.25 # entanglement-generation window
+fixed_time = 0.2 # entanglement-generation window
 @info "F-TMBL run: S=$S, F=$F, p=$success_prob, fixed_time=$fixed_time"
 t_start = time()
 
