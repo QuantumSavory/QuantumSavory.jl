@@ -1,5 +1,13 @@
 using Test
 
 @testset "Examples - firstgenrepeater 2" begin
-    include("../../examples/firstgenrepeater/2_swapper_example.jl")
+    try
+        include("../../examples/firstgenrepeater/2_swapper_example.jl")
+    finally
+        if isdefined(@__MODULE__, :server)
+            # The example may fail before the server is created.
+            close(server)
+            wait(server)
+        end
+    end
 end

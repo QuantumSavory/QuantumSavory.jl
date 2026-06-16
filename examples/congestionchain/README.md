@@ -15,4 +15,4 @@ The other files run the simulation and generate visuals in a number of different
 Documentation:
 
 - [The "How To" doc page on setting up this simulation of a repeater chain](https://qs.quantumsavory.org/dev/howto/congestionchain/congestionchain)
-- [A more detailed example studying a first generation repeater chain](https://qs.quantumsavory.org/dev/howto/firstgenrepeater/firstgenrepeater)
+- [A more detailed example studying a first generation repeater chain](https://qs.quantumsavory.org/dev/howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel)

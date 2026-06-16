@@ -88,7 +88,7 @@ When you already know the match you care about, prefer `query_wait` or
 - `docs/src/classical_messaging.md`
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/howto/repeatergrid/repeatergrid.md`
-- `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
+- `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
 
 ## Common Mistakes
 
