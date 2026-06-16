@@ -31,6 +31,7 @@ Use `.agents/zoos/protocol-zoo-dev.md` for those.
 Other specialized families:
 
 - `SimpleSwitchDiscreteProt` for switch-style setups.
+- `SwitchRequesterProt` for client-side request generation into a switch.
 - `EndNodeController`, `NetworkNodeController`, and `LinkController` for the QTCP stack.
 
 ## Common Workflow

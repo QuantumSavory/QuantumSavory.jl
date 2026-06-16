@@ -66,7 +66,7 @@ The current `ProtocolZoo` includes:
 - entanglement generation and swapping protocols,
 - metadata tracking helpers,
 - consumer and cutoff protocols,
-- switch-style protocols,
+- switch-style protocols, including switch request generation,
 - and QTCP-related controllers and message types.
 
 The autodocs below are the exact API reference.

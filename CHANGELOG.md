@@ -6,6 +6,7 @@
 - **(fix)** `EntanglementTracker` no longer waits on the physical slot lock when an incoming update only needs `EntanglementHistory` metadata of an empty slot, fixing a race (#448) where valid in-flight updates were dropped as stale because history forwarding was serialized behind slot reuse by an `EntanglerProt`.
 - `SwapperProt` gained a `max_history_per_slot` option and `CutoffProt` gained a `max_delete_per_slot` option, enforcing FIFO caps on accumulated `EntanglementHistory` and `EntanglementDelete` metadata. `CutoffProt` no longer deletes old `EntanglementHistory` tags itself; history cleanup is now owned by the swapper that creates those tags.
 - Stale update/delete messages dropped by `EntanglementTracker` are now logged at `@warn` level instead of `@error`, as with pair IDs such drops are expected only under benign circumstances (e.g. history garbage collection).
+- `SwitchRequesterProt` now provides a reusable client-side protocol for sending periodic `SwitchRequest`s to `SimpleSwitchDiscreteProt`.
 
 ### Porting guide for the pair-ID tag schema
 

@@ -23,7 +23,7 @@ export
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     EntanglementID, NO_ENTANGLEMENT_ID, fresh_entanglement_id, combine_entanglement_ids,
     # from Switches
-    SimpleSwitchDiscreteProt, SwitchRequest,
+    SimpleSwitchDiscreteProt, SwitchRequesterProt, SwitchRequest,
     # from QTCP
     QDatagram, Flow, LinkLevelRequest,
     QTCPPairBegin, QTCPPairEnd,

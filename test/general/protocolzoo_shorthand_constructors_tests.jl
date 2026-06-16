@@ -1,8 +1,9 @@
 using Test
 using QuantumSavory
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt
+using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt, SwitchRequesterProt
 using QuantumSavory.ProtocolZoo.QTCP: EndNodeController, NetworkNodeController, LinkController
 using ConcurrentSim
+using Graphs: star_graph
 
 @testset "ProtocolZoo Shorthand Constructors" begin
 
@@ -28,6 +29,11 @@ swapper = SwapperProt(net, 2; rounds=5, local_busy_time=0.1)
 # Test CutoffProt shorthand constructor
 cutoff = CutoffProt(net, 3; period=0.05, retention_time=10.0)
 @test cutoff.sim === get_time_tracker(net)
+
+# Test SwitchRequesterProt shorthand constructor
+switch_net = RegisterNet(star_graph(3), [Register(1), Register(1), Register(1)])
+switch_requester = SwitchRequesterProt(switch_net, 1, 2, 3; request_interval=0.5, rounds=1)
+@test switch_requester.sim === get_time_tracker(switch_net)
 
 # Test EndNodeController shorthand constructor
 end_controller = EndNodeController(net, 2)

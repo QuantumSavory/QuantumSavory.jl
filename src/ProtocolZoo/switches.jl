@@ -14,7 +14,7 @@ using Random
 using JuMP: optimizer_with_attributes, MOI
 using HiGHS: HiGHS
 
-export SimpleSwitchDiscreteProt, SwitchRequest
+export SimpleSwitchDiscreteProt, SwitchRequesterProt, SwitchRequest
 
 """
 A wrapper around a matrix, ensuring that it is symmetric.
@@ -362,6 +362,106 @@ $TYPEDFIELDS
 end
 Base.show(io::IO, tag::SwitchRequest) = print(io, "Request from $(tag.requester) to be entangled to $(tag.remote_node)")
 QuantumSavory.Tag(tag::SwitchRequest) = Tag(SwitchRequest, tag.requester, tag.remote_node)
+
+"""
+$TYPEDEF
+
+A client-side protocol that periodically sends [`SwitchRequest`](@ref) messages
+to a [`SimpleSwitchDiscreteProt`](@ref).
+
+`request_interval` can be a positive number, a zero-argument function returning
+a positive number, or an object with `request_interval[]` returning a positive
+number. The latter two forms are useful for stochastic or interactive request
+rates.
+
+$TYPEDFIELDS
+"""
+struct SwitchRequesterProt{I} <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of the switch receiving requests"""
+    switchnode::Int
+    """the client node making requests"""
+    requester::Int
+    """the remote client node the requester wants to be entangled with"""
+    remote_node::Int
+    """time to wait between successive requests"""
+    request_interval::I
+    """how many requests to send (`-1` for infinite)"""
+    rounds::Int
+end
+
+function _check_switch_requester_nodes(net, switchnode, requester, remote_node)
+    requester != remote_node || throw(ArgumentError("`requester` and `remote_node` must be different nodes."))
+    requester in neighbors(net, switchnode) || throw(ArgumentError("`requester` must be a neighbor of `switchnode`."))
+    remote_node in neighbors(net, switchnode) || throw(ArgumentError("`remote_node` must be a neighbor of `switchnode`."))
+end
+
+_request_interval_value(request_interval::Real) = Float64(request_interval)
+_request_interval_value(request_interval::Function) = Float64(request_interval())
+_request_interval_value(request_interval) = Float64(request_interval[])
+
+function _check_request_interval_value(request_interval)
+    request_interval > 0 || throw(ArgumentError("`request_interval` must be positive."))
+end
+
+function _check_switch_requester_rounds(rounds)
+    0 < rounds || rounds == -1 || throw(ArgumentError("`rounds` must be positive or `-1` for infinite."))
+end
+
+function SwitchRequesterProt(;
+        sim::Simulation,
+        net::RegisterNet,
+        switchnode::Int,
+        requester::Int,
+        remote_node::Int,
+        request_interval=1.0,
+        rounds::Int=-1,
+    )
+    _check_switch_requester_nodes(net, switchnode, requester, remote_node)
+    request_interval isa Real && _check_request_interval_value(Float64(request_interval))
+    _check_switch_requester_rounds(rounds)
+    return SwitchRequesterProt{typeof(request_interval)}(
+        sim, net, switchnode, requester, remote_node, request_interval, rounds
+    )
+end
+
+function SwitchRequesterProt(
+        sim::Simulation,
+        net::RegisterNet,
+        switchnode::Int,
+        requester::Int,
+        remote_node::Int;
+        kwargs...,
+    )
+    return SwitchRequesterProt(; sim, net, switchnode, requester, remote_node, kwargs...)
+end
+
+function SwitchRequesterProt(
+        net::RegisterNet,
+        switchnode::Int,
+        requester::Int,
+        remote_node::Int;
+        kwargs...,
+    )
+    return SwitchRequesterProt(get_time_tracker(net), net, switchnode, requester, remote_node; kwargs...)
+end
+
+@resumable function (prot::SwitchRequesterProt)()
+    rounds = prot.rounds
+    round = 1
+    while rounds != 0
+        request_interval = _request_interval_value(prot.request_interval)
+        _check_request_interval_value(request_interval)
+        @yield timeout(prot.sim, request_interval)
+        put!(channel(prot.net, prot.requester=>prot.switchnode), SwitchRequest(prot.requester, prot.remote_node))
+        @debug "SwitchRequesterProt $(prot.requester) -> $(prot.switchnode): request $(round) for $(prot.remote_node)"
+        rounds == -1 || (rounds -= 1)
+        round += 1
+    end
+end
 
 
 end # module

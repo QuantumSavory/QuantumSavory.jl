@@ -18,7 +18,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `src/ProtocolZoo/swapping.jl` contains slot-selection and swapper logic.
 - `src/ProtocolZoo/cutoff.jl` handles stale-entanglement cleanup.
 - `src/ProtocolZoo/qtcp.jl` is a higher-level protocol stack built on the same tag/message model.
-- `src/ProtocolZoo/switches.jl` is a separate subsystem with its own request and matching machinery.
+- `src/ProtocolZoo/switches.jl` is a separate subsystem with its own client request, switch matching, and switch scheduling machinery.
 
 ## Extension Pattern
 
