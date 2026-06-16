@@ -54,4 +54,4 @@ Use `.agents/zoos/circuit-zoo-user.md` for that.
 - `docs/src/API_CircuitZoo.md`
 - `docs/src/zoos_as_building_blocks.md`
 - `docs/src/discreteeventsimulator.md`
-- `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
+- `docs/src/howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md`

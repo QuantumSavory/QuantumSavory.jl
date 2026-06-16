@@ -67,9 +67,9 @@ function main()
     ],
     "How-To Guides" => [
         "howto.md",
-        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater/firstgenrepeater.md",
-        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
-        "1st-gen Repeater - simpler implementation" => "howto/firstgenrepeater_v2/firstgenrepeater_v2.md",
+        "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md",
+        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
+        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",

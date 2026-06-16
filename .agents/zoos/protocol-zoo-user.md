@@ -59,10 +59,10 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 - `docs/src/API_ProtocolZoo.md`
 - `docs/src/zoos_as_building_blocks.md`
 - `docs/src/discreteeventsimulator.md`
-- `docs/src/howto/firstgenrepeater_v2/firstgenrepeater_v2.md`
+- `docs/src/howto/firstgenrepeater/firstgenrepeater.md`
 - `docs/src/howto/repeatergrid/repeatergrid.md`
 - `docs/src/howto/simpleswitch/simpleswitch.md`
-- `examples/firstgenrepeater_v2/README.md`
+- `examples/firstgenrepeater/README.md`
 - `examples/repeatergrid/README.md`
 - `examples/simpleswitch/README.md`
 

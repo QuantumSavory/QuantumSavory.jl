@@ -6,7 +6,6 @@ GLMakie.activate!()
 ##
 # Demo all three components, Entangler, Swapper, and Purifer working together
 ##
-
 sizes = [2,3,4,3,2]        # Number of qubits in each register
 T2 = 10.0                  # T2 dephasing time of all qubits
 F = 0.9                    # Fidelity of the raw Bell pairs
@@ -17,35 +16,15 @@ swapper_busy_time = 0.15   # How long it takes to swap two qubits
 purifier_wait_time = 0.15  # How long to wait if there are no pairs to be purified
 purifier_busy_time = 0.2   # How long the purification circuit takes to execute
 
-noisy_pair = noisy_pair_func(F)
-
 sim, network = simulation_setup(sizes, T2)
 
+noisy_pair = noisy_pair_func(F)
 for (;src, dst) in edges(network)
-    eprot = EntanglerProt(sim, network, src, dst; pairstate=noisy_pair, local_busy_time_post=entangler_busy_time, retry_lock_time=entangler_wait_time)
-    @process eprot()
+    @process entangler(sim, network, src, dst, noisy_pair, entangler_wait_time, entangler_busy_time)
 end
-
 for node in vertices(network)
-    sprot = SwapperProt(
-        sim,
-        network,
-        node;
-        nodeL = <(node),
-        nodeH = >(node),
-        chooseL = argmin,
-        chooseH = argmax,
-        local_busy_time = swapper_busy_time,
-        retry_lock_time = swapper_wait_time,
-    )
-    @process sprot()
+    @process swapper(sim, network, node, swapper_wait_time, swapper_busy_time)
 end
-
-for node in vertices(network)
-    @process EntanglementTracker(sim, network, node)()
-end
-
-
 for nodea in vertices(network)
     for nodeb in vertices(network)
         if nodeb>nodea
@@ -61,7 +40,7 @@ display(fig)
 
 # record the simulation progress
 step_ts = range(0, 30, step=0.1)
-record(fig, "firstgenrepeaterv2.purifier.mp4", step_ts, framerate=10, visible=true) do t
+record(fig, "firstgenrepeater-05.purifier.mp4", step_ts, framerate=10, visible=true) do t
     run(sim, t)
     notify(obs)
     ax.title = "t=$(t)"
