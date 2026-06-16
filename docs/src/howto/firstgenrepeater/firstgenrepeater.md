@@ -3,20 +3,37 @@
 This how-to guide walks through a simulation of a first-generation quantum repeater chain
 using the high-level protocol abstractions from [`QuantumSavory.ProtocolZoo`](@ref "Predefined Networking Protocols").
 
-!!! info "Simpler version of a more detailed example"
+There is a convenient classification of quantum repeaters by their logical capabilities[^1].
+The first, simplest, generation of quantum repeaters involves the generation of physical (unencoded) entangled qubits between neighboring nodes,
+followed by entanglement swap and entanglement purification operation.
+No error correcting codes are employed and establishing of a link is a probabilistic process.
+
+[^1]: [muralidharan2016optimal](@cite)
+
+!!! info "A lower-level version is also available"
     Compared to [the lower-level implementation](@ref First-Generation-Quantum-Repeater),
     the code here is drastically shorter because the entangler and swapper are provided as
     ready-made reusable protocols.
-    Reading the low-level version first is worthwhile if you want to understand what is
-    happening inside these protocols, or if you want to write your own.
+    If you want to understand what is happening inside these protocols, or if you want to
+    write your own from scratch, you can check out the low-level version.
 
-We simulate the same physical setup as the low-level guide:
+The simulated network is a chain of quantum repeater nodes of various sizes (number of qubits).
+The goal is to entangle the extreme ends of the chain:
 
-- A chain of quantum repeater nodes, each holding a small register of qubits;
-- Nearest-neighbor entanglement is generated probabilistically by an [`EntanglerProt`](@ref);
-- Entanglement is extended end-to-end by a [`SwapperProt`](@ref) running on every intermediate node;
-- Classical metadata (who is entangled with whom) is kept consistent across the network by an [`EntanglementTracker`](@ref);
-- A custom purifier process distills higher-fidelity pairs whenever two Bell pairs are shared between the same node pair.
+- By directly entangling nearest neighbors, done probabilistically by an [`EntanglerProt`](@ref);
+- Followed by entanglement swaps to extend the links, performed by a [`SwapperProt`](@ref) running on every intermediate node;
+- And entanglement purification to increase the quality of the links, done here by a custom purifier process whenever two Bell pairs are shared between the same node pair.
+
+Classical metadata (who is entangled with whom) is kept consistent across the network by an [`EntanglementTracker`](@ref),
+so that, unlike in the low-level version, the bookkeeping never has to be done by hand.
+
+Behind the scenes `QuantumSavory.jl` will use:
+
+- `ConcurrentSim.jl` for discrete event scheduling and simulation;
+- `Makie.jl` together with our custom plotting recipes for visualizations;
+- `QuantumOptics.jl` for low-level quantum states.
+
+The user does not need to know much about these libraries, but if they wish, it is easy for them to peek behind the scenes and customize their use.
 
 The source code is in the [`examples/firstgenrepeater`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater) folder.
 
@@ -31,6 +48,12 @@ sim, network = simulation_setup(sizes, T2)
 ```
 
 Each qubit is assigned a [`T2Dephasing`](@ref) background process so that stored entanglement decays naturally without any explicit tracking.
+
+!!! note
+    To see how to visualize these data structures as the simulation is proceeding, consult the [Visualizations](@ref Visualizations) page.
+
+!!! note
+    To see how to define imperfections, noise processes, and background events, consult the [Sub-system Background Noise](@ref "Background Noise Processes") page.
 
 ## Entangler
 
@@ -64,7 +87,19 @@ pairstate = BarrettKokBellPair(ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱)
 
 ## Swapper
 
-[`SwapperProt`](@ref) extends entanglement across the chain by performing Bell measurements on local qubits that are each half of a separate Bell pair.
+Once we have the raw nearest-neighbor entanglement, we can proceed with swap operations that link two Bell pairs that share one common node into a longer Bell pair.
+The swapper working on a given node simply checks whether there are any qubits on that node that are entangled with other nodes, both on the left and right of the current node.
+If such qubits are found, the entanglement swap operation is performed on them.
+
+The entanglement swap operation is performed through the following simple circuit, which entangles the two local qubits belonging to two separate Bell pairs, and then measures them:
+
+```@raw html
+<img alt="Entanglement swapping circuit" src="../firstgenrepeater_lowlevel/firstgenrepeater-04.swapcircuit.png" style="max-width:50%">
+```
+
+The two measurement outcomes determine which Pauli corrections (a `Z` and an `X`) are applied to the remote qubits of the now-connected long-range pair.
+
+[`SwapperProt`](@ref) performs exactly this Bell measurement on local qubits that are each half of a separate Bell pair.
 One instance runs on every node:
 
 ```julia
@@ -118,6 +153,20 @@ distills them into a single higher-fidelity pair:
 ```@raw html
 <video src="../firstgenrepeater-03.purifier.mp4" autoplay loop muted></video>
 ```
+
+As you can see, not all purification attempts succeed. On some occasions there is a failure and both pairs get discarded as faulty.
+Each purifier runs two purification circuits, one after the other,
+as a single round of purification is incapable of detecting all types of errors.
+The two circuits being employed are the following:
+
+```@raw html
+<img alt="Entanglement purification circuit" src="../firstgenrepeater_lowlevel/firstgenrepeater-06.purcircuit1.png" style="max-width:40%">
+<img alt="Entanglement purification circuit" src="../firstgenrepeater_lowlevel/firstgenrepeater-06.purcircuit2.png" style="max-width:40%">
+```
+
+If the coincidence measurements fail, all qubits are reset.
+If the coincidence measurements are correct, the purified pair would have higher fidelity than what it started with.
+In the code below this two-round structure is captured by alternating the `purifyerror` between `:X` and `:Z` on successive successful rounds:
 
 ```julia
 @resumable function purifier(sim, network, nodea, nodeb,
@@ -179,4 +228,59 @@ The three scripts in the `examples/firstgenrepeater` folder build on top of each
 1. **`1_entangler_example.jl`** — entanglement generation only, no swaps or purification;
 2. **`2_swapper_example.jl`** — entanglement generation and swapping, as an interactive web app with Barrett-Kok source sliders;
 3. **`3_purifier_example.jl`** — all three layers running together.
+
+## Figures of Merit and Visualizations
+
+These simulations are not particularly useful if we do not track the performance of the quantum network.
+One convenient way to do that is to compute observables related to the quality of entanglement,
+e.g., the `XX` and `ZZ` correlators.
+We compute these correlators for the second pair on the extreme ends of the chain of repeaters:
+
+```@raw html
+<video src="../firstgenrepeater_lowlevel/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
+```
+
+Notice how the `XX` observable drops due to the T₂ dephasing experienced by the qubits.
+And then it goes back up at the occurrence of a successful purification
+(or all the way to zero at failed purifications).
+Here is what it looks like if we do not perform purification:
+
+```@raw html
+<video src="../firstgenrepeater_lowlevel/firstgenrepeater-07.observable.nopur.mp4" autoplay loop muted></video>
+```
+
+The plotting itself is realized with the wonderful `Makie.jl` plotting library.
+The figure of merit is obtained through a call to [`observable`](@ref),
+a convenient method for calculating expectation values of various quantum observables.
+
+## Summary of `QuantumSavory` tools employed in the simulation
+
+We used the [`Register`](@ref) data structure to automatically track the quantum states
+describing our mixed analog-digital quantum dynamics.
+
+Much of the analog dynamics was implicit through the use of [backgrounds,
+declaring the noise properties of various qubits](@ref "Background Noise Processes").
+
+On top of that, the high-level protocols from [`QuantumSavory.ProtocolZoo`](@ref "Predefined Networking Protocols")
+([`EntanglerProt`](@ref), [`SwapperProt`](@ref), and [`EntanglementTracker`](@ref))
+took care of the entangling, swapping, and classical bookkeeping that the low-level example implemented by hand,
+while the digital-ish dynamics of the custom purifier was implemented through the use of
+- [`apply!`](@ref) for the application of various gates
+- [`traceout!`](@ref) for deleting qubits
+- [`project_traceout!`](@ref) for projective measurements over qubits
+- [`observable`](@ref) for calculating expectation values of quantum observables
+
+Many of the above functions take the `time` keyword argument, which ensures that various background analog processes are simulated before the given operation is performed.
+
+Of note is that we also used
+`Makie.jl` for plotting,
+`ConcurrentSim.jl` for discrete event scheduling,
+and `QuantumOptics.jl` for convenient master equation integration.
+Many of these tools were used under the hood without being invoked directly.
+
+## Suggested Improvements
+
+- Calibrating when to perform a purification versus a swap would be important for the performance of the network.
+- Balancing what types of entanglement purification is performed, depending on the type of noise experienced, can drastically lower resource requirements.
+- Implementing more sophisticated purification schemes can greatly improve the quality of entanglement.
 
