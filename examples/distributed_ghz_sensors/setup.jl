@@ -29,7 +29,7 @@ function entangled_sensors(net, S)
     hub_idx = S + 1
     ent = Int[]
     for i in 1:S
-        q = query(net[hub_idx], EntanglementCounterpart, i, ❓; locked=false, assigned=true)
+        q = query(net[hub_idx], EntanglementCounterpart, i, ❓, ❓; locked=false, assigned=true)
         isnothing(q) || push!(ent, i)
     end
     ent
