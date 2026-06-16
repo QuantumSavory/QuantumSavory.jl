@@ -52,7 +52,7 @@ for metadata, optionally consume it.
 The `Tag` type stores a small structured payload. Common patterns are:
 
 - symbolic tags such as `Tag(:ready)` or `Tag(:swap_request)`;
-- typed tags such as `Tag(EntanglementCounterpart, remote_node, remote_slot)`.
+- typed tags such as `Tag(EntanglementCounterpart, remote_node, remote_slot, pair_id)`.
 
 Typed tags are especially useful when several protocols share a common metadata
 schema. They make the intended meaning explicit and allow custom printing.
@@ -63,7 +63,7 @@ Queries can match exactly, use a wildcard, or use a predicate for one field.
 
 ```julia
 query(reg, :ready, ❓)
-query(reg, EntanglementCounterpart, 7, ❓)
+query(reg, EntanglementCounterpart, 7, ❓, ❓)
 query(reg, :score, x -> x > 90)
 ```
 

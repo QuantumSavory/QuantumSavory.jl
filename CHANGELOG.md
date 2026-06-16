@@ -1,7 +1,36 @@
 # News
 
-## v0.6.1 - unreleased
+## v0.7.0 - 2026-06-12
 
+- **(breaking)** **(fix)** The `ProtocolZoo` entanglement-tracking tags and messages now carry entanglement pair IDs, fixing a class of bookkeeping bugs (#303) where stale update messages could be applied to the wrong Bell pair after a physical slot was reused. See the porting guide below.
+- **(fix)** `EntanglementTracker` no longer waits on the physical slot lock when an incoming update only needs `EntanglementHistory` metadata of an empty slot, fixing a race (#448) where valid in-flight updates were dropped as stale because history forwarding was serialized behind slot reuse by an `EntanglerProt`.
+- `SwapperProt` gained a `max_history_per_slot` option and `CutoffProt` gained a `max_delete_per_slot` option, enforcing FIFO caps on accumulated `EntanglementHistory` and `EntanglementDelete` metadata. `CutoffProt` no longer deletes old `EntanglementHistory` tags itself; history cleanup is now owned by the swapper that creates those tags.
+- Stale update/delete messages dropped by `EntanglementTracker` are now logged at `@warn` level instead of `@error`, as with pair IDs such drops are expected only under benign circumstances (e.g. history garbage collection).
+
+### Porting guide for the pair-ID tag schema
+
+User code that creates, queries, or destructures the `ProtocolZoo` entanglement tags needs the following updates. The new ID fields are of type `EntanglementID` (an alias for `Int`), with `NO_ENTANGLEMENT_ID == 0` reserved as the neutral/legacy value; fresh IDs are created with `fresh_entanglement_id()` and swap composition uses `combine_entanglement_ids(a, b)`.
+
+The tag schemas changed as follows (new fields in **bold**):
+
+| Tag | Old schema | New schema |
+|---|---|---|
+| `EntanglementCounterpart` | `(remote_node, remote_slot)` | `(remote_node, remote_slot, `**`pair_id`**`)` |
+| `EntanglementHistory` | `(remote_node, remote_slot, swap_remote_node, swap_remote_slot, swapped_local)` | `(remote_node, remote_slot, swap_remote_node, swap_remote_slot, swapped_local, `**`local_chunk_id`**`, `**`swapped_chunk_id`**`)` |
+| `EntanglementUpdateX` / `EntanglementUpdateZ` | `(past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)` | `(`**`target_pair_id`**`, `**`other_pair_id`**`, past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)` |
+| `EntanglementDelete` | `(send_node, send_slot, rec_node, rec_slot)` | `(`**`target_pair_id`**`, send_node, send_slot, rec_node, rec_slot)` |
+
+Required changes, in decreasing order of likelihood that they affect you:
+
+1. **Queries must use the new arity.** A query with the old number of fields *silently matches nothing* — it does not error. Add a wildcard for the new field(s), e.g.
+   - `query(reg, EntanglementCounterpart, node, ❓)` → `query(reg, EntanglementCounterpart, node, ❓, ❓)`
+   - `queryall(reg, EntanglementHistory, ❓, ❓, ❓, ❓, ❓)` → `queryall(reg, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓)`
+   - `querydelete!(mb, EntanglementUpdateX, ❓, ❓, ❓, ❓, ❓, ❓)` → `querydelete!(mb, EntanglementUpdateX, ❓, ❓, ❓, ❓, ❓, ❓, ❓, ❓)`
+2. **Raw `tag!` and `Tag` calls must include the new fields.** `tag!(slot, EntanglementCounterpart, node, slot_idx)` still runs, but creates an old-arity tag that is *invisible* to all queries and protocols in this release. Write `tag!(slot, EntanglementCounterpart, node, slot_idx, pair_id)` instead, where `pair_id` comes from `fresh_entanglement_id()` for a new pair (use the same ID on both ends of the pair), or `NO_ENTANGLEMENT_ID` for metadata that does not participate in ID-based tracking.
+3. **Positional destructuring of update/delete messages must shift indices.** The two ID fields are *prepended* to `EntanglementUpdateX`/`EntanglementUpdateZ` and one ID field is prepended to `EntanglementDelete`, so e.g. `tag[2]` (formerly `past_local_node` / `send_node`) is now `tag[4]` / `tag[3]`. `EntanglementCounterpart` and `EntanglementHistory` are extended at the end, so existing indices keep working there.
+4. **The struct constructors are backward compatible.** `EntanglementCounterpart(node, slot)`, `EntanglementHistory(a, b, c, d, e)`, `EntanglementUpdateX(a, b, c, d, e, f)`, and `EntanglementDelete(a, b, c, d)` still work and fill the new fields with `NO_ENTANGLEMENT_ID`. Note however that protocols match counterpart tags by exact pair ID, so hand-constructed `NO_ENTANGLEMENT_ID` metadata only interoperates with other legacy-ID metadata.
+5. **Reciprocal tags must agree on the pair ID.** `EntanglementConsumer` (and the switch protocols) now require the two ends of a pair to carry the same `pair_id` in their reciprocal `EntanglementCounterpart` tags, not just matching `(node, slot)` routing info. If you create entangled pairs manually in tests or examples, tag both ends with the same ID.
+6. **Custom tag types are unaffected.** `EntanglerProt(...; tag=MyTag)` keeps writing the legacy two-field `MyTag(remote_node, remote_slot)` schema, and `EntanglementConsumer(...; tag=MyTag)` keeps querying it with the legacy arity. Only `EntanglementCounterpart` carries a pair ID.
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
 - Significant performance improvements to queries on registers or buffers that already contain many tags.
 - New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.

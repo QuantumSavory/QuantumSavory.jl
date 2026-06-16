@@ -17,6 +17,8 @@ if isinteractive()
     println("Logger set to debug")
 end
 
+tagprefix(tag, n) = Tuple(tag[i] for i in 1:n)
+
 ##
 
 # without an entanglement tracker
@@ -31,7 +33,7 @@ for i in 1:10
     @process entangler1()
     run(sim, 20)
 
-    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, 2, 1)]
+    @test tagprefix.([net[1].tag_info[i].tag for i in net[1].guids], 3) == [(EntanglementCounterpart, 2, 1)]
 
     entangler2 = EntanglerProt(sim, net, 2, 3; rounds=1)
     @process entangler2()
@@ -40,10 +42,10 @@ for i in 1:10
     @process entangler3()
     run(sim, 60)
 
-    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, 2, 1)]
-    @test [net[2].tag_info[i].tag for i in net[2].guids] == [Tag(EntanglementCounterpart, 1, 1), Tag(EntanglementCounterpart, 3, 1)]
-    @test [net[3].tag_info[i].tag for i in net[3].guids] == [Tag(EntanglementCounterpart, 2, 2), Tag(EntanglementCounterpart, 4, 1)]
-    @test [net[4].tag_info[i].tag for i in net[4].guids] == [Tag(EntanglementCounterpart, 3, 2)]
+    @test tagprefix.([net[1].tag_info[i].tag for i in net[1].guids], 3) == [(EntanglementCounterpart, 2, 1)]
+    @test tagprefix.([net[2].tag_info[i].tag for i in net[2].guids], 3) == [(EntanglementCounterpart, 1, 1), (EntanglementCounterpart, 3, 1)]
+    @test tagprefix.([net[3].tag_info[i].tag for i in net[3].guids], 3) == [(EntanglementCounterpart, 2, 2), (EntanglementCounterpart, 4, 1)]
+    @test tagprefix.([net[4].tag_info[i].tag for i in net[4].guids], 3) == [(EntanglementCounterpart, 3, 2)]
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
@@ -55,10 +57,10 @@ for i in 1:10
     run(sim, 80)
 
     # In the absence of an entanglement tracker the tags will not all be updated
-    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, 2, 1)]
-    @test [net[2].tag_info[i].tag for i in net[2].guids] == [Tag(EntanglementHistory, 1, 1, 3, 1, 2),Tag(EntanglementHistory, 3, 1, 1, 1, 1)]
-    @test [net[3].tag_info[i].tag for i in net[3].guids] == [Tag(EntanglementHistory, 2, 2, 4, 1, 2), Tag(EntanglementHistory, 4, 1, 2, 2, 1)]
-    @test [net[4].tag_info[i].tag for i in net[4].guids] == [Tag(EntanglementCounterpart, 3, 2)]
+    @test tagprefix.([net[1].tag_info[i].tag for i in net[1].guids], 3) == [(EntanglementCounterpart, 2, 1)]
+    @test tagprefix.([net[2].tag_info[i].tag for i in net[2].guids], 6) == [(EntanglementHistory, 1, 1, 3, 1, 2), (EntanglementHistory, 3, 1, 1, 1, 1)]
+    @test tagprefix.([net[3].tag_info[i].tag for i in net[3].guids], 6) == [(EntanglementHistory, 2, 2, 4, 1, 2), (EntanglementHistory, 4, 1, 2, 2, 1)]
+    @test tagprefix.([net[4].tag_info[i].tag for i in net[4].guids], 3) == [(EntanglementCounterpart, 3, 2)]
 
     @test isassigned(net[1][1]) && isassigned(net[4][1])
     @test !isassigned(net[2][1]) && !isassigned(net[3][1])
@@ -97,8 +99,8 @@ for i in 1:30, n in 2:30
     end
     run(sim, 200)
 
-    q1 = query(net[1], EntanglementCounterpart, n, ❓)
-    q2 = query(net[n], EntanglementCounterpart, 1, ❓)
+    q1 = query(net[1], EntanglementCounterpart, n, ❓, ❓)
+    q2 = isnothing(q1) ? nothing : query(net[n], EntanglementCounterpart, 1, q1.slot.idx, q1.tag[4])
     @test q1.tag[2] == n
     @test q2.tag[2] == 1
     @test observable((q1.slot, q2.slot), Z⊗Z) ≈ 1

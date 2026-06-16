@@ -1,7 +1,7 @@
 using Test
 using QuantumSavory
 using QuantumSavory: tag_types
-using QuantumSavory.ProtocolZoo: EntanglementCounterpart
+using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementUpdateX
 
 @testset "Tags and Queries" begin
 
@@ -25,6 +25,7 @@ tag!(r[5], Int, 4, 5)
 @test Tag(:symbol1, 2, 3) == tag_types.SymbolIntInt(:symbol1, 2, 3)
 @test QuantumSavory._tag_index_head(Tag(:symbol1, 2, 3)) == :symbol1
 @test QuantumSavory._tag_index_head(Tag(Int, 4, 5)) == Int
+@test QuantumSavory._tag_index_head(Tag(EntanglementUpdateX, 101, 202, 2, 1, 1, 3, 1, 1)) == EntanglementUpdateX
 @test QuantumSavory._tag_index_head(tag_types.Forward(Tag(:symbol1), 2)) === nothing
 @test strip_id(query(r, :symbol1, 4, ❓)) == (slot=r[3], tag=tag_types.SymbolIntInt(:symbol1, 4, 1))
 @test strip_id(query(r, :symbol1, 4, 5)) == (slot=r[2], tag=tag_types.SymbolIntInt(:symbol1, 4, 5))

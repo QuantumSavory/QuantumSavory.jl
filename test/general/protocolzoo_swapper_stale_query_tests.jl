@@ -11,19 +11,21 @@ using ResumableFunctions
     qlow = net[2][1]
     qhigh = net[2][2]
     bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2.0)
+    left_pair_id = 101
+    right_pair_id = 202
 
     initialize!((net[1][1], qlow), bell)
     initialize!((qhigh, net[3][1]), bell)
-    tag!(net[1][1], EntanglementCounterpart, 2, 1)
-    tag!(qlow, EntanglementCounterpart, 1, 1)
-    tag!(qhigh, EntanglementCounterpart, 3, 1)
-    tag!(net[3][1], EntanglementCounterpart, 2, 2)
+    tag!(net[1][1], EntanglementCounterpart, 2, 1, left_pair_id)
+    tag!(qlow, EntanglementCounterpart, 1, 1, left_pair_id)
+    tag!(qhigh, EntanglementCounterpart, 3, 1, right_pair_id)
+    tag!(net[3][1], EntanglementCounterpart, 2, 2, right_pair_id)
 
     selected_lock_taken = Ref(false)
     selected_tag_deleted = Ref(false)
 
     @resumable function delete_selected_tag(sim)
-        deleted = querydelete!(qlow, EntanglementCounterpart, 1, 1)
+        deleted = querydelete!(qlow, EntanglementCounterpart, 1, 1, left_pair_id)
         selected_tag_deleted[] = !isnothing(deleted)
         @yield timeout(sim, 1.0)
         unlock(qlow)
@@ -53,8 +55,8 @@ using ResumableFunctions
     @test selected_tag_deleted[]
     @test !islocked(qlow)
     @test !islocked(qhigh)
-    @test isnothing(query(qlow, EntanglementCounterpart, 1, 1))
-    @test !isnothing(query(qhigh, EntanglementCounterpart, 3, 1))
-    @test isempty(queryall(qlow, EntanglementHistory, ❓, ❓, ❓, ❓, ❓))
-    @test isempty(queryall(qhigh, EntanglementHistory, ❓, ❓, ❓, ❓, ❓))
+    @test isnothing(query(qlow, EntanglementCounterpart, 1, 1, left_pair_id))
+    @test !isnothing(query(qhigh, EntanglementCounterpart, 3, 1, right_pair_id))
+    @test isempty(queryall(qlow, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓))
+    @test isempty(queryall(qhigh, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓))
 end
