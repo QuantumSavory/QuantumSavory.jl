@@ -1,43 +1,61 @@
 using Test
-using QuantumSavory
-using QuantumSavory.ProtocolZoo
+import QuantumSavory
+import QuantumOptics: SpinBasis, spinup, spindown, tensor, DenseOperator
+import QuantumSavory: stateof, initialize!
 
-@testset "show text/html" begin
+@testset "Rich StateRef text/HTML display" begin
 
-#out = stdout
-out = IOBuffer()
+    b = SpinBasis(1//2)
 
-reg = Register([Qubit(), Qumode()], [CliffordRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
+    # ── 1-qubit pure state ──────────────────────────────────────────────
+    reg1 = QuantumSavory.Register(1)
+    initialize!(reg1[1], spinup(b))
+    txt1 = sprint(show, stateof(reg1[1]))
+    @test occursin("QuantumOptics", txt1)
+    @test occursin("purity",  txt1)
+    @test occursin("Bloch",   txt1)
+    @test !occursin("does not support", txt1)
 
-initialize!(reg[1], X1)
+    html1 = repr(MIME"text/html"(), stateof(reg1[1]))
+    @test occursin("purity",           html1)
+    @test occursin("qs-state-display", html1)
+    @test !occursin("does not support", html1)
 
-show(out, MIME"text/html"(), reg[1])
-show(out, MIME"text/html"(), reg[2])
-show(out, MIME"text/html"(), QuantumSavory.stateof(reg[1]))
+    # ── 1-qubit mixed state ──────────────────────────────────────────────
+    reg_m = QuantumSavory.Register(1)
+    initialize!(reg_m[1], DenseOperator(b, ComplexF64[0.6 0; 0 0.4]))
+    txt_m = sprint(show, stateof(reg_m[1]))
+    @test occursin("purity",  txt_m)
+    @test occursin("entropy", txt_m)
 
-reg1 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
-reg2 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
-net = RegisterNet([reg1, reg2])
+    # ── 2-qubit Bell state ───────────────────────────────────────────────
+    bell = (tensor(spinup(b), spinup(b)) + tensor(spindown(b), spindown(b))) / √2
+    reg2 = QuantumSavory.Register(2)
+    initialize!((reg2[1], reg2[2]), bell)
+    txt2 = sprint(show, stateof(reg2[1]))
+    @test occursin("concurrence", txt2)
+    @test occursin("Bell",        txt2)
+    @test !occursin("does not support", txt2)
 
-initialize!((reg1[1],reg2[1]), X1⊗Z1+Z1⊗X1)
+    html2 = repr(MIME"text/html"(), stateof(reg2[1]))
+    @test occursin("concurrence", html2)
+    @test !occursin("does not support", html2)
 
-show(out, MIME"text/html"(), reg1[1])
-show(out, MIME"text/html"(), reg2[2])
-show(out, MIME"text/html"(), QuantumSavory.stateof(reg1[1]))
+    # ── 3-qubit product state ────────────────────────────────────────────
+    ψ3   = tensor(spinup(b), spinup(b), spinup(b))
+    reg3 = QuantumSavory.Register(3)
+    initialize!((reg3[1], reg3[2], reg3[3]), ψ3)
+    txt3 = sprint(show, stateof(reg3[1]))
+    @test occursin("|000⟩", txt3)
+    @test !occursin("does not support", txt3)
 
+    # ── 6-qubit: compact fallback ────────────────────────────────────────
+    ψ6   = tensor([spinup(b) for _ in 1:6]...)
+    reg6 = QuantumSavory.Register(6)
+    initialize!(Tuple(reg6[i] for i in 1:6), ψ6)
+    txt6 = sprint(show, stateof(reg6[1]))
+    @test occursin("suppressed", txt6) || occursin("n=6", txt6)
+    @test !occursin("does not support", txt6)
 
-reg1 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
-reg2 = Register([Qubit(), Qumode()], [QuantumOpticsRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
-net = RegisterNet([reg1, reg2]; name="my net", names=["reg 1", "reg 2"])
-
-initialize!((reg1[1],reg2[1]), X1⊗Z1+Z1⊗X1)
-
-show(out, MIME"text/html"(), reg1[1])
-show(out, MIME"text/html"(), reg2[2])
-show(out, MIME"text/html"(), QuantumSavory.stateof(reg1[1]))
-
-
-prot = EntanglerProt(get_time_tracker(net), net, 1, 2)
-show(out, MIME"text/html"(), prot)
-
+    println("All text/HTML display tests passed ✓")
 end

@@ -97,3 +97,20 @@ Required changes, in decreasing order of likelihood that they affect you:
 - Establishing plotting and visualization capabilities
 
 ## older versions were not tracked
+
+## Unreleased
+
+### New features
+
+- Rich `show` methods for `StateRef` objects (closes #401):
+  - `text/plain`: Bloch vector (with ASCII sphere projection), purity, von Neumann
+    entropy, density matrix, and top-K basis probabilities for QuantumOpticsBase
+    states; Wootters concurrence and Bell-state fidelity decomposition for two-qubit
+    states; stabilizer generator list for QuantumClifford states.
+  - `text/html`: image-free HTML tables with collapsible density-matrix and
+    correlation sections; no new dependencies.
+  - `image/png` (via `QuantumSavoryMakie`): Bloch sphere figure for one qubit;
+    probability bar chart for two-to-five qubits; stabilizer tableau for
+    QuantumClifford states (unchanged).
+  - States larger than `RICH_DISPLAY_MAX_DENSE_QUBITS` (default 5) fall back to a
+    one-line compact summary with purity and entropy rather than an exponential table.
