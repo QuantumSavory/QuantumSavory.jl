@@ -253,19 +253,18 @@ get_statedata(state::Operator) = state.data
 get_statedata(state::LazyKet) = get_statedata(Ket(state))
 get_statedata(state) = nothing
 
-function state_to_blochcoord(state::AbstractOperator)
-    b = basis(state)
+function blochparams(state::AbstractOperator)
+    nsubsystems(state) != 1 && error("Bloch parameters are only defined for single-qubit states.")
 
+    b = basis(state)
     x = real(tr(state * sigmax(b)))
     y = real(tr(state * sigmay(b)))
     z = real(tr(state * sigmaz(b)))
-
     θ = acos(clamp(z, -1, 1))
     ϕ = atan(y, x)
-
     return (x, y, z), (θ, ϕ)
 end
-state_to_blochcoord(state::StateVector) = state_to_blochcoord(dm(state))
+blochparams(state::StateVector) = blochparams(dm(state))
 
 purity(state::AbstractOperator) = real(tr(state * state))
 purity(state::StateVector) = purity(dm(state))
@@ -459,7 +458,7 @@ function stateshow(io, ::MIME"text/html", state, stateref)
 
     if nsubsystems(state) == 1
         α, β = get_statedata(state)
-        (x, y, z), (θ, ϕ) = state_to_blochcoord(state)
+        (x, y, z), (θ, ϕ) = blochparams(state)
         r = sqrt(x^2 + y^2 + z^2)
 
 
@@ -487,8 +486,8 @@ function stateshow(io, ::MIME"text/html", state, stateref)
         ρB = ptrace(state, 1)
 
         # Bloch coordinates
-        (xA, yA, zA), (θA, ϕA) = state_to_blochcoord(ρA)
-        (xB, yB, zB), (θB, ϕB) = state_to_blochcoord(ρB)
+        (xA, yA, zA), (θA, ϕA) = blochparams(ρA)
+        (xB, yB, zB), (θB, ϕB) = blochparams(ρB)
 
         rA = sqrt(xA^2 + yA^2 + zA^2)
         rB = sqrt(xB^2 + yB^2 + zB^2)

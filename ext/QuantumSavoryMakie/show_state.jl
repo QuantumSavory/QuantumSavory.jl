@@ -27,8 +27,8 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
     set_theme!(theme_latexfonts())
     if nsubsystems(state) == 1
         update_theme!(Theme(figure_padding=0))
-        draw_bloch!(subfig[1,1], state)
-        draw_stateinfo!(subfig[1, 1:2], state)
+        draw1q_bloch!(subfig[1,1], state)
+        draw1q_stateinfo!(subfig[1, 1:2], state)
         colgap!(subfig.layout, 0)
         colsize!(subfig.layout, 1, Relative(0.664))
     elseif nsubsystems(state) == 2

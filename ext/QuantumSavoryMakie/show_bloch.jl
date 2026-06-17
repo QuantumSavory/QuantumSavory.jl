@@ -1,18 +1,6 @@
-function state_to_blochcoord(state::AbstractOperator)
-    b = basis(state)
+using QuantumSavory: blochparams
 
-    x = real(tr(state * sigmax(b)))
-    y = real(tr(state * sigmay(b)))
-    z = real(tr(state * sigmaz(b)))
-
-    θ = acos(clamp(z, -1, 1))
-    ϕ = atan(y, x)
-
-    return (x, y, z), (θ, ϕ)
-end
-state_to_blochcoord(state::StateVector) = state_to_blochcoord(dm(state))
-
-function draw_bloch!(subfig, state::Union{AbstractOperator, StateVector})
+function draw1q_bloch!(subfig, state::Union{AbstractOperator, StateVector})
     ax = Axis3(subfig, aspect=:data, azimuth=deg2rad(30), elevation=deg2rad(30), protrusions=(0,0,0,0), limits=(-1.2, 1.2, -1.2, 1.2, -1.2, 1.2))
     tightlimits!(ax)
     hidedecorations!(ax)
@@ -57,14 +45,12 @@ function draw_bloch!(subfig, state::Union{AbstractOperator, StateVector})
     text!(ax, L"x", position = Point3f(1.2, 0, 0), fontsize=20, align=(:center,:center))
     text!(ax, L"y", position = Point3f(0, 1.2, 0), fontsize=20, align=(:center,:center))
 
-    (x, y, z), (θ, ϕ) = state_to_blochcoord(state)
-
+    (x, y, z), (θ, ϕ) = blochparams(state)
     # draw state vector
     arrows3d!(ax, Point3f(0), Point3f(x, y, z); color=:red, shaftradius=0.01, tiplength=0.08, tipradius=0.05)
     lines!(ax, [Point3f(x, y, 0), Point3f(x, y, z)], linestyle=:dash, color=:gray, alpha=0.5)
     lines!(ax, [Point3f(0), Point3f(x, y, 0)], linestyle=:dash, color=:gray, alpha=0.5)
     scatter!(ax, [Point3f(x, y, 0)]; markersize=5, color=:red, alpha=0.5)
-
     # draw angles θ and ϕ
     ϕ_arc = range(0, atan(y,x), length=50)
     lines!(ax, 0.2.*cos.(ϕ_arc), 0.2.*sin.(ϕ_arc), zeros(length(ϕ_arc)); color=:blue, alpha=0.5)
@@ -73,21 +59,21 @@ function draw_bloch!(subfig, state::Union{AbstractOperator, StateVector})
     lines!(ax, 0.2.*sin.(θcurve).*cos(φ), 0.2.*sin.(θcurve).*sin(φ), 0.2.*cos.(θcurve); color=:green, alpha=0.5)
 end
 
-function draw_statedata(ax, state::Ket)
+function _draw1q_statedata!(ax, state::Ket)
     α, β = state.data
     α = @sprintf("%.3f%+.3fi", real(α), imag(α))
     β = @sprintf("%.3f%+.3fi", real(β), imag(β))
     text!(ax, 0.77, 0.43; text=L"(%$α)|0\rangle", align=(:center, :center))
     text!(ax, 0.77, 0.39; text=L"(%$β)|1\rangle", align=(:center, :center))
 end
-function draw_statedata(ax, state::Bra)
+function _draw1q_statedata!(ax, state::Bra)
     α, β = state.data
     α = @sprintf("%.3f%+.3fi", real(α), imag(α))
     β = @sprintf("%.3f%+.3fi", real(β), imag(β))
     text!(ax, 0.77, 0.43; text=L"\langle 0|(%$α)", align=(:center, :center))
     text!(ax, 0.77, 0.39; text=L"\langle 1|(%$β)", align=(:center, :center))
 end
-function draw_statedata(ax, state::Operator)
+function _draw1q_statedata!(ax, state::Operator)
     α, β, γ, δ = state.data
     α = @sprintf("%.3f%+.3fi", real(α), imag(α))
     β = @sprintf("%.3f%+.3fi", real(β), imag(β))
@@ -98,17 +84,17 @@ function draw_statedata(ax, state::Operator)
     text!(ax, 0.60, 0.41; text="[", align=(:center, :center), fontsize=40, color=:gray)
     text!(ax, 0.94, 0.41; text="]", align=(:center, :center), fontsize=40, color=:gray)
 end
-draw_statedata(state::LazyKet) = draw_statedata(Ket(state))
-draw_statedata(state) = nothing
+_draw1q_statedata!(state::LazyKet) = _draw1q_statedata!(Ket(state))
+_draw1q_statedata!(state) = nothing
 
-function draw_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
+function draw1q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
     ax = Axis(subfig)
     hidedecorations!(ax)
     hidespines!(ax)
     xlims!(ax, 0, 1)
     ylims!(ax, 0, 1)
 
-    (x, y, z), (θ, ϕ) = state_to_blochcoord(state)
+    (x, y, z), (θ, ϕ) = blochparams(state)
     r = sqrt(x^2 + y^2 + z^2)
 
     # Bloch coordinates
@@ -146,7 +132,7 @@ function draw_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
         ),
         align = (:center, :top)
     )
-    draw_statedata(ax, state)
+    _draw1q_statedata!(ax, state)
 
     # State properties
     xlog2x(x) = iszero(x) ? 0.0 : x * log2(x)
