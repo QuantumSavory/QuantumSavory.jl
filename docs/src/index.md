@@ -79,7 +79,7 @@ Below we show some of the results of the How-To guides.
 #### A simulation of a quantum repeater:
 
 ```@raw html
-<video src="howto/firstgenrepeater/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
+<video src="howto/firstgenrepeater_lowlevel/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
 ```
 
 #### A simulation of the generation of a cluster state in color-center memories:

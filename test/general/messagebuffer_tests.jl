@@ -169,7 +169,7 @@ end
     wake_times = Float64[]
 
     @resumable function receiver(sim, mb, wake_times)
-        @yield wait(mb)
+        @yield @test_deprecated wait(mb)
         push!(wake_times, now(sim))
     end
 
@@ -197,6 +197,33 @@ end
     @test rt <: Union{Nothing, NamedTuple{(:src, :tag), Tuple{Union{Nothing, Int}, Tag}}}
     result = querydelete!(mb, :goodbye)
     @test result.tag == Tag(:goodbye)
+end
+
+@testset "messagebuffer head index preserves query and delete semantics" begin
+    reg = Register(1)
+    net = RegisterNet([reg])
+    mb = messagebuffer(reg)
+
+    put!(mb, Tag(:wanted, 1))
+    put!(mb, Tag(:other, 99))
+    put!(mb, Tag(:wanted, 2))
+    put!(mb, Tag(:wanted, 3))
+
+    @test length(mb.buffer_ids_by_head[:wanted]) == 3
+    @test length(mb.buffer_ids_by_head[:other]) == 1
+
+    @test query(mb, :wanted, ❓).tag == Tag(:wanted, 1)
+    @test query(mb, W, 99).tag == Tag(:other, 99)
+    @test query(mb, x -> x == :other, 99).tag == Tag(:other, 99)
+
+    @test querydelete!(mb, :wanted, 2).tag == Tag(:wanted, 2)
+    @test querydelete!(mb, :wanted, 1).tag == Tag(:wanted, 1)
+    @test querydelete!(mb, :wanted, 3).tag == Tag(:wanted, 3)
+
+    @test query(mb, :wanted, ❓) === nothing
+    @test !haskey(mb.buffer_ids_by_head, :wanted)
+    @test query(mb, :other, 99).tag == Tag(:other, 99)
+    @test first(values(mb.buffer_depth_by_id)) == 1
 end
 
 end

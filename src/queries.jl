@@ -22,6 +22,7 @@ function tag!(ref::RegRef, tag)
     id = guid()
     push!(ref.reg.guids, id)
     ref.reg.tag_info[id] = (;tag, slot=ref.idx, time=now(get_time_tracker(ref)))
+    _index_register_tag_id!(ref.reg, ref.idx, id, tag)
     unlock(ref.reg.tag_waiter[])
     return id
 end
@@ -46,6 +47,7 @@ function untag!(ref::RegOrRegRef, id::Integer)
     i = findfirst(==(id), reg.guids)
     isnothing(i) ? throw(QueryError("Attempted to delete a nonexistent tag id", untag!, id)) : deleteat!(reg.guids, i) # TODO make sure there is a clear error message
     to_be_deleted = reg.tag_info[id]
+    _unindex_register_tag_id!(reg, to_be_deleted.slot, id, to_be_deleted.tag)
     delete!(reg.tag_info, id)
     unlock(reg.tag_waiter[])
     return to_be_deleted
@@ -73,6 +75,56 @@ or you can simply use the ASCII alternative [`W`](@ref).
 
 See also: [`query`](@ref), [`tag!`](@ref), [`W`](@ref)"""
 const ❓ = W
+
+function _index_register_tag_id!(reg::Register, slot::Int, id::Int128, tag::Tag)
+    push!(reg.tag_ids_by_slot[slot], id)
+    head = _tag_index_head(tag)
+    isnothing(head) || push!(get!(Vector{Int128}, reg.tag_ids_by_head, head), id)
+    return nothing
+end
+
+function _unindex_register_tag_id!(reg::Register, slot::Int, id::Int128, tag::Tag)
+    slot_ids = reg.tag_ids_by_slot[slot]
+    slot_i = findfirst(==(id), slot_ids)
+    isnothing(slot_i) || deleteat!(slot_ids, slot_i)
+
+    head = _tag_index_head(tag)
+    if !isnothing(head)
+        head_ids = get(reg.tag_ids_by_head, head, nothing)
+        if !isnothing(head_ids)
+            head_i = findfirst(==(id), head_ids)
+            isnothing(head_i) || deleteat!(head_ids, head_i)
+            isempty(head_ids) && delete!(reg.tag_ids_by_head, head)
+        end
+    end
+    return nothing
+end
+
+function _query_candidate_ids(reg::Register, ref::Union{Nothing,RegRef}, firstarg)
+    slot_ids = isnothing(ref) ? nothing : reg.tag_ids_by_slot[ref.idx]
+    head = _query_index_head(firstarg)
+    head_ids = isnothing(head) ? nothing : get(reg.tag_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
+    if isnothing(slot_ids)
+        return isnothing(head_ids) ? reg.guids : head_ids
+    elseif isnothing(head_ids)
+        return slot_ids
+    else
+        return length(slot_ids) <= length(head_ids) ? slot_ids : head_ids
+    end
+end
+
+function _query_candidate_ids(reg::Register, ref::Union{Nothing,RegRef}, query::Tag)
+    slot_ids = isnothing(ref) ? nothing : reg.tag_ids_by_slot[ref.idx]
+    head = _tag_index_head(query)
+    head_ids = isnothing(head) ? nothing : get(reg.tag_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
+    if isnothing(slot_ids)
+        return isnothing(head_ids) ? reg.guids : head_ids
+    elseif isnothing(head_ids)
+        return slot_ids
+    else
+        return length(slot_ids) <= length(head_ids) ? slot_ids : head_ids
+    end
+end
 
 
 """
@@ -181,13 +233,35 @@ $TYPEDSIGNATURES
 You are advised to actually use [`querydelete!`](@ref), not `query` when working with classical message buffers.
 """
 function query(mb::MessageBuffer, queryargs::Vararg{QueryTypes,N}) where {N}
-    buffer = mb.buffer
-    @inbounds for depth in eachindex(buffer)
-        entry = buffer[depth]
+    ids = _messagebuffer_query_ids(mb, first(queryargs))
+    @inbounds for id in ids
+        depth = mb.buffer_depth_by_id[id]
+        entry = mb.buffer[depth]
         tag = entry.tag
         query_good(tag, queryargs...) && return (;depth, src=entry.src, tag)
     end
     return nothing
+end
+
+function _messagebuffer_query_ids(mb::MessageBuffer, firstarg)
+    head = _query_index_head(firstarg)
+    return isnothing(head) ? mb.buffer_ids : get(mb.buffer_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
+end
+
+function _messagebuffer_query_ids(mb::MessageBuffer, query::Tag)
+    head = _tag_index_head(query)
+    return isnothing(head) ? mb.buffer_ids : get(mb.buffer_ids_by_head, head, EMPTY_TAG_ID_VECTOR)
+end
+
+function _pop_messagebuffer_at!(mb::MessageBuffer, depth::Int)
+    entry = popat!(mb.buffer, depth)
+    id = popat!(mb.buffer_ids, depth)
+    delete!(mb.buffer_depth_by_id, id)
+    _unindex_messagebuffer_id!(mb, id, entry.tag)
+    @inbounds for i in depth:length(mb.buffer_ids)
+        mb.buffer_depth_by_id[mb.buffer_ids[i]] = i
+    end
+    return entry
 end
 
 for i in 1:10 # Vararg{Union{...}, N} does not specialize well, so we are explicitly making a method for each number of arguments
@@ -199,10 +273,11 @@ for i in 1:10 # Vararg{Union{...}, N} does not specialize well, so we are explic
         ref = isa(reg, RegRef) ? reg : nothing
         reg = get_register(reg)
         res = QueryOnRegResult[]
-        l = length(reg.guids)
+        ids = _query_candidate_ids(reg, ref, $(args[1]))
+        l = length(ids)
         indices = filoB ? (l:-1:1) : (1:l)
         for i in indices
-            i = reg.guids[i]
+            i = ids[i]
             (;tag, time) = reg.tag_info[i]
             slot = reg[reg.tag_info[i].slot]
             if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot))
@@ -332,9 +407,10 @@ t=3.0: query returns SymbolIntInt(:second_tag, 123, 456)::Tag received from node
 ```
 """
 function querydelete!(mb::MessageBuffer, queryargs::Vararg{QueryTypes,N}) where {N}
-    buffer = mb.buffer
-    @inbounds for depth in eachindex(buffer)
-        query_good(buffer[depth].tag, queryargs...) && return popat!(buffer, depth)
+    ids = _messagebuffer_query_ids(mb, first(queryargs))
+    @inbounds for id in ids
+        depth = mb.buffer_depth_by_id[id]
+        query_good(mb.buffer[depth].tag, queryargs...) && return _pop_messagebuffer_at!(mb, depth)
     end
     return nothing
 end
@@ -379,10 +455,11 @@ function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, query::Tag; locked:
     ref = isa(reg, RegRef) ? reg : nothing
     reg = get_register(reg)
     res = QueryOnRegResult[]
-    l = length(reg.guids)
+    ids = _query_candidate_ids(reg, ref, query)
+    l = length(ids)
     indices = filoB ? (l:-1:1) : (1:l)
     for i in indices
-        i = reg.guids[i]
+        i = ids[i]
         (;tag, time) = reg.tag_info[i]
         slot = reg[reg.tag_info[i].slot]
         if _nothingor(ref, slot) && _nothingor(locked, islocked(slot)) && _nothingor(assigned, isassigned(slot)) && tag==query
@@ -392,18 +469,20 @@ function _query(reg::RegOrRegRef, ::Val{allB}, ::Val{filoB}, query::Tag; locked:
     allB ? res : nothing
 end
 function query(mb::MessageBuffer, query::Tag)
-    buffer = mb.buffer
-    @inbounds for depth in eachindex(buffer)
-        entry = buffer[depth]
+    ids = _messagebuffer_query_ids(mb, query)
+    @inbounds for id in ids
+        depth = mb.buffer_depth_by_id[id]
+        entry = mb.buffer[depth]
         entry.tag == query && return (;depth, src=entry.src, tag=entry.tag)
     end
     return nothing
 end
 
 function querydelete!(mb::MessageBuffer, query::Tag)
-    buffer = mb.buffer
-    @inbounds for depth in eachindex(buffer)
-        buffer[depth].tag == query && return popat!(buffer, depth)
+    ids = _messagebuffer_query_ids(mb, query)
+    @inbounds for id in ids
+        depth = mb.buffer_depth_by_id[id]
+        mb.buffer[depth].tag == query && return _pop_messagebuffer_at!(mb, depth)
     end
     return nothing
 end
@@ -466,7 +545,7 @@ end
 
 function isolderthan(slot::RegRef, age::Float64)
     if !isassigned(slot) throw(NotAssignedError("Slot must be assigned with a quantum state before checking coherence.", isolderthan)) end
-    id = query(slot, QuantumSavory.ProtocolZoo.EntanglementCounterpart, ❓, ❓).id
+    id = query(slot, QuantumSavory.ProtocolZoo.EntanglementCounterpart, ❓, ❓, ❓).id
     slot_time  = slot.reg.tag_info[id][3]
     return (now(get_time_tracker(slot))) - slot_time > age
 end

@@ -7,7 +7,7 @@ using ConcurrentSim
 
 # Useful for interactive work
 # Enables automatic re-compilation of modified codes
-isinteractive() && @eval using Revise
+using Revise
 
 # The workhorse for the simulation
 using QuantumSavory
@@ -15,7 +15,6 @@ using QuantumSavory.StatesZoo
 
 # Predefined useful circuits
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1
-using QuantumSavory.ProtocolZoo: EntanglerProt, SwapperProt
 
 ##
 # Create a handful of qubit registers in a chain
@@ -49,6 +48,12 @@ function simulation_setup(
     # The scheduler datastructure for the discrete event simulation
     sim = get_time_tracker(network)
 
+    # Add a register datastructures and event locks to each node.
+    for v in vertices(network)
+        # Create an array specifying whether a qubit is entangled with another qubit
+        network[v,:enttrackers] = Any[nothing for i in 1:sizes[v]]
+    end
+
     sim, network
 end
 
@@ -56,22 +61,105 @@ end
 # The Entangler
 ##
 
+const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
+const perfect_pair_dm = SProjector(perfect_pair)
+const mixed_dm = MixedState(perfect_pair_dm)
 noisy_pair_func(F) = DepolarizedBellPair(;F)
 # Here is how you can do it manually if you want to have a more general state provided by QuantumSymbolics.
 # Check out also the StatesZoo as a source of other predefined types of noisy Bell pairs:
-# const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
-# const perfect_pair_dm = SProjector(perfect_pair)
-# const mixed_dm = MixedState(perfect_pair_dm)
 # noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
-
 const XX = X⊗X
 const ZZ = Z⊗Z
 const YY = Y⊗Y
+
+@resumable function entangler(
+    sim::Environment,   # The scheduler for all simulation events
+    network,            # The graph of quantum nodes
+    nodea, nodeb,       # The two nodes which we will be entangling
+    noisy_pair,         # A raw entangled pair
+    entangler_wait_time,# The wait time in case all qubits are "busy"
+    entangler_busy_time # How long it takes to establish entanglement
+    )
+    while true
+        ia = findfreequbit(network, nodea)
+        ib = findfreequbit(network, nodeb)
+        if isnothing(ia) || isnothing(ib)
+            @yield timeout(sim, entangler_wait_time)
+            continue
+        end
+        slota = network[nodea,ia]
+        slotb = network[nodeb,ib]
+        @yield request(slota) & request(slotb)
+        registera = network[nodea]
+        registerb = network[nodeb]
+        @yield timeout(sim, entangler_busy_time)
+        initialize!((registera[ia],registerb[ib]),noisy_pair; time=now(sim))
+        network[nodea,:enttrackers][ia] = (node=nodeb,slot=ib)
+        network[nodeb,:enttrackers][ib] = (node=nodea,slot=ia)
+        @simlog sim "entangled node $(nodea):$(ia) and node $(nodeb):$(ib)"
+        unlock(slota)
+        unlock(slotb)
+    end
+end
+
+"""Find an uninitialized unlocked qubit on a given node"""
+function findfreequbit(network, node)
+    register = network[node]
+    regsize = nsubsystems(register)
+    findfirst(i->!isassigned(register,i) && !islocked(register[i]), 1:regsize)
+end
 
 ##
 # The Swapper
 ##
 
+@resumable function swapper(
+    sim::Environment, # The scheduler for all simulation events
+    network,          # The graph of quantum nodes
+    node,             # The node on which the swapper works
+    swapper_wait_time,# The wait time in case there are no available qubits for swapping
+    swapper_busy_time # How long it takes to perform the swap
+    )
+    while true
+        qubit_pair = findswapablequbits(network,node)
+        if isnothing(qubit_pair)
+            @yield timeout(sim, swapper_wait_time)
+            continue
+        end
+        q1, q2 = qubit_pair
+        @yield request(network[node][q1]) & request(network[node][q2])
+        reg = network[node]
+        @yield timeout(sim, swapper_busy_time)
+        node1 = network[node,:enttrackers][q1]
+        reg1 = network[node1.node]
+        node2 = network[node,:enttrackers][q2]
+        reg2 = network[node2.node]
+        uptotime!((reg[q1], reg1[node1.slot], reg[q2], reg2[node2.slot]), now(sim))
+        swapcircuit(reg[q1], reg1[node1.slot], reg[q2], reg2[node2.slot])
+        network[node1.node,:enttrackers][node1.slot] = node2
+        network[node2.node,:enttrackers][node2.slot] = node1
+        network[node,:enttrackers][q1] = nothing
+        network[node,:enttrackers][q2] = nothing
+        @simlog sim "swap at $(node):$(q1)&$(q2) connecting $(node1) and $(node2)"
+        unlock(network[node][q1])
+        unlock(network[node][q2])
+    end
+end
+
+swapcircuit = EntanglementSwap()
+
+function findswapablequbits(network,node)
+    enttrackers = network[node,:enttrackers]
+    left_nodes  = [(i=i,n...) for (i,n) in enumerate(enttrackers)
+                   if !isnothing(n) && n.node<node && !islocked(network[node][i])]
+    isempty(left_nodes)  && return nothing
+    right_nodes = [(i=i,n...) for (i,n) in enumerate(enttrackers)
+                   if !isnothing(n) && n.node>node && !islocked(network[node][i])]
+    isempty(right_nodes) && return nothing
+    _, farthest_left  = findmin(n->n.node, left_nodes)
+    _, farthest_right = findmax(n->n.node, right_nodes)
+    return left_nodes[farthest_left].i, right_nodes[farthest_right].i
+end
 
 ##
 # The Purifier

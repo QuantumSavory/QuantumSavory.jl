@@ -1,4 +1,3 @@
-using Revise
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory
@@ -39,7 +38,7 @@ end
     end
     @process switch()
     run(sim, 30)
-    res = query(net[2], EntanglementCounterpart, ❓, ❓)
+    res = query(net[2], EntanglementCounterpart, ❓, ❓, ❓)
 
     @test abs(observable([res.slot, net[3][res.tag[3]]], X⊗X)) ≈ 1.0 # we are not running an EntanglementTracker so Pauli corrections are not applied
     @test abs(observable([res.slot, net[3][res.tag[3]]], Z⊗Z)) ≈ 1.0 # we are not running an EntanglementTracker so Pauli corrections are not applied
