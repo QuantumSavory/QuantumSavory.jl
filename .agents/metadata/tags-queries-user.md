@@ -66,6 +66,8 @@ When you already know the match you care about, prefer `query_wait` or
 
 - Use typed tags when several protocols need to share a stable schema.
 - Use plain symbolic tags for simple stage markers or one-off control flow.
+- Users can define custom tags freely; use `ProtocolZoo` standard tags when a
+  custom protocol should interoperate with existing zoo protocols.
 - Use `locked=` and `assigned=` filters when resource availability matters, especially in networking protocols.
 - Use `querydelete!` or `querydelete_wait!` when the tag or message is consumable state.
 - Prefer waiting helpers over manual `while true` polling loops.
@@ -85,6 +87,7 @@ When you already know the match you care about, prefer `query_wait` or
 
 - `docs/src/metadata_plane.md`
 - `docs/src/tag_query.md`
+- `docs/src/standard_protocol_tags.md`
 - `docs/src/classical_messaging.md`
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/howto/repeatergrid/repeatergrid.md`
