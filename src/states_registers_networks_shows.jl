@@ -1,6 +1,6 @@
 function Base.show(io::IO, s::StateRef)
     if get(io, :compact, false) | haskey(io, :typeinfo)
-        print(io, "State $(typeof(s.state[]).name.module) of size $(nsubsystems(s.state[]))")
+        print(io, "State $(nameof(typeof(s.state[]))) of size $(nsubsystems(s.state[]))")
     else
         print(io, "State containing $(nsubsystems(s.state[])) subsystems in $(typeof(s.state[]).name.module) implementation")
         print(io, "\n  In registers:")
@@ -83,22 +83,147 @@ function namestr(reg::Register; useobjectid=true)
     end
 end
 
-function Base.show(io::IO, m::MIME"text/html", r::RegRef)
-    print(io,"""
+# function Base.show(io::IO, m::MIME"text/html", r::RegRef)
+#     print(io,"""
+#     <div class="quantumsavory_show quantumsavory_regref">
+#     """)
+#     isnothing(r.reg.netparent[]) || print(io,"""
+#     <span class="quantumsavory_regref_netname">$(namestr(r.reg.netparent[]))</span>
+#     <span class="quantumsavory_regref_regindex">$(r.reg.netindex[])</span>
+#     <span class="quantumsavory_regref_name">$(namestr(r.reg))</span>
+#     """)
+#     print(io,"""
+#     <span class="quantumsavory_regref_slotindex">$(r.idx)</span>
+#     </div>
+#     """)
+# end
+function Base.show(io::IO, ::MIME"text/html", r::RegRef)
+    regstr = namestr(parent(r))
+
+    print(io, """
+    <style>
+    .quantumsavory_regref {
+        font-family: "STIX Two Text", "Cambria Math", serif;
+        min-width: 250px;
+        max-width: 400px;
+        line-height: 1.35;
+        color: #222;
+    }
+
+    .quantumsavory_regref_heading {
+        font-weight: 700;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.2em;
+        margin-bottom: 0.5em;
+    }
+
+    .quantumsavory_regref_table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .quantumsavory_regref_table td {
+        padding: 0.15em 0.4em;
+    }
+
+    .quantumsavory_regref_table td:first-child {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .quantumsavory_regref_slotindex {
+        color: #2b6cb0;
+        font-weight: 700;
+    }
+
+    .quantumsavory_regref_regname {
+        font-family: "JuliaMono", monospace;
+    }
+
+    .quantumsavory_regref_content {
+        margin-top: 0.7em;
+        padding: 0.5em;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        background: #fafafa;
+    }
+
+    .quantumsavory_regref_stateindex {
+        color: #805ad5;
+        font-family: "JuliaMono", monospace;
+    }
+    </style>
+
     <div class="quantumsavory_show quantumsavory_regref">
+
+        <div class="quantumsavory_regref_heading">
+            Register Reference
+        </div>
+
+        <table class="quantumsavory_regref_table">
+            <tr>
+                <td>Register</td>
+                <td class="quantumsavory_regref_regname">$regstr</td>
+            </tr>
+            <tr>
+                <td>Slot</td>
+                <td>
+                    <span class="quantumsavory_regref_slotindex">$(r.idx)</span>
+                    / $(length(r.reg.traits))
+                </td>
+            </tr>
     """)
-    isnothing(r.reg.netparent[]) || print(io,"""
-    <span class="quantumsavory_regref_netname">$(namestr(r.reg.netparent[]))</span>
-    <span class="quantumsavory_regref_regindex">$(r.reg.netindex[])</span>
-    <span class="quantumsavory_regref_name">$(namestr(r.reg))</span>
+
+    if !isnothing(r.reg.netparent[])
+        print(io, """
+            <tr>
+                <td>Network</td>
+                <td>$(namestr(r.reg.netparent[]))</td>
+            </tr>
+            <tr>
+                <td>Net Index</td>
+                <td>$(r.reg.netindex[])</td>
+            </tr>
+        """)
+    end
+
+    print(io, "</table>")
+
+    i, s = r.reg.stateindices[r.idx], r.reg.staterefs[r.idx]
+
+    print(io, """
+        <div class="quantumsavory_regref_heading" style="margin-top:1em">
+            Content
+        </div>
     """)
-    print(io,"""
-    <span class="quantumsavory_regref_slotindex">$(r.idx)</span>
-    </div>
-    """)
+
+    if isnothing(s)
+        print(io, """
+        <div class="quantumsavory_regref_content">
+            <i>empty</i>
+        </div>
+        """)
+    else
+        print(io, """
+        <div class="quantumsavory_regref_content">
+            <span class="quantumsavory_regref_stateindex">$i</span>
+            &nbsp;@&nbsp;
+        """)
+
+        show(IOContext(io, :compact => true), MIME"text/html"(), s)
+
+        print(io, "</div>")
+    end
+
+    print(io, "</div>")
 end
 
 function Base.show(io::IO, m::MIME"text/html", s::StateRef)
+    if get(io, :compact, false) | haskey(io, :typeinfo)
+        return show(io, s)
+        # print(io, "State $(typeof(s.state[]).name.module) of size $(nsubsystems(s.state[]))")
+        # return
+    end
     print(io,"""
     <div class="quantumsavory_show quantumsavory_stateref">
     <div class="quantumsavory_stateref_regrefs">
@@ -142,69 +267,98 @@ function state_to_blochcoord(state::AbstractOperator)
 end
 state_to_blochcoord(state::StateVector) = state_to_blochcoord(dm(state))
 
-format_complex(z) = @sprintf("%.3f%+.3fi", real(z), imag(z))
-function html_statedata(state::Ket)
-    α, β = state.data
-    α = @sprintf("%.3f%+.3fi", real(α), imag(α))
-    β = @sprintf("%.3f%+.3fi", real(β), imag(β))
+purity(state::AbstractOperator) = real(tr(state * state))
+purity(state::StateVector) = purity(dm(state))
 
-    """
-    <div class="quantumsavory_state">
-        <span class="quantumsavory_coeff">$α</span>
-        <span class="quantumsavory_basis0">|0⟩</span>
-        +
-        <span class="quantumsavory_coeff">$β</span>
-        <span class="quantumsavory_basis1">|1⟩</span>
-    </div>
-    """
+
+format_complex(z) = @sprintf("%.3f%+.3fi", real(z), imag(z))
+
+function html_statedata(state::Ket)
+    data = state.data
+
+    if length(data) == 2
+        α, β = format_complex.(data)
+
+        return """
+        <div class="quantumsavory_state">
+            <span class="quantumsavory_coeff">$α</span>
+            <span class="quantumsavory_basis0">|0⟩</span>
+            +
+            <span class="quantumsavory_coeff">$β</span>
+            <span class="quantumsavory_basis1">|1⟩</span>
+        </div>
+        """
+    elseif length(data) == 4
+        α, β, γ, δ = format_complex.(data)
+
+        return """
+        <div class="quantumsavory_state">
+            <span class="quantumsavory_coeff">$α</span>|00⟩ +
+            <span class="quantumsavory_coeff">$β</span>|01⟩ +
+            <span class="quantumsavory_coeff">$γ</span>|10⟩ +
+            <span class="quantumsavory_coeff">$δ</span>|11⟩
+        </div>
+        """
+    end
+    ""
 end
 function html_statedata(state::Bra)
-    α, β = state.data
-    α = format_complex(α)
-    β = format_complex(β)
+    data = state.data
 
-    """
-    <div class="quantumsavory_state">
-        <span class="quantumsavory_basis0">⟨0|</span>
-        <span class="quantumsavory_coeff">$α</span>
-        +
-        <span class="quantumsavory_basis1">⟨1|</span>
-        <span class="quantumsavory_coeff">$β</span>
-    </div>
-    """
+    if length(data) == 2
+        α, β = format_complex.(data)
+
+        return """
+        <div class="quantumsavory_state">
+            <span class="quantumsavory_basis0">⟨0|</span>
+            <span class="quantumsavory_coeff">$α</span>
+            +
+            <span class="quantumsavory_basis1">⟨1|</span>
+            <span class="quantumsavory_coeff">$β</span>
+        </div>
+        """
+    elseif length(data) == 4
+        α, β, γ, δ = format_complex.(data)
+
+        return """
+        <div class="quantumsavory_state">
+            ⟨00|<span class="quantumsavory_coeff">$α</span> +
+            ⟨01|<span class="quantumsavory_coeff">$β</span> +
+            ⟨10|<span class="quantumsavory_coeff">$γ</span> +
+            ⟨11|<span class="quantumsavory_coeff">$δ</span>
+        </div>
+        """
+    end
+    ""
 end
 function html_statedata(state::Operator)
-    α, β, γ, δ = state.data
+    data = state.data
+    rows = String[]
+    for i in axes(data, 1)
+        cells = join(
+            ("<td>$(format_complex(data[i,j]))</td>"
+             for j in axes(data,2)),
+            ""
+        )
 
-    α = format_complex(α)
-    β = format_complex(β)
-    γ = format_complex(γ)
-    δ = format_complex(δ)
-
+        push!(rows, "<tr>$cells</tr>")
+    end
     """
     <table class="quantumsavory_densitymatrix">
-        <tr>
-            <td>$α</td>
-            <td>$β</td>
-        </tr>
-        <tr>
-            <td>$γ</td>
-            <td>$δ</td>
-        </tr>
+        $(join(rows, "\n"))
     </table>
     """
 end
-html_statedata(state::LazyKet) = html_statedata(Ket(state))
-html_statedata(state) = ""
+
+function html_basis(state)
+    if nsubsystems(state) <= 2
+        return "Basis: $(basis(state))"
+    end
+    return "NSubsystems: $(nsubsystems(state))"
+end
 
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""
 function stateshow(io, ::MIME"text/html", state, stateref)
-    α, β = get_statedata(state)
-    (x, y, z), (θ, ϕ) = state_to_blochcoord(state)
-    r = sqrt(x^2 + y^2 + z^2)
-
-    xlog2x(x) = iszero(x) ? 0.0 : x * log2(x)
-
     print(io, """
 <style>
     .quantumsavory_qubit {
@@ -291,16 +445,25 @@ function stateshow(io, ::MIME"text/html", state, stateref)
 <div class="quantumsavory_qubit">
     <div class="quantumsavory_section">
         <div class="quantumsavory_heading">Quantum State</div>
-            $(html_statedata(state))
+        $(html_statedata(state))
 
-            <div class="quantumsavory_meta">
-                Type:
-                <span class="quantumsavory_typename">$(nameof(typeof(state)))</span>
-                <br>
-                Basis: $(basis(state))
-            </div>
+        <div class="quantumsavory_meta">
+            Type:
+            <span class="quantumsavory_typename">$(nameof(typeof(state)))</span>
+            <br>
+            $(html_basis(state))
         </div>
+    </div>
+    """)
+    xlog2x(x) = iszero(x) ? 0.0 : x * log2(x)
 
+    if nsubsystems(state) == 1
+        α, β = get_statedata(state)
+        (x, y, z), (θ, ϕ) = state_to_blochcoord(state)
+        r = sqrt(x^2 + y^2 + z^2)
+
+
+        print(io, """
     <div class="quantumsavory_section">
         <div class="quantumsavory_heading">Bloch Coordinates</div>
 
@@ -318,15 +481,118 @@ function stateshow(io, ::MIME"text/html", state, stateref)
             </table>
         </div>
     </div>
+        """)
+    elseif nsubsystems(state) == 2
+        ρA = ptrace(state, 2)
+        ρB = ptrace(state, 1)
 
+        # Bloch coordinates
+        (xA, yA, zA), (θA, ϕA) = state_to_blochcoord(ρA)
+        (xB, yB, zB), (θB, ϕB) = state_to_blochcoord(ρB)
+
+        rA = sqrt(xA^2 + yA^2 + zA^2)
+        rB = sqrt(xB^2 + yB^2 + zB^2)
+
+        # Pauli operators
+        b = SpinBasis(1//2)
+        X = sigmax(b)
+        Y = sigmay(b)
+        Z = sigmaz(b)
+
+        if state isa Ket
+            state = dm(state)
+        end
+
+        # Correlation matrix
+        xx = real(tr(state * tensor(X, X)))
+        xy = real(tr(state * tensor(X, Y)))
+        xz = real(tr(state * tensor(X, Z)))
+
+        yx = real(tr(state * tensor(Y, X)))
+        yy = real(tr(state * tensor(Y, Y)))
+        yz = real(tr(state * tensor(Y, Z)))
+
+        zx = real(tr(state * tensor(Z, X)))
+        zy = real(tr(state * tensor(Z, Y)))
+        zz = real(tr(state * tensor(Z, Z)))
+
+        print(io, """
+    <div class="quantumsavory_section">
+        <div class="quantumsavory_heading">Reduced States</div>
+        <div class="quantumsavory_grid">
+            <table class="quantumsavory_table">
+                <tr><td colspan="2"><b>Qubit A</b></td></tr>
+                <tr><td>⟨X⟩</td><td>$(@sprintf("% .3f", xA))</td></tr>
+                <tr><td>⟨Y⟩</td><td>$(@sprintf("% .3f", yA))</td></tr>
+                <tr><td>⟨Z⟩</td><td>$(@sprintf("% .3f", zA))</td></tr>
+                <tr><td>θ</td><td>$(@sprintf("%.1f", rad2deg(θA)))°</td></tr>
+                <tr><td>ϕ</td><td>$(@sprintf("%.1f", rad2deg(ϕA)))°</td></tr>
+                <tr><td>|r|</td><td>$(@sprintf("%.3f", rA))</td></tr>
+            </table>
+            <table class="quantumsavory_table">
+                <tr><td colspan="2"><b>Qubit B</b></td></tr>
+                <tr><td>⟨X⟩</td><td>$(@sprintf("% .3f", xB))</td></tr>
+                <tr><td>⟨Y⟩</td><td>$(@sprintf("% .3f", yB))</td></tr>
+                <tr><td>⟨Z⟩</td><td>$(@sprintf("% .3f", zB))</td></tr>
+                <tr><td>θ</td><td>$(@sprintf("%.1f", rad2deg(θB)))°</td></tr>
+                <tr><td>ϕ</td><td>$(@sprintf("%.1f", rad2deg(ϕB)))°</td></tr>
+                <tr><td>|r|</td><td>$(@sprintf("%.3f", rB))</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="quantumsavory_section">
+        <div class="quantumsavory_heading">Correlations</div>
+        <table class="quantumsavory_densitymatrix">
+            <tr>
+                <td>⊗</td>
+                <td><b>X</b></td>
+                <td><b>Y</b></td>
+                <td><b>Z</b></td>
+            </tr>
+            <tr>
+                <td><b>X</b></td>
+                <td>$(@sprintf("% .3f", xx))</td>
+                <td>$(@sprintf("% .3f", xy))</td>
+                <td>$(@sprintf("% .3f", xz))</td>
+            </tr>
+            <tr>
+                <td><b>Y</b></td>
+                <td>$(@sprintf("% .3f", yx))</td>
+                <td>$(@sprintf("% .3f", yy))</td>
+                <td>$(@sprintf("% .3f", yz))</td>
+            </tr>
+            <tr>
+                <td><b>Z</b></td>
+                <td>$(@sprintf("% .3f", zx))</td>
+                <td>$(@sprintf("% .3f", zy))</td>
+                <td>$(@sprintf("% .3f", zz))</td>
+            </tr>
+        </table>
+    </div>
+        """)
+    elseif 3 <= nsubsystems(state) <= 5
+    
+    elseif nsubsystems(state) > 5
+        topk = get(io, :topk, 10)
+        print(io, """
+    <div class="quantumsavory_section">
+        <div class="quantumsavory_heading">Top $topk amplitudes</div>
+    </div>
+        """)
+    else
+        return print(io, "state of type $(typeof(state)) with $(nsubsystems(state)) subsystems does not support rich visualization")
+    end
+    
+    print(io, """
     <div class="quantumsavory_section">
         <div class="quantumsavory_heading">State Properties</div>
         <div class="quantumsavory_properties">
-            Purity: <b>$(@sprintf("%.3f", (1+r^2)/2))</b>
+            Purity: <b>$(@sprintf("%.3f", purity(state)))</b>
             <br>
-            Entropy: <b>$(@sprintf("%.3f", -xlog2x((1+r)/2) - xlog2x((1-r)/2)))</b>
+            Entropy: <b>$(@sprintf("%.3f", entropy_vn(state)/log(2)))</b>
         </div>
     </div>
 </div>
-""")
+        """)
 end
