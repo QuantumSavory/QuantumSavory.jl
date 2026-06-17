@@ -229,6 +229,13 @@ querydelete!(messagebuffer(net, switch_node), SwitchRequest, W, W)
 QTCP tags are subsystem-specific control-plane messages. They are standard
 within the QTCP controller stack and are useful when customizing QTCP behavior.
 
+![QTCP protocol tags and controller interactions](assets/qtcp_protocols.png)
+
+The figure summarizes the QTCP controller API: applications submit `Flow`
+requests to end-node controllers, end nodes create and acknowledge `QDatagram`
+messages, network-node controllers request hop-by-hop link resources, and link
+controllers answer with the link-level reply tags consumed by the higher layers.
+
 ### Flow Requests And Endpoints
 
 ```julia
