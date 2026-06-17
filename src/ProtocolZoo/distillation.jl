@@ -36,9 +36,10 @@ $TYPEDEF
 
 Classical message exchanged between the two parties of [`BBPSSWProt`](@ref)
 carrying the outcome of one distillation round. It is used as a `Tag` token
-(`Tag(BBPSSWMessage, sender_node, success_bit)`) so that neither side commits
-the per-pair bookkeeping before the classical-channel delay between the nodes
-has elapsed.
+(`Tag(BBPSSWMessage, sender_node, target_pair_id, sacrificed_pair_id, success_bit)`)
+so that neither side commits the per-pair bookkeeping before the classical-channel
+delay between the nodes has elapsed, and stale messages from previous rounds
+cannot match a different pair.
 """
 struct BBPSSWMessage end
 
@@ -83,6 +84,8 @@ See also: [`Purify2to1`](@ref)
     retry_lock_time::Union{Nothing, Float64} = nothing
     """fixed "busy time" duration immediately before starting the next distillation round"""
     local_busy_time::Union{Float64, Nothing} = nothing
+    """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
+    max_delete_per_slot::Union{Int,Nothing} = 3
 end
 
 """
@@ -114,6 +117,14 @@ Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) 
 """
 BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 
+permits_virtual_edge(::BBPSSWProt) = true
+
+function _mark_bbpssw_delete!(slot::RegRef, local_node::Int, remote_node::Int, remote_slot::Int, pair_id::EntanglementID, max_delete_per_slot::Union{Int,Nothing})
+    tag!(slot, EntanglementDelete, pair_id, local_node, slot.idx, remote_node, remote_slot)
+    _enforce_delete_cap!(slot, local_node, max_delete_per_slot)
+    return nothing
+end
+
 @resumable function(prot::BBPSSWProt)()
     mbB = messagebuffer(prot.net, prot.nodeB)
 
@@ -140,6 +151,8 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
         q2 = distilled_pair[2].slot
         q3 = sacrificed_pair[1].slot
         q4 = sacrificed_pair[2].slot
+        target_pair_id = distilled_pair[1].tag[4]
+        sacrificed_pair_id = sacrificed_pair[1].tag[4]
 
         @yield lock(q1) & lock(q2) & lock(q3) & lock(q4)  # this should not really need a yield thanks to `finddistillablequbits` which queries only for unlocked qubits, but it is better to be defensive
 
@@ -147,10 +160,10 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
         # tagged entanglement; re-query under the locks to confirm the
         # reciprocal tags are still present and to capture fresh ids that
         # are safe to pass to `untag!` later in the round.
-        fresh1 = query(q1, distilled_pair[1].tag;  assigned=true)
-        fresh2 = query(q2, distilled_pair[2].tag;  assigned=true)
-        fresh3 = query(q3, sacrificed_pair[1].tag; assigned=true)
-        fresh4 = query(q4, sacrificed_pair[2].tag; assigned=true)
+        fresh1 = query(q1, EntanglementCounterpart, prot.nodeB, q2.idx, target_pair_id; assigned=true)
+        fresh2 = query(q2, EntanglementCounterpart, prot.nodeA, q1.idx, target_pair_id; assigned=true)
+        fresh3 = query(q3, EntanglementCounterpart, prot.nodeB, q4.idx, sacrificed_pair_id; assigned=true)
+        fresh4 = query(q4, EntanglementCounterpart, prot.nodeA, q3.idx, sacrificed_pair_id; assigned=true)
         if isnothing(fresh1) || isnothing(fresh2) || isnothing(fresh3) || isnothing(fresh4)
             unlock(q1); unlock(q2); unlock(q3); unlock(q4)
             continue
@@ -168,14 +181,16 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
         # let's untag the sacrificed qubits
         untag!(q3, id3)
         untag!(q4, id4)
+        _mark_bbpssw_delete!(q3, prot.nodeA, prot.nodeB, q4.idx, sacrificed_pair_id, prot.max_delete_per_slot)
+        _mark_bbpssw_delete!(q4, prot.nodeB, prot.nodeA, q3.idx, sacrificed_pair_id, prot.max_delete_per_slot)
 
         # Communicate the outcome from nodeA to nodeB over the classical
         # channel; the per-pair bookkeeping below only commits once nodeB
         # has received the message, which captures the channel delay.
-        outcome_msg = Tag(BBPSSWMessage, prot.nodeA, success ? 1 : 0)
+        outcome_msg = Tag(BBPSSWMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, success ? 1 : 0)
         put!(channel(prot.net, prot.nodeA => prot.nodeB; permit_forward=true), outcome_msg)
         @debug "BBPSSWProt @$(prot.nodeA)→$(prot.nodeB) round $(round): outcome=$(success) sent at $(now(prot.sim))"
-        @yield querydelete_wait!(mbB, BBPSSWMessage, prot.nodeA, ❓)
+        @yield querydelete_wait!(mbB, BBPSSWMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, ❓)
 
         if success
             # Mark distilled qubits with the configured tag (if any)
@@ -195,6 +210,8 @@ BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get
             # untag distilled qubits if distillation failed
             untag!(q1, id1)
             untag!(q2, id2)
+            _mark_bbpssw_delete!(q1, prot.nodeA, prot.nodeB, q2.idx, target_pair_id, prot.max_delete_per_slot)
+            _mark_bbpssw_delete!(q2, prot.nodeB, prot.nodeA, q1.idx, target_pair_id, prot.max_delete_per_slot)
             @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation failed on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx)). Released."
         end
 
@@ -217,11 +234,11 @@ function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB, ch
     regA = net[nodeA]
     regB = net[nodeB]
     low_queryresults  = [
-        n for n in queryall(regA, EntanglementCounterpart, nodeB, ❓; locked=false, assigned=true)
+        n for n in queryall(regA, EntanglementCounterpart, nodeB, ❓, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
     high_queryresults = [
-        n for n in queryall(regB, EntanglementCounterpart, nodeA, ❓; locked=false, assigned=true)
+        n for n in queryall(regB, EntanglementCounterpart, nodeA, ❓, ❓; locked=false, assigned=true)
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
 
@@ -240,7 +257,9 @@ function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB, ch
     pairs = NTuple{2, QueryOnRegResult}[]
     for low_qr in low_queryresults
         for high_qr in high_queryresults
-            if low_qr.slot.idx == high_qr.tag[3] && high_qr.slot.idx == low_qr.tag[3]
+            if low_qr.slot.idx == high_qr.tag[3] &&
+                    high_qr.slot.idx == low_qr.tag[3] &&
+                    low_qr.tag[4] == high_qr.tag[4]
                 push!(pairs, (low_qr, high_qr))
                 break
             end

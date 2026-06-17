@@ -17,6 +17,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `src/ProtocolZoo/entanglement_ids.jl` defines pair ID generation and the commutative/associative accumulator used by the tracker.
 - `src/ProtocolZoo/swapping.jl` contains slot-selection and swapper logic.
 - `src/ProtocolZoo/cutoff.jl` handles stale-entanglement cleanup.
+- `src/ProtocolZoo/distillation.jl` contains BBPSSW pair selection, outcome messaging, and consumed-pair cleanup.
 - `src/ProtocolZoo/qtcp.jl` is a higher-level protocol stack built on the same tag/message model.
 - `src/ProtocolZoo/switches.jl` is a separate subsystem with its own request and matching machinery.
 
@@ -51,6 +52,8 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   - `CutoffProt.max_delete_per_slot`
   - `SwapperProt.agelimit`
   - `SwapperProt.max_history_per_slot`
+  - `BBPSSWProt.max_delete_per_slot`
+- For BBPSSW changes, check that reciprocal `EntanglementCounterpart` tags agree on pair ID, that `BBPSSWMessage` queries include both consumed pair IDs, and that sacrificed or failed pairs leave capped `EntanglementDelete` tags.
 - Keep shorthand constructors like `Prot(net, ...)` aligned with tests.
 - For QTCP changes, review the `Tag(...)` serialization and matching query shape together.
 
@@ -60,6 +63,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `src/ProtocolZoo/entanglement_ids.jl`
 - `src/ProtocolZoo/swapping.jl`
 - `src/ProtocolZoo/cutoff.jl`
+- `src/ProtocolZoo/distillation.jl`
 - `src/ProtocolZoo/qtcp.jl`
 - `src/ProtocolZoo/switches.jl`
 - `src/ProtocolZoo/show.jl`
@@ -71,6 +75,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `test/general/protocolzoo_cutoffprot_tests.jl`
 - `test/general/protocolzoo_entanglement_consumer_tests.jl`
 - `test/general/protocolzoo_swapper_chooseslots_tests.jl`
+- `test/general/protocolzoo_distillation_tests.jl`
 - `test/general/protocolzoo_switch_tests.jl`
 - `test/general/protocolzoo_throws_tests.jl`
 - `test/general/protocolzoo_qtcp_tests.jl`

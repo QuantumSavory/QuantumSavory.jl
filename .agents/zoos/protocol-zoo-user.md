@@ -26,6 +26,7 @@ Use `.agents/zoos/protocol-zoo-dev.md` for those.
 - `SwapperProt` consumes two tagged links and performs a local swap.
 - `EntanglementTracker` keeps remote metadata and corrections coherent after swaps and deletions.
 - `CutoffProt` removes stale entanglement.
+- `BBPSSWProt` consumes two same-endpoint Bell pairs and keeps one distilled pair when the distillation round succeeds.
 - `EntanglementConsumer` acts as a sink or observer for completed long-range pairs.
 
 Other specialized families:
