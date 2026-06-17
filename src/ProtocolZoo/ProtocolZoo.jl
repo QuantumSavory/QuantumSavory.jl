@@ -625,6 +625,7 @@ permits_virtual_edge(::EntanglementConsumer) = true
 end
 
 
+include("metadata_cleanup.jl")
 include("cutoff.jl")
 include("swapping.jl")
 include("distillation.jl")

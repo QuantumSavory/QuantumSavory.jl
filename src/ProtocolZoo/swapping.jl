@@ -72,16 +72,6 @@ end
 
 SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_tracker(net), net, node; kwargs...)
 
-function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Union{Int,Nothing})
-    isnothing(max_history_per_slot) && return nothing
-    max_history_per_slot < 0 && throw(ArgumentError("max_history_per_slot must be nonnegative"))
-    histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
-    for history in Iterators.take(histories, max(0, length(histories) - max_history_per_slot))
-        untag!(slot, history.id)
-    end
-    return nothing
-end
-
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
     round = 1
