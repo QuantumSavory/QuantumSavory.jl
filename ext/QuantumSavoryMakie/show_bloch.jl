@@ -1,6 +1,8 @@
 using QuantumSavory: blochparams
 
 function draw1q_bloch!(subfig, state::Union{AbstractOperator, StateVector})
+    nsubsystems(state) != 1 && error("Bloch sphere visualization is only supported for single-qubit states.")
+
     ax = Axis3(subfig, aspect=:data, azimuth=deg2rad(30), elevation=deg2rad(30), protrusions=(0,0,0,0), limits=(-1.2, 1.2, -1.2, 1.2, -1.2, 1.2))
     tightlimits!(ax)
     hidedecorations!(ax)

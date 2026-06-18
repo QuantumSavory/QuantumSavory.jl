@@ -5,7 +5,7 @@ get_statedata(state::LazyKet) = get_statedata(Ket(state))
 get_statedata(state) = nothing
 
 include("show_bloch.jl")
-include("state_explorer.jl") # must put in its own file - use better naming
+include("show_densitymatrix.jl")
 include("show_amplhistogram.jl")
 
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
@@ -33,7 +33,10 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
         colsize!(subfig.layout, 1, Relative(0.664))
     elseif nsubsystems(state) == 2
         update_theme!(Theme(figure_padding=0))
-        draw_state!(subfig, state)
+        draw2q_densitymatrix!(subfig, state)
+        # also draw the colorbar and the stateinfo
+        colgap!(subfig.layout, 0)
+        # colsize!(subfig.layout, 1, Relative(0.664))
     elseif 3 <= nsubsystems(state) <= 5
         draw_amplhistogram!(subfig, state)
     else
