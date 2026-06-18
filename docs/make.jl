@@ -78,6 +78,7 @@ function main()
     "Tutorials" => [
         "tutorial.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
+        "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
         #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
@@ -87,6 +88,7 @@ function main()
         "Register Interface API" => "register_interface.md",
         "Backend Simulators" => "backendsimulator.md",
         "Tag and Query API" => "tag_query.md",
+        "Standard Protocol Tags" => "standard_protocol_tags.md",
         "Symbolic Expressions Reference" => "symbolics.md",
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",

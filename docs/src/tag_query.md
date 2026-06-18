@@ -56,6 +56,9 @@ The `Tag` type stores a small structured payload. Common patterns are:
 
 Typed tags are especially useful when several protocols share a common metadata
 schema. They make the intended meaning explicit and allow custom printing.
+`ProtocolZoo` defines a set of standard typed tags for interoperability with
+its reusable protocols; see [Standard Protocol Tags](@ref
+standard-protocol-tags).
 
 ## Wildcards And Predicates
 
@@ -169,6 +172,8 @@ QuantumSavory.queryall
 
 - Read [Discrete Event Simulator](@ref sim) for `query_wait` and
   `querydelete_wait!`.
+- Read [Standard Protocol Tags](@ref standard-protocol-tags) for the typed tag
+  schemas used by `ProtocolZoo`.
 - Read [Backend Simulators](backendsimulator.md) and
   [Register Interface API](register_interface.md) for the quantum side of the
   same workflow.
