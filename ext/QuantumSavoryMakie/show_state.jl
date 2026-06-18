@@ -28,13 +28,13 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
     elseif nsubsystems(state) == 2
         update_theme!(Theme(figure_padding=0))
         draw2q_densitymatrix!(subfig, state)
-        # also draw the colorbar and the stateinfo
         Colorbar(subfig[1,3]; colorrange=(-π,π), colormap=:cyclic_mrybm_35_75_c68_n256, ticks=([-π,0,π],["-π","0","π"]), label="phase", vertical=true)
         draw2q_stateinfo!(subfig[2,1:3], state)
         colgap!(subfig.layout, 0)
         rowgap!(subfig.layout, 0)
-        rowsize!(subfig.layout, 1, Relative(0.8))
+        rowsize!(subfig.layout, 1, Relative(0.70))
     elseif 3 <= nsubsystems(state) <= 5
+        update_theme!(Theme(figure_padding=30))
         draw_amplhistogram!(subfig, state)
     else
         ax = Axis(subfig[1,1])

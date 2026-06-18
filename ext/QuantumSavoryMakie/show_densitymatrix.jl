@@ -44,7 +44,8 @@ function draw2q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
     xlims!(ax, 0, 1)
     ylims!(ax, 0, 1)
 
-    text!(ax, 0.25, 1;
+    _draw2q_statedata!(ax, state)
+    text!(ax, 0.25, 0.75;
         text = rich(
             rich("Quantum State\n", font=:bold),
             "Type: $(nameof(typeof(state)))\n",
@@ -53,7 +54,7 @@ function draw2q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
         align = (:center, :top)
     )
 
-    text!(ax, 0.75, 1;
+    text!(ax, 0.75, 0.75;
         text=rich(rich("State Properties\n", font=:bold),
             "Purity: $(@sprintf("%.3f", QuantumSavory.purity(state)))\n",
             "Entropy: $(@sprintf("%.3f", entropy_vn(state)/log(2)))",
@@ -61,3 +62,27 @@ function draw2q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
         align=(:center, :top)
     )
 end
+
+function _draw2q_statedata!(ax, state::Ket)
+    α, β, γ, δ = state.data
+    α = @sprintf("%.3f%+.3fi", real(α), imag(α))
+    β = @sprintf("%.3f%+.3fi", real(β), imag(β))
+    γ = @sprintf("%.3f%+.3fi", real(γ), imag(γ))
+    δ = @sprintf("%.3f%+.3fi", real(δ), imag(δ))
+    text!(ax, 0.5, 0.95;
+        text = L"(%$α)|00\rangle + (%$β)|01\rangle + (%$γ)|10\rangle + (%$δ)|11\rangle",
+        align = (:center, :top), fontsize=13
+    )
+end
+function _draw2q_statedata!(ax, state::Bra)
+    α, β, γ, δ = state.data
+    α = @sprintf("%.3f%+.3fi", real(α), imag(α))
+    β = @sprintf("%.3f%+.3fi", real(β), imag(β))
+    γ = @sprintf("%.3f%+.3fi", real(γ), imag(γ))
+    δ = @sprintf("%.3f%+.3fi", real(δ), imag(δ))
+    text!(ax, 0.5, 0.95;
+        text = L"(%$α)\langle00| + (%$β)\langle01| + (%$γ)\langle10| + (%$δ)\langle11|",
+        align = (:center, :top), fontsize=13
+    )
+end
+_draw2q_statedata!(ax, state) = nothing

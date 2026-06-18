@@ -1,3 +1,5 @@
+using QuantumOptics: Ket, Bra, Operator
+
 function Base.show(io::IO, s::StateRef)
     if get(io, :compact, false) | haskey(io, :typeinfo)
         print(io, "State $(nameof(typeof(s.state[]))) of size $(nsubsystems(s.state[]))")
