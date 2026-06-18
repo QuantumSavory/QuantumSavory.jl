@@ -1,5 +1,9 @@
 # News
 
+## Unreleased
+
+- New memory cutoff tradeoff example under `examples/memorycutoff/`, including a deterministic sweep, a WGLMakie dashboard, documentation, and a smoke test.
+
 ## v0.7.0 - 2026-06-12
 
 - **(breaking)** **(fix)** The `ProtocolZoo` entanglement-tracking tags and messages now carry entanglement pair IDs, fixing a class of bookkeeping bugs (#303) where stale update messages could be applied to the wrong Bell pair after a physical slot was reused. See the porting guide below.

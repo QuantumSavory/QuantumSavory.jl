@@ -73,6 +73,7 @@ function main()
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
+        "Memory Cutoff Tradeoff" => "howto/memorycutoff/memorycutoff.md",
         "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
     ],
     "Tutorials" => [
