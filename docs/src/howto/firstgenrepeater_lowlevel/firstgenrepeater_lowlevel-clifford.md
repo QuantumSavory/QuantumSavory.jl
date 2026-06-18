@@ -4,6 +4,9 @@ Here we will simulate a quantum repeater by employing a noisy Clifford circuit s
 
 Be sure to check out the more detailed tutorial on [wavefunction simulations of First Generation Quantum Repeater](@ref First-Generation-Quantum-Repeater) before proceeding with this one.
 
+!!! warning "Low Level Implementation"
+    This is a very low-level implementation, mainly useful for learning how to make simulations from scratch. For a more practical example that does the same thing with much less code thanks to already implemented reusable protocols like [`EntanglerProt`](https://qs.quantumsavory.org/dev/API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglerProt), see the higher-level [`firstgenrepeater`](https://qs.quantumsavory.org/dev/howto/firstgenrepeater/firstgenrepeater) example.
+
 The changes we need to perform to the code are incredibly small. We only change the way the initial states of the entangled pairs are set, without changing any of the code implementing the swapping and purification steps.
 
 For the wavefunction simulator we had used:

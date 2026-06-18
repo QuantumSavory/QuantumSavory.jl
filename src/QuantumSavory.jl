@@ -11,9 +11,10 @@ using Reexport
 import Base: unlock, lock, islocked
 
 using DocStringExtensions
+using PrettyTables: PrettyTables, pretty_table
 using IterTools
 import LinearAlgebra
-using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot
+using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot, det
 import Random
 using Random: randperm
 using Graphs
@@ -157,6 +158,7 @@ include("measurements.jl")
 include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
 include("backends/gabs/gabs.jl")
+include("backends/gabs/show.jl")
 include("backends/gabs/should_upstream.jl")
 
 include("ambiguity_fix.jl")

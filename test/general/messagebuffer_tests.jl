@@ -169,7 +169,7 @@ end
     wake_times = Float64[]
 
     @resumable function receiver(sim, mb, wake_times)
-        @yield wait(mb)
+        @yield @test_deprecated wait(mb)
         push!(wake_times, now(sim))
     end
 

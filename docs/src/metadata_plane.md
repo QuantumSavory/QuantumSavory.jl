@@ -48,9 +48,16 @@ Instead of manually piping classical channels between every pair of cooperating
 components, protocols can publish and consume semantic facts about resource
 availability, pairing relationships, and outcomes.
 
+Users can define custom tags for their own protocols. When the goal is to
+cooperate with existing `ProtocolZoo` components, use the standard schemas in
+[Standard Protocol Tags](@ref standard-protocol-tags); those schemas are the
+interface that custom protocols share with the zoo.
+
 ## Where To Go Next
 
 - Read [Discrete Event Simulator](@ref sim) for the execution model around
   waiting and scheduling.
 - Read [Tagging and Querying](tag_query.md) for the detailed API reference.
+- Read [Standard Protocol Tags](@ref standard-protocol-tags) for the shared
+  tag schemas used by `ProtocolZoo`.
 - Read [References](@ref) when you need exact signatures.

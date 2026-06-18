@@ -1,5 +1,9 @@
 # News
 
+## v0.7.1 - unreleased
+
+- Additional visualization methods for states of registers.
+
 ## v0.7.0 - 2026-06-12
 
 - Protocol-specific text, HTML, and (through the `QuantumSavoryMakie` extension) PNG `show` summaries for the qTCP controllers `EndNodeController`, `NetworkNodeController`, and `LinkController`, framed as the quantum analog of the TCP/IP control plane (endpoint flow table, router next-hop table, link endpoint table), summarizing the qTCP messages visible in the relevant message buffers.
