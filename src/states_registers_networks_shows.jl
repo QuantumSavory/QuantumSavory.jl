@@ -123,11 +123,23 @@ function Base.show(io::IO, m::MIME"text/html", s::StateRef)
 end
 
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""
+function stateshow(io, ::MIME"text/plain", state, stateref)
+    print(io, "\n\n")
+    show(io, MIME"text/plain"(), state)
+end
+
+_html_escape_text(text) = replace(text, "&" => "&amp;", "<" => "&lt;", ">" => "&gt;")
+
 function stateshow(io, ::MIME"text/html", state, stateref)
-    print(io,
-    """
+    text = sprint(show, MIME"text/plain"(), state; context=io)
+    type_name = _html_escape_text(string(typeof(state)))
+    print(io, """
     <div class="quantumsavory_show quantumsavory_numericalstate quantumsavory_numericalstate_unknown">
-    state of type <pre class="quantumsavory_typename quantumsavory_numericalstate_typename">$(typeof(state))</pre> does not support rich visualization in HTML
+    <p>
+    state of type <code class="quantumsavory_typename quantumsavory_numericalstate_typename">$type_name</code>
+    does not support rich visualization in HTML
+    </p>
+    <pre class="quantumsavory_numericalstate_plaintext">$(_html_escape_text(text))</pre>
     </div>
     """)
 end

@@ -1,7 +1,7 @@
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
     f = Figure()
     stateshowimage(f,QuantumSavory.quantumstate(s),s)
-    return f
+    show(io, m, f)
 end
 
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy. Instead of an IO instance, it takes a Makie axis."""
