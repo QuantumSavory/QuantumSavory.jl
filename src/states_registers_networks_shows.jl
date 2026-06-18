@@ -261,9 +261,6 @@ function blochparams(state::AbstractOperator)
 end
 blochparams(state::StateVector) = blochparams(dm(state))
 
-purity(state::AbstractOperator) = real(tr(state * state))
-purity(state::StateVector) = purity(dm(state))
-
 
 format_complex(z) = @sprintf("%.3f%+.3fi", real(z), imag(z))
 

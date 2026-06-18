@@ -2,6 +2,7 @@ module QuantumSavoryMakie
 
 using QuantumSavory
 using Graphs
+using LinearAlgebra: diag
 using NetworkLayout
 using ConcurrentSim: ConcurrentSim
 using Makie: Makie, Figure, Axis, Axis3, Label, get_scene,
@@ -23,7 +24,7 @@ using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsume
 using QuantumClifford: QuantumClifford
 using QuantumOpticsBase: QuantumOpticsBase, dm, sigmax, sigmay, sigmaz
 using QuantumOptics: Ket, Bra, Operator, LazyKet, entropy_vn
-using QuantumInterface: StateVector, AbstractOperator
+using QuantumInterface: StateVector, AbstractOperator, AbstractKet, AbstractBra
 
 
 ##

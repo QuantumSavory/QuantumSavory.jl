@@ -1,6 +1,6 @@
 include("show_bloch.jl")
 include("show_densitymatrix.jl")
-include("show_amplhistogram.jl")
+include("show_histogram.jl")
 
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
     f = Figure()
@@ -26,16 +26,18 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
         colgap!(subfig.layout, 0)
         colsize!(subfig.layout, 1, Relative(0.664))
     elseif nsubsystems(state) == 2
-        update_theme!(Theme(figure_padding=0))
+        update_theme!(Theme(figure_padding=10))
         draw2q_densitymatrix!(subfig, state)
-        Colorbar(subfig[1,3]; colorrange=(-π,π), colormap=:cyclic_mrybm_35_75_c68_n256, ticks=([-π,0,π],["-π","0","π"]), label="phase", vertical=true)
+        Colorbar(subfig[1,3]; colorrange=(-π,π), colormap=:cyclic_mrybm_35_75_c68_n256, ticks=([-π,0,π],["-π","0","π"]), vertical=true, label="phase", labelpadding=-2)
         draw2q_stateinfo!(subfig[2,1:3], state)
         colgap!(subfig.layout, 0)
         rowgap!(subfig.layout, 0)
         rowsize!(subfig.layout, 1, Relative(0.70))
     elseif 3 <= nsubsystems(state) <= 5
-        update_theme!(Theme(figure_padding=30))
-        draw_amplhistogram!(subfig, state)
+        update_theme!(Theme(figure_padding=10))
+        draw_histogram!(subfig[1,1], state)
+        draw_stateinfo!(subfig[2,1], state)
+        rowsize!(subfig.layout, 1, Relative(0.75))
     else
         ax = Axis(subfig[1,1])
         hidedecorations!(ax)
@@ -50,7 +52,7 @@ function stateshowimage(subfig, state::QuantumClifford.MixedDestabilizer, stater
     names = [
         QuantumSavory.namestr(s.reg,useobjectid=false)*".$(s.idx)"
         for s in QuantumSavory.slots(stateref)
-        ]
+    ]
     subfig,ax,p = QuantumClifford.stabilizerplot_axis(subfig, stab)
     #ax.xticksvisible = true
     ax.xticklabelsvisible = true
