@@ -29,9 +29,9 @@ Bob starts with one qubit entangled with Alice and another qubit entangled with
 Charlie. The tutorial manually prepares those two Bell pairs so that we can
 focus on the swapper protocol itself.
 
-The example follows the same structure as the other in-repo examples:
-`setup.jl` contains the reusable setup function, and `my_swapper_prot.jl`
-contains the custom protocol and runnable script.
+The example is a single runnable script, `my_swapper_prot.jl`. Keeping the
+setup, protocol definition, and final inspection in one file makes the ordering
+of the tutorial explicit.
 
 ```julia
 using Graphs
@@ -72,7 +72,6 @@ function build_myswapper_tutorial()
     tag!(net[2][2], EntanglementCounterpart, 3, 1, bob_charlie_pair_id)
     tag!(net[3][1], EntanglementCounterpart, 2, 2, bob_charlie_pair_id)
 
-    # The protocol definitions are in my_swapper_prot.jl.
     @process MySwapperProt(sim, net, 2, 1, 3)()
     @process endpoint_update(sim, net, 1, 2, :swap_update_z)
     @process endpoint_update(sim, net, 3, 2, :swap_update_x)
@@ -224,12 +223,10 @@ end
 
 ## Run It
 
-The runnable script includes `setup.jl`, defines the custom protocol, runs the
-setup, and leaves the final query results available for inspection:
+The runnable script defines the custom protocol, runs the setup, and leaves the
+final query results available for inspection:
 
 ```julia
-include("setup.jl")
-
 tutorial_result = build_myswapper_tutorial()
 sim = tutorial_result.sim
 net = tutorial_result.net
