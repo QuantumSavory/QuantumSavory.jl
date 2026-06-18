@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Quantum State Visualization · QuantumSavory.jl</title><meta name="title" content="Quantum State Visualization · QuantumSavory.jl"/><meta property="og:title" content="Quantum State Visualization · QuantumSavory.jl"/><meta property="twitter:title" content="Quantum State Visualization · QuantumSavory.jl"/><meta name="description" content="Documentation for QuantumSavory.jl."/><meta property="og:description" content="Documentation for QuantumSavory.jl."/><meta property="twitter:description" content="Documentation for QuantumSavory.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="QuantumSavory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">QuantumSavory.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">QuantumSavory.jl</a></li><li><a class="tocitem" href="../manual/">Getting Started Manual</a></li><li><span class="tocitem">Explanations</span><ul><li><a class="tocitem" href="../explanations/">Explanations</a></li><li><a class="tocitem" href="../architecture/">Architecture and Mental Model</a></li><li><a class="tocitem" href="../why_quantumsavory/">Why QuantumSavory Exists</a></li><li><a class="tocitem" href="../restricted_formalisms/">Restricted Formalisms and Efficient Simulation</a></li><li><a class="tocitem" href="../modeling_tradeoffs/">Choosing a Backend and Modeling Tradeoffs</a></li><li><a class="tocitem" href="../modeling_registers_and_time/">Modeling Registers, Factorization, and Time</a></li><li><a class="tocitem" href="../metadata_plane/">Metadata and Protocol Composition</a></li><li><a class="tocitem" href="../classical_messaging/">Classical Messaging and Buffers</a></li><li><a class="tocitem" href="../zoos_as_building_blocks/">Zoos as Composable Building Blocks</a></li><li><a class="tocitem" href="../properties/">Properties</a></li><li><a class="tocitem" href="../backgrounds/">Background Noise</a></li><li><a class="tocitem" href="../symbolic_frontend/">Symbolic Frontend</a></li><li><a class="tocitem" href="../discreteeventsimulator/">Discrete Event Simulator</a></li></ul></li><li><span class="tocitem">How-To Guides</span><ul><li><a class="tocitem" href="../howto/">How-To Guides</a></li><li><a class="tocitem" href="../howto/firstgenrepeater/firstgenrepeater/">1st-gen Repeater - low level implementation</a></li><li><a class="tocitem" href="../howto/firstgenrepeater/firstgenrepeater-clifford/">1st-gen Repeater - Clifford formalism</a></li><li><a class="tocitem" href="../howto/firstgenrepeater_v2/firstgenrepeater_v2/">1st-gen Repeater - simpler implementation</a></li><li><a class="tocitem" href="../howto/congestionchain/congestionchain/">Congestion on a Repeater Chain</a></li><li><a class="tocitem" href="../howto/colorcentermodularcluster/colorcentermodularcluster/">Cluster States in Atomic Memories</a></li><li><a class="tocitem" href="../howto/simpleswitch/simpleswitch/">Entanglement Switch</a></li><li><a class="tocitem" href="../howto/cluster_state_walkthrough/">Cluster-State Walkthrough</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../tutorial/">Tutorials</a></li><li><a class="tocitem" href="../tutorial/noninstantgate/">Gate Duration</a></li><li><a class="tocitem" href="../tutorial/state_explorer/">State Explorer</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../references/">References</a></li><li><a class="tocitem" href="../register_interface/">Register Interface API</a></li><li><a class="tocitem" href="../backendsimulator/">Backend Simulators</a></li><li><a class="tocitem" href="../tag_query/">Tag and Query API</a></li><li><a class="tocitem" href="../symbolics/">Symbolic Expressions Reference</a></li><li><a class="tocitem" href="../API/">API</a></li><li><a class="tocitem" href="../API_CircuitZoo/">CircuitZoo API</a></li><li><a class="tocitem" href="../API_StatesZoo/">StatesZoo API</a></li><li><a class="tocitem" href="../API_ProtocolZoo/">ProtocolZoo API</a></li><li><a class="tocitem" href="../API_Interface/">QuantumInterface API</a></li><li><a class="tocitem" href="../API_Symbolics/">QuantumSymbolics API</a></li><li><a class="tocitem" href="../visualizations/">Visualizations</a></li><li class="is-active"><a class="tocitem" href>Quantum State Visualization</a><ul class="internal"><li><a class="tocitem" href="#QuantumOptics-State"><span>QuantumOptics State</span></a></li><li><a class="tocitem" href="#Gabs-State"><span>Gabs State</span></a></li><li><a class="tocitem" href="#QuantumClifford-State"><span>QuantumClifford State</span></a></li></ul></li><li><a class="tocitem" href="../bibliography/">Bibliography</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">References</a></li><li class="is-active"><a href>Quantum State Visualization</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Quantum State Visualization</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/QuantumSavory/QuantumSavory.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/docs/src/state_visualization.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="quantum-state-visualization"><a class="docs-heading-anchor" href="#quantum-state-visualization">Quantum State Visualization</a><a id="quantum-state-visualization-1"></a><a class="docs-heading-anchor-permalink" href="#quantum-state-visualization" title="Permalink"></a></h1><p>The quantum states objects in QuantumSavory have a variety of <code>show</code> methods implemented for them. Depending on the IDE you are working in, you will be able to see rich information about the quantum state you are working with, e.g. when accessing it with <code>stateof(network[register_index][slot_index])</code> or <code>stateof(register[slot_index])</code>.</p><p>In particular:</p><ul><li>in Pluto or Jupyter or VS Code you will see the <code>text/html</code> or <code>image/png</code> rendering.</li><li>in the REPL you will see the <code>text/plain</code> rendering.</li></ul><p>This reference page shows how a five-subsystem <code>StateRef</code> is rendered by the <code>text/plain</code>, <code>text/html</code>, and <code>image/png</code> display backends.</p><h2 id="QuantumOptics-State"><a class="docs-heading-anchor" href="#QuantumOptics-State">QuantumOptics State</a><a id="QuantumOptics-State-1"></a><a class="docs-heading-anchor-permalink" href="#QuantumOptics-State" title="Permalink"></a></h2><h3 id="text/plain"><a class="docs-heading-anchor" href="#text/plain"><code>text/plain</code></a><a id="text/plain-1"></a><a class="docs-heading-anchor-permalink" href="#text/plain" title="Permalink"></a></h3><pre class="documenter-example-output"><code class="nohighlight hljs ansi">State containing 5 subsystems in QuantumOpticsBase implementation
+  In registers:
+    5340629276717155856.1
+    5340629276717155856.2
+    5340629276717155856.3
+    5340629276717155856.4
+    5340629276717155856.5
+
+Ket(dim=32)
+  basis: [Spin(1/2) ⊗ Spin(1/2) ⊗ Spin(1/2) ⊗ Spin(1/2) ⊗ Spin(1/2)]
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                    ⋮
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im</code></pre><h3 id="text/html"><a class="docs-heading-anchor" href="#text/html"><code>text/html</code></a><a id="text/html-1"></a><a class="docs-heading-anchor-permalink" href="#text/html" title="Permalink"></a></h3><div class="quantumsavory_show quantumsavory_stateref">
+<div class="quantumsavory_stateref_regrefs">
+<ol>
+<li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">1</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">2</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">3</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">4</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">5</span>
+</div>
+</li></ol>
+</div>
+<div class="quantumsavory_stateref_state">
+<div class="quantumsavory_show quantumsavory_numericalstate quantumsavory_numericalstate_unknown">
+<p>
+state of type <code class="quantumsavory_typename quantumsavory_numericalstate_typename">QuantumOpticsBase.Ket{QuantumInterface.CompositeBasis{Vector{Int64}, NTuple{5, SpinBasis{1//2, Int64}}}, Vector{ComplexF64}}</code>
+does not support rich visualization in HTML
+</p>
+<pre class="quantumsavory_numericalstate_plaintext">Ket(dim=32)
+  basis: [Spin(1/2) ⊗ Spin(1/2) ⊗ Spin(1/2) ⊗ Spin(1/2) ⊗ Spin(1/2)]
+ 0.7071067811865475 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+                0.0 + 0.0im
+ 0.7071067811865475 + 0.0im</pre>
+</div>
+</div>
+</div>
+<h3 id="image/png"><a class="docs-heading-anchor" href="#image/png"><code>image/png</code></a><a id="image/png-1"></a><a class="docs-heading-anchor-permalink" href="#image/png" title="Permalink"></a></h3><p><img src="../assets/generated/state_visualization/quantumoptics_5subsystems.png" alt="QuantumOptics `StateRef` rendered with the image/png backend"/></p><h2 id="Gabs-State"><a class="docs-heading-anchor" href="#Gabs-State">Gabs State</a><a id="Gabs-State-1"></a><a class="docs-heading-anchor-permalink" href="#Gabs-State" title="Permalink"></a></h2><h3 id="text/plain-2"><a class="docs-heading-anchor" href="#text/plain-2"><code>text/plain</code></a><a class="docs-heading-anchor-permalink" href="#text/plain-2" title="Permalink"></a></h3><pre class="documenter-example-output"><code class="nohighlight hljs ansi">State containing 5 subsystems in Gabs implementation
+  In registers:
+    5982123335899223526.1
+    5982123335899223526.2
+    5982123335899223526.3
+    5982123335899223526.4
+    5982123335899223526.5
+
+Gaussian State
+  Modes: 5
+  Basis: QuadBlockBasis
+  Purity: 1.0 (Pure State)
+
+Displacement Vector (First Moments):
+  [0.42426406871192857, 0.5242640687119287, 0.7949747468305834, 0.9449747468305834, 0.4692388155425118, -0.21213203435596428, -0.2621320343559643, -0.3974873734152917, -0.4724873734152917, -0.2346194077712559]
+
+Per-mode Marginals:
+  Mode 1: Mean = [0.42426, -0.21213] | Var(x) = 0.64481 | Var(p) = 1.58599 | Purity = 0.49443
+  Mode 2: Mean = [0.52426, -0.26213] | Var(x) = 0.52569 | Var(p) = 2.0228 | Purity = 0.48487
+  Mode 3: Mean = [0.79497, -0.39749] | Var(x) = 0.41344 | Var(p) = 2.67146 | Purity = 0.47576
+  Mode 4: Mean = [0.94497, -0.47249] | Var(x) = 0.31829 | Var(p) = 3.57657 | Purity = 0.46862
+  Mode 5: Mean = [0.46924, -0.23462] | Var(x) = 0.31829 | Var(p) = 3.57657 | Purity = 0.46862</code></pre><h3 id="text/html-2"><a class="docs-heading-anchor" href="#text/html-2"><code>text/html</code></a><a class="docs-heading-anchor-permalink" href="#text/html-2" title="Permalink"></a></h3><div class="quantumsavory_show quantumsavory_stateref">
+<div class="quantumsavory_stateref_regrefs">
+<ol>
+<li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">1</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">2</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">3</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">4</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">5</span>
+</div>
+</li></ol>
+</div>
+<div class="quantumsavory_stateref_state">
+<div class="quantumsavory_gaussianstate">
+<h1><code>5</code>-mode Gaussian state in <code>QuadBlockBasis</code> basis</h1>
+<dl>
+<dt>Purity</dt>
+<dd>1.0 (Pure State)</dd>
+</dl>
+<table class = "gabs_first_moments">
+  <thead>
+    <tr class = "title">
+      <td colspan = "3" style = "font-size: x-large; font-weight: bold; text-align: center;">First Moments</td>
+    </tr>
+    <tr class = "columnLabelRow">
+      <th class = "stubheadLabel" style = "font-weight: bold; text-align: left;"></th>
+      <th style = "font-weight: bold; text-align: right;">⟨x̂⟩</th>
+      <th style = "font-weight: bold; text-align: right;">⟨p̂⟩</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: left;">Mode 1</td>
+      <td style = "text-align: right;">0.42426</td>
+      <td style = "text-align: right;">-0.21213</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: left;">Mode 2</td>
+      <td style = "text-align: right;">0.52426</td>
+      <td style = "text-align: right;">-0.26213</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: left;">Mode 3</td>
+      <td style = "text-align: right;">0.79497</td>
+      <td style = "text-align: right;">-0.39749</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: left;">Mode 4</td>
+      <td style = "text-align: right;">0.94497</td>
+      <td style = "text-align: right;">-0.47249</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: left;">Mode 5</td>
+      <td style = "text-align: right;">0.46924</td>
+      <td style = "text-align: right;">-0.23462</td>
+    </tr>
+  </tbody>
+</table>
+
+<table class = "gabs_covariance_matrix">
+  <thead>
+    <tr class = "title">
+      <td colspan = "11" style = "font-size: x-large; font-weight: bold; text-align: center;">Covariance Matrix</td>
+    </tr>
+    <tr class = "columnLabelRow">
+      <th class = "stubheadLabel" style = "font-weight: bold; text-align: right;"></th>
+      <th style = "font-weight: bold; text-align: center;">x₁</th>
+      <th style = "font-weight: bold; text-align: center;">x₂</th>
+      <th style = "font-weight: bold; text-align: center;">x₃</th>
+      <th style = "font-weight: bold; text-align: center;">x₄</th>
+      <th style = "font-weight: bold; text-align: center;">x₅</th>
+      <th style = "font-weight: bold; text-align: center;">p₁</th>
+      <th style = "font-weight: bold; text-align: center;">p₂</th>
+      <th style = "font-weight: bold; text-align: center;">p₃</th>
+      <th style = "font-weight: bold; text-align: center;">p₄</th>
+      <th style = "font-weight: bold; text-align: center;">p₅</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">x₁</td>
+      <td style = "color: green; text-align: center;">0.644815</td>
+      <td style = "text-align: center;">-0.0678846</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0480016</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0339423</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0339423</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">x₂</td>
+      <td style = "text-align: center;">-0.0678846</td>
+      <td style = "color: green; text-align: center;">0.525692</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0842324</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0595613</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0595613</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">x₃</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0480016</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0842324</td>
+      <td style = "color: green; text-align: center;">0.413443</td>
+      <td style = "text-align: center;">-0.0793721</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0793721</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">x₄</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0339423</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0595613</td>
+      <td style = "text-align: center;">-0.0793721</td>
+      <td style = "color: green; text-align: center;">0.318287</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0951565</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">x₅</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0339423</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0595613</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0793721</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0951565</td>
+      <td style = "color: green; text-align: center;">0.318287</td>
+      <td style = "text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">p₁</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "text-align: center;">0.0</td>
+      <td style = "color: green; text-align: center;">1.58599</td>
+      <td style = "opacity: 0.3; text-align: center;">0.166969</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.118065</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0834846</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0834846</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">p₂</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.166969</td>
+      <td style = "color: green; text-align: center;">2.0228</td>
+      <td style = "text-align: center;">0.308869</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.218404</td>
+      <td style = "opacity: 0.3; text-align: center;">0.218404</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">p₃</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.118065</td>
+      <td style = "text-align: center;">0.308869</td>
+      <td style = "color: green; text-align: center;">2.67146</td>
+      <td style = "opacity: 0.3; text-align: center;">0.458672</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.458672</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">p₄</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0834846</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.218404</td>
+      <td style = "opacity: 0.3; text-align: center;">0.458672</td>
+      <td style = "color: green; text-align: center;">3.57657</td>
+      <td style = "text-align: center;">0.905116</td>
+    </tr>
+    <tr class = "dataRow">
+      <td class = "rowLabel" style = "font-weight: bold; text-align: right;">p₅</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">0.0</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.0834846</td>
+      <td style = "opacity: 0.3; text-align: center;">0.218404</td>
+      <td style = "opacity: 0.3; text-align: center;">-0.458672</td>
+      <td style = "text-align: center;">0.905116</td>
+      <td style = "color: green; text-align: center;">3.57657</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+</div>
+</div>
+<h3 id="image/png-2"><a class="docs-heading-anchor" href="#image/png-2"><code>image/png</code></a><a class="docs-heading-anchor-permalink" href="#image/png-2" title="Permalink"></a></h3><p><img src="../assets/generated/state_visualization/gabs_5subsystems.png" alt="Gabs `StateRef` rendered with the image/png backend"/></p><h2 id="QuantumClifford-State"><a class="docs-heading-anchor" href="#QuantumClifford-State">QuantumClifford State</a><a id="QuantumClifford-State-1"></a><a class="docs-heading-anchor-permalink" href="#QuantumClifford-State" title="Permalink"></a></h2><h3 id="text/plain-3"><a class="docs-heading-anchor" href="#text/plain-3"><code>text/plain</code></a><a class="docs-heading-anchor-permalink" href="#text/plain-3" title="Permalink"></a></h3><pre class="documenter-example-output"><code class="nohighlight hljs ansi">State containing 5 subsystems in QuantumClifford implementation
+  In registers:
+    2776568065543584658.1
+    2776568065543584658.2
+    2776568065543584658.3
+    2776568065543584658.4
+    2776568065543584658.5
+
+𝒟ℯ𝓈𝓉𝒶𝒷━
++ Z____
+ ⋮
+
+𝒮𝓉𝒶𝒷━━━
++ XXXXX
+ ⋮</code></pre><h3 id="text/html-3"><a class="docs-heading-anchor" href="#text/html-3"><code>text/html</code></a><a class="docs-heading-anchor-permalink" href="#text/html-3" title="Permalink"></a></h3><div class="quantumsavory_show quantumsavory_stateref">
+<div class="quantumsavory_stateref_regrefs">
+<ol>
+<li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">1</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">2</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">3</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">4</span>
+</div>
+</li><li><div class="quantumsavory_show quantumsavory_regref">
+<span class"quantumsavory_regref_slotindex">5</span>
+</div>
+</li></ol>
+</div>
+<div class="quantumsavory_stateref_state">
+<div class="quantumsavory_show quantumsavory_numericalstate quantumsavory_numericalstate_unknown">
+<p>
+state of type <code class="quantumsavory_typename quantumsavory_numericalstate_typename">QuantumClifford.MixedDestabilizer{QuantumClifford.Tableau{Vector{UInt8}, Matrix{UInt64}}}</code>
+does not support rich visualization in HTML
+</p>
+<pre class="quantumsavory_numericalstate_plaintext">𝒟ℯ𝓈𝓉𝒶𝒷━
++ Z____
++ _X___
++ __X__
++ ___X_
++ ____X
+𝒮𝓉𝒶𝒷━━━
++ XXXXX
++ ZZ___
++ Z_Z__
++ Z__Z_
++ Z___Z</pre>
+</div>
+</div>
+</div>
+<h3 id="image/png-3"><a class="docs-heading-anchor" href="#image/png-3"><code>image/png</code></a><a class="docs-heading-anchor-permalink" href="#image/png-3" title="Permalink"></a></h3><p><img src="../assets/generated/state_visualization/quantumclifford_5subsystems.png" alt="QuantumClifford `StateRef` rendered with the image/png backend"/></p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+    startOnLoad: true,
+    theme: "neutral"
+});
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../visualizations/">« Visualizations</a><a class="docs-footer-nextpage" href="../bibliography/">Bibliography »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 18 June 2026 17:58">Thursday 18 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
