@@ -50,12 +50,17 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 
 - Launch protocol objects with `@process prot()`.
 - Compose protocols over one `RegisterNet`.
+- Use standard typed tags documented in `docs/src/standard_protocol_tags.md`
+  when user-written protocols should communicate with `ProtocolZoo` protocols.
+- Custom tags are appropriate for protocol-local metadata that no zoo protocol
+  needs to understand.
 - If a workflow depends on swap updates or deletion notices, include `EntanglementTracker`.
 - Use `CircuitZoo` instead when all you need is a local gate sequence.
 
 ## Good Docs And Examples To Open Next
 
 - `docs/src/API_ProtocolZoo.md`
+- `docs/src/standard_protocol_tags.md`
 - `docs/src/zoos_as_building_blocks.md`
 - `docs/src/discreteeventsimulator.md`
 - `docs/src/howto/firstgenrepeater/firstgenrepeater.md`

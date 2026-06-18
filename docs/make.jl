@@ -89,6 +89,7 @@ function main()
         "Register Interface API" => "register_interface.md",
         "Backend Simulators" => "backendsimulator.md",
         "Tag and Query API" => "tag_query.md",
+        "Standard Protocol Tags" => "standard_protocol_tags.md",
         "Symbolic Expressions Reference" => "symbolics.md",
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",
