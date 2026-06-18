@@ -147,13 +147,17 @@ end
         distilled_pair = two_qubit_pairs[1]
         sacrificed_pair = two_qubit_pairs[2]
 
+        # Defensive check: custom choose_pairs must return two distinct pairs.
+        if distilled_pair[1].slot.idx == sacrificed_pair[1].slot.idx || distilled_pair[2].slot.idx == sacrificed_pair[2].slot.idx
+            throw(ArgumentError("BBPSSWProt.choose_pairs must return two distinct Bell pairs"))
+        end
+
         q1 = distilled_pair[1].slot
         q2 = distilled_pair[2].slot
         q3 = sacrificed_pair[1].slot
         q4 = sacrificed_pair[2].slot
         target_pair_id = distilled_pair[1].tag[4]
         sacrificed_pair_id = sacrificed_pair[1].tag[4]
-
         @yield lock(q1) & lock(q2) & lock(q3) & lock(q4)  # this should not really need a yield thanks to `finddistillablequbits` which queries only for unlocked qubits, but it is better to be defensive
 
         # Across the lock yield, another process could have consumed the
