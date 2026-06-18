@@ -1,9 +1,3 @@
-get_statedata(state::Ket) = state.data
-get_statedata(state::Bra) = state.data
-get_statedata(state::Operator) = state.data
-get_statedata(state::LazyKet) = get_statedata(Ket(state))
-get_statedata(state) = nothing
-
 include("show_bloch.jl")
 include("show_densitymatrix.jl")
 include("show_amplhistogram.jl")
@@ -35,8 +29,11 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
         update_theme!(Theme(figure_padding=0))
         draw2q_densitymatrix!(subfig, state)
         # also draw the colorbar and the stateinfo
+        Colorbar(subfig[1,3]; colorrange=(-π,π), colormap=:cyclic_mrybm_35_75_c68_n256, ticks=([-π,0,π],["-π","0","π"]), label="phase", vertical=true)
+        draw2q_stateinfo!(subfig[2,1:3], state)
         colgap!(subfig.layout, 0)
-        # colsize!(subfig.layout, 1, Relative(0.664))
+        rowgap!(subfig.layout, 0)
+        rowsize!(subfig.layout, 1, Relative(0.8))
     elseif 3 <= nsubsystems(state) <= 5
         draw_amplhistogram!(subfig, state)
     else

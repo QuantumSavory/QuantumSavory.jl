@@ -1,12 +1,5 @@
 function draw_amplhistogram!(fig, state::StateVector)
-    data = get_statedata(state)
-    if data === nothing
-        hidedecorations!(ax)
-        hidespines!(ax)
-        text = "state of type\n$(typeof(state))\nwith $(nsubsystems(state)) subsystems\ndoes not support rich visualization"
-        text!(ax,0,0;text,align=(:center,:center))
-        return
-    end
+    data = state.data
 
     labels = [string(i-1; base=2, pad=nsubsystems(state)) for i in eachindex(data)]
     ax = Axis(fig[1,1], xticks=(eachindex(data), labels), xticklabelrotation=π/2)

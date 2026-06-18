@@ -4,12 +4,12 @@ function draw2q_densitymatrix!(fig, state::AbstractOperator)
     a3dρ = Axis3(fig[1,1],
         xticks=ρticks, yticks=ρticks, yreversed=true, zticks=([0,0.25,0.5,0.75,1],["","¼","½","¾","1"]),
         xlabel="", ylabel="", zlabel="",
-        title="ρ (Z basis)"
+        title="ρ (Z basis)", tellheight=true
     )
     a3dρB = Axis3(fig[1,2],
         xticks=ρBticks, yticks=ρBticks, yreversed=true, zticks=([0,0.25,0.5,0.75,1],["","¼","½","¾","1"]),
         xlabel="", ylabel="", zlabel="",
-        title="ρ (Bell basis)"
+        title="ρ (Bell basis)", tellheight=true
     )
     xlims!(a3dρ,1-0.1,5)
     ylims!(a3dρ,5,1-0.1)
@@ -36,3 +36,28 @@ function draw2q_densitymatrix!(fig, state::AbstractOperator)
     )
 end
 draw2q_densitymatrix!(fig, state::StateVector) = draw2q_densitymatrix!(fig, dm(state))
+
+function draw2q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
+    ax = Axis(subfig)
+    hidedecorations!(ax)
+    hidespines!(ax)
+    xlims!(ax, 0, 1)
+    ylims!(ax, 0, 1)
+
+    text!(ax, 0.25, 1;
+        text = rich(
+            rich("Quantum State\n", font=:bold),
+            "Type: $(nameof(typeof(state)))\n",
+            "Basis: $(basis(state))"
+        ),
+        align = (:center, :top)
+    )
+
+    text!(ax, 0.75, 1;
+        text=rich(rich("State Properties\n", font=:bold),
+            "Purity: $(@sprintf("%.3f", QuantumSavory.purity(state)))\n",
+            "Entropy: $(@sprintf("%.3f", entropy_vn(state)/log(2)))",
+        ),
+        align=(:center, :top)
+    )
+end

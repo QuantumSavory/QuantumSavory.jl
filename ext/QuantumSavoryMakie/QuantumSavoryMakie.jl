@@ -10,7 +10,7 @@ using Makie: Makie, Figure, Axis, Axis3, Label, get_scene,
     Point2, Point2f, Rect2f, Point3f, Rect3f, Vec3f,
     scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
     arrows3d!, Sphere, barplot!, meshscatter!,
-    xlims!, ylims!, zlims!, tightlimits!, colgap!, colsize!, Relative,
+    xlims!, ylims!, zlims!, tightlimits!, colgap!, colsize!, rowgap!, rowsize!, Relative,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
     deregister_interaction!, interactions,
@@ -22,7 +22,7 @@ using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsume
 
 using QuantumClifford: QuantumClifford
 using QuantumOpticsBase: QuantumOpticsBase, dm, sigmax, sigmay, sigmaz
-using QuantumOptics: Ket, Bra, Operator, LazyKet
+using QuantumOptics: Ket, Bra, Operator, LazyKet, entropy_vn
 using QuantumInterface: StateVector, AbstractOperator
 
 

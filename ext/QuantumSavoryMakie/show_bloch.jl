@@ -100,13 +100,11 @@ function draw1q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
     r = sqrt(x^2 + y^2 + z^2)
 
     # Bloch coordinates
-    text!(
-        ax, 0.77, 0.85;
+    text!(ax, 0.77, 0.85;
         text = rich("Bloch Coordinates", font=:bold),
         align = (:center, :center)
     )
-    text!(
-        ax, 0.62, 0.81;
+    text!(ax, 0.62, 0.81;
         text = rich(
             rich("⟨X⟩", color=:red),   " = $(@sprintf("% .3f", x))\n",
             rich("⟨Y⟩", color=:green), " = $(@sprintf("% .3f", y))\n",
@@ -114,8 +112,7 @@ function draw1q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
         ),
         align = (:left, :top)
     )
-    text!(
-        ax, 0.80, 0.81;
+    text!(ax, 0.80, 0.81;
         text = rich(
             rich("θ", color=:darkgreen), " = $(@sprintf("% .1f", rad2deg(θ)))°\n",
             rich("φ", color=:darkblue),  " = $(@sprintf("% .1f", rad2deg(ϕ)))°\n",
@@ -125,8 +122,7 @@ function draw1q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
     )
 
     # Quantum state data
-    text!(
-        ax, 0.77, 0.61;
+    text!(ax, 0.77, 0.61;
         text = rich(
             rich("Quantum State\n", font=:bold),
             "Type: $(nameof(typeof(state)))\n",
@@ -137,12 +133,10 @@ function draw1q_stateinfo!(subfig, state::Union{AbstractOperator, StateVector})
     _draw1q_statedata!(ax, state)
 
     # State properties
-    xlog2x(x) = iszero(x) ? 0.0 : x * log2(x)
-    text!(
-        ax, 0.77, 0.23;
+    text!(ax, 0.77, 0.23;
         text=rich(rich("State Properties\n", font=:bold),
             "Purity: $(@sprintf("%.3f", (1+r^2)/2))\n",
-            "Entropy: $(@sprintf("%.3f", -xlog2x((1+r)/2) - xlog2x((1-r)/2)))",
+            "Entropy: $(@sprintf("%.3f", entropy_vn(state)/log(2)))",
         ),
         align=(:center, :center)
     )

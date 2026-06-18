@@ -246,13 +246,6 @@ function Base.show(io::IO, m::MIME"text/html", s::StateRef)
     """)
 end
 
-using QuantumOptics
-get_statedata(state::Ket) = state.data
-get_statedata(state::Bra) = state.data
-get_statedata(state::Operator) = state.data
-get_statedata(state::LazyKet) = get_statedata(Ket(state))
-get_statedata(state) = nothing
-
 function blochparams(state::AbstractOperator)
     nsubsystems(state) != 1 && error("Bloch parameters are only defined for single-qubit states.")
 
@@ -454,10 +447,9 @@ function stateshow(io, ::MIME"text/html", state, stateref)
         </div>
     </div>
     """)
-    xlog2x(x) = iszero(x) ? 0.0 : x * log2(x)
 
     if nsubsystems(state) == 1
-        α, β = get_statedata(state)
+        α, β = state.data
         (x, y, z), (θ, ϕ) = blochparams(state)
         r = sqrt(x^2 + y^2 + z^2)
 
