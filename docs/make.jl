@@ -97,6 +97,7 @@ function main()
         "QuantumInterface API" => "API_Interface.md",
         "QuantumSymbolics API" => "API_Symbolics.md",
         "Visualizations" => "visualizations.md",
+        "Quantum State Visualization" => "state_visualization.md",
         "Bibliography" => "bibliography.md",
     ],
     ]
