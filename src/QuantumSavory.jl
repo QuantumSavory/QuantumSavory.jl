@@ -13,7 +13,7 @@ import Base: unlock, lock, islocked
 using DocStringExtensions
 using IterTools
 import LinearAlgebra
-using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot
+using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot, diag
 import Random
 using Random: randperm
 using Graphs
@@ -32,7 +32,7 @@ import QuantumClifford
 import QuantumClifford: MixedDestabilizer
 
 import QuantumOpticsBase
-import QuantumOpticsBase: StateVector, Ket, Operator,
+import QuantumOpticsBase: StateVector, Ket, Bra, Operator, entropy_vn,
     basisstate, spinup, spindown, sigmap, sigmax, sigmay, sigmaz, destroy, spre, spost
 
 import QuantumOptics
@@ -136,6 +136,7 @@ include("messagebuffer.jl")
 include("networks.jl")
 include("states_registers_networks_getset.jl")
 include("states_registers_networks_shows.jl")
+include("states_registers_networks_html.jl")
 include("show.jl")
 
 

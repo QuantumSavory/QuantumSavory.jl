@@ -1,3 +1,7 @@
+include("show_bloch.jl")
+include("show_densitymatrix.jl")
+include("show_histogram.jl")
+
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
     f = Figure()
     stateshowimage(f,QuantumSavory.quantumstate(s),s)
@@ -13,12 +17,42 @@ function stateshowimage(subfig, state, stateref)
     text!(a,0,0;text,align=(:center,:center))
 end
 
+function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, stateref)
+    set_theme!(theme_latexfonts())
+    if nsubsystems(state) == 1
+        update_theme!(Theme(figure_padding=0))
+        draw1q_bloch!(subfig[1,1], state)
+        draw1q_stateinfo!(subfig[1, 1:2], state)
+        colgap!(subfig.layout, 0)
+        colsize!(subfig.layout, 1, Relative(0.664))
+    elseif nsubsystems(state) == 2
+        update_theme!(Theme(figure_padding=10))
+        draw2q_densitymatrix!(subfig, state)
+        Colorbar(subfig[1,3]; colorrange=(-π,π), colormap=:cyclic_mrybm_35_75_c68_n256, ticks=([-π,0,π],["-π","0","π"]), vertical=true, label="phase", labelpadding=-2)
+        draw2q_stateinfo!(subfig[2,1:3], state)
+        colgap!(subfig.layout, 0)
+        rowgap!(subfig.layout, 0)
+        rowsize!(subfig.layout, 1, Relative(0.70))
+    elseif 3 <= nsubsystems(state) <= 5
+        update_theme!(Theme(figure_padding=10))
+        draw_histogram!(subfig[1,1], state)
+        draw_stateinfo!(subfig[2,1], state)
+        rowsize!(subfig.layout, 1, Relative(0.75))
+    else
+        ax = Axis(subfig[1,1])
+        hidedecorations!(ax)
+        hidespines!(ax)
+        text = "state of type\n$(typeof(state))\nwith $(nsubsystems(state)) subsystems\ndoes not support rich visualization"
+        text!(ax,0,0;text,align=(:center,:center))
+    end
+end
+
 function stateshowimage(subfig, state::QuantumClifford.MixedDestabilizer, stateref)
     stab = QuantumClifford.stabilizerview(state)
     names = [
         QuantumSavory.namestr(s.reg,useobjectid=false)*".$(s.idx)"
         for s in QuantumSavory.slots(stateref)
-        ]
+    ]
     subfig,ax,p = QuantumClifford.stabilizerplot_axis(subfig, stab)
     #ax.xticksvisible = true
     ax.xticklabelsvisible = true

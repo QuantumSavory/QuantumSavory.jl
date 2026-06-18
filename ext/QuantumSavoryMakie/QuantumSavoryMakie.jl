@@ -2,13 +2,16 @@ module QuantumSavoryMakie
 
 using QuantumSavory
 using Graphs
+using LinearAlgebra: diag
 using NetworkLayout
 using ConcurrentSim: ConcurrentSim
-using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
-    @recipe, lift, @lift, Observable,
-    Point2, Point2f, Rect2f, Rect3f,
+using Makie: Makie, Figure, Axis, Axis3, Label, get_scene,
+    Theme, set_theme!, update_theme!, theme_latexfonts, NoShading, rich,
+    @recipe, lift, @lift, @L_str, Observable,
+    Point2, Point2f, Rect2f, Point3f, Rect3f, Vec3f,
     scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
-    xlims!, ylims!, zlims!,
+    arrows3d!, Sphere, barplot!, meshscatter!,
+    xlims!, ylims!, zlims!, tightlimits!, colgap!, colsize!, rowgap!, rowsize!, Relative,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
     deregister_interaction!, interactions,
@@ -19,7 +22,9 @@ using QuantumSavory: compactstr
 using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
 
 using QuantumClifford: QuantumClifford
-using QuantumOpticsBase: QuantumOpticsBase, dm
+using QuantumOpticsBase: QuantumOpticsBase, dm, sigmax, sigmay, sigmaz
+using QuantumOptics: Ket, Bra, Operator, LazyKet, entropy_vn
+using QuantumInterface: StateVector, AbstractOperator, AbstractKet, AbstractBra
 
 
 ##
