@@ -4,7 +4,6 @@ push!(LOAD_PATH,"../src/")
 using Documenter
 using DocumenterCitations, DocumenterMermaid
 using AnythingLLMDocs
-using CairoMakie
 using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
 using QuantumSavory.StatesZoo.Genqo
@@ -13,52 +12,7 @@ using QuantumSymbolics
 
 DocMeta.setdocmeta!(QuantumSavory, :DocTestSetup, :(using QuantumSavory, QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo, QuantumSavory.StatesZoo.Genqo); recursive=true)
 
-function state_visualization_qubit_state(repr)
-    reg = Register(fill(Qubit(), 5), fill(repr, 5))
-    initialize!(reg[1], X1)
-    for i in 2:5
-        initialize!(reg[i], Z1)
-    end
-    for i in 2:5
-        apply!([reg[1], reg[i]], CNOT)
-    end
-    return QuantumSavory.stateof(reg[1])
-end
-
-function state_visualization_gabs_state()
-    reg = Register(
-        fill(Qumode(), 5),
-        fill(GabsRepr(QuantumSavory.Gabs.QuadBlockBasis), 5),
-    )
-    for i in 1:5
-        initialize!(reg[i], SqueezedState(0.15 * i))
-        apply!(reg[i], DisplaceOp(0.1 * i - 0.05im * i))
-    end
-    for i in 1:4
-        apply!([reg[i], reg[i + 1]], BeamSplitterOp(1 / 2))
-    end
-    return QuantumSavory.stateof(reg[1])
-end
-
-function generate_state_visualization_assets()
-    CairoMakie.activate!()
-    asset_dir = joinpath(@__DIR__, "src", "assets", "generated", "state_visualization")
-    mkpath(asset_dir)
-    examples = [
-        ("quantumoptics_5subsystems.png", state_visualization_qubit_state(QuantumOpticsRepr())),
-        ("gabs_5subsystems.png", state_visualization_gabs_state()),
-        ("quantumclifford_5subsystems.png", state_visualization_qubit_state(CliffordRepr())),
-    ]
-    for (filename, stateref) in examples
-        open(joinpath(asset_dir, filename), "w") do io
-            show(io, MIME"image/png"(), stateref)
-        end
-    end
-end
-
 function main()
-    generate_state_visualization_assets()
-
     doc_modules = [
         QuantumSavory,
         QuantumSavory.StatesZoo,

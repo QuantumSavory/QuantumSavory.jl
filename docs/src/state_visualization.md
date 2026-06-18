@@ -66,6 +66,13 @@ end
 function statevis_html(stateref)
     return Base.HTML(sprint(show, MIME"text/html"(), stateref))
 end
+
+struct StateVisualizationPNG
+    stateref
+end
+
+Base.show(io::IO, mime::MIME"image/png", image::StateVisualizationPNG) =
+    show(io, mime, image.stateref)
 ```
 
 ## QuantumOptics State
@@ -84,7 +91,9 @@ statevis_html(quantumoptics_state) # hide
 
 ### `image/png`
 
-![QuantumOptics `StateRef` rendered with the image/png backend](assets/generated/state_visualization/quantumoptics_5subsystems.png)
+```@example state_visualization
+StateVisualizationPNG(quantumoptics_state) # hide
+```
 
 ## Gabs State
 
@@ -102,7 +111,9 @@ statevis_html(gabs_state) # hide
 
 ### `image/png`
 
-![Gabs `StateRef` rendered with the image/png backend](assets/generated/state_visualization/gabs_5subsystems.png)
+```@example state_visualization
+StateVisualizationPNG(gabs_state) # hide
+```
 
 ## QuantumClifford State
 
@@ -120,4 +131,6 @@ statevis_html(quantumclifford_state) # hide
 
 ### `image/png`
 
-![QuantumClifford `StateRef` rendered with the image/png backend](assets/generated/state_visualization/quantumclifford_5subsystems.png)
+```@example state_visualization
+StateVisualizationPNG(quantumclifford_state) # hide
+```

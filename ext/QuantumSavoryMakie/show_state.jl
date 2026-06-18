@@ -58,9 +58,9 @@ function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
             xlabel="Modes",
             ylabel="Amplitude",
         )
-        colors = cgrad(:greens, 2, categorical=true)
+        colors = cgrad(:RdBu, 2, categorical=true)
         for n in 1:N
-            barplot!(a_fm, [n,n], _mode_mean(state, n, N), dodge=[1,2], width=0.3, color=[1,2], colormap=colors)
+            barplot!(a_fm, [n,n], _mode_mean(state, n, N), dodge=[1,2], width=0.85, color=[1,2], colormap=colors)
         end
         labels = [L"\langle \hat{x} \rangle", L"\langle \hat{p} \rangle"]
         elements = [PolyElement(color=colors[i]) for i in 1:length(labels)]
