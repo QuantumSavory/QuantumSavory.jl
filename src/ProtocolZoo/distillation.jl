@@ -3,6 +3,15 @@ function nondistilled(reg::Register, tag::DataType=DistilledTag)
     return (slot) -> isnothing(query(reg[slot], tag))
 end
 
+_slot_filter(chooseslots::Vector{Int}) = in(chooseslots)
+_slot_filter(chooseslots::Function) = chooseslots
+
+function _bbpssw_slots_pass_filters(chooseslotsA, chooseslotsB, q1::RegRef, q2::RegRef, q3::RegRef, q4::RegRef)
+    choosefuncA = _slot_filter(chooseslotsA)
+    choosefuncB = _slot_filter(chooseslotsB)
+    return choosefuncA(q1.idx) && choosefuncB(q2.idx) && choosefuncA(q3.idx) && choosefuncB(q4.idx)
+end
+
 """
 Pick two distinct random elements from a vector of candidate Bell pairs.
 
@@ -55,6 +64,13 @@ are available, the protocol locks them and starts distillation.
 Slots are eligible if they are entangled with each other,
 not locked, and pass the specified filters.
 
+A single `BBPSSWProt` instance is serial: it finishes one distillation
+round, including the classical outcome exchange and optional
+`local_busy_time`, before searching for the next two pairs. This models one
+local distillation device or controller. Multiple instances can be launched
+with overlapping slot filters to model multiple devices; the protocol locks
+the chosen slots and rechecks eligibility under those locks before acting.
+
 $TYPEDFIELDS
 
 See also: [`Purify2to1`](@ref)
@@ -82,7 +98,7 @@ See also: [`Purify2to1`](@ref)
     agelimit::Union{Nothing, Float64} = nothing
     """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
     retry_lock_time::Union{Nothing, Float64} = nothing
-    """fixed "busy time" duration immediately before starting the next distillation round"""
+    """fixed "busy time" duration after a round completes and before this serial instance searches for the next distillation round"""
     local_busy_time::Union{Float64, Nothing} = nothing
     """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
     max_delete_per_slot::Union{Int,Nothing} = 3
@@ -160,10 +176,13 @@ end
         sacrificed_pair_id = sacrificed_pair[1].tag[4]
         @yield lock(q1) & lock(q2) & lock(q3) & lock(q4)  # this should not really need a yield thanks to `finddistillablequbits` which queries only for unlocked qubits, but it is better to be defensive
 
-        # Across the lock yield, another process could have consumed the
-        # tagged entanglement; re-query under the locks to confirm the
-        # reciprocal tags are still present and to capture fresh ids that
-        # are safe to pass to `untag!` later in the round.
+        # Across the lock yield, another process could have consumed or
+        # retagged the selected slots; recheck the slot filters and then
+        # re-query reciprocal tags under the locks before acting.
+        if !_bbpssw_slots_pass_filters(prot.chooseslotsA, prot.chooseslotsB, q1, q2, q3, q4)
+            unlock(q1); unlock(q2); unlock(q3); unlock(q4)
+            continue
+        end
         fresh1 = query(q1, EntanglementCounterpart, prot.nodeB, q2.idx, target_pair_id; assigned=true)
         fresh2 = query(q2, EntanglementCounterpart, prot.nodeA, q1.idx, target_pair_id; assigned=true)
         fresh3 = query(q3, EntanglementCounterpart, prot.nodeB, q4.idx, sacrificed_pair_id; assigned=true)
@@ -246,8 +265,8 @@ function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB, ch
         if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
     ]
 
-    choosefuncA = chooseslotsA isa Vector{Int} ? in(chooseslotsA) : chooseslotsA
-    choosefuncB = chooseslotsB isa Vector{Int} ? in(chooseslotsB) : chooseslotsB
+    choosefuncA = _slot_filter(chooseslotsA)
+    choosefuncB = _slot_filter(chooseslotsB)
     low_queryresults = [qr for qr in low_queryresults if choosefuncA(qr.slot.idx)]
     high_queryresults = [qr for qr in high_queryresults if choosefuncB(qr.slot.idx)]
 

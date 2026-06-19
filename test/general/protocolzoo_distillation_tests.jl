@@ -4,6 +4,7 @@ using ConcurrentSim
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: BBPSSWProt, DistilledTag, EntanglerProt, EntanglementCounterpart, EntanglementDelete
 using QuantumSavory.ProtocolZoo: BBPSSWMessage, finddistillablequbits, fresh_entanglement_id, permits_virtual_edge
+using QuantumSavory.ProtocolZoo: _bbpssw_slots_pass_filters
 using Graphs
 
 const _bbpssw_bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2.0)
@@ -100,6 +101,101 @@ end
     @test !isnothing(query(failure_net[2][1], EntanglementDelete, failed_target_pair_id, 2, 1, 1, 1))
     delete_tags = queryall(failure_net[1][2], EntanglementDelete, ❓, 1, 2, ❓, ❓; filo=false)
     @test [delete_tag.tag[2] for delete_tag in delete_tags] == [failed_sacrificed_pair_id]
+end
+
+@testset "BBPSSWProt rechecks slot filters after locking" begin
+    net = RegisterNet([Register(2), Register(2)])
+    _tagged_bell_pair!(net, 1)
+    _tagged_bell_pair!(net, 2)
+
+    q1 = net[1][1]
+    q2 = net[2][1]
+    q3 = net[1][2]
+    q4 = net[2][2]
+    distiller = BBPSSWProt(net, 1, 2; rounds=0)
+
+    @test _bbpssw_slots_pass_filters(distiller.chooseslotsA, distiller.chooseslotsB, q1, q2, q3, q4)
+
+    tag!(q3, DistilledTag)
+    @test !_bbpssw_slots_pass_filters(distiller.chooseslotsA, distiller.chooseslotsB, q1, q2, q3, q4)
+    @test !_bbpssw_slots_pass_filters([1], [1], q1, q2, q3, q4)
+end
+
+@testset "BBPSSWProt overlapping instances share slot filters safely" begin
+    net = RegisterNet([Register(2), Register(2)])
+    sim = get_time_tracker(net)
+    target_pair_id = _tagged_bell_pair!(net, 1)
+    sacrificed_pair_id = _tagged_bell_pair!(net, 2)
+    choose_pair = _choose_slot_pair(1, 2)
+
+    distiller1 = BBPSSWProt(sim, net, 1, 2; rounds=1, choose_pairs=choose_pair)
+    distiller2 = BBPSSWProt(sim, net, 1, 2; rounds=1, choose_pairs=choose_pair)
+    @process distiller1()
+    @process distiller2()
+    run(sim, 200)
+
+    @test !isnothing(query(net[1][1], EntanglementCounterpart, 2, 1, target_pair_id))
+    @test !isnothing(query(net[2][1], EntanglementCounterpart, 1, 1, target_pair_id))
+    @test !isnothing(query(net[1][1], DistilledTag))
+    @test !isnothing(query(net[2][1], DistilledTag))
+    @test isnothing(query(net[1][2], EntanglementCounterpart, 2, 2, sacrificed_pair_id))
+    @test isnothing(query(net[2][2], EntanglementCounterpart, 1, 2, sacrificed_pair_id))
+    @test !isnothing(query(net[1][2], EntanglementDelete, sacrificed_pair_id, 1, 2, 2, 2))
+    @test !isnothing(query(net[2][2], EntanglementDelete, sacrificed_pair_id, 2, 2, 1, 2))
+end
+
+@testset "BBPSSWProt backs out after selected slot lock contention" begin
+    net = RegisterNet([Register(2), Register(2)])
+    sim = get_time_tracker(net)
+    target_pair_id = _tagged_bell_pair!(net, 1)
+    sacrificed_pair_id = _tagged_bell_pair!(net, 2)
+
+    selected_lock_taken = Ref(false)
+    selected_slot_retagged = Ref(false)
+
+    @resumable function retag_while_distiller_waits(sim)
+        tag!(net[1][2], DistilledTag)
+        selected_slot_retagged[] = true
+        @yield timeout(sim, 1.0)
+        unlock(net[1][1])
+    end
+
+    function choose_and_pin_selected_slot(pairs)
+        distilled = only(pair for pair in pairs if pair[1].slot.idx == 1)
+        sacrificed = only(pair for pair in pairs if pair[1].slot.idx == 2)
+        if !selected_lock_taken[]
+            request(distilled[1].slot)
+            selected_lock_taken[] = true
+            @process retag_while_distiller_waits(sim)
+        end
+        return (distilled, sacrificed)
+    end
+
+    distiller = BBPSSWProt(
+        sim,
+        net,
+        1,
+        2;
+        rounds=1,
+        choose_pairs=choose_and_pin_selected_slot,
+        retry_lock_time=0.25,
+    )
+    @process distiller()
+    run(sim, 1.1)
+
+    @test selected_lock_taken[]
+    @test selected_slot_retagged[]
+    @test !islocked(net[1][1])
+    @test !islocked(net[2][1])
+    @test !islocked(net[1][2])
+    @test !islocked(net[2][2])
+    @test !isnothing(query(net[1][1], EntanglementCounterpart, 2, 1, target_pair_id))
+    @test !isnothing(query(net[2][1], EntanglementCounterpart, 1, 1, target_pair_id))
+    @test !isnothing(query(net[1][2], EntanglementCounterpart, 2, 2, sacrificed_pair_id))
+    @test !isnothing(query(net[2][2], EntanglementCounterpart, 1, 2, sacrificed_pair_id))
+    @test isnothing(query(net[1][1], DistilledTag))
+    @test !isnothing(query(net[1][2], DistilledTag))
+    @test isnothing(query(messagebuffer(net, 2), BBPSSWMessage, 1, target_pair_id, sacrificed_pair_id, ❓))
 end
 
 @testset "BBPSSWProt chooseslots nondistilled" begin

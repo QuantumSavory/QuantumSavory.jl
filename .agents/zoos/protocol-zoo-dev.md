@@ -53,7 +53,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   - `SwapperProt.agelimit`
   - `SwapperProt.max_history_per_slot`
   - `BBPSSWProt.max_delete_per_slot`
-- For BBPSSW changes, check that reciprocal `EntanglementCounterpart` tags agree on pair ID, that `BBPSSWMessage` queries include both consumed pair IDs, and that sacrificed or failed pairs leave capped `EntanglementDelete` tags.
+- For BBPSSW changes, check that reciprocal `EntanglementCounterpart` tags agree on pair ID, that slot filters are rechecked after locks for overlapping distiller instances, that `BBPSSWMessage` queries include both consumed pair IDs, that successful pairs receive the configured distillation tag such as `DistilledTag`, and that sacrificed or failed pairs leave capped `EntanglementDelete` tags.
 - Keep shorthand constructors like `Prot(net, ...)` aligned with tests.
 - For QTCP changes, review the `Tag(...)` serialization and matching query shape together.
 
