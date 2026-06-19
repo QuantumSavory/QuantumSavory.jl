@@ -1,6 +1,7 @@
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
+using Gabs
 using CairoMakie
 import InteractiveUtils, REPL
 
@@ -41,5 +42,16 @@ show(out, MIME"image/png"(), QuantumSavory.stateof(reg1[1]))
 
 prot = EntanglerProt(get_time_tracker(net), net, 1, 2)
 show(out, MIME"image/png"(), prot)
+
+
+reg1 = Register([Qumode()], [GabsRepr(QuadBlockBasis)])
+initialize!(reg1[1], SqueezedState(0.8))
+apply!(reg1[1], DisplaceOp(0.6 - 0.4im))
+show(out, MIME"image/png"(), QuantumSavory.stateof(reg1[1]))
+
+
+reg2 = Register([Qumode(), Qumode()], [GabsRepr(QuadBlockBasis), GabsRepr(QuadBlockBasis)])
+initialize!(reg2[1:2], TwoSqueezedState(0.45))
+show(out, MIME"image/png"(), QuantumSavory.stateof(reg2[1]))
 
 end
