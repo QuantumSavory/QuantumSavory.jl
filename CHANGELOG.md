@@ -1,4 +1,5 @@
 # News
+- Rich text, HTML, and PNG displays for register states now summarize small QuantumOpticsBase states (Bloch vector, purity, entropy, density matrix, top basis probabilities) and QuantumClifford stabilizer states.
 
 ## v0.7.1 - unreleased
 
