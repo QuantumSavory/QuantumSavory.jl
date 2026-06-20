@@ -33,17 +33,11 @@ function stateshowimage(subfig, state::Union{AbstractOperator, StateVector}, sta
         colgap!(subfig.layout, 0)
         rowgap!(subfig.layout, 0)
         rowsize!(subfig.layout, 1, Relative(0.70))
-    elseif 3 <= nsubsystems(state) <= 5
+    else
         update_theme!(Theme(figure_padding=10))
         draw_histogram!(subfig[1,1], state)
         draw_stateinfo!(subfig[2,1], state)
         rowsize!(subfig.layout, 1, Relative(0.75))
-    else
-        ax = Axis(subfig[1,1])
-        hidedecorations!(ax)
-        hidespines!(ax)
-        text = "state of type\n$(typeof(state))\nwith $(nsubsystems(state)) subsystems\ndoes not support rich visualization"
-        text!(ax,0,0;text,align=(:center,:center))
     end
 end
 

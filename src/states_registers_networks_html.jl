@@ -515,8 +515,12 @@ function html_basis(state)
     return "NSubsystems: $(nsubsystems(state))"
 end
 
-"""Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""
 function stateshow(io, ::MIME"text/html", state, stateref)
+    print(io, "state of type\n$(typeof(state))\ndoes not support rich visualization")
+end
+
+"""Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy."""
+function stateshow(io, ::MIME"text/html", state::Union{StateVector, AbstractOperator}, stateref)
     print(io, """
 $styles
 

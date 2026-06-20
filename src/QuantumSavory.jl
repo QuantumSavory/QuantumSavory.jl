@@ -42,7 +42,7 @@ import Gabs
 
 import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, permutesystems,
     projector, identityoperator, embed, dm, expect, ptrace,
-    AbstractOperator, AbstractKet, AbstractSuperOperator,
+    AbstractOperator, StateVector, AbstractKet, AbstractBra, AbstractSuperOperator,
     Basis, GenericBasis, CompositeBasis, SpinBasis
 
 export apply!, traceout!, removebackref!, nsubsystems

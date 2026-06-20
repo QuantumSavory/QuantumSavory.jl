@@ -1,21 +1,30 @@
-_histogram_xticks(state::AbstractKet) = eachindex(state.data), [L"|%$(string(i-1; base=2, pad=nsubsystems(state)))\rangle" for i in eachindex(state.data)]
-_histogram_xticks(state::AbstractBra) = eachindex(state.data), [L"\langle %$(string(i-1; base=2, pad=nsubsystems(state)))|" for i in eachindex(state.data)]
-_histogram_xticks(state::AbstractOperator) = eachindex(state.data), [string(i-1; base=2, pad=nsubsystems(state)) for i in eachindex(state.data)]
+_histogram_xticks(state::AbstractKet, idxs::Vector) = eachindex(idxs), [L"|%$(string(i-1; base=2, pad=nsubsystems(state)))\rangle" for i in idxs]
+_histogram_xticks(state::AbstractBra, idxs::Vector) = eachindex(idxs), [L"\langle %$(string(i-1; base=2, pad=nsubsystems(state)))|" for i in idxs]
+_histogram_xticks(state::AbstractOperator, idxs::Vector) = eachindex(idxs), [string(i-1; base=2, pad=nsubsystems(state)) for i in idxs]
 
 function draw_histogram!(fig, state::StateVector)
+    amps = collect(enumerate(state.data))
+    if nsubsystems(state) > 5
+        sort!(amps; by = x -> abs(x[2]), rev = true)
+        amps = amps[1:min(8, length(amps))]
+        title = "Top $(length(amps)) Amplitudes"
+    else
+        title = "State Amplitudes"
+    end
+
     ax = Axis(fig[1,1];
-        title = "State Amplitudes",
+        title = title,
         xlabel = "Computational Basis State",
         ylabel = "|Amplitude|",
-        xticks = _histogram_xticks(state),
+        xticks = _histogram_xticks(state, first.(amps)),
         xticklabelrotation = π/2,
         xlabelpadding = 10,
         ylabelpadding = 10,
     )
     ylims!(ax, 0, 1)
 
-    barplot!(ax, eachindex(state.data), abs.(state.data);
-        color = angle.(state.data),
+    barplot!(ax, eachindex(amps), abs.(last.(amps));
+        color = angle.(last.(amps)),
         colormap = :cyclic_mrybm_35_75_c68_n256,
         colorrange = (-π, π),
     )
@@ -24,19 +33,27 @@ function draw_histogram!(fig, state::StateVector)
 end
 
 function draw_histogram!(fig, state::AbstractOperator)
+    probs = collect(enumerate(real.(diag(state.data))))
+    if nsubsystems(state) > 5
+        sort!(probs; by = x -> x[2], rev = true)
+        probs = probs[1:min(8, length(probs))]
+        title = "Top $(length(probs)) Probabilities"
+    else
+        title = "State Probabilities"
+    end
+
     ax = Axis(fig;
-        title = "State Probabilities",
+        title = title,
         xlabel = "Computational Basis State",
         ylabel = "Probability",
-        xticks = _histogram_xticks(state),
+        xticks = _histogram_xticks(state, first.(probs)),
         xticklabelrotation = π/2,
         xlabelpadding = 10,
         ylabelpadding = 10,
     )
     ylims!(ax, 0, 1)
 
-    probs = real.(diag(state.data))
-    barplot!(ax, eachindex(probs), probs)
+    barplot!(ax, eachindex(probs), last.(probs))
 end
 
 function draw_stateinfo!(fig, state::Union{AbstractOperator, StateVector})
