@@ -52,6 +52,11 @@ cannot match a different pair.
 """
 struct BBPSSWMessage end
 
+# Internal reservation marker for optional BBPSSW initial handshakes:
+# Tag(BBPSSWHandshakeMessage, sender_node, target_pair_id, sacrificed_pair_id, stage)
+# where stage == 1 is the request and stage == 2 is the acknowledgement.
+struct BBPSSWHandshakeMessage end
+
 """
 $TYPEDEF
 
@@ -70,6 +75,9 @@ round, including the classical outcome exchange and optional
 local distillation device or controller. Multiple instances can be launched
 with overlapping slot filters to model multiple devices; the protocol locks
 the chosen slots and rechecks eligibility under those locks before acting.
+If `initial_handshake=true`, the selected slots stay locked while the protocol
+performs one classical round-trip reservation handshake before the local
+purification circuit.
 
 $TYPEDFIELDS
 
@@ -100,6 +108,8 @@ See also: [`Purify2to1`](@ref)
     retry_lock_time::Union{Nothing, Float64} = nothing
     """fixed "busy time" duration after a round completes and before this serial instance searches for the next distillation round"""
     local_busy_time::Union{Float64, Nothing} = nothing
+    """whether to simulate an initial classical round-trip reservation handshake before each distillation attempt; the delay comes from the network's classical channels"""
+    initial_handshake::Bool = false
     """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
     max_delete_per_slot::Union{Int,Nothing} = 3
 end
@@ -142,6 +152,7 @@ function _mark_bbpssw_delete!(slot::RegRef, local_node::Int, remote_node::Int, r
 end
 
 @resumable function(prot::BBPSSWProt)()
+    mbA = messagebuffer(prot.net, prot.nodeA)
     mbB = messagebuffer(prot.net, prot.nodeB)
 
     rounds = prot.rounds
@@ -195,6 +206,16 @@ end
         id2 = (fresh2::QueryOnRegResult).id
         id3 = (fresh3::QueryOnRegResult).id
         id4 = (fresh4::QueryOnRegResult).id
+
+        if prot.initial_handshake
+            request_msg = Tag(BBPSSWHandshakeMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, 1)
+            put!(channel(prot.net, prot.nodeA => prot.nodeB; permit_forward=true), request_msg)
+            @yield querydelete_wait!(mbB, BBPSSWHandshakeMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, 1)
+
+            ack_msg = Tag(BBPSSWHandshakeMessage, prot.nodeB, target_pair_id, sacrificed_pair_id, 2)
+            put!(channel(prot.net, prot.nodeB => prot.nodeA; permit_forward=true), ack_msg)
+            @yield querydelete_wait!(mbA, BBPSSWHandshakeMessage, prot.nodeB, target_pair_id, sacrificed_pair_id, 2)
+        end
 
         uptotime!((q1, q2, q3, q4), now(prot.sim))
 

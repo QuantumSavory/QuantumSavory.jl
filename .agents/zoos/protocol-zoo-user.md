@@ -56,6 +56,9 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 - Custom tags are appropriate for protocol-local metadata that no zoo protocol
   needs to understand.
 - If a workflow depends on swap updates or deletion notices, include `EntanglementTracker`.
+- Use `BBPSSWProt(initial_handshake=true)` when a simulation should include an
+  initial classical round-trip reservation delay before each distillation
+  attempt.
 - Launch multiple `BBPSSWProt` instances when modeling multiple distillation
   devices; their slot filters may overlap because the protocol rechecks
   eligibility after locking.

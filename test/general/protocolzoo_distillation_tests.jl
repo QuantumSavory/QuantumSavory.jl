@@ -3,7 +3,7 @@ using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: BBPSSWProt, DistilledTag, EntanglerProt, EntanglementCounterpart, EntanglementDelete
-using QuantumSavory.ProtocolZoo: BBPSSWMessage, finddistillablequbits, fresh_entanglement_id, permits_virtual_edge
+using QuantumSavory.ProtocolZoo: BBPSSWHandshakeMessage, BBPSSWMessage, finddistillablequbits, fresh_entanglement_id, permits_virtual_edge
 using QuantumSavory.ProtocolZoo: _bbpssw_slots_pass_filters
 using Graphs
 
@@ -101,6 +101,60 @@ end
     @test !isnothing(query(failure_net[2][1], EntanglementDelete, failed_target_pair_id, 2, 1, 1, 1))
     delete_tags = queryall(failure_net[1][2], EntanglementDelete, ❓, 1, 2, ❓, ❓; filo=false)
     @test [delete_tag.tag[2] for delete_tag in delete_tags] == [failed_sacrificed_pair_id]
+end
+
+function _setup_bbpssw_timing_net(; classical_delay)
+    net = RegisterNet([Register(2), Register(2)]; classical_delay)
+    sim = get_time_tracker(net)
+    target_pair_id = _tagged_bell_pair!(net, 1)
+    sacrificed_pair_id = _tagged_bell_pair!(net, 2)
+    return net, sim, target_pair_id, sacrificed_pair_id
+end
+
+@testset "BBPSSWProt optional initial handshake timing" begin
+    no_handshake_net, no_handshake_sim, target_pair_id, sacrificed_pair_id =
+        _setup_bbpssw_timing_net(; classical_delay=2.0)
+    no_handshake_distiller = BBPSSWProt(
+        no_handshake_sim,
+        no_handshake_net,
+        1,
+        2;
+        rounds=1,
+        choose_pairs=_choose_slot_pair(1, 2),
+    )
+    @process no_handshake_distiller()
+
+    run(no_handshake_sim, 1.9)
+    @test isnothing(query(no_handshake_net[1][1], DistilledTag))
+    @test isnothing(query(no_handshake_net[2][1], DistilledTag))
+    run(no_handshake_sim, 2.1)
+    @test !isnothing(query(no_handshake_net[1][1], DistilledTag))
+    @test !isnothing(query(no_handshake_net[2][1], DistilledTag))
+
+    handshake_net, handshake_sim, handshake_target_pair_id, handshake_sacrificed_pair_id =
+        _setup_bbpssw_timing_net(; classical_delay=2.0)
+    handshake_distiller = BBPSSWProt(
+        handshake_sim,
+        handshake_net,
+        1,
+        2;
+        rounds=1,
+        choose_pairs=_choose_slot_pair(1, 2),
+        initial_handshake=true,
+    )
+    @process handshake_distiller()
+
+    run(handshake_sim, 5.9)
+    @test isnothing(query(handshake_net[1][1], DistilledTag))
+    @test isnothing(query(handshake_net[2][1], DistilledTag))
+    run(handshake_sim, 6.1)
+    @test !isnothing(query(handshake_net[1][1], DistilledTag))
+    @test !isnothing(query(handshake_net[2][1], DistilledTag))
+    @test isnothing(query(messagebuffer(handshake_net, 2), BBPSSWHandshakeMessage, 1, handshake_target_pair_id, handshake_sacrificed_pair_id, 1))
+    @test isnothing(query(messagebuffer(handshake_net, 1), BBPSSWHandshakeMessage, 2, handshake_target_pair_id, handshake_sacrificed_pair_id, 2))
+
+    @test !isnothing(query(no_handshake_net[1][1], EntanglementCounterpart, 2, 1, target_pair_id))
+    @test isnothing(query(no_handshake_net[1][2], EntanglementCounterpart, 2, 2, sacrificed_pair_id))
 end
 
 @testset "BBPSSWProt rechecks slot filters after locking" begin
