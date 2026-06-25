@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Custom Swapper Protocol · QuantumSavory.jl</title><meta name="title" content="Custom Swapper Protocol · QuantumSavory.jl"/><meta property="og:title" content="Custom Swapper Protocol · QuantumSavory.jl"/><meta property="twitter:title" content="Custom Swapper Protocol · QuantumSavory.jl"/><meta name="description" content="Documentation for QuantumSavory.jl."/><meta property="og:description" content="Documentation for QuantumSavory.jl."/><meta property="twitter:description" content="Documentation for QuantumSavory.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="QuantumSavory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">QuantumSavory.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">QuantumSavory.jl</a></li><li><a class="tocitem" href="../../manual/">Getting Started Manual</a></li><li><span class="tocitem">Explanations</span><ul><li><a class="tocitem" href="../../explanations/">Explanations</a></li><li><a class="tocitem" href="../../architecture/">Architecture and Mental Model</a></li><li><a class="tocitem" href="../../why_quantumsavory/">Why QuantumSavory Exists</a></li><li><a class="tocitem" href="../../restricted_formalisms/">Restricted Formalisms and Efficient Simulation</a></li><li><a class="tocitem" href="../../modeling_tradeoffs/">Choosing a Backend and Modeling Tradeoffs</a></li><li><a class="tocitem" href="../../modeling_registers_and_time/">Modeling Registers, Factorization, and Time</a></li><li><a class="tocitem" href="../../metadata_plane/">Metadata and Protocol Composition</a></li><li><a class="tocitem" href="../../classical_messaging/">Classical Messaging and Buffers</a></li><li><a class="tocitem" href="../../zoos_as_building_blocks/">Zoos as Composable Building Blocks</a></li><li><a class="tocitem" href="../../properties/">Properties</a></li><li><a class="tocitem" href="../../backgrounds/">Background Noise</a></li><li><a class="tocitem" href="../../symbolic_frontend/">Symbolic Frontend</a></li><li><a class="tocitem" href="../../discreteeventsimulator/">Discrete Event Simulator</a></li></ul></li><li><span class="tocitem">How-To Guides</span><ul><li><a class="tocitem" href="../../howto/">How-To Guides</a></li><li><a class="tocitem" href="../../howto/firstgenrepeater/firstgenrepeater/">1st-gen Repeater</a></li><li><a class="tocitem" href="../../howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel/">1st-gen Repeater - low level implementation</a></li><li><a class="tocitem" href="../../howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford/">1st-gen Repeater - Clifford formalism</a></li><li><a class="tocitem" href="../../howto/congestionchain/congestionchain/">Congestion on a Repeater Chain</a></li><li><a class="tocitem" href="../../howto/colorcentermodularcluster/colorcentermodularcluster/">Cluster States in Atomic Memories</a></li><li><a class="tocitem" href="../../howto/simpleswitch/simpleswitch/">Entanglement Switch</a></li><li><a class="tocitem" href="../../howto/cluster_state_walkthrough/">Cluster-State Walkthrough</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../">Tutorials</a></li><li><a class="tocitem" href="../noninstantgate/">Gate Duration</a></li><li class="is-active"><a class="tocitem" href>Custom Swapper Protocol</a><ul class="internal"><li><a class="tocitem" href="#Setup"><span>Setup</span></a></li><li><a class="tocitem" href="#The-Swapper"><span>The Swapper</span></a></li><li><a class="tocitem" href="#Endpoint-Updates"><span>Endpoint Updates</span></a></li><li><a class="tocitem" href="#Run-It"><span>Run It</span></a></li></ul></li><li><a class="tocitem" href="../state_explorer/">State Explorer</a></li></ul></li><li><span class="tocitem">References</span><ul><li><a class="tocitem" href="../../references/">References</a></li><li><a class="tocitem" href="../../register_interface/">Register Interface API</a></li><li><a class="tocitem" href="../../backendsimulator/">Backend Simulators</a></li><li><a class="tocitem" href="../../tag_query/">Tag and Query API</a></li><li><a class="tocitem" href="../../standard_protocol_tags/">Standard Protocol Tags</a></li><li><a class="tocitem" href="../../symbolics/">Symbolic Expressions Reference</a></li><li><a class="tocitem" href="../../API/">API</a></li><li><a class="tocitem" href="../../API_CircuitZoo/">CircuitZoo API</a></li><li><a class="tocitem" href="../../API_StatesZoo/">StatesZoo API</a></li><li><a class="tocitem" href="../../API_ProtocolZoo/">ProtocolZoo API</a></li><li><a class="tocitem" href="../../API_Interface/">QuantumInterface API</a></li><li><a class="tocitem" href="../../API_Symbolics/">QuantumSymbolics API</a></li><li><a class="tocitem" href="../../visualizations/">Visualizations</a></li><li><a class="tocitem" href="../../state_visualization/">Quantum State Visualization</a></li><li><a class="tocitem" href="../../bibliography/">Bibliography</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Custom Swapper Protocol</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Custom Swapper Protocol</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/QuantumSavory/QuantumSavory.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/docs/src/tutorial/myswapperprot.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Custom-Swapper-Protocol"><a class="docs-heading-anchor" href="#Custom-Swapper-Protocol">Custom Swapper Protocol</a><a id="Custom-Swapper-Protocol-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Swapper-Protocol" title="Permalink"></a></h1><p>This guide is a complete runnable version of the <code>MySwapperProt</code> sketch shown in the <a href="https://arxiv.org/abs/2512.16752">QuantumSavory paper</a>. The paper uses the sketch to explain how tags, queries, message buffers, and discrete-event protocols fit together. Here we turn that sketch into a small working repeater chain.</p><p>The example is intentionally simple and explicit. It is a good first look at how QuantumSavory models a repeater node that waits for a classical request, finds the two local Bell-pair halves it needs, performs a local Bell measurement, and sends classical update messages to the endpoints.</p><p>For production-style simulations, QuantumSavory already provides a more polished and automated version of this workflow in <a href="../../API_ProtocolZoo/#Predefined-Networking-Protocols"><code>ProtocolZoo</code></a>: <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.SwapperProt"><code>SwapperProt</code></a> performs the swaps, <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementTracker"><code>EntanglementTracker</code></a> handles the endpoint bookkeeping, and the rest of the repeater suite manages repeated attempts and metadata updates. After this guide, the natural follow-up is the <a href="../../howto/firstgenrepeater/firstgenrepeater/#First-Generation-Quantum-Repeater-ProtocolZoo">First Generation Quantum Repeater</a> how-to, which uses that suite.</p><p>The complete source is in <a href="https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/myswapper_tutorial"><code>examples/myswapper_tutorial</code></a>.</p><h2 id="Setup"><a class="docs-heading-anchor" href="#Setup">Setup</a><a id="Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Setup" title="Permalink"></a></h2><p>We use a three-node chain: Alice is node 1, Bob is node 2, and Charlie is node 3. Bob starts with one qubit entangled with Alice and another qubit entangled with Charlie. The tutorial manually prepares those two Bell pairs so that we can focus on the swapper protocol itself.</p><p>The example is a single runnable script, <code>my_swapper_prot.jl</code>. Keeping the setup, protocol definition, and final inspection in one file makes the ordering of the tutorial explicit.</p><pre><code class="language-julia hljs">using Graphs
+using ConcurrentSim
+using ResumableFunctions
+
+using QuantumSavory
+using QuantumSavory.CircuitZoo: LocalEntanglementSwap
+using QuantumSavory.ProtocolZoo:
+    AbstractProtocol,
+    EntanglementCounterpart,
+    combine_entanglement_ids,
+    fresh_entanglement_id</code></pre><p>The setup function creates the chain, prepares the two initial Bell pairs, and tags each slot with the existing <code>ProtocolZoo</code> <code>EntanglementCounterpart</code> tag. The tag fields are:</p><ul><li>the remote node,</li><li>the remote slot,</li><li>and the pair id.</li></ul><pre><code class="language-julia hljs">function build_myswapper_tutorial()
+    registers = [Register(2), Register(2), Register(2)]
+    net = RegisterNet(path_graph(3), registers; classical_delay=0.1)
+    sim = get_time_tracker(net)
+
+    initialize!((net[1][1], net[2][1]), StabilizerState(&quot;ZZ XX&quot;))
+    initialize!((net[2][2], net[3][1]), StabilizerState(&quot;ZZ XX&quot;))
+
+    alice_bob_pair_id = fresh_entanglement_id()
+    bob_charlie_pair_id = fresh_entanglement_id()
+
+    tag!(net[1][1], EntanglementCounterpart, 2, 1, alice_bob_pair_id)
+    tag!(net[2][1], EntanglementCounterpart, 1, 1, alice_bob_pair_id)
+    tag!(net[2][2], EntanglementCounterpart, 3, 1, bob_charlie_pair_id)
+    tag!(net[3][1], EntanglementCounterpart, 2, 2, bob_charlie_pair_id)
+
+    @process MySwapperProt(sim, net, 2, 1, 3)()
+    @process endpoint_update(sim, net, 1, 2, :swap_update_z)
+    @process endpoint_update(sim, net, 3, 2, :swap_update_x)
+
+    put!(channel(net, 1 =&gt; 2), Tag(:swap_request))
+    run(sim, 1.0)
+
+    alice_final = query(net[1], EntanglementCounterpart, 3, W, W)
+    charlie_final = query(net[3], EntanglementCounterpart, 1, W, W)
+
+    return (; sim, net, alice_final, charlie_final)
+end</code></pre><p>The important point is that the quantum state and the classical metadata are separate. The Bell pair is the quantum resource; the <code>EntanglementCounterpart</code> tag is the classical fact that lets later protocols find that resource.</p><h2 id="The-Swapper"><a class="docs-heading-anchor" href="#The-Swapper">The Swapper</a><a id="The-Swapper-1"></a><a class="docs-heading-anchor-permalink" href="#The-Swapper" title="Permalink"></a></h2><p><code>MySwapperProt</code> is a small protocol object. It carries the simulation context and the node identities it needs:</p><pre><code class="language-julia hljs">struct MySwapperProt &lt;: AbstractProtocol
+    sim::Simulation
+    net::RegisterNet
+    node::Int
+    alice::Int
+    charlie::Int
+end</code></pre><p>The protocol starts by waiting on Bob&#39;s message buffer. No direct handle to the requesting protocol is needed; the only contract is that a <code>:swap_request</code> message arrives.</p><pre><code class="language-julia hljs">@resumable function (prot::MySwapperProt)()
+    (; sim, net, node, alice, charlie) = prot
+    reg = net[node]
+    mb = messagebuffer(net, node)
+
+    @yield querydelete_wait!(mb, :swap_request)</code></pre><p>Once the request arrives, Bob queries his own register for one slot entangled with Alice and one slot entangled with Charlie. The wildcard fields mean &quot;any remote slot&quot; and &quot;any pair id&quot;.</p><pre><code class="language-julia hljs">    a = query(reg, EntanglementCounterpart, alice, W, W; locked=false, assigned=true)
+    b = query(reg, EntanglementCounterpart, charlie, W, W; locked=false, assigned=true)
+    @assert !isnothing(a) &quot;No local slot at node $(node) is tagged as entangled with Alice.&quot;
+    @assert !isnothing(b) &quot;No local slot at node $(node) is tagged as entangled with Charlie.&quot;</code></pre><p>Before measuring the two local qubits, the protocol locks them and then re-checks that the tags are still current. This is the main concurrency lesson in the example: query results are snapshots, and a protocol can yield while it waits for locks.</p><pre><code class="language-julia hljs">    q_alice = a.slot
+    q_charlie = b.slot
+    @yield lock(q_alice) &amp; lock(q_charlie)
+
+    current_a = query(q_alice, a.tag; assigned=true)
+    current_b = query(q_charlie, b.tag; assigned=true)
+    if isnothing(current_a) || isnothing(current_b)
+        unlock(q_alice)
+        unlock(q_charlie)
+        return nothing
+    end
+
+    untag!(q_alice, current_a.id)
+    untag!(q_charlie, current_b.id)</code></pre><p>Now Bob can perform the local Bell measurement. The two original pair ids are combined into the pair id for the new Alice-Charlie entanglement, and Bob sends one explicit update message to each endpoint.</p><pre><code class="language-julia hljs">    xmeas, zmeas = LocalEntanglementSwap()(q_alice, q_charlie)
+    new_pair_id = combine_entanglement_ids(a.tag[4], b.tag[4])
+
+    put!(
+        channel(net, node =&gt; alice),
+        Tag(:swap_update_z, q_alice.idx, b.tag[2], b.tag[3], Int(xmeas), new_pair_id),
+    )
+    put!(
+        channel(net, node =&gt; charlie),
+        Tag(:swap_update_x, q_charlie.idx, a.tag[2], a.tag[3], Int(zmeas), new_pair_id),
+    )
+
+    unlock(q_alice)
+    unlock(q_charlie)
+    return (xmeas, zmeas)
+end</code></pre><p>This is the core idea from the paper&#39;s example: Bob does not need to know who implemented the request. Alice and Charlie do not need direct access to Bob&#39;s protocol object. The protocols coordinate through tags and message buffers.</p><h2 id="Endpoint-Updates"><a class="docs-heading-anchor" href="#Endpoint-Updates">Endpoint Updates</a><a id="Endpoint-Updates-1"></a><a class="docs-heading-anchor-permalink" href="#Endpoint-Updates" title="Permalink"></a></h2><p>The full <code>ProtocolZoo</code> workflow uses <a href="../../API_ProtocolZoo/#QuantumSavory.ProtocolZoo.EntanglementTracker"><code>EntanglementTracker</code></a> for this step. This tutorial keeps the bookkeeping explicit so the data movement is visible.</p><p>Each endpoint waits for its update message, removes the old Bob-facing <code>EntanglementCounterpart</code>, applies the Pauli correction if needed, and tags the same slot as entangled with the other endpoint.</p><pre><code class="language-julia hljs">@resumable function endpoint_update(sim, net, node, old_neighbor, update_tag)
+    mb = messagebuffer(net, node)
+    msg = @yield querydelete_wait!(mb, update_tag, W, W, W, W, W)
+
+    old_neighbor_slot = msg.tag[2]
+    new_remote_node = msg.tag[3]
+    new_remote_slot = msg.tag[4]
+    correction = msg.tag[5]
+    new_pair_id = msg.tag[6]
+
+    old_tag = querydelete!(
+        net[node],
+        EntanglementCounterpart,
+        old_neighbor,
+        old_neighbor_slot,
+        W,
+    )
+    @assert !isnothing(old_tag) &quot;Endpoint $(node) did not have the expected old entanglement tag.&quot;
+
+    if correction == 2
+        if update_tag == :swap_update_z
+            apply!(old_tag.slot, Z)
+        elseif update_tag == :swap_update_x
+            apply!(old_tag.slot, X)
+        end
+    end
+
+    tag!(old_tag.slot, EntanglementCounterpart, new_remote_node, new_remote_slot, new_pair_id)
+    return old_tag.slot.idx
+end</code></pre><h2 id="Run-It"><a class="docs-heading-anchor" href="#Run-It">Run It</a><a id="Run-It-1"></a><a class="docs-heading-anchor-permalink" href="#Run-It" title="Permalink"></a></h2><p>The runnable script defines the custom protocol, runs the setup, and leaves the final query results available for inspection:</p><pre><code class="language-julia hljs">tutorial_result = build_myswapper_tutorial()
+sim = tutorial_result.sim
+net = tutorial_result.net
+alice_final = tutorial_result.alice_final
+charlie_final = tutorial_result.charlie_final</code></pre><p>After the simulation, Alice and Charlie have reciprocal endpoint tags:</p><pre><code class="language-julia hljs">alice_final = query(net[1], EntanglementCounterpart, 3, W, W)
+charlie_final = query(net[3], EntanglementCounterpart, 1, W, W)</code></pre><p>The value of this guide is pedagogical. It shows the moving parts that the high-level repeater protocols automate: classical requests, message buffers, resource tags, slot locking, local quantum operations, measurement-dependent messages, and endpoint metadata updates.</p><p>For a more complete repeater simulation built from reusable ProtocolZoo components, continue with <a href="../../howto/firstgenrepeater/firstgenrepeater/#First-Generation-Quantum-Repeater-ProtocolZoo">First Generation Quantum Repeater</a>.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+    startOnLoad: true,
+    theme: "neutral"
+});
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../noninstantgate/">« Gate Duration</a><a class="docs-footer-nextpage" href="../state_explorer/">State Explorer »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 25 June 2026 13:15">Thursday 25 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
