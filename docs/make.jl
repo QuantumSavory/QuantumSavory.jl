@@ -67,9 +67,9 @@ function main()
     ],
     "How-To Guides" => [
         "howto.md",
-        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater/firstgenrepeater.md",
-        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater/firstgenrepeater-clifford.md",
-        "1st-gen Repeater - simpler implementation" => "howto/firstgenrepeater_v2/firstgenrepeater_v2.md",
+        "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md",
+        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
+        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
@@ -78,6 +78,7 @@ function main()
     "Tutorials" => [
         "tutorial.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
+        "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
         #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
@@ -87,6 +88,7 @@ function main()
         "Register Interface API" => "register_interface.md",
         "Backend Simulators" => "backendsimulator.md",
         "Tag and Query API" => "tag_query.md",
+        "Standard Protocol Tags" => "standard_protocol_tags.md",
         "Symbolic Expressions Reference" => "symbolics.md",
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",
@@ -95,6 +97,7 @@ function main()
         "QuantumInterface API" => "API_Interface.md",
         "QuantumSymbolics API" => "API_Symbolics.md",
         "Visualizations" => "visualizations.md",
+        "Quantum State Visualization" => "state_visualization.md",
         "Bibliography" => "bibliography.md",
     ],
     ]

@@ -4,20 +4,24 @@ using QuantumSavory
 using Graphs
 using NetworkLayout
 using ConcurrentSim: ConcurrentSim
-using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
+using LinearAlgebra: eigen
+using Makie: Makie, Theme, Figure, Axis, Axis3, Aspect, Label, PolyElement, Legend, get_scene, @L_str,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
-    scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
+    scatter!, heatmap!, barplot!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
     xlims!, ylims!, zlims!,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
+    colsize!, resize_to_layout!,
     deregister_interaction!, interactions,
-    DataInspector, Slider, Colorbar, axislegend
+    DataInspector, Slider, Colorbar, axislegend, cgrad
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 using QuantumSavory: compactstr
 using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
+using QuantumSavory: _mode_mean
 
+using Gabs: Gabs
 using QuantumClifford: QuantumClifford
 using QuantumOpticsBase: QuantumOpticsBase, dm
 
@@ -52,9 +56,9 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
 
     register_rectangles = Observable(Rect2f[])     # Makie rectangles that will be plotted for each register
     register_slots_coords = Observable(Point2f[])  # Makie marker locations that will be plotted for each register slot
-    state_coords = Observable(Point2f[])           # Makie marker locations for each slot that contains a state subsystem
-    lock_coords = Observable(Point2f[])            # Makie marker locations for each lock
-    state_links = Observable(Point2f[])            # The lines connecting the state subsystem markers corresponding to the same composite system
+    state_coords = Observable(fill(Point2f(NaN, NaN), sum(nsubsystems.(registers))))  # NaN-padded fixed size
+    lock_coords = Observable(fill(Point2f(NaN, NaN), sum(nsubsystems.(registers))))  # NaN-padded fixed size
+    state_links = Observable(fill(Point2f(NaN, NaN), 2 * sum(nsubsystems.(registers))))  # NaN-padded fixed size; GLMakie GPU buffers cannot resize after plot creation
     observables_coords = Observable(Point2f[])     # Makie marker locations that will be plotted for each subsystem on which an observable is evaluated
     observables_links = Observable(Point2f[])      # The links between observed subsystems
     observables_vals = Observable(Float64[])       # Values of the observables (stored per marker)
@@ -117,13 +121,15 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         registercoords = rn[:registercoords][]
         all_nodes = [ # TODO it is rather wasteful to replot everything... do it smarter
             register_rectangles, register_slots_coords,
-            state_coords, state_links, lock_coords,
             register_slots_coords_backref, state_coords_backref,
             observables_coords, observables_links, observables_vals, observables_linkvals
         ]
         for a in all_nodes # using a naive `lift` would allocate, so instead we just empty each array and refill it; can still be done more elegantly with lift and preallocation
             empty!(a[])
         end
+        state_coord_idx = 0
+        lock_coord_idx = 0
+        state_link_idx = 0
 
         # the location of the registers and the slots inside of the registers
         for (iʳᵉᵍ,reg) in enumerate(registers)
@@ -138,7 +144,8 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 push!(register_slots_coords[], Point2f(xˢˡᵒᵗ,yˢˡᵒᵗ))
                 push!(register_slots_coords_backref[], (reg,iʳᵉᵍ,iˢˡᵒᵗ))
                 if reg.locks[iˢˡᵒᵗ].level >= 1
-                    push!(lock_coords[], Point2f(xˢˡᵒᵗ, yˢˡᵒᵗ))
+                    lock_coord_idx += 1
+                    lock_coords[][lock_coord_idx] = Point2f(xˢˡᵒᵗ, yˢˡᵒᵗ)
                 end
             end
         end
@@ -153,10 +160,17 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
                 xˢ = registercoords[whichreg][1]
                 yˢ = registercoords[whichreg][2]+(iˢˡᵒᵗ-1)*rn[:scale][]
                 pˢ = Point2f(xˢ, yˢ)
-                push!(state_coords[], pˢ)
+                state_coord_idx += 1
+                state_coords[][state_coord_idx] = pˢ
                 push!(state_coords_backref[], (s, network[whichreg], whichreg, iˢˡᵒᵗ, iˢ))
-                nsubsystems(s) == 1 || push!(state_links[], pˢ)
-                iˢ == 1 || iˢ == nsubsystems(s) || push!(state_links[], pˢ)
+                if nsubsystems(s) != 1
+                    state_link_idx += 1
+                    state_links[][state_link_idx] = pˢ
+                end
+                if !(iˢ == 1 || iˢ == nsubsystems(s))
+                    state_link_idx += 1
+                    state_links[][state_link_idx] = pˢ
+                end
             end
         end
 
@@ -183,6 +197,21 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
             end
         end
         end
+
+        for i in (state_coord_idx + 1):length(state_coords[])
+            state_coords[][i] = Point2f(NaN, NaN)
+        end
+        notify(state_coords)
+
+        for i in (lock_coord_idx + 1):length(lock_coords[])
+            lock_coords[][i] = Point2f(NaN, NaN)
+        end
+        notify(lock_coords)
+
+        for i in (state_link_idx + 1):length(state_links[])
+            state_links[][i] = Point2f(NaN, NaN)
+        end
+        notify(state_links)
 
         for a in all_nodes
             notify(a)

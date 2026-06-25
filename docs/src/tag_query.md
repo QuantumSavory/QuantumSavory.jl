@@ -52,10 +52,13 @@ for metadata, optionally consume it.
 The `Tag` type stores a small structured payload. Common patterns are:
 
 - symbolic tags such as `Tag(:ready)` or `Tag(:swap_request)`;
-- typed tags such as `Tag(EntanglementCounterpart, remote_node, remote_slot)`.
+- typed tags such as `Tag(EntanglementCounterpart, remote_node, remote_slot, pair_id)`.
 
 Typed tags are especially useful when several protocols share a common metadata
 schema. They make the intended meaning explicit and allow custom printing.
+`ProtocolZoo` defines a set of standard typed tags for interoperability with
+its reusable protocols; see [Standard Protocol Tags](@ref
+standard-protocol-tags).
 
 ## Wildcards And Predicates
 
@@ -63,7 +66,7 @@ Queries can match exactly, use a wildcard, or use a predicate for one field.
 
 ```julia
 query(reg, :ready, ❓)
-query(reg, EntanglementCounterpart, 7, ❓)
+query(reg, EntanglementCounterpart, 7, ❓, ❓)
 query(reg, :score, x -> x > 90)
 ```
 
@@ -169,6 +172,8 @@ QuantumSavory.queryall
 
 - Read [Discrete Event Simulator](@ref sim) for `query_wait` and
   `querydelete_wait!`.
+- Read [Standard Protocol Tags](@ref standard-protocol-tags) for the typed tag
+  schemas used by `ProtocolZoo`.
 - Read [Backend Simulators](backendsimulator.md) and
   [Register Interface API](register_interface.md) for the quantum side of the
   same workflow.

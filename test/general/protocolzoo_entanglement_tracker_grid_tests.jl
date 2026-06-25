@@ -1,5 +1,4 @@
 using Test
-using Revise
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory
@@ -9,6 +8,8 @@ using Graphs
 using Logging
 
 @testset "ProtocolZoo Entanglement Tracker Grid" begin
+
+tagprefix(tag, n) = Tuple(tag[i] for i in 1:n)
 
 if isinteractive()
     logger = ConsoleLogger(Logging.Debug; meta_formatter=(args...)->(:black,"",""))
@@ -75,7 +76,7 @@ for path in paths
     @process entangler1()
     run(sim, 20)
 
-    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
+    @test tagprefix.([net[1].tag_info[i].tag for i in net[1].guids], 3) == [(EntanglementCounterpart, path[1], 1)]
 
 
     # For no particular reason we are starting the entangler protocols at different times
@@ -96,13 +97,13 @@ for path in paths
     @process entangler6()
     run(sim, 120)
 
-    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
-    @test [net[path[1]].tag_info[i].tag for i in net[path[1]].guids] == [Tag(EntanglementCounterpart, 1, 1), Tag(EntanglementCounterpart, path[2], 1)]
-    @test [net[path[2]].tag_info[i].tag for i in net[path[2]].guids] == [Tag(EntanglementCounterpart, path[1], 2), Tag(EntanglementCounterpart, path[3], 1)]
-    @test [net[path[3]].tag_info[i].tag for i in net[path[3]].guids] == [Tag(EntanglementCounterpart, path[2], 2), Tag(EntanglementCounterpart, path[4], 1)]
-    @test [net[path[4]].tag_info[i].tag for i in net[path[4]].guids] == [Tag(EntanglementCounterpart, path[3], 2), Tag(EntanglementCounterpart, path[5], 1)]
-    @test [net[path[5]].tag_info[i].tag for i in net[path[5]].guids] == [Tag(EntanglementCounterpart, path[4], 2), Tag(EntanglementCounterpart, 16, 1)]
-    @test [net[16].tag_info[i].tag for i in net[16].guids] == [Tag(EntanglementCounterpart, path[5], 2)]
+    @test tagprefix.([net[1].tag_info[i].tag for i in net[1].guids], 3) == [(EntanglementCounterpart, path[1], 1)]
+    @test tagprefix.([net[path[1]].tag_info[i].tag for i in net[path[1]].guids], 3) == [(EntanglementCounterpart, 1, 1), (EntanglementCounterpart, path[2], 1)]
+    @test tagprefix.([net[path[2]].tag_info[i].tag for i in net[path[2]].guids], 3) == [(EntanglementCounterpart, path[1], 2), (EntanglementCounterpart, path[3], 1)]
+    @test tagprefix.([net[path[3]].tag_info[i].tag for i in net[path[3]].guids], 3) == [(EntanglementCounterpart, path[2], 2), (EntanglementCounterpart, path[4], 1)]
+    @test tagprefix.([net[path[4]].tag_info[i].tag for i in net[path[4]].guids], 3) == [(EntanglementCounterpart, path[3], 2), (EntanglementCounterpart, path[5], 1)]
+    @test tagprefix.([net[path[5]].tag_info[i].tag for i in net[path[5]].guids], 3) == [(EntanglementCounterpart, path[4], 2), (EntanglementCounterpart, 16, 1)]
+    @test tagprefix.([net[16].tag_info[i].tag for i in net[16].guids], 3) == [(EntanglementCounterpart, path[5], 2)]
 
     @test [islocked(ref) for i in vertices(net) for ref in net[i]] |> any == false
 
@@ -117,13 +118,13 @@ for path in paths
     run(sim, 200)
 
     # In the absence of an entanglement tracker the tags will not all be updated
-    @test [net[1].tag_info[i].tag for i in net[1].guids] == [Tag(EntanglementCounterpart, path[1], 1)]
-    @test [net[path[1]].tag_info[i].tag for i in net[path[1]].guids] == [Tag(EntanglementHistory, 1, 1, path[2], 1, 2), Tag(EntanglementHistory, path[2], 1, 1, 1, 1)]
-    @test [net[path[2]].tag_info[i].tag for i in net[path[2]].guids] == [Tag(EntanglementHistory, path[1], 2, path[3], 1, 2), Tag(EntanglementHistory, path[3], 1, path[1], 2, 1)]
-    @test [net[path[3]].tag_info[i].tag for i in net[path[3]].guids] == [Tag(EntanglementHistory, path[2], 2, path[4], 1, 2), Tag(EntanglementHistory, path[4], 1, path[2], 2, 1)]
-    @test [net[path[4]].tag_info[i].tag for i in net[path[4]].guids] == [Tag(EntanglementHistory, path[3], 2, path[5], 1, 2), Tag(EntanglementHistory, path[5], 1, path[3], 2, 1)]
-    @test [net[path[5]].tag_info[i].tag for i in net[path[5]].guids] == [Tag(EntanglementHistory, path[4], 2, 16, 1, 2), Tag(EntanglementHistory, 16, 1, path[4], 2, 1)]
-    @test [net[16].tag_info[i].tag for i in net[16].guids] == [Tag(EntanglementCounterpart, path[5], 2)]
+    @test tagprefix.([net[1].tag_info[i].tag for i in net[1].guids], 3) == [(EntanglementCounterpart, path[1], 1)]
+    @test tagprefix.([net[path[1]].tag_info[i].tag for i in net[path[1]].guids], 6) == [(EntanglementHistory, 1, 1, path[2], 1, 2), (EntanglementHistory, path[2], 1, 1, 1, 1)]
+    @test tagprefix.([net[path[2]].tag_info[i].tag for i in net[path[2]].guids], 6) == [(EntanglementHistory, path[1], 2, path[3], 1, 2), (EntanglementHistory, path[3], 1, path[1], 2, 1)]
+    @test tagprefix.([net[path[3]].tag_info[i].tag for i in net[path[3]].guids], 6) == [(EntanglementHistory, path[2], 2, path[4], 1, 2), (EntanglementHistory, path[4], 1, path[2], 2, 1)]
+    @test tagprefix.([net[path[4]].tag_info[i].tag for i in net[path[4]].guids], 6) == [(EntanglementHistory, path[3], 2, path[5], 1, 2), (EntanglementHistory, path[5], 1, path[3], 2, 1)]
+    @test tagprefix.([net[path[5]].tag_info[i].tag for i in net[path[5]].guids], 6) == [(EntanglementHistory, path[4], 2, 16, 1, 2), (EntanglementHistory, 16, 1, path[4], 2, 1)]
+    @test tagprefix.([net[16].tag_info[i].tag for i in net[16].guids], 3) == [(EntanglementCounterpart, path[5], 2)]
 
     @test isassigned(net[1][1]) && isassigned(net[16][1])
     @test !isassigned(net[path[1]][1]) && !isassigned(net[path[2]][1])
@@ -179,8 +180,8 @@ for n in 4:10
     run(sim, 200)
 
     # has a small chance of failing due to the randomization of the entanglement protocols
-    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
-    q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
+    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓, ❓)
+    q2 = isnothing(q1) ? nothing : query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx, q1.tag[4])
 
     @test q1.tag[2] == size(graph)[1]
     @test q2.tag[2] == 1
@@ -217,10 +218,10 @@ for n in 4:7
 
     run(sim, 300)
 
-    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓)
+    q1 = query(net[1], EntanglementCounterpart, size(graph)[1], ❓, ❓)
     # The guard below should be false (skipping the `if` block) only very rarely, but keeps stochastic CI runs consistent.
     if !isnothing(q1)
-        q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx)
+        q2 = query(net[size(graph)[1]], EntanglementCounterpart, 1, q1.slot.idx, q1.tag[4])
 
         @test q1.tag[2] == size(graph)[1]
         @test q2.tag[2] == 1
@@ -234,40 +235,6 @@ end
 
 # More tests of 2D rectangular grids with the full stack of protocols,
 # but also now with an unlimited number of rounds and an entanglement consumer.
-
-using Test
-using Revise
-using ResumableFunctions
-using ConcurrentSim
-using QuantumSavory
-using QuantumSavory.ProtocolZoo
-using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
-using Graphs
-function check_nodes(net, c_node, node; low=true)
-    n = Int(sqrt(size(net.graph)[1])) # grid size
-    c_x = c_node%n == 0 ? c_node ÷ n : (c_node ÷ n) + 1
-    c_y = c_node - n*(c_x-1)
-    x = node%n == 0 ? node ÷ n : (node ÷ n) + 1
-    y = node - n*(x-1)
-    return low ? (c_x - x) >= 0 && (c_y - y) >= 0 : (c_x - x) <= 0 && (c_y - y) <= 0
-end
-
-# predicate for picking the furthest node
-function distance(n, a, b)
-    x1 = a%n == 0 ? a ÷ n : (a ÷ n) + 1
-    x2 = b%n == 0 ? b ÷ n : (b ÷ n) + 1
-    y1 = a - n*(x1-1)
-    y2 = b - n*(x2-1)
-
-    return x1 - x2 + y1 - y2
-end
-
-# filter for picking the furthest node
-function choose_node(net, node, arr; low=true)
-    grid_size = Int(sqrt(size(net.graph)[1]))
-    return low ? argmax((distance.(grid_size, node, arr))) : argmin((distance.(grid_size, node, arr)))
-end
-
 
 n = 6 # the size of the square grid network (n × n)
 regsize = 20 # the size of the quantum registers at each node

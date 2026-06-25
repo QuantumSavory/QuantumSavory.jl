@@ -19,22 +19,24 @@ const Switches = QuantumSavory.ProtocolZoo.Switches
     switch = SimpleSwitchDiscreteProt(net, 1, [2, 3], [1.0, 1.0]; ticktock=1.0, rounds=1)
     reverseclientindex = Dict(2 => 1, 3 => 2)
     switch._backlog[1, 2] = 1
+    left_pair_id = 101
+    right_pair_id = 202
 
     initialize!((net[1][1], net[2][1]), (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2.0))
-    tag!(net[1][1], EntanglementCounterpart, 2, 1)
-    tag!(net[2][1], EntanglementCounterpart, 1, 1)
+    tag!(net[1][1], EntanglementCounterpart, 2, 1, left_pair_id)
+    tag!(net[2][1], EntanglementCounterpart, 1, 1, left_pair_id)
 
     initialize!((net[1][2], net[3][1]), (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2.0))
-    tag!(net[1][2], EntanglementCounterpart, 3, 1)
-    tag!(net[3][1], EntanglementCounterpart, 1, 2)
+    tag!(net[1][2], EntanglementCounterpart, 3, 1, right_pair_id)
+    tag!(net[3][1], EntanglementCounterpart, 1, 2, right_pair_id)
 
     match = Switches._switch_successful_entanglements_best_match(switch, reverseclientindex)
     @test !isnothing(match)
     @test switch._backlog[1, 2] == 1
 
     for (switchslot, clientnode, clientslot) in ((1, 2, 1), (2, 3, 1))
-        switchtag = query(net[1][switchslot], EntanglementCounterpart, clientnode, clientslot)
-        clienttag = query(net[clientnode][clientslot], EntanglementCounterpart, 1, switchslot)
+        switchtag = query(net[1][switchslot], EntanglementCounterpart, clientnode, clientslot, ❓)
+        clienttag = query(net[clientnode][clientslot], EntanglementCounterpart, 1, switchslot, switchtag.tag[4])
         untag!(net[1][switchslot], switchtag.id)
         untag!(net[clientnode][clientslot], clienttag.id)
         traceout!(net[1][switchslot], net[clientnode][clientslot])
@@ -43,6 +45,6 @@ const Switches = QuantumSavory.ProtocolZoo.Switches
     Switches._switch_run_swaps(switch, match)
     run(sim, 0.2)
 
-    @test isempty(queryall(net[1], EntanglementHistory, ❓, ❓, ❓, ❓, ❓))
+    @test isempty(queryall(net[1], EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓))
     @test switch._backlog[1, 2] == 1
 end

@@ -35,6 +35,10 @@ This matters because the protocol object packages:
 That packaging is what makes protocols easier to reuse and compare than a large
 free function with many arguments.
 
+When user-written protocols need to cooperate with these implementations, the
+main interface is the standard set of typed tags documented in
+[Standard Protocol Tags](@ref standard-protocol-tags).
+
 ## How Protocols Compose
 
 Protocols in `ProtocolZoo` are designed to compose through the same metadata and

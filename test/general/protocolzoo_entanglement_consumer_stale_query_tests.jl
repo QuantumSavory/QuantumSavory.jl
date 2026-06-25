@@ -8,10 +8,11 @@ using ResumableFunctions
 @testset "ProtocolZoo EntanglementConsumer stale query" begin
     net = RegisterNet([Register(1), Register(1)])
     sim = get_time_tracker(net)
+    pair_id = 101
 
     initialize!((net[1][1], net[2][1]), DepolarizedBellPair(1.0))
-    stale_id = tag!(net[1][1], EntanglementCounterpart, 2, 1)
-    tag!(net[2][1], EntanglementCounterpart, 1, 1)
+    stale_id = tag!(net[1][1], EntanglementCounterpart, 2, 1, pair_id)
+    tag!(net[2][1], EntanglementCounterpart, 1, 1, pair_id)
 
     consumer = EntanglementConsumer(sim, net, 1, 2; period=1.0)
 
@@ -28,5 +29,5 @@ using ResumableFunctions
     @test !islocked(net[1][1])
     @test !islocked(net[2][1])
     @test isempty(consumer._log)
-    @test query(net[2][1], EntanglementCounterpart, 1, 1) !== nothing
+    @test query(net[2][1], EntanglementCounterpart, 1, 1, pair_id) !== nothing
 end

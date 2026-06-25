@@ -11,6 +11,7 @@ want exact signatures, exported names, or generated API listings.
 - [Backend Simulators](backendsimulator.md)
 - [Tag and Query API](tag_query.md)
 - [Symbolic Expressions Reference](symbolics.md)
+- [Quantum State Visualization](state_visualization.md)
 - [Visualizations](visualizations.md)
 
 ## Module Reference Pages

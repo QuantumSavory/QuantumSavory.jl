@@ -81,8 +81,8 @@ initialize!((net[1, 1], net[2, 1]), StabilizerState("XX ZZ"))
 - `docs/src/register_interface.md`
 - `docs/src/modeling_registers_and_time.md`
 - `docs/src/properties.md`
+- `examples/firstgenrepeater_lowlevel/README.md`
 - `examples/firstgenrepeater/README.md`
-- `examples/firstgenrepeater_v2/README.md`
 
 ## Common Mistakes
 
