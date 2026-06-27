@@ -36,16 +36,6 @@ end
 
 CutoffProt(net::RegisterNet, node::Int; kwargs...) = CutoffProt(get_time_tracker(net), net, node; kwargs...)
 
-function _enforce_delete_cap!(slot::RegRef, node::Int, max_delete_per_slot::Union{Int,Nothing})
-    isnothing(max_delete_per_slot) && return nothing
-    max_delete_per_slot < 0 && throw(ArgumentError("max_delete_per_slot must be nonnegative"))
-    delete_tags = queryall(slot, EntanglementDelete, ❓, node, slot.idx, ❓, ❓; filo=false)
-    for delete_tag in Iterators.take(delete_tags, max(0, length(delete_tags) - max_delete_per_slot))
-        untag!(slot, delete_tag.id)
-    end
-    return nothing
-end
-
 @resumable function (prot::CutoffProt)()
     reg = prot.net[prot.node]
     for slot in reg

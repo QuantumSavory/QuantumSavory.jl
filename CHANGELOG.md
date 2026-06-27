@@ -36,6 +36,7 @@ Required changes, in decreasing order of likelihood that they affect you:
 5. **Reciprocal tags must agree on the pair ID.** `EntanglementConsumer` (and the switch protocols) now require the two ends of a pair to carry the same `pair_id` in their reciprocal `EntanglementCounterpart` tags, not just matching `(node, slot)` routing info. If you create entangled pairs manually in tests or examples, tag both ends with the same ID.
 6. **Custom tag types are unaffected.** `EntanglerProt(...; tag=MyTag)` keeps writing the legacy two-field `MyTag(remote_node, remote_slot)` schema, and `EntanglementConsumer(...; tag=MyTag)` keeps querying it with the legacy arity. Only `EntanglementCounterpart` carries a pair ID.
 - **(fix)** Solving edge cases of deadlocks when simultaneously tagging and waiting on tags.
+- New `BBPSSWProt` distillation protocol in `ProtocolZoo`, plus the `DistilledTag` and `BBPSSWMessage` tag types. Includes a customizable `choose_pairs` selection strategy and explicit classical-channel communication of the per-round distillation outcome.
 - Significant performance improvements to queries on registers or buffers that already contain many tags.
 - New QTCP tutorial examples under `examples/qtcp_tutorial/` demonstrating basic usage on a chain, GLMakie visualization, multi-flow on a grid topology, and custom endpoint controllers.
 

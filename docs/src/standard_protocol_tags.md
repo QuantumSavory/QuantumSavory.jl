@@ -174,6 +174,35 @@ querydelete!(messagebuffer(net, node),
     EntanglementDelete, target_pair_id, W, W, node, W)
 ```
 
+### `DistilledTag`
+
+```julia
+Tag(DistilledTag)
+```
+
+Storage location: register slots.
+
+Meaning: the slot holds the surviving pair from a successful BBPSSW
+distillation round.
+
+Protocol interface:
+
+- `BBPSSWProt` adds this tag to both slots of the surviving pair after a
+  successful round, unless it is configured with `tag=nothing`.
+- By default, `BBPSSWProt` also uses the configured tag as its slot filter:
+  slots already carrying `DistilledTag` are not selected for another round by
+  the same kind of distiller.
+- Custom protocols can query this tag when they need to consume only distilled
+  pairs, or they can replace it with their own fieldless tag by passing
+  `tag=MyTag` to `BBPSSWProt`.
+
+Typical query:
+
+```julia
+query(reg, DistilledTag)
+query(slot, DistilledTag)
+```
+
 ## Entanglement IDs
 
 Some standard entanglement tags carry fields of type `EntanglementID`. These ids
@@ -394,6 +423,7 @@ EntanglementHistory
 EntanglementUpdateX
 EntanglementUpdateZ
 QuantumSavory.ProtocolZoo.EntanglementDelete
+QuantumSavory.ProtocolZoo.DistilledTag
 SwitchRequest
 Flow
 QTCPPairBegin
