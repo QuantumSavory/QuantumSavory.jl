@@ -2,6 +2,8 @@
 
 ## v0.7.1 - unreleased
 
+- Expanded benchmark suite with import/bootstrap, register backends, locks, channels, and examples coverage.
+- Improved Makie network visualization tooltips with message-buffer contents and quantum-state summaries.
 - Additional visualization methods for states of registers.
 
 ## v0.7.0 - 2026-06-12
