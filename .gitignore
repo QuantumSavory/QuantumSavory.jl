@@ -10,3 +10,5 @@ coverage
 .vscode
 dev
 .csv
+.ipynb_checkpoints/
+*.ipynb
