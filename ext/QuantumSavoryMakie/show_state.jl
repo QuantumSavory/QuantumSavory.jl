@@ -1,5 +1,5 @@
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
-    f = Figure()
+    f = Figure(size=(1000, 440))
     stateshowimage(f,QuantumSavory.quantumstate(s),s)
     show(io, m, f)
 end
@@ -90,4 +90,58 @@ function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
         axislegend(position = :rb)
         lines!(a_el, Point2f.(xs, ps))
     end
+end
+
+function stateshowimage(
+        subfig,
+        state::Union{<:QuantumOpticsBase.Ket, <:QuantumOpticsBase.AbstractOperator},
+        stateref)
+    dims = QuantumSavory._basis_dimensions(state)
+    rows = QuantumSavory._top_probability_rows(state; topk=8)
+
+    if prod(dims) <= QuantumSavory._QS_DISPLAY_MAX_DENSE_DIM &&
+            length(dims) == 1 && dims == [2]
+        rho    = QuantumSavory._dense_density_matrix(state)
+        paulis = QuantumSavory._pauli_expectations_from_density_matrix(rho)
+        _bloch_vector_plot(subfig[1,1], [v for (_,v) in paulis])
+    elseif isempty(rows)
+        a = Axis(subfig[1,1])
+        hidedecorations!(a); hidespines!(a)
+        text!(a, 0, 0;
+              text  = "QuantumOpticsBase state\n(no nonzero basis probabilities)",
+              align = (:center, :center))
+    else
+        labels = [label for (label, _) in rows]
+        probs  = [p     for (_,     p) in rows]
+        a = Axis(subfig[1,1]; title="Top basis probabilities", ylabel="Probability")
+        barplot!(a, 1:length(probs), probs)
+        a.xticks             = (1:length(labels), labels)
+        a.xticklabelrotation = pi/2 * 0.35
+        ylims!(a, 0, max(1.0, maximum(probs) * 1.1))
+    end
+
+    sa = Axis(subfig[1,2])
+    hidedecorations!(sa); hidespines!(sa)
+    lines = QuantumSavory._stateref_summary_lines(state, stateref; topk=6)
+    text!(sa, 0, 1; text=join(lines, "\n"), align=(:left, :top), fontsize=13)
+    xlims!(sa, 0, 1); ylims!(sa, 0, 1)
+    subfig
+end
+
+function _bloch_vector_plot(subfig, bloch)
+    axis = Axis(subfig; title="Bloch vector (XY plane)", xlabel="X", ylabel="Y", aspect=1)
+    θ    = range(0, 2π; length=121)
+    lines!(axis, cos.(θ), sin.(θ); color=:gray70, linewidth=2)
+    lines!(axis, [-1.0,  1.0], [0.0, 0.0]; color=:gray50, linewidth=1)
+    lines!(axis, [ 0.0,  0.0], [-1.0, 1.0]; color=:gray50, linewidth=1)
+    lines!(axis, [0.0, bloch[1]], [0.0, bloch[2]]; color=:crimson, linewidth=5)
+    scatter!(axis, [bloch[1]], [bloch[2]]; color=:crimson, markersize=14)
+    text!(axis, -0.95, 0.94;
+          text  = "Z=$(QuantumSavory._format_real(bloch[3]))",
+          align = (:left, :top), fontsize=13)
+    text!(axis, -0.95, 0.80;
+          text  = "|r|=$(QuantumSavory._format_real(sqrt(sum(abs2, bloch))))",
+          align = (:left, :top), fontsize=13)
+    xlims!(axis, -1.05, 1.05); ylims!(axis, -1.05, 1.05)
+    axis
 end
