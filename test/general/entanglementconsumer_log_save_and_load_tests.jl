@@ -111,9 +111,11 @@ const YY = Y⊗Y
         @test test_log_file_dict(csv_path)
         @test test_log_file_namedtuple(csv_path)
 
-        # Test HDF5 saving
+        # Test HDF5 saving and loading
         @test test_log_file_dict(hdf5_path)
+        @test EntanglementConsumerLog(hdf5_path) isa EntanglementConsumerLog
         @test test_log_file_namedtuple(hdf5_path)
+        @test EntanglementConsumerLog(hdf5_path) isa EntanglementConsumerLog
 
         # Clean up test files
         remove_log_file(csv_path)
