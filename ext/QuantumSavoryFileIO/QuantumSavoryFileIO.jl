@@ -2,6 +2,7 @@ module QuantumSavoryFileIO
 
 import QuantumSavory
 using QuantumSavory.ProtocolZoo
+using DocStringExtensions
 import FileIO
 
 function _set_metadata_default_values(metadata::Dict{String,Any})
@@ -35,6 +36,14 @@ function FileIO.save(file_name::String, prot::EntanglementConsumer; metadata::Un
     
     metadata = _set_metadata_default_values(metadata)
     FileIO.save(FileIO.query(file_name), prot; metadata)
+end
+
+function ProtocolZoo.EntanglementConsumerLog(file_name::String)
+    if endswith(file_name, ".h5") || endswith(file_name, ".`hdf5")
+        return FileIO.load(FileIO.File{FileIO.DataFormat{:QNHDF5},String}(file_name))
+    else
+        return ProtocolZoo.EntanglementConsumerLog()
+    end
 end
 
 end

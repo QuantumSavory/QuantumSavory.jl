@@ -118,5 +118,99 @@ function FileIO.save(save_file::FileIO.File{FileIO.DataFormat{:HDF5},String}, pr
     end
 end
 
+function FileIO.load(file::FileIO.File{FileIO.DataFormat{:QNHDF5},String})
+    function get_attribute_enum_types_dict(parent, attribute::String)
+        dtype_id = HDF5.API.h5a_get_type(HDF5.attributes(parent)[attribute])  
+        dtype = HDF5.Datatype(dtype_id)
+
+        nmembers = HDF5.API.h5t_get_nmembers(dtype)
+        type_size = HDF5.API.h5t_get_size(dtype)
+        
+        T = if type_size == 1; Int8
+            elseif type_size == 2; Int16
+            elseif type_size == 4; Int32
+            else; Int64
+        end
+
+        enum_dict = Dict{T, String}()
+        
+        for i in 0:(nmembers - 1)
+            name = HDF5.API.h5t_get_member_name(dtype, i)
+            
+            val_buf = zeros(UInt8, type_size)
+            
+            ccall(
+                (:H5Tget_member_value, HDF5.API.libhdf5), 
+                Cint, 
+                (HDF5.API.hid_t, Cuint, Ptr{Cvoid}), 
+                dtype, i, val_buf
+            )
+            
+            raw_val = reinterpret(T, val_buf)[1]
+            
+            is_big_endian = (HDF5.API.h5t_get_order(dtype) == HDF5.API.H5T_ORDER_BE)
+            actual_val = is_big_endian ? ntoh(raw_val) : raw_val
+            
+            enum_dict[actual_val] = name
+        end
+
+        close(dtype)
+        
+        return enum_dict
+    end
+
+    function read_attribute_enum(parent, attribute::String)
+        enum_dict = get_attribute_enum_types_dict(parent, attribute)
+        attr = HDF5.read_attribute(parent, attribute)
+        return enum_dict[attr]
+    end
+
+    HDF5.h5open(file.filename, "r") do file
+        qnet_group = HDF5.open_group(file, "qnet")
+        metadata_group = HDF5.open_group(qnet_group, "metadata")
+        simulation_log_group = HDF5.open_group(qnet_group, "simulation_log")
+
+        format_version = HDF5.read_attribute(qnet_group, "format_version")
+        format_version_minor = HDF5.read_attribute(qnet_group, "format_version_minor")
+        log_format = read_attribute_enum(qnet_group, "log_format")
+        reference_state = read_attribute_enum(qnet_group, "reference_state")
+
+        simulation_time = HDF5.read_dataset(simulation_log_group, "time")
+        simulation_state = HDF5.read_dataset(simulation_log_group, "state")
+
+        if isa(simulation_state,Vector)
+            simulation_state = collect(reshape(simulation_state,:,1)')
+        end
+
+        simulation_log = ProtocolZoo.EntanglementConsumerLogSimulationLog(time = simulation_time, state = simulation_state)
+
+        metadata_description = HDF5.read_attribute(metadata_group, "description")
+        metadata_simulator = HDF5.read_attribute(metadata_group, "simulator")
+
+        quantumsavory_metadata = Dict{String,Any}()
+        if haskey(metadata_group, "quantumsavory")
+            quantumsavory_group = HDF5.open_group(metadata_group, "quantumsavory")
+            for attr in keys(HDF5.attributes(quantumsavory_group))
+                quantumsavory_metadata[attr] = HDF5.read_attribute(quantumsavory_group, attr)
+            end
+        end
+
+        metadata = ProtocolZoo.EntanglementConsumerLogMetadata(
+            description = metadata_description, 
+            simulator = metadata_simulator, 
+            quantumsavory_metadata = quantumsavory_metadata
+        )
+
+        return ProtocolZoo.EntanglementConsumerLog(
+            format_version = format_version,
+            format_version_minor = format_version_minor,
+            log_format = log_format,
+            reference_state = reference_state,
+            simulation_log = simulation_log,
+            metadata = metadata
+        )
+    end
+end
+
 end
 
