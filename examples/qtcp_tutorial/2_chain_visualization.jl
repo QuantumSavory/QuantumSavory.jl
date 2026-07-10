@@ -1,3 +1,4 @@
+
 # QTCP Tutorial — Script 2: Chain Visualization
 #
 # Same repeater chain as Script 1, but now with live Makie visualization

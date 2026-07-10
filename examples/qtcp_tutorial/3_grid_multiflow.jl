@@ -21,7 +21,7 @@ T2      = 100.0
 graph = grid([n_rows, n_cols])
 
 # Set up the simulation with the full QTCP protocol suite.
-# End nodes are at the four corners of the grid.
+# nodes are at the four corners of the grid.
 end_nodes = [1, n_cols, n_nodes - n_cols + 1, n_nodes]
 sim, net = simulation_setup(graph, regsize; T2=T2, end_nodes=end_nodes)
 

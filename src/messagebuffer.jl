@@ -50,11 +50,26 @@ struct ChannelForwarder
 end
 
 function Base.put!(cf::ChannelForwarder, tag)
-    tag = convert(Tag, tag)
-    # shortest path calculated by Graphs.a_star
-    nexthop = first(Graphs.a_star(cf.net.graph, cf.src, cf.dst))
-    @debug "ChannelForwarder: Forwarding message from node $(nexthop.src) to node $(nexthop.dst) | message=$(tag)| end destination=$(cf.dst)"
-    put!(channel(cf.net, cf.src=>nexthop.dst; permit_forward=false), tag_types.Forward(tag, cf.dst))
+   tag = convert(Tag, tag)
+
+   if cf.src == cf.dst 
+    put!(messagebuffer(cf.net, cf.dst), tag)
+    return nothing 
+   end
+
+   path = Graphs.a_star(cf.net.graph, cf.src, cf.dst)
+   @assert !isempty(path) "No route from node $(cf.src) to destination $(cf.dst)"
+
+   edge = first(path)
+   nexthop = edge.src == cf.src ? edge.dst : edge.src
+
+   @debug "ChannelForwarder: Forwarding message from node $(cf.src) to node $(nexthop) | message = $(tag) | end destination=$(cf.dst)"
+
+   put!(
+    channel(cf.net, cf.src => nexthop; permit_forward=false),
+    tag_types.Forward(tag, cf.dst)
+   )
+   return nothing
 end
 
 function Base.put!(mb::MessageBuffer, tag)
@@ -77,12 +92,18 @@ Importantly, it also unlocks all processes waiting on the message buffer.
 """
 @resumable function take_loop_mb(sim, ch, src, mb)
     while true
-        _tag = @yield take!(ch) # TODO: The type assert is necessary due to a bug in ResumableFunctions. The bug was probably introduced in https://github.com/JuliaDynamics/ResumableFunctions.jl/pull/76 which introduces type inference for resumable functions in julia >=1.10. The type assert is not necessary on julia 1.9.
+        _tag = @yield take!(ch)
         tag = _tag::Tag
+
         @cases tag begin
-            Forward(innertag, enddestination) => begin # inefficient -- it recalculates the a_star at each hop TODO provide some caching mechanism
-                @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Forwarding message to node $(enddestination) | message=`$(tag)`"
-                put!(channel(mb.net, mb.node=>enddestination; permit_forward=true), innertag)
+            Forward(innertag, enddestination) => begin
+                @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Forwarding message to node $(enddestination) | message`$(tag)`"
+                
+                if mb.node == enddestination
+                    put_and_unlock_waiters(mb, src, innertag)
+                else
+                    put!(channel(mb.net, mb.node=>enddestination; permit_forward=true), innertag)
+                end
             end
             _ => begin
                 put_and_unlock_waiters(mb, src, tag)
