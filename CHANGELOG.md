@@ -3,6 +3,7 @@
 ## v0.7.1 - unreleased
 
 - Additional visualization methods for states of registers.
+- **(fix)** `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
 
 ## v0.7.0 - 2026-06-12
 
