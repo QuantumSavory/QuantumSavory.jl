@@ -74,3 +74,30 @@ function register_creation_and_initialization()
     @assert nsubsystems(net[i].staterefs[2]) == 2
 end
 SUITE["register"]["creation_and_initialization"]["from_tests"] = @benchmarkable register_creation_and_initialization()
+
+SUITE["register"]["operations"] = BenchmarkGroup(["operations"])
+
+function register_basic_operations()
+    # QuantumOptics backend
+    reg_qo = Register(3, [QuantumOpticsRepr(), QuantumOpticsRepr(), QuantumOpticsRepr()])
+    initialize!(reg_qo[1])
+    initialize!(reg_qo[2], X1)
+    apply!(reg_qo[1], Z)
+    apply!([reg_qo[1], reg_qo[2]], CNOT)
+
+    # Clifford backend
+    reg_cliff = Register(3, [CliffordRepr(), CliffordRepr(), CliffordRepr()])
+    initialize!(reg_cliff[1])
+    initialize!(reg_cliff[2], X1)
+    apply!(reg_cliff[1], Z)
+    apply!([reg_cliff[1], reg_cliff[2]], CNOT)
+
+    # QuantumMC backend
+    reg_qmc = Register(3, [QuantumMCRepr(), QuantumMCRepr(), QuantumMCRepr()])
+    initialize!(reg_qmc[1])
+    initialize!(reg_qmc[2], X1)
+    apply!(reg_qmc[1], Z)
+    apply!([reg_qmc[1], reg_qmc[2]], CNOT)
+end
+
+SUITE["register"]["operations"]["basic_gates"] = @benchmarkable register_basic_operations()
