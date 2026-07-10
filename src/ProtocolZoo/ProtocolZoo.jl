@@ -636,6 +636,7 @@ using .QTCP
 include("mbqc.jl")
 using .MBQCEntanglementDistillation
 
+include("teleport.jl")
 include("show.jl")
 
 end # module
