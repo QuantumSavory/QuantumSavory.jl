@@ -31,7 +31,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   - `EntanglementUpdateX(target_pair_id, other_pair_id, past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)`
   - `EntanglementUpdateZ(target_pair_id, other_pair_id, past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)`
   - `EntanglementDelete(target_pair_id, send_node, send_slot, rec_node, rec_slot)`
-- If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::MyProt) = true`.
+- If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::Type{<:MyProt}) = true`; instance queries delegate to this type-level trait.
 
 ## Review Checks
 

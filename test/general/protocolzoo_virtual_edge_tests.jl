@@ -5,13 +5,20 @@ using ConcurrentSim
 
 @testset "ProtocolZoo Virtual Edge Detection" begin
 
-# Test default behavior
+# Test type-level default behavior
+@test permits_virtual_edge(EntanglerProt) == false
+@test permits_virtual_edge(SwapperProt) == false
+@test permits_virtual_edge(EntanglementTracker) == false
+@test permits_virtual_edge(CutoffProt) == false
+
+# Test instance queries delegate to their protocol types
 @test permits_virtual_edge(EntanglerProt(sim=Simulation(), net=RegisterNet([Register(2)]), nodeA=1, nodeB=1)) == false
 @test permits_virtual_edge(SwapperProt(sim=Simulation(), net=RegisterNet([Register(2)]), node=1)) == false
 @test permits_virtual_edge(EntanglementTracker(sim=Simulation(), net=RegisterNet([Register(2)]), node=1)) == false
 @test permits_virtual_edge(CutoffProt(sim=Simulation(), net=RegisterNet([Register(2)]), node=1)) == false
 
 # Test EntanglementConsumer permits virtual edges
+@test permits_virtual_edge(EntanglementConsumer) == true
 @test permits_virtual_edge(EntanglementConsumer(sim=Simulation(), net=RegisterNet([Register(2), Register(2)]), nodeA=1, nodeB=2)) == true
 
 # Test with different constructor variants for EntanglementConsumer
