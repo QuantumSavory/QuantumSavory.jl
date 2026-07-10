@@ -170,7 +170,14 @@ $TYPEDFIELDS
     communication_slot::Int
     """slot for storage (e.g. nuclear spin)"""
     storage_slot::Int
+    """the state generated on the communication qubits of each edge (supports symbolic and numeric states); the fusion step expects the pair in graph form, i.e. `CZ|++⟩` with stabilizers `ZX XZ` — if the state is given in a different form, provide the local `correction` gates that bring it to graph form"""
+    pairstate = StabilizerState("ZX XZ")
+    """local correction gates applied in order to the second node's communication qubit after entanglement generation succeeds and before fusion, bringing `pairstate` to graph form (`nothing` if the state is already in graph form); e.g. `[X, H]` rotates a Barrett-Kok style `(|01⟩+|10⟩)/√2` pair to `CZ|++⟩`"""
+    correction = nothing
 end
+
+GraphStateConstructor(sim, net, graph, nodes, communication_slot, storage_slot; kwargs...) =
+    GraphStateConstructor(; sim, net, graph, nodes, communication_slot, storage_slot, kwargs...)
 
 struct GraphStateStorage
     uuid::Int
@@ -220,8 +227,8 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
                 nodeA, nodeB,
                 chooseslotA=communication_slot, chooseslotB=communication_slot,
                 tag=nothing,
-                pairstate = StabilizerState("ZX XZ"),
-                uselock=false, rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
+                pairstate = prot.pairstate,
+                uselock=false, rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the local link time and quality
             )
             process = @process entangler()
             push!(processes, process)
@@ -232,6 +239,13 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
         for (i, j) in current_edges
             regA = net[nodes[i]]
             regB = net[nodes[j]]
+
+            # apply the local correction gates that bring the pair to graph form
+            if !isnothing(prot.correction)
+                for gate in prot.correction
+                    apply!(regB[communication_slot], gate)
+                end
+            end
 
             Fusion()(regA, regB, communication_slot, storage_slot)
         end

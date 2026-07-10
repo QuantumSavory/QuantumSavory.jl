@@ -1,4 +1,4 @@
-include("full_purification_example.jl")
+include("1_purification_example.jl")
 
 using GLMakie
 GLMakie.activate!(inline=false)
