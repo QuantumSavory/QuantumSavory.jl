@@ -25,7 +25,9 @@ function simulation_setup(
     sizes, # Array giving the number of qubits in each node
     T2 # T2 dephasing times for the qubits
     ;
-    representation = QuantumOpticsRepr # Representation to use for the qubits
+    # representation = QuantumOpticsRepr # Representation to use for the qubits
+    # representation = CliffordRepr # Alternative representation
+    representation = ITensorRepr # Tensor Network representation
     )
     R = length(sizes) # Number of registers
 

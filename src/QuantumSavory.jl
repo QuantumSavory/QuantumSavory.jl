@@ -62,7 +62,7 @@ using QuantumSymbolics: I # to avoid ambiguity with LinearAlgebra.I
 export
     StateRef, RegRef, Register,
     Qubit, Qumode, QuantumStateTrait,
-    CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
+    CliffordRepr, QuantumOpticsRepr, QuantumMCRepr, ITensorRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
     onchange_tag, onchange,
@@ -160,6 +160,7 @@ include("backends/clifford/clifford.jl")
 include("backends/gabs/gabs.jl")
 include("backends/gabs/show.jl")
 include("backends/gabs/should_upstream.jl")
+include("backends/itensors/itensors.jl")
 
 include("ambiguity_fix.jl")
 

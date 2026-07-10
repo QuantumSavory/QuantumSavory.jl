@@ -70,8 +70,12 @@ sampled_times = 0.:0.2:25.
 qo_res = with_logger(nologging) do
     [monte_carlo_trajectory(; sampled_times) for _ in 1:replicates]
 end;
-qc_res = with_logger(nologging) do
-    [monte_carlo_trajectory(; sampled_times, representation=CliffordRepr) for _ in 1:replicates]
+clifford_traj = @elapsed begin
+    qc_res = [monte_carlo_trajectory(; sampled_times, representation=CliffordRepr) for _ in 1:replicates]
+end
+
+itensor_traj = @elapsed begin
+    it_res = [monte_carlo_trajectory(; sampled_times, representation=ITensorRepr) for _ in 1:replicates]
 end;
 
 # Plot the mean of the observables average over all trajectories
