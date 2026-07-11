@@ -148,6 +148,32 @@ Expected outcome:
 - The default controller completes the requested flow
 - The custom controller also completes the requested flow
 
+## Step 5: Interactive Grid Visualization
+
+File:
+- `examples/qtcp_tutorial/5_grid_interactive.jl`
+
+Goal:
+- Provide a fully interactive, web-based visualization of multiple QTCP flows executing concurrently on a grid network.
+
+Scenario:
+- A 4x4 grid topology.
+- Two simultaneous end-to-end flows connecting diagonal corners.
+- An interactive Bonito/WGLMakie web application where you can start the simulation and observe real-time performance.
+
+What the script demonstrates:
+- Combining QTCP simulations with `WGLMakie` and `Bonito` to build interactive web apps.
+- Real-time visualization of `QTCPPairBegin` and `QTCPPairEnd` tagging as entanglement successfully flows across the network.
+- Reactive updates in a Makie Dashboard (bar plot tracking delivered pairs).
+
+Narrative role:
+- This is the interactive visual finale.
+- Shows how QuantumSavory simulations can be packaged into explorable demonstrations.
+
+Expected outcome:
+- An interactive web server starts, hosting a dynamic UI.
+- Pressing "Run simulation" animates the QTCP datagram delivery and live-updates the throughput charts.
+
 ## Recommended Reading Order
 
 1. Read `setup.jl` once to understand the shared scaffold.
@@ -155,3 +181,4 @@ Expected outcome:
 3. Run `2_chain_visualization.jl` to build intuition for the runtime behavior.
 4. Run `3_grid_multiflow.jl` to see concurrent flows on a larger topology.
 5. Run `4_custom_endnode.jl` to see tutorial-level customization.
+6. Run `5_grid_interactive.jl` to interact with a live grid simulation via a web app.
