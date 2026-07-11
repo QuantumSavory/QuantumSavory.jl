@@ -209,6 +209,13 @@ function _basis_label(idx::Int, dims::Vector{Int})
     return "|" * join(reverse(parts), ",") * "⟩"
 end
 
+# Returns true only for SpinBasis(1//2) — the genuine qubit basis.
+# A FockBasis(1) also has dim=2 but should not show Bloch vector labels.
+_is_qubit_spinbasis(s::QuantumOpticsBase.StateVector) =
+    s.basis isa QuantumOpticsBase.SpinBasis && s.basis.spinnumber == 1//2
+_is_qubit_spinbasis(s::QuantumOpticsBase.AbstractOperator) =
+    s.basis_l isa QuantumOpticsBase.SpinBasis && s.basis_l.spinnumber == 1//2
+
 function _top_probability_rows(
         state::Union{<:QuantumOpticsBase.Ket, <:QuantumOpticsBase.AbstractOperator};
         topk::Int = _QS_DISPLAY_TOP_K)
@@ -236,11 +243,17 @@ function _stateref_summary_lines(
     nsub  = length(dims)
     push!(lines, "Backend: QuantumOpticsBase")
     push!(lines, "Subsystems: $nsub   dims: $(join(string.(dims), "×"))")
+    # Show entanglement across register slots
+    all_slots = slots(stateref)
+    if length(all_slots) > 1
+        slot_names = [namestr(sl.reg, useobjectid=false)*".$(sl.idx)" for sl in all_slots]
+        push!(lines, "Entangled across: " * join(slot_names, ", "))
+    end
     if N <= _QS_DISPLAY_MAX_DENSE_DIM
         rho = _dense_density_matrix(state)
         push!(lines, "Purity:   $(_format_real(_purity(rho)))")
         push!(lines, "Entropy:  $(_format_real(_von_neumann_entropy(rho))) bits")
-        if nsub == 1 && dims == [2]
+        if nsub == 1 && dims == [2] && _is_qubit_spinbasis(state)
             pq = _pauli_expectations_from_density_matrix(rho)
             push!(lines, "Bloch:  ⟨X⟩=$(_format_real(pq[1][2]))  ⟨Y⟩=$(_format_real(pq[2][2]))  ⟨Z⟩=$(_format_real(pq[3][2]))")
         end
@@ -269,11 +282,21 @@ function stateshow(
     nsub = length(dims)
     println(io)
     println(io, "  QuantumOpticsBase state — $nsub subsystem$(nsub==1 ? "" : "s"), dim=$N")
+    # Note if this state is entangled across multiple register slots
+    all_slots = slots(stateref)
+    if length(all_slots) > 1
+        slot_names = [namestr(sl.reg, useobjectid=false)*".$(sl.idx)" for sl in all_slots]
+        println(io, "  Entangled across: " * join(slot_names, ", "))
+    end
+    # Note if basis is not a qubit
+    if nsub == 1 && dims != [2]
+        println(io, "  (non-qubit system, dim=$N)")
+    end
     if N <= _QS_DISPLAY_MAX_DENSE_DIM
         rho = _dense_density_matrix(state)
         println(io, "  Purity:          $(_format_real(_purity(rho)))")
         println(io, "  Entropy (bits):  $(_format_real(_von_neumann_entropy(rho)))")
-        if nsub == 1 && dims == [2]
+        if nsub == 1 && dims == [2] && _is_qubit_spinbasis(state)
             pq = _pauli_expectations_from_density_matrix(rho)
             println(io, "  ⟨X⟩=$(_format_real(pq[1][2]))   ⟨Y⟩=$(_format_real(pq[2][2]))   ⟨Z⟩=$(_format_real(pq[3][2]))")
             println(io, "  Bloch |r|=$(_format_real(sqrt(sum(x->x[2]^2, pq))))")
@@ -341,6 +364,17 @@ function stateshow(
     nsub = length(dims)
     print(io, """<div class="quantumsavory_show quantumsavory_numericalstate quantumsavory_numericalstate_qob" style="font-family:monospace;padding:6px 0">""")
     print(io, "<b>QuantumOpticsBase</b> — $nsub subsystem$(nsub==1 ? "" : "s"), dim=$N<br>")
+    # Note if this state is entangled across multiple register slots
+    let all_slots = slots(stateref)
+        if length(all_slots) > 1
+            slot_names = [namestr(sl.reg, useobjectid=false)*".$(sl.idx)" for sl in all_slots]
+            print(io, "<i>Entangled across: " * join(slot_names, ", ") * "</i><br>")
+        end
+    end
+    # Note if basis is not a qubit
+    if nsub == 1 && dims != [2]
+        print(io, "<i>(non-qubit system, dim=$N)</i><br>")
+    end
     if N <= _QS_DISPLAY_MAX_DENSE_DIM
         rho = _dense_density_matrix(state)
         p   = _purity(rho)
@@ -348,7 +382,7 @@ function stateshow(
         print(io, "<table style='border-collapse:collapse;margin:4px 0;font-size:0.92em'>")
         print(io, "<tr><td style='padding-right:1em'>Purity</td><td><b>$(_format_real(p))</b></td></tr>")
         print(io, "<tr><td>Entropy (bits)</td><td><b>$(_format_real(s_))</b></td></tr>")
-        if nsub == 1 && dims == [2]
+        if nsub == 1 && dims == [2] && _is_qubit_spinbasis(state)
             pq = _pauli_expectations_from_density_matrix(rho)
             print(io, "<tr><td>⟨X⟩</td><td>$(_format_real(pq[1][2]))</td></tr>")
             print(io, "<tr><td>⟨Y⟩</td><td>$(_format_real(pq[2][2]))</td></tr>")

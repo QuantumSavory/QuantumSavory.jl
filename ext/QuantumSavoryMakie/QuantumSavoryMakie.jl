@@ -7,9 +7,10 @@ using ConcurrentSim: ConcurrentSim
 using LinearAlgebra: eigen
 using Makie: Makie, Theme, Figure, Axis, Axis3, Aspect, Label, PolyElement, Legend, get_scene, @L_str,
     @recipe, lift, @lift, Observable,
-    Point2, Point2f, Rect2f, Rect3f,
+    Point2, Point2f, Point3f, Rect2f, Rect3f,
     scatter!, heatmap!, barplot!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
     xlims!, ylims!, zlims!,
+    surface!,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
     colsize!, resize_to_layout!,
@@ -23,7 +24,8 @@ using QuantumSavory: _mode_mean
 
 using Gabs: Gabs
 using QuantumClifford: QuantumClifford
-using QuantumOpticsBase: QuantumOpticsBase, dm
+using QuantumOpticsBase: QuantumOpticsBase, dm, SpinBasis
+using QuantumOptics: QuantumOptics
 
 
 ##

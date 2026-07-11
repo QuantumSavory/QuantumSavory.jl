@@ -1,6 +1,6 @@
 function Base.show(io::IO, m::MIME"image/png", s::StateRef)
-    f = Figure(size=(1000, 440))
-    stateshowimage(f,QuantumSavory.quantumstate(s),s)
+    f = Figure()  # no hardcoded size — let Makie use its default
+    stateshowimage(f, QuantumSavory.quantumstate(s), s)
     show(io, m, f)
 end
 
@@ -20,7 +20,6 @@ function stateshowimage(subfig, state::QuantumClifford.MixedDestabilizer, stater
         for s in QuantumSavory.slots(stateref)
         ]
     subfig,ax,p = QuantumClifford.stabilizerplot_axis(subfig, stab)
-    #ax.xticksvisible = true
     ax.xticklabelsvisible = true
     ax.xticks = (1:length(names), names)
     ax.xticklabelrotation = pi/2*0.8
@@ -36,7 +35,6 @@ function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
     elseif typeof(state.basis) <: Gabs.QuadBlockBasis
         ticks = (1:2N, vcat([L"x_{%$i}" for i in 1:N], [L"p_{%$i}" for i in 1:N]))
     end
-    resize!(subfig.scene, (800, 400))
     a_cv = Axis(
         subfig[1,1];
         aspect = Makie.DataAspect(),
@@ -60,7 +58,7 @@ function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
         )
         colors = cgrad(:RdBu, 2, categorical=true)
         for n in 1:N
-            barplot!(a_fm, [n,n], _mode_mean(state, n, N), dodge=[1,2], width=0.85, color=[1,2], colormap=colors)
+            barplot!(a_fm, [n,n], QuantumSavory._mode_mean(state, n, N), dodge=[1,2], width=0.85, color=[1,2], colormap=colors)
         end
         labels = [L"\langle \hat{x} \rangle", L"\langle \hat{p} \rangle"]
         elements = [PolyElement(color=colors[i]) for i in 1:length(labels)]
@@ -69,7 +67,6 @@ function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
     end
     # phase space ellipse for 1-mode state
     if N == 1
-        resize!(subfig.scene, (800, 800))
         λs, vecs = eigen(state.covar)
         a, b = sqrt.(λs)
         v1, v2 = vecs[:, 1], vecs[:, 2]
@@ -92,23 +89,30 @@ function stateshowimage(subfig, state::Gabs.GaussianState, stateref)
     end
 end
 
+# Helper: is the state's basis SpinBasis(1//2)?
+_is_spin_half_basis(s::QuantumOpticsBase.Ket) =
+    s.basis isa SpinBasis && s.basis.spinnumber == 1//2
+_is_spin_half_basis(s::QuantumOpticsBase.AbstractOperator) =
+    s.basis_l isa SpinBasis && s.basis_l.spinnumber == 1//2
+
 function stateshowimage(
         subfig,
         state::Union{<:QuantumOpticsBase.Ket, <:QuantumOpticsBase.AbstractOperator},
         stateref)
     dims = QuantumSavory._basis_dimensions(state)
+    nsub = length(dims)
+    N    = prod(dims)
     rows = QuantumSavory._top_probability_rows(state; topk=8)
 
-    if prod(dims) <= QuantumSavory._QS_DISPLAY_MAX_DENSE_DIM &&
-            length(dims) == 1 && dims == [2]
-        rho    = QuantumSavory._dense_density_matrix(state)
-        paulis = QuantumSavory._pauli_expectations_from_density_matrix(rho)
-        _bloch_vector_plot(subfig[1,1], [v for (_,v) in paulis])
+    # Single spin-1/2 qubit: use QuantumOptics.qfuncsu2 for a proper 3D Bloch sphere
+    if nsub == 1 && dims == [2] && _is_spin_half_basis(state) &&
+            N <= QuantumSavory._QS_DISPLAY_MAX_DENSE_DIM
+        _bloch_sphere_plot(subfig[1,1], state)
     elseif isempty(rows)
         a = Axis(subfig[1,1])
         hidedecorations!(a); hidespines!(a)
         text!(a, 0, 0;
-              text  = "QuantumOpticsBase state\n(no nonzero basis probabilities)",
+              text  = "QuantumOpticsBase state\n(dim=$N — display suppressed)",
               align = (:center, :center))
     else
         labels = [label for (label, _) in rows]
@@ -120,28 +124,49 @@ function stateshowimage(
         ylims!(a, 0, max(1.0, maximum(probs) * 1.1))
     end
 
+    # Summary text panel — include entanglement info if state spans multiple slots
     sa = Axis(subfig[1,2])
     hidedecorations!(sa); hidespines!(sa)
-    lines = QuantumSavory._stateref_summary_lines(state, stateref; topk=6)
-    text!(sa, 0, 1; text=join(lines, "\n"), align=(:left, :top), fontsize=13)
+    lines_vec = QuantumSavory._stateref_summary_lines(state, stateref; topk=6)
+    text!(sa, 0, 1; text=join(lines_vec, "\n"), align=(:left, :top), fontsize=13)
     xlims!(sa, 0, 1); ylims!(sa, 0, 1)
     subfig
 end
 
-function _bloch_vector_plot(subfig, bloch)
-    axis = Axis(subfig; title="Bloch vector (XY plane)", xlabel="X", ylabel="Y", aspect=1)
-    θ    = range(0, 2π; length=121)
-    lines!(axis, cos.(θ), sin.(θ); color=:gray70, linewidth=2)
-    lines!(axis, [-1.0,  1.0], [0.0, 0.0]; color=:gray50, linewidth=1)
-    lines!(axis, [ 0.0,  0.0], [-1.0, 1.0]; color=:gray50, linewidth=1)
-    lines!(axis, [0.0, bloch[1]], [0.0, bloch[2]]; color=:crimson, linewidth=5)
-    scatter!(axis, [bloch[1]], [bloch[2]]; color=:crimson, markersize=14)
-    text!(axis, -0.95, 0.94;
-          text  = "Z=$(QuantumSavory._format_real(bloch[3]))",
-          align = (:left, :top), fontsize=13)
-    text!(axis, -0.95, 0.80;
-          text  = "|r|=$(QuantumSavory._format_real(sqrt(sum(abs2, bloch))))",
-          align = (:left, :top), fontsize=13)
-    xlims!(axis, -1.05, 1.05); ylims!(axis, -1.05, 1.05)
-    axis
+# 3D Bloch sphere using QuantumOptics.jl's qfuncsu2 (Husimi Q-function on SU(2)).
+# The Wigner quasi-probability function on SU(2) gives the coloring of the sphere surface.
+function _bloch_sphere_plot(subfig, state)
+    rho_op = state isa QuantumOpticsBase.Ket ? dm(state) : state
+
+    # Use QuantumOptics.qfuncsu2 — Husimi Q-function on the SU(2) sphere.
+    # wignersu2 has a known bounds error for spin-1/2 (N=1) in this version;
+    # qfuncsu2 is the correct reuse of QuantumOptics.jl visualization capability.
+    Ntheta = 40
+    Nphi   = 2 * Ntheta
+    Q = QuantumOptics.qfuncsu2(rho_op, Ntheta; Nphi=Nphi)  # Ntheta×Nphi real matrix
+
+    # Build matching spherical coordinate grids (qfuncsu2 uses theta in [0,pi], phi in [0,2pi])
+    thetas = range(0.0, π,  length=Ntheta)
+    phis   = range(0.0, 2π, length=Nphi)
+    xs = [sin(θ)*cos(φ) for θ in thetas, φ in phis]
+    ys = [sin(θ)*sin(φ) for θ in thetas, φ in phis]
+    zs = [cos(θ)        for θ in thetas, φ in phis]
+
+    qmax = max(maximum(Q), 1e-10)
+
+    ax = Axis3(subfig; title="Bloch sphere (Husimi Q function)",
+               aspect=:equal, xlabel="X", ylabel="Y", zlabel="Z")
+    surface!(ax, xs, ys, zs; color=Q, colormap=:viridis, colorrange=(0.0, qmax))
+
+    # Overlay the Bloch vector as a line+point
+    ρ  = Matrix(rho_op.data)
+    bx = 2real(ρ[1,2])
+    by = -2imag(ρ[1,2])
+    bz = real(ρ[1,1]) - real(ρ[2,2])
+    linesegments!(ax, [Point3f(0f0,0f0,0f0), Point3f(bx,by,bz)];
+                  color=:black, linewidth=4)
+    scatter!(ax, [Point3f(bx,by,bz)]; color=:black, markersize=12)
+
+    xlims!(ax, -1.1, 1.1); ylims!(ax, -1.1, 1.1); zlims!(ax, -1.1, 1.1)
+    ax
 end
