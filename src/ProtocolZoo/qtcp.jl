@@ -20,10 +20,6 @@ export QDatagram, Flow,
 # Message types
 ###
 
-# set to true for AIMD, false for fixed window baseline
-const USE_AIMD = false
-const FIXED_WINDOW = 3
-
 
 """
 $TYPEDEF
@@ -218,7 +214,7 @@ Tag(tag::ECNSignal) = Tag(ECNSignal, tag.flow_uuid, tag.seq_num, tag.marked_at_n
 β_default = 1.816e-2            #integral gain (always < alpha)
 t_target_default = 0.5       #target buffering time
 update_interval_default = 0.1   #how often PI runs
-fidelty_target_default = 0.88   #fidelty maintanance
+fidelty_target_default = 0.88   #fidelty maintenance
 variance_thres_default = 0.001  #max acceptable fidelity variance
 α_min_default = 1e-7            #safety floor
 α_max_default = 1e-3            #safety ceiling
@@ -408,7 +404,6 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
     pairs_left_to_fulfill = Dict{Int,Int}() # total number of pairs still to be established
     destination            = Dict{Int,Int}() # the destination
 
-    #---AIMD state, replaces fixed WINDOW = 3
     window          = Dict{Int, Float64}()
     ssthresh        = Dict{Int, Float64}()
     in_slow_start   = Dict{Int, Bool}()
@@ -446,7 +441,6 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 qdatagrams_in_flight[flow_uuid]   -= 1
                 pairs_left_to_fulfill[flow_uuid] -= 1
 
-                # AIMD additive increase on successful ACK 
                 if in_slow_start[flow_uuid]
                     window[flow_uuid] += 1.0
                     if window[flow_uuid] >= ssthresh[flow_uuid]
@@ -456,11 +450,11 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     window[flow_uuid] += 1.0 / window[flow_uuid]
                 end
 
-                #--- compute and log delievered fidelity ---
+                #--- compute and log delivered fidelity ---
                 transit_time = now(sim) - start_time
                 T_c = 100.0
-                delievered_fidelity = 0.25 + 0.75 * exp(-transit_time / T_c)
-                @info "[$(now(sim))] FIDELITY RECORD | flow=$(flow_uuid).$(seq_num) | transit=$(round(transit_time, digits=3))s | F=$(round(delievered_fidelity, digits=4))"
+                delivered_fidelity = 0.25 + 0.75 * exp(-transit_time / T_c)
+                @info "[$(now(sim))] FIDELITY RECORD | flow=$(flow_uuid).$(seq_num) | transit=$(round(transit_time, digits=3))s | F=$(round(delivered_fidelity, digits=4))"
 
                 # Check if there are any LinkLevelReplyAtSource messages and turn them into QTCPPairBegin messages
                 link_reply = querydelete!(mb, LinkLevelReplyAtSource, flow_uuid, seq_num, ❓)
@@ -484,7 +478,6 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     delete!(qdatagrams_sent, flow_uuid)
                     delete!(pairs_left_to_fulfill, flow_uuid)
                     delete!(destination, flow_uuid)
-                    #clean up AIMD state too
                     delete!(window, flow_uuid)
                     delete!(ssthresh, flow_uuid)
                     delete!(in_slow_start, flow_uuid)
@@ -507,7 +500,6 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 window[flow_uuid]           = ssthresh[flow_uuid]
                 in_slow_start[flow_uuid]    = false
                 
-                @info "[$(now(sim))] AIMD BACKOFF | flow =$(flow_uuid).$(seq_num) | window $(round(old_window, digits=2)) → $(round(window[flow_uuid], digits=2)) | marked at node $(marked_at_node) | propagation delay $(round(propagation_delay*1000, digits=3))ms"
             end
 
             # check if we just received a qdatagram for which we are the flow destination
@@ -524,9 +516,9 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 #--- Log fidelity at the destination ---
                 transit_time = now(sim) - start_time
                 T_c = 100.0
-                delievered_fidelity = 0.25 + 0.75 * exp(-transit_time / T_c)
+                delivered_fidelity = 0.25 + 0.75 * exp(-transit_time / T_c)
                 
-                @info "[$(now(sim))] PAIR DELIVERED | flow=$(flow_uuid).$(seq_num) | transit=$(round(transit_time, digits=3))s | F=$(round(delievered_fidelity, digits=4))"
+                @info "[$(now(sim))] PAIR DELIVERED | flow=$(flow_uuid).$(seq_num) | transit=$(round(transit_time, digits=3))s | F=$(round(delivered_fidelity, digits=4))"
 
                 # Check if there are any LinkLevelReplyAtHop messages and turn them into QTCPPairEnd messages
                 link_reply = querydelete!(mb, LinkLevelReplyAtHop, flow_uuid, seq_num, ❓)
@@ -546,7 +538,6 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
         end
 
         for uuid in current_flows
-            effective_window = USE_AIMD ? floor(Int, window[uuid]) : FIXED_WINDOW
             while qdatagrams_in_flight[uuid] < effective_window &&
                 qdatagrams_in_flight[uuid] < pairs_left_to_fulfill[uuid]
             qdatagrams_in_flight[uuid] += 1
