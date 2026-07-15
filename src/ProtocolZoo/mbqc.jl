@@ -172,7 +172,15 @@ $TYPEDFIELDS
     storage_slot::Int
 end
 
-struct GraphStateStorage
+"""
+$TYPEDEF
+
+Tag identifying the graph-state UUID and logical vertex stored in a register
+slot by [`GraphStateConstructor`](@ref).
+
+$TYPEDFIELDS
+"""
+struct GraphStateStorage <: AbstractTag
     uuid::Int
     vertex::Int
 end
@@ -307,7 +315,7 @@ Message containing the results of Bell measurements performed during purificatio
 
 $TYPEDFIELDS
 """
-@kwdef struct PurifierBellMeasurementResults
+@kwdef struct PurifierBellMeasurementResults <: AbstractTag
     """the node that performed the measurements"""
     node::Int
     """bit-packed XX measurement results"""
@@ -393,7 +401,7 @@ A tag indicating a purified entanglement with a remote node.
 
 $TYPEDFIELDS
 """
-@kwdef struct PurifiedEntanglementCounterpart
+@kwdef struct PurifiedEntanglementCounterpart <: AbstractTag
     """the remote node we are entangled to after purification"""
     remote_node::Int
     """the slot in the remote node"""

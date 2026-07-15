@@ -354,7 +354,7 @@ Notify a switch that you request to be entangled with another node.
 
 $TYPEDFIELDS
 """
-@kwdef struct SwitchRequest
+@kwdef struct SwitchRequest <: AbstractTag
     "the id of the node making the request"
     requester::Int
     "the id of the remote node to which we want to be entangled"

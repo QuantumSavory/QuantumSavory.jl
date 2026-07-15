@@ -31,6 +31,10 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   - `EntanglementUpdateX(target_pair_id, other_pair_id, past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)`
   - `EntanglementUpdateZ(target_pair_id, other_pair_id, past_local_node, past_local_slot, past_remote_slot, new_remote_node, new_remote_slot, correction)`
   - `EntanglementDelete(target_pair_id, send_node, send_slot, rec_node, rec_slot)`
+- Named tag-head structs used by the zoo are concrete `AbstractTag` subtypes.
+  Preserve the exact configuration-field contracts: `EntanglerProt.tag`
+  permits such a type or `nothing`, while `EntanglementConsumer.tag` requires
+  such a type.
 - If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::Type{<:MyProt}) = true`; instance queries delegate to this type-level trait.
 
 ## Review Checks
@@ -52,6 +56,9 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   - `SwapperProt.agelimit`
   - `SwapperProt.max_history_per_slot`
 - Keep shorthand constructors like `Prot(net, ...)` aligned with tests.
+- When migrating custom entangler/consumer tags, define a concrete
+  `AbstractTag` subtype; do not constrain generic `Tag(::DataType, ...)`
+  construction as a side effect.
 - For QTCP changes, review the `Tag(...)` serialization and matching query shape together.
 
 ## Source Files To Read

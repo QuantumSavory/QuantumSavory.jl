@@ -68,6 +68,10 @@ When you already know the match you care about, prefer `query_wait` or
 - Use plain symbolic tags for simple stage markers or one-off control flow.
 - Users can define custom tags freely; use `ProtocolZoo` standard tags when a
   custom protocol should interoperate with existing zoo protocols.
+- `AbstractTag` marks named tag-head types used by protocol configuration. A
+  custom type passed to `EntanglerProt(...; tag=...)` or
+  `EntanglementConsumer(...; tag=...)` must be a concrete subtype. Generic
+  `Tag(DataType, ...)` use remains unrestricted.
 - Use `locked=` and `assigned=` filters when resource availability matters, especially in networking protocols.
 - Use `querydelete!` or `querydelete_wait!` when the tag or message is consumable state.
 - Prefer waiting helpers over manual `while true` polling loops.

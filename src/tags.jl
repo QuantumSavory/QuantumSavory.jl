@@ -2,6 +2,26 @@ const TagElementTypes = Union{Symbol, Int, DataType}
 const EMPTY_TAG_ID_VECTOR = Int128[]
 
 """
+    AbstractTag
+
+Marker supertype for named tag heads used by QuantumSavory protocols.
+
+`AbstractTag` describes the type stored at the head of a typed [`Tag`](@ref),
+such as `EntanglementCounterpart` in
+`Tag(EntanglementCounterpart, remote_node, remote_slot, pair_id)`. It does not
+replace the `Tag` sum type itself. Generic `Tag(::DataType, ...)` construction
+and querying remain available for types that do not subtype `AbstractTag`.
+
+Custom tag heads supplied through protocol fields declared as
+`Type{<:AbstractTag}` must be concrete subtypes of this marker:
+
+```julia
+struct MyTag <: AbstractTag end
+```
+"""
+abstract type AbstractTag end
+
+"""
 Tags are used to represent classical metadata describing the state (or even history) of nodes and their registers. The library allows the construction of custom tags using the `Tag` constructor. Currently tags are implemented as instances of a [sum type](https://github.com/MasonProtter/SumTypes.jl) and have fairly constrained structure. Most of them are constrained to contain only Symbol instances and integers.
 
 Here is an example of such a generic tag:

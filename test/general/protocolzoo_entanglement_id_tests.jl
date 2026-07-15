@@ -8,7 +8,7 @@ using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory,
     NO_ENTANGLEMENT_ID, combine_entanglement_ids, fresh_entanglement_id
 using QuantumSavory.ProtocolZoo: _enforce_history_cap!, normalize_entanglement_id
 
-struct CustomEntanglerTag end
+struct CustomEntanglerTag <: AbstractTag end
 
 @testset "ProtocolZoo entanglement IDs" begin
     @testset "ID accumulator algebra" begin
