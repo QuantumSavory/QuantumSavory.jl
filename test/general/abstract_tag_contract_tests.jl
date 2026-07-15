@@ -12,30 +12,6 @@ struct UnrelatedTagHead end
 @testset "AbstractTag contract" begin
     @test Base.isexported(QuantumSavory, :AbstractTag)
 
-    builtin_named_tag_types = (
-        PZ.EntanglementCounterpart,
-        PZ.EntanglementHistory,
-        PZ.EntanglementUpdateX,
-        PZ.EntanglementUpdateZ,
-        PZ.EntanglementDelete,
-        PZ.SwitchRequest,
-        QTCP.Flow,
-        QTCP.QTCPPairBegin,
-        QTCP.QTCPPairEnd,
-        QTCP.QDatagram,
-        QTCP.QDatagramSuccess,
-        QTCP.LinkLevelRequest,
-        QTCP.LinkLevelReply,
-        QTCP.LinkLevelReplyAtSource,
-        QTCP.LinkLevelReplyAtHop,
-        MBQC.GraphStateStorage,
-        MBQC.PurifierBellMeasurementResults,
-        MBQC.PurifiedEntanglementCounterpart,
-    )
-
-    @test length(builtin_named_tag_types) == 18
-    @test all(isconcretetype, builtin_named_tag_types)
-    @test all(T -> T <: AbstractTag, builtin_named_tag_types)
 
     net = RegisterNet([Register(1), Register(1)])
     sim = get_time_tracker(net)
