@@ -11,6 +11,9 @@
   `struct MyTag <: AbstractTag end`. The entangler accepts `nothing`, while the
   consumer requires a named tag type. Generic `Tag(DataType, ...)` construction
   and querying remain unrestricted.
+- `RegisterNet` now accepts `(src, dst) -> delay` callables for
+  `classical_delay` and `quantum_delay`, enabling per-link and asymmetric
+  transport delays while retaining scalar delay support.
 
 ## v0.7.0 - 2026-06-12
 
