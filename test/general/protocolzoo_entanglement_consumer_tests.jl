@@ -6,7 +6,7 @@ using ConcurrentSim
 using ResumableFunctions
 using Logging
 
-struct CustomConsumerEntanglementTag end
+struct CustomConsumerEntanglementTag <: AbstractTag end
 
 @testset "ProtocolZoo Entanglement Consumer" begin
 

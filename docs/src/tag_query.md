@@ -60,6 +60,23 @@ schema. They make the intended meaning explicit and allow custom printing.
 its reusable protocols; see [Standard Protocol Tags](@ref
 standard-protocol-tags).
 
+### Named Tag Heads And `AbstractTag`
+
+[`AbstractTag`](@ref) is the marker supertype for named tag heads used by
+QuantumSavory protocols. It describes the type at the head of a stored `Tag`;
+it does not replace the `Tag` sum type.
+
+Custom tag heads passed as `EntanglerProt(...; tag=MyTag)` or
+`EntanglementConsumer(...; tag=MyTag)` must be concrete subtypes of it:
+
+```julia
+struct MyTag <: AbstractTag end
+```
+
+This protocol-field contract does not restrict the generic metadata API.
+`Tag(Int, 1)`, `Tag(MyOtherType, ...)`, and matching queries continue to accept
+arbitrary `DataType` heads supported by the existing concrete tag signatures.
+
 ## Wildcards And Predicates
 
 Queries can match exactly, use a wildcard, or use a predicate for one field.
@@ -121,6 +138,7 @@ reserved or empty.
 ## `Tag` Type
 
 ```@docs; canonical=false
+QuantumSavory.AbstractTag
 QuantumSavory.Tag
 ```
 

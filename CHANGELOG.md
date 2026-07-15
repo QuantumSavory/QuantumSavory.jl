@@ -4,6 +4,12 @@
 
 - Additional visualization methods for states of registers.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
+- **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.
+  Custom types passed to `EntanglerProt(...; tag=MyTag)` or
+  `EntanglementConsumer(...; tag=MyTag)` must be concrete and migrate to
+  `struct MyTag <: AbstractTag end`. The entangler accepts `nothing`, while the
+  consumer requires a named tag type. Generic `Tag(DataType, ...)` construction
+  and querying remain unrestricted.
 
 ## v0.7.0 - 2026-06-12
 

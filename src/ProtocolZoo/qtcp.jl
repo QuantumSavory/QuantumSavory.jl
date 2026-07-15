@@ -26,7 +26,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct Flow
+@kwdef struct Flow <: AbstractTag
     "who initiates the request and also initiates the qdatagrams"
     src::Int
     "the destination node"
@@ -45,7 +45,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairBegin
+@kwdef struct QTCPPairBegin <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -68,7 +68,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairEnd
+@kwdef struct QTCPPairEnd <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -91,7 +91,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QDatagram
+@kwdef struct QDatagram <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -113,7 +113,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QDatagramSuccess
+@kwdef struct QDatagramSuccess <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "sequence number of the qdataframe in the given flow"
@@ -129,7 +129,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelRequest
+@kwdef struct LinkLevelRequest <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -145,7 +145,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReply
+@kwdef struct LinkLevelReply <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -161,7 +161,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtSource
+@kwdef struct LinkLevelReplyAtSource <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -177,7 +177,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtHop
+@kwdef struct LinkLevelReplyAtHop <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"

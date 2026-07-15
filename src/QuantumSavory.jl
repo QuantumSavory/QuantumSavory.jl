@@ -77,7 +77,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl and querywait.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    AbstractTag, Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
     findfreeslot,
     #messagebuffer.jl
     MessageBuffer,

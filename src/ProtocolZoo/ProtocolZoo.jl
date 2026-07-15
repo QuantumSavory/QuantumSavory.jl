@@ -66,7 +66,7 @@ Indicates the current entanglement status with a remote node's slot. Added when 
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementCounterpart
+@kwdef struct EntanglementCounterpart <: AbstractTag
     "the id of the remote node to which we are entangled"
     remote_node::Int
     "the slot in the remote node containing the qubit we are entangled to"
@@ -99,7 +99,7 @@ have outdated information about who is entangled to whom and we need to update t
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementHistory
+@kwdef struct EntanglementHistory <: AbstractTag
     "the id of the remote node we used to be entangled to"
     remote_node::Int
     "the slot of the remote node we used to be entangled to"
@@ -127,7 +127,7 @@ entanglement information and apply an `X` correction after the remote node perfo
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementUpdateX
+@kwdef struct EntanglementUpdateX <: AbstractTag
     "the pair id currently known by the receiver for the target slot"
     target_pair_id::EntanglementID
     "the pair-id chunk to combine into the target pair"
@@ -157,7 +157,7 @@ entanglement information and apply a `Z` correction after the remote node perfor
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementUpdateZ
+@kwdef struct EntanglementUpdateZ <: AbstractTag
     "the pair id currently known by the receiver for the target slot"
     target_pair_id::EntanglementID
     "the pair-id chunk to combine into the target pair"
@@ -190,7 +190,7 @@ $TYPEDFIELDS
 
 See also: [`CutoffProt`](@ref)
 """
-@kwdef struct EntanglementDelete
+@kwdef struct EntanglementDelete <: AbstractTag
     "the pair id targeted by this deletion"
     target_pair_id::EntanglementID
     "the node that sent the deletion announcement message after they delete their local qubit"
@@ -252,8 +252,8 @@ $TYPEDFIELDS
     margin::Int = 0
     """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
     hardmargin::Int = 0
-    """Tag to be added to the entangled qubits or nothing to not add any tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
-    tag::Union{DataType,Nothing} = EntanglementCounterpart
+    """concrete `AbstractTag` subtype to add to the entangled qubits, or `nothing` to add no tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
+    tag::Union{Type{<:AbstractTag},Nothing} = EntanglementCounterpart
 end
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
@@ -524,8 +524,8 @@ $FIELDS
     nodeB::Int
     """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
     period::Union{Float64,Nothing} = 0.1
-    """tag type which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
-    tag::Any = EntanglementCounterpart
+    """concrete `AbstractTag` subtype which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
+    tag::Type{<:AbstractTag} = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end

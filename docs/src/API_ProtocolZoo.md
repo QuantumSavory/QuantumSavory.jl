@@ -39,6 +39,12 @@ When user-written protocols need to cooperate with these implementations, the
 main interface is the standard set of typed tags documented in
 [Standard Protocol Tags](@ref standard-protocol-tags).
 
+`EntanglerProt` and `EntanglementConsumer` accept a named tag-head type through
+their `tag` fields. Custom types supplied there must be concrete subtypes of
+`QuantumSavory.AbstractTag`; the entangler additionally accepts `nothing` to
+disable tagging. This marker describes the head stored inside a `Tag` and does
+not replace the `Tag` value itself.
+
 ## How Protocols Compose
 
 Protocols in `ProtocolZoo` are designed to compose through the same metadata and

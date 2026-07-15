@@ -26,6 +26,19 @@ when another protocol is expected to understand the metadata. This convention
 is what lets a custom component fit into an existing stack without directly
 calling the internals of another protocol.
 
+Named tag heads used through the `tag` configuration field of
+`EntanglerProt` or `EntanglementConsumer` must be concrete subtypes of
+`AbstractTag`:
+
+```julia
+struct MyEntanglementTag <: AbstractTag end
+```
+
+The entangler writes custom configured tags with the legacy
+`(remote_node, remote_slot)` payload, and the consumer queries that same shape.
+This requirement applies to those protocol configuration fields, not to
+general `Tag(DataType, ...)` construction and querying.
+
 For example, `EntanglerProt` marks generated links with
 `EntanglementCounterpart`. `SwapperProt` can then find such links by querying
 for that tag, and `EntanglementTracker` can keep the metadata coherent after a
@@ -404,6 +417,7 @@ LinkLevelRequest
 LinkLevelReply
 LinkLevelReplyAtSource
 LinkLevelReplyAtHop
+QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation.GraphStateStorage
 QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation.PurifierBellMeasurementResults
 QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation.PurifiedEntanglementCounterpart
 ```
