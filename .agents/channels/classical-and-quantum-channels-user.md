@@ -87,6 +87,9 @@ put!(qchannel(net, 1 => 2), net[1, 1])
   - this gives the same semantics on message buffers and registers.
 - `permit_forward=true` affects only classical traffic.
 - `qchannel(net, ...)` is a direct-edge quantum link, not an automatic repeater or routing layer.
+- `RegisterNet(...; classical_delay, quantum_delay)` accepts either one delay
+  for all links or a callable `(src, dst) -> delay` evaluated for each directed
+  channel.
 - The destination slot for `take!` on a quantum channel must be empty.
 - If in-transit noise matters, construct the `QuantumChannel` with a background process.
 

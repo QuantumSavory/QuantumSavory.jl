@@ -13,6 +13,9 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
 ## Classical Side
 
 - `RegisterNet` materializes directed classical channels for every undirected edge.
+- `classical_delay` and `quantum_delay` are resolved once for each directed
+  channel during `RegisterNet` construction. A callable receives `(src, dst)`;
+  a non-callable value is reused unchanged.
 - Each `MessageBuffer` is backed by one `take_loop_mb` process per incoming edge.
 - Forwarding is implemented by `ChannelForwarder` plus the internal `Forward` tag variant.
 - Forwarded messages recompute the shortest path at each hop.
@@ -62,6 +65,8 @@ Use `.agents/channels/classical-and-quantum-channels-user.md` for that.
 - Prefer `query_wait` or `querydelete_wait!` in protocol code when the awaited
   condition is already known.
 - Keep direct-edge versus forwarded classical paths clearly separate.
+- When changing network construction, test scalar delay compatibility and both
+  directions of callable delays for classical and quantum channels.
 - Check for accidental language in docs or code reviews that implies enforced locality. The framework models locality; it does not enforce it at the Julia level.
 - Watch for hidden timing assumptions between:
   - local buffer injection
