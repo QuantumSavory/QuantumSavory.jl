@@ -1,0 +1,315 @@
+# pick slots in reg without the given distillation tag (defaults to DistilledTag)
+function nondistilled(reg::Register, tag::DataType=DistilledTag)
+    return (slot) -> isnothing(query(reg[slot], tag))
+end
+
+_slot_filter(chooseslots::Vector{Int}) = in(chooseslots)
+_slot_filter(chooseslots::Function) = chooseslots
+
+function _bbpssw_slots_pass_filters(chooseslotsA, chooseslotsB, q1::RegRef, q2::RegRef, q3::RegRef, q4::RegRef)
+    choosefuncA = _slot_filter(chooseslotsA)
+    choosefuncB = _slot_filter(chooseslotsB)
+    return choosefuncA(q1.idx) && choosefuncB(q2.idx) && choosefuncA(q3.idx) && choosefuncB(q4.idx)
+end
+
+"""
+Pick two distinct random elements from a vector of candidate Bell pairs.
+
+This is the default `choose_pairs` strategy for [`BBPSSWProt`](@ref): given
+the list of Bell pairs available for distillation, return a tuple
+`(distilled, sacrificed)` of two distinct pairs chosen uniformly at random.
+The caller is responsible for ensuring `length(pairs) >= 2`.
+"""
+function random_pair(pairs)
+    n = length(pairs)
+    i = rand(1:n)
+    j = rand(1:(n - 1))
+    j >= i && (j += 1)
+    return (pairs[i], pairs[j])
+end
+
+"""
+$TYPEDEF
+
+This tag is used to mark a register slot when the stored qubit
+has successfully undergone distillation.
+
+$TYPEDFIELDS
+
+For example, see also: [`BBPSSWProt`](@ref)
+"""
+@kwdef struct DistilledTag end
+
+"""
+$TYPEDEF
+
+Classical message exchanged between the two parties of [`BBPSSWProt`](@ref)
+carrying the outcome of one distillation round. It is used as a `Tag` token
+(`Tag(BBPSSWMessage, sender_node, target_pair_id, sacrificed_pair_id, success_bit)`)
+so that neither side commits the per-pair bookkeeping before the classical-channel
+delay between the nodes has elapsed, and stale messages from previous rounds
+cannot match a different pair.
+"""
+struct BBPSSWMessage end
+
+# Internal reservation marker for optional BBPSSW initial handshakes:
+# Tag(BBPSSWHandshakeMessage, sender_node, target_pair_id, sacrificed_pair_id, stage)
+# where stage == 1 is the request and stage == 2 is the acknowledgement.
+struct BBPSSWHandshakeMessage end
+
+"""
+$TYPEDEF
+
+A protocol implementing the BBPSSW [Bennett et al. 1996]
+entanglement distillation protocol. It purifies 2 Bell
+pairs into 1 pair. It traces out the
+sacrificed qubits (always) and the distilled qubits
+(if distillation fails). Whenever two pairs of eligible slots
+are available, the protocol locks them and starts distillation.
+Slots are eligible if they are entangled with each other,
+not locked, and pass the specified filters.
+
+A single `BBPSSWProt` instance is serial: it finishes one distillation
+round, including the classical outcome exchange and optional
+`local_busy_time`, before searching for the next two pairs. This models one
+local distillation device or controller. Multiple instances can be launched
+with overlapping slot filters to model multiple devices; the protocol locks
+the chosen slots and rechecks eligibility under those locks before acting.
+If `initial_handshake=true`, the selected slots stay locked while the protocol
+performs one classical round-trip reservation handshake before the local
+purification circuit.
+
+$TYPEDFIELDS
+
+See also: [`Purify2to1`](@ref)
+"""
+@kwdef struct BBPSSWProt <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+     """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of node A"""
+    nodeA::Int
+    """the vertex index of node B"""
+    nodeB::Int
+    """Tag to be added to the entangled qubits, or `nothing` to skip tagging. The tag should not have any field. Defaults to `DistilledTag`."""
+    tag::Union{DataType, Nothing} = DistilledTag
+    """how many rounds of this protocol to run (`-1` for infinite)"""
+    rounds::Int = -1
+    """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node"""
+    chooseslotsA::Union{Vector{Int}, Function}
+    """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among distillable slots in the node"""
+    chooseslotsB::Union{Vector{Int}, Function}
+    """policy for selecting which two Bell pairs to consume in each distillation round. Receives a `Vector` of valid candidate pairs (each a `Tuple{QueryOnRegResult, QueryOnRegResult}` for the slot at `nodeA` and at `nodeB`) and returns a tuple `(distilled, sacrificed)` of two distinct pairs from that vector. Defaults to `random_pair`; override to implement strategies like oldest/youngest, highest fidelity, etc."""
+    choose_pairs::Function = random_pair
+    """what is the oldest a qubit should be to be picked for distillation (to avoid distilling qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
+    agelimit::Union{Nothing, Float64} = nothing
+    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
+    retry_lock_time::Union{Nothing, Float64} = nothing
+    """fixed "busy time" duration after a round completes and before this serial instance searches for the next distillation round"""
+    local_busy_time::Union{Float64, Nothing} = nothing
+    """whether to simulate an initial classical round-trip reservation handshake before each distillation attempt; the delay comes from the network's classical channels"""
+    initial_handshake::Bool = false
+    """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
+    max_delete_per_slot::Union{Int,Nothing} = 3
+end
+
+"""
+Convenience constructor for `BBPSSWProt`.
+Defaults for missing `chooseslotsA` and `chooseslotsB` are set to filter for slots that have no distillation tag (`DistilledTag` by default).
+Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) docstring.
+- `sim::Simulation`: time-and-schedule-tracking instance from `ConcurrentSim`
+- `net::RegisterNet`: a network graph of registers
+- `nodeA::Int`: the vertex index of node A
+- `nodeB::Int`: the vertex index of node B
+- `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
+"""
+function BBPSSWProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    tag = get(kwargs, :tag, DistilledTag)
+    chooseslotsA = isnothing(tag) ? alwaystrue : nondistilled(net[nodeA], tag::DataType)
+    chooseslotsB = isnothing(tag) ? alwaystrue : nondistilled(net[nodeB], tag::DataType)
+    return BBPSSWProt(; sim, net, nodeA, nodeB, chooseslotsA, chooseslotsB, kwargs...)
+end
+
+"""
+Convenience constructor for `BBPSSWProt`.
+Defaults for missing `sim` is taken from the network's time tracker.
+Defaults for missing `chooseslotsA` and `chooseslotsB` are set to filter for slots that have no distillation tag (`DistilledTag` by default).
+Defaults for remaining missing fields are described in the [`BBPSSWProt`](@ref) docstring.
+- `net::RegisterNet`: a network graph of registers
+- `nodeA::Int`: the vertex index of node A
+- `nodeB::Int`: the vertex index of node B
+- `kwargs...`: optional keyword arguments for `BBPSSWProt` remaining fields
+"""
+BBPSSWProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = BBPSSWProt(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+
+permits_virtual_edge(::BBPSSWProt) = true
+
+function _mark_bbpssw_delete!(slot::RegRef, local_node::Int, remote_node::Int, remote_slot::Int, pair_id::EntanglementID, max_delete_per_slot::Union{Int,Nothing})
+    tag!(slot, EntanglementDelete, pair_id, local_node, slot.idx, remote_node, remote_slot)
+    _enforce_delete_cap!(slot, local_node, max_delete_per_slot)
+    return nothing
+end
+
+@resumable function(prot::BBPSSWProt)()
+    mbA = messagebuffer(prot.net, prot.nodeA)
+    mbB = messagebuffer(prot.net, prot.nodeB)
+
+    rounds = prot.rounds
+    round = 1
+    while rounds != 0
+        two_qubit_pairs_ = finddistillablequbits(prot.net, prot.nodeA, prot.nodeB, prot.chooseslotsA, prot.chooseslotsB, prot.choose_pairs; agelimit=prot.agelimit)
+        if isnothing(two_qubit_pairs_)
+            if isnothing(prot.retry_lock_time)
+                @debug "BBPSSWProt: no distillable qubits found. Waiting for tag change..."
+                @yield (onchange(prot.net[prot.nodeA], Tag) | onchange(prot.net[prot.nodeB], Tag))
+            else
+                @debug "BBPSSWProt: no distillable qubits found. Waiting a fixed amount of time..."
+                @yield timeout(prot.sim, prot.retry_lock_time::Float64)
+            end
+            continue
+        end
+        # The compiler is not smart enough to figure out that two_qubit_pairs_ is not nothing, so we need to tell it explicitly. A new variable name is needed due to @resumable.
+        two_qubit_pairs = two_qubit_pairs_::Tuple{NTuple{2, QueryOnRegResult}, NTuple{2, QueryOnRegResult}}
+        distilled_pair = two_qubit_pairs[1]
+        sacrificed_pair = two_qubit_pairs[2]
+
+        # Defensive check: custom choose_pairs must return two distinct pairs.
+        if distilled_pair[1].slot.idx == sacrificed_pair[1].slot.idx || distilled_pair[2].slot.idx == sacrificed_pair[2].slot.idx
+            throw(ArgumentError("BBPSSWProt.choose_pairs must return two distinct Bell pairs"))
+        end
+
+        q1 = distilled_pair[1].slot
+        q2 = distilled_pair[2].slot
+        q3 = sacrificed_pair[1].slot
+        q4 = sacrificed_pair[2].slot
+        target_pair_id = distilled_pair[1].tag[4]
+        sacrificed_pair_id = sacrificed_pair[1].tag[4]
+        @yield lock(q1) & lock(q2) & lock(q3) & lock(q4)  # this should not really need a yield thanks to `finddistillablequbits` which queries only for unlocked qubits, but it is better to be defensive
+
+        # Across the lock yield, another process could have consumed or
+        # retagged the selected slots; recheck the slot filters and then
+        # re-query reciprocal tags under the locks before acting.
+        if !_bbpssw_slots_pass_filters(prot.chooseslotsA, prot.chooseslotsB, q1, q2, q3, q4)
+            unlock(q1); unlock(q2); unlock(q3); unlock(q4)
+            continue
+        end
+        fresh1 = query(q1, EntanglementCounterpart, prot.nodeB, q2.idx, target_pair_id; assigned=true)
+        fresh2 = query(q2, EntanglementCounterpart, prot.nodeA, q1.idx, target_pair_id; assigned=true)
+        fresh3 = query(q3, EntanglementCounterpart, prot.nodeB, q4.idx, sacrificed_pair_id; assigned=true)
+        fresh4 = query(q4, EntanglementCounterpart, prot.nodeA, q3.idx, sacrificed_pair_id; assigned=true)
+        if isnothing(fresh1) || isnothing(fresh2) || isnothing(fresh3) || isnothing(fresh4)
+            unlock(q1); unlock(q2); unlock(q3); unlock(q4)
+            continue
+        end
+        id1 = (fresh1::QueryOnRegResult).id
+        id2 = (fresh2::QueryOnRegResult).id
+        id3 = (fresh3::QueryOnRegResult).id
+        id4 = (fresh4::QueryOnRegResult).id
+
+        if prot.initial_handshake
+            request_msg = Tag(BBPSSWHandshakeMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, 1)
+            put!(channel(prot.net, prot.nodeA => prot.nodeB; permit_forward=true), request_msg)
+            @yield querydelete_wait!(mbB, BBPSSWHandshakeMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, 1)
+
+            ack_msg = Tag(BBPSSWHandshakeMessage, prot.nodeB, target_pair_id, sacrificed_pair_id, 2)
+            put!(channel(prot.net, prot.nodeB => prot.nodeA; permit_forward=true), ack_msg)
+            @yield querydelete_wait!(mbA, BBPSSWHandshakeMessage, prot.nodeB, target_pair_id, sacrificed_pair_id, 2)
+        end
+
+        uptotime!((q1, q2, q3, q4), now(prot.sim))
+
+
+        purify_circuit = Purify2to1()
+        success = purify_circuit(q1, q2, q3, q4)
+        # let's untag the sacrificed qubits
+        untag!(q3, id3)
+        untag!(q4, id4)
+        _mark_bbpssw_delete!(q3, prot.nodeA, prot.nodeB, q4.idx, sacrificed_pair_id, prot.max_delete_per_slot)
+        _mark_bbpssw_delete!(q4, prot.nodeB, prot.nodeA, q3.idx, sacrificed_pair_id, prot.max_delete_per_slot)
+
+        # Communicate the outcome from nodeA to nodeB over the classical
+        # channel; the per-pair bookkeeping below only commits once nodeB
+        # has received the message, which captures the channel delay.
+        outcome_msg = Tag(BBPSSWMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, success ? 1 : 0)
+        put!(channel(prot.net, prot.nodeA => prot.nodeB; permit_forward=true), outcome_msg)
+        @debug "BBPSSWProt @$(prot.nodeA)→$(prot.nodeB) round $(round): outcome=$(success) sent at $(now(prot.sim))"
+        @yield querydelete_wait!(mbB, BBPSSWMessage, prot.nodeA, target_pair_id, sacrificed_pair_id, ❓)
+
+        if success
+            # Mark distilled qubits with the configured tag (if any)
+            if !isnothing(prot.tag)
+                tag!(q1, prot.tag::DataType)
+                tag!(q2, prot.tag::DataType)
+            end
+            # TODO: apply a bilateral twirl to (q1, q2) here so the surviving
+            # pair is symmetrized into Werner form, as specified in the
+            # original BBPSSW protocol (Bennett et al. 1996). Today we cannot
+            # express the full single-qubit Clifford group via `apply!` — it
+            # requires a symbolic phase/`S` gate that QuantumSymbolics does
+            # not yet export. Wire this up once QuantumSymbolics PR #95
+            # (rotation gates) lands.
+            @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation succeeded on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx))."
+        else
+            # untag distilled qubits if distillation failed
+            untag!(q1, id1)
+            untag!(q2, id2)
+            _mark_bbpssw_delete!(q1, prot.nodeA, prot.nodeB, q2.idx, target_pair_id, prot.max_delete_per_slot)
+            _mark_bbpssw_delete!(q2, prot.nodeB, prot.nodeA, q1.idx, target_pair_id, prot.max_delete_per_slot)
+            @debug "BBPSSWProt nodes $(prot.nodeA) and $(prot.nodeB). Round $(round): Distillation failed on qubits $(prot.nodeA).$(q1.idx) and $(prot.nodeB).$(q2.idx) (sacrificed $(prot.nodeA).$(q3.idx) and $(prot.nodeB).$(q4.idx)). Released."
+        end
+
+        if !isnothing(prot.local_busy_time)
+            @yield timeout(prot.sim, prot.local_busy_time::Float64)
+        end
+        unlock(q1)
+        unlock(q2)
+        unlock(q3)
+        unlock(q4)
+
+        rounds==-1 || (rounds -= 1)
+        round += 1
+    end
+
+    
+end
+
+function finddistillablequbits(net, nodeA, nodeB, chooseslotsA, chooseslotsB, choose_pairs; agelimit=nothing)
+    regA = net[nodeA]
+    regB = net[nodeB]
+    low_queryresults  = [
+        n for n in queryall(regA, EntanglementCounterpart, nodeB, ❓, ❓; locked=false, assigned=true)
+        if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
+    ]
+    high_queryresults = [
+        n for n in queryall(regB, EntanglementCounterpart, nodeA, ❓, ❓; locked=false, assigned=true)
+        if isnothing(agelimit) || !isolderthan(n.slot, agelimit) # TODO add age limit to query and queryall
+    ]
+
+    choosefuncA = _slot_filter(chooseslotsA)
+    choosefuncB = _slot_filter(chooseslotsB)
+    low_queryresults = [qr for qr in low_queryresults if choosefuncA(qr.slot.idx)]
+    high_queryresults = [qr for qr in high_queryresults if choosefuncB(qr.slot.idx)]
+
+    (isempty(low_queryresults) || isempty(high_queryresults)) && return nothing
+    @debug "Found $(length(low_queryresults)) candidate qubits in node $nodeA and $(length(high_queryresults)) candidate qubits in node $nodeB for distillation."
+
+    # Build the list of valid Bell pairs (low_qr, high_qr) where the two slots
+    # are reciprocally entangled with each other; checking both directions
+    # avoids pairing on stale/half-updated tags (e.g. after a swap whose
+    # update has only reached one side).
+    pairs = NTuple{2, QueryOnRegResult}[]
+    for low_qr in low_queryresults
+        for high_qr in high_queryresults
+            if low_qr.slot.idx == high_qr.tag[3] &&
+                    high_qr.slot.idx == low_qr.tag[3] &&
+                    low_qr.tag[4] == high_qr.tag[4]
+                push!(pairs, (low_qr, high_qr))
+                break
+            end
+        end
+    end
+
+    length(pairs) < 2 && return nothing
+    return choose_pairs(pairs)::NTuple{2, NTuple{2, QueryOnRegResult}}
+end

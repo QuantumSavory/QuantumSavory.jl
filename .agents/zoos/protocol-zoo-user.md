@@ -26,6 +26,7 @@ Use `.agents/zoos/protocol-zoo-dev.md` for those.
 - `SwapperProt` consumes two tagged links and performs a local swap.
 - `EntanglementTracker` keeps remote metadata and corrections coherent after swaps and deletions.
 - `CutoffProt` removes stale entanglement.
+- `BBPSSWProt` serially consumes two same-endpoint Bell pairs and keeps one pair tagged with `DistilledTag` when the distillation round succeeds.
 - `EntanglementConsumer` acts as a sink or observer for completed long-range pairs.
 
 Other specialized families:
@@ -58,6 +59,12 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
   declared as concrete subtypes of `AbstractTag`; `nothing` is supported only
   by the entangler to disable tagging.
 - If a workflow depends on swap updates or deletion notices, include `EntanglementTracker`.
+- Use `BBPSSWProt(initial_handshake=true)` when a simulation should include an
+  initial classical round-trip reservation delay before each distillation
+  attempt.
+- Launch multiple `BBPSSWProt` instances when modeling multiple distillation
+  devices; their slot filters may overlap because the protocol rechecks
+  eligibility after locking.
 - Use `CircuitZoo` instead when all you need is a local gate sequence.
 
 ## Good Docs And Examples To Open Next
