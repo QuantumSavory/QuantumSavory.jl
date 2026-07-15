@@ -47,7 +47,7 @@ end
             @test observable(r12[1], SProjector(A)) ≈ 1.0
         end
         @test observable(r21[1:2], SProjector(AB)) ≈ 1.0
-        @test_broken observable((r1[1], r2[2]), SProjector(AB)) ≈ 1.0
+        @test observable((r1[1], r2[2]), SProjector(AB)) ≈ 1.0
         @test observable(r1[1], SProjector(A)) ≈ 1.0
         @test observable(r2[2], SProjector(B)) ≈ 1.0
     end
