@@ -5,6 +5,7 @@
 - Additional visualization methods for states of registers.
 - **(fix)** `observable` now locally composes separately factorized states, and pure
   Clifford states accept dense QuantumOptics observables.
+- Package logs expose stable, filterable domain groups through `LOG_GROUPS`.
 - **(fix)** `QuantumMCRepr` background evolution now samples Kraus trajectories
   without converting kets to density operators.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.

@@ -49,6 +49,9 @@ import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, per
 export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
 
+include("logging.jl")
+export LOG_GROUPS
+
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
     CliffordRepr, consistent_representation, QuantumOpticsRepr, QuantumMCRepr,

@@ -241,7 +241,7 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
             Fusion()(regA, regB, communication_slot, storage_slot)
         end
 
-        @debug "[$(now(sim))]: GraphStateConstructor: graph state is established"
+        @debug "[$(now(sim))]: GraphStateConstructor: graph state is established" _group=LOG_GROUPS.protocol
     end
     for slot in slots
         unlock(slot)
@@ -385,7 +385,7 @@ end
     t_int = sum(bit * 2^(i-1) for (i, bit) in enumerate(t))
 
     msg = PurifierBellMeasurementResults(node=local_chief_idx, measurements_XX=s_int, measurements_ZZ=t_int)
-    @debug "[$(now(sim))]: PurifierBellMeasurements at node $(local_chief_idx) completed measurements XX=$(s_int) ZZ=$(t_int)"
+    @debug "[$(now(sim))]: PurifierBellMeasurements at node $(local_chief_idx) completed measurements XX=$(s_int) ZZ=$(t_int)" _group=LOG_GROUPS.protocol
 
     tag!(net[local_chief_idx][z_slot], Tag(msg))
     put!(channel(net, local_chief_idx=>remote_chief_idx; permit_forward=true), msg)
@@ -464,9 +464,9 @@ end
         # Wait for remote measurement result
         msg = query(mb, PurifierBellMeasurementResults, remote_chief_idx, ❓, ❓)
         if isnothing(msg)
-            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) waiting for remote message"
+            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) waiting for remote message" _group=LOG_GROUPS.protocol
             @yield onchange(mb)
-            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) received message"
+            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) received message" _group=LOG_GROUPS.protocol
             continue
         end
 
@@ -485,10 +485,10 @@ end
         syndrome = (H1*s + H2*t) .% 2
 
         if syndrome == zeros(Int, length(syndrome))
-            @debug "[$(now(sim))]: MBQCPurificationTracker purification successful"
+            @debug "[$(now(sim))]: MBQCPurificationTracker purification successful" _group=LOG_GROUPS.protocol
 
             if correct
-                @debug "[$(now(sim))]: MBQCPurificationTracker applying corrections"
+                @debug "[$(now(sim))]: MBQCPurificationTracker applying corrections" _group=LOG_GROUPS.protocol
 
                 logxs_binary = stab_to_gf2(logxs)
                 logzs_binary = stab_to_gf2(logzs)
@@ -512,7 +512,7 @@ end
                     end
                 end
 
-                @debug "[$(now(sim))]: MBQCPurificationTracker corrections completed"
+                @debug "[$(now(sim))]: MBQCPurificationTracker corrections completed" _group=LOG_GROUPS.protocol
             end
 
             # Tag purified pairs
@@ -520,7 +520,7 @@ end
                 tag!(net[local_chief_idx + i][storage_slot], PurifiedEntanglementCounterpart, remote_chief_idx + i, storage_slot)
             end
         else
-            @debug "[$(now(sim))]: MBQCPurificationTracker purification failed syndrome=$(syndrome)"
+            @debug "[$(now(sim))]: MBQCPurificationTracker purification failed syndrome=$(syndrome)" _group=LOG_GROUPS.protocol
             untag!(local_tag.slot, local_tag.id)
             for i in nodes
                 traceout!(net[i][communication_slot])
