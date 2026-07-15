@@ -60,17 +60,18 @@ julia> step_gen()
  (1, 2)
  (3, 4)
 
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
- (2, 3)
-
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
+julia> sort([only(step_gen()), only(step_gen())])
+2-element Vector{Tuple{Int64, Int64}}:
  (1, 3)
+ (2, 3)
 
 julia> step_gen() |> isnothing # the generator returns `nothing` when done
 true
 ```
+
+Successive matchings with the same cardinality can be returned in any order,
+so the remaining one-edge rounds are sorted above only to make the example's
+output deterministic.
 
 Importantly, if the link generation is probabilistic and only part of the links succeed,
 you can provide that information back to the generator, so that it can account for failed attempts:
@@ -85,17 +86,13 @@ julia> step_gen()
  (1, 2)
  (3, 4)
 
-julia> step_gen([(3,4)]) # assume only 3-4 was successfully generated
-1-element Vector{Tuple{Int64, Int64}}:
- (2, 3)
+julia> next_edge = only(step_gen([(3,4)])); # assume only 3-4 was successfully generated
 
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
+julia> sort([next_edge, only(step_gen()), only(step_gen())])
+3-element Vector{Tuple{Int64, Int64}}:
  (1, 2)
-
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
  (1, 3)
+ (2, 3)
 
 julia> step_gen() |> isnothing # the generator returns `nothing` when done
 true

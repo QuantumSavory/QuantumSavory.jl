@@ -4,6 +4,7 @@
 
 - Additional visualization methods for states of registers.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
+- **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.
   Custom types passed to `EntanglerProt(...; tag=MyTag)` or
   `EntanglementConsumer(...; tag=MyTag)` must be concrete and migrate to
