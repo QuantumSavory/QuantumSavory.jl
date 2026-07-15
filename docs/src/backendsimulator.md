@@ -27,7 +27,9 @@ network models.
 
 `QuantumOpticsRepr()` selects the general `QuantumOptics` backend, and
 `QuantumMCRepr()` uses the same symbolic lowering path with a Monte Carlo style
-state representation.
+state representation. For backgrounds with a Kraus representation,
+`QuantumMCRepr()` samples a normalized pure-state trajectory instead of
+converting the state to a density operator.
 
 Use this family when:
 

@@ -3,6 +3,25 @@ function uptotime!(state::StateVector, idx::Int, background, Δt)
     uptotime!(state, idx, background, Δt)
 end
 
+function uptotime!(state::Ket, idx::Int, background, Δt, ::QuantumMCRepr)
+    b = basis(state)
+    iscomposite = b isa CompositeBasis
+    Ks = krausops(background, Δt, b)
+    isnothing(Ks) && return uptotime!(state, idx, background, Δt)
+
+    branches = map(Ks) do k
+        embedded_k = iscomposite ? embed(b, [idx], k) : k
+        embedded_k * state
+    end
+    probabilities = norm.(branches) .^ 2
+    total_probability = sum(probabilities)
+    @assert total_probability ≈ 1
+
+    threshold = rand() * total_probability
+    branch = something(findfirst(>(threshold), cumsum(probabilities)), lastindex(branches))
+    normalize(branches[branch])
+end
+
 function uptotime!(state::Operator, idx::Int, background, Δt)
     nstate = zero(state)
     tmpl = zero(state)
