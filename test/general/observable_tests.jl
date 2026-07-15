@@ -104,7 +104,7 @@ end
 
     @test observable(net_qc[2][1:3], projector(ref_stab)) ≈ 1
     @test observable(net_qc[2][1:3], projector(ref_stab2)) ≈ 1
-    @test_broken observable(net_qc[2][1:3], projector(ref_ket)) ≈ 1 # TODO state::MixedDestabilizer, operator::QuantumOpticsBase.Operator is not supported yet
+    @test observable(net_qc[2][1:3], projector(ref_ket)) ≈ 1
     @test observable(net_qc[2][1:3], projector(ref_manual)) ≈ 1
 
     @test observable(net_qo[2][1:3], projector(ref_stab)) ≈ 1
@@ -114,7 +114,7 @@ end
 
     @test observable(net_qc2[2][1:3], projector(ref_stab)) ≈ 1
     @test observable(net_qc2[2][1:3], projector(ref_stab2)) ≈ 1
-    @test_broken observable(net_qc2[2][1:3], projector(ref_ket)) ≈ 1 # TODO state::MixedDestabilizer, operator::QuantumOpticsBase.Operator is not supported yet
+    @test observable(net_qc2[2][1:3], projector(ref_ket)) ≈ 1
     @test observable(net_qc2[2][1:3], projector(ref_manual)) ≈ 1
 
     @test observable(net_qo2[2][1:3], projector(ref_stab)) ≈ 1

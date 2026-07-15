@@ -19,6 +19,12 @@ function observable(state::QuantumClifford.MixedDestabilizer, indices::Base.Abst
     QuantumClifford.expect(op, state)
 end
 
+function observable(state::QuantumClifford.MixedDestabilizer,
+                    indices::Base.AbstractVecOrTuple{Int},
+                    operation::QuantumOpticsBase.Operator)
+    observable(Ket(state), indices, operation)
+end
+
 # This is a bit of a hack to work specifically with SProjector. If you start needing more of these for other types, consider doing a bit of a redesign. This all should pass through `express(...,::UseAsObservable)`.
 function observable(state::QuantumClifford.MixedDestabilizer, indices::Base.AbstractVecOrTuple{Int}, operation::SProjector)
     pstate = express(operation.ket, CliffordRepr())
