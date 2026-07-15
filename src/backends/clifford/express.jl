@@ -22,6 +22,15 @@ end
 function observable(state::QuantumClifford.MixedDestabilizer,
                     indices::Base.AbstractVecOrTuple{Int},
                     operation::QuantumOpticsBase.Operator)
+    @warn(
+        "Converting a Clifford stabilizer state to a dense ket to evaluate a " *
+        "dense observable. The dense state size grows exponentially with the " *
+        "number of qubits.",
+        _group=LOG_GROUPS.backend,
+        event=:stabilizer_to_ket,
+        nqubits=QuantumClifford.nqubits(state),
+        observed_subsystems=length(indices),
+    )
     observable(Ket(state), indices, operation)
 end
 
