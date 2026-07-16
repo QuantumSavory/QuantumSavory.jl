@@ -15,6 +15,15 @@
   `classical_delay` and `quantum_delay`, enabling per-link and asymmetric
   transport delays while retaining scalar delay support.
 
+  ### New Features
+  - Added per-flow AIMD congestion control to `EndNodeController`, replacing the fixed global window
+  with dynamic per-flow windows governed by slow start and additive increase/multiplicative decrease.
+  - Added PI-based Active Queue Management to `NetworkNodeController` via a new `PIController` struct, with periodic marking probability updates to the ECN signaling to flow sources.
+  - Added adaptive PI gain tuning in `adapt_gains!`, scaling controller responsiveness with observed fidelity and concurrent flow count.
+  - Added `ECNSignal` message type for explicit congestion notification between network nodes and flow sources.
+  **(fix)** Lost-wakeup race condition in `LinkController`'s multi-hop scheduling by replacing edge-triggered `onchange` with a level-triggered `timeout` fallback, preventing second-hop entanglement from stalling under concurrent load.
+  **(fix)** `ChannelForwarder` so same-node forwarding is treated as a local delivery. Preventing `Graph.a_star` from returning an empty path and causing a BoundsError.
+
 ## v0.7.0 - 2026-06-12
 
 - **(breaking)** **(fix)** The `ProtocolZoo` entanglement-tracking tags and messages now carry entanglement pair IDs, fixing a class of bookkeeping bugs (#303) where stale update messages could be applied to the wrong Bell pair after a physical slot was reused. See the porting guide below.
