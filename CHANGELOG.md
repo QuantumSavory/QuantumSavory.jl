@@ -2,6 +2,13 @@
 
 ## v0.7.1 - unreleased
 
+- **(breaking)** Simulation, network, protocol, and visualization traces now use
+  Julia's standard logging macros with stable `event` symbols and structured
+  metadata. Rendered messages have changed, and routine low-level simulation
+  and protocol control-flow records now use `Debug` severity in the
+  `LOG_GROUPS.protocol` group. The `@simlog` macro and both non-public `timestr`
+  methods were removed immediately; use `simulation_log_context` or
+  `ProtocolZoo.protocol_log_context` with `@debug`, `@warn`, or `@error`.
 - Additional visualization methods for states of registers.
 - **(fix)** `observable` now locally composes separately factorized states, and pure
   Clifford states accept dense QuantumOptics observables.

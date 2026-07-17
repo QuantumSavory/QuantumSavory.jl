@@ -25,6 +25,13 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - Subtype `AbstractProtocol`.
 - Store `sim` and `net` in the protocol object.
 - Implement `@resumable function (prot::MyProt)()`.
+- Overload `protocol_log_context(prot::MyProt)` with only primitive simulation
+  fields, `protocol::Symbol`, and an immutable ordered node tuple. Do not retain
+  the simulation, network, protocol, register, message, or query objects in the
+  returned context.
+- Emit protocol records with an explicit `_group=LOG_GROUPS.protocol`, a stable
+  `event::Symbol`, and `protocol_log_context(prot)...`. Keep runtime-selected
+  peers in `src_node`, `dst_node`, or `remote_nodes`, not in the base context.
 - Reuse existing tag/message schemas when possible:
   - `EntanglementCounterpart(remote_node, remote_slot, pair_id)`
   - `EntanglementHistory(remote_node, remote_slot, swap_remote_node, swap_remote_slot, swapped_local, local_chunk_id, swapped_chunk_id)`
@@ -60,6 +67,9 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   `AbstractTag` subtype; do not constrain generic `Tag(::DataType, ...)`
   construction as a side effect.
 - For QTCP changes, review the `Tag(...)` serialization and matching query shape together.
+- Review log records by group, event, and metadata rather than matching rendered
+  message strings. `_group` is the only field available to `shouldlog` before
+  message and context construction.
 
 ## Source Files To Read
 

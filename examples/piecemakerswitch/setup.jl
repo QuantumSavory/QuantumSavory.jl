@@ -52,7 +52,19 @@ the measurement outcome is 2) to correct the client's qubit state.
         if !isnothing(msg)
             value = msg[3][2]
             @yield lock(net[node][1])
-            @debug "X received at node $(node), with value $(value)"
+            @debug(
+                "Received an entanglement correction",
+                _group=LOG_GROUPS.protocol,
+                event=:correction_received,
+                simulation_log_context(sim)...,
+                protocol=:EntanglementCorrector,
+                nodes=(node,),
+                src_node=1,
+                dst_node=node,
+                slot=1,
+                message_type=:updateX,
+                correction=value,
+            )
             value == 2 && apply!(net[node][1], X)
             unlock(net[node][1])
             break
@@ -87,7 +99,19 @@ Saves a (time, fidelity) data point to the `logging` vector.
         error("No message received at node $(node) with tag :updateZ.")
     else
         value = msg[3][2]
-        @debug "Z received at node $(node), with value $(value)"
+        @debug(
+            "Received an entanglement correction",
+            _group=LOG_GROUPS.protocol,
+            event=:correction_received,
+            simulation_log_context(sim)...,
+            protocol=:Logger,
+            nodes=(node,),
+            src_node=1,
+            dst_node=node,
+            slot=1,
+            message_type=:updateZ,
+            correction=value,
+        )
         @yield lock(net[node][1])
         value == 2 && apply!(net[node][1], Z)
         unlock(net[node][1])
@@ -97,7 +121,16 @@ Saves a (time, fidelity) data point to the `logging` vector.
         obs_proj = SProjector(StabilizerState(ghzs[n])) # GHZ state projector to measure
         fidelity = real(observable([net[i+1][1] for i in 1:n], obs_proj; time = now(sim)))
         t = now(sim) - start_of_round
-        @debug "Fidelity: $(fidelity)"
+        @debug(
+            "Computed entanglement fidelity",
+            _group=LOG_GROUPS.protocol,
+            event=:fidelity_computed,
+            simulation_log_context(sim)...,
+            protocol=:Logger,
+            nodes=(node,),
+            fidelity=fidelity,
+            elapsed_s=t,
+        )
         push!(logging, (t, fidelity))
     end
 end
@@ -152,7 +185,15 @@ The piecemaker protocol generates multipartite entanglement by:
 """
 @resumable function PiecemakerProt(sim, n::Int, net::RegisterNet, link_success_prob::Float64, rounds::Int, logging)
     while rounds != 0
-        @debug "round $(rounds)"
+        @debug(
+            "Started a piecemaker round",
+            _group=LOG_GROUPS.protocol,
+            event=:round_started,
+            simulation_log_context(sim)...,
+            protocol=:PiecemakerProt,
+            nodes=(1, Tuple(2:n+1)...),
+            round=rounds,
+        )
         start = now(sim)
 
         for i in 1:n
@@ -190,14 +231,35 @@ The piecemaker protocol generates multipartite entanglement by:
                         querydelete!(net[1 + slot.idx][1], EntanglementCounterpart, 1, slot.idx, pair_id)
                         tag!(net[1 + slot.idx][1], Tag(:updateX, Int(res))) # communicate change to client node
                         counter += 1
-                        @debug "Fused client $(slot.idx) with piecemaker qubit"
+                        @debug(
+                            "Fused a switch client",
+                            _group=LOG_GROUPS.protocol,
+                            event=:client_fused,
+                            simulation_log_context(sim)...,
+                            protocol=:PiecemakerProt,
+                            nodes=(1, Tuple(2:n+1)...),
+                            dst_node=1 + slot.idx,
+                            switch_slot=slot.idx,
+                            client_slot=1,
+                            pair_id=pair_id,
+                            measurement=Int(res),
+                        )
                     else
                         break
                     end
                 end
             end
 
-            @debug "All clients entangled, measuring piecemaker | time: $(now(sim)-start)"
+            @debug(
+                "Entangled all switch clients",
+                _group=LOG_GROUPS.protocol,
+                event=:clients_entangled,
+                simulation_log_context(sim)...,
+                protocol=:PiecemakerProt,
+                nodes=(1, Tuple(2:n+1)...),
+                client_nodes=Tuple(2:n+1),
+                elapsed_s=now(sim)-start,
+            )
             @yield lock(net[1][n+1])
             res = project_traceout!(net[1][n+1], σˣ)
             unlock(net[1][n+1])
@@ -210,7 +272,15 @@ The piecemaker protocol generates multipartite entanglement by:
         # cleanup qubits
         clear_up_qubits!(net, n)
         rounds -= 1
-        @debug "Round $(rounds) finished"
+        @debug(
+            "Completed a piecemaker round",
+            _group=LOG_GROUPS.protocol,
+            event=:round_completed,
+            simulation_log_context(sim)...,
+            protocol=:PiecemakerProt,
+            nodes=(1, Tuple(2:n+1)...),
+            round=rounds,
+        )
     end
 end
 

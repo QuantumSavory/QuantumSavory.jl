@@ -18,9 +18,25 @@ Performs a single GHZ projection on whatever links succeeded after a fixed time.
 
     ent = entangled_sensors(net, S)
     if isempty(ent)
-        @info "  F-TMBL: all entanglement failed at t=$(now(sim))"
+        @debug(
+            "Entanglement failed",
+            _group=LOG_GROUPS.protocol,
+            event=:entanglement_failed,
+            simulation_log_context(sim)...,
+            protocol=:f_tmbl,
+            nodes=(Tuple(1:S)..., S + 1),
+            client_nodes=(),
+        )
     else
-        @info "  F-TMBL: $(length(ent)) sensors entangled at t=$(now(sim)): $ent"
+        @debug(
+            "Entangled sensors",
+            _group=LOG_GROUPS.protocol,
+            event=:sensors_entangled,
+            simulation_log_context(sim)...,
+            protocol=:f_tmbl,
+            nodes=(Tuple(1:S)..., S + 1),
+            client_nodes=Tuple(ent),
+        )
         ghz_project(net, S, ent)
     end
     result[] = ent

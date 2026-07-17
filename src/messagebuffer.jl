@@ -53,7 +53,16 @@ function Base.put!(cf::ChannelForwarder, tag)
     tag = convert(Tag, tag)
     # shortest path calculated by Graphs.a_star
     nexthop = first(Graphs.a_star(cf.net.graph, cf.src, cf.dst))
-    @debug "ChannelForwarder: Forwarding message from node $(nexthop.src) to node $(nexthop.dst) | message=$(tag)| end destination=$(cf.dst)" _group=LOG_GROUPS.network
+    @debug(
+        "Forwarded a network message",
+        _group=LOG_GROUPS.network,
+        event=:message_forwarded,
+        simulation_log_context(get_time_tracker(cf.net))...,
+        component=:ChannelForwarder,
+        src_node=nexthop.src,
+        dst_node=nexthop.dst,
+        message_type=_message_type(tag),
+    )
     put!(channel(cf.net, cf.src=>nexthop.dst; permit_forward=false), tag_types.Forward(tag, cf.dst))
 end
 
@@ -81,7 +90,16 @@ Importantly, it also unlocks all processes waiting on the message buffer.
         tag = _tag::Tag
         @cases tag begin
             Forward(innertag, enddestination) => begin # inefficient -- it recalculates the a_star at each hop TODO provide some caching mechanism
-                @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Forwarding message to node $(enddestination) | message=`$(tag)`" _group=LOG_GROUPS.network
+                @debug(
+                    "Forwarded a network message",
+                    _group=LOG_GROUPS.network,
+                    event=:message_forwarded,
+                    simulation_log_context(mb.sim)...,
+                    component=:MessageBuffer,
+                    src_node=mb.node,
+                    dst_node=enddestination,
+                    message_type=_message_type(innertag),
+                )
                 put!(channel(mb.net, mb.node=>enddestination; permit_forward=true), innertag)
             end
             _ => begin
@@ -92,9 +110,27 @@ Importantly, it also unlocks all processes waiting on the message buffer.
 end
 
 function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
-    @debug "MessageBuffer @$(mb.node) at t=$(now(mb.sim)): Receiving from source $(src) | message=`$(tag)`" _group=LOG_GROUPS.network
+    @debug(
+        "Received a network message",
+        _group=LOG_GROUPS.network,
+        event=:message_received,
+        simulation_log_context(mb.sim)...,
+        component=:MessageBuffer,
+        src_node=src,
+        dst_node=mb.node,
+        message_type=_message_type(tag),
+    )
     nwaiters = nbwaiters(mb.tag_waiter)
-    nwaiters == 0 && @debug "MessageBuffer @$(mb.node) received a message from $(src), but there is no one waiting on that message buffer. The message was `$(tag)`." _group=LOG_GROUPS.network
+    nwaiters == 0 && @debug(
+        "A network message arrived without a waiter",
+        _group=LOG_GROUPS.network,
+        event=:message_arrived_without_waiter,
+        simulation_log_context(mb.sim)...,
+        component=:MessageBuffer,
+        src_node=src,
+        dst_node=mb.node,
+        message_type=_message_type(tag),
+    )
     id = guid()
     push!(mb.buffer, (;src,tag));
     push!(mb.buffer_ids, id)

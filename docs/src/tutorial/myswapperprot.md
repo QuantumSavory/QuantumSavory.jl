@@ -45,6 +45,7 @@ using QuantumSavory.ProtocolZoo:
     EntanglementCounterpart,
     combine_entanglement_ids,
     fresh_entanglement_id
+import QuantumSavory.ProtocolZoo: protocol_log_context
 ```
 
 The setup function creates the chain, prepares the two initial Bell pairs, and
@@ -103,7 +104,17 @@ struct MySwapperProt <: AbstractProtocol
     alice::Int
     charlie::Int
 end
+
+protocol_log_context(prot::MySwapperProt) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:MySwapperProt,
+    nodes=(prot.node,),
+)
 ```
+
+The context overload is the standard logging extension point for a custom
+protocol. Bob is the protocol's fixed node; Alice and Charlie are dynamic peers
+and are recorded as `remote_nodes` on the events that involve them.
 
 The protocol starts by waiting on Bob's message buffer. No direct handle to the
 requesting protocol is needed; the only contract is that a `:swap_request`
@@ -168,6 +179,17 @@ one explicit update message to each endpoint.
         Tag(:swap_update_x, q_charlie.idx, a.tag[2], a.tag[3], Int(zmeas), new_pair_id),
     )
 
+    @debug(
+        "Swapped entanglement",
+        _group=LOG_GROUPS.protocol,
+        event=:entanglement_swapped,
+        protocol_log_context(prot)...,
+        slots=(q_alice.idx, q_charlie.idx),
+        remote_nodes=(alice, charlie),
+        pair_id=new_pair_id,
+        correction=(Int(xmeas), Int(zmeas)),
+    )
+
     unlock(q_alice)
     unlock(q_charlie)
     return (xmeas, zmeas)
@@ -217,6 +239,20 @@ same slot as entangled with the other endpoint.
     end
 
     tag!(old_tag.slot, EntanglementCounterpart, new_remote_node, new_remote_slot, new_pair_id)
+    @debug(
+        "Received an entanglement correction",
+        _group=LOG_GROUPS.protocol,
+        event=:correction_received,
+        simulation_log_context(sim)...,
+        protocol=:endpoint_update,
+        nodes=(node,),
+        src_node=old_neighbor,
+        dst_node=node,
+        slot=old_tag.slot.idx,
+        message_type=Symbol(update_tag),
+        correction=correction,
+        pair_id=new_pair_id,
+    )
     return old_tag.slot.idx
 end
 ```

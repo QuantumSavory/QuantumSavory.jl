@@ -23,7 +23,6 @@ using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Resource,
       Process, @process,
       request, release, now, active_process, timeout, put, get
 using ResumableFunctions
-using Printf
 import SumTypes
 using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
@@ -50,7 +49,6 @@ export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
 
 include("logging.jl")
-export LOG_GROUPS
 
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
@@ -71,6 +69,8 @@ export
     onchange_tag, onchange,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer,
+    # logging.jl
+    LOG_GROUPS, simulation_log_context,
     # initialize.jl
     initialize!, newstate,
     # subsystemcompose.jl

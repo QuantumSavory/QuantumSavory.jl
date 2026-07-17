@@ -40,9 +40,18 @@ function stateexplorer!(fig,S)
 
     if !isempty(params)
         timed_result = @timed express(S((paramdict[p].good for p in params)...))
-        @info "timing first state computation" timed_result _group=LOG_GROUPS.visualization
         slowcompute = timed_result.time > slowthreshold
-        @info "triggering slowcompute?" slowcompute _group=LOG_GROUPS.visualization
+        @debug(
+            "Computed the initial state",
+            _group=LOG_GROUPS.visualization,
+            event=:initial_state_computed,
+            elapsed_s=timed_result.time,
+            bytes=timed_result.bytes,
+            gctime_s=timed_result.gctime,
+            compile_time_s=timed_result.compile_time,
+            slowcompute,
+            threshold_s=slowthreshold,
+        )
         perfect = timed_result.value
         perfect = perfect/tr(perfect)
     end

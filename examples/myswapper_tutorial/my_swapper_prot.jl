@@ -9,6 +9,7 @@ using QuantumSavory.ProtocolZoo:
     EntanglementCounterpart,
     combine_entanglement_ids,
     fresh_entanglement_id
+import QuantumSavory.ProtocolZoo: protocol_log_context
 
 struct MySwapperProt <: AbstractProtocol
     sim::Simulation
@@ -17,6 +18,12 @@ struct MySwapperProt <: AbstractProtocol
     alice::Int
     charlie::Int
 end
+
+protocol_log_context(prot::MySwapperProt) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:MySwapperProt,
+    nodes=(prot.node,),
+)
 
 @resumable function (prot::MySwapperProt)()
     (; sim, net, node, alice, charlie) = prot
@@ -62,6 +69,16 @@ end
         channel(net, node => charlie),
         Tag(:swap_update_x, q_charlie.idx, a.tag[2], a.tag[3], Int(zmeas), new_pair_id),
     )
+    @debug(
+        "Swapped entanglement",
+        _group=LOG_GROUPS.protocol,
+        event=:entanglement_swapped,
+        protocol_log_context(prot)...,
+        slots=(q_alice.idx, q_charlie.idx),
+        remote_nodes=(alice, charlie),
+        pair_id=new_pair_id,
+        correction=(Int(xmeas), Int(zmeas)),
+    )
 
     # Finally, we can unlock the qubits
     unlock(q_alice)
@@ -97,6 +114,20 @@ end
     end
 
     tag!(old_tag.slot, EntanglementCounterpart, new_remote_node, new_remote_slot, new_pair_id)
+    @debug(
+        "Received an entanglement correction",
+        _group=LOG_GROUPS.protocol,
+        event=:correction_received,
+        simulation_log_context(sim)...,
+        protocol=:endpoint_update,
+        nodes=(node,),
+        src_node=old_neighbor,
+        dst_node=node,
+        slot=old_tag.slot.idx,
+        message_type=Symbol(update_tag),
+        correction=correction,
+        pair_id=new_pair_id,
+    )
     return old_tag.slot.idx
 end
 

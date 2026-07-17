@@ -96,7 +96,15 @@ const YY = Y⊗Y
         initialize!((registera[ia],registerb[ib]),noisy_pair; time=now(sim))
         network[nodea,:enttrackers][ia] = (node=nodeb,slot=ib)
         network[nodeb,:enttrackers][ib] = (node=nodea,slot=ia)
-        @simlog sim "entangled node $(nodea):$(ia) and node $(nodeb):$(ib)"
+        @debug(
+            "Entangled a pair",
+            _group=LOG_GROUPS.protocol,
+            event=:pair_entangled,
+            simulation_log_context(sim)...,
+            protocol=:entangler,
+            nodes=(nodea, nodeb),
+            slots=(ia, ib),
+        )
         unlock(slota)
         unlock(slotb)
     end
@@ -140,7 +148,16 @@ end
         network[node2.node,:enttrackers][node2.slot] = node1
         network[node,:enttrackers][q1] = nothing
         network[node,:enttrackers][q2] = nothing
-        @simlog sim "swap at $(node):$(q1)&$(q2) connecting $(node1) and $(node2)"
+        @debug(
+            "Swapped entanglement",
+            _group=LOG_GROUPS.protocol,
+            event=:entanglement_swapped,
+            simulation_log_context(sim)...,
+            protocol=:swapper,
+            nodes=(node,),
+            slots=(q1, q2),
+            remote_nodes=(node1.node, node2.node),
+        )
         unlock(network[node][q1])
         unlock(network[node][q2])
     end
@@ -193,10 +210,28 @@ end
         if !success
             network[nodea,:enttrackers][pair1qa] = nothing
             network[nodeb,:enttrackers][pair1qb] = nothing
-            @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa) and $(nodeb):$(pair1qb)&$(pair2qb)"
+            @debug(
+                "Purification failed",
+                _group=LOG_GROUPS.protocol,
+                event=:purification_failed,
+                simulation_log_context(sim)...,
+                protocol=:purifier,
+                nodes=(nodea, nodeb),
+                round=round,
+                slots=(pair1qa, pair1qb, pair2qa, pair2qb),
+            )
         else
             round += 1
-            @simlog sim "purification at $(nodea):$(pair1qa) $(nodeb):$(pair1qb) by sacrifice of $(nodea):$(pair1qa) $(nodeb):$(pair1qb)"
+            @debug(
+                "Purification succeeded",
+                _group=LOG_GROUPS.protocol,
+                event=:purification_succeeded,
+                simulation_log_context(sim)...,
+                protocol=:purifier,
+                nodes=(nodea, nodeb),
+                round=round,
+                slots=(pair1qa, pair1qb, pair2qa, pair2qb),
+            )
         end
         network[nodea,:enttrackers][pair2qa] = nothing
         network[nodeb,:enttrackers][pair2qb] = nothing
