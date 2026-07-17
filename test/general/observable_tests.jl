@@ -114,6 +114,7 @@ end
     # calculating fidelity in a few different ways
 
     function observable_with_conversion_warning(refs, operation)
+        # A fresh logger per call gives each assertion its own maxlog=1 counter.
         logger = Test.TestLogger()
         value = with_logger(logger) do
             observable(refs, operation)

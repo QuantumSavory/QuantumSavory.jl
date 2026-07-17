@@ -140,7 +140,9 @@ important boundary: QuantumSavory converts the entire stabilizer state to a dens
 ket. Its size grows exponentially with the number of qubits, even if the observable
 addresses only some subsystems. This conversion emits a warning with log group
 `LOG_GROUPS.backend`, event `:stabilizer_to_ket`, and qubit/subsystem counts so
-applications can filter or present it appropriately.
+applications can filter or present it appropriately. The default logger shows this
+warning once per session. Custom loggers still receive every record and can filter or
+count conversions through the log group and event metadata.
 
 ## Where To Go Next
 

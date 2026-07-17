@@ -40,6 +40,7 @@ function observable(state::QuantumClifford.MixedDestabilizer,
         event=:stabilizer_to_ket,
         nqubits=nq,
         observed_subsystems=length(indices),
+        maxlog=1,
     )
     observable(Ket(state), indices, operation)
 end
