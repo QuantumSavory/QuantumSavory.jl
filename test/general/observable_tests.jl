@@ -1,11 +1,21 @@
 using Test
 using Logging
 using QuantumSavory
-using QuantumClifford: Stabilizer
+using QuantumClifford: Stabilizer, MixedDestabilizer, @S_str
 using Graphs: Graph, add_edge!, add_vertices!
 using QuantumOpticsBase: Ket
 
 @testset "Observable" begin
+
+@testset "dense observable on a mixed Clifford state" begin
+    reg = Register(2, CliffordRepr())
+    initialize!(reg[1:2], MixedDestabilizer(S"ZZ"))
+    dense_observable = express(σᶻ⊗σᶻ, QuantumOpticsRepr())
+    logger = Test.TestLogger()
+
+    @test_throws "mixed" with_logger(() -> observable(reg[1:2], dense_observable), logger)
+    @test isempty(logger.logs)
+end
 
 @testset "entangled observable" begin
     bell = StabilizerState("XX ZZ")

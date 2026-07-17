@@ -22,13 +22,23 @@ end
 function observable(state::QuantumClifford.MixedDestabilizer,
                     indices::Base.AbstractVecOrTuple{Int},
                     operation::QuantumOpticsBase.Operator)
+    nq = QuantumClifford.nqubits(state)
+    if LinearAlgebra.rank(state) != nq
+        error("An attempt was made to evaluate a dense QuantumOptics-style observable " *
+              "on a mixed (rank-deficient) stabilizer state. This would require " *
+              "converting the stabilizer tableau to a ket, which is only defined for " *
+              "pure stabilizer states. Consider using Pauli observables, which act " *
+              "directly on the stabilizer representation and support mixed states. " *
+              "Message us on the issue tracker if you want this functionality " *
+              "implemented.")
+    end
     @warn(
         "Converting a Clifford stabilizer state to a dense ket to evaluate a " *
         "dense observable. The dense state size grows exponentially with the " *
         "number of qubits.",
         _group=LOG_GROUPS.backend,
         event=:stabilizer_to_ket,
-        nqubits=QuantumClifford.nqubits(state),
+        nqubits=nq,
         observed_subsystems=length(indices),
     )
     observable(Ket(state), indices, operation)
