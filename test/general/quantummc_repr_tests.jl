@@ -52,7 +52,7 @@ using QuantumOpticsBase: Ket, Operator
     traced_reg = Register(2, QuantumMCRepr())
     initialize!(traced_reg[1:2], StabilizerState("XX ZZ"))
     traceout!(traced_reg[1])
-    @test traced_reg.staterefs[2].state[] isa Operator
+    @test traced_reg.staterefs[2].state[] isa QuantumSavory.MCKet
 
     evolved_reg = Register(1, QuantumMCRepr())
     initialize!(evolved_reg[1], X1)

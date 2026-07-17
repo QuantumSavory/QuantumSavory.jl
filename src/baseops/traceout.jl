@@ -30,10 +30,20 @@ function traceout!(s::StateRef, i::Int)
 end
 
 """
-Delete the given slot of the given register.
+Delete one or more register slots.
 
 `traceout!(reg, slot)` would reset (perform a partial trace) over the given subsystem.
 The Hilbert space of the register gets automatically shrunk.
+
+`traceout!(ref1, ref2, ...)` deletes several [`RegRef`](@ref)s in argument order
+and returns the corresponding registers as a tuple. When the arguments include
+every live slot backed by the same `StateRef`, that state is deleted as
+one group without calling the backend's partial-trace implementation. Incomplete
+groups are reduced one slot at a time.
+
+For `QuantumMCRepr` trajectories, partial reduction samples the discarded
+subsystem in its native canonical basis. Use [`project_traceout!`](@ref) instead
+when the sampled outcome is needed.
 """
 function traceout!(r::Register, i::Int)
     stateref = r.staterefs[i]
@@ -48,7 +58,41 @@ function traceout!(r::Register, i::Int)
     r
 end
 traceout!(r::RegRef) = traceout!(r.reg, r.idx)
-traceout!(rs::RegRef...) = map(traceout!, rs)
+
+_slot_identity(r::Register, i::Int) = (objectid(r.staterefs), i)
+
+function traceout!(refs::RegRef...)
+    materialized = RegRef[refs...]
+    requested_slots = Set{Tuple{UInt,Int}}()
+    candidate_states = IdDict{Base.RefValue{Any},StateRef}()
+    sizehint!(requested_slots, length(materialized))
+    sizehint!(candidate_states, length(materialized))
+
+    for ref in materialized
+        push!(requested_slots, _slot_identity(ref.reg, ref.idx))
+        stateref = ref.reg.staterefs[ref.idx]
+        if !isnothing(stateref) && nsubsystems(stateref) > 1
+            get!(candidate_states, stateref.state, stateref)
+        end
+    end
+
+    for stateref in values(candidate_states)
+        all_requested = all(
+            isnothing(reg) || _slot_identity(reg, index) in requested_slots
+            for (reg, index) in zip(stateref.registers, stateref.registerindices)
+        )
+        if all_requested
+            for stateindex in lastindex(stateref.registers):-1:firstindex(stateref.registers)
+                isnothing(stateref.registers[stateindex]) && continue
+                removebackref!(stateref, stateindex)
+            end
+        end
+    end
+
+    Tuple(map(materialized) do ref
+        isnothing(ref.reg.staterefs[ref.idx]) ? ref.reg : traceout!(ref)
+    end)
+end
 
 """
 Perform a projective measurement on the given slot of the given register.

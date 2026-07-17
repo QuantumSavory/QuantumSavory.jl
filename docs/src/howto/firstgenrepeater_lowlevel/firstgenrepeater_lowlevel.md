@@ -368,8 +368,7 @@ apply!((regb[pair2qb],regb[pair1qb]),gate)
 measa = project_traceout!(rega[pair2qa], X)
 measb = project_traceout!(regb[pair2qb], X)
 if measa!=measb
-    traceout!(rega[pair1qa])
-    traceout!(regb[pair1qb])
+    traceout!(rega[pair1qa], regb[pair1qb])
 end
 ```
 
@@ -435,8 +434,7 @@ end
         measa = project_traceout!(rega[pair2qa], X)
         measb = project_traceout!(regb[pair2qb], X)
         if measa!=measb
-            traceout!(rega[pair1qa])
-            traceout!(regb[pair1qb])
+            traceout!(rega[pair1qa], regb[pair1qb])
             network[nodea,:enttrackers][pair1qa] = nothing
             network[nodeb,:enttrackers][pair1qb] = nothing
             @simlog sim "failed purification at $(nodea):$(pair1qa)&$(pair2qa) and $(nodeb):$(pair1qb)&$(pair2qb)"
