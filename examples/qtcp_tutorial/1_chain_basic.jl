@@ -37,7 +37,7 @@ put!(net[1], flow)
 run(sim, 200.0)
 
 # --- Check results ---
-# At the source (node 1), successfully delivered pairs are tagged as QTCPPairBegin.
+# At the source (node 1), successfully 'delivered pairs are tagged as QTCPPairBegin.
 # At the destination (node 5), they are tagged as QTCPPairEnd.
 mb_src = messagebuffer(net, 1)
 mb_dst = messagebuffer(net, n_nodes)

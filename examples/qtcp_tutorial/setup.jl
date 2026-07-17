@@ -27,6 +27,7 @@ Set up a QTCP simulation on the given network topology.
 # Returns
 `(sim, net)` — the simulation scheduler and the register network.
 """
+#/-------Setting the topology-------
 function simulation_setup(
     graph,
     regsize::Int;

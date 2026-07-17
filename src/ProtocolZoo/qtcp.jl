@@ -15,18 +15,18 @@ import Graphs
 export QDatagram, Flow,
     LinkLevelRequest, LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
     QTCPPairBegin, QTCPPairEnd,
-    NetworkNodeController, EndNodeController, LinkController
-
+    NetworkNodeController, EndNodeController, LinkController, ECNSignal, PIController
 ###
 # Message types
 ###
+
 
 """
 $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct Flow <: AbstractTag
+@kwdef struct Flow
     "who initiates the request and also initiates the qdatagrams"
     src::Int
     "the destination node"
@@ -45,7 +45,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairBegin <: AbstractTag
+@kwdef struct QTCPPairBegin
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -68,7 +68,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairEnd <: AbstractTag
+@kwdef struct QTCPPairEnd
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -91,7 +91,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QDatagram <: AbstractTag
+@kwdef struct QDatagram
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -113,7 +113,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QDatagramSuccess <: AbstractTag
+@kwdef struct QDatagramSuccess
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "sequence number of the qdataframe in the given flow"
@@ -129,7 +129,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelRequest <: AbstractTag
+@kwdef struct LinkLevelRequest
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -145,7 +145,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReply <: AbstractTag
+@kwdef struct LinkLevelReply
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -161,7 +161,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtSource <: AbstractTag
+@kwdef struct LinkLevelReplyAtSource
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -177,7 +177,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtHop <: AbstractTag
+@kwdef struct LinkLevelReplyAtHop
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -189,6 +189,128 @@ Base.show(io::IO, tag::LinkLevelReplyAtHop) = print(io, "LinkLevelReplyAtHop for
 Tag(tag::LinkLevelReplyAtHop) = Tag(LinkLevelReplyAtHop, tag.flow_uuid, tag.seq_num, tag.memory_slot) # TODO automate this
 
 
+
+"""
+$TYPEDEF
+
+$TYPEDFIELDS
+"""
+@kwdef struct ECNSignal
+    "the uuid of the flow being marked as congested"
+    flow_uuid::Int
+    "sequence number of the datagram that was marked"
+    seq_num::Int
+    "the node that detected the congestion"
+    marked_at_node::Int
+    "update time"
+    sent_time::Float64
+end
+Base.show(io::IO, tag::ECNSignal) = print(io, "ECNSignal flow $(tag.flow_uuid).$(tag.seq_num) marked at node $(tag.marked_at_node)")
+Tag(tag::ECNSignal) = Tag(ECNSignal, tag.flow_uuid, tag.seq_num, tag.marked_at_node, tag.sent_time)
+
+
+#---Default constants ---
+α_default = 1.822e-2            #proportional gain
+β_default = 1.816e-2            #integral gain (always < alpha)
+t_target_default = 0.5       #target buffering time
+update_interval_default = 0.1   #how often PI runs
+fidelty_target_default = 0.88   #fidelty maintenance
+variance_thres_default = 0.001  #max acceptable fidelity variance
+α_min_default = 1e-7            #safety floor
+α_max_default = 1e-3            #safety ceiling
+
+mutable struct PIController
+    p::Float64                          # current marking probability
+    t_prev::Float64                     # buffering time from last step
+    α::Float64                          # proportional gain
+    β::Float64                          # integral gain (always < alpha)
+    t_target::Float64                   # target buffering time
+    fidelity_history::Vector{Float64}   # recent delivered fidelity values
+    last_update_time::Float64           # sim time of last PI update
+end
+
+# convenience constructor with defaults
+function PIController()
+    PIController(
+        0.0,                  # p starts at 0
+        0.0,                  # t_prev starts at 0
+        α_default,
+        β_default,
+        t_target_default,
+        Float64[],            # empty fidelity history
+        0.0                   # last update time
+    )
+end
+##
+#using proportional and integral components to periodically update the probability pᵢ → pᵢ₊₁
+#between time steps i and i + 1
+#pᵢ₊₁ = pᵢ + α(tᵢ₊₁ - t) - β(tᵢ - t)
+#t = target buffering time
+
+#mutating function because ctrl.p and ctrl.t_prev are being mutated
+function pi_update!(ctrl::PIController, t_current::Float64)
+    p_new = ctrl.p + ctrl.α * (t_current - ctrl.t_target) - ctrl.β * (ctrl.t_prev - ctrl.t_target)
+    p_new = clamp(p_new, 0.0, 1.0) #clamped from [0, 1]
+
+    #update state
+    ctrl.p = p_new
+    ctrl.t_prev = t_current
+
+    return p_new
+end
+
+#---Buffering time measurement ---
+#Compute the average time qdatagrams have been waiting at this switch node
+function avg_buffering_time(arrival_times::Dict, current_time::Float64)
+    isempty(arrival_times) && return 0.0 
+
+    total_wait = 0.0
+    for arrival_time in values(arrival_times)
+        total_wait += current_time - arrival_time
+    end
+    num_entries = length(arrival_times)
+    return total_wait/num_entries
+end
+
+##
+#Decide whether to mark an arriving datagram as congested
+#Called every time a QDatagram, arrives at this switch
+function should_mark(ctrl::PIController)
+
+random_value = rand()
+return random_value < ctrl.p
+
+end
+
+##
+function record_fidelity!(ctrl::PIController, fidelity::Float64)
+    push!(ctrl.fidelity_history, fidelity)
+    if length(ctrl.fidelity_history) > 20
+        popfirst!(ctrl.fidelity_history)
+    end
+end
+##
+function adapt_gains!(ctrl::PIController, flow_count::Int)
+    fidelity_history = ctrl.fidelity_history
+    if length(fidelity_history) < 5
+        return
+    end
+
+    avg_fidelity = mean(ctrl.fidelity_history)
+    fidelity_variance = var(ctrl.fidelity_history)  
+
+    if avg_fidelity < fidelity_target_default
+        ctrl.α *= 1.1
+    elseif fidelity_variance > variance_thres_default
+        ctrl.α *= 0.9
+    end
+    ctrl.α *= 1 + 0.1 * (flow_count)
+
+    ctrl.β = ctrl.α * 0.99
+
+    ctrl.α = clamp(ctrl.α, α_min_default, α_max_default)
+    ctrl.β = clamp(ctrl.β, α_min_default * 0.99, ctrl.α * 0.99)
+end
 ###
 # Protocol declaration
 ###
@@ -282,7 +404,9 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
     pairs_left_to_fulfill = Dict{Int,Int}() # total number of pairs still to be established
     destination            = Dict{Int,Int}() # the destination
 
-    WINDOW = 3 # TODO per flow
+    window          = Dict{Int, Float64}()
+    ssthresh        = Dict{Int, Float64}()
+    in_slow_start   = Dict{Int, Bool}()
 
     while true
         workwasdone = true
@@ -299,7 +423,12 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 qdatagrams_sent[uuid]        = 0
                 pairs_left_to_fulfill[uuid] = npairs
                 destination[uuid]            = dst
-                @debug "[$(now(sim))]: flow $(uuid) started" _group=LOG_GROUPS.protocol
+
+                window[uuid]        = 1.0
+                ssthresh[uuid]       = 16.0
+                in_slow_start[uuid]  = true
+
+                @debug "[$(now(sim))]: flow $(uuid) started"
             end
 
             # check if there are datagram acknowledgements
@@ -311,6 +440,21 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 start_time = start_time::Float64
                 qdatagrams_in_flight[flow_uuid]   -= 1
                 pairs_left_to_fulfill[flow_uuid] -= 1
+
+                if in_slow_start[flow_uuid]
+                    window[flow_uuid] += 1.0
+                    if window[flow_uuid] >= ssthresh[flow_uuid]
+                        in_slow_start[flow_uuid] = false
+                    end
+                else 
+                    window[flow_uuid] += 1.0 / window[flow_uuid]
+                end
+
+                #--- compute and log delivered fidelity ---
+                transit_time = now(sim) - start_time
+                T_c = 100.0
+                delivered_fidelity = 0.25 + 0.75 * exp(-transit_time / T_c)
+                @info "[$(now(sim))] FIDELITY RECORD | flow=$(flow_uuid).$(seq_num) | transit=$(round(transit_time, digits=3))s | F=$(round(delivered_fidelity, digits=4))"
 
                 # Check if there are any LinkLevelReplyAtSource messages and turn them into QTCPPairBegin messages
                 link_reply = querydelete!(mb, LinkLevelReplyAtSource, flow_uuid, seq_num, ❓)
@@ -325,7 +469,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_begin)
-                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node" _group=LOG_GROUPS.protocol
+                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node"
 
                 # if we have fulfilled all pairs, remove the flow in every data structure
                 if pairs_left_to_fulfill[flow_uuid] == 0
@@ -334,9 +478,28 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     delete!(qdatagrams_sent, flow_uuid)
                     delete!(pairs_left_to_fulfill, flow_uuid)
                     delete!(destination, flow_uuid)
+                    delete!(window, flow_uuid)
+                    delete!(ssthresh, flow_uuid)
+                    delete!(in_slow_start, flow_uuid)
                     current_time = now(sim)
-                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated" _group=LOG_GROUPS.protocol
+                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated"
                 end
+            end
+
+            #check for ECN congestion signals
+            ecn = querydelete!(mb, ECNSignal, ❓, ❓, ❓, ❓)
+            if !isnothing(ecn)
+                workwasdone = true
+                _, flow_uuid, seq_num, marked_at_node, sent_time = ecn.tag
+
+                propagation_delay = now(sim) - sent_time
+                old_window = window[flow_uuid]
+
+                #multiplicative decrease
+                ssthresh[flow_uuid]         = max(window[flow_uuid] / 2.0, 1.0)
+                window[flow_uuid]           = ssthresh[flow_uuid]
+                in_slow_start[flow_uuid]    = false
+                
             end
 
             # check if we just received a qdatagram for which we are the flow destination
@@ -349,6 +512,13 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 qdatagram_success = QDatagramSuccess(flow_uuid, seq_num, start_time)
                 put!(channel(net, node=>flow_src; permit_forward=true), qdatagram_success)
                 # TODO implement Pauli corrections
+
+                #--- Log fidelity at the destination ---
+                transit_time = now(sim) - start_time
+                T_c = 100.0
+                delivered_fidelity = 0.25 + 0.75 * exp(-transit_time / T_c)
+                
+                @info "[$(now(sim))] PAIR DELIVERED | flow=$(flow_uuid).$(seq_num) | transit=$(round(transit_time, digits=3))s | F=$(round(delivered_fidelity, digits=4))"
 
                 # Check if there are any LinkLevelReplyAtHop messages and turn them into QTCPPairEnd messages
                 link_reply = querydelete!(mb, LinkLevelReplyAtHop, flow_uuid, seq_num, ❓)
@@ -363,20 +533,20 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_end)
-                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination" _group=LOG_GROUPS.protocol
+                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination"
             end
         end
 
-        # send qdatagrams
         for uuid in current_flows
-            while qdatagrams_in_flight[uuid] < WINDOW && qdatagrams_in_flight[uuid] < pairs_left_to_fulfill[uuid]
-                qdatagrams_in_flight[uuid] += 1
-                dst        = destination[uuid]
-                seq_num    = qdatagrams_sent[uuid] += 1
-                start_time = now(sim)::Float64
-                corrections = 0 # TODO implement Pauli corrections
-                qdatagram = QDatagram(uuid, node, dst, corrections, seq_num, start_time)
-                put!(net[node], qdatagram)
+            while qdatagrams_in_flight[uuid] < effective_window &&
+                qdatagrams_in_flight[uuid] < pairs_left_to_fulfill[uuid]
+            qdatagrams_in_flight[uuid] += 1
+            dst         = destination[uuid]
+            seq_num     = qdatagrams_sent[uuid] += 1
+            start_time  = now(sim)::Float64
+            corrections = 0
+            qdatagram   = QDatagram(uuid, node, dst, corrections, seq_num, start_time)
+            put!(net[node], qdatagram)
             end
         end
 
@@ -390,16 +560,63 @@ end
     (;sim, net, node) = prot
     mb = messagebuffer(net, node)
     datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int}}() # keyed by flow_uuid, seq_num; storing datagram tag and next hop
+    
+    #---PI controller state
+    pi_ctrl = PIController()
+    arrival_times = Dict{Tuple{Int, Int}, Float64}() #(flow_uuid, seq_num) → arrival time
+    UPDATE_INTERVAL = 0.1 
+    last_pi_update = 0.0
+
     while true
         workwasdone = true
         while workwasdone
             workwasdone = false
 
+            #periodic PI update
+            current_time = now(sim)
+            if current_time - last_pi_update >= UPDATE_INTERVAL
+                workwasdone = true # this counts as work so the loop continues checking
+                t_current = avg_buffering_time(arrival_times, current_time)
+                pi_update!(pi_ctrl, t_current)
+                @info "[$(now(sim))] PI STATE | node=$(node) | p=$(round(pi_ctrl.p, digits=8)) | t_current=$(round(t_current*1000, digits=4))ms | expected_marks_per_100_datagrams=$(round(pi_ctrl.p * 100, digits=6))"
+                last_pi_update = current_time
+
+                @info "[$(current_time)] PI STATE | node=$(node) | p=$(round(pi_ctrl.p, digits=8)) | t_current=$(round(t_current*1000, digits=4))ms"
+            end
+
+            # --- adaptive gain update every 10 x UPDATE_INTERVAL ---
+            if current_time - pi_ctrl.last_update_time >= 10 * UPDATE_INTERVAL
+                n_active = length(arrival_times)
+                adapt_gains!(pi_ctrl, n_active)
+                pi_ctrl.last_update_time = current_time
+                @info "[$(current_time)] ADAPT GAINS | node=$(node) | α=$(round(pi_ctrl.α, digits=8)) | β=$(round(pi_ctrl.β, digits=8))"
+            end
+
             incoming_qdatagram = querydelete!(mb, QDatagram, ❓, ❓, !=(node), ❓, ❓, ❓)
             if !isnothing(incoming_qdatagram)
                 workwasdone = true
                 _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = incoming_qdatagram.tag
-                nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
+                #---track arrival time for buffering measurement----
+                arrival_times[(flow_uuid, seq_num)] = now(sim)
+
+                #check whether to mark this datagram as congested
+                if should_mark(pi_ctrl)
+                    ecn = ECNSignal(
+                        flow_uuid       = flow_uuid,
+                        seq_num         = seq_num,
+                        marked_at_node  = node,
+                        sent_time       = now(sim)
+                    )
+                    put!(channel(net, node=>flow_src; permit_forward=true), ecn)
+
+                   @info "[$(now(sim))] ECN MARK | flow=$(flow_uuid).$(seq_num) | node=$(node) | p=$(round(pi_ctrl.p, digits = 6))"
+                end 
+
+                path = Graphs.a_star(net.graph, node, flow_dst::Int)
+                @assert !isempty(path) "No route from node $node to destination $flow_dst"
+
+                edge = first(path)
+                nexthop = edge.src == node ? edge.dst : edge.src
                 request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
                 datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop)
                 put!(mb, request)
@@ -416,17 +633,23 @@ end
                 # Process the entanglement and forward the datagram
                 _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = queued_tag
 
+                
+                #---this datagram is departing -- stop tracking its wait time--
+                delete!(arrival_times, (flow_uuid, seq_num))
                 # Perform entanglement swapping
                 if node == flow_src
                     put!(net[node], LinkLevelReplyAtSource(flow_uuid, seq_num, memory_slot))
                 else
                     # Find the corresponding LinkLevelReplyAtHop message from the previous hop (when the current node was the destination node)
-                    llreply_at_destination = querydelete!(mb, LinkLevelReplyAtHop, flow_uuid, seq_num, ❓)
+                    #Recommended Fix: Use W for the unknown empty memory slot
+                    llreply_at_destination = querydelete!(mb, LinkLevelReplyAtHop, flow_uuid, seq_num, W)
                     @assert !isnothing(llreply_at_destination) "No LinkLevelReplyAtHop message found for flow $(flow_uuid), sequence $(seq_num) at node $(node)"
                     _, _, _, memory_slot_at_destination = llreply_at_destination.tag
                     swapcircuit = LocalEntanglementSwap()
                     xmeas, zmeas = swapcircuit(net[node,memory_slot], net[node,memory_slot_at_destination])
                     # TODO: use xmeas and zmeas to add a correction to the datagram
+                    # FIX: Accumulate the BSM outcomes into the Pauli frame correction
+                    corrections = corrections ⊻ (zmeas << 1 | xmeas)
                 end
 
                 # Forward the datagram to the next node in the path
@@ -435,14 +658,16 @@ end
             end
         end
 
-        # Wait until we have received a message
-        @yield onchange(mb)
+        # Wait until we have received a message or the PI update timer
+        @yield (onchange(mb) | timeout(sim, UPDATE_INTERVAL))
     end
 end
 
 
 @resumable function _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
     @yield lock(link_resource)
+    regA_free = findall(isnothing, [net[nodeA][i] for i in 1:nsubsystems(net[nodeA])])
+    regB_free = findall(isnothing, [net[nodeB][i] for i in 1:nsubsystems(net[nodeB])])
     entangler = EntanglerProt(;
         sim, net,
         nodeA, nodeB,
@@ -474,7 +699,10 @@ end
         workwasdone = true
         while workwasdone
             workwasdone = false
-
+            
+            # add this right inside the LinkController loop, before the querydelete! calls
+            @debug "[$(now(sim))] LinkController polling | nodeA=$(nodeA) nodeB=$(nodeB)"
+            
             llrequestA = querydelete!(mbA, LinkLevelRequest, ❓, ❓, nodeB)
             llrequest, originator_node, destination_node = if isnothing(llrequestA)
                 querydelete!(mbB, LinkLevelRequest, ❓, ❓, nodeA), nodeB, nodeA
@@ -489,7 +717,10 @@ end
             end
         end
         # wait until we have received a message
-        @yield (onchange(mbA) | onchange(mbB))
+        #Replace:
+        #@yield (onchange(mbA) | onchange(mbB))
+        # with:
+        @yield (onchange(mbA) | onchange(mbB) | timeout(sim, 0.1))
     end
 end
 
