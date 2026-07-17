@@ -10,8 +10,12 @@
   stabilizer state to an exponentially sized ket, with the default logger showing the
   warning once per session. Mixed stabilizer states fail early with guidance to use
   representation-native Pauli observables.
-- **(fix)** `QuantumMCRepr` background evolution now samples Kraus trajectories
-  without converting kets to density operators.
+- **(fix)** `QuantumMCRepr` slots now store pure trajectories in the exported `MCKet`
+  wrapper, so background evolution selects Kraus sampling through structural dispatch.
+  Partial trace, Hamiltonian evolution, and Lindblad-only backgrounds leave the
+  trajectory manifold and produce an `Operator`. `stateref.state[]` now exposes the
+  wrapper, and `StateRef` displays identify its implementation module as
+  `QuantumSavory`.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
 - **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.
