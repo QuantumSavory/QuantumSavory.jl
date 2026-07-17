@@ -13,6 +13,10 @@ default_repr(::MCKet) = QuantumMCRepr()
 QuantumSymbolics.express(state::MCKet, ::QuantumMCRepr) = state
 QuantumSymbolics.express(state::MCKet, ::QuantumOpticsRepr) = state.ket
 
+function _wrap_state_for_slots(state::Ket, reprs)
+    all(repr -> repr isa QuantumMCRepr, reprs) ? MCKet(state) : state
+end
+
 function apply!(state::MCKet, indices, operation::Operator)
     MCKet(apply!(state.ket, indices, operation))
 end
