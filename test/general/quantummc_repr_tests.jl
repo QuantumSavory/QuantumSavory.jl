@@ -6,6 +6,8 @@ using QuantumOpticsBase: Ket, Operator
 
 @testset "QuantumMCRepr structural dispatch" begin
 
+@test :MCKet ∉ names(QuantumSavory)
+
 @testset "MCKet lifecycle and manifold exits" begin
     reg = Register(
         [Qubit(), Qubit()],
@@ -13,24 +15,24 @@ using QuantumOpticsBase: Ket, Operator
         [T2Dephasing(1.0), T2Dephasing(1.0)],
     )
     initialize!(reg[1], X1)
-    @test reg.staterefs[1].state[] isa MCKet
+    @test reg.staterefs[1].state[] isa QuantumSavory.MCKet
 
     apply!(reg[1], Z)
-    @test reg.staterefs[1].state[] isa MCKet
+    @test reg.staterefs[1].state[] isa QuantumSavory.MCKet
 
     initialize!(reg[2], Z1)
     subsystemcompose(reg[1], reg[2])
-    @test reg.staterefs[1].state[] isa MCKet
+    @test reg.staterefs[1].state[] isa QuantumSavory.MCKet
 
     uptotime!(reg[1], 0.1)
-    @test reg.staterefs[1].state[] isa MCKet
+    @test reg.staterefs[1].state[] isa QuantumSavory.MCKet
 
     project_traceout!(reg[1], σᶻ)
-    @test reg.staterefs[2].state[] isa MCKet
+    @test reg.staterefs[2].state[] isa QuantumSavory.MCKet
 
     raw_reg = Register(1, QuantumMCRepr())
     initialize!(raw_reg[1], express(X1, QuantumOpticsRepr()))
-    @test raw_reg.staterefs[1].state[] isa MCKet
+    @test raw_reg.staterefs[1].state[] isa QuantumSavory.MCKet
 
     mixed_reg = Register(
         [Qubit(), Qubit()],
@@ -40,7 +42,7 @@ using QuantumOpticsBase: Ket, Operator
     initialize!(mixed_reg[2], Z1)
     subsystemcompose(mixed_reg[1], mixed_reg[2])
     @test mixed_reg.staterefs[1].state[] isa Ket
-    @test !(mixed_reg.staterefs[1].state[] isa MCKet)
+    @test !(mixed_reg.staterefs[1].state[] isa QuantumSavory.MCKet)
 
     traced_reg = Register(2, QuantumMCRepr())
     initialize!(traced_reg[1:2], StabilizerState("XX ZZ"))

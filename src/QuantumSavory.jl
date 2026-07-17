@@ -65,7 +65,7 @@ using QuantumSymbolics: I # to avoid ambiguity with LinearAlgebra.I
 export
     StateRef, RegRef, Register,
     Qubit, Qumode, QuantumStateTrait,
-    CliffordRepr, QuantumOpticsRepr, QuantumMCRepr, MCKet,
+    CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
     onchange_tag, onchange,

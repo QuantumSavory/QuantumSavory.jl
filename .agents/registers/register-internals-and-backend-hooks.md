@@ -58,8 +58,8 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - Time evolution:
   - `uptotime!` groups by shared `StateRef` and prior access time, then dispatches
     background updates on the stored state type
-  - `QuantumMCRepr()` slots store `MCKet`, which selects trajectory sampling by
-    structural dispatch; documented manifold exits replace it with `Operator`
+  - `QuantumMCRepr()` slots store an internal `MCKet`, which selects trajectory
+    sampling by structural dispatch; documented manifold exits replace it with `Operator`
 
 ## Review Checks
 

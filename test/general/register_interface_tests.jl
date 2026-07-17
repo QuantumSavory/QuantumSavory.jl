@@ -39,7 +39,7 @@ initialize!(net[i,2])
 initialize!(net[i,3],X1)
 @test nsubsystems(net[i].staterefs[2]) == 1
 apply!([net[i,2], net[i,3]], CNOT)
-@test net[i].staterefs[2].state[] isa MCKet
+@test net[i].staterefs[2].state[] isa QuantumSavory.MCKet
 @test nsubsystems(net[i].staterefs[2]) == 2
 
 ##
@@ -77,6 +77,6 @@ initialize!(net[i,2], time=1.0)
 initialize!(net[i,3],X1, time=2.0)
 @test nsubsystems(net[i].staterefs[2]) == 1
 apply!([net[i,2], net[i,3]], CNOT, time=3.0)
-@test net[i].staterefs[2].state[] isa MCKet
+@test net[i].staterefs[2].state[] isa QuantumSavory.MCKet
 @test nsubsystems(net[i].staterefs[2]) == 2
 end

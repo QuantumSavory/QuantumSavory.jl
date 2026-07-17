@@ -31,7 +31,7 @@ state representation. For backgrounds with a Kraus representation,
 `QuantumMCRepr()` samples a normalized pure-state trajectory instead of
 converting the state to a density operator.
 
-Slots using `QuantumMCRepr()` store that trajectory in an exported `MCKet`
+Slots using `QuantumMCRepr()` store that trajectory in an internal `MCKet`
 wrapper around the underlying QuantumOptics `Ket`. The wrapper preserves Monte
 Carlo semantics through initialization, instantaneous operations, compositions
 whose factors are all `MCKet`s, and projective measurements. Composing with a

@@ -10,7 +10,7 @@
   stabilizer state to an exponentially sized ket, with the default logger showing the
   warning once per session. Mixed stabilizer states fail early with guidance to use
   representation-native Pauli observables.
-- **(fix)** `QuantumMCRepr` slots now store pure trajectories in the exported `MCKet`
+- **(fix)** `QuantumMCRepr` slots now store pure trajectories in an internal `MCKet`
   wrapper, so background evolution selects Kraus sampling through structural dispatch.
   Partial trace, Hamiltonian evolution, and Lindblad-only backgrounds leave the
   trajectory manifold and produce an `Operator`. `stateref.state[]` now exposes the
