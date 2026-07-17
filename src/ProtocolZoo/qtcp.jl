@@ -299,7 +299,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 qdatagrams_sent[uuid]        = 0
                 pairs_left_to_fulfill[uuid] = npairs
                 destination[uuid]            = dst
-                @debug "[$(now(sim))]: flow $(uuid) started"
+                @debug "[$(now(sim))]: flow $(uuid) started" _group=LOG_GROUPS.protocol
             end
 
             # check if there are datagram acknowledgements
@@ -325,7 +325,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_begin)
-                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node"
+                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node" _group=LOG_GROUPS.protocol
 
                 # if we have fulfilled all pairs, remove the flow in every data structure
                 if pairs_left_to_fulfill[flow_uuid] == 0
@@ -335,7 +335,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     delete!(pairs_left_to_fulfill, flow_uuid)
                     delete!(destination, flow_uuid)
                     current_time = now(sim)
-                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated"
+                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated" _group=LOG_GROUPS.protocol
                 end
             end
 
@@ -363,7 +363,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_end)
-                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination"
+                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination" _group=LOG_GROUPS.protocol
             end
         end
 

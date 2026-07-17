@@ -3,6 +3,15 @@
 ## v0.7.1 - unreleased
 
 - Additional visualization methods for states of registers.
+- **(fix)** `observable` now locally composes separately factorized states, and pure
+  Clifford states accept dense QuantumOptics observables.
+- Package logs expose stable, filterable domain groups through `LOG_GROUPS`.
+- Dense observables on pure Clifford states now warn before converting the entire
+  stabilizer state to an exponentially sized ket, with the default logger showing the
+  warning once per session. Mixed stabilizer states fail early with guidance to use
+  representation-native Pauli observables.
+- **(fix)** `QuantumMCRepr` background evolution now samples Kraus trajectories
+  without converting kets to density operators.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
 - **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.

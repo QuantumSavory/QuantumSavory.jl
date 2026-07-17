@@ -79,7 +79,7 @@ end
         # TODO Why do we have separate entanglementhistory and entanglementupdate but we have only a single entanglementdelete that serves both roles? We should probably have both be pairs of tags, for consistency and ease of reasoning
         _enforce_delete_cap!(slot, prot.node, prot.max_delete_per_slot)
         (prot.announce) && put!(channel(prot.net, prot.node=>msg[5]; permit_forward=true), msg)
-        @debug "CutoffProt @$(prot.node): Send message to $(msg[5]) | message=`$msg` | time=$(now(prot.sim))"
+        @debug "CutoffProt @$(prot.node): Send message to $(msg[5]) | message=`$msg` | time=$(now(prot.sim))" _group=LOG_GROUPS.protocol
 
         unlock(slot)
     end

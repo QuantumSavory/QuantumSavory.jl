@@ -27,7 +27,9 @@ network models.
 
 `QuantumOpticsRepr()` selects the general `QuantumOptics` backend, and
 `QuantumMCRepr()` uses the same symbolic lowering path with a Monte Carlo style
-state representation.
+state representation. For backgrounds with a Kraus representation,
+`QuantumMCRepr()` samples a normalized pure-state trajectory instead of
+converting the state to a density operator.
 
 Use this family when:
 
@@ -119,6 +121,24 @@ When you switch backends, the following usually stays the same:
 
 What changes is the numerical representation used once symbolic objects are
 lowered and the set of operations that can be executed efficiently.
+
+## Performance Boundaries
+
+Operations that span separately factorized states compose those states into a
+larger tensor product. In particular, `apply!` and non-instant operations merge
+the touched state references, while `observable` builds a temporary composition
+without changing the register. Repeated cross-state observables therefore repeat
+that tensor-product work.
+
+The cost of composition depends on the backend. `QuantumOpticsRepr()` tensors
+state vectors or density operators; composing a ket with a density operator first
+promotes the ket to a density operator. `CliffordRepr()` and `GabsRepr(...)` keep
+their compact tableau and Gaussian representations, respectively.
+
+A dense `QuantumOpticsBase.Operator` observable on a Clifford state is a more
+important boundary: QuantumSavory converts the entire stabilizer state to a dense
+ket. Its size grows exponentially with the number of qubits, even if the observable
+addresses only some subsystems.
 
 ## Where To Go Next
 

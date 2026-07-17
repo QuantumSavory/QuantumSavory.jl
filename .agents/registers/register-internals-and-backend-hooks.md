@@ -53,9 +53,11 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - Register-level operations:
   - `apply!(regs, indices, ...)` -> `uptotime!` -> `subsystemcompose` -> backend `apply!`
 - Register-level observables:
-  - `observable(regs, indices, ...)` currently requires all touched slots to already share one `StateRef`
+  - `observable(regs, indices, ...)` locally composes distinct backend states and remaps
+    the requested subsystem indices without merging their `StateRef`s
 - Time evolution:
-  - `uptotime!` groups by shared `StateRef` and prior access time before applying background updates
+  - `uptotime!` groups by shared `StateRef` and prior access time, then passes each
+    slot's representation to the background update
 
 ## Review Checks
 
@@ -63,7 +65,8 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - Check time monotonicity on every new code path that touches `accesstimes`.
 - Look for user-facing code that reaches into `StateRef` or backend objects unnecessarily.
 - Treat concurrent protocol bugs as register bugs first if locks are missing.
-- Keep doc claims aligned with code. Current example: `docs/src/register_interface.md` describes cross-state observable composition more generally than `src/baseops/observable.jl` currently implements.
+- Keep doc claims aligned with code, especially around local cross-state observable
+  composition and backend-specific background evolution.
 - Do not present `default_repr(::Qubit)` or `default_repr(::Qumode)` as a performance recommendation. They currently default to `QuantumOpticsRepr()`.
 
 ## Source Files To Read
