@@ -16,7 +16,7 @@
   transport delays while retaining scalar delay support.
 
   ### New Features
-  - Added per-flow AIMD congestion control to `EndNodeController`, replacing the fixed global window
+  - Added per-flow Additive Increase/Multiplicative Decrease congestion control to `EndNodeController`, replacing the fixed global window
   with dynamic per-flow windows governed by slow start and additive increase/multiplicative decrease.
   - Added PI-based Active Queue Management to `NetworkNodeController` via a new `PIController` struct, with periodic marking probability updates to the ECN signaling to flow sources.
   - Added adaptive PI gain tuning in `adapt_gains!`, scaling controller responsiveness with observed fidelity and concurrent flow count.
