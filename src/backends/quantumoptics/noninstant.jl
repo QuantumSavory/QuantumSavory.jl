@@ -1,16 +1,7 @@
 function _noninstant_operators(state, state_indices, operation, backgrounds)
     base = basis(state)
     iscomposite = base isa CompositeBasis
-    lindbladians = []
-    for (i, bg) in zip(state_indices, backgrounds)
-        if !isnothing(bg)
-            subsystem_basis = iscomposite ? base.bases[i] : base
-            ops = lindbladop(bg, subsystem_basis)
-            for op in ops
-                push!(lindbladians, iscomposite ? embed(base, [i], op) : op)
-            end
-        end
-    end
+    lindbladians = _embedded_lindblad_operators(state, state_indices, backgrounds)
     ham = express(operation.hamiltonian, QOR)
     ham = iscomposite ? embed(base, state_indices, ham) : ham
     ham, lindbladians

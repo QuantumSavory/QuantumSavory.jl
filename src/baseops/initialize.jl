@@ -1,5 +1,17 @@
 function newstate end
 
+"""
+    _wrap_state_for_slots(state, reprs)
+
+Promote `state`, when necessary, to the most appropriate common stored
+representation for all destination-slot representations in `reprs`.
+
+Backends extend this initialization hook when multiple representation choices
+need a common representation or a structural wrapper. The fallback leaves
+`state` unchanged.
+"""
+function _wrap_state_for_slots end
+
 _wrap_state_for_slots(state, reprs) = state
 
 function initialize!(reg::Register,i::Int; time=nothing)

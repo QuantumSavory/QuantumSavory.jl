@@ -34,6 +34,11 @@ using QuantumOpticsBase: Ket, Operator
     initialize!(raw_reg[1], express(X1, QuantumOpticsRepr()))
     @test raw_reg.staterefs[1].state[] isa QuantumSavory.MCKet
 
+    promoted_reg = Register(1, QuantumOpticsRepr())
+    initialize!(promoted_reg[1], raw_reg.staterefs[1].state[])
+    @test promoted_reg.staterefs[1].state[] isa Ket
+    @test !(promoted_reg.staterefs[1].state[] isa QuantumSavory.MCKet)
+
     mixed_reg = Register(
         [Qubit(), Qubit()],
         [QuantumMCRepr(), QuantumOpticsRepr()],
@@ -83,7 +88,18 @@ using QuantumOpticsBase: Ket, Operator
     )
     initialize!(damped_reg[1], F1)
     uptotime!(damped_reg[1], 0.1)
-    @test damped_reg.staterefs[1].state[] isa Operator
+    @test damped_reg.staterefs[1].state[] isa QuantumSavory.MCKet
+
+    composite_damped_reg = Register(
+        [Qumode(), Qubit()],
+        [QuantumMCRepr(), QuantumMCRepr()],
+        [AmplitudeDamping(1.0), nothing],
+    )
+    initialize!(composite_damped_reg[1], F1)
+    initialize!(composite_damped_reg[2], Z1)
+    subsystemcompose(composite_damped_reg[1], composite_damped_reg[2])
+    uptotime!(composite_damped_reg[1], 0.1)
+    @test composite_damped_reg.staterefs[1].state[] isa QuantumSavory.MCKet
 end
 
 @testset "T2 trajectory statistics" begin

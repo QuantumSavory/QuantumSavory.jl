@@ -40,11 +40,13 @@ an `Operator` after density-matrix promotion.
 
 `ConstantHamiltonianEvolution` preserves `MCKet`: it uses Schrödinger evolution
 without active backgrounds and Monte Carlo wave-function evolution when Lindblad
-jump operators are present. Partial trace and standalone background updates that
-provide only Lindblad operators rather than Kraus operators leave the pure-state
-trajectory manifold and replace the stored `MCKet` with an `Operator`. Because
-`MCKet` is the stored state type, `stateref.state[]` exposes it directly and
-`StateRef` displays identify its implementation module as `QuantumSavory`.
+jump operators are present. Standalone background evolution also preserves
+`MCKet`: it samples a Kraus branch when available and otherwise uses Monte Carlo
+wave-function evolution with a zero Hamiltonian. Partial trace leaves the
+pure-state trajectory manifold and replaces the stored `MCKet` with an
+`Operator`. Because `MCKet` is the stored state type, `stateref.state[]` exposes
+it directly and `StateRef` displays identify its implementation module as
+`QuantumSavory`.
 
 Use this family when:
 

@@ -17,6 +17,10 @@ function _wrap_state_for_slots(state::Ket, reprs)
     all(repr -> repr isa QuantumMCRepr, reprs) ? MCKet(state) : state
 end
 
+function _wrap_state_for_slots(state::MCKet, reprs)
+    all(repr -> repr isa QuantumMCRepr, reprs) ? state : state.ket
+end
+
 function apply!(state::MCKet, indices, operation::Operator)
     MCKet(apply!(state.ket, indices, operation))
 end
