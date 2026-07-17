@@ -60,17 +60,18 @@ julia> step_gen()
  (1, 2)
  (3, 4)
 
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
- (2, 3)
-
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
+julia> sort([only(step_gen()), only(step_gen())])
+2-element Vector{Tuple{Int64, Int64}}:
  (1, 3)
+ (2, 3)
 
 julia> step_gen() |> isnothing # the generator returns `nothing` when done
 true
 ```
+
+Successive matchings with the same cardinality can be returned in any order,
+so the remaining one-edge rounds are sorted above only to make the example's
+output deterministic.
 
 Importantly, if the link generation is probabilistic and only part of the links succeed,
 you can provide that information back to the generator, so that it can account for failed attempts:
@@ -85,17 +86,13 @@ julia> step_gen()
  (1, 2)
  (3, 4)
 
-julia> step_gen([(3,4)]) # assume only 3-4 was successfully generated
-1-element Vector{Tuple{Int64, Int64}}:
- (2, 3)
+julia> next_edge = only(step_gen([(3,4)])); # assume only 3-4 was successfully generated
 
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
+julia> sort([next_edge, only(step_gen()), only(step_gen())])
+3-element Vector{Tuple{Int64, Int64}}:
  (1, 2)
-
-julia> step_gen()
-1-element Vector{Tuple{Int64, Int64}}:
  (1, 3)
+ (2, 3)
 
 julia> step_gen() |> isnothing # the generator returns `nothing` when done
 true
@@ -172,7 +169,15 @@ $TYPEDFIELDS
     storage_slot::Int
 end
 
-struct GraphStateStorage
+"""
+$TYPEDEF
+
+Tag identifying the graph-state UUID and logical vertex stored in a register
+slot by [`GraphStateConstructor`](@ref).
+
+$TYPEDFIELDS
+"""
+struct GraphStateStorage <: AbstractTag
     uuid::Int
     vertex::Int
 end
@@ -236,7 +241,7 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
             Fusion()(regA, regB, communication_slot, storage_slot)
         end
 
-        @debug "[$(now(sim))]: GraphStateConstructor: graph state is established"
+        @debug "[$(now(sim))]: GraphStateConstructor: graph state is established" _group=LOG_GROUPS.protocol
     end
     for slot in slots
         unlock(slot)
@@ -307,7 +312,7 @@ Message containing the results of Bell measurements performed during purificatio
 
 $TYPEDFIELDS
 """
-@kwdef struct PurifierBellMeasurementResults
+@kwdef struct PurifierBellMeasurementResults <: AbstractTag
     """the node that performed the measurements"""
     node::Int
     """bit-packed XX measurement results"""
@@ -380,7 +385,7 @@ end
     t_int = sum(bit * 2^(i-1) for (i, bit) in enumerate(t))
 
     msg = PurifierBellMeasurementResults(node=local_chief_idx, measurements_XX=s_int, measurements_ZZ=t_int)
-    @debug "[$(now(sim))]: PurifierBellMeasurements at node $(local_chief_idx) completed measurements XX=$(s_int) ZZ=$(t_int)"
+    @debug "[$(now(sim))]: PurifierBellMeasurements at node $(local_chief_idx) completed measurements XX=$(s_int) ZZ=$(t_int)" _group=LOG_GROUPS.protocol
 
     tag!(net[local_chief_idx][z_slot], Tag(msg))
     put!(channel(net, local_chief_idx=>remote_chief_idx; permit_forward=true), msg)
@@ -393,7 +398,7 @@ A tag indicating a purified entanglement with a remote node.
 
 $TYPEDFIELDS
 """
-@kwdef struct PurifiedEntanglementCounterpart
+@kwdef struct PurifiedEntanglementCounterpart <: AbstractTag
     """the remote node we are entangled to after purification"""
     remote_node::Int
     """the slot in the remote node"""
@@ -459,9 +464,9 @@ end
         # Wait for remote measurement result
         msg = query(mb, PurifierBellMeasurementResults, remote_chief_idx, ❓, ❓)
         if isnothing(msg)
-            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) waiting for remote message"
+            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) waiting for remote message" _group=LOG_GROUPS.protocol
             @yield onchange(mb)
-            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) received message"
+            @debug "[$(now(sim))]: MBQCPurificationTracker at node $(local_chief_idx) received message" _group=LOG_GROUPS.protocol
             continue
         end
 
@@ -480,10 +485,10 @@ end
         syndrome = (H1*s + H2*t) .% 2
 
         if syndrome == zeros(Int, length(syndrome))
-            @debug "[$(now(sim))]: MBQCPurificationTracker purification successful"
+            @debug "[$(now(sim))]: MBQCPurificationTracker purification successful" _group=LOG_GROUPS.protocol
 
             if correct
-                @debug "[$(now(sim))]: MBQCPurificationTracker applying corrections"
+                @debug "[$(now(sim))]: MBQCPurificationTracker applying corrections" _group=LOG_GROUPS.protocol
 
                 logxs_binary = stab_to_gf2(logxs)
                 logzs_binary = stab_to_gf2(logzs)
@@ -507,7 +512,7 @@ end
                     end
                 end
 
-                @debug "[$(now(sim))]: MBQCPurificationTracker corrections completed"
+                @debug "[$(now(sim))]: MBQCPurificationTracker corrections completed" _group=LOG_GROUPS.protocol
             end
 
             # Tag purified pairs
@@ -515,7 +520,7 @@ end
                 tag!(net[local_chief_idx + i][storage_slot], PurifiedEntanglementCounterpart, remote_chief_idx + i, storage_slot)
             end
         else
-            @debug "[$(now(sim))]: MBQCPurificationTracker purification failed syndrome=$(syndrome)"
+            @debug "[$(now(sim))]: MBQCPurificationTracker purification failed syndrome=$(syndrome)" _group=LOG_GROUPS.protocol
             untag!(local_tag.slot, local_tag.id)
             for i in nodes
                 traceout!(net[i][communication_slot])

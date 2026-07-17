@@ -19,15 +19,16 @@ using ResumableFunctions
             @simlog sim "hello from the simulation"
         end
 
-        out = IOBuffer()
-        with_logger(SimpleLogger(out, Logging.Info)) do
+        logger = Test.TestLogger()
+        with_logger(logger) do
             @process speaker(sim)
             run(sim)
         end
 
-        logged = String(take!(out))
-        @test occursin("t=0.0000", logged)
-        @test occursin("hello from the simulation", logged)
+        record = only(logger.logs)
+        @test record.group == LOG_GROUPS.simulation
+        @test occursin("t=0.0000", record.message)
+        @test occursin("hello from the simulation", record.message)
     end
 
     @testset "RegRef requests proxy the slot lock" begin

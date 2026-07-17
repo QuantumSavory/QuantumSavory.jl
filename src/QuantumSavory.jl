@@ -49,6 +49,9 @@ import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, per
 export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
 
+include("logging.jl")
+export LOG_GROUPS
+
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
     CliffordRepr, consistent_representation, QuantumOpticsRepr, QuantumMCRepr,
@@ -77,7 +80,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl and querywait.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    AbstractTag, Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
     findfreeslot,
     #messagebuffer.jl
     MessageBuffer,

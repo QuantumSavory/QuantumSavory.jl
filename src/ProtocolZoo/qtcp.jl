@@ -26,7 +26,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct Flow
+@kwdef struct Flow <: AbstractTag
     "who initiates the request and also initiates the qdatagrams"
     src::Int
     "the destination node"
@@ -45,7 +45,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairBegin
+@kwdef struct QTCPPairBegin <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -68,7 +68,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairEnd
+@kwdef struct QTCPPairEnd <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -91,7 +91,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QDatagram
+@kwdef struct QDatagram <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -113,7 +113,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QDatagramSuccess
+@kwdef struct QDatagramSuccess <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "sequence number of the qdataframe in the given flow"
@@ -129,7 +129,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelRequest
+@kwdef struct LinkLevelRequest <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -145,7 +145,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReply
+@kwdef struct LinkLevelReply <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -161,7 +161,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtSource
+@kwdef struct LinkLevelReplyAtSource <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -177,7 +177,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtHop
+@kwdef struct LinkLevelReplyAtHop <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -299,7 +299,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 qdatagrams_sent[uuid]        = 0
                 pairs_left_to_fulfill[uuid] = npairs
                 destination[uuid]            = dst
-                @debug "[$(now(sim))]: flow $(uuid) started"
+                @debug "[$(now(sim))]: flow $(uuid) started" _group=LOG_GROUPS.protocol
             end
 
             # check if there are datagram acknowledgements
@@ -325,7 +325,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_begin)
-                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node"
+                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node" _group=LOG_GROUPS.protocol
 
                 # if we have fulfilled all pairs, remove the flow in every data structure
                 if pairs_left_to_fulfill[flow_uuid] == 0
@@ -335,7 +335,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     delete!(pairs_left_to_fulfill, flow_uuid)
                     delete!(destination, flow_uuid)
                     current_time = now(sim)
-                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated"
+                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated" _group=LOG_GROUPS.protocol
                 end
             end
 
@@ -363,7 +363,7 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_end)
-                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination"
+                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination" _group=LOG_GROUPS.protocol
             end
         end
 

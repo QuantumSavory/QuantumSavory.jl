@@ -1,10 +1,21 @@
 using Test
+using Logging
 using QuantumSavory
-using QuantumClifford: Stabilizer
+using QuantumClifford: Stabilizer, MixedDestabilizer, @S_str
 using Graphs: Graph, add_edge!, add_vertices!
 using QuantumOpticsBase: Ket
 
 @testset "Observable" begin
+
+@testset "dense observable on a mixed Clifford state" begin
+    reg = Register(2, CliffordRepr())
+    initialize!(reg[1:2], MixedDestabilizer(S"ZZ"))
+    dense_observable = express(σᶻ⊗σᶻ, QuantumOpticsRepr())
+    logger = Test.TestLogger()
+
+    @test_throws "mixed" with_logger(() -> observable(reg[1:2], dense_observable), logger)
+    @test isempty(logger.logs)
+end
 
 @testset "entangled observable" begin
     bell = StabilizerState("XX ZZ")
@@ -47,7 +58,7 @@ end
             @test observable(r12[1], SProjector(A)) ≈ 1.0
         end
         @test observable(r21[1:2], SProjector(AB)) ≈ 1.0
-        @test_broken observable((r1[1], r2[2]), SProjector(AB)) ≈ 1.0
+        @test observable((r1[1], r2[2]), SProjector(AB)) ≈ 1.0
         @test observable(r1[1], SProjector(A)) ≈ 1.0
         @test observable(r2[2], SProjector(B)) ≈ 1.0
     end
@@ -102,9 +113,25 @@ end
 
     # calculating fidelity in a few different ways
 
+    function observable_with_conversion_warning(refs, operation)
+        # A fresh logger per call gives each assertion its own maxlog=1 counter.
+        logger = Test.TestLogger()
+        value = with_logger(logger) do
+            observable(refs, operation)
+        end
+        record = only(logger.logs)
+        metadata = Dict(record.kwargs)
+        @test record.level == Logging.Warn
+        @test record.group == LOG_GROUPS.backend
+        @test metadata[:event] == :stabilizer_to_ket
+        @test metadata[:nqubits] == 3
+        @test metadata[:observed_subsystems] == 3
+        value
+    end
+
     @test observable(net_qc[2][1:3], projector(ref_stab)) ≈ 1
     @test observable(net_qc[2][1:3], projector(ref_stab2)) ≈ 1
-    @test_broken observable(net_qc[2][1:3], projector(ref_ket)) ≈ 1 # TODO state::MixedDestabilizer, operator::QuantumOpticsBase.Operator is not supported yet
+    @test observable_with_conversion_warning(net_qc[2][1:3], projector(ref_ket)) ≈ 1
     @test observable(net_qc[2][1:3], projector(ref_manual)) ≈ 1
 
     @test observable(net_qo[2][1:3], projector(ref_stab)) ≈ 1
@@ -114,7 +141,7 @@ end
 
     @test observable(net_qc2[2][1:3], projector(ref_stab)) ≈ 1
     @test observable(net_qc2[2][1:3], projector(ref_stab2)) ≈ 1
-    @test_broken observable(net_qc2[2][1:3], projector(ref_ket)) ≈ 1 # TODO state::MixedDestabilizer, operator::QuantumOpticsBase.Operator is not supported yet
+    @test observable_with_conversion_warning(net_qc2[2][1:3], projector(ref_ket)) ≈ 1
     @test observable(net_qc2[2][1:3], projector(ref_manual)) ≈ 1
 
     @test observable(net_qo2[2][1:3], projector(ref_stab)) ≈ 1

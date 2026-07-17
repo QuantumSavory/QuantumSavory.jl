@@ -68,6 +68,15 @@ interface are responsible for lowering those declarations into the chosen
 representation, while time evolution is tracked by the framework as operations
 and protocol events occur.
 
+### Log Domains
+
+QuantumSavory uses Julia's standard log-record `group` field to classify records by
+subsystem. The stable groups are available as [`LOG_GROUPS`](@ref), with `backend`,
+`network`, `protocol`, `simulation`, and `visualization` domains. A custom logger can
+filter on these symbols in `Logging.shouldlog(logger, level, module, group, id)` before
+the message and its metadata are constructed. Individual records can also carry an
+`event` metadata key for a more specific machine-readable event type.
+
 ### The Zoos
 
 QuantumSavory also ships reusable libraries of common states, circuits, and

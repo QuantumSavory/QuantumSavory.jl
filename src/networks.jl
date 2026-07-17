@@ -15,6 +15,8 @@ struct RegisterNet
     names::Vector{String}
 end
 
+_resolve_link_delay(delay, src, dst) = applicable(delay, src, dst) ? delay(src, dst) : delay
+
 function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metadata, directed_edge_metadata; classical_delay=0, quantum_delay=0, name=nothing, names=String[])
     env = get_time_tracker(registers[1])
 
@@ -46,10 +48,15 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
     end
 
     for (;src,dst) in edges(graph)
-        cchannels[src=>dst] = DelayQueue{Tag}(env, classical_delay)
-        qchannels[src=>dst] = QuantumChannel(env, quantum_delay)
-        cchannels[dst=>src] = DelayQueue{Tag}(env, classical_delay)
-        qchannels[dst=>src] = QuantumChannel(env, quantum_delay)
+        forward_classical_delay = _resolve_link_delay(classical_delay, src, dst)
+        forward_quantum_delay = _resolve_link_delay(quantum_delay, src, dst)
+        reverse_classical_delay = _resolve_link_delay(classical_delay, dst, src)
+        reverse_quantum_delay = _resolve_link_delay(quantum_delay, dst, src)
+
+        cchannels[src=>dst] = DelayQueue{Tag}(env, forward_classical_delay)
+        qchannels[src=>dst] = QuantumChannel(env, forward_quantum_delay)
+        cchannels[dst=>src] = DelayQueue{Tag}(env, reverse_classical_delay)
+        qchannels[dst=>src] = QuantumChannel(env, reverse_quantum_delay)
     end
     for (v,r) in zip(vertices(graph), registers)
         channels = [(;src=w, channel=cchannels[w=>v]) for w in neighbors(graph, v)]
@@ -64,6 +71,10 @@ end
 
 """
 Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s and a graph.
+
+The `classical_delay` and `quantum_delay` keyword arguments each accept either a
+single delay used for every channel or a callable `(src, dst) -> delay`. The
+callable is evaluated separately for both directions of every graph edge.
 
 ```jldoctest
 julia> graph = grid([2,2]) # from Graphs.jl

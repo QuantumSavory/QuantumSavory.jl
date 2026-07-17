@@ -200,11 +200,11 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
         # pick a set of client nodes to which to assign local memory slots
         assignment = prot.assignment_algorithm(m,n,_backlog,prot.success_probs)
         if isnothing(assignment)
-            @debug "Switch $switchnode found no useful memory slot assignments"
+            @debug "Switch $switchnode found no useful memory slot assignments" _group=LOG_GROUPS.protocol
             @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
             continue
         end
-        @debug "Switch $switchnode assigns memory slots to clients $([prot.clientnodes[a] for a in assignment])"
+        @debug "Switch $switchnode assigns memory slots to clients $([prot.clientnodes[a] for a in assignment])" _group=LOG_GROUPS.protocol
 
         # run entangler
         _switch_entangler(prot, assignment)
@@ -243,7 +243,7 @@ QuantumSavory.get_time_tracker(deleter::_SwitchSynchronizedDelete) = get_time_tr
             switchslot = res.slot.idx
             clientnode = res.tag[2]
             clientslot = res.tag[3]
-            @debug "Switch $(prot.switchnode).$(switchslot) deletes unused entanglement with client $(clientnode).$(clientslot)"
+            @debug "Switch $(prot.switchnode).$(switchslot) deletes unused entanglement with client $(clientnode).$(clientslot)" _group=LOG_GROUPS.protocol
             clientres = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot, res.tag[4])
             # We expect `clientres` to not be nothing because the client should not have destroyed entanglement 
             # that has been promised for use by the switch -- but just so we are a bit more resilient to misbehaving clients
@@ -303,13 +303,13 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓, ❓)
     entangled_clients = [r.tag[2] for r in successes]
     if isempty(entangled_clients)
-        @debug "Switch $(prot.switchnode) failed to entangle with any clients"
+        @debug "Switch $(prot.switchnode) failed to entangle with any clients" _group=LOG_GROUPS.protocol
         return nothing
     end
     # get the maximum match for the actually connected nodes
     ne = length(entangled_clients)
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
-    @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" # (indexed as $entangled_clients_revindex)"
+    @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" _group=LOG_GROUPS.protocol # (indexed as $entangled_clients_revindex)"
 
     (;weight, mate) = match_entangled_pattern(prot._backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
 
@@ -338,7 +338,7 @@ perform swaps to connect them and decrement the backlog counter.
 end
 
 function _switch_run_swaps(prot, match)
-    @debug "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])"
+    @debug "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])" _group=LOG_GROUPS.protocol
     for (i,j) in match
         @process _switch_run_accounted_swap(prot.sim, prot, i, j)
     end
@@ -354,7 +354,7 @@ Notify a switch that you request to be entangled with another node.
 
 $TYPEDFIELDS
 """
-@kwdef struct SwitchRequest
+@kwdef struct SwitchRequest <: AbstractTag
     "the id of the node making the request"
     requester::Int
     "the id of the remote node to which we want to be entangled"
