@@ -21,6 +21,12 @@ function apply_noninstant!(state::Ket, state_indices::Vector{Int}, operation::Co
     apply_noninstant!(dm(state), state_indices, operation, backgrounds)
 end
 
+# Hamiltonian evolution currently leaves the pure-state trajectory manifold.
+function apply_noninstant!(state::MCKet, state_indices::Vector{Int},
+                           operation::ConstantHamiltonianEvolution, backgrounds)
+    apply_noninstant!(dm(state.ket), state_indices, operation, backgrounds)
+end
+
 """
 For a given background noise type, provide the corresponding Lindblad collapse operator, in a QuantumOptics.jl representation.
 

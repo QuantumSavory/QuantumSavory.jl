@@ -22,6 +22,26 @@ function uptotime!(state::Ket, idx::Int, background, Δt, ::QuantumMCRepr)
     normalize(branches[branch])
 end
 
+function uptotime!(state::MCKet, idx::Int, background, Δt)
+    b = basis(state)
+    iscomposite = b isa CompositeBasis
+    Ks = krausops(background, Δt, b)
+    # Lindblad-only backgrounds leave the pure-state trajectory manifold.
+    isnothing(Ks) && return uptotime!(state.ket, idx, background, Δt)
+
+    branches = map(Ks) do k
+        embedded_k = iscomposite ? embed(b, [idx], k) : k
+        embedded_k * state.ket
+    end
+    probabilities = norm.(branches) .^ 2
+    total_probability = sum(probabilities)
+    @assert total_probability ≈ 1
+
+    threshold = rand() * total_probability
+    branch = something(findfirst(>(threshold), cumsum(probabilities)), lastindex(branches))
+    MCKet(normalize(branches[branch]))
+end
+
 function uptotime!(state::Operator, idx::Int, background, Δt)
     nstate = zero(state)
     tmpl = zero(state)
