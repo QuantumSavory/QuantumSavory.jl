@@ -56,8 +56,11 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
   - `observable(regs, indices, ...)` locally composes distinct backend states and remaps
     the requested subsystem indices without merging their `StateRef`s
 - Time evolution:
-  - `uptotime!` groups by shared `StateRef` and prior access time, then passes each
-    slot's representation to the background update
+  - `uptotime!` groups by shared `StateRef` and prior access time, then dispatches
+    background updates on the stored state type
+  - `QuantumMCRepr()` slots store an internal `MCKet`, which selects trajectory
+    sampling by structural dispatch for both Kraus and Lindblad-only evolution;
+    partial trace replaces it with `Operator`
 
 ## Review Checks
 

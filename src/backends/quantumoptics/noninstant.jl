@@ -1,24 +1,39 @@
-function apply_noninstant!(state::Operator, state_indices::Vector{Int}, operation::ConstantHamiltonianEvolution, backgrounds)
-    Δt = operation.duration
+function _noninstant_operators(state, state_indices, operation, backgrounds)
     base = basis(state)
-    e = isa(base,CompositeBasis)
-    lindbladians = []
-    for (i,bg) in zip(state_indices,backgrounds)
-        if !isnothing(bg)
-            ops = lindbladop(bg)
-            for op in ops
-                push!(lindbladians, e ? embed(base,[i],op) : op)
-            end
-        end
-    end
+    iscomposite = base isa CompositeBasis
+    lindbladians = _embedded_lindblad_operators(state, state_indices, backgrounds)
     ham = express(operation.hamiltonian, QOR)
-    ham = e ? embed(base,state_indices,ham) : ham
-    _, sol = timeevolution.master([0,Δt], state, ham, lindbladians)
+    ham = iscomposite ? embed(base, state_indices, ham) : ham
+    ham, lindbladians
+end
+
+function apply_noninstant!(state::Operator, state_indices::Vector{Int},
+                           operation::ConstantHamiltonianEvolution, backgrounds)
+    ham, lindbladians = _noninstant_operators(
+        state, state_indices, operation, backgrounds
+    )
+    _, sol = timeevolution.master(
+        [0, operation.duration], state, ham, lindbladians
+    )
     sol[end]
 end
 
 function apply_noninstant!(state::Ket, state_indices::Vector{Int}, operation::ConstantHamiltonianEvolution, backgrounds)
     apply_noninstant!(dm(state), state_indices, operation, backgrounds)
+end
+
+function apply_noninstant!(state::MCKet, state_indices::Vector{Int},
+                           operation::ConstantHamiltonianEvolution, backgrounds)
+    ham, lindbladians = _noninstant_operators(
+        state, state_indices, operation, backgrounds
+    )
+    times = [0, operation.duration]
+    if isempty(lindbladians)
+        _, sol = timeevolution.schroedinger(times, state.ket, ham)
+    else
+        _, sol = timeevolution.mcwf(times, state.ket, ham, lindbladians)
+    end
+    MCKet(sol[end])
 end
 
 """

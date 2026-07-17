@@ -31,6 +31,23 @@ state representation. For backgrounds with a Kraus representation,
 `QuantumMCRepr()` samples a normalized pure-state trajectory instead of
 converting the state to a density operator.
 
+Slots using `QuantumMCRepr()` store that trajectory in an internal `MCKet`
+wrapper around the underlying QuantumOptics `Ket`. The wrapper preserves Monte
+Carlo semantics through initialization, instantaneous operations, compositions
+whose factors are all `MCKet`s, and projective measurements. Composing with a
+plain `Ket` produces a plain `Ket`, while composing with an `Operator` produces
+an `Operator` after density-matrix promotion.
+
+`ConstantHamiltonianEvolution` preserves `MCKet`: it uses Schrödinger evolution
+without active backgrounds and Monte Carlo wave-function evolution when Lindblad
+jump operators are present. Standalone background evolution also preserves
+`MCKet`: it samples a Kraus branch when available and otherwise uses Monte Carlo
+wave-function evolution with a zero Hamiltonian. Partial trace leaves the
+pure-state trajectory manifold and replaces the stored `MCKet` with an
+`Operator`. Because `MCKet` is the stored state type, `stateref.state[]` exposes
+it directly and `StateRef` displays identify its implementation module as
+`QuantumSavory`.
+
 Use this family when:
 
 - you need general qubit operations beyond the stabilizer regime,

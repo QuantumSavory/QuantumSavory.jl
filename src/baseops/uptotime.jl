@@ -23,14 +23,6 @@ function uptotime!(stateref::StateRef, idx::Int, background, Δt) # TODO this sh
     stateref.state[] = uptotime!(stateref.state[], idx, background, Δt)
 end
 
-function uptotime!(stateref::StateRef, idx::Int, background, Δt,
-                   repr::AbstractRepresentation)
-    stateref.state[] = uptotime!(stateref.state[], idx, background, Δt, repr)
-end
-
-uptotime!(state, idx::Int, background, Δt, ::AbstractRepresentation) =
-    uptotime!(state, idx, background, Δt)
-
 function uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt) # TODO what about multiqubit correlated backgrounds... e.g. an interaction hamiltonian!?
     for (i,b) in zip(indices, backgrounds)
         isnothing(b) && continue
@@ -38,16 +30,9 @@ function uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δ
     end
 end
 
-function uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δt, reprs)
-    for (i, b, repr) in zip(indices, backgrounds, reprs)
-        isnothing(b) && continue
-        uptotime!(state, i, b, Δt, repr)
-    end
-end
-
 function uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)
     staterecords = [(state=r.staterefs[i], idx=r.stateindices[i], bg=r.backgrounds[i],
-                     repr=r.reprs[i], t=r.accesstimes[i])
+                     t=r.accesstimes[i])
                     for (r,i) in zip(registers, indices)
                     if isassigned(r,i)]
     for stategroup in groupby(x->x.state, staterecords) # TODO check this is grouping by ===... Actually, make sure that == for StateRef is the same as ===
@@ -60,8 +45,7 @@ function uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)
             group = vcat(timegroups[1:i]...)
             stateindices = [g.idx for g in group]
             backgrounds = [g.bg for g in group]
-            reprs = [g.repr for g in group]
-            uptotime!(state, stateindices, backgrounds, Δt, reprs)
+            uptotime!(state, stateindices, backgrounds, Δt)
         end
     end
     for (i,r) in zip(indices, registers)

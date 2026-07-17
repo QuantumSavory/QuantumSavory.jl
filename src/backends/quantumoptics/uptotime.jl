@@ -3,15 +3,34 @@ function uptotime!(state::StateVector, idx::Int, background, Δt)
     uptotime!(state, idx, background, Δt)
 end
 
-function uptotime!(state::Ket, idx::Int, background, Δt, ::QuantumMCRepr)
+function _embedded_lindblad_operators(state, state_indices, backgrounds)
+    base = basis(state)
+    iscomposite = base isa CompositeBasis
+    lindbladians = AbstractOperator[]
+    for (i, bg) in zip(state_indices, backgrounds)
+        isnothing(bg) && continue
+        subsystem_basis = iscomposite ? base.bases[i] : base
+        for op in lindbladop(bg, subsystem_basis)
+            push!(lindbladians, iscomposite ? embed(base, [i], op) : op)
+        end
+    end
+    lindbladians
+end
+
+function uptotime!(state::MCKet, idx::Int, background, Δt)
     b = basis(state)
     iscomposite = b isa CompositeBasis
     Ks = krausops(background, Δt, b)
-    isnothing(Ks) && return uptotime!(state, idx, background, Δt)
+    if isnothing(Ks)
+        lindbladians = _embedded_lindblad_operators(state, (idx,), (background,))
+        hamiltonian = zero(identityoperator(b))
+        _, sol = timeevolution.mcwf([0, Δt], state.ket, hamiltonian, lindbladians)
+        return MCKet(sol[end])
+    end
 
     branches = map(Ks) do k
         embedded_k = iscomposite ? embed(b, [idx], k) : k
-        embedded_k * state
+        embedded_k * state.ket
     end
     probabilities = norm.(branches) .^ 2
     total_probability = sum(probabilities)
@@ -19,7 +38,7 @@ function uptotime!(state::Ket, idx::Int, background, Δt, ::QuantumMCRepr)
 
     threshold = rand() * total_probability
     branch = something(findfirst(>(threshold), cumsum(probabilities)), lastindex(branches))
-    normalize(branches[branch])
+    MCKet(normalize(branches[branch]))
 end
 
 function uptotime!(state::Operator, idx::Int, background, Δt)
@@ -30,9 +49,7 @@ function uptotime!(state::Operator, idx::Int, background, Δt)
     e = isa(b,CompositeBasis) # TODO make this more elegant with multiple dispatch
     Ks = krausops(background, Δt, b)
     if isnothing(Ks) # TODO turn this into a dispatch on a trait of having a kraus representations
-        # TODO code repetition with apply_noninstant!
-        L = lindbladop(background,b)
-        lindbladians = [e ? embed(b,[idx],l) : l for l in L]
+        lindbladians = _embedded_lindblad_operators(state, (idx,), (background,))
         _, sol = timeevolution.master([0,Δt], state, identityoperator(b), lindbladians)
         nstate.data .= sol[end].data
     else
