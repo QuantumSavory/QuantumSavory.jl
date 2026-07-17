@@ -193,8 +193,7 @@ apply!((regb[pair2qb],regb[pair1qb]),gate)
 measa = project_traceout!(rega[pair2qa], X)
 measb = project_traceout!(regb[pair2qb], X)
 if measa!=measb
-    traceout!(rega[pair1qa])
-    traceout!(regb[pair1qb])
+    traceout!(rega[pair1qa], regb[pair1qb])
 end</code></pre><p>The overall structure of this process is similar to the Entangler and Swapper: repeatedly trying to lock four qubits belonging to two pairs shared by the same nodes, followed by performing the purification procedure.</p><div class="mermaid">graph LR
     A[Purifier starts&lt;br&gt;on nodes A and B]
     B{Are there&lt;br&gt;two Bell pairs shared&lt;br&gt;between A and B?}
@@ -242,8 +241,7 @@ end</code></pre><details><summary>Click to see the implementation of the Entangl
         measa = project_traceout!(rega[pair2qa], X)
         measb = project_traceout!(regb[pair2qb], X)
         if measa!=measb
-            traceout!(rega[pair1qa])
-            traceout!(regb[pair1qb])
+            traceout!(rega[pair1qa], regb[pair1qb])
             network[nodea,:enttrackers][pair1qa] = nothing
             network[nodeb,:enttrackers][pair1qb] = nothing
             @simlog sim &quot;failed purification at $(nodea):$(pair1qa)&amp;$(pair2qa) and $(nodeb):$(pair1qb)&amp;$(pair2qb)&quot;
@@ -300,4 +298,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>(<a href="../../../bibliography/#muralidharan2016optimal">Muralidharan <em>et al.</em>, 2016</a>)</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../firstgenrepeater/firstgenrepeater/">« 1st-gen Repeater</a><a class="docs-footer-nextpage" href="../firstgenrepeater_lowlevel-clifford/">1st-gen Repeater - Clifford formalism »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 17 July 2026 19:32">Friday 17 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script><section class="footnotes is-size-7"><ul><li class="footnote" id="footnote-1"><a class="tag is-link" href="#citeref-1">1</a>(<a href="../../../bibliography/#muralidharan2016optimal">Muralidharan <em>et al.</em>, 2016</a>)</li></ul></section></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../firstgenrepeater/firstgenrepeater/">« 1st-gen Repeater</a><a class="docs-footer-nextpage" href="../firstgenrepeater_lowlevel-clifford/">1st-gen Repeater - Clifford formalism »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 17 July 2026 20:36">Friday 17 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
