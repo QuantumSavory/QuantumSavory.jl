@@ -1,11 +1,4 @@
-"""
-    MCKet(ket::Ket)
-
-A pure-state QuantumOptics ket carrying Monte Carlo trajectory semantics.
-
-QuantumSavory stores this wrapper in slots using `QuantumMCRepr()` so background
-evolution can dispatch on the stored state type.
-"""
+# Internal pure-state QuantumOptics ket carrying Monte Carlo trajectory semantics.
 struct MCKet{K<:Ket}
     ket::K
 end

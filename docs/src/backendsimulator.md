@@ -38,12 +38,13 @@ whose factors are all `MCKet`s, and projective measurements. Composing with a
 plain `Ket` produces a plain `Ket`, while composing with an `Operator` produces
 an `Operator` after density-matrix promotion.
 
-Some operations leave the pure-state trajectory manifold and therefore replace
-the stored `MCKet` with an `Operator`: partial trace, Hamiltonian evolution through
-`ConstantHamiltonianEvolution`, and backgrounds that provide only Lindblad
-operators rather than Kraus operators. Because `MCKet` is the stored state type,
-`stateref.state[]` exposes it directly and `StateRef` displays identify its
-implementation module as `QuantumSavory`.
+`ConstantHamiltonianEvolution` preserves `MCKet`: it uses Schrödinger evolution
+without active backgrounds and Monte Carlo wave-function evolution when Lindblad
+jump operators are present. Partial trace and standalone background updates that
+provide only Lindblad operators rather than Kraus operators leave the pure-state
+trajectory manifold and replace the stored `MCKet` with an `Operator`. Because
+`MCKet` is the stored state type, `stateref.state[]` exposes it directly and
+`StateRef` displays identify its implementation module as `QuantumSavory`.
 
 Use this family when:
 

@@ -51,9 +51,30 @@ using QuantumOpticsBase: Ket, Operator
 
     evolved_reg = Register(1, QuantumMCRepr())
     initialize!(evolved_reg[1], X1)
-    evolution = ConstantHamiltonianEvolution(IdentityOp(X1), 0.1)
+    evolution = ConstantHamiltonianEvolution(π / 2 * Z, 1.0)
     apply!(evolved_reg[1], evolution)
-    @test evolved_reg.staterefs[1].state[] isa Operator
+    @test evolved_reg.staterefs[1].state[] isa QuantumSavory.MCKet
+    @test observable(evolved_reg[1], X) ≈ -1 atol=1e-6
+
+    Random.seed!(0x491)
+    noisy_evolved_reg = Register(
+        [Qubit()],
+        [QuantumMCRepr()],
+        [T2Dephasing(1.0)],
+    )
+    initialize!(noisy_evolved_reg[1], X1)
+    apply!(noisy_evolved_reg[1], evolution)
+    @test noisy_evolved_reg.staterefs[1].state[] isa QuantumSavory.MCKet
+    @test abs(observable(noisy_evolved_reg[1], X)) ≈ 1
+
+    composite_evolved_reg = Register(
+        [Qubit(), Qubit()],
+        [QuantumMCRepr(), QuantumMCRepr()],
+        [T2Dephasing(1.0), nothing],
+    )
+    initialize!(composite_evolved_reg[1:2], StabilizerState("XX ZZ"))
+    apply!(composite_evolved_reg[1], evolution)
+    @test composite_evolved_reg.staterefs[1].state[] isa QuantumSavory.MCKet
 
     damped_reg = Register(
         [Qumode()],
