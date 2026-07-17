@@ -14,10 +14,12 @@
   wrapper, so background evolution selects Kraus sampling through structural dispatch.
   `ConstantHamiltonianEvolution` preserves the wrapper through Schrödinger or Monte
   Carlo wave-function evolution. Lindblad-only background updates now also preserve it
-  through Monte Carlo wave-function evolution with a zero Hamiltonian. Partial trace
-  leaves the trajectory manifold and produces an `Operator`. `stateref.state[]` now
-  exposes the wrapper, and `StateRef` displays identify its implementation module as
-  `QuantumSavory`.
+  through Monte Carlo wave-function evolution with a zero Hamiltonian. Partial trace now
+  samples the discarded subsystem's canonical basis and preserves the conditional
+  trajectory as an `MCKet`; its ensemble equals the exact partial trace. Grouped
+  `traceout!` calls that delete every slot of a shared state skip backend reduction and
+  RNG sampling entirely. `stateref.state[]` exposes the wrapper, and `StateRef` displays
+  identify its implementation module as `QuantumSavory`.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
 - **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.

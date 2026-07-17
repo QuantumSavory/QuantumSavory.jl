@@ -116,9 +116,10 @@ next round or simulation end.
 - `n::Int`: Number of client nodes
 """
 function clear_up_qubits!(net::RegisterNet, n::Int)
-    # cleanup qubits
-    foreach(q -> (traceout!(q); unlock(q)), net[1])
-    foreach(q -> (traceout!(q); unlock(q)), [net[1 + i][1] for i in 1:n])
+    refs = RegRef[net[1]...]
+    append!(refs, [net[1 + i][1] for i in 1:n])
+    traceout!(refs...)
+    foreach(unlock, refs)
 end
 
 """

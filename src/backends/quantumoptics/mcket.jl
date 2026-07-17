@@ -43,8 +43,15 @@ end
 subsystemcompose(state::MCKet, operation::Operator) = tensor(dm(state.ket), operation)
 subsystemcompose(operation::Operator, state::MCKet) = tensor(operation, dm(state.ket))
 
-# Partial trace leaves the pure-state trajectory manifold.
-traceout!(state::MCKet, index::Int) = ptrace(state.ket, index)
+function traceout!(state::MCKet, index::Int)
+    nsubsystems(state) == 1 && throw(ArgumentError(
+        "Partial trace can't be used to trace out all subsystems - use tr() instead."
+    ))
+    native_basis = basis(state).bases[index]
+    canonical_basis = [basisstate(native_basis, i) for i in 1:length(native_basis)]
+    _, reduced_state = project_traceout!(state, index, canonical_basis)
+    reduced_state
+end
 
 function Base.show(io::IO, state::MCKet)
     print(io, "MCKet(")

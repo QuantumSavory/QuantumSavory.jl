@@ -522,10 +522,12 @@ end
         else
             @debug "[$(now(sim))]: MBQCPurificationTracker purification failed syndrome=$(syndrome)" _group=LOG_GROUPS.protocol
             untag!(local_tag.slot, local_tag.id)
+            discarded_refs = RegRef[]
             for i in nodes
-                traceout!(net[i][communication_slot])
-                traceout!(net[i][storage_slot])
+                push!(discarded_refs, net[i][communication_slot])
+                push!(discarded_refs, net[i][storage_slot])
             end
+            traceout!(discarded_refs...)
         end
     end
 end

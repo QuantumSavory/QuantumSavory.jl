@@ -59,8 +59,13 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
   - `uptotime!` groups by shared `StateRef` and prior access time, then dispatches
     background updates on the stored state type
   - `QuantumMCRepr()` slots store an internal `MCKet`, which selects trajectory
-    sampling by structural dispatch for both Kraus and Lindblad-only evolution;
-    partial trace replaces it with `Operator`
+    sampling by structural dispatch for Kraus and Lindblad-only evolution;
+    partial trace samples the discarded subsystem's native canonical basis and
+    keeps the conditional state as `MCKet`
+- Multi-slot deletion:
+  - one `traceout!(refs...)` call groups requested slots by `StateRef` identity
+  - complete groups remove their backreferences without backend reduction or RNG
+  - incomplete groups retain unary traceout dispatch in argument order
 
 ## Review Checks
 

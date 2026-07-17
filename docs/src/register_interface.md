@@ -242,6 +242,13 @@ Perform a partial trace over a part of the system (i.e. discard a part of the sy
 
 Partial trace over a particular register reference.
 
+#### `traceout!(refs::RegRef...)`
+
+Delete several register references in one call. Complete groups that cover all
+live slots of a shared state are removed without backend state reduction;
+incomplete groups are traced out in argument order. The return value is a tuple
+of the owning registers in the same order as `refs`.
+
 #### `traceout!(r::Register, i::Int)`
 
 Partial trace over slot `i` of register `r`. Calls down to the state reference stored in that particular register.
@@ -255,10 +262,14 @@ Partial trace over subsystem `i` of state referenced by `s`.
 ```mermaid
 flowchart TB
   A["<code>traceout!(r::RegRef)</code>"]
+  A2["<code>traceout!(refs::RegRef...)</code>"]
   B["<code>traceout!(r::Register, i::Int)</code>"]
   C["<code>traceout!(r::StateRef, i::Int)</code>"]
+  F([Complete shared-state group:<br>remove backreferences directly])
   D([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> C --> D
+  A2 --> F
+  A2 --> B
 ```
 
 ## `uptotime!`

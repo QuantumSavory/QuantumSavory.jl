@@ -42,11 +42,22 @@ an `Operator` after density-matrix promotion.
 without active backgrounds and Monte Carlo wave-function evolution when Lindblad
 jump operators are present. Standalone background evolution also preserves
 `MCKet`: it samples a Kraus branch when available and otherwise uses Monte Carlo
-wave-function evolution with a zero Hamiltonian. Partial trace leaves the
-pure-state trajectory manifold and replaces the stored `MCKet` with an
-`Operator`. Because `MCKet` is the stored state type, `stateref.state[]` exposes
-it directly and `StateRef` displays identify its implementation module as
-`QuantumSavory`.
+wave-function evolution with a zero Hamiltonian.
+
+Partial trace also preserves `MCKet`. It samples the discarded subsystem in
+that subsystem's native canonical basis and stores the corresponding conditional
+pure-state trajectory. Individual trajectories therefore depend on this
+canonical-basis unraveling, while their ensemble is the exact partial trace.
+Use `QuantumOpticsRepr()` when an exact deterministic reduced density matrix is
+needed, or [`project_traceout!`](@ref) when the sampled outcome itself is needed.
+When one `traceout!` call includes every live slot of a shared state, the register
+layer deletes the complete group without backend reduction or trajectory
+sampling.
+
+Because `MCKet` is the stored state type, `stateref.state[]` exposes it directly
+and `StateRef` displays identify its implementation module as `QuantumSavory`.
+Combining an `MCKet` with an existing `Operator` still promotes the ket through
+`dm` and produces an `Operator`.
 
 Use this family when:
 
