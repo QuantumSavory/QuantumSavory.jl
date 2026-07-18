@@ -2,7 +2,7 @@ module MBQCEntanglementDistillation
 
 using QuantumSavory
 import QuantumSavory: Tag
-using QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglerProt
+using QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglerProt, protocol_log_context
 using QuantumSavory.CircuitZoo: Fusion
 
 using DocStringExtensions
