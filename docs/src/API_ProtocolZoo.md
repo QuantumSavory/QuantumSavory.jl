@@ -59,6 +59,37 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
+## Protocol Logging Context
+
+ProtocolZoo records use Julia's standard logging macros and the public
+[`protocol_log_context`](@ref) helper. The helper returns simulation time,
+active process id, protocol type name, and an ordered tuple of participating
+nodes. Custom `AbstractProtocol` implementations should overload it when their
+node layout is not already represented:
+
+```julia
+import QuantumSavory.ProtocolZoo: protocol_log_context
+
+protocol_log_context(prot::MyProtocol) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:MyProtocol,
+    nodes=(prot.node,),
+)
+
+@debug(
+    "Consumed entanglement",
+    _group=LOG_GROUPS.protocol,
+    event=:entanglement_consumed,
+    protocol_log_context(prot)...,
+    slots=(left_slot, right_slot),
+    pair_id=pair_id,
+)
+```
+
+Keep selectors and runtime peers out of the base `nodes` tuple. Put the actual
+participants for one event in fields such as `src_node`, `dst_node`, or
+`remote_nodes`.
+
 ## Visualization Hooks
 
 Some protocols also expose richer visualization through `show` methods.

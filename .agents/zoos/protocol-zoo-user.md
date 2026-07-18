@@ -58,6 +58,9 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
   declared as concrete subtypes of `AbstractTag`; `nothing` is supported only
   by the entangler to disable tagging.
 - If a workflow depends on swap updates or deletion notices, include `EntanglementTracker`.
+- Use `protocol_log_context(prot)...` with Julia's standard logging macros.
+  Custom protocols should overload `protocol_log_context` to return simulation
+  fields, a protocol symbol, and an immutable ordered `nodes` tuple.
 - Use `CircuitZoo` instead when all you need is a local gate sequence.
 
 ## Good Docs And Examples To Open Next

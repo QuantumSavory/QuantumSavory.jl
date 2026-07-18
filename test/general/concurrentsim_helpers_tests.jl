@@ -1,11 +1,10 @@
 using Test
-using Logging
 using QuantumSavory
 using ConcurrentSim
 using ResumableFunctions
 
 @testset "ConcurrentSim helpers" begin
-    @testset "@simlog and get_time_tracker expose the active simulation" begin
+    @testset "simulation context and get_time_tracker expose the active simulation" begin
         regs = [Register(1), Register(1)]
         net = RegisterNet(regs)
         sim = get_time_tracker(net)
@@ -15,20 +14,16 @@ using ResumableFunctions
         @test sim === get_time_tracker(regs[1][1])
         @test sim === get_time_tracker(mb)
 
-        @resumable function speaker(sim)
-            @simlog sim "hello from the simulation"
+        context_inside = Ref{Any}()
+        @resumable function capture_context(sim)
+            context_inside[] = simulation_log_context(sim)
         end
 
-        logger = Test.TestLogger()
-        with_logger(logger) do
-            @process speaker(sim)
-            run(sim)
-        end
-
-        record = only(logger.logs)
-        @test record.group == LOG_GROUPS.simulation
-        @test occursin("t=0.0000", record.message)
-        @test occursin("hello from the simulation", record.message)
+        @test simulation_log_context(sim) == (sim_time=0.0, sim_process_id=nothing)
+        @process capture_context(sim)
+        run(sim)
+        @test context_inside[].sim_time == 0.0
+        @test context_inside[].sim_process_id isa UInt
     end
 
     @testset "RegRef requests proxy the slot lock" begin

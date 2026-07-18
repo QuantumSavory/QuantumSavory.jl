@@ -72,7 +72,6 @@ end
     release.(nspin_slots)
     release.(espin_slots)
     release(link_resource)
-    #@simlog env "success on $(nodea) $(nodeb) after $(attempts) attempt(s) $(duration)"
 end
 
 ##

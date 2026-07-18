@@ -7,7 +7,7 @@ using Graphs
 using GraphsMatching: maximum_weight_matching
 
 import QuantumSavory.CircuitZoo: Fusion
-import QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglerProt
+import QuantumSavory.ProtocolZoo: AbstractProtocol, EntanglerProt, protocol_log_context
 
 import QuantumClifford
 import QuantumOpticsBase
@@ -155,6 +155,12 @@ For example, constructing this graph will require the following steps:
     storage_slot::Int
 end
 
+protocol_log_context(prot::GraphStateConstructor) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:GraphStateConstructor,
+    nodes=Tuple(prot.nodes),
+)
+
 struct GraphStateStorage
     uuid::Int
     vertex::Int
@@ -219,7 +225,12 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
             Fusion()(regA, regB, communication_slot, storage_slot)
         end
 
-        @debug "Graph state is established."
+        @debug(
+            "Established a graph state",
+            _group=LOG_GROUPS.protocol,
+            event=:graph_state_established,
+            protocol_log_context(prot)...,
+        )
     end
     for slot in slots
         unlock(slot)
