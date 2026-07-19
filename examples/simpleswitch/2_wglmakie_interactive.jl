@@ -76,7 +76,7 @@ end
 function continue_singlerun!(n, fig, sim, sim_time, switch_protocol, client_unordered_pairs, consumers,
     observables, axes, running
 )
-    backlog = observables._backlog
+    backlog = observables.backlog
     consumed = observables.consumed
     backlog_perpair = observables.backlog_perpair
     step_ts = range(0, 1000, step=0.1)
