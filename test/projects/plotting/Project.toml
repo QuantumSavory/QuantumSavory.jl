@@ -21,3 +21,4 @@ QuantumSavory = {path = "../../.."}
 
 [compat]
 FileIO = "1.20.0"
+ParallelTestRunner = "2.6.3"
