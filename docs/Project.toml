@@ -29,3 +29,6 @@ Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [sources]
 QuantumSavory = {path = ".."}
+
+[compat]
+Distributions = "0.25.129"
