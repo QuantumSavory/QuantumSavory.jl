@@ -94,7 +94,7 @@ If such qubits are found, the entanglement swap operation is performed on them.
 The entanglement swap operation is performed through the following simple circuit, which entangles the two local qubits belonging to two separate Bell pairs, and then measures them:
 
 ```@raw html
-<img alt="Entanglement swapping circuit" src="../firstgenrepeater_lowlevel/firstgenrepeater-04.swapcircuit.png" style="max-width:50%">
+<img alt="Entanglement swapping circuit" src="../../firstgenrepeater_lowlevel/firstgenrepeater-04.swapcircuit.png" style="max-width:50%">
 ```
 
 The two measurement outcomes determine which Pauli corrections (a `Z` and an `X`) are applied to the remote qubits of the now-connected long-range pair.
@@ -160,8 +160,8 @@ as a single round of purification is incapable of detecting all types of errors.
 The two circuits being employed are the following:
 
 ```@raw html
-<img alt="Entanglement purification circuit" src="../firstgenrepeater_lowlevel/firstgenrepeater-06.purcircuit1.png" style="max-width:40%">
-<img alt="Entanglement purification circuit" src="../firstgenrepeater_lowlevel/firstgenrepeater-06.purcircuit2.png" style="max-width:40%">
+<img alt="Entanglement purification circuit" src="../../firstgenrepeater_lowlevel/firstgenrepeater-06.purcircuit1.png" style="max-width:40%">
+<img alt="Entanglement purification circuit" src="../../firstgenrepeater_lowlevel/firstgenrepeater-06.purcircuit2.png" style="max-width:40%">
 ```
 
 If the coincidence measurements fail, all qubits are reset.
@@ -237,7 +237,7 @@ e.g., the `XX` and `ZZ` correlators.
 We compute these correlators for the second pair on the extreme ends of the chain of repeaters:
 
 ```@raw html
-<video src="../firstgenrepeater_lowlevel/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
+<video src="../../firstgenrepeater_lowlevel/firstgenrepeater-07.observable.mp4" autoplay loop muted></video>
 ```
 
 Notice how the `XX` observable drops due to the T₂ dephasing experienced by the qubits.
@@ -246,7 +246,7 @@ And then it goes back up at the occurrence of a successful purification
 Here is what it looks like if we do not perform purification:
 
 ```@raw html
-<video src="../firstgenrepeater_lowlevel/firstgenrepeater-07.observable.nopur.mp4" autoplay loop muted></video>
+<video src="../../firstgenrepeater_lowlevel/firstgenrepeater-07.observable.nopur.mp4" autoplay loop muted></video>
 ```
 
 The plotting itself is realized with the wonderful `Makie.jl` plotting library.

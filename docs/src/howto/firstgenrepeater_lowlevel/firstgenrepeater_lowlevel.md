@@ -556,7 +556,7 @@ Many of these tools were used under the hood without being invoked directly.
 
 ## Suggested Improvements
 
-- The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available.
+- The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available. This is done in the firstgenrepeater example.
 - Calibrating when to perform a purification versus a swap would be important for the performance of the network.
 - Balancing what types of entanglement purification is performed, depending on the type of noise experienced, can drastically lower resource requirements.
 - Implementing more sophisticated purification schemes can greatly improve the quality of entanglement.
