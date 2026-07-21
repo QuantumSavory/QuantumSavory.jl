@@ -165,3 +165,5 @@ include("../../../../examples/repeatergrid/1a_async_interactive_visualization.jl
 ```@raw html
 <video src="../grid_sim6x6hv.mp4" autoplay loop muted></video>
 ```
+
+The source code is in the [`examples/repeatergrid`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/repeatergrid) folder.
