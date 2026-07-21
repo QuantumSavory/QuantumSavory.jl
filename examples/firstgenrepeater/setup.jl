@@ -101,10 +101,28 @@ const YY = Y⊗Y
         if !success
             untag!(qa1.slot, qa1.id)
             untag!(qb1.slot, qb1.id)
-            @info "$(round(now(sim), digits=2)): failed purification at $(nodea):$(qa1.slot.idx) & $(qa2.slot.idx) and $(nodeb):$(qb1.slot.idx) & $(qb2.slot.idx)"
+            @debug(
+                "Purification failed",
+                _group=LOG_GROUPS.protocol,
+                event=:purification_failed,
+                simulation_log_context(sim)...,
+                protocol=:purifier,
+                nodes=(nodea, nodeb),
+                round=nround,
+                slots=(qa1.slot.idx, qb1.slot.idx, qa2.slot.idx, qb2.slot.idx),
+            )
         else
             nround += 1
-            @info "$(round(now(sim), digits=2)): purification at $(nodea):$(qa1.slot.idx) $(nodeb):$(qb1.slot.idx) by sacrifice of $(nodea):$(qa2.slot.idx) $(nodeb):$(qb2.slot.idx)"
+            @debug(
+                "Purification succeeded",
+                _group=LOG_GROUPS.protocol,
+                event=:purification_succeeded,
+                simulation_log_context(sim)...,
+                protocol=:purifier,
+                nodes=(nodea, nodeb),
+                round=nround,
+                slots=(qa1.slot.idx, qb1.slot.idx, qa2.slot.idx, qb2.slot.idx),
+            )
         end
         untag!(qa2.slot, qa2.id)
         untag!(qb2.slot, qb2.id)

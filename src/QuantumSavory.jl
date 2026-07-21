@@ -23,7 +23,6 @@ using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Resource,
       Process, @process,
       request, release, now, active_process, timeout, put, get
 using ResumableFunctions
-using Printf
 import SumTypes
 using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
@@ -49,6 +48,8 @@ import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, per
 export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
 
+include("logging.jl")
+
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
     CliffordRepr, consistent_representation, QuantumOpticsRepr, QuantumMCRepr,
@@ -68,6 +69,8 @@ export
     onchange_tag, onchange,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer,
+    # logging.jl
+    LOG_GROUPS, simulation_log_context,
     # initialize.jl
     initialize!, newstate,
     # subsystemcompose.jl
@@ -77,7 +80,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl and querywait.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    AbstractTag, Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
     findfreeslot,
     #messagebuffer.jl
     MessageBuffer,

@@ -13,6 +13,9 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 ## Internal Model
 
 - `Tag` is a `@sum_type` in `src/tags.jl` with a fixed set of supported payload shapes.
+- `AbstractTag` is a marker for named tag-head types; it is not a replacement
+  for the `Tag` sum type. Keep generic `Tag(::DataType, ...)` construction and
+  queries independent of this marker.
 - The current implementation is narrower than some high-level prose suggests:
   - `TagElementTypes = Union{Symbol, Int, DataType}`
   - extra explicit variants exist for some `Float64` cases
@@ -57,6 +60,9 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 ## Review Checks
 
 - Verify a proposed tag schema fits existing `Tag(...)` constructors before documenting it.
+- Keep protocol fields declared as `Type{<:AbstractTag}` constrained to
+  concrete named heads while preserving arbitrary `DataType` heads in the
+  general tag API.
 - Do not bless `tag!(register, ...)` or `tag!(messagebuffer, ...)`; both are rejected.
 - Preserve query ordering semantics unless the change is intentional and broadly updated.
 - Preserve the distinction between:

@@ -2,8 +2,42 @@
 
 ## v0.7.1 - unreleased
 
+- **(breaking)** Simulation, network, protocol, and visualization traces now use
+  Julia's standard logging macros with stable `event` symbols and structured
+  metadata. Rendered messages have changed, and routine low-level simulation
+  and protocol control-flow records now use `Debug` severity in the
+  `LOG_GROUPS.protocol` group. The `@simlog` macro and both non-public `timestr`
+  methods were removed immediately; use `simulation_log_context` or
+  `ProtocolZoo.protocol_log_context` with `@debug`, `@warn`, or `@error`.
 - Additional visualization methods for states of registers.
+- **(fix)** `observable` now locally composes separately factorized states, and pure
+  Clifford states accept dense QuantumOptics observables.
+- Package logs expose stable, filterable domain groups through `LOG_GROUPS`.
+- Dense observables on pure Clifford states now warn before converting the entire
+  stabilizer state to an exponentially sized ket, with the default logger showing the
+  warning once per session. Mixed stabilizer states fail early with guidance to use
+  representation-native Pauli observables.
+- **(fix)** `QuantumMCRepr` slots now store pure trajectories in an internal `MCKet`
+  wrapper, so background evolution selects Kraus sampling through structural dispatch.
+  `ConstantHamiltonianEvolution` preserves the wrapper through Schrödinger or Monte
+  Carlo wave-function evolution. Lindblad-only background updates now also preserve it
+  through Monte Carlo wave-function evolution with a zero Hamiltonian. Partial trace now
+  samples the discarded subsystem's canonical basis and preserves the conditional
+  trajectory as an `MCKet`; its ensemble equals the exact partial trace. Grouped
+  `traceout!` calls that delete every slot of a shared state skip backend reduction and
+  RNG sampling entirely. `stateref.state[]` exposes the wrapper, and `StateRef` displays
+  identify its implementation module as `QuantumSavory`.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
+- **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
+- **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.
+  Custom types passed to `EntanglerProt(...; tag=MyTag)` or
+  `EntanglementConsumer(...; tag=MyTag)` must be concrete and migrate to
+  `struct MyTag <: AbstractTag end`. The entangler accepts `nothing`, while the
+  consumer requires a named tag type. Generic `Tag(DataType, ...)` construction
+  and querying remain unrestricted.
+- `RegisterNet` now accepts `(src, dst) -> delay` callables for
+  `classical_delay` and `quantum_delay`, enabling per-link and asymmetric
+  transport delays while retaining scalar delay support.
 
 ## v0.7.0 - 2026-06-12
 

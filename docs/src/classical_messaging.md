@@ -51,8 +51,19 @@ repeater layer.
 ## Latency Is Part Of The Simulation
 
 `RegisterNet(...; classical_delay = Δt)` assigns that delay to each direct
-classical edge at construction time. Message arrival therefore happens on the
-simulation clock, not instantly.
+classical edge at construction time. A two-argument callable assigns delays per
+directed link instead:
+
+```julia
+delay(src, dst) = propagation_delays[src => dst]
+net = RegisterNet(graph, registers; classical_delay=delay, quantum_delay=delay)
+```
+
+The callable is evaluated separately as `delay(src, dst)` and `delay(dst, src)`
+for each undirected graph edge, so it may model asymmetric links. The
+`quantum_delay` keyword follows the same scalar-or-callable convention for the
+direct quantum channels returned by [`qchannel`](@ref). Message arrival and
+quantum transport therefore happen on the simulation clock, not instantly.
 
 That matters because protocol behavior often depends on classical latency:
 

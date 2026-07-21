@@ -1,5 +1,6 @@
 using QuantumSavory
 using QuantumSavory.ProtocolZoo: AbstractProtocol
+import QuantumSavory.ProtocolZoo: protocol_log_context
 using ConcurrentSim
 using ResumableFunctions
 using Gabs
@@ -94,6 +95,12 @@ struct AssistedTeleport <: AbstractProtocol
     nodeB::Int # Bob (receiver)
     nodeC::Int # Charlie (assister)
 end
+
+protocol_log_context(prot::AssistedTeleport) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:AssistedTeleport,
+    nodes=(prot.nodeA, prot.nodeB, prot.nodeC),
+)
 
 """
     homodyne_alice!(net, nodeA, nodeB)
