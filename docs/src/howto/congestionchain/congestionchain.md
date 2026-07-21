@@ -118,7 +118,7 @@ swapcircuit = EntanglementSwap()   # from QuantumSavory.CircuitZoo
 ```
 
 `findswapablequbits` always picks the *farthest* available neighbor on each side, so each swap extends the link as much as possible.
-The actual quantum operation is the predefined [`EntanglementSwap`](@ref) circuit from [`CircuitZoo`](@ref Predefined-Quantum-Circuits); the [`uptotime!`](@ref) call first advances the four qubits' states to the present so the accumulated `T2` dephasing is applied before the swap.
+The actual quantum operation is the predefined `EntanglementSwap` circuit from [`CircuitZoo`](@ref Predefined-Quantum-Circuits); the [`uptotime!`](@ref) call first advances the four qubits' states to the present so the accumulated `T2` dephasing is applied before the swap.
 
 ## Consumer
 
@@ -205,6 +205,6 @@ declaring the noise properties of the qubits](@ref "Background Noise Processes")
 The three discrete-event processes were hand-written as [`@resumable`](https://github.com/JuliaDynamics/ResumableFunctions.jl) functions scheduled on the `ConcurrentSim.jl` event loop, using
 - `request`/`unlock` on register slots for coordinating access to shared hardware
 - [`initialize!`](@ref) for state preparation, drawing the noisy pair from [`DepolarizedBellPair`](@ref) in [`StatesZoo`](@ref Predefined-Models-of-Quantum-States)
-- [`EntanglementSwap`](@ref) from [`CircuitZoo`](@ref Predefined-Quantum-Circuits) for the swap
+- `EntanglementSwap` from [`CircuitZoo`](@ref Predefined-Quantum-Circuits) for the swap
 - [`observable`](@ref) for the `XX`/`ZZ` stabilizer expectations
 - [`traceout!`](@ref) for deleting consumed qubits

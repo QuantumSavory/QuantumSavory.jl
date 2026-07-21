@@ -92,7 +92,7 @@ end
 ```
 
 **Reserving the hardware.**
-First it makes sure no other process is already working on this edge, then reserves the electron spins of both nodes with a [`nongreedymultilock`](@ref) (a multi-resource lock that avoids deadlock by never holding a partial set of locks):
+First it makes sure no other process is already working on this edge, then reserves the electron spins of both nodes with a `nongreedymultilock` (a multi-resource lock that avoids deadlock by never holding a partial set of locks):
 
 ```julia
 link_resource = net[(nodea, nodeb), :link_queue]
@@ -196,7 +196,7 @@ r  = tmap((_)->run_until_connected(root_conf), 1:100)
 df = rename(DataFrame(r), [:time, :fid])
 ```
 
-## Visualizations
+## Figures of Merit and Visualizations
 
 The second script, `2_real_time_visualization.jl`, advances a single instance with `run(sim, t)` and records the dashboard video shown at the top of this page.
 It combines three of `QuantumSavory`'s plotting recipes:
@@ -228,7 +228,7 @@ Much of the analog dynamics was implicit through the use of [backgrounds,
 declaring the noise properties of the electron and nuclear spins](@ref "Background Noise Processes").
 
 The discrete-event protocol itself was written by hand as a [`@resumable`](https://github.com/JuliaDynamics/ResumableFunctions.jl) function scheduled on the `ConcurrentSim.jl` event loop, using
-- [`nongreedymultilock`](@ref) and `Resource` locks for coordinating access to shared hardware
+- `nongreedymultilock` and `Resource` locks for coordinating access to shared hardware
 - [`initialize!`](@ref) and [`apply!`](@ref) for state preparation and gates
 - [`project_traceout!`](@ref) for the projective electron measurements
 - [`observable`](@ref) for evaluating the cluster-state stabilizers
