@@ -9,7 +9,8 @@ using QuantumSavory.ProtocolZoo:
     AbstractProtocol,
     EntanglementCounterpart,
     combine_entanglement_ids,
-    fresh_entanglement_id</code></pre><p>The setup function creates the chain, prepares the two initial Bell pairs, and tags each slot with the existing <code>ProtocolZoo</code> <code>EntanglementCounterpart</code> tag. The tag fields are:</p><ul><li>the remote node,</li><li>the remote slot,</li><li>and the pair id.</li></ul><pre><code class="language-julia hljs">function build_myswapper_tutorial()
+    fresh_entanglement_id
+import QuantumSavory.ProtocolZoo: protocol_log_context</code></pre><p>The setup function creates the chain, prepares the two initial Bell pairs, and tags each slot with the existing <code>ProtocolZoo</code> <code>EntanglementCounterpart</code> tag. The tag fields are:</p><ul><li>the remote node,</li><li>the remote slot,</li><li>and the pair id.</li></ul><pre><code class="language-julia hljs">function build_myswapper_tutorial()
     registers = [Register(2), Register(2), Register(2)]
     net = RegisterNet(path_graph(3), registers; classical_delay=0.1)
     sim = get_time_tracker(net)
@@ -42,7 +43,13 @@ end</code></pre><p>The important point is that the quantum state and the classic
     node::Int
     alice::Int
     charlie::Int
-end</code></pre><p>The protocol starts by waiting on Bob&#39;s message buffer. No direct handle to the requesting protocol is needed; the only contract is that a <code>:swap_request</code> message arrives.</p><pre><code class="language-julia hljs">@resumable function (prot::MySwapperProt)()
+end
+
+protocol_log_context(prot::MySwapperProt) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:MySwapperProt,
+    nodes=(prot.node,),
+)</code></pre><p>The context overload is the standard logging extension point for a custom protocol. Bob is the protocol&#39;s fixed node; Alice and Charlie are dynamic peers and are recorded as <code>remote_nodes</code> on the events that involve them.</p><p>The protocol starts by waiting on Bob&#39;s message buffer. No direct handle to the requesting protocol is needed; the only contract is that a <code>:swap_request</code> message arrives.</p><pre><code class="language-julia hljs">@resumable function (prot::MySwapperProt)()
     (; sim, net, node, alice, charlie) = prot
     reg = net[node]
     mb = messagebuffer(net, node)
@@ -73,6 +80,17 @@ end</code></pre><p>The protocol starts by waiting on Bob&#39;s message buffer. N
     put!(
         channel(net, node =&gt; charlie),
         Tag(:swap_update_x, q_charlie.idx, a.tag[2], a.tag[3], Int(zmeas), new_pair_id),
+    )
+
+    @debug(
+        &quot;Swapped entanglement&quot;,
+        _group=LOG_GROUPS.protocol,
+        event=:entanglement_swapped,
+        protocol_log_context(prot)...,
+        slots=(q_alice.idx, q_charlie.idx),
+        remote_nodes=(alice, charlie),
+        pair_id=new_pair_id,
+        correction=(Int(xmeas), Int(zmeas)),
     )
 
     unlock(q_alice)
@@ -106,6 +124,20 @@ end</code></pre><p>This is the core idea from the paper&#39;s example: Bob does 
     end
 
     tag!(old_tag.slot, EntanglementCounterpart, new_remote_node, new_remote_slot, new_pair_id)
+    @debug(
+        &quot;Received an entanglement correction&quot;,
+        _group=LOG_GROUPS.protocol,
+        event=:correction_received,
+        simulation_log_context(sim)...,
+        protocol=:endpoint_update,
+        nodes=(node,),
+        src_node=old_neighbor,
+        dst_node=node,
+        slot=old_tag.slot.idx,
+        message_type=Symbol(update_tag),
+        correction=correction,
+        pair_id=new_pair_id,
+    )
     return old_tag.slot.idx
 end</code></pre><h2 id="Run-It"><a class="docs-heading-anchor" href="#Run-It">Run It</a><a id="Run-It-1"></a><a class="docs-heading-anchor-permalink" href="#Run-It" title="Permalink"></a></h2><p>The runnable script defines the custom protocol, runs the setup, and leaves the final query results available for inspection:</p><pre><code class="language-julia hljs">tutorial_result = build_myswapper_tutorial()
 sim = tutorial_result.sim
@@ -117,4 +149,4 @@ mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../noninstantgate/">« Gate Duration</a><a class="docs-footer-nextpage" href="../state_explorer/">State Explorer »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 20 July 2026 00:51">Monday 20 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../noninstantgate/">« Gate Duration</a><a class="docs-footer-nextpage" href="../state_explorer/">State Explorer »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 21 July 2026 16:09">Tuesday 21 July 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
