@@ -252,7 +252,7 @@ The entanglement swap operation is performed through the following simple circui
  -->
 ```
 
-The example uses the ready-made [`EntanglementSwap`](@ref) circuit from [`CircuitZoo`](@ref Predefined-Quantum-Circuits) for this. If you were to write it out by hand instead, it would look like the following (where `localslot` denotes register slots on which swapping happens, and `remslot` denotes remote registers on the left and right):
+The example uses the ready-made `EntanglementSwap` circuit from [`CircuitZoo`](@ref Predefined-Quantum-Circuits) for this. If you were to write it out by hand instead, it would look like the following (where `localslot` denotes register slots on which swapping happens, and `remslot` denotes remote registers on the left and right):
 
 ```julia
 apply!((localslot1, localslot2), CNOT; time=time)
