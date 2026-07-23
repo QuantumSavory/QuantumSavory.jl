@@ -50,8 +50,8 @@ where each node has the prescribed number of qubits, e.g.:
 The `RegisterNet` would contain, on each node:
 
 - a [`Register`](@ref) of the appropriate size;
-- an array of tuples keeping track of whom each qubit in the register is entangled to (as the `:enttracker` property);
-- an array of locks (from `ConcurrentSim.jl`) keeping track of whether a process is happening on the given qubit (as the `:locks` property).
+- an array of tuples keeping track of whom each qubit in the register is entangled to (as the `:enttrackers` property).
+
 
 !!! note
     To see how to visualize these data structures as the simulation is proceeding, consult the [Visualizations](@ref Visualizations) page.
@@ -72,9 +72,6 @@ function simulation_setup(
     )
     R = length(sizes) # Number of registers
 
-    # A scheduler datastructure for the discrete event simulation
-    sim = Simulation()
-
     # All of the quantum register we will be simulating
     registers = Register[]
     for s in sizes
@@ -91,12 +88,13 @@ function simulation_setup(
     graph = grid([R])
     network = RegisterNet(graph, registers) # A graphs with extra "meta data"
 
+    # The scheduler datastructure for the discrete event simulation
+    sim = get_time_tracker(network)
+
     # Add a register datastructures and event locks to each node.
     for v in vertices(network)
         # Create an array specifying whether a qubit is entangled with another qubit
         network[v,:enttrackers] = Any[nothing for i in 1:sizes[v]]
-        # Create an array of locks, telling us whether a qubit is undergoing an operation
-        network[v,:locks] = [Resource(sim,1) for i in 1:sizes[v]]
     end
 
     sim, network
@@ -157,9 +155,9 @@ graph LR
             @yield timeout(sim, entangler_wait_time)
             continue
         end
-        locka = network[nodea,:locks][ia]
-        lockb = network[nodeb,:locks][ib]
-        @yield request(locka) & request(lockb)
+        slota = network[nodea,ia]
+        slotb = network[nodeb,ib]
+        @yield request(slota) & request(slotb)
         registera = network[nodea]
         registerb = network[nodeb]
         @yield timeout(sim, entangler_busy_time)
@@ -175,30 +173,32 @@ graph LR
             nodes=(nodea, nodeb),
             slots=(ia, ib),
         )
-        release(locka)
-        release(lockb)
+        unlock(slota)
+        unlock(slotb)
     end
 end
 
 """Find an uninitialized unlocked qubit on a given node"""
 function findfreequbit(network, node)
     register = network[node]
-    locks = network[node,:locks]
     regsize = nsubsystems(register)
-    findfirst(i->!isassigned(register,i) & isfree(locks[i]), 1:regsize)
+    findfirst(i->!isassigned(register,i) && !islocked(register[i]), 1:regsize)
 end
 ```
 ```@raw html
 </details>
 ```
 
-Notice that the entangler uses the [`initialize!`](@ref) function to set the state of certain registers, but we never need to explicitly construct the numerical representation of these kets. Rather, we use the symbolic algebra system of [`QuantumSymbolics.jl`](https://github.com/QuantumSavory/QuantumSymbolics.jl), and let the simulator automatically convert the symbolic expression into numerical density matrices. This conversion was governed by the choice of `representation = QuantumOpticsRepr`. Here is one possible symbolic definition of a `noisy_pair`:
+Notice that the entangler uses the [`initialize!`](@ref) function to set the state of certain registers, but we never need to explicitly construct the numerical representation of these kets. Rather, we use the symbolic algebra system of [`QuantumSymbolics.jl`](https://github.com/QuantumSavory/QuantumSymbolics.jl), and let the simulator automatically convert the symbolic expression into numerical density matrices. This conversion was governed by the choice of `representation = QuantumOpticsRepr`. The example takes its `noisy_pair` from the predefined [`DepolarizedBellPair`](@ref) in [`StatesZoo`](@ref Predefined-Models-of-Quantum-States), but it also keeps the equivalent hand-written symbolic definition around (commented out) to show how you would build such a state yourself:
 
 ```julia
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
-noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
+noisy_pair_func(F) = DepolarizedBellPair(;F)
+# Here is how you can do it manually if you want to have a more general state provided by QuantumSymbolics.
+# Check out also the StatesZoo as a source of other predefined types of noisy Bell pairs:
+# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 ```
 
 The symbolic-expression-to-density-matrix conversion is cached inside of the symbolic expression, so that it does not need to be recomputed each time.
@@ -252,7 +252,7 @@ The entanglement swap operation is performed through the following simple circui
  -->
 ```
 
-The code implementing such a circuit looks like the following (where `localslot` denotes register slots on which swapping happens, and `remslot` denotes remote registers on the left and right):
+The example uses the ready-made [`EntanglementSwap`](@ref) circuit from [`CircuitZoo`](@ref Predefined-Quantum-Circuits) for this. If you were to write it out by hand instead, it would look like the following (where `localslot` denotes register slots on which swapping happens, and `remslot` denotes remote registers on the left and right):
 
 ```julia
 apply!((localslot1, localslot2), CNOT; time=time)
@@ -284,15 +284,15 @@ end
             continue
         end
         q1, q2 = qubit_pair
-        locks = network[node, :locks][[q1,q2]]
-        @yield mapreduce(request, &, locks)
+        @yield request(network[node][q1]) & request(network[node][q2])
         reg = network[node]
         @yield timeout(sim, swapper_busy_time)
         node1 = network[node,:enttrackers][q1]
         reg1 = network[node1.node]
         node2 = network[node,:enttrackers][q2]
         reg2 = network[node2.node]
-        swapcircuit(reg[q1], reg[q2], reg1[node1.slot], reg2[node2.slot]; time=now(sim))
+        uptotime!((reg[q1], reg1[node1.slot], reg[q2], reg2[node2.slot]), now(sim))
+        swapcircuit(reg[q1], reg1[node1.slot], reg[q2], reg2[node2.slot])
         network[node1.node,:enttrackers][node1.slot] = node2
         network[node2.node,:enttrackers][node2.slot] = node1
         network[node,:enttrackers][q1] = nothing
@@ -307,30 +307,20 @@ end
             slots=(q1, q2),
             remote_nodes=(node1.node, node2.node),
         )
-        release.(locks)
+        unlock(network[node][q1])
+        unlock(network[node][q2])
     end
 end
 
-function swapcircuit(localslot1, localslot2, remslot1, remslot2; time=nothing)
-    apply!((localslot1, localslot2), CNOT; time=time)
-    xmeas = project_traceout!(localslot1, X)
-    zmeas = project_traceout!(localslot2, Z)
-    if xmeas==2
-        apply!(remslot1, Z)
-    end
-    if zmeas==2
-        apply!(remslot2, X)
-    end
-end
+swapcircuit = EntanglementSwap()
 
 function findswapablequbits(network,node)
     enttrackers = network[node,:enttrackers]
-    locks = network[node,:locks]
     left_nodes  = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node<node && isfree(locks[i])]
+                   if !isnothing(n) && n.node<node && !islocked(network[node][i])]
     isempty(left_nodes)  && return nothing
     right_nodes = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node>node && isfree(locks[i])]
+                   if !isnothing(n) && n.node>node && !islocked(network[node][i])]
     isempty(right_nodes) && return nothing
     _, farthest_left  = findmin(n->n.node, left_nodes)
     _, farthest_right = findmax(n->n.node, right_nodes)
@@ -376,10 +366,10 @@ The two circuits being employed are the following:
 
 If the coincidence measurements fail, all qubits are reset.
 If the coincidence measurements are correct, the purified pair would have higher fidelity than what it started with.
-To implement one of these circuits one can write something akin to the following, where `regA` and `regB` are the two registers who share two entangled pairs, and `pairXqubitX` specifies the slot for each of the qubits of each of the pairs:
+The example runs these through the ready-made [`Purify2to1`](@ref) circuit from [`CircuitZoo`](@ref Predefined-Quantum-Circuits), which returns whether the coincidence check succeeded and discards the failed pair for you. Written out by hand, one of these circuits would look something like the following, where `regA` and `regB` are the two registers who share two entangled pairs, and `pairXqubitX` specifies the slot for each of the qubits of each of the pairs:
 
 ```julia
-gate = Gates.CNOT # or Gates.CPHASE
+gate = CNOT # or CPHASE
 apply!((rega[pair2qa],rega[pair1qa]),gate)
 apply!((regb[pair2qb],regb[pair1qb]),gate)
 measa = project_traceout!(rega[pair2qa], X)
@@ -439,19 +429,16 @@ end
             continue
         end
         pair1qa, pair1qb, pair2qa, pair2qb = pairs_of_bellpairs
-        locks = [network[nodea,:locks][[pair1qa,pair2qa]];
-                 network[nodeb,:locks][[pair1qb,pair2qb]]]
+        locks = [network[nodea][[pair1qa,pair2qa]];
+                 network[nodeb][[pair1qb,pair2qb]]]
         @yield mapreduce(request, &, locks)
         @yield timeout(sim, purifier_busy_time)
         rega = network[nodea]
         regb = network[nodeb]
-        gate = (CNOT, CPHASE)[round%2+1]
-        apply!((rega[pair2qa],rega[pair1qa]),gate)
-        apply!((regb[pair2qb],regb[pair1qb]),gate)
-        measa = project_traceout!(rega[pair2qa], X)
-        measb = project_traceout!(regb[pair2qb], X)
-        if measa!=measb
-            traceout!(rega[pair1qa], regb[pair1qb])
+        purifyerror =  (:X, :Z)[round%2+1]
+        purificationcircuit = Purify2to1(purifyerror)
+        success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb])
+        if !success
             network[nodea,:enttrackers][pair1qa] = nothing
             network[nodeb,:enttrackers][pair1qb] = nothing
             @debug(
@@ -485,10 +472,10 @@ end
 
 function findqubitstopurify(network,nodea,nodeb)
     enttrackers = network[nodea,:enttrackers]
-    locksa = network[nodea,:locks]
-    locksb = network[nodeb,:locks]
+    rega = network[nodea]
+    regb = network[nodeb]
     enttrackers = [(i=i,n...) for (i,n) in enumerate(enttrackers)
-                   if !isnothing(n) && n.node==nodeb && isfree(locksa[i]) && isfree(locksb[n.slot])]
+                   if !isnothing(n) && n.node==nodeb && !islocked(rega[i]) && !islocked(regb[n.slot])]
     if length(enttrackers)>=2
         aqubits = [n.i for n in enttrackers[end-1:end]]
         bqubits = [n.slot for n in enttrackers[end-1:end]]
@@ -589,7 +576,7 @@ Many of these tools were used under the hood without being invoked directly.
 
 ## Suggested Improvements
 
-- The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available. This is done in the firstgenrepeater example.
+- The first and most obvious improvement would be to trigger the various events (Entangler, Swapper, Purifier) from each other, instead of having them all randomly wait and hope the necessary resources are available. The higher-level [firstgenrepeater example](@ref First-Generation-Quantum-Repeater-ProtocolZoo) replaces the hand-written processes with reusable protocols, and its `EntanglementTracker` is genuinely event-driven — it blocks until a classical message arrives. The `EntanglerProt` and `SwapperProt` protocols also support waiting on tag changes instead of polling, but only when constructed with `retry_lock_time=nothing`; that example passes a fixed `retry_lock_time`, so as configured they still retry on a timer, and its custom purification loop polls as well.
 - Calibrating when to perform a purification versus a swap would be important for the performance of the network.
 - Balancing what types of entanglement purification is performed, depending on the type of noise experienced, can drastically lower resource requirements.
 - Implementing more sophisticated purification schemes can greatly improve the quality of entanglement.

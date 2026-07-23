@@ -74,16 +74,18 @@ end
 Internally it searches for a free qubit slot on each endpoint, locks them, waits for the
 entanglement attempt, and writes the result into the register using the tag system.
 All of that bookkeeping is hidden behind the protocol — compare with the
-[manual entangler implementation](@ref First-Generation-Quantum-Repeater) to see
-what is being abstracted away.
+[manual entangler implementation](@ref First-Generation-Quantum-Repeater) to see what is being abstracted away.
 
 The `pairstate` argument accepts any symbolic or numerical two-qubit state.
-Here we use [`BarrettKokBellPair`](@ref) from [`StatesZoo`](@ref Predefined-Models-of-Quantum-States),
-a physically motivated noisy Bell state parametrized by the optical channel efficiencies and dark-count probability of the Barrett-Kok scheme:
+Here `noisy_pair` is the [`DepolarizedBellPair`](@ref) from [`StatesZoo`](@ref Predefined-Models-of-Quantum-States),
+a noisy Bell state parametrized by a single fidelity `F`:
 
 ```julia
-pairstate = BarrettKokBellPair(ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱)
+noisy_pair_func(F) = DepolarizedBellPair(;F)
+noisy_pair = noisy_pair_func(F)
 ```
+
+`StatesZoo` also offers more physically motivated states — for example [`BarrettKokBellPair`](@ref), parametrized by the optical channel efficiencies and dark-count probability of the Barrett-Kok scheme — which you can drop in as the `pairstate` instead.
 
 ## Swapper
 
@@ -185,8 +187,11 @@ In the code below this two-round structure is captured by alternating the `purif
         success = Purify2to1(purifyerror)(qa1.slot, qb1.slot, qa2.slot, qb2.slot)
         if success
             nround += 1
+        else
+            untag!(qa1.slot, qa1.id)  # purification failed — discard the corrupted surviving pair too
+            untag!(qb1.slot, qb1.id)
         end
-        untag!(qa2.slot, qa2.id)
+        untag!(qa2.slot, qa2.id)  # the measured pair is always consumed
         untag!(qb2.slot, qb2.id)
         unlock(qa1.slot); unlock(qa2.slot); unlock(qb1.slot); unlock(qb2.slot)
     end
