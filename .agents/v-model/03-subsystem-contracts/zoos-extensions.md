@@ -111,8 +111,9 @@
   partial dependency sets do not activate an incomplete extension, activated calls
   dispatch to the optional implementation, and representative diagnostics contain
   the documented domain, event, simulation time, process identity, protocol identity,
-  and ordered participant identifiers without retaining mutable product objects. A
-  core-only baseline result is unchanged after optional activation.
+  and ordered participant identifiers in their documented primitive or immutable tuple
+  types without retaining mutable product objects. A core-only baseline result is
+  unchanged after optional activation.
 - **Verification:** INTV-008 (test)
 - **Origin / risk:** Optional activation and logging schema; maintainer confirmation
   pending; medium installation and observability risk

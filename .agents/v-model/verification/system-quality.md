@@ -15,7 +15,8 @@ inspection behavior.
   dependencies; each complete weak-dependency set activates only its corresponding
   extension; every activated inspection entry point returns its documented result; and
   representative diagnostics contain documented domain, event, simulation time, and
-  process identity without retaining mutable simulation objects.
+  process identity as immutable primitive values without retaining mutable simulation
+  objects.
 - **Status:** implemented
 - **Evidence:** [`Project.toml`](../../../Project.toml), [`ci.yml`](../../../.github/workflows/ci.yml), [`downgrade.yml`](../../../.github/workflows/downgrade.yml), [`pipeline.yml`](../../../.buildkite/pipeline.yml), [`logging_tests.jl`](../../../test/general/logging_tests.jl), [`interactiveutils_tests.jl`](../../../test/general/interactiveutils_tests.jl), [`show_html_tests.jl`](../../../test/general/show_html_tests.jl), [`protocol_show_html_contracts_tests.jl`](../../../test/general/protocol_show_html_contracts_tests.jl), [`cairo_tests.jl`](../../../test/plotting/cairo_tests.jl), [`gl_tests.jl`](../../../test/plotting/gl_tests.jl), [`show_png_tests.jl`](../../../test/plotting/show_png_tests.jl), [`doctests_tests.jl`](../../../test/plotting/doctests_tests.jl)
 - **Nonconformance:** No clean activation matrix exists; logs/rendering are sampled,
@@ -30,7 +31,8 @@ inspection behavior.
 - **Environment / configuration:** Exclude external services and unspecified threaded
   schedules; compare monotonic IDs only when counters reset.
 - **Pass criterion:** For a scenario whose random choices use Julia RNG state, both
-  fresh runs agree on selected scientific outcomes, simulated event times, and
+  fresh runs use the same fixed software environment, initial model, and scheduling
+  configuration and agree on selected scientific outcomes, simulated event times, and
   RNG-derived protocol identifiers after resetting that state to the same seed.
   Internal monotonic storage identities are excluded unless their counters are reset.
 - **Status:** planned
@@ -53,5 +55,6 @@ inspection behavior.
   edge collection.
 - **Status:** implemented
 - **Evidence:** [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`show_html_tests.jl`](../../../test/general/show_html_tests.jl), [`show_gabs_tests.jl`](../../../test/general/show_gabs_tests.jl), [`registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`registernet_metadata_access_tests.jl`](../../../test/general/registernet_metadata_access_tests.jl)
-- **Nonconformance:** Network tests cover most addressing modes, but no fixture proves
-  state inspection and rendering are non-mutating or combines every system clause.
+- **Nonconformance:** Network tests cover most addressing modes, but both directed bulk
+  setters currently dispatch into the undirected store. No fixture proves state
+  inspection and rendering are non-mutating or combines every system clause.

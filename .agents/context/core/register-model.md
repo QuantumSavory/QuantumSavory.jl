@@ -3,7 +3,7 @@
 - **Context need:** Explanation
 - **Open when:** Reasoning about slot ownership, subsystem grouping, initialization, or register/network structure.
 - **Do not open when:** Looking up operation signatures, backend coverage, or metadata-query syntax.
-- **Related specification IDs:** SYS-002, SYS-003, SUB-002, CMP-001, CMP-002
+- **Related specification IDs:** SYS-002, SYS-003, SYS-013, SUB-002, SUB-015, CMP-001, CMP-002
 - **Review when:** Register storage, `StateRef`, initialization, factorization, or `RegisterNet` construction changes.
 
 ## Ownership and factorization
@@ -38,12 +38,15 @@ partial-failure example. Review callers that catch such errors as potentially ne
 cleanup rather than assuming rollback.
 
 For inspection, qualified `QuantumSavory.stateof(slot)` returns its `StateRef` or
-`nothing`, `quantumstate(stateref)` unwraps the native backend state, and
-`slots(stateref)` reconstructs live `RegRef` back-references. These are internal
-inspection boundaries rather than exported serialization APIs. Text display summarizes
-`Register`, `RegRef`, `StateRef`, and `RegisterNet`; HTML display is specialized for
-`RegRef` and `StateRef`, with backend-specific `stateshow` hooks and an escaped
-plain-text fallback. Do not parse display text as stable data.
+`nothing`, `QuantumSavory.quantumstate(stateref)` unwraps the native backend state, and
+`QuantumSavory.slots(stateref)` reconstructs live `RegRef` back-references. These are
+unexported qualified inspection hooks; their public and stability status awaits
+maintainer confirmation, and they are not serialization APIs. Human docs teach
+`stateof`; one introductory reference is unqualified, while the executable examples
+call `QuantumSavory.stateof`. Text display summarizes `Register`, `RegRef`, `StateRef`,
+and `RegisterNet`; HTML display is specialized for `RegRef` and `StateRef`, with
+backend-specific `stateshow` hooks and an escaped plain-text fallback. Do not parse
+display text as stable data.
 
 `RegisterNet` adds graph and simulation ownership around registers. Its constructor,
 locality model, and known dynamic-insertion defects are canonicalized in the

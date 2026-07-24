@@ -38,8 +38,9 @@
   declared optional capabilities are activated.
 - **Parents:** STK-005
 - **Acceptance criterion:** Representative diagnostics carry documented domain, event,
-  simulation time, and process identity without retaining mutable simulation objects;
-  each activated optional inspection entry point produces its documented result.
+  simulation time, and process identity as immutable primitive values without retaining
+  mutable simulation objects; each activated optional inspection entry point produces
+  its documented result.
 - **Verification:** SYSV-008 (test)
 - **Context:** [Structured logging](../../context/network/structured-logging.md)
 

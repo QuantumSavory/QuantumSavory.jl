@@ -29,11 +29,13 @@ activation invariants.
   an empty destination, then repeat with an assigned destination.
 - **Environment / configuration:** Root tests with an assigned source whose access time
   is no later than arrival and explicit backreference identities.
-- **Pass criterion:** Send unassigns the source and replaces it with exactly one
-  in-transit owner in the shared mapping; at delayed arrival, receipt replaces that
-  owner with the empty destination, leaves every reciprocal backreference consistent,
-  and produces the documented background-evolved result. Receipt into an assigned
-  destination reports failure before overwriting that destination.
+- **Pass criterion:** From an assigned source whose access time is no later than
+  modeled arrival, send unassigns the source and replaces it with exactly one in-transit
+  owner in the shared mapping; at delayed arrival, receipt replaces that owner with the
+  empty destination, leaves every reciprocal backreference consistent, and produces a
+  joint observable equal to stationary evolution under the same background for the
+  same interval. Receipt into an assigned destination reports failure before
+  overwriting that destination.
 - **Status:** implemented
 - **Evidence:** [`quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl)
 - **Nonconformance:** Tests do not assert the exact send/arrival times, the in-transit
@@ -42,7 +44,7 @@ activation invariants.
   before checking vacancy, so recovery of the in-transit subsystem is not established;
   a source time later than arrival can fail after source ownership has moved.
 
-## UNITV-009 — Verify StateZoo parameter/expression alignment
+## UNITV-009 — Verify StatesZoo parameter/expression alignment
 
 - **Covers:** CMP-010
 - **Method:** test

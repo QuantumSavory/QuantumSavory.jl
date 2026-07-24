@@ -3,7 +3,7 @@
 - **Context need:** Task playbook
 - **Open when:** Selecting local checks, adding a test file, or interpreting CI shard coverage.
 - **Do not open when:** Only reasoning about product behavior without running or changing verification.
-- **Related specification IDs:** None — repository-only workflow
+- **Related specification IDs:** SYS-012
 - **Review when:** `test/runtests.jl`, test projects, workspace membership, or CI shard configuration changes.
 
 ## Select and run checks

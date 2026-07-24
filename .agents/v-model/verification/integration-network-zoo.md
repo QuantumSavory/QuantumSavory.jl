@@ -7,27 +7,29 @@ boundaries.
 
 - **Covers:** SUB-007, SUB-008, SUB-009
 - **Method:** test
-- **Procedure:** Construct an asymmetric three-node network; run direct/forwarded
-  messages, noisy correlated quantum transfer from an assigned source whose access time
-  does not exceed arrival, occupied receipt, malformed counts, and incompatible domains.
+- **Procedure:** Construct an asymmetric branching network with distinguishable
+  multi-hop alternatives; run direct/forwarded messages, noisy correlated quantum
+  transfer from an assigned source whose access time does not exceed arrival, occupied
+  receipt, malformed counts, and incompatible domains.
 - **Environment / configuration:** Root tests with unused registers, nonzero delays,
   discriminating background, and empty positive-fixture destination.
 - **Pass criterion:** Resources share one clock; every edge has both directed channel
   pairs and directional values; every location has one incoming store; malformed counts
   and incompatible domains fail. Direct messages reach only their destination after
-  delay; nonadjacent direct send fails, while forwarding follows declared edges and
-  preserves payload. Quantum send unassigns the source immediately, leaves the
-  destination unchanged before arrival, assigns it at arrival, preserves reciprocal
+  delay; nonadjacent direct send fails, while forwarding selects the shortest declared
+  path and preserves the payload. Quantum send unassigns the source immediately, leaves
+  the destination unchanged before arrival, assigns it at arrival, preserves reciprocal
   backreferences/correlation, matches the background reference, and rejects an assigned
   destination.
 - **Status:** implemented
 - **Evidence:** [`registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`registernet_metadata_access_tests.jl`](../../../test/general/registernet_metadata_access_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl)
-- **Nonconformance:** Forwarding, malformed counts, and incompatible domains lack
-  passing tests; count mismatch currently does not throw. Quantum tests omit exact
+- **Nonconformance:** No forwarding test distinguishes alternative paths; malformed
+  counts and incompatible domains lack passing tests, and count mismatch currently does
+  not throw. Quantum tests omit exact
   send/pre-arrival/arrival transitions and in-transit backreferences. Occupied receipt
   dequeues before vacancy checking, so recovery is not established.
 
-## INTV-006 — Verify StateZoo and CircuitZoo through registers
+## INTV-006 — Verify StatesZoo and CircuitZoo through registers
 
 - **Covers:** SUB-011, SUB-012
 - **Method:** test
@@ -81,9 +83,9 @@ boundaries.
 - **Pass criterion:** Core loads without optional dependencies; partial sets do not
   activate incomplete extensions; complete sets dispatch. Diagnostics contain
   documented domain, event, simulation time, process/protocol identity, and ordered
-  participants without mutable product objects. The external optional fixture uses the
-  same activation boundary, returns its result without core changes, and leaves the core
-  baseline unchanged.
+  participants in their documented primitive or immutable tuple types without mutable
+  product objects. The external optional fixture uses the same activation boundary,
+  returns its result without core changes, and leaves the core baseline unchanged.
 - **Status:** implemented
 - **Evidence:** [`Project.toml`](../../../Project.toml), [`logging_tests.jl`](../../../test/general/logging_tests.jl), [`interactiveutils_tests.jl`](../../../test/general/interactiveutils_tests.jl), [`show_html_tests.jl`](../../../test/general/show_html_tests.jl), [`cairo_tests.jl`](../../../test/plotting/cairo_tests.jl), [`gl_tests.jl`](../../../test/plotting/gl_tests.jl), [`show_png_tests.jl`](../../../test/plotting/show_png_tests.jl)
 - **Nonconformance:** No clean activation matrix, external optional fixture, or pre/post
@@ -110,4 +112,5 @@ boundaries.
 - **Evidence:** [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`show_html_tests.jl`](../../../test/general/show_html_tests.jl), [`show_gabs_tests.jl`](../../../test/general/show_gabs_tests.jl), [`registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`registernet_metadata_access_tests.jl`](../../../test/general/registernet_metadata_access_tests.jl)
 - **Nonconformance:** No test directly covers `stateof`/`quantumstate`/`slots` for all
   assignment shapes or proves rendering leaves every identity, position, value, and
-  time unchanged. Network metadata coverage is strong but not one complete fixture.
+  time unchanged. Both directed bulk setters currently dispatch into the undirected
+  store; network metadata coverage is otherwise strong but not one complete fixture.

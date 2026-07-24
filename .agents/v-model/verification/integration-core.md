@@ -29,15 +29,16 @@ These actions exercise core subsystem boundaries and failure paths.
 
 - **Covers:** SUB-004, SUB-006
 - **Method:** test
-- **Procedure:** Run deterministic timeout, change, single/paired-resource, duplicate-
-  resource, observing, consuming, re-wait, unattended-message, and failing-process cases.
+- **Procedure:** Run deterministic timeout, change, single-resource, paired-distinct-
+  resource, observing, consuming, re-wait, unattended-message, and failing-process
+  cases.
 - **Environment / configuration:** Root tests with recorded event and ownership times.
 - **Pass criterion:** No process resumes before its trigger, capacity is never
-  exceeded, a paired waiter holds no partial acquisition while blocked, duplicate
-  resources are rejected, and process failure reaches the caller. Existing matches
-  return immediately; observing waits retain and consuming waits remove one. A future
-  change or message wakes all current waiters, while each unattended message supplies
-  one later immediate notification without consuming its message.
+  exceeded, a waiter for distinct paired resources holds no partial acquisition while
+  blocked, and process failure reaches the caller. Existing matches return immediately;
+  observing waits retain and consuming waits remove one. A future change or message
+  wakes all current waiters, while each unattended message supplies one later immediate
+  notification without consuming its message.
 - **Status:** implemented
 - **Evidence:** [`concurrentsim_helpers_tests.jl`](../../../test/general/concurrentsim_helpers_tests.jl), [`querywait_tests.jl`](../../../test/general/querywait_tests.jl), [`semaphore_2_tests.jl`](../../../test/general/semaphore_2_tests.jl), [`semaphore_3_tests.jl`](../../../test/general/semaphore_3_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl)
 - **Nonconformance:** Failure propagation, no partial paired acquisition, and the
@@ -53,8 +54,9 @@ These actions exercise core subsystem boundaries and failure paths.
 - **Environment / configuration:** Root tests plus a clean external protocol package,
   duplicate tags, stable IDs, and injected stale data.
 - **Pass criterion:** Register exact, wildcard, predicate, FIFO/FILO, and resource-
-  filtered queries return the canonical slot, stable ID, tag, and time; message FIFO
-  observation returns depth/source/tag and consumption returns source/tag. Observation
+  filtered queries match the canonical scan and return slot, stable ID, tag, and time;
+  message exact, wildcard, and predicate FIFO queries match their canonical scan,
+  observation returns depth/source/tag, and consumption returns source/tag. Observation
   removes nothing, consumption removes only its result, and later queries/indexes stay
   consistent. Protocol pairs have reciprocal IDs; delayed updates affect only matching
   current/history state; an invalidated snapshot is not consumed; successful resources

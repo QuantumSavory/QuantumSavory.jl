@@ -40,12 +40,13 @@
   destination, reject a nonexistent direct-link request by default, and perform
   shortest-path forwarding only when the sender explicitly permits forwarding.
 - **Parents:** SYS-006
-- **Acceptance criterion:** Given a three-location path with asymmetric delays, when a
-  direct message is sent in each direction, then each reaches only the destination
-  incoming store after the sum applicable to its traversed direct link; when an
-  endpoint-to-endpoint message is sent without forwarding it reports no direct link,
-  and when the same message is sent with forwarding it reaches the final destination
-  after traversing the path and retains its payload.
+- **Acceptance criterion:** Given a topology with asymmetric direct delays and
+  distinguishable shorter and longer multi-hop alternatives, when a direct message is
+  sent in each direction, then each reaches only the destination incoming store after
+  the delay applicable to its traversed direct link; when an endpoint-to-endpoint
+  message is sent without forwarding it reports no direct link, and when the same
+  message is sent with forwarding it reaches the final destination over the shortest
+  declared path and retains its payload.
 - **Verification:** INTV-004 (test)
 - **Origin / risk:** Classical channel and forwarding behavior; maintainer confirmation
   pending; high routing risk

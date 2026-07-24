@@ -3,7 +3,7 @@
 - **Context need:** Reference
 - **Open when:** Looking up `RegisterNet` graph delegation, register indexing, or static vertex/edge metadata access.
 - **Do not open when:** Changing channel delivery, protocol races, register state, or plotting implementation.
-- **Related specification IDs:** SYS-006, SUB-007, CMP-007
+- **Related specification IDs:** SYS-006, SYS-013, SUB-007, SUB-016, CMP-007
 - **Review when:** `RegisterNet` indexing, Graphs delegation, metadata storage, or dynamic-topology methods change.
 
 ## Graph and register access
