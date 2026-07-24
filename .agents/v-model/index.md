@@ -20,7 +20,7 @@ confirmation.
 ## Left-side specification
 
 1. [Stakeholder outcomes](01-stakeholder-outcomes.md)
-2. [System requirements](02-system-requirements.md)
+2. [System requirements](02-system-requirements/index.md)
 3. [Subsystem and interface contracts](03-subsystem-contracts/index.md)
 4. [Component contracts](04-component-contracts/index.md)
 
