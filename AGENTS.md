@@ -1,53 +1,37 @@
-# QuantumSavory.jl Agent Guide
+# QuantumSavory.jl Agent Router
 
-This file is the entry point for work inside `QuantumSavory.jl`.
-Do not load the whole `.agents/` tree by default.
-Open only the topic files that match the task.
+Open the [agent documentation index](.agents/index.md), then follow only the
+route needed for the task. Do not scan `.agents/` wholesale. The V-model records
+the intended and implemented contract; context pages explain the implementation.
+`.agents/evals/` is evaluation data, not repository guidance, and must remain
+outside documentation maintenance unless the task explicitly concerns evals.
 
-## First Pass
+## Route by work area
 
-- Decide whether the task is primarily user-facing, contributor-facing, or review-heavy.
-- Start from public docs and examples for user behavior, then confirm in source if anything looks ambiguous.
-- Start from source and tests for internal changes, review, or bug hunting.
-- Cross-check public claims against the implementation before editing docs. A few docs intentionally simplify internals, and a few details lag the code.
+- Core source: follow [src/AGENTS.md](src/AGENTS.md).
+- Tests: follow [test/AGENTS.md](test/AGENTS.md).
+- Human documentation: follow [docs/AGENTS.md](docs/AGENTS.md).
+- Executable examples: follow [examples/AGENTS.md](examples/AGENTS.md).
+- Benchmarks: follow [benchmark/AGENTS.md](benchmark/AGENTS.md).
+- Optional package extensions: follow [ext/AGENTS.md](ext/AGENTS.md).
 
-## Topic Router
+Read `Project.toml` before changing dependencies, compatibility, extensions, or
+the Julia version. Preserve the existing four-space Julia indentation and update
+human docs when public behavior changes.
 
-- Register API, factorization, time semantics, backend hooks:
-  - user: `.agents/registers/register-interface-user.md`
-  - dev/review: `.agents/registers/register-internals-and-backend-hooks.md`
-- Tags, queries, metadata plane, waiting on tags/messages:
-  - user: `.agents/metadata/tags-queries-user.md`
-  - dev/review: `.agents/metadata/tags-queries-dev.md`
-- Classical messaging, message buffers, quantum transport:
-  - user: `.agents/channels/classical-and-quantum-channels-user.md`
-  - dev/review: `.agents/channels/classical-and-quantum-channels-dev.md`
-- `StatesZoo`:
-  - user: `.agents/zoos/states-zoo-user.md`
-  - dev/review: `.agents/zoos/states-zoo-dev.md`
-- `CircuitZoo`:
-  - user: `.agents/zoos/circuit-zoo-user.md`
-  - dev/review: `.agents/zoos/circuit-zoo-dev.md`
-- `ProtocolZoo`:
-  - user: `.agents/zoos/protocol-zoo-user.md`
-  - dev/review: `.agents/zoos/protocol-zoo-dev.md`
+## Verification
 
-## Shared Source Map
+Run focused tests first from the repository root:
 
-- Public docs live in `docs/src/`.
-- Core implementation lives in `src/`.
-- Example scripts live in `examples/`.
-- Regression and behavior anchors live in `test/general/` and `test/examples/`.
+```sh
+julia --project=. -e 'using Pkg; Pkg.test(; test_args=["general/register_interface"])'
+```
 
-## Repo Workflow
+Replace the test selector with the affected `test/` path. Use the normal suite
+when the change crosses subsystem boundaries:
 
-- Prefer targeted tests first, then broader runs if behavior changed across multiple subsystems.
-- When you change public APIs, examples, or user-visible behavior, update the matching `docs/src/` page and the matching `.agents/` topic file.
-- When you change docstrings or documentation structure, build docs with `julia --project=docs docs/make.jl`.
-- Many examples are mirrored by tests in `test/examples/`; use those tests as the safer validation path when possible.
+```sh
+julia --project=. -e 'using Pkg; Pkg.test(; test_args=["general"])'
+```
 
-## Documentation Boundary
-
-- User files under `.agents/` should stay on public APIs, examples, and mental models.
-- Dev files under `.agents/` should cover internals, invariants, tests, and review checks.
-- If a detail is only useful for contributors or reviewers, keep it out of the user files.
+Before handoff, review `git diff` and `git status`, and report checks not run.
