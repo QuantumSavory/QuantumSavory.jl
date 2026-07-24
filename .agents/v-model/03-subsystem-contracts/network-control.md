@@ -26,9 +26,10 @@
   register membership are mutually addressable.
 - **State:** Initially unused registers may join the common scheduling domain; registers
   already used in incompatible domains are not silently rehomed.
-- **Errors:** Construction requires one register per declared location, but the current
-  mismatch diagnostic is not baselined. Incompatible used scheduling domains report
-  failure. Dynamic network mutation is not specified.
+- **Errors:** Construction shall reject a register/location count mismatch. The current
+  constructor only creates an `ArgumentError` value and continues, so it is
+  nonconforming. Incompatible used scheduling domains report failure. Dynamic network
+  mutation is not specified.
 
 ## SUB-008 — Separate direct and forwarded classical transport
 

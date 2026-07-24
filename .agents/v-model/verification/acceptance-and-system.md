@@ -37,12 +37,16 @@
 
 - **Covers:** STK-004
 - **Method:** demonstration
-- **Procedure:** Build a temporary extension package; exercise one documented seam through the public API.
-- **Environment / configuration:** Clean Julia environment with released QuantumSavory.
-- **Pass criterion:** The fixture loads without modifying QuantumSavory and its custom operation completes with an asserted result; an unsupported operation returns the documented error.
+- **Procedure:** Build separate temporary-package fixtures for each confirmed extension
+  class and exercise them through public boundaries.
+- **Environment / configuration:** Clean Julia environment developing the pinned
+  QuantumSavory checkout plus separate fixture packages.
+- **Pass criterion:** Every fixture loads without modifying QuantumSavory, its custom
+  behavior completes with an asserted result, and a designated unsupported request
+  does not report success.
 - **Status:** planned
 - **Evidence:** None
-- **Nonconformance:** No extension fixture exists.
+- **Nonconformance:** No independently packaged extension fixture exists for any class.
 
 ## ACC-005 — Demonstrate inspection, diagnostics, and reproduction aids
 
@@ -53,7 +57,9 @@
 - **Pass criterion:** The explorer starts and closes cleanly, QTCP emits the requested media file and endpoint counts, and the repeater emits a structured entanglement record with typed context.
 - **Status:** implemented
 - **Evidence:** [`state_explorer_tests.jl`](../../../test/examples/state_explorer_tests.jl), [`qtcp_tutorial_2_tests.jl`](../../../test/examples/qtcp_tutorial_2_tests.jl), [`firstgenrepeater_lowlevel_1_tests.jl`](../../../test/examples/firstgenrepeater_lowlevel_1_tests.jl)
-- **Nonconformance:** No action repeats one seeded run and compares outcomes, event times, and result identifiers.
+- **Nonconformance:** No action inspects the complete declared configuration/state or
+  repeats one seeded run to compare scientific outcomes, event times, and RNG-derived
+  protocol identifiers.
 
 ## SYSV-001 — Verify symbolic lowering and factorized register ownership
 
@@ -97,7 +103,10 @@
 - **Pass criterion:** Directional link delays equal their configuration, classical arrival occurs at the asserted time, quantum transfer vacates the source and shares the destination state reference, and configured transit noise changes the asserted observables.
 - **Status:** implemented
 - **Evidence:** [`registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl)
-- **Nonconformance:** There is no direct classical-forwarding test and no focused malformed-network/count-mismatch test.
+- **Nonconformance:** There is no direct classical-forwarding test, no focused
+  malformed-network/count-mismatch test, and no quantum-send fixture whose source
+  access time is later than the modeled arrival. The current count-mismatch path
+  constructs an error without throwing it.
 
 ## SYSV-005 — Verify backend capability boundaries
 
@@ -108,7 +117,9 @@
 - **Pass criterion:** Every cited supported case has its asserted state/observable result, while the cited dense-on-mixed unsupported observable throws.
 - **Status:** implemented
 - **Evidence:** [`register_interface_tests.jl`](../../../test/general/register_interface_tests.jl), [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl)
-- **Nonconformance:** The backend matrix is partial, and unsupported-operation error types/messages are not comprehensively specified or tested.
+- **Nonconformance:** The support matrix is not baselined; coverage is partial, with no
+  complete supported/unsupported fixtures across state, operation, observable,
+  measurement, background, and non-instant capability classes.
 
 ## SYSV-006 — Verify distinct reusable Zoo surfaces
 
@@ -125,12 +136,15 @@
 
 - **Covers:** SYS-009
 - **Method:** test
-- **Procedure:** Run custom tag, dispatch, and protocol logging-overload tests.
+- **Procedure:** Run custom tag and protocol logging-context overload tests.
 - **Environment / configuration:** Root tests; custom types in the test module.
-- **Pass criterion:** Custom tags/protocol-context overloads and symbolic lowering to a raw backend state dispatch through public contracts and return asserted values.
+- **Pass criterion:** A custom tag is accepted through typed protocol/tag boundaries,
+  and a custom protocol context overload dispatches and returns asserted fields.
 - **Status:** implemented
-- **Evidence:** [`abstract_tag_contract_tests.jl`](../../../test/general/abstract_tag_contract_tests.jl), [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`logging_tests.jl`](../../../test/general/logging_tests.jl)
-- **Nonconformance:** These are in-repository toy types, not an independently packaged third-party extension; unsupported extension behavior is not exhaustively asserted.
+- **Evidence:** [`abstract_tag_contract_tests.jl`](../../../test/general/abstract_tag_contract_tests.jl), [`logging_tests.jl`](../../../test/general/logging_tests.jl)
+- **Nonconformance:** These are in-repository toy types, not independently packaged
+  extensions. No custom numerical adapter, operation, model building block, complete
+  protocol, or optional feature is exercised.
 
 ## SYSV-008 — Verify diagnostics, optional UI, and declared compatibility
 
@@ -141,4 +155,7 @@
 - **Pass criterion:** Core general tests pass on each configured OS; logging fields/types match assertions; optional rendering calls complete; Aqua/JET assertions hold; docs build completes in its configured environment.
 - **Status:** implemented
 - **Evidence:** [`ci.yml`](../../../.github/workflows/ci.yml), [`downgrade.yml`](../../../.github/workflows/downgrade.yml), [`logging_tests.jl`](../../../test/general/logging_tests.jl), [`show_png_tests.jl`](../../../test/plotting/show_png_tests.jl), [`aqua_tests.jl`](../../../test/general/aqua_tests.jl), [`jet_tests.jl`](../../../test/jet_tests.jl), [`pipeline.yml`](../../../.buildkite/pipeline.yml)
-- **Nonconformance:** Plotting is smoke-only; logging is sampled; no clean core-only/unavailable-call test exists; docs are credentialed with no offline action; only general is cross-platform; the workspace lists missing `test/projects/examples`.
+- **Nonconformance:** Plotting is smoke-only; logging is sampled; no clean core-only or
+  partial-dependency activation matrix exists; docs are credentialed with no offline
+  action; only general is cross-platform; the workspace lists missing
+  `test/projects/examples`.

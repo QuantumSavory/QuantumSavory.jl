@@ -86,7 +86,7 @@
   identities, when every supported exact, wildcard, predicate, slot-filtered, and
   head-filtered query is run newest-first and oldest-first both with indexes populated
   and against a canonical full scan, then result identities and order are identical;
-  a wrong-length pattern and a non-Boolean predicate report failure.
+  a wrong-length pattern yields no match and a non-Boolean predicate reports failure.
 - **Verification:** UNITV-004 (test)
 - **Origin / risk:** Current tag sum types and indexed-query kernels; maintainer
   confirmation pending; high selection-correctness risk

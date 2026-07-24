@@ -16,5 +16,6 @@ Use the matching component contract and verification action linked from the
 context page. Keep backend capability limits explicit; dispatch failure is not
 evidence that a representation is supported.
 
-Run the narrowest matching `test/general/*_tests.jl` selector from the repository
-root before the full `general` suite.
+Run the matching runner prefix from the repository root—for example,
+`general/apply` selects `test/general/apply_tests.jl`—before the full `general`
+suite.

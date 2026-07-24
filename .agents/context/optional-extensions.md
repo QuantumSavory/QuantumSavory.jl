@@ -26,6 +26,11 @@ Makie backend where rendering is needed. Headless validation generally uses Cair
 interactive examples may require GLMakie or WGLMakie and a display/runtime appropriate
 to that backend.
 
+Core error-hint registration adds activation guidance for plotting, maps, and selected
+interactive-discovery seams. It does not cover every unimplemented optional function,
+including the state-explorer seams and `available_protocol_types`; uniform activation
+diagnostics are not a current contract.
+
 The plotting extension emits diagnostics under `LOG_GROUPS.visualization`. The group is
 part of the stable group set, while individual visualization event fields remain
 representative rather than a complete versioned schema.
@@ -45,4 +50,5 @@ shard, while Buildkite has a distinct plotting job.
 ## Unresolved questions
 
 - Which extension APIs beyond activation and log groups should be treated as stable?
+- Should every unavailable optional seam provide an activation hint?
 - Should interactive discovery tolerate protocol types without the expected `sim`/`net` field layout?

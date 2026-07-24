@@ -75,7 +75,10 @@
 - **Pass criterion:** Transfer vacates the source, attaches the destination to the same state reference, applies the asserted T1/T2 transit behavior, and throws before overwriting an initialized destination.
 - **Status:** implemented
 - **Evidence:** [`quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl)
-- **Nonconformance:** In-transit backreference replacement, pre-arrival destination state, cancellation, and simultaneous takes are not directly asserted.
+- **Nonconformance:** In-transit backreference replacement, pre-arrival destination
+  state, cancellation, simultaneous takes, and a source access time later than channel
+  arrival are not directly asserted; the last case can report a rewind after ownership
+  has moved out of the source.
 
 ## UNITV-008 — Verify backend manifolds and dispatch exits
 
@@ -108,7 +111,10 @@
 - **Pass criterion:** Each cited direct call returns its asserted result shape, preserves asserted output fidelity, and clears or retains the slots checked by its focused test.
 - **Status:** implemented
 - **Evidence:** [`circuitzoo_api_tests.jl`](../../../test/general/circuitzoo_api_tests.jl), [`circuitzoo_ent_swap_tests.jl`](../../../test/general/circuitzoo_ent_swap_tests.jl), [`circuitzoo_fusion_tests.jl`](../../../test/general/circuitzoo_fusion_tests.jl), [`circuitzoo_superdense_tests.jl`](../../../test/general/circuitzoo_superdense_tests.jl), [`circuitzoo_purification_tests.jl`](../../../test/general/circuitzoo_purification_tests.jl)
-- **Nonconformance:** No test asserts zero simulated-time advance; several Node variants and Stringent return/destructive shapes are incomplete.
+- **Nonconformance:** No test asserts zero simulated-time advance;
+  `SDEncode`/`SDDecode` omit `inputqubits`; `StringentBody` and
+  `StringentBodyNode` report inconsistent arities; several Node/Stringent return and
+  destructive shapes remain incomplete.
 
 ## UNITV-011 — Verify protocol snapshots and pair identity
 

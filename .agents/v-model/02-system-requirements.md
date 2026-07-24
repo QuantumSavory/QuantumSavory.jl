@@ -64,10 +64,12 @@ packages, files, and algorithms are intentionally excluded from their normative 
   order, distinguish observation from consumption, and expose query results as
   snapshots rather than reservations.
 - **Parents:** STK-003
-- **Acceptance criterion:** Given matching and nonmatching entries, exact, wildcard,
-  predicate, first, all, and consuming queries return documented matches in documented
-  order; observation leaves the store unchanged, consumption removes only its result,
-  and a snapshot held across a yield grants no reservation.
+- **Acceptance criterion:** Given matching and nonmatching register and message-store
+  entries, register exact, wildcard, predicate, first, all, FIFO/FILO, and consuming
+  modes return documented results; message stores return the first FIFO match, support
+  consumption, and reject the unsupported all-results mode; observation leaves the
+  store unchanged, consumption removes only its result, and a snapshot held across a
+  yield grants no reservation.
 - **Verification:** SYSV-003 (test)
 - **Context:** [Metadata and waits](../context/core/metadata-and-waits.md)
 
@@ -93,9 +95,10 @@ packages, files, and algorithms are intentionally excluded from their normative 
   representation that supports that requested capability, and shall not report an
   unsupported combination as successful by silently changing its physical meaning.
 - **Parents:** STK-002
-- **Acceptance criterion:** Given supported and unsupported operation or background
-  fixtures for each selected representation family, supported fixtures produce their
-  documented results and unsupported fixtures do not report success.
+- **Acceptance criterion:** For every state, operation, observable, measurement,
+  background, and non-instant capability cell in the confirmed backend support
+  inventory, a supported fixture produces its documented result and a designated
+  unsupported fixture does not report success or silently change physical meaning.
 - **Verification:** SYSV-005 (test)
 - **Context:** [Backend support](../context/simulation/backend-support.md)
 
@@ -122,9 +125,10 @@ packages, files, and algorithms are intentionally excluded from their normative 
   optional-feature seams through the same dispatch and activation boundaries used by
   supported built-in behavior.
 - **Parents:** STK-004
-- **Acceptance criterion:** Given external fixtures for one numerical-adapter seam and
-  one building-block or optional-feature seam, normal product operations select both
-  implementations and return their documented results without core-source changes.
+- **Acceptance criterion:** Given external fixtures for every representation,
+  operation, model-building, protocol, and optional-feature extension class in the
+  confirmed support inventory, normal product operations select each implementation
+  and return its documented result without core-source changes.
 - **Verification:** SYSV-007 (test)
 - **Context:** [Backend extension](../context/simulation/backend-extension.md)
 
@@ -149,8 +153,8 @@ packages, files, and algorithms are intentionally excluded from their normative 
 - **Parents:** STK-004, STK-005
 - **Acceptance criterion:** In a clean compatible Julia environment with required
   dependencies present and optional UI dependencies absent, core loading succeeds and
-  core operations remain available; calling an unavailable optional entry point
-  identifies the capability to activate.
+  core operations remain available; loading each complete declared weak-dependency set
+  activates only its corresponding extension.
 - **Verification:** SYSV-008 (test)
 - **Context:** [Optional extensions](../context/optional-extensions.md)
 

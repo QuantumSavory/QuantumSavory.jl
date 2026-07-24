@@ -42,5 +42,7 @@
 
 - Quantum multi-hop forwarding is outside this contract.
 - Sending an unassigned source is unresolved and therefore has no normative result.
+- A source access time later than the modeled arrival can currently cause a rewind
+  failure after ownership has moved into the channel; rollback is unresolved.
 - Receiving failure is not stated to consume, requeue, or roll back an in-transit
   subsystem; that recovery policy requires maintainer confirmation.

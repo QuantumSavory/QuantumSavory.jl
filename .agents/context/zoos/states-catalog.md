@@ -30,16 +30,18 @@ ranges. Those ranges are descriptive metadata; constructors do not consistently 
 them. Validate physical domains at the calling boundary when invalid values would make
 a study meaningless.
 
-All five model types are covered by the API test’s generic trace check. Only add an
-explicit `LinearAlgebra.tr` method when generic symbolic lowering is insufficient; the
-Barrett–Kok path needs specialization, but explicit trace methods are not a general
-StatesZoo requirement.
+All five model types are covered by the API test’s default-QuantumOptics trace check.
+The separate Clifford check for `DepolarizedBellPair` lives in
+`test/test_stateszoo_depolarized.jl`, which the current `_tests.jl` filename filter does
+not discover. Only add an explicit `LinearAlgebra.tr` method when generic symbolic
+lowering is insufficient; the Barrett–Kok path needs specialization, but explicit
+trace methods are not a general StatesZoo requirement.
 
 ## Anchors
 
 - **Source:** [`src/StatesZoo/StatesZoo.jl`](../../../src/StatesZoo/StatesZoo.jl), [`src/StatesZoo/barrett_kok.jl`](../../../src/StatesZoo/barrett_kok.jl), [`src/StatesZoo/depolarized.jl`](../../../src/StatesZoo/depolarized.jl), and [`src/StatesZoo/genqo.jl`](../../../src/StatesZoo/genqo.jl) — model definitions and lowering.
 - **Docs:** [`docs/src/API_StatesZoo.md`](../../../docs/src/API_StatesZoo.md) and [`docs/src/state_visualization.md`](../../../docs/src/state_visualization.md) — constructors, formulas, and exploration.
-- **Test:** [`test/general/stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl) — catalog surface and generic trace behavior.
+- **Test:** [`test/general/stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl) and the currently orphaned [`test/test_stateszoo_depolarized.jl`](../../../test/test_stateszoo_depolarized.jl) — catalog surface and backend-specific evidence.
 
 ## Unresolved questions
 

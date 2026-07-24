@@ -7,4 +7,4 @@ work.
 
 Circuits operate immediately on slots and may consume or replace state. Verify
 supported representations, success/failure branches, exports, and the matching
-`general/circuitzoo_*` tests.
+`general/circuitzoo` test prefix.

@@ -40,21 +40,21 @@
 
 ## CMP-012 — Revalidate protocol snapshots and preserve pair identity
 
-- **Normative statement:** A protocol that retains a query snapshot across a scheduling
-  yield or lock acquisition shall re-query the affected resources under all required
-  locks before consuming or mutating them; reciprocal entangled resources shall carry
-  matching pair identity, newly generated pairs shall use a fresh nonzero identity, and
-  swaps shall derive the new reciprocal identity from both consumed pairs so delayed
-  updates cannot target an unrelated current pair.
+- **Normative statement:** A supported protocol that retains a query snapshot across a
+  scheduling yield or lock acquisition shall re-query the affected resources under all
+  required locks before consuming or mutating them; supported entanglement-lifecycle
+  protocols shall give reciprocal resources matching pair identity, use fresh nonzero
+  identity for generated pairs, and derive swap identity from both consumed pairs so
+  delayed updates cannot target an unrelated current pair.
 - **Parents:** SUB-013
 - **Acceptance criterion:** Given reciprocal pairs, a swap or consume process, and an
   injected competing process that replaces one queried tag before lock acquisition,
   when both run, then the stale snapshot is not consumed as current and no unrelated
   state is mutated; given an uncontended swap, then both remote endpoints receive
   reciprocal metadata with the same identity derived from both consumed pair
-  identities, and a delayed update carrying an old or mismatched identity is forwarded
-  through matching history or rejected according to protocol policy rather than
-  applied to the unrelated pair.
+  identities. A delayed update is applied to a matching live pair, forwarded through
+  matching history, used to advance a matching delete marker, or logged and dropped as
+  stale; it never mutates an unrelated live pair.
 - **Verification:** UNITV-011 (test)
 - **Origin / risk:** Race-aware protocol paths and entanglement identity behavior;
   maintainer confirmation pending; critical distributed-state risk

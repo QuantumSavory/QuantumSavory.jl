@@ -1,8 +1,9 @@
 # QuantumSavory.jl Agent Router
 
 Open the [agent documentation index](.agents/index.md), then follow only the
-route needed for the task. Do not scan `.agents/` wholesale. The V-model records
-the intended and implemented contract; context pages explain the implementation.
+route needed for the task. Do not scan `.agents/` wholesale. The draft V-model
+separates proposed intent from mapped evidence; context pages explain the current
+implementation.
 `.agents/evals/` is evaluation data, not repository guidance, and must remain
 outside documentation maintenance unless the task explicitly concerns evals.
 
@@ -27,8 +28,9 @@ Run focused tests first from the repository root:
 julia --project=. -e 'using Pkg; Pkg.test(; test_args=["general/register_interface"])'
 ```
 
-Replace the test selector with the affected `test/` path. Use the normal suite
-when the change crosses subsystem boundaries:
+Replace the selector with the runner's test name or prefix, such as
+`general/querywait`; omit `test/`, `_tests`, and `.jl`. Use the normal suite when
+the change crosses subsystem boundaries:
 
 ```sh
 julia --project=. -e 'using Pkg; Pkg.test(; test_args=["general"])'

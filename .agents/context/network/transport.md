@@ -19,13 +19,15 @@ arrival notifications. Selection follows insertion-order identifiers (FIFO), unl
 the register query default of FILO.
 
 Quantum transport is direct-edge only. It is keyed by source/destination channel and
-does not inherit classical multi-hop forwarding. Sending moves the quantum state out of
-the source into channel-owned temporary storage before arrival; receiving then transfers
-it into the destination slot. Current receive ordering dequeues the in-flight item
-before checking whether the destination is occupied. Recovery after that error is not
-specified. The behavior of a send from an empty source is likewise not an established
-contract. Protocols should validate source occupancy, destination vacancy, and direct
-connectivity before initiating transfer, while still handling interleaving failures.
+does not inherit classical multi-hop forwarding. Sending swaps the quantum state from
+the source into channel-owned temporary storage before queueing it. If the source access
+time is already later than the channel clock plus its delay, that swap can advance the
+temporary slot and the subsequent arrival-time advance can throw a rewind error after
+the source is empty. Receiving likewise dequeues the in-flight item before checking
+whether the destination is occupied. Neither failure path has a specified rollback.
+Sending from an empty source is also unresolved. Protocols should validate source
+occupancy, destination vacancy, time consistency, and direct connectivity while still
+handling interleaving failures.
 
 Two `RegisterNet` construction paths are defective. The constructor creates an
 `ArgumentError` for graph/register size mismatch but does not throw it, and

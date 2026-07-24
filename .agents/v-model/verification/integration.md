@@ -42,7 +42,10 @@
 - **Pass criterion:** The cited net/register/message store share a tracker; directional delays match configuration; classical arrival time is asserted; quantum take transfers ownership and applies asserted transit noise.
 - **Status:** implemented
 - **Evidence:** [`concurrentsim_helpers_tests.jl`](../../../test/general/concurrentsim_helpers_tests.jl), [`registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`registernet_metadata_access_tests.jl`](../../../test/general/registernet_metadata_access_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl)
-- **Nonconformance:** No focused test covers explicit multi-hop classical forwarding or malformed network/register counts; forwarding is only exercised indirectly by protocols/examples.
+- **Nonconformance:** No focused test covers explicit multi-hop classical forwarding,
+  malformed network/register counts, or a source access time later than quantum
+  arrival. The current count-mismatch path does not throw, and the last case can fail
+  after the source is emptied.
 
 ## INTV-005 — Verify backend capability dispatch in composed operations
 
@@ -64,7 +67,10 @@
 - **Pass criterion:** Cited states accept declared good parameters and lower successfully; cited circuit calls satisfy asserted measurement, fidelity, and destructive-slot effects.
 - **Status:** implemented
 - **Evidence:** [`stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl), [`circuitzoo_ent_swap_tests.jl`](../../../test/general/circuitzoo_ent_swap_tests.jl), [`circuitzoo_fusion_tests.jl`](../../../test/general/circuitzoo_fusion_tests.jl), [`circuitzoo_superdense_tests.jl`](../../../test/general/circuitzoo_superdense_tests.jl), [`circuitzoo_purification_tests.jl`](../../../test/general/circuitzoo_purification_tests.jl)
-- **Nonconformance:** State formulas/range endpoints are weak; the depolarized file is orphaned; no circuit time-advance assertion exists; Node/Stringent return coverage is incomplete.
+- **Nonconformance:** State formulas/range endpoints are weak; the depolarized Clifford
+  file is orphaned; no circuit time-advance assertion exists; `SDEncode`/`SDDecode`
+  omit `inputqubits`, and Stringent arity, return, and destructive-shape coverage is
+  incomplete.
 
 ## INTV-007 — Verify asynchronous protocol composition and stale-state recovery
 
@@ -86,4 +92,5 @@
 - **Pass criterion:** Structured contexts contain asserted primitive fields and early filtering avoids evaluation; optional extension calls load in their configured projects and all cited render/show calls complete.
 - **Status:** implemented
 - **Evidence:** [`logging_tests.jl`](../../../test/general/logging_tests.jl), [`interactiveutils_tests.jl`](../../../test/general/interactiveutils_tests.jl), [`cairo_tests.jl`](../../../test/plotting/cairo_tests.jl), [`gl_tests.jl`](../../../test/plotting/gl_tests.jl), [`show_png_tests.jl`](../../../test/plotting/show_png_tests.jl)
-- **Nonconformance:** Plotting is smoke-only; logging is sampled; no absent/partial/full dependency matrix or unavailable-call diagnostic is tested in clean environments.
+- **Nonconformance:** Plotting is smoke-only; logging is sampled; no
+  absent/partial/full dependency matrix is tested in clean environments.

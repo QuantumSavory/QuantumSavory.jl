@@ -48,3 +48,11 @@ right-side action shards.
 - Context links are supplementary forward references for the coordinated context
   migration. Normative meaning remains entirely in this V-model.
 - Unresolved intent does not form part of a baseline.
+
+## Gates before baselining
+
+The acceptance authority must confirm the release/development boundary, enumerate the
+backend-by-capability combinations designated supported, identify the supported versus
+experimental entries in each Zoo, and choose the public stability boundary. Until
+those inventories exist, a record using “supported” or “designated supported” is a
+candidate requirement: its action may be implemented, but it cannot be marked passing.

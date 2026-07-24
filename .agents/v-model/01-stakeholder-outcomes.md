@@ -61,10 +61,11 @@ topology. They remain draft until the acceptance authority confirms them.
   and optional inspection features without changing representation-independent
   product behavior.
 - **Parents:** None
-- **Acceptance criterion:** Given an external module that implements one documented
-  supported seam using a new type, when that module is loaded, then the new type is
-  selected through the same user-facing operation as built-in types, an unsupported
-  type remains unselected, and the core product source need not be modified.
+- **Acceptance criterion:** Given separate external fixtures for every extension class
+  included in the confirmed support inventory, when each fixture is loaded, then its
+  new type or optional implementation is selected through the same user-facing boundary
+  as built-in behavior, an unsupported type remains unselected, and core product source
+  need not be modified.
 - **Verification:** ACC-004 (demonstration)
 - **Origin / risk:** Extension documentation and dispatch-based interfaces; maintainer
   confirmation pending; medium ecosystem-compatibility risk
@@ -76,11 +77,14 @@ topology. They remain draft until the acceptance authority confirms them.
   configuration and state, diagnose representative simulation activity, and reproduce
   selected results from a fixed model configuration and random seed.
 - **Parents:** None
-- **Acceptance criterion:** Given a representative seeded scenario with structured
-  diagnostics enabled, when it is executed twice from the same initial configuration,
-  then both executions report the same selected measurement outcomes, simulated event
-  times, and protocol result identifiers, and each selected diagnostic record exposes
-  its documented domain, event, simulation time, and process identity fields.
+- **Acceptance criterion:** Given a representative scenario with inspectable
+  configuration/state, structured diagnostics, a declared software environment, and
+  every simulation RNG reset to the same seed, when it is executed twice from the same
+  initial state, then inspection exposes the configured representations, backgrounds,
+  ownership, and final state; selected diagnostics expose their documented domain,
+  event, simulation time, and process identity; and selected scientific outcomes,
+  event times, and RNG-derived protocol identifiers agree. Internal monotonic storage
+  IDs are excluded unless their counters are also reset.
 - **Verification:** ACC-005 (demonstration)
 - **Origin / risk:** Inspection, logging, and reproducibility behavior in documentation
   and tests; maintainer confirmation pending; medium diagnosis risk

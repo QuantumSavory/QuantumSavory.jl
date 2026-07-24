@@ -60,8 +60,9 @@
 
 - **Normative statement:** A protocol entry designated supported shall execute as a
   resumable process, coordinate through common metadata, messaging, timing, and
-  resource-reservation boundaries, preserve pair identity across updates, and
-  revalidate mutable resource snapshots after scheduling yields before consuming them.
+  resource-reservation boundaries, and revalidate mutable resource snapshots after
+  scheduling yields before consuming them. An entry that manages reciprocal
+  entanglement shall also preserve pair identity across updates.
 - **Parents:** SYS-004, SYS-005, SYS-008, SYS-009
 - **Acceptance criterion:** Given an entanglement producer, tracker, swapper, consumer,
   and delayed competing mutation, when the protocols run concurrently, then generated
@@ -97,10 +98,10 @@
 - **Acceptance criterion:** Given one core-only environment and environments activating
   each declared optional capability, when the product is loaded and corresponding
   entry points are called, then core loading succeeds without optional dependencies,
-  unavailable optional calls identify their activation requirement, activated calls
-  dispatch to the optional implementation, and representative diagnostics contain the
-  documented domain, event, simulation time, process identity, protocol identity, and
-  ordered participant identifiers without retaining mutable product objects.
+  partial dependency sets do not activate an incomplete extension, activated calls
+  dispatch to the optional implementation, and representative diagnostics contain
+  the documented domain, event, simulation time, process identity, protocol identity,
+  and ordered participant identifiers without retaining mutable product objects.
 - **Verification:** INTV-008 (test)
 - **Origin / risk:** Optional activation and logging schema; maintainer confirmation
   pending; medium installation and observability risk
@@ -110,8 +111,8 @@
 
 - **Inputs:** Core or optional entry-point call, activated dependency set, and
   diagnostic event context.
-- **Outputs:** Core result, activated optional result, actionable unavailable-capability
-  failure, or structured log record.
+- **Outputs:** Core result, activated optional result, unavailable method boundary, or
+  structured log record.
 - **State:** Optional activation extends dispatch without changing stored simulation
   state; log context is a snapshot of primitive values.
 - **Errors:** Optional capability absence is not a core-load failure. External network
