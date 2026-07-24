@@ -5,12 +5,15 @@
 - **Normative statement:** The symbolic boundary shall combine a supported symbolic
   description, its intended use as state, operation, or observable, and the involved
   subsystem representation preferences to produce a semantically corresponding native
-  object only for a compatible capability combination.
-- **Parents:** SYS-001, SYS-007
+  object only for a compatible capability combination. An external symbolic type shall
+  participate through the same documented lowering dispatch without core source
+  changes.
+- **Parents:** SYS-001, SYS-007, SYS-009
 - **Acceptance criterion:** Given supported symbolic state, operation, and observable
   fixtures, lowering for two compatible representations produces native objects with
   the expected preparation, operation effect, and observable result; an incompatible
-  fixture does not report success.
+  fixture does not report success; and an external symbolic fixture is selected through
+  the same boundary without changing a built-in baseline result.
 - **Verification:** INTV-001 (test)
 - **Context:** [Backend support](../../context/simulation/backend-support.md)
 
@@ -82,20 +85,20 @@
 
 - **Normative statement:** The event boundary shall schedule resumable processes against
   one simulation clock, resume them only when their requested event, timeout, or
-  resource condition is satisfied, enforce exclusive capacity for slot resources, and
-  surface unhandled process failure to the simulation caller.
+  resource condition is satisfied, enforce exclusive capacity for one or more distinct
+  slot resources, and surface unhandled process failure to the simulation caller.
 - **Parents:** SYS-004
 - **Acceptance criterion:** Under timeout, change, single-resource, and paired-resource
-  contention, no process resumes before its trigger, capacity is never exceeded, a
-  paired waiter retains no partial acquisition while blocked, and an unhandled process
-  error reaches the caller.
+  contention over distinct resources, no process resumes before its trigger, capacity
+  is never exceeded, a paired waiter retains no partial acquisition while blocked, and
+  an unhandled process error reaches the caller.
 - **Verification:** INTV-002 (test)
 - **Context:** [Discrete events](../../context/core/discrete-events.md)
 
 ### Boundary semantics
 
-- **Inputs:** A simulation clock, resumable process, event or timeout, and zero or more
-  resource requests.
+- **Inputs:** A simulation clock, resumable process, event or timeout, and one or more
+  distinct resource requests when multi-resource acquisition is requested.
 - **Outputs:** A scheduled process result, resumption event, acquired resource set, or
   surfaced failure.
 - **State:** The scheduler owns simulated time and process lifecycle; each exclusive
@@ -106,13 +109,18 @@
 ## SUB-005 — Preserve tag and query-store semantics
 
 - **Normative statement:** The metadata boundary shall store supported fixed-shape tag
-  values with stable identities, location and simulated timestamp, preserve documented
-  insertion order independently of lookup indexes, and provide exact, wildcard,
-  predicate, observation, and consumption query modes with documented result shapes.
+  values, preserve documented insertion order independently of lookup indexes, and
+  provide exact, wildcard, predicate, observation, and consumption query modes with
+  store-specific result shapes. Register entries shall expose stable identity, slot,
+  and simulated timestamp; message results shall expose buffer depth and source rather
+  than a public identity or timestamp.
 - **Parents:** SYS-005
-- **Acceptance criterion:** Given duplicate and distinct tags, all supported selector,
-  order, resource-filter, and consumption modes match a canonical full scan;
-  observation removes nothing and consumption removes only its result while indexes
+- **Acceptance criterion:** Given duplicate and distinct tags in both store kinds,
+  register exact, wildcard, predicate, FIFO/FILO, resource-filter, observation, and
+  consumption modes match a canonical scan and return slot, stable identity, tag, and
+  time; message exact, wildcard, predicate, FIFO observation, and consumption match
+  their canonical scan and return depth or source plus tag as documented. Observation
+  removes nothing and consumption removes only its result while subsequent queries
   remain consistent.
 - **Verification:** INTV-003 (test)
 - **Context:** [Metadata and waits](../../context/core/metadata-and-waits.md)
@@ -121,12 +129,12 @@
 
 - **Inputs:** A supported tag shape, target store or slot, query patterns, optional
   predicates, ordering selection, and resource-state filters where supported.
-- **Outputs:** No match, one match, all supported matches, or one consumed match with
-  the store-specific result shape.
+- **Outputs:** No match, one match, all supported register matches, or one consumed
+  match with the store-specific result metadata.
 - **State:** Tag insertion and deletion update the canonical ordered store and all
   secondary indexes as one synchronous operation.
-- **Errors:** Unsupported tag shapes, invalid predicates, deletion of an unknown stable
-  identity, or an unsupported query mode report failure.
+- **Errors:** Unsupported tag shapes, invalid predicates, deletion of an unknown
+  register identity, or an unsupported store/query-mode combination report failure.
 
 ## SUB-006 — Separate matching waits from change notification
 
@@ -158,12 +166,15 @@
 - **Normative statement:** A numerical adapter shall declare or implement the
   capabilities needed to create, compose, transform, observe, measure, reduce, or
   evolve its native state, and the adapter boundary shall preserve representation-
-  specific exact, stochastic, or compact-state semantics for supported requests.
+  specific exact, stochastic, or compact-state semantics for supported requests. An
+  external adapter shall participate through the same documented dispatch boundary
+  without modifying core product source.
 - **Parents:** SYS-001, SYS-003, SYS-007, SYS-009
 - **Acceptance criterion:** Representative exact-state, trajectory, stabilizer, and
   Gaussian adapters return documented state manifolds, subsystem counts, and
   normalization or weight for every designated capability; requests outside the matrix
-  do not report success.
+  do not report success; and an external adapter fixture is selected through the same
+  boundary without changing a representation-independent baseline result.
 - **Verification:** INTV-005 (test)
 - **Context:** [Backend extension](../../context/simulation/backend-extension.md)
 
@@ -178,3 +189,28 @@
   manifold; the register-state boundary remains responsible for logical ownership.
 - **Errors:** Unsupported capability combinations do not have one standardized error
   type. No adapter-independent scientific-accuracy or performance budget is specified.
+
+## SUB-015 — Expose register state inspection without mutation
+
+- **Normative statement:** The register-inspection boundary shall expose whether a
+  logical slot is assigned, its shared state-owner identity and subsystem membership,
+  the owner's native numerical state, and documented text or HTML summaries without
+  changing ownership, state, or access time.
+- **Parents:** SYS-013
+- **Acceptance criterion:** Given unassigned, separately assigned, and shared-state
+  slots, inspection returns no owner for the unassigned slot, distinct owners for the
+  separate slots, one shared owner whose member list contains exactly the shared slots,
+  and the corresponding native state; repeating the inspection and rendering supported
+  summaries leaves all owner identities, subsystem positions, state values, and access
+  times unchanged.
+- **Verification:** INTV-009 (test)
+- **Context:** [Register model](../../context/core/register-model.md)
+
+### Boundary semantics
+
+- **Inputs:** A register, slot, or live shared-state owner and a supported display form.
+- **Outputs:** Assignment/owner information, native state, member slots, or a rendered
+  summary.
+- **State:** Inspection is observational and shall not advance time or reassign state.
+- **Errors:** Inspecting an unassigned slot returns the documented empty result; stale
+  internal owners are outside the public contract.

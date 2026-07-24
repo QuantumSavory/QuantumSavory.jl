@@ -53,6 +53,7 @@ right-side action shards.
 
 The acceptance authority must confirm the release/development boundary, enumerate the
 backend-by-capability combinations designated supported, identify the supported versus
-experimental entries in each Zoo, and choose the public stability boundary. Until
-those inventories exist, a record using “supported” or “designated supported” is a
-candidate requirement: its action may be implemented, but it cannot be marked passing.
+experimental entries in each Zoo, enumerate the supported external extension seams and
+optional entry points, and choose the public stability boundary. Until those
+inventories exist, a record using “supported” or “designated supported” is a candidate
+requirement: its action may be implemented, but it cannot be marked passing.

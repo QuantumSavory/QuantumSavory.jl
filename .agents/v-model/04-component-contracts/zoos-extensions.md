@@ -50,7 +50,8 @@
 - **Acceptance criterion:** Given reciprocal pairs, a swap or consume process, and an
   injected competing process that replaces one queried tag before lock acquisition,
   when both run, then the stale snapshot is not consumed as current and no unrelated
-  state is mutated; given an uncontended swap, then both remote endpoints receive
+  state is mutated; given generation of a fresh pair, both endpoints receive the same
+  nonzero fresh identity; given an uncontended swap, both remote endpoints receive
   reciprocal metadata with the same identity derived from both consumed pair
   identities. A delayed update is applied to a matching live pair, forwarded through
   matching history, used to advance a matching delete marker, or logged and dropped as

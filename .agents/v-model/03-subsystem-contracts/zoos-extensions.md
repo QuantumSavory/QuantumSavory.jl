@@ -5,14 +5,17 @@
 - **Normative statement:** A supported state-catalog entry shall expose a stable
   parameter order and exploratory ranges, lower to every representation designated
   compatible for that entry, and distinguish normalized state models from weighted
-  models whose trace carries a documented success weight.
-- **Parents:** SYS-008
+  models whose trace carries a documented success weight. An external state-model type
+  shall participate through the same construction and lowering dispatch without core
+  source changes.
+- **Parents:** SYS-008, SYS-009
 - **Acceptance criterion:** Given one normalized and one weighted supported state entry,
   when each is constructed from its declared parameter order and lowered to each
   designated compatible representation, then subsystem arity is correct, the
   normalized entry has unit trace, the weighted entry's trace equals its documented
   success weight, and explorer metadata reports one range record per declared
-  parameter in the same order.
+  parameter in the same order. An external fixture is selected through the same state
+  boundary without changing a built-in baseline result.
 - **Verification:** INTV-006 (test)
 - **Origin / risk:** Current state catalog and explorer interface; maintainer
   confirmation pending; high normalization-interpretation risk
@@ -33,13 +36,16 @@
 - **Normative statement:** A circuit entry designated supported shall run immediately
   on caller-selected logical slots without scheduling waits or message exchange, shall
   expose its required input arity, and shall document its return value and destructive
-  measurement or removal effects.
-- **Parents:** SYS-008
+  measurement or removal effects. An external circuit type shall participate through
+  the same callable and arity dispatch without core source changes.
+- **Parents:** SYS-008, SYS-009
 - **Acceptance criterion:** Given supported swap, purification, encoding/decoding, and
   fusion fixtures with the documented number of assigned input slots, when each circuit
-  is called, then it returns its documented outcome shape, performs no simulated wait,
+  reports its arity and is called, then reported arity equals the required slot
+  arguments, it returns its documented outcome shape, performs no simulated wait,
   removes every sacrificial or measured input documented as destructive, and preserves
-  every retained output documented for its success branch.
+  every retained output documented for its success branch. An external fixture is
+  selected through the same boundaries without changing a built-in baseline result.
 - **Verification:** INTV-006 (test)
 - **Origin / risk:** Current circuit catalog and tests; maintainer confirmation pending;
   high destructive-state risk
@@ -62,14 +68,17 @@
   resumable process, coordinate through common metadata, messaging, timing, and
   resource-reservation boundaries, and revalidate mutable resource snapshots after
   scheduling yields before consuming them. An entry that manages reciprocal
-  entanglement shall also preserve pair identity across updates.
+  entanglement shall also preserve pair identity across updates. An external protocol
+  type shall participate through the same resumable-process dispatch without core
+  source changes.
 - **Parents:** SYS-004, SYS-005, SYS-008, SYS-009
 - **Acceptance criterion:** Given an entanglement producer, tracker, swapper, consumer,
   and delayed competing mutation, when the protocols run concurrently, then generated
   pairs have reciprocal identity-bearing metadata, delayed updates are applied only to
   the matching current or documented historical pair, a snapshot invalidated before
   lock acquisition is not consumed as current, and successfully consumed resources are
-  removed exactly once.
+  removed exactly once. An external fixture schedules through the same process boundary
+  without changing a built-in baseline result.
 - **Verification:** INTV-003 (test), INTV-007 (test)
 - **Origin / risk:** Core protocol behavior and race-aware tests; maintainer
   confirmation pending; high distributed-consistency risk
@@ -93,15 +102,17 @@
   loading independent of optional UI capabilities, activate an optional implementation
   only when its declared dependencies are present, and emit structured diagnostics
   whose common context contains immutable primitive simulation and protocol identity
-  fields.
-- **Parents:** SYS-010, SYS-011
+  fields. Optional methods shall be addable at the declared activation boundary without
+  modifying core product source or changing core-only results.
+- **Parents:** SYS-009, SYS-010, SYS-011
 - **Acceptance criterion:** Given one core-only environment and environments activating
   each declared optional capability, when the product is loaded and corresponding
   entry points are called, then core loading succeeds without optional dependencies,
   partial dependency sets do not activate an incomplete extension, activated calls
   dispatch to the optional implementation, and representative diagnostics contain
   the documented domain, event, simulation time, process identity, protocol identity,
-  and ordered participant identifiers without retaining mutable product objects.
+  and ordered participant identifiers without retaining mutable product objects. A
+  core-only baseline result is unchanged after optional activation.
 - **Verification:** INTV-008 (test)
 - **Origin / risk:** Optional activation and logging schema; maintainer confirmation
   pending; medium installation and observability risk

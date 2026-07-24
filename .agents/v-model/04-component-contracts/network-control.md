@@ -27,12 +27,15 @@
   only into an unassigned destination while retaining every external owner
   backreference of a correlated state.
 - **Parents:** SUB-009
-- **Acceptance criterion:** Given a correlated two-subsystem state with one subsystem
-  transmitted, when send occurs, then the source becomes unassigned and exactly one
-  in-transit owner replaces it in the shared backreference mapping; when receive occurs
-  at the delayed arrival time into an empty destination, then that in-transit owner is
-  replaced by the destination and the mapping remains bidirectionally consistent; when
-  the destination is assigned, receive reports failure rather than overwriting it.
+- **Acceptance criterion:** Given a correlated two-subsystem state with one currently
+  assigned subsystem whose access time is no later than modeled arrival, when it is
+  transmitted through a link with a supported nontrivial background, then the source
+  becomes unassigned and exactly one in-transit owner replaces it in the shared
+  backreference mapping; when receive occurs at the delayed arrival time into an empty
+  destination, then that owner is replaced by the destination, the mapping remains
+  bidirectionally consistent, and a joint observable matches stationary evolution
+  under the same background for the same interval; when the destination is assigned,
+  receive reports failure rather than overwriting it.
 - **Verification:** UNITV-007 (test)
 - **Origin / risk:** Quantum-channel swap and backreference behavior; maintainer
   confirmation pending; critical no-cloning and state-loss risk

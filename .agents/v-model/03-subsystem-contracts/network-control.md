@@ -12,7 +12,9 @@
   endpoint pair, when the network is constructed, then all included resources share
   one simulation clock, every undirected edge exposes both directed channel pairs, each
   channel records the value for its own direction, and every location has one incoming
-  message store.
+  message store. A register/location count mismatch and a register already used in an
+  incompatible scheduling domain each report failure rather than producing a usable
+  network.
 - **Verification:** INTV-004 (test)
 - **Origin / risk:** Network construction and directional-delay behavior; maintainer
   confirmation pending; high scheduling-domain risk
@@ -71,12 +73,13 @@
   channel.
 - **Parents:** SYS-006
 - **Acceptance criterion:** Given one half of a correlated two-subsystem state at a
-  source, the retained half elsewhere, a direct quantum link with nonzero delay and a
-  supported background, and an empty destination, when send and receive complete, then
-  the source is unassigned immediately after send, the destination remains unchanged
-  before arrival, the destination owns the transmitted subsystem at arrival, and a
-  joint observable with the retained half matches a stationary subsystem evolved under
-  the same background for the same interval; receiving into an assigned destination
+  currently assigned source, the retained half elsewhere, a source access time no later
+  than modeled arrival, a direct quantum link with nonzero delay and a supported
+  background, and an empty destination, when send and receive complete, then the source
+  is unassigned immediately after send, the destination remains unchanged before
+  arrival, the destination owns the transmitted subsystem at arrival, and a joint
+  observable with the retained half matches a stationary subsystem evolved under the
+  same background for the same interval; receiving into an assigned destination
   reports failure.
 - **Verification:** INTV-004 (test)
 - **Origin / risk:** Quantum-channel state-transfer behavior; maintainer confirmation
@@ -93,3 +96,30 @@
   correlations outside the channel remain valid.
 - **Errors:** Receiving into an assigned destination reports failure. Multi-hop quantum
   routing and the behavior of sending an unassigned source are not specified.
+
+## SUB-016 — Preserve topology access and metadata addressing
+
+- **Normative statement:** The network access boundary shall expose its declared graph,
+  registers, and logical slots through indexed and graph-compatible queries; preserve
+  one metadata namespace per vertex, one endpoint-order-invariant namespace per
+  undirected edge, and separate namespaces per directed edge; and apply bulk metadata
+  operations to the existing addressed collection.
+- **Parents:** SYS-013
+- **Acceptance criterion:** Given a network with multiple vertices and edges, indexed
+  access returns the intended register and slot and graph queries return the declared
+  topology; vertex metadata round-trips only at its vertex, tuple or graph-edge lookup
+  returns the same undirected value in either endpoint order, opposing pair directions
+  retain unequal values, and scalar and function-valued bulk assignment produce one
+  retrievable value for every existing addressed vertex or edge.
+- **Verification:** INTV-009 (test)
+- **Context:** [Network topology and metadata](../../context/network/topology-and-metadata.md)
+
+### Boundary semantics
+
+- **Inputs:** A vertex, undirected edge, directed edge, register/slot index, graph
+  query, or bulk collection selector plus an optional metadata key and value factory.
+- **Outputs:** Graph structure, register/slot references, or addressed metadata values.
+- **State:** Metadata changes do not change topology, transport, register ownership, or
+  simulated time.
+- **Errors:** Missing metadata keys follow mapping lookup behavior. Dynamic topology
+  growth is not part of this static-network contract.

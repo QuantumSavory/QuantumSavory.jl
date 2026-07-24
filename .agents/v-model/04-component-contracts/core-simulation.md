@@ -78,26 +78,27 @@
 
 - **Normative statement:** A stored tag shall use one supported fixed payload shape,
   retain one stable insertion identity, and match only a same-length query whose fields
-  satisfy exact, wildcard, or Boolean-predicate selectors; secondary head and slot
-  indexes may reduce candidates but shall not change the result set, global order, or
-  first-match direction of an equivalent canonical scan.
+  satisfy exact, wildcard, or Boolean-predicate selectors. Any lookup acceleration
+  shall preserve the result set, insertion order, and selected first-match direction
+  observable from a canonical scan.
 - **Parents:** SUB-005
 - **Acceptance criterion:** Given interleaved duplicate tag heads and slots with stable
   identities, when every supported exact, wildcard, predicate, slot-filtered, and
   head-filtered query is run newest-first and oldest-first both with indexes populated
-  and against a canonical full scan, then result identities and order are identical;
+  and against a canonical full-scan oracle, then result identities and order are
+  identical;
   a wrong-length pattern yields no match and a non-Boolean predicate reports failure.
 - **Verification:** UNITV-004 (test)
-- **Origin / risk:** Current tag sum types and indexed-query kernels; maintainer
+- **Origin / risk:** Current tag shapes and query-order behavior; maintainer
   confirmation pending; high selection-correctness risk
 - **Context:** [Metadata and waits](../../context/core/metadata-and-waits.md)
 
 ## CMP-006 — Distinguish register change generations from queued message wakeups
 
-- **Normative statement:** A resource change shall wake every waiter attached to its
-  current notification generation and rotate to a fresh generation before wake
-  completion, while a message arrival shall wake every currently blocked message
-  waiter or, if none exists, add exactly one queued immediate wakeup; neither kind of
+- **Normative statement:** A resource change shall wake every waiter already blocked
+  for that future change, while a waiter that blocks again after waking shall require a
+  later change. A message arrival shall wake every currently blocked message waiter or,
+  if none exists, supply exactly one later immediate wakeup; neither kind of
   notification shall consume metadata or a message.
 - **Parents:** SUB-006
 - **Acceptance criterion:** Given multiple resource waiters including one that re-waits
@@ -108,8 +109,8 @@
   future arrival time, while all three messages remain queryable until explicitly
   consumed.
 - **Verification:** UNITV-005 (test)
-- **Origin / risk:** Change-generation and queued-wakeup regression tests; maintainer
-  confirmation pending; critical lost-wakeup risk
+- **Origin / risk:** Resource-change and queued-message wakeup regression tests;
+  maintainer confirmation pending; critical lost-wakeup risk
 - **Context:** [Metadata and waits](../../context/core/metadata-and-waits.md)
 
 ## CMP-009 — Preserve backend-specific state manifolds and dispatch boundaries

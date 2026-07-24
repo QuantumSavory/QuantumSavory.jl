@@ -65,7 +65,8 @@ topology. They remain draft until the acceptance authority confirms them.
   included in the confirmed support inventory, when each fixture is loaded, then its
   new type or optional implementation is selected through the same user-facing boundary
   as built-in behavior, an unsupported type remains unselected, and core product source
-  need not be modified.
+  need not be modified. Running a representation-independent baseline fixture before
+  and after extension loading produces the same result.
 - **Verification:** ACC-004 (demonstration)
 - **Origin / risk:** Extension documentation and dispatch-based interfaces; maintainer
   confirmation pending; medium ecosystem-compatibility risk
@@ -79,15 +80,16 @@ topology. They remain draft until the acceptance authority confirms them.
 - **Parents:** None
 - **Acceptance criterion:** Given a representative scenario with inspectable
   configuration/state, structured diagnostics, a declared software environment, and
-  every simulation RNG reset to the same seed, when it is executed twice from the same
-  initial state, then inspection exposes the configured representations, backgrounds,
-  ownership, and final state; selected diagnostics expose their documented domain,
-  event, simulation time, and process identity; and selected scientific outcomes,
-  event times, and RNG-derived protocol identifiers agree. Internal monotonic storage
-  IDs are excluded unless their counters are also reset.
+  fixed scheduling configuration, when two fresh executions start from the same
+  initial model and reset the Julia RNG state they use to the same seed, then inspection
+  exposes the configured representations, backgrounds, ownership, and final state;
+  selected diagnostics expose their documented domain, event, simulation time, and
+  process identity; and selected scientific outcomes, event times, and RNG-derived
+  protocol identifiers agree. Internal monotonic storage IDs are excluded unless their
+  counters are also reset.
 - **Verification:** ACC-005 (demonstration)
-- **Origin / risk:** Inspection, logging, and reproducibility behavior in documentation
-  and tests; maintainer confirmation pending; medium diagnosis risk
+- **Origin / risk:** Inspection and logging documentation plus seeded backend tests and
+  protocol RNG behavior; maintainer confirmation pending; medium diagnosis risk
 - **Context:** None
 
 ## Shared limitations
