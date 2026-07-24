@@ -8,28 +8,23 @@
 
 ## Implemented capability boundaries
 
-Backend support is a dispatch matrix, not a single “supported” flag. Confirm the exact
-state, operation, and background combination in source and tests before promising it.
+Backend support is a dispatch matrix, not a single “supported” flag:
 
-`QuantumOpticsRepr` is the broad numeric path for qubits and qumodes. It covers ket and
-operator representations and includes Monte Carlo trajectories through `MCKet`.
-`MCKet` traceout samples the discarded subsystem in its canonical basis and retains the
-conditional trajectory; it is deliberately not density-matrix partial trace semantics.
-The `PauliNoise` helper methods in the QuantumOptics and Clifford evolution files
-currently have signatures inconsistent with their callers, so their apparent presence
-does not establish working support.
+| Representation | Stored state and implemented surface | Current limits |
+|---|---|---|
+| `QuantumOpticsRepr` | Exact `Ket` and `Operator` paths for symbolic lowering, application, observables, project/traceout, backgrounds, and non-instant evolution | Cost grows densely; individual state/background combinations still depend on lowering helpers |
+| `QuantumMCRepr` | Distinct internal `MCKet` pure-trajectory wrapper; sampled background branches, projective measurement, and canonical-basis sampled traceout | All-`MCKet` composition preserves the wrapper; mixing with a plain `Ket` exits to `Ket`, and composition with an `Operator` promotes through a density operator |
+| `CliffordRepr` | `MixedDestabilizer` stabilizer application, Pauli observables/projective measurement, traceout, and T2/depolarization trajectories | Dense observables convert only pure tableaux to exponentially sized kets; mixed dense observables error, and `SProjector` requires the entire stored tableau rather than an embedded subset |
+| `GabsRepr` | Gaussian-state composition and Gaussian unitary/channel application; homodyne `project_traceout!` performs measurement and partial trace | No general `observable`, native background `uptotime!`, or `apply_noninstant!` for `ConstantHamiltonianEvolution` |
 
-`CliffordRepr` is restricted to stabilizer-compatible states and operations. Its
-background evolution currently implements T2 dephasing and depolarization paths, not
-the full background catalog. Unsupported symbolic inputs should fail at the backend
-boundary rather than be silently approximated.
+`PauliNoise` is not currently usable through normal evolution dispatch. QuantumOptics
+defines `krausops(::PauliNoise)` and Clifford defines
+`paulinoise(::PauliNoise)`, but their callers supply a duration argument. The apparent
+helpers therefore do not implement those backend/noise pairs.
 
-`GabsRepr` provides a narrower Gaussian path. The implemented surface includes Gaussian
-application, homodyne-related projection/traceout, representation defaults, and display
-support; do not infer parity with QuantumOptics from the shared register interface.
 The current trait implementation and backend guide map both `Qubit` and `Qumode` to
-`QuantumOpticsRepr`, but the 0.7.0 `CHANGELOG.md` entry says Gabs became the default for
-qumodes. Treat the intended default as an unresolved source/history conflict.
+`QuantumOpticsRepr`, while the 0.7.0 `CHANGELOG.md` entry says Gabs became the default
+for qumodes. Treat the intended default as an unresolved source/history conflict.
 
 Generic register operations may work for a backend when its primitive methods and
 traits satisfy the contract. Conversely, exported symbols or included files alone are

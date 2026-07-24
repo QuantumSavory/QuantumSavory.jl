@@ -13,7 +13,8 @@
    `get_time_tracker` and participating-node context rather than accepting an unrelated
    simulation.
 2. Define typed tags for durable protocol facts. Preserve fixed payload shapes and
-   decide identifier/sentinel behavior explicitly. Add `Tag` conversion and compact
+   decide identifier/sentinel behavior explicitly. A configurable head typed as
+   `Type{<:AbstractTag}` must be a concrete subtype. Add `Tag` conversion and compact
    display only when needed by the shared metadata surface.
 3. Design the yield boundaries before implementation. Query snapshots become stale
    across every wait. Acquire resources, revalidate reciprocal metadata and occupancy,
@@ -22,12 +23,16 @@
 4. Define cleanup for partial completion. Tags, classical sends, quantum moves,
    measurements, and traceout are not one transaction. Cover timeout, cancellation,
    occupied destinations, missing counterparts, and competing consumers.
-5. Emit records under `LOG_GROUPS.protocol` with `protocol_log_context`. Stable groups
-   do not make every event name or field a frozen public schema.
-6. Include and export the intended surface from ProtocolZoo. Add the protocol to the
+5. Override `permits_virtual_edge(::Type{MyProtocol}) = true` only if the protocol is
+   valid without a physical graph edge; the default is false and instance queries
+   delegate to the type.
+6. Emit records under `LOG_GROUPS.protocol` with `protocol_log_context`. Its base fields
+   are primitive simulation values, a protocol-name `Symbol`, and an immutable ordered
+   node tuple; do not store live objects. Stable groups do not freeze every event field.
+7. Include and export the intended surface from ProtocolZoo. Add the protocol to the
    human API and a runnable example when it teaches composition; avoid copying the full
    field catalog into agent context.
-7. Test happy-path completion and forced races. Add stale-query, reciprocal-tag,
+8. Test happy-path completion and forced races. Add stale-query, reciprocal-tag,
    cleanup, shorthand-simulation, logging-context, and virtual-edge cases as applicable.
    Run the focused tests followed by the general shard.
 

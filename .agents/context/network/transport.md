@@ -8,9 +8,15 @@
 
 ## Current transport boundaries
 
-A `RegisterNet` binds a graph and its node registers to one SimJulia simulation.
+A `RegisterNet` binds a graph and its node registers to one ConcurrentSim simulation.
 Classical and quantum edge delays may be constants or direction-aware callables. Delay
 is scheduled in the network simulation; it is not wall-clock waiting.
+
+Construction uses the first register's simulation. All registers must already use that
+same simulation, or every register simulation must be unused at time zero (zero `now`,
+empty event heap, and no active process). In the latter case, construction rehomes each
+register's slot locks and tag notifier to the first simulation. A nonzero or scheduled
+independent register is rejected.
 
 Classical messages have two modes. Direct delivery sends to an adjacent destination
 buffer. Forwarded delivery follows the graph toward a non-adjacent node and incurs the
@@ -19,21 +25,29 @@ arrival notifications. Selection follows insertion-order identifiers (FIFO), unl
 the register query default of FILO.
 
 Quantum transport is direct-edge only. It is keyed by source/destination channel and
-does not inherit classical multi-hop forwarding. Sending swaps the quantum state from
-the source into channel-owned temporary storage before queueing it. If the source access
-time is already later than the channel clock plus its delay, that swap can advance the
-temporary slot and the subsequent arrival-time advance can throw a rewind error after
-the source is empty. Receiving likewise dequeues the in-flight item before checking
-whether the destination is occupied. Neither failure path has a specified rollback.
-Sending from an empty source is also unresolved. Protocols should validate source
-occupancy, destination vacancy, time consistency, and direct connectivity while still
-handling interleaving failures.
+does not inherit classical multi-hop forwarding. A standalone `QuantumChannel` owns a
+temporary one-slot register with the channel's configured background: `put!` swaps
+ownership into that slot at channel time and applies in-transit background evolution to
+the modeled arrival time before queueing.
+
+If the source access time is already later than channel time plus delay, that evolution
+can throw a rewind error after the source is empty. Receiving likewise dequeues the
+in-flight item before checking whether the destination is occupied. Neither failure
+path has a specified rollback. Sending from an empty source is also unresolved.
+Protocols should validate occupancy and time consistency while handling interleaving
+failures.
 
 Two `RegisterNet` construction paths are defective. The constructor creates an
 `ArgumentError` for graph/register size mismatch but does not throw it, and
 `add_register!` updates only part of the network and computes an invalid return value.
 Do not rely on dynamic node insertion or mismatch rejection until those paths are fixed
 and tested.
+
+The graph provides channels and physical-topology metadata, but locality is not a
+general register-operation guard: code can directly operate on slots from arbitrary
+registers, and only selected protocol constructors validate adjacency. Treat physical
+locality as a protocol/model responsibility unless the chosen API explicitly enforces
+it.
 
 Transport moves ownership; it does not clone quantum state. Metadata describing an
 entangled counterpart must be forwarded and revalidated separately from the physical

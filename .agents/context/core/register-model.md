@@ -14,6 +14,11 @@ One state may therefore span several slots, including slots in different registe
 the bidirectional slot-to-state bookkeeping is the invariant that operations and
 traceout must preserve. Empty slots have no state reference.
 
+Each slot independently declares its quantum-state trait, preferred representation,
+and optional background process. Register constructors either accept those parallel
+vectors or fill them from trait defaults; do not infer one register-wide backend or
+noise model.
+
 Initialization is intentionally explicit. A plain state is installed as one state
 reference over the listed slots. Only symbolic `STensor` input is structurally split
 into separate factor states. The implementation does not attempt general separability
@@ -32,19 +37,24 @@ can follow an earlier successful mutation. The traceout tests deliberately prese
 partial-failure example. Review callers that catch such errors as potentially needing
 cleanup rather than assuming rollback.
 
-`RegisterNet` associates a graph, registers, and one simulation. Its constructor
-currently constructs but does not throw the graph/register size error, and
-`add_register!` does not completely update all network structures. Treat dynamic
-register insertion and mismatched construction as known defects, not supported
-invariants.
+For inspection, qualified `QuantumSavory.stateof(slot)` returns its `StateRef` or
+`nothing`, `quantumstate(stateref)` unwraps the native backend state, and
+`slots(stateref)` reconstructs live `RegRef` back-references. These are internal
+inspection boundaries rather than exported serialization APIs. Text display summarizes
+`Register`, `RegRef`, `StateRef`, and `RegisterNet`; HTML display is specialized for
+`RegRef` and `StateRef`, with backend-specific `stateshow` hooks and an escaped
+plain-text fallback. Do not parse display text as stable data.
+
+`RegisterNet` adds graph and simulation ownership around registers. Its constructor,
+locality model, and known dynamic-insertion defects are canonicalized in the
+[transport reference](../network/transport.md).
 
 ## Anchors
 
-- **Source:** [`src/states_registers.jl`](../../../src/states_registers.jl), [`src/baseops/initialize.jl`](../../../src/baseops/initialize.jl), and [`src/networks.jl`](../../../src/networks.jl) — ownership, explicit tensor splitting, and network construction.
+- **Source:** [`src/states_registers.jl`](../../../src/states_registers.jl), [`src/states_registers_networks_shows.jl`](../../../src/states_registers_networks_shows.jl), [`src/baseops/initialize.jl`](../../../src/baseops/initialize.jl), and [`src/networks.jl`](../../../src/networks.jl) — ownership, inspection, display, explicit tensor splitting, and network construction.
 - **Docs:** [`docs/src/modeling_registers_and_time.md`](../../../docs/src/modeling_registers_and_time.md) and [`docs/src/register_interface.md`](../../../docs/src/register_interface.md) — human-facing register model.
-- **Test:** [`test/general/register_interface_tests.jl`](../../../test/general/register_interface_tests.jl) and [`test/general/traceout_tests.jl`](../../../test/general/traceout_tests.jl) — ownership behavior and non-atomic failure evidence.
+- **Test:** [`test/general/register_interface_tests.jl`](../../../test/general/register_interface_tests.jl), [`test/general/show_html_tests.jl`](../../../test/general/show_html_tests.jl), [`test/general/show_gabs_tests.jl`](../../../test/general/show_gabs_tests.jl), and [`test/general/traceout_tests.jl`](../../../test/general/traceout_tests.jl) — ownership, inspection displays, and non-atomic failure evidence.
 
 ## Unresolved questions
 
 - Should multi-slot mutations eventually guarantee rollback, or should partial mutation become an explicit public contract?
-- What final invariant and return value should `add_register!` provide?

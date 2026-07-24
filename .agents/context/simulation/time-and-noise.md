@@ -9,32 +9,34 @@
 ## Chronological evolution contract
 
 Each register slot tracks an access time, while state references may span several
-slots. Before an operation reads or mutates state, `uptotime!` groups the affected
-state, evolves it through its configured backgrounds to the target simulation time,
-and updates access-time bookkeeping. Callers must not move a slot backward in time.
+slots. Advancement is demand-driven but not implicit in every operation:
+
+- `apply!` targets the maximum selected access time unless a non-earlier `time` is
+  supplied, then calls `uptotime!`;
+- `observable` and `project_traceout!` call `uptotime!` only when `time` is supplied;
+- plain `traceout!` performs no time advancement; and
+- `initialize!` changes access time only when given `time`.
+
+Explicit `uptotime!` groups affected state, applies configured backgrounds, and updates
+slot access times. Callers must not move a slot backward in time.
 
 The current implementation checks rewind conditions after backend evolution within the
 grouped path. A request that throws for an earlier target can therefore follow an
 in-place backend mutation. Treat rewind failure as potentially state-changing until
 ordering is corrected and regression-tested.
 
-Background support is backend-specific. QuantumOptics handles broad ket/operator
-evolution and Monte Carlo trajectories. Clifford implements only its compatible T2
-and depolarization cases. Gabs has a smaller Gaussian surface. `PauliNoise` helper
-definitions currently disagree with their call sites, so neither source presence nor a
-generic noise type proves that a backend/noise pair works. Consult focused tests for
-each combination.
+Background and default-representation support is backend-specific. Use the
+[backend support matrix](backend-support.md) as the canonical account of implemented
+combinations, the `PauliNoise` dispatch defect, and the unresolved `Qumode` default.
 
-Non-instant operations are simulation processes: they acquire or coordinate resources,
-advance time through yielded events, and expose the state to background evolution over
-the interval. Review both the mathematical lowering and the event schedule. A correct
-instantaneous backend method is not sufficient evidence that interruption, occupancy,
-or cleanup behavior is correct.
-
-The current trait implementation and backend guide map both `Qubit` and `Qumode` to
-`QuantumOpticsRepr`, while the 0.7.0 `CHANGELOG.md` entry says Gabs became the default
-for qumodes. Until that conflict is resolved, code requiring a particular physical
-approximation should select its representation explicitly.
+`NonInstantGate` and `ConstantHamiltonianEvolution` are synchronous `apply!` methods,
+not ConcurrentSim processes: they do not yield, acquire scheduler resources, or advance
+the scheduler clock. `NonInstantGate` applies its gate and evolves selected state to a
+later access time. `ConstantHamiltonianEvolution` invokes the backend's non-instant
+evolution and overwrites selected access times at the end of the duration. The third
+example in `docs/src/tutorial/noninstantgate.md` currently constructs `gate =
+NonInstantGate(...)` but calls `apply!(..., CNOT)`, so it does not demonstrate the
+object it describes.
 
 ## Anchors
 

@@ -1,11 +1,10 @@
 # QuantumSavory.jl Agent Router
 
-Open the [agent documentation index](.agents/index.md), then follow only the
-route needed for the task. Do not scan `.agents/` wholesale. The draft V-model
-separates proposed intent from mapped evidence; context pages explain the current
-implementation.
-`.agents/evals/` is evaluation data, not repository guidance, and must remain
-outside documentation maintenance unless the task explicitly concerns evals.
+Open the [agent documentation index](.agents/index.md) and follow the task's
+narrowest route; never scan `.agents/` wholesale. Its draft V-model records
+proposed requirements, observable contracts, and traceability—not confirmed
+authority. Context describes current implementation. `.agents/evals/` is
+unrelated evaluation data; ignore it unless the task explicitly targets evals.
 
 ## Route by work area
 

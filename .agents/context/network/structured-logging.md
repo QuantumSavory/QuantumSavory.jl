@@ -13,11 +13,12 @@ five stable group symbols: `backend`, `simulation`, `protocol`, `network`, and
 `visualization`. Use the exported values in `_group`; do not duplicate literal symbols
 throughout new code. Group filtering is the supported coarse selection mechanism.
 
-`simulation_log_context(sim)` supplies the simulation time and active-process identity.
-Protocol code extends that context with protocol identity through its helper. Merge
-these fields into structured key-value records rather than embedding all context in a
-human sentence. Records should still have a concise message that makes unfiltered
-output understandable.
+`simulation_log_context(sim)` supplies `sim_time::Float64` and
+`sim_process_id::Union{UInt,Nothing}`. `protocol_log_context(prot)` adds
+`protocol::Symbol` and `nodes::Tuple{Vararg{Int}}`, an immutable ordered snapshot.
+Merge these primitive fields into records; do not retain live protocol, network,
+register, message, or query objects. Records should still have a concise message that
+makes unfiltered output understandable.
 
 The groups are explicitly described as stable by source and human documentation.
 Individual event symbols, messages, levels, and field vocabularies are less settled.

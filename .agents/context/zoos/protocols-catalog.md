@@ -8,7 +8,7 @@
 
 ## Protocol families
 
-ProtocolZoo contains callable `AbstractProtocol` values run as SimJulia processes.
+ProtocolZoo contains callable `AbstractProtocol` values run as ConcurrentSim processes.
 Constructor shorthands derive the simulation from the supplied `RegisterNet`; callers
 should not maintain a separate clock. Use the human API for fields and signatures.
 

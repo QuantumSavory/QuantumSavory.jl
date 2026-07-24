@@ -9,13 +9,13 @@
 ## Develop and review a protocol
 
 1. Represent long-running behavior as a callable `AbstractProtocol` executed by a
-   SimJulia process. Prefer the established shorthand constructor where applicable; it
+   ConcurrentSim process. Prefer the established shorthand constructor where applicable; it
    derives the simulation from the supplied `RegisterNet`, so do not maintain a
    second, potentially inconsistent simulation argument.
 2. Declare the fixed tag payloads and slot ownership assumptions before coding. Use the
-   standard tag types when they express the protocol fact. Pair identifiers deserve
-   special review: the current combined identifier scheme can collide with the zero
-   sentinel.
+   standard tag types when they express the protocol fact. Configurable typed tag heads
+   must be concrete `AbstractTag` subtypes. Pair identifiers deserve special review:
+   the current combined identifier scheme can collide with the zero sentinel.
 3. Treat every query result as a snapshot. `query_wait` is non-consuming and
    non-locking. After every yield and after resource acquisition, revalidate slot
    occupancy, reciprocal counterpart tags, pair identifiers, and any remote-node
@@ -26,9 +26,11 @@
 5. Sequence physical and metadata effects consciously. State moves, traceout, tag
    deletion, and message send are not one atomic transaction. Define cleanup for every
    prefix of the sequence and do not assume an exception rolls it back.
-6. Emit structured records using the stable `LOG_GROUPS.protocol` group and the
-   protocol/simulation context helper. Treat individual event symbols and field sets as
-   evolving unless a dedicated contract and tests establish stability.
+6. Emit structured records using the stable `LOG_GROUPS.protocol` group and
+   `protocol_log_context`. The helper contains primitive simulation fields, the
+   protocol type name as a `Symbol`, and an immutable ordered tuple of node integers;
+   keep protocols, networks, registers, messages, and other live objects out. Treat
+   individual event symbols and field sets as evolving unless separately contracted.
 7. Test adversarial interleavings, not only completion. Force stale query results,
    reciprocal-tag disagreement, occupied or emptied slots, competing consumers, and
    timeout cleanup. Run the relevant protocol tests plus the general shard.
@@ -36,6 +38,11 @@
 The existing tracker, swapper, switch, cutoff, QTCP, and MBQC tests contain reusable
 race patterns. Some zoo protocols remain incomplete, so copied behavior is evidence to
 review, not automatically a requirement.
+
+Counterpart metadata is not uniqueness-enforced. `_tag_entanglement_counterpart!` logs
+an error when one tag already exists, then still calls `tag!` and adds another. A logged
+conflict therefore does not prevent mutation; consumers must handle or reject
+duplicates explicitly.
 
 ## Anchors
 

@@ -9,8 +9,8 @@
 ## Circuit families
 
 CircuitZoo contains callable structs that execute immediately on register-slot
-arguments. They are not SimJulia processes and do not wait for remote messages. Use the
-human API for signatures; select by family:
+arguments. They are not ConcurrentSim processes and do not wait for remote messages.
+Use the human API for signatures; select by family:
 
 - entanglement swapping: full `EntanglementSwap` with remote corrections and
   `LocalEntanglementSwap` for the local Bell measurement;
@@ -28,11 +28,22 @@ The shared executable surface is a callable method. `inputqubits` is useful but 
 in the current API tests, so absence does not by itself mean a circuit is invalid.
 Code that needs capacity planning should check the selected type explicitly.
 
-Advanced stringent/expedient node forms are not a settled correctness reference.
-`StringentBodyNode` has current arity/return inconsistencies, and the documented
-full-stringent failure reset semantics do not cleanly match all implementation paths.
-Treat those behaviors as unresolved defects and run the focused purification tests
-before reuse or documentation changes.
+Current purification limitations are concrete:
+
+- `StringentBody.inputqubits` reports 6/8 qubits for expedient/stringent mode, but its
+  callable also consumes two purified inputs, for totals of 8/10.
+- `StringentBodyNode.inputqubits` reports 3/4 but its callable consumes 4/5 including
+  the purified input.
+- `StringentBodyNode` computes `alfa`, `beta`, optional `gamma`, and `delta`, then
+  returns only scalar `alfa`; `PurifyStringentNode` later splats that scalar.
+- `PurifyStringent` and `PurifyExpedient` docstrings promise reset on failure, while
+  their implementations return a Boolean without tracing out the retained pair.
+- `Purify3to1` accepts equal `leaveout1`/`leaveout2`, while correctness loops skip
+  equality and therefore do not establish that case.
+
+`SDEncode` and `SDDecode` also omit `inputqubits`. Treat these as visible implementation
+gaps, not reusable contracts, and run `general/circuitzoo_purification` or the matching
+family test before reuse or documentation changes.
 
 ## Anchors
 

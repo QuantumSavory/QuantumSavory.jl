@@ -1,10 +1,10 @@
 # Source Router
 
-Open only the context for the code being changed:
+Open only the context for changed code:
 
-- Registers, operations, representations, tags, queries, or waits:
+- Register storage, operations, tags, queries, or waits:
   [core context](../.agents/context/core/index.md).
-- Backgrounds, time advancement, or simulator representations:
+- Representation selection or lowering, backend code, backgrounds, or time:
   [simulation context](../.agents/context/simulation/index.md).
 - Register networks, messages, or quantum channels:
   [network context](../.agents/context/network/index.md).
@@ -12,10 +12,9 @@ Open only the context for the code being changed:
 - Optional loading or visualization hooks:
   [extension context](../.agents/context/optional-extensions.md).
 
-Use the matching component contract and verification action linked from the
+Use the component contract and verification action linked from the
 context page. Keep backend capability limits explicit; dispatch failure is not
 evidence that a representation is supported.
 
-Run the matching runner prefix from the repository root—for example,
-`general/apply` selects `test/general/apply_tests.jl`—before the full `general`
-suite.
+Run its test prefix from the root—for example, `general/apply` selects
+`test/general/apply_tests.jl`—before the full `general` suite.

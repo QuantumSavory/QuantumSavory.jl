@@ -10,8 +10,8 @@
 
 1. Define a small `AbstractCircuit` subtype in `src/CircuitZoo/CircuitZoo.jl` or a
    clearly included sibling file. Keep configuration in fields and execution in one
-   callable method. Current API tests expect exactly one applicable call implementation
-   per public circuit type.
+   callable method. The API test constructs every direct subtype, including internal
+   helper circuits, with `T()` and expects exactly one callable implementation.
 2. State slot order, required occupancy, supported representations, return value, and
    destructive effects in the docstring. A measurement commonly traces out its input;
    failure may also reset the candidate state. These are caller-visible contracts.
@@ -20,8 +20,10 @@
    that multi-step mutation is not transactional; design cleanup for every failure
    prefix.
 4. Implement `inputqubits` when a stable count helps callers. It is optional under the
-   current surface test, so add it deliberately rather than returning a misleading
-   count for variable-arity behavior.
+   current surface test, and that test skips arity validation for varargs. Count fixed
+   purified inputs as well as sacrificed varargs. For a callable with non-slot arguments
+   such as `SDEncode`'s message, reconcile the API test's simple method-arity assumption
+   instead of reporting the message as a qubit.
 5. Export the public type and place it in the human CircuitZoo API. Keep the long
    formula, example, and signature catalog in human docs rather than reproducing it in
    agent context.
@@ -32,9 +34,8 @@
 7. Run the family tests and the general shard. Immediate circuits can still affect
    protocol tests because ProtocolZoo composes them.
 
-Do not use the current stringent/expedient node paths as unquestioned templates:
-`StringentBodyNode` has arity/return inconsistencies and full-stringent failure cleanup
-is disputed between code and documentation.
+Do not use stringent/expedient or equal-leaveout 3-to-1 paths as templates without
+checking the exact [cataloged limitations](circuits-catalog.md).
 
 ## Anchors
 

@@ -1,14 +1,14 @@
 # Discrete Events
 
 - **Context need:** Explanation
-- **Open when:** Reasoning about SimJulia processes, waits, resource ownership, or event ordering.
+- **Open when:** Reasoning about ConcurrentSim processes, waits, resource ownership, or event ordering.
 - **Do not open when:** Looking up register operations, backend methods, or zoo inventory.
 - **Related specification IDs:** SYS-004, SUB-004, SUB-006
 - **Review when:** Simulation-process helpers, resource acquisition, notifier behavior, or wait composition changes.
 
 ## Scheduling model
 
-QuantumSavory coordinates long-running behavior with SimJulia discrete-event
+QuantumSavory coordinates long-running behavior with ConcurrentSim discrete-event
 processes. A process runs until it yields an event, resumes when that event fires, and
 shares one simulation clock with registers and network delays. Code between yields is
 the practical atomic region; any snapshot retained across a yield may be stale when
@@ -30,10 +30,11 @@ redundant or coalesced wakeups.
 
 Time progression comes from yielded timeout or channel events, not wall-clock delay.
 Network directional delay functions schedule arrivals on the same simulation.
-Non-instant quantum operations similarly schedule completion around resource and
-background evolution. Avoid manually changing simulation time or assuming that two
-processes scheduled for one timestamp run in a protocol-specific order unless a test
-and explicit event dependency establish it.
+Register `NonInstantGate` and `ConstantHamiltonianEvolution` calls are instead
+synchronous: they update slot access times without yielding or moving the scheduler
+clock; see [time and noise](../simulation/time-and-noise.md). Avoid manually changing
+simulation time or assuming that two processes scheduled for one timestamp run in a
+protocol-specific order unless a test and explicit event dependency establish it.
 
 Race-oriented tests should force yields between selection and mutation, then verify
 revalidation and cleanup. The protocol tracker, swapper, switch, and cutoff suites
@@ -48,5 +49,5 @@ than straight-line happy paths.
 
 ## Unresolved questions
 
-- Which same-timestamp orderings are intentional contracts rather than SimJulia implementation consequences?
+- Which same-timestamp orderings are intentional contracts rather than ConcurrentSim implementation consequences?
 - Should resource-safe cleanup helpers become a shared protocol abstraction?
