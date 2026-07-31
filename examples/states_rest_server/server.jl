@@ -7,10 +7,33 @@ using QuantumOpticsBase
 using QuantumSymbolics
 
 const NO_QUERY_PARAMETERS = ()
-const BARRETT_KOK_QUERY_PARAMETERS =
-    ("etaA", "etaB", "Pd", "etad", "V", "m", "weighted")
-const GENQO_ZALM_QUERY_PARAMETERS = ("etab", "etad", "etat", "N")
-const GENQO_SPDC_QUERY_PARAMETERS = ("etad", "etat", "N")
+
+function state_query_parameters(family, names)
+    parameters = state_family_schema(family).parameters
+    length(names) == length(parameters) ||
+        throw(ArgumentError("REST aliases must match the state-family schema"))
+    return Tuple(
+        (String(name), Float64, Float64(parameter.recommended))
+        for (name, parameter) in zip(names, parameters)
+    )
+end
+
+const BARRETT_KOK_QUERY_PARAMETERS = (
+    state_query_parameters(
+        BarrettKokBellPair,
+        ("etaA", "etaB", "Pd", "etad", "V"),
+    )...,
+    ("m", Int, 0),
+    ("weighted", Bool, false),
+)
+const GENQO_ZALM_QUERY_PARAMETERS = state_query_parameters(
+    GenqoMultiplexedCascadedBellPairW,
+    ("etab", "etad", "etat", "N"),
+)
+const GENQO_SPDC_QUERY_PARAMETERS = state_query_parameters(
+    GenqoUnheraldedSPDCBellPairW,
+    ("etad", "etat", "N"),
+)
 
 function parameters_valid(family, values)
     schema = state_family_schema(family)
@@ -19,8 +42,14 @@ function parameters_valid(family, values)
                zip(values, schema.parameters))
 end
 
-function validated_queryparams(req, allowed_parameters)
+parse_query_parameter(::Type{Bool}, value) =
+    value == "true" ? true : value == "false" ? false :
+    throw(ArgumentError("expected true or false"))
+parse_query_parameter(type::Type, value) = parse(type, value)
+
+function validated_queryparams(req, specifications)
     params = queryparams(req)
+    allowed_parameters = first.(specifications)
     unknown_parameters = sort!(
         String[
             name
@@ -28,14 +57,32 @@ function validated_queryparams(req, allowed_parameters)
             if name ∉ allowed_parameters
         ],
     )
-    rejection = isempty(unknown_parameters) ? nothing : json(
-        Dict(
-            "error" => "Unknown query parameters",
-            "unknown_parameters" => unknown_parameters,
-        );
-        status=400,
-    )
-    return params, rejection
+    if !isempty(unknown_parameters)
+        return nothing, json(
+            Dict(
+                "error" => "Unknown query parameters",
+                "unknown_parameters" => unknown_parameters,
+            );
+            status=400,
+        )
+    end
+
+    values = Dict{String,Any}()
+    for (name, type, default) in specifications
+        raw_value = Base.get(params, name, string(default))
+        values[name] = try
+            parse_query_parameter(type, raw_value)
+        catch
+            return nothing, json(
+                Dict(
+                    "error" => "Invalid query parameter",
+                    "parameter" => name,
+                );
+                status=400,
+            )
+        end
+    end
+    return values, nothing
 end
 
 @oxidize
@@ -43,7 +90,7 @@ end
     _, rejection = validated_queryparams(req, NO_QUERY_PARAMETERS)
     isnothing(rejection) || return rejection
 
-    return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running -- see implementation details at https://github.com/QuantumSavory/QuantumSavory.jl/tree/main/examples/states_rest_api")
+    return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running -- see implementation details at https://github.com/QuantumSavory/QuantumSavory.jl/tree/main/examples/states_rest_server")
 end
 
 # Barrett-Kok Bell Pair endpoints
@@ -51,20 +98,22 @@ end
     params, rejection = validated_queryparams(req, BARRETT_KOK_QUERY_PARAMETERS)
     isnothing(rejection) || return rejection
 
-    # Extract parameters with defaults
-    ηᴬ = Base.get(params, "etaA", "1.0") |> x -> parse(Float64, x)
-    ηᴮ = Base.get(params, "etaB", "1.0") |> x -> parse(Float64, x)
-    Pᵈ = Base.get(params, "Pd", "0.0") |> x -> parse(Float64, x)
-    ηᵈ = Base.get(params, "etad", "1.0") |> x -> parse(Float64, x)
-    𝒱 = Base.get(params, "V", "1.0") |> x -> parse(Float64, x)
-    m = Base.get(params, "m", "0") |> x -> parse(Int, x)
-    weighted = Base.get(params, "weighted", "false") == "true"
+    ηᴬ = params["etaA"]
+    ηᴮ = params["etaB"]
+    Pᵈ = params["Pd"]
+    ηᵈ = params["etad"]
+    𝒱 = params["V"]
+    m = params["m"]
+    weighted = params["weighted"]
 
     try
         # Validate parameters
         values = (ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱)
         if !parameters_valid(BarrettKokBellPair, values) || m ∉ (0, 1)
-            return Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema and m must be 0 or 1")
+            return json(
+                Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema and m must be 0 or 1");
+                status=400,
+            )
         end
 
         # Create the state
@@ -96,7 +145,10 @@ end
             "dimensions" => size(density_matrix)
         )
     catch e
-        return Dict("error" => "Failed to compute density matrix: $(string(e))")
+        return json(
+            Dict("error" => "Failed to compute density matrix: $(string(e))");
+            status=500,
+        )
     end
 end
 
@@ -126,11 +178,10 @@ end
     params, rejection = validated_queryparams(req, GENQO_ZALM_QUERY_PARAMETERS)
     isnothing(rejection) || return rejection
 
-    # Extract parameters with defaults
-    ηᵇ = Base.get(params, "etab", "1.0") |> x -> parse(Float64, x)
-    ηᵈ = Base.get(params, "etad", "1.0") |> x -> parse(Float64, x)
-    ηᵗ = Base.get(params, "etat", "1.0") |> x -> parse(Float64, x)
-    N = Base.get(params, "N", "0.1") |> x -> parse(Float64, x)
+    ηᵇ = params["etab"]
+    ηᵈ = params["etad"]
+    ηᵗ = params["etat"]
+    N = params["N"]
 
     try
         # Validate parameters
@@ -138,7 +189,10 @@ end
             GenqoMultiplexedCascadedBellPairW,
             (ηᵇ, ηᵈ, ηᵗ, N),
         )
-            return Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema")
+            return json(
+                Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema");
+                status=400,
+            )
         end
 
         # Create the state
@@ -163,7 +217,10 @@ end
             "dimensions" => size(density_matrix)
         )
     catch e
-        return Dict("error" => "Failed to compute density matrix: $(string(e))")
+        return json(
+            Dict("error" => "Failed to compute density matrix: $(string(e))");
+            status=500,
+        )
     end
 end
 
@@ -191,15 +248,17 @@ end
     params, rejection = validated_queryparams(req, GENQO_SPDC_QUERY_PARAMETERS)
     isnothing(rejection) || return rejection
 
-    # Extract parameters with defaults
-    ηᵈ = Base.get(params, "etad", "1.0") |> x -> parse(Float64, x)
-    ηᵗ = Base.get(params, "etat", "1.0") |> x -> parse(Float64, x)
-    N = Base.get(params, "N", "0.1") |> x -> parse(Float64, x)
+    ηᵈ = params["etad"]
+    ηᵗ = params["etat"]
+    N = params["N"]
 
     try
         # Validate parameters
         if !parameters_valid(GenqoUnheraldedSPDCBellPairW, (ηᵈ, ηᵗ, N))
-            return Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema")
+            return json(
+                Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema");
+                status=400,
+            )
         end
 
         # Create the state
@@ -223,7 +282,10 @@ end
             "dimensions" => size(density_matrix)
         )
     catch e
-        return Dict("error" => "Failed to compute density matrix: $(string(e))")
+        return json(
+            Dict("error" => "Failed to compute density matrix: $(string(e))");
+            status=500,
+        )
     end
 end
 

@@ -39,8 +39,9 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 - `value in parameter_schema` is the validation boundary for configuration
   tooling. Open endpoints represent singular or zero-weight states, not merely
   UI hints.
-- The REST example has an explicit, closed query-parameter allowlist for every
-  route and rejects undeclared parameters with HTTP 400.
+- The REST example derives state defaults from `StateFamilySchema`, keeps one explicit
+  route-level alias/type table, and rejects undeclared, unparseable, or out-of-range
+  query parameters with HTTP 400.
 - `stateparameters` and `stateparametersrange` are derived compatibility APIs;
   do not add parallel family-specific methods for built-ins.
 - `state_weight` returns the finite absolute trace.

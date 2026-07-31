@@ -6,7 +6,7 @@ This REST API provides access to density matrices from quantum states in the Qua
 
 ### Prerequisites
 
-1. Julia 1.11+ with QuantumSavory.jl installed
+1. Julia 1.12+ with QuantumSavory.jl installed
 2. Oxygen.jl for the REST API framework
 3. JSON3.jl for JSON handling
 
@@ -41,7 +41,8 @@ The server will start on `http://localhost:8080`
   - `etad` (optional): Detection efficiency, ∈(0,1], default=1.0
   - `V` (optional): Real-valued mode overlap, ∈[0,1], default=1.0
   - `m` (optional): Parity bit (0 or 1), default=0
-  - `weighted` (optional): Return weighted version (trace = success probability), default=false
+  - `weighted` (optional): Return weighted version (trace = success probability),
+    exact `true` or `false`, default=false
 
 #### Get Parameters Info
 - **GET** `/api/barrett-kok/parameters`
@@ -129,6 +130,9 @@ with HTTP 400 instead of being silently ignored:
   "unknown_parameters": ["Pd"]
 }
 ```
+
+Declared parameters that cannot be parsed, values outside the advertised state-family
+bounds, and invalid enum-like values such as `weighted=yes` also return HTTP 400.
 
 ## Example Usage
 
