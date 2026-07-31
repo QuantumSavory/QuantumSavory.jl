@@ -59,6 +59,16 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - Custom packages can extend `constructor_schema` for their own types, but do
   not mutate the built-in catalogs.
 
+## Inspection Invariants
+
+- `tag_records` and `message_records` preserve insertion order, oldest first,
+  and return new vectors of immutable simulator-domain records.
+- Record IDs remain `Int128`; register slots and message sources remain local
+  simulator indices. Do not introduce Web or serialization identifiers here.
+- `access_time(::RegRef)` is the public read-only view of the corresponding
+  `accesstimes` entry.
+- `tag_parts` exposes logical constructor values, not SumTypes variants.
+
 ## Important Lowering Paths
 
 - Symbolic initialization:
@@ -112,6 +122,7 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - `test/general/observable_tests.jl`
 - `test/general/project_traceout_tests.jl`
 - `test/general/component_metadata_tests.jl`
+- `test/general/tag_metadata_inspection_tests.jl`
 
 ## Paper And Docs Cross-Check
 

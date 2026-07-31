@@ -60,6 +60,20 @@ schema. They make the intended meaning explicit and allow custom printing.
 its reusable protocols; see [Standard Protocol Tags](@ref
 standard-protocol-tags).
 
+The named catalog is explicit and simulator-owned:
+
+```@example tag-metadata
+using QuantumSavory
+using QuantumSavory.ProtocolZoo
+
+map(schema -> schema.head, tag_head_schemas())
+```
+
+Each [`TagHeadSchema`](@ref) contains ordered [`TagFieldSchema`](@ref)
+definitions with stable names, Julia types, and documentation. Packages can
+extend `tag_head_schema` for custom `AbstractTag` heads; custom extensions do
+not mutate the built-in catalog.
+
 ### Named Tag Heads And `AbstractTag`
 
 [`AbstractTag`](@ref) is the marker supertype for named tag heads used by
@@ -144,10 +158,34 @@ QuantumSavory.Tag
 
 The currently supported concrete tag signatures are:
 
-```@example
-using QuantumSavory #hide
-[tuple(m.sig.types[2:end]...) for m in methods(Tag) if m.sig.types[2] ∈ (Symbol, DataType)]
+```@example tag-metadata
+map(signature -> (
+    head_type=signature.head_type,
+    field_types=signature.field_types,
+), general_tag_signatures())
 ```
+
+[`tag_parts`](@ref) exposes the logical head and field tuple without revealing
+the internal sum-type variant:
+
+```@example tag-metadata
+tag_parts(Tag(:ready, 7))
+```
+
+## Non-consuming Inspection
+
+Use [`tag_records`](@ref) for an immutable, oldest-first snapshot of the tags
+attached to a register or one slot:
+
+```@example tag-metadata
+reg = Register(2)
+tag!(reg[2], :ready, 7)
+tag_records(reg)
+```
+
+The records retain simulator-domain `Int128` IDs, register-local slot indices,
+attachment times, and `Tag` values. They deliberately do not choose external
+IDs or a wire format.
 
 ## Assigning And Removing Tags
 
@@ -184,6 +222,21 @@ querydelete!
 
 ```@docs; canonical=false
 QuantumSavory.queryall
+```
+
+## Metadata And Inspection Types
+
+```@docs; canonical=false
+TagFieldSchema
+TagHeadSchema
+TagSignatureSchema
+tag_head_schema
+tag_head_schemas
+general_tag_signatures
+TagParts
+tag_parts
+TagRecord
+tag_records
 ```
 
 ## Where To Go Next

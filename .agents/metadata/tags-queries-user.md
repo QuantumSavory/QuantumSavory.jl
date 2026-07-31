@@ -61,6 +61,14 @@ When you already know the match you care about, prefer `query_wait` or
 - Match helpers:
   - `W`
   - `Tag(...)`
+- Schema discovery:
+  - `tag_head_schemas()`
+  - `tag_head_schema(TagType)`
+  - `general_tag_signatures()`
+- Non-consuming inspection:
+  - `tag_parts(tag)`
+  - `tag_records(register_or_slot)`
+  - `message_records(messagebuffer)`
 
 ## Usage Guidance
 
@@ -75,6 +83,9 @@ When you already know the match you care about, prefer `query_wait` or
 - Use `locked=` and `assigned=` filters when resource availability matters, especially in networking protocols.
 - Use `querydelete!` or `querydelete_wait!` when the tag or message is consumable state.
 - Prefer waiting helpers over manual `while true` polling loops.
+- Tag and message records are immutable simulator-domain snapshots in
+  oldest-first order. Map their IDs, node or slot indices, and values to a wire
+  format only in the downstream presentation layer.
 - Prefer `query_wait` and `querydelete_wait!` over `onchange(...)` followed by a
   query when possible:
   - the helpers check existing matches first and then wait only if necessary;
@@ -86,6 +97,8 @@ When you already know the match you care about, prefer `query_wait` or
 - Use `tag!` only on register slots like `reg[i]`.
 - Use `put!` for message buffers and classical channels.
 - `queryall` is for registers, not message buffers.
+- Use schema and record APIs for tooling; do not inspect SumTypes variants,
+  register tag dictionaries, or message-buffer vectors directly.
 
 ## Good Docs And Examples To Open Next
 

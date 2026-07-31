@@ -47,6 +47,9 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   Preserve the exact configuration-field contracts: `EntanglerProt.tag`
   permits such a type or `nothing`, while `EntanglementConsumer.tag` requires
   such a type.
+- Add every standard named tag head to the explicit `tag_head_schemas()`
+  catalog, with fields in its stored `Tag` order. Do not discover tag heads by
+  scanning `Tag` methods or Julia subtypes.
 - If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::Type{<:MyProt}) = true`; instance queries delegate to this type-level trait.
 
 ## Protocol Metadata Invariants

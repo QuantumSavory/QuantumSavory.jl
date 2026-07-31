@@ -84,6 +84,10 @@ export
     uptotime!, overwritetime!,
     # tags.jl and queries.jl and querywait.jl
     AbstractTag, Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    TagFieldSchema, TagHeadSchema, TagSignatureSchema,
+    tag_head_schema, tag_head_schemas, general_tag_signatures,
+    TagParts, tag_parts, TagRecord, tag_records,
+    MessageRecord, message_records, access_time,
     findfreeslot,
     #messagebuffer.jl
     MessageBuffer,
@@ -173,6 +177,9 @@ include("CircuitZoo/CircuitZoo.jl")
 include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
+
+include("tag_metadata.jl")
+include("inspection.jl")
 
 include("should_upstream.jl")
 include("precompile.jl")

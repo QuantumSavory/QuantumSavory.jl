@@ -24,6 +24,23 @@ Use `.agents/metadata/tags-queries-user.md` for that.
   - ordered ids in `reg.guids`
   - payloads in `reg.tag_info[id] = (; tag, slot, time)`
 - Message buffers store `(; src, tag)` entries in arrival order.
+- `tag_parts` is the public representation-independent view of a `Tag`.
+- `tag_records` and `message_records` expose immutable oldest-first snapshots
+  while retaining simulator `Int128` IDs and local indices.
+
+## Metadata Catalog Invariants
+
+- `tag_head_schemas()` is the explicit built-in `AbstractTag` catalog; loading
+  unrelated packages must not change it.
+- `TagHeadSchema.fields` exactly matches the named head's field layout and
+  stored `Tag` order.
+- `general_tag_signatures()` explicitly describes generic Symbol and DataType
+  shapes and excludes the internal forwarding variant.
+- Custom packages can extend `tag_head_schema` for their named heads without
+  mutating either built-in catalog.
+- Keep these APIs Julia-native and JSON-neutral. External type IDs, external
+  node or slot IDs, display strings, and serialization policy belong
+  downstream.
 
 ## Query Semantics That Matter In Review
 
@@ -76,6 +93,8 @@ Use `.agents/metadata/tags-queries-user.md` for that.
   async boundary. Prefer `querydelete!`/`querydelete_wait!`, or check that a
   fresh query still matches after acquiring locks.
 - Keep user docs honest about the current implementation. The current code does not support arbitrarily rich tag payloads.
+- Prefer the public schema and snapshot APIs in integrations. Direct tag
+  dictionaries and message vectors remain implementation details.
 
 ## Source Files To Read
 
@@ -83,12 +102,15 @@ Use `.agents/metadata/tags-queries-user.md` for that.
 - `src/queries.jl`
 - `src/querywait.jl`
 - `src/messagebuffer.jl`
+- `src/tag_metadata.jl`
+- `src/inspection.jl`
 
 ## Tests To Anchor Behavior
 
 - `test/general/tags_and_queries_tests.jl`
 - `test/general/querywait_tests.jl`
 - `test/general/messagebuffer_tests.jl`
+- `test/general/tag_metadata_inspection_tests.jl`
 
 ## Public Docs And Paper To Cross-Check
 

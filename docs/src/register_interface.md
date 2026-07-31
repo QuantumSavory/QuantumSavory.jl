@@ -24,6 +24,9 @@ Store a `state` in the given register slots. When using representations that sup
 
 The `accesstimes` attributes of the slots are reset to the given `time`.
 
+Use [`access_time`](@ref) to inspect one slot's simulator-domain access time
+without reaching into the register's parallel storage arrays.
+
 If `state<:Symbolic`, then [`consistent_representation`](@ref) is used to choose an appropriate representation based on the [`AbstractRepresentation`](@ref) properties of the register slots. Then an [`express`](@ref) call is made to transform the symbolic object into the appropriate representation.
 
 #### `initialize!(r::RegRef; time)` and `initialize!(reg::Register, i::Int64; time)`
@@ -58,6 +61,10 @@ flowchart TB
     direction LR
   end
   Ap --> Bp --> TOPp --> Cp ---> D2
+```
+
+```@docs; canonical=false
+access_time
 ```
 
 ## `apply!`

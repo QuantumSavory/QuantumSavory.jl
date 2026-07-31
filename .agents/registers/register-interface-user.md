@@ -58,6 +58,11 @@ initialize!((net[1, 1], net[2, 1]), StabilizerState("XX ZZ"))
   - `quantumstate`
   - `slots`
   - `isassigned`
+  - `access_time`
+- Metadata inspection:
+  - `tag_records(reg)` or `tag_records(reg[i])`
+  - `message_records(messagebuffer)`
+  - `tag_parts(tag)`
 - State preparation and evolution:
   - `initialize!`
   - `apply!`
@@ -80,6 +85,9 @@ initialize!((net[1, 1], net[2, 1]), StabilizerState("XX ZZ"))
 - Write protocol code against `RegRef`s, not backend state objects.
 - Use `RegisterNet` early if registers will participate in one simulation. It unifies time tracking and networking APIs.
 - Use locks when multiple simulated processes can touch the same slot.
+- Treat tag and message records as oldest-first snapshots. Their IDs, slot or
+  source indices, times, and `Tag` values are simulator-domain data; map them to
+  external IDs only in the presentation layer.
 
 ## Good Docs And Examples To Open Next
 

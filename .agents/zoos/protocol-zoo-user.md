@@ -67,6 +67,8 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 - Custom tag heads passed to `EntanglerProt` or `EntanglementConsumer` must be
   declared as concrete subtypes of `AbstractTag`; `nothing` is supported only
   by the entangler to disable tagging.
+- Use `tag_head_schemas()` for the deterministic catalog of standard named tag
+  heads and `tag_head_schema(TagType)` for ordered field metadata.
 - If a workflow depends on swap updates or deletion notices, include `EntanglementTracker`.
 - Use `protocol_log_context(prot)...` with Julia's standard logging macros.
   Custom protocols should overload `protocol_log_context` to return simulation

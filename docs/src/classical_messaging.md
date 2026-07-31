@@ -86,6 +86,17 @@ The most common buffer operations are:
 That pattern gives protocols a message-queue style interface without requiring
 each pair of protocols to set up bespoke point-to-point plumbing.
 
+For non-consuming tooling, [`message_records`](@ref) returns immutable
+oldest-first snapshots:
+
+```julia
+records = message_records(messagebuffer(net, node))
+```
+
+Each [`MessageRecord`](@ref) retains the simulator `Int128` ID, source node
+index (or `nothing` for local insertion), and `Tag` value. Presentation layers
+remain responsible for external node IDs and wire encoding.
+
 ## Locality Is By Convention, Not Enforcement
 
 QuantumSavory models network locality through the graph, channels, delays, and
@@ -106,6 +117,11 @@ protocols.
 
 That is more reusable than building every simulation around one fixed object
 graph of callbacks and explicit peer handles.
+
+```@docs; canonical=false
+MessageRecord
+message_records
+```
 
 ## Where To Go Next
 
