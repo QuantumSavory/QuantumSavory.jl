@@ -4,6 +4,8 @@ using ParallelTestRunner
 const TEST_PROJECTS = Dict(
     "plotting" => normpath(joinpath(@__DIR__, "projects", "plotting")),
     "examples" => normpath(joinpath(@__DIR__, "..", "examples")),
+    "states_rest_server" =>
+        normpath(joinpath(@__DIR__, "..", "examples", "states_rest_server")),
     "jet" => normpath(joinpath(@__DIR__, "projects", "jet")),
 )
 const JET_TEST_PATH = joinpath(@__DIR__, "jet_tests.jl")
@@ -23,6 +25,8 @@ else
 end
 
 test_project(name) = startswith(name, "plotting") ? TEST_PROJECTS["plotting"] :
+                     startswith(name, "examples/states_rest_server") ?
+                         TEST_PROJECTS["states_rest_server"] :
                      startswith(name, "examples") ? TEST_PROJECTS["examples"] :
                      startswith(name, "jet") ? TEST_PROJECTS["jet"] :
                      nothing

@@ -25,7 +25,8 @@
 - **(breaking)** Removed the ignored `Pᵈ` field from the two Genqo state
   wrappers, their metadata, and the example REST schema. The underlying Genqo
   spin-density-matrix functions do not accept detector excess noise, so the
-  old field never affected a simulated state.
+  old field never affected a simulated state. The REST example now rejects
+  undeclared query parameters with HTTP 400 instead of silently ignoring them.
 - **(breaking)** Simulation, network, protocol, and visualization traces now use
   Julia's standard logging macros with stable `event` symbols and structured
   metadata. Rendered messages have changed, and routine low-level simulation

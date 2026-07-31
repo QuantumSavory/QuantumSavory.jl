@@ -6,6 +6,12 @@ using QuantumSavory.StatesZoo.Genqo: GenqoUnheraldedSPDCBellPairW, GenqoMultiple
 using QuantumOpticsBase
 using QuantumSymbolics
 
+const NO_QUERY_PARAMETERS = ()
+const BARRETT_KOK_QUERY_PARAMETERS =
+    ("etaA", "etaB", "Pd", "etad", "V", "m", "weighted")
+const GENQO_ZALM_QUERY_PARAMETERS = ("etab", "etad", "etat", "N")
+const GENQO_SPDC_QUERY_PARAMETERS = ("etad", "etat", "N")
+
 function parameters_valid(family, values)
     schema = state_family_schema(family)
     return length(values) == length(schema.parameters) &&
@@ -13,21 +19,46 @@ function parameters_valid(family, values)
                zip(values, schema.parameters))
 end
 
+function validated_queryparams(req, allowed_parameters)
+    params = queryparams(req)
+    unknown_parameters = sort!(
+        String[
+            name
+            for name in keys(params)
+            if name ∉ allowed_parameters
+        ],
+    )
+    rejection = isempty(unknown_parameters) ? nothing : json(
+        Dict(
+            "error" => "Unknown query parameters",
+            "unknown_parameters" => unknown_parameters,
+        );
+        status=400,
+    )
+    return params, rejection
+end
+
 @oxidise
-@get "/api/health" function()
+@get "/api/health" function(req)
+    _, rejection = validated_queryparams(req, NO_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running -- see implementation details at https://github.com/QuantumSavory/QuantumSavory.jl/tree/main/examples/states_rest_api")
 end
 
 # Barrett-Kok Bell Pair endpoints
 @get "/api/barrett-kok/density-matrix" function(req)
+    params, rejection = validated_queryparams(req, BARRETT_KOK_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     # Extract parameters with defaults
-    ηᴬ = Base.get(queryparams(req), "etaA", "1.0") |> x -> parse(Float64, x)
-    ηᴮ = Base.get(queryparams(req), "etaB", "1.0") |> x -> parse(Float64, x)
-    Pᵈ = Base.get(queryparams(req), "Pd", "0.0") |> x -> parse(Float64, x)
-    ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
-    𝒱 = Base.get(queryparams(req), "V", "1.0") |> x -> parse(Float64, x)
-    m = Base.get(queryparams(req), "m", "0") |> x -> parse(Int, x)
-    weighted = Base.get(queryparams(req), "weighted", "false") == "true"
+    ηᴬ = Base.get(params, "etaA", "1.0") |> x -> parse(Float64, x)
+    ηᴮ = Base.get(params, "etaB", "1.0") |> x -> parse(Float64, x)
+    Pᵈ = Base.get(params, "Pd", "0.0") |> x -> parse(Float64, x)
+    ηᵈ = Base.get(params, "etad", "1.0") |> x -> parse(Float64, x)
+    𝒱 = Base.get(params, "V", "1.0") |> x -> parse(Float64, x)
+    m = Base.get(params, "m", "0") |> x -> parse(Int, x)
+    weighted = Base.get(params, "weighted", "false") == "true"
 
     try
         # Validate parameters
@@ -69,7 +100,10 @@ end
     end
 end
 
-@get "/api/barrett-kok/parameters" function()
+@get "/api/barrett-kok/parameters" function(req)
+    _, rejection = validated_queryparams(req, NO_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     params = stateparameters(BarrettKokBellPair)
     ranges = stateparametersrange(BarrettKokBellPair)
 
@@ -89,11 +123,14 @@ end
 
 # Genqo ZALM (Multiplexed Cascaded) endpoints
 @get "/api/genqo/zalm/density-matrix" function(req)
+    params, rejection = validated_queryparams(req, GENQO_ZALM_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     # Extract parameters with defaults
-    ηᵇ = Base.get(queryparams(req), "etab", "1.0") |> x -> parse(Float64, x)
-    ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
-    ηᵗ = Base.get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
-    N = Base.get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
+    ηᵇ = Base.get(params, "etab", "1.0") |> x -> parse(Float64, x)
+    ηᵈ = Base.get(params, "etad", "1.0") |> x -> parse(Float64, x)
+    ηᵗ = Base.get(params, "etat", "1.0") |> x -> parse(Float64, x)
+    N = Base.get(params, "N", "0.1") |> x -> parse(Float64, x)
 
     try
         # Validate parameters
@@ -130,7 +167,10 @@ end
     end
 end
 
-@get "/api/genqo/zalm/parameters" function()
+@get "/api/genqo/zalm/parameters" function(req)
+    _, rejection = validated_queryparams(req, NO_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     params = stateparameters(GenqoMultiplexedCascadedBellPairW)
     ranges = stateparametersrange(GenqoMultiplexedCascadedBellPairW)
 
@@ -148,10 +188,13 @@ end
 
 # Genqo SPDC endpoints
 @get "/api/genqo/spdc/density-matrix" function(req)
+    params, rejection = validated_queryparams(req, GENQO_SPDC_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     # Extract parameters with defaults
-    ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
-    ηᵗ = Base.get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
-    N = Base.get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
+    ηᵈ = Base.get(params, "etad", "1.0") |> x -> parse(Float64, x)
+    ηᵗ = Base.get(params, "etat", "1.0") |> x -> parse(Float64, x)
+    N = Base.get(params, "N", "0.1") |> x -> parse(Float64, x)
 
     try
         # Validate parameters
@@ -184,7 +227,10 @@ end
     end
 end
 
-@get "/api/genqo/spdc/parameters" function()
+@get "/api/genqo/spdc/parameters" function(req)
+    _, rejection = validated_queryparams(req, NO_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     params = stateparameters(GenqoUnheraldedSPDCBellPairW)
     ranges = stateparametersrange(GenqoUnheraldedSPDCBellPairW)
 
@@ -200,7 +246,10 @@ end
 end
 
 # General info endpoint
-@get "/api/states" function()
+@get "/api/states" function(req)
+    _, rejection = validated_queryparams(req, NO_QUERY_PARAMETERS)
+    isnothing(rejection) || return rejection
+
     return Dict(
         "available_states" => [
             Dict(

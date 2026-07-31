@@ -120,6 +120,16 @@ The server will start on `http://localhost:8080`
 }
 ```
 
+Every endpoint has a closed query schema. Undeclared query parameters are rejected
+with HTTP 400 instead of being silently ignored:
+
+```json
+{
+  "error": "Unknown query parameters",
+  "unknown_parameters": ["Pd"]
+}
+```
+
 ## Example Usage
 
 ### Using curl
@@ -210,7 +220,7 @@ Unheralded spontaneous parametric down-conversion Bell pair source, as described
 - The density matrices are returned as separate real and imaginary parts to ensure JSON compatibility
 - For Genqo states, `Genqo.jl` must be available in the active Julia environment
 - The current Genqo backends do not model detector excess noise, so the Genqo
-  endpoints do not accept a `Pd` parameter
+  endpoints reject a `Pd` parameter with HTTP 400
 - All states represent two-qubit systems with 4×4 density matrices
 - Parameter validation is performed server-side with appropriate error messages
 - The weighted versions return unnormalized density matrices where the trace represents the success probability
