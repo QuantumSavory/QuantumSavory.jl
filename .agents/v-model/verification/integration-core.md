@@ -22,8 +22,7 @@ These actions exercise core subsystem boundaries and failure paths.
 - **Evidence:** [`register_interface_tests.jl`](../../../test/general/register_interface_tests.jl), [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`apply_tests.jl`](../../../test/general/apply_tests.jl), [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`project_traceout_tests.jl`](../../../test/general/project_traceout_tests.jl), [`noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl)
 - **Nonconformance:** Built-in tests do not jointly cover both representations, factor
   identities, local-time synchronization, unchanged observed owners, and survivor
-  mappings. Symbolic/backend hooks are internal and are intentionally not tested as
-  third-party seams.
+  mappings.
 
 ## INTV-002 — Verify scheduling against waits and notifications
 
@@ -69,16 +68,16 @@ These actions exercise core subsystem boundaries and failure paths.
 - **Evidence:** [`tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`protocolzoo_entanglement_consumer_stale_query_tests.jl`](../../../test/general/protocolzoo_entanglement_consumer_stale_query_tests.jl), [`protocolzoo_entanglement_tracker_lock_gap_tests.jl`](../../../test/general/protocolzoo_entanglement_tracker_lock_gap_tests.jl), [`protocolzoo_swapper_stale_query_tests.jl`](../../../test/general/protocolzoo_swapper_stale_query_tests.jl), [`protocolzoo_entanglement_id_tests.jl`](../../../test/general/protocolzoo_entanglement_id_tests.jl)
 - **Nonconformance:** No all-mode canonical comparison exists. Separate lifecycle tests
   do not jointly prove every field, absence of an implicit wait lock, matching update,
-  stale rejection, and exactly-once removal. Protocol lifecycle hooks are internal.
+  stale rejection, and exactly-once removal.
 
 ## INTV-005 — Verify backend dispatch and representation conversion
 
 - **Covers:** SUB-010
 - **Method:** test
-- **Procedure:** Run the built-in capability matrix across initialization, composition,
-  operations, observables, measurement, traceout, backgrounds, non-instant evolution,
-  and transport; force constrained and mixed representations to a common general
-  representation and probe no-method dispatch.
+- **Procedure:** Run the built-in capability matrix and a minimal external adapter
+  across initialization, composition, operations, observables, measurement, traceout,
+  backgrounds, non-instant evolution, and transport; force constrained and mixed
+  representations to a common general representation and probe no-method dispatch.
 - **Environment / configuration:** Root matrix with exact, Monte Carlo, stabilizer, and
   Gaussian states, captured warnings, and configured representation approximation
   parameters.
@@ -91,11 +90,12 @@ These actions exercise core subsystem boundaries and failure paths.
   representation. A supported general input plus explicit twirling object converts to
   the requested specialized representation with the object's declared semantics;
   without that object it remains general. When no method or conversion applies,
-  dispatch produces a `MethodError` with any hint remaining supplemental.
+  dispatch produces a `MethodError` with any hint remaining supplemental. The external
+  adapter participates through only the documented public extension methods.
 - **Status:** planned
 - **Evidence:** [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), [`project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl)
 - **Nonconformance:** The built-in matrix is partial. Only selected conversion paths
   exist; uniform promotion and propagation of configured representation approximation
   settings, explicit twirling, warning policy, and complete MethodError/hint coverage
-  are unimplemented. Backend hooks are internal rather than third-party extension
-  contracts.
+  are unimplemented. No independent external-adapter conformance fixture exercises the
+  documented public extension path.

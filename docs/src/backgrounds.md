@@ -69,9 +69,8 @@ pt_to_html(types; backend = :html, show_column_labels = false) # hide
 ```
 
 
-Repository-owned backend implementations currently lower declared backgrounds through
-the internal `paulinoise`, `krausops`, and `lindbladop` methods. These methods are not a
-supported third-party extension API.
+If you want to inspect how a declared background process is represented, use
+[`paulinoise`](@ref), [`krausops`](@ref), and [`lindbladop`](@ref).
 
 ## Where To Go Next
 

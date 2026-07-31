@@ -8,11 +8,12 @@
 
 ## Add the circuit
 
-1. Define a small built-in `AbstractCircuit` subtype in
-   `src/CircuitZoo/CircuitZoo.jl` or a clearly included sibling file. Keep
-   configuration in fields and execution in one callable method. The current API test
-   constructs every direct subtype, including internal helpers, with `T()` and expects
-   exactly one callable implementation.
+1. Define a small `AbstractCircuit` subtype with configuration in fields and execution
+   in one callable method. Repository entries live in `src/CircuitZoo/CircuitZoo.jl` or
+   an included sibling file; external libraries can implement the same documented
+   callable convention. The current API test constructs every direct subtype,
+   including internal helpers, with `T()` and expects exactly one callable
+   implementation.
 2. State slot order, required occupancy, supported representations, modeled result
    values, and destructive effects in the docstring. A measurement commonly traces out
    its input; an ordinary failure result may also reset the candidate state.
@@ -20,10 +21,11 @@
    `observable`, and `traceout!`) rather than reaching into state references. Implement
    cleanup for modeled Boolean/measurement failure branches. A thrown exception may
    leave partial mutation and ends the run; do not build rollback solely for it.
-4. Implement the public feature/arity introspection required by SUB-012. Today only
-   unexported `inputqubits` exists and the surface test makes it optional; do not extend
-   that gap. Count fixed purified inputs as well as sacrificed varargs. For a callable
-   with non-slot arguments such as `SDEncode`'s message, distinguish data from slots.
+4. Implement the supported public `inputqubits` feature/arity interface required by
+   SUB-012. It remains unexported and optional in the current surface test, so do not
+   extend those marking and coverage gaps. Count fixed purified inputs as well as
+   sacrificed varargs. For a callable with non-slot arguments such as `SDEncode`'s
+   message, distinguish data from slots.
 5. Export or declare the public type, and place it in the human CircuitZoo API with a
    user-oriented example. Keep formulas and signature catalogs in human docs.
 6. Add a focused test for ideal success, detectable failure, undetected-error behavior
@@ -44,5 +46,6 @@ checking the exact [cataloged limitations](circuits-catalog.md).
 
 ## Current gap
 
-The repository still needs one marked public circuit-feature API that represents both
-fixed and variable arity; `inputqubits` is currently incomplete and internal.
+`AbstractCircuit` and `inputqubits` are supported extension interfaces but still need
+generated prose plus `public` declarations. `inputqubits` also needs complete fixed- and
+variable-arity coverage.

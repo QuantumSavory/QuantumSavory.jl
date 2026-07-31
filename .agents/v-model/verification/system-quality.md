@@ -51,9 +51,9 @@ and inspection behavior.
   maps every checked-in script, interactive path, and server to a bounded test. It is
   not run across the full compatible-version range, and the credentialed docs build has
   no isolated integration test. The current 42-published/one-draft/two-archived-page
-  inventory is manual rather than mechanically enforced. Several examples depend on internal
-  `AbstractProtocol`/logging hooks, concrete `_log`/`_backlog` or `StateRef.state`
-  fields, or exported-but-undocumented `nongreedymultilock`.
+  inventory is manual rather than mechanically enforced. Several examples read
+  concrete `_log`/`_backlog` runtime storage or use the exported-but-undocumented
+  `nongreedymultilock`.
 
 ## SYSV-010 — Verify public inspection and network metadata
 

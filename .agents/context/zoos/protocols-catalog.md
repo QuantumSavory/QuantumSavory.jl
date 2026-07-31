@@ -30,12 +30,12 @@ graph labels. Entanglement pair identifiers can collide with the zero sentinel u
 the current combination scheme. Switch tests cover several stale-match and
 reciprocal-delete races, but do not prove every scheduler policy.
 
-Public protocol constructors generally use documented DocStringExtensions field tables.
-Those tables describe constructor parameters; concrete struct layout is not stable.
-`AbstractProtocol`, process wiring, `permits_virtual_edge`, and logging-context
-overloads are internal implementation seams rather than third-party extension APIs.
-Human API prose now labels those seams internal, but they remain exported or are used by
-checked-in examples. That source/example mismatch is tracked by SYS-009 and SYS-012.
+The supported authoring surface includes the documented `AbstractProtocol` callable
+pattern, virtual-edge capability, and logging-context overload, so external libraries
+can define reusable protocols in the same style as ProtocolZoo. Public protocol
+constructors generally use DocStringExtensions field tables. Configuration fields are
+supported constructor inputs; runtime bookkeeping fields such as `_log` and `_backlog`
+are explicitly internal and their storage types may change.
 
 ## Anchors
 
@@ -49,10 +49,10 @@ checked-in examples. That source/example mismatch is tracked by SYS-009 and SYS-
 - MBQC assumes contiguous node labels in several paths.
 - Combined entanglement identifiers can collide with the zero sentinel.
 - The documented qualified `promponas_bruteforce_choice` switch selector and Zoo module
-  bindings lack `public` declarations.
+  bindings lack `public` declarations. The documented unexported `AbstractProtocol` and
+  `permits_virtual_edge` extension names have the same marking gap.
 - Generated constructor-reference coverage is not mechanically audited. Runtime
   `_log`/`_backlog` storage remains accepted by generated `@kwdef` constructor paths and
-  is read by examples, although maintained constructor prose excludes it. Public outer
-  constructors still need to hide that internal storage completely.
-- Internal protocol hooks remain exported or used by checked-in examples even though
-  maintained API prose now classifies them as internal.
+  is read by examples even though its concrete type is not a supported interface.
+- No independent conformance fixture defines an external protocol and verifies the full
+  documented authoring surface.

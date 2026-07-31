@@ -112,11 +112,9 @@ protocol_log_context(prot::MySwapperProt) = (
 )
 ```
 
-This tutorial-local protocol mirrors ProtocolZoo's current internal logging
-pattern. `AbstractProtocol` and `protocol_log_context` are not supported
-third-party extension hooks and may change together with this checked-in
-example. Bob is the protocol's fixed node; Alice and Charlie are dynamic peers
-recorded on the events that involve them.
+The context overload is the standard logging extension point for a custom
+protocol. Bob is the protocol's fixed node; Alice and Charlie are dynamic peers
+and are recorded as `remote_nodes` on the events that involve them.
 
 The protocol starts by waiting on Bob's message buffer. No direct handle to the
 requesting protocol is needed; the only contract is that a `:swap_request`

@@ -26,20 +26,21 @@
 - **Normative statement:** A product interface shall be public and SemVer-protected
   when it is described in generated prose documentation and is either exported or
   declared `public`; neither documentation nor namespace exposure alone makes it
-  public. Documented qualified APIs shall be declared `public`; internal helpers and
-  implementation or third-party extension hooks shall not be presented as public.
+  public. Documented qualified APIs shall be declared `public`. Supported backend,
+  state-model, circuit, protocol, logging-context, and optional-capability extension
+  points follow the same public convention; undocumented implementation helpers do not.
   Representation defaults are the sole stated exception to this protection, and a
   preceding deprecation release is not required for a breaking change.
 - **Parents:** STK-004
 - **Acceptance criterion:** A generated-documentation and namespace inventory finds
   every public API both documented and exported or declared `public`, including
-  qualified inspection functions, and finds no internal Zoo helper or backend,
-  lowering, lifecycle, logging-context, or activation hook advertised as public. Across
-  a SemVer-compatible comparison, protected APIs, public tag layouts, query/wait/event
-  semantics, and log-group identifiers remain compatible; representation defaults,
-  nonpublic internals, log payloads, event identifiers, and rendering content may
-  differ. A breaking release may remove a public interface without an earlier
-  deprecation release.
+  qualified inspection functions and documented extension points, and finds no
+  undocumented implementation helper advertised as public. Across a SemVer-compatible
+  comparison, protected APIs, public tag layouts, query/wait/event semantics, and
+  log-group identifiers remain compatible; representation defaults, nonpublic
+  internals, log payloads, event identifiers, and rendering content may differ. A
+  breaking release may remove a public interface without an earlier deprecation
+  release.
 - **Verification:** SYSV-007 (test)
 - **Context:** [Documentation workflow](../../context/workflows/documentation.md)
 

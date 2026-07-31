@@ -80,9 +80,8 @@ provide:
 - parameterized reference implementations,
 - and interoperable components that reduce glue code.
 
-When a needed component does not exist yet, users can compose the public register,
-state, operation, event, metadata, and messaging APIs directly. Internal Zoo subtype
-and lifecycle hooks are not third-party extension interfaces.
+When a needed component does not exist yet, the same APIs remain available for
+the user to define their own state, circuit, or protocol in the same style.
 
 ## Where To Go Next
 

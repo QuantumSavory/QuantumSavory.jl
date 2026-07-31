@@ -80,6 +80,8 @@ function main()
         "Gate Duration" => "tutorial/noninstantgate.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",
+        #"Message queues" => "tutorial/message_queues.md", TODO
+        #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
     ],
     "References" => [
         "references.md",

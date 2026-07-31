@@ -82,14 +82,11 @@ Calls [`uptotime!`](@ref) in order to update any [`AbstractBackground`](@ref) pr
 
 Calls [`subsystemcompose`](@ref) in order to make one big state. Then goes to `apply!(state, subsystem_indices, operation; time)`.
 
-#### Internal native-state `apply!` lowering
+#### `apply!(state, subsystem_indices, operation; time)`
 
 `subsystem_indices` refers to subsystems in `state`.
 
 If `operation<:Symbolic`, then `express(operation, repr, ::UseAsOperation)` is used to convert the symbolic `operation` into something workable for the given state type. `repr` is chosen by dispatch on `state`.
-
-This native-state dispatch is repository backend implementation detail, not a
-supported third-party extension API.
 
 !!! warning "Limitations of symbolic-to-explicit conversion"
 
@@ -121,12 +118,9 @@ flowchart TB
 
     As mentioned above, converting from symbolic to explicit representation for the `operation` is dependent only on the type of `state`, i.e. by the time the conversion is done, no knowledge of the register and its properties are kept (in particular its preferred representation is not considered).
 
-!!! info "Internal short-circuit of the `express` dispatch"
+!!! info "Short-circuiting the `express` dispatch"
 
-    Built-in backends can skip `express` by defining a specialized
-    `apply!` method for their native state type. This is an internal integration
-    seam rather than a supported third-party extension API, and it also skips
-    the memoization employed by `express`.
+    You can add a custom dispatch that skips the `express` functionality by defining a method `apply!(state::YourStateType, indices, operation<:Symbolic{AbstractOperator})`. This would preemt the default `apply!(state, indices, operation<:Symbolic{AbstractOperator})` containing the `express` logic. The drawback is that this would also skip the memoization employed by `express`.
 
 ## `observable`
 
@@ -182,10 +176,9 @@ flowchart TB
   D1 --> D2
 ```
 
-!!! info "Internal short-circuit of the `express` dispatch"
+!!! info "Short-circuiting the `express` dispatch"
 
-    Built-in backends can skip `express` with a native-state `observable` method.
-    This dispatch is an internal repository integration seam.
+    Similarly to the case with `apply!`, you can skips the `express` functionality by defining a method `observable(state::YourStateType, indices, obs<:Symbolic{AbstractOperator})`.
 
 ## `project_traceout!`
 
@@ -197,7 +190,7 @@ project_traceout!
 
 Project the state in `RegRef` on `basis` at a specified `time`. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
 
-#### `project_traceout!(reg::Register, i::Int, basis; time)`
+#### `project_traceout(reg::Register, i::Int, basis; time)`
 
 Project the state in the slot in index `i` of `Register` on `basis` at a specified `time`.  `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
 
@@ -210,10 +203,9 @@ Project the state in `RegRef` on `basis` at a specified `time` and apply functio
 Project the state in the slot in index `i` of `Register` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
 Lowers the representation from registers to states.
 
-#### Internal native-state `project_traceout!` lowering
+#### `project_traceout!(state, stateindex, basis::Symbolic{AbstractOperator})` and `basis::AbstractVecOrTuple{<:Symbolic{AbstractKet}}`
 
-Repository backend implementations dispatch on the native state, subsystem index, and
-symbolic operator or ket basis. This is not a supported third-party extension API.
+Backend implementations.
 If `basis` is an operator, call `eigvecs` to convert it into a matrix whose columns are the eigenvectors of the operator.
 If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` to convert it to the necessary representation.
 
@@ -225,8 +217,8 @@ flowchart TB
   B["<code>project_traceout!(reg::Register, i::Int, basis; time)</code>"]
   subgraph TOP [lower from registers to states]
     direction LR
-    D1["resolve the slot's shared state"]
-    D2["resolve the slot's subsystem position"]
+    D1["<code>reg.staterefs[i].state[]</code>"]
+    D2["<code>reg.stateindices[i]</code>"]
   end
   E1["<code>basis::Symbolic{AbstractOperator}</code>"]
   F1["<code>eigvecs(basis)</code>"]
@@ -298,9 +290,6 @@ Evolve the state represented by the given `RegRef`s upto a time `now`
 
 Evolve the state of all the given `registers` at the slots represented by `indices` upto a time `now`
 
-The remaining native-state overloads in this section are repository backend
-implementation details, not a supported third-party extension API.
-
 #### `uptotime!(stateref::StateRef, idx::Int, background, Δt)`
 
 Evolve a `StateRef` at index `idx` with given `background` and `Δt`
@@ -367,10 +356,6 @@ Overwrite the time of the simulation for the given references to `now`
 #### `overwritetime!(registers, indices, now)`
 
 Overwrite the time of the simulation for the given `registers` at `indices` to `now`
-
-This low-level helper does not apply background evolution or validate ordering. Use it
-only with a nondecreasing target time; after an invalid time update, the simulation
-state is not guaranteed to remain consistent.
 
 #### Interface Overview
 

@@ -10,8 +10,9 @@
 
 QuantumSavory declares three Julia package extensions. Documented, exported user calls
 become available only when every weak dependency named for the extension is loaded.
-The Julia extension-method seams themselves are internal and are not a supported
-third-party extension API:
+Those callable APIs are supported for their declared dependency combinations; the
+generated extension-module names and package-loading machinery are implementation
+details:
 
 - `QuantumSavoryInteractiveUtils` requires both `InteractiveUtils` and `REPL`. It
   implements discovery of slot, background, and public protocol types plus constructor
@@ -58,4 +59,4 @@ shard, while Buildkite has a distinct plotting job.
 - The prose-documented qualified `showmetadata` visualization call lacks `export` or
   `public` marking.
 - Interactive discovery assumes protocol types expose particular `sim`/`net` fields
-  even though protocol lifecycle hooks are internal.
+  instead of relying only on the documented protocol extension surface.

@@ -6,16 +6,18 @@
   shall be supported, document its constructor parameters and compatible
   representations, expose introspection of expected parameter values, and distinguish
   unit-trace models from weighted models whose trace carries a documented success
-  weight. Constructor parameters, not concrete struct fields, form the public
-  interface.
+  weight. The documented model and lowering interface shall support entries supplied by
+  external libraries as well as StatesZoo. Constructor parameters, not concrete struct
+  fields, form the public interface.
 - **Parents:** SYS-007, SYS-008, SYS-009, SYS-012
 - **Acceptance criterion:** For every public state entry, generated API and example
   documentation names every constructor parameter, introspection returns an expected
   value or exploratory range for each parameter in constructor order, and lowering to
   every representation designated compatible produces the declared subsystem arity.
   Normalized entries have unit trace and weighted entries have trace equal to their
-  documented success weight; concrete field layout is not required by the public
-  checks.
+  documented success weight. A separately defined external model implements the same
+  constructor, introspection, and lowering interface without repository-private
+  helpers; concrete field layout is not required by the public checks.
 - **Verification:** INTV-006 (test)
 - **Origin / risk:** Current state catalog, explorer interface, and maintainer
   interview; high normalization-interpretation risk
@@ -37,15 +39,18 @@
 - **Normative statement:** Every public circuit entry shall be supported, run
   immediately on caller-selected logical slots without scheduling waits or message
   exchange, and expose a consistent public feature API describing at least required
-  input arity, return behavior, and destructive measurement or removal effects.
+  input arity, return behavior, and destructive measurement or removal effects. The
+  documented callable and feature interface shall support entries supplied by external
+  libraries as well as CircuitZoo.
 - **Parents:** SYS-008, SYS-009, SYS-012
 - **Acceptance criterion:** For every public swap, purification (including advanced
   families), encoding/decoding, and fusion circuit, generated API and example
   documentation agrees with feature introspection. On a valid fixture, reported arity
   equals required slot arguments, the result has its documented shape, execution
   performs no simulated wait, every documented destructive input is removed, and every
-  documented retained success output remains. Internal helper circuits are absent from
-  public discovery.
+  documented retained success output remains. A separately defined external circuit
+  implements the documented callable and feature interface without repository-private
+  helpers. Internal helper circuits are absent from public discovery.
 - **Verification:** INTV-006 (test)
 - **Origin / risk:** Current circuit catalog, tests, and maintainer interview; high
   destructive-state risk
@@ -67,18 +72,22 @@
   switch, QTCP, and MBQC families, shall be supported as a resumable process, document
   every constructor parameter, coordinate through common metadata, messaging, timing,
   and resource-reservation boundaries, and revalidate mutable resource snapshots after
-  scheduling yields before consuming them. Constructor parameters, not concrete struct
-  fields, form the public interface.
+  scheduling yields before consuming them. The documented `AbstractProtocol`, virtual-
+  edge capability, and logging-context conventions shall support user and external-
+  library protocol implementations. Constructor parameters, not concrete struct fields,
+  form the public interface.
 - **Parents:** SYS-004, SYS-005, SYS-008, SYS-009, SYS-012
 - **Acceptance criterion:** The public protocol inventory includes core entanglement,
   switch, QTCP, and MBQC families, with every constructor parameter present in
   generated API documentation and an applicable example. Representative entries
-  schedule through the shared process boundary. Given an entanglement producer,
-  tracker, swapper, consumer, and delayed competing mutation, generated pairs have
-  reciprocal identity-bearing metadata, delayed updates target only the matching
-  current or documented historical pair, a snapshot invalidated before lock
-  acquisition is not consumed as current, and successfully consumed resources are
-  removed exactly once.
+  schedule through the shared process boundary. A user-defined `AbstractProtocol`
+  schedules through the same callable bridge, reports its virtual-edge capability, and
+  supplies logging context through the documented overload. Given an entanglement
+  producer, tracker, swapper, consumer, and delayed competing mutation, generated pairs
+  have reciprocal identity-bearing metadata, delayed updates target only the matching
+  current or documented historical pair, a snapshot invalidated before lock acquisition
+  is not consumed as current, and successfully consumed resources are removed exactly
+  once.
 - **Verification:** INTV-003 (test), INTV-007 (test)
 - **Origin / risk:** Core protocol behavior, race-aware tests, and maintainer interview;
   high distributed-consistency risk

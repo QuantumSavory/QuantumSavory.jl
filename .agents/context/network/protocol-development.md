@@ -6,13 +6,14 @@
 - **Related specification IDs:** SYS-004, SYS-005, SYS-008, SYS-009, SUB-013, CMP-012
 - **Review when:** Protocol process structure, tag schemas, pair identifiers, resource locking, or cleanup rules change.
 
-## Develop and review a built-in protocol
+## Develop and review a reusable protocol
 
 1. Represent long-running behavior as a callable `AbstractProtocol` executed by a
    ConcurrentSim process. Prefer the established shorthand constructor where applicable; it
    derives the simulation from the supplied `RegisterNet`, so do not maintain a
-   second, potentially inconsistent simulation argument. These lifecycle hooks organize
-   repository-owned implementations; they are not a third-party extension contract.
+   second, potentially inconsistent simulation argument. The documented
+   `AbstractProtocol` callable pattern is supported for both ProtocolZoo and
+   user-defined protocols.
 2. Declare the fixed tag payloads and slot ownership assumptions before coding. Use the
    public standard tag types when they express the protocol fact, preserving field
    order and types. Configurable typed tag heads must be concrete `AbstractTag`
@@ -31,10 +32,11 @@
    deletion, and message send are separate mutations. Define cleanup for ordinary
    protocol failure, timeout, and cancellation branches, but do not add rollback work
    solely to recover from an exception.
-6. Emit structured records using the stable `LOG_GROUPS.protocol` group and
-   the current internal `protocol_log_context` helper. Keep protocols, networks,
-   registers, messages, and other live objects out. Only the group is a stable logging
-   contract; message, level, event, field, ordering, and occurrence may all evolve.
+6. Emit structured records using the stable `LOG_GROUPS.protocol` group and the public
+   `protocol_log_context` extension point. Keep protocols, networks, registers,
+   messages, and other live objects out. The helper is supported, while only the group
+   is a stable logging schema; message, level, event, field, ordering, and occurrence
+   may all evolve.
 7. Test adversarial interleavings, not only completion. Force stale query results,
    reciprocal-tag disagreement, occupied or emptied slots, competing consumers, and
    timeout cleanup. Run the relevant protocol tests plus the general shard.

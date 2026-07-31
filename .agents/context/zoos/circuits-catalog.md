@@ -24,14 +24,15 @@ remain occupied after invocation. Return values range from Boolean success to
 measurement results; consult the concrete docstring rather than imposing one common
 result type.
 
-The exported callable types are the intended supported entries. Helper types such as
+The exported callable types are supported entries. Helper types such as
 `StringentHead` and `StringentBody` are unexported internals even though the current API
 test discovers every direct `AbstractCircuit` subtype.
 
-The only current feature-introspection function is `inputqubits`. It is unexported,
-unmarked, optional in the API test, missing for `SDEncode` and `SDDecode`, and inaccurate
-for two Stringent body helpers. This does not yet provide the well-defined public
-feature/arity surface required by SUB-012 and CMP-011.
+The supported public feature-introspection function is `inputqubits`, part of the
+documented `AbstractCircuit` interface in source. It is unexported, unmarked, absent
+from generated prose, optional in the API test, missing for `SDEncode` and `SDDecode`,
+and inaccurate for two Stringent body helpers. The public feature/arity surface
+required by SUB-012 and CMP-011 therefore remains incomplete.
 
 Current purification limitations are concrete:
 

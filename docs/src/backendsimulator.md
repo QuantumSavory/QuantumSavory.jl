@@ -3,7 +3,7 @@
 This page is the backend-focused companion to
 [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs). It names
 the current built-in backend families, the representation types that select
-them, and the internal interface points used by repository-owned backends.
+them, and the interface points used when attaching a new backend.
 
 ## Built-In Backend Families
 
@@ -54,9 +54,8 @@ When one `traceout!` call includes every live slot of a shared state, the regist
 layer deletes the complete group without backend reduction or trajectory
 sampling.
 
-Because `MCKet` is the stored state type, `quantumstate(stateref)` returns it
-directly and `StateRef` displays identify its implementation module as
-`QuantumSavory`.
+Because `MCKet` is the stored state type, `stateref.state[]` exposes it directly
+and `StateRef` displays identify its implementation module as `QuantumSavory`.
 Combining an `MCKet` with an existing `Operator` still promotes the ket through
 `dm` and produces an `Operator`.
 
@@ -117,14 +116,13 @@ Symbolic states and operators cross the backend boundary through `express`.
 That conversion is used by `initialize!`, `apply!`, `observable`, and related
 register operations.
 
-## Built-In Backend Integration Internals
+## Backend Extension Points
 
-Repository-owned backends do not replace the register API. Internally, they
-provide the methods that let the register API lower symbolic objects and act
-on native state types. These hooks are implementation details, not a supported
-third-party extension API, and may change without a breaking release.
+A new backend does not need to replace the register API. It needs to provide
+the methods that let the register API lower symbolic objects and act on native
+state types.
 
-In practice, a built-in backend integration usually defines:
+In practice, a backend integration usually defines:
 
 - a representation type such as `CliffordRepr()`, `QuantumOpticsRepr()`, or
   `GabsRepr(...)`;

@@ -29,9 +29,9 @@ LOCC protocols are driven by events:
 - a timeout expires,
 - or a slot lock is released.
 
-Those events may occur at different or identical simulated times, and several
-protocol components may be active at once. Discrete-event execution lets each
-protocol wait only on the events it cares about.
+Those events do not happen at the same time, and several protocol components
+may be active at once. Discrete-event execution lets each protocol wait only on
+the events it cares about.
 
 ## `@resumable` Processes
 
@@ -64,26 +64,68 @@ sim = Simulation()
 Once scheduled, the process runs whenever the events it is waiting on become
 ready.
 
-## Identical Timestamps Do Not Imply Order
+## `AbstractProtocol` Is The Reusable Protocol Pattern
 
-Simulated time determines when an event becomes ready; it does not define a
-relative order between otherwise independent events or processes with the same
-timestamp. Any equal-time tie-breaking observed from ConcurrentSim—including
-apparent insertion order—is an implementation detail and may change in a future
-ConcurrentSim version.
+Plain `@resumable` functions are supported, but QuantumSavory uses a more
+structured convention for reusable protocols: a callable struct subtype of
+`AbstractProtocol`.
 
-When a protocol requires ordering, express it as a causal dependency: await the
-earlier event or process, pass a message, hand off a resource, or use distinct
-simulated times. Do not rely on process launch order to resolve equal timestamps.
+```julia
+using QuantumSavory.ProtocolZoo: AbstractProtocol
+import QuantumSavory.ProtocolZoo: protocol_log_context
 
-## Reusable Protocol Processes
+struct MySwapperProt <: AbstractProtocol
+    sim::Simulation
+    net::RegisterNet
+    node::Int
+    alice::Int
+    charlie::Int
+end
 
-User-defined control flow can remain a plain `@resumable` function scheduled
-with `@process`. ProtocolZoo's built-in reusable protocols additionally use
-callable `AbstractProtocol` subtypes and logging-context helpers internally.
-Those lifecycle and logging hooks are not a supported third-party extension
-API. The custom-swapper tutorial mirrors the current internal pattern in
-tutorial-local code and is maintained with the checked-in example.
+protocol_log_context(prot::MySwapperProt) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:MySwapperProt,
+    nodes=(prot.node,),
+)
+
+@resumable function (prot::MySwapperProt)()
+    (; sim, net, node, alice, charlie) = prot
+    mb = messagebuffer(net, node)
+    @yield querydelete_wait!(mb, :swap_request)
+
+    a = query(net[node], EntanglementCounterpart, alice, ❓, ❓)
+    b = query(net[node], EntanglementCounterpart, charlie, ❓, ❓)
+
+    @yield lock(a.slot) & lock(b.slot)
+    # strictly speaking, we should be checking that
+    # by the time the locks are acquired
+    # alice and charlie still have the properties we have queried for
+    # (someone else might have consumed the entanglement in between)
+    x, y = LocalEntanglementSwap()(a.slot, b.slot)
+    @debug(
+        "Swapped entanglement",
+        _group=LOG_GROUPS.protocol,
+        event=:entanglement_swapped,
+        protocol_log_context(prot)...,
+        slots=(a.slot.idx, b.slot.idx),
+        remote_nodes=(alice, charlie),
+        correction=(Int(x), Int(y)),
+    )
+    unlock(a.slot)
+    unlock(b.slot)
+    return x, y
+end
+```
+
+This pattern is useful because configuration and runtime context stay packaged
+with the protocol. It is easier to pass around, store, visualize, and reuse
+than a large free function with many arguments.
+
+Custom protocols should overload
+[`QuantumSavory.ProtocolZoo.protocol_log_context`](@ref) as shown above. This
+is the public extension point for selecting a small, immutable node context;
+do not place the protocol, network, registers, or messages themselves in log
+metadata.
 
 ## Common Wait Conditions
 

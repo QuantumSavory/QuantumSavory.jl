@@ -22,12 +22,12 @@ defines `krausops(::PauliNoise)` and Clifford defines
 `paulinoise(::PauliNoise)`, but their callers supply a duration argument. The apparent
 helpers therefore do not implement those backend/noise pairs.
 
-The trait implementation, backend guide, and corrected 0.7.0 changelog entry map both
-`Qubit` and `Qumode` to `QuantumOpticsRepr`; `Register` applies those defaults slot by
-slot. Gabs and Clifford are explicit specialized choices, while `QuantumMCRepr` is a
-general peer of the ordinary QuantumOptics representation and does not require
-conversion to it. SYS-007 treats representation-default changes as the specific
-exception to ordinary SemVer protection.
+The trait implementation and backend guide map both `Qubit` and `Qumode` to
+`QuantumOpticsRepr`; `Register` applies those defaults slot by slot. Gabs and Clifford
+are explicit specialized choices, while `QuantumMCRepr` is a general peer of the
+ordinary QuantumOptics representation and does not require conversion to it. SYS-007
+treats representation-default changes as the specific exception to ordinary SemVer
+protection.
 
 Generic register operations may work for a backend when its primitive methods and
 traits satisfy the contract. Conversely, exported symbols or included files alone are
@@ -61,7 +61,7 @@ plotting and discovery calls, not representation capability or promotion failure
 ## Anchors
 
 - **Source:** [`src/traits_and_defaults.jl`](../../../src/traits_and_defaults.jl), [`src/baseops/initialize.jl`](../../../src/baseops/initialize.jl), [`src/backends/quantumoptics/`](../../../src/backends/quantumoptics/), [`src/backends/clifford/`](../../../src/backends/clifford/), and [`src/backends/gabs/`](../../../src/backends/gabs/) — defaults, current consistency selection, and backend implementations.
-- **Docs:** [`docs/src/backendsimulator.md`](../../../docs/src/backendsimulator.md), [`docs/src/restricted_formalisms.md`](../../../docs/src/restricted_formalisms.md), and [`CHANGELOG.md`](../../../CHANGELOG.md) — current representation guidance and default policy.
+- **Docs:** [`docs/src/backendsimulator.md`](../../../docs/src/backendsimulator.md) and [`docs/src/restricted_formalisms.md`](../../../docs/src/restricted_formalisms.md) — current representation guidance and default policy.
 - **Test:** [`test/general/representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`test/general/quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), and [`test/general/project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl) — exercised capabilities.
 
 ## Unresolved questions

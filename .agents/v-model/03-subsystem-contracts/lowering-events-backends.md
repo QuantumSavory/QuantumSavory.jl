@@ -57,13 +57,14 @@
 
 ## SUB-010 — Dispatch and promote through supported backend capabilities
 
-- **Normative statement:** A numerical adapter shall implement the capabilities needed
-  to create, compose, transform, observe, measure, reduce, or evolve its native state.
-  The coordination boundary shall preserve a supporting current representation,
-  automatically promote an insufficient constrained or mixed set to a configured
-  common general representation, and perform requested general-to-specialized
-  conversion through an explicit configurable object describing the twirling.
-- **Parents:** SYS-001, SYS-003, SYS-007
+- **Normative statement:** The documented numerical-adapter interface shall support
+  repository and external-library implementations of the capabilities needed to
+  create, compose, transform, observe, measure, reduce, or evolve native state. The
+  coordination boundary shall preserve a supporting current representation,
+  automatically promote an insufficient constrained or mixed set to a configured common
+  general representation, and perform requested general-to-specialized conversion
+  through an explicit configurable object describing the twirling.
+- **Parents:** SYS-001, SYS-003, SYS-007, SYS-009
 - **Acceptance criterion:** Representative exact-state, trajectory, stabilizer, and
   Gaussian adapters return documented state manifolds, subsystem counts, and
   normalization or weight for every designated capability. `QuantumOpticsRepr` and
@@ -73,8 +74,9 @@
   site with the initial and final representations. Given a supported general input and
   requested specialized representation, an explicit twirling object produces that
   representation with the object's declared semantics; without the object no
-  specialization occurs. A request with no applicable implementation or promotion
-  produces a `MethodError`.
+  specialization occurs. A separately supplied minimal adapter participates through the
+  same documented register and lowering generics without repository-private hooks. A
+  request with no applicable implementation or promotion produces a `MethodError`.
 - **Verification:** INTV-005 (test)
 - **Context:** [Backend extension](../../context/simulation/backend-extension.md)
 

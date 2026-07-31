@@ -11,8 +11,8 @@
 1. Place concepts, tutorials, how-to guides, and API reference in their existing
    Diátaxis-oriented sections. Update `docs/make.jl` navigation when adding a page.
    `docs/src/howto/repeatergrid/repeatergrid.md` is an explicitly labeled unpublished
-   draft, and `docs/outdated/` is explicitly archival, so filesystem presence is not
-   proof that a page is published.
+   draft, and each page under `docs/outdated/` is labeled archival, so filesystem
+   presence is not proof that a page is published.
 2. Keep runnable docstrings compatible with the plotting doctest setup. The main
    `makedocs` call sets `doctest=false`; it does not execute documentation-page
    `jldoctest` blocks. A separate plotting test calls `doctest(QuantumSavory)`, which
@@ -37,12 +37,14 @@ concrete field that stores it remains internal even when it has the same name. T
 checkout contains no `public` declarations. The current public-intent inventory is:
 
 - generated prose but no marking: qualified `stateof`, `quantumstate`, `swap!`,
-  `showmetadata`, `Switches.promponas_bruteforce_choice`,
+  `showmetadata`, `default_repr`, `Switches.promponas_bruteforce_choice`,
+  `ProtocolZoo.AbstractProtocol`,
   `ProtocolZoo.EntanglementDelete`, `ProtocolZoo.QTCP.QDatagramSuccess`, the three Zoo
   module bindings, their documented `Genqo`/`Switches`/`QTCP`/MBQC nested modules, and
-  the two Genqo state models;
-- source docstring but no generated prose or marking: `slots`; and
-- not ready to mark: CircuitZoo's inconsistent `inputqubits` feature seam.
+  the two Genqo state models; and
+- source docstring but no generated prose or marking: `slots`,
+  `ProtocolZoo.permits_virtual_edge`, `CircuitZoo.AbstractCircuit`, and its incomplete
+  `inputqubits` feature interface.
 
 Audit those gaps instead of treating documentation alone or an accidental export alone
 as sufficient. The Zoo catalogs give the model and feature details.
@@ -55,8 +57,8 @@ examples.
 
 At this audit revision, `docs/src/` has 43 Markdown content pages: 42 are listed in the
 Documenter page tree and the repeater-grid page is the one labeled unpublished draft.
-`docs/outdated/` has two labeled archival content pages plus its classification README.
-Recount this inventory when navigation or Markdown files change.
+`docs/outdated/` has two individually labeled archival content pages. Recount this
+inventory when navigation or Markdown files change.
 
 Navigation classification applies to human prose pages. `docs/make.jl`,
 `docs/Project.toml`, CSS, the bibliography, and referenced image/video assets are
@@ -69,7 +71,7 @@ exact bytes are not a rendering-content promise.
 ## Anchors
 
 - **Source:** [`docs/make.jl`](../../../docs/make.jl) and [`docs/Project.toml`](../../../docs/Project.toml) — build, external integration, navigation, and deployment.
-- **Docs:** [`docs/src/index.md`](../../../docs/src/index.md), [`docs/src/howto/repeatergrid/repeatergrid.md`](../../../docs/src/howto/repeatergrid/repeatergrid.md), and [`docs/outdated/README.md`](../../../docs/outdated/README.md) — published, draft, and archival classifications.
+- **Docs:** [`docs/src/index.md`](../../../docs/src/index.md), [`docs/src/howto/repeatergrid/repeatergrid.md`](../../../docs/src/howto/repeatergrid/repeatergrid.md), and [`docs/outdated/message_queues.md`](../../../docs/outdated/message_queues.md) — published, draft, and archival classifications.
 - **Test:** [`test/plotting/doctests_tests.jl`](../../../test/plotting/doctests_tests.jl) — the separately executed docstring doctests.
 - **CI:** [`.buildkite/pipeline.yml`](../../../.buildkite/pipeline.yml) — credentials and full-build invocation.
 

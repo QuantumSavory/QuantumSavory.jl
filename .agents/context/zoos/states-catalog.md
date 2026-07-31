@@ -23,7 +23,7 @@ for constructor parameters and formulas.
 Genqo.jl is a direct package dependency, not an optional Python integration. The two
 wrappers are nested under `StatesZoo.Genqo`. They have docstrings and a dedicated
 generated-docs section, but are neither exported nor declared `public`; that marking gap
-keeps source and the intended public catalog out of alignment. In both lowering paths
+keeps source and the public catalog out of alignment. In both lowering paths
 the constructor parameter `Pᵈ` is retained for compatibility but ignored because the
 called Genqo density-matrix routines do not accept dark counts. Do not interpret a
 changed `Pᵈ` value as simulated noise until that boundary changes.

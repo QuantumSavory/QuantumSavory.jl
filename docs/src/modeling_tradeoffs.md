@@ -72,12 +72,14 @@ Use `Gabs` when the system is naturally Gaussian:
 For those models, Gaussian simulation can be dramatically cheaper than a
 general wavefunction treatment.
 
-## Built-In Backend Evolution
+## Backend Extension
 
-QuantumSavory's repository-owned backend set can evolve without rewriting
-higher-level models and protocols. The symbolic frontend and register interface
-provide the internal integration structure used by those built-in backends.
-Those hooks are not a supported third-party extension API.
+QuantumSavory is not limited to the backends listed above. The symbolic
+frontend and register interface are designed so that new numerical backends can
+be integrated without rewriting higher-level models and protocols. This matters
+because new hardware abstractions and new specialized simulation methods keep
+appearing, and a full-stack tool needs to absorb them without forcing users to
+start over.
 
 ## Why The Symbolic Frontend Matters
 

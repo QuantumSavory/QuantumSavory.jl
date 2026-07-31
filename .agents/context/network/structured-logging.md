@@ -13,11 +13,11 @@ five stable group symbols: `backend`, `simulation`, `protocol`, `network`, and
 `visualization`. Use the exported values in `_group`; do not duplicate literal symbols
 throughout new code. Group filtering is the supported coarse selection mechanism.
 
-The current `simulation_log_context(sim)` helper supplies `sim_time::Float64` and
-`sim_process_id::Union{UInt,Nothing}`. `protocol_log_context(prot)` adds a protocol
-symbol and ordered node tuple. These helpers keep live protocol, network, register,
-message, and query objects out of base context, but their fields are implementation
-details rather than stable schemas.
+The exported `simulation_log_context(sim)` and `protocol_log_context(prot)` helpers are
+supported extension points for constructing records. The first currently supplies
+simulation time and process identity; the second adds protocol identity and an ordered
+node tuple and should be overloaded for custom `AbstractProtocol` layouts. Keep live
+protocol, network, register, message, and query objects out of base context.
 
 Only the five groups are stable. Messages, levels, event symbols, fields, semantic
 field details, ordering, presence, and event sequences may all change without a
@@ -40,10 +40,7 @@ must remain loadable without those packages.
 - **Docs:** [`docs/src/architecture.md`](../../../docs/src/architecture.md) and [`docs/src/API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md) — public structured-logging convention.
 - **Test:** [`test/general/logging_tests.jl`](../../../test/general/logging_tests.jl) and [`test/general/observable_tests.jl`](../../../test/general/observable_tests.jl) — group filtering, contexts, and sampled records.
 
-## Public-surface mismatch
-
-`simulation_log_context` and `protocol_log_context` remain exported even though
-maintainer-confirmed intent treats logging-context hooks as internal rather than
-third-party extension APIs. Human prose and their docstrings now say so, but source
-exports and checked-in examples that call them still need reconciliation under SYS-009
-and SYS-012. This does not alter the stability of `LOG_GROUPS`.
+Supporting the context helpers does not freeze their returned field schema. Consumers
+that require SemVer-stable filtering should select by `LOG_GROUPS`; custom emitters
+should splat the helper result and add event-specific metadata rather than depend on an
+exact field inventory.

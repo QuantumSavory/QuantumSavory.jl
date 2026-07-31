@@ -115,8 +115,9 @@ activation invariants.
 - **Nonconformance:** No generated-pair test asserts reciprocal equal nonzero IDs, and
   no uncontended swap asserts the exact consumed-ID combination. Stale/update routes
   remain split, and QTCP/MBQC tests do not exercise adversarial valid interleavings or
-  prove lock-and-revalidation coverage. Protocol surface tests do not reject internal
-  `_log`/`_backlog` constructor keywords.
+  prove lock-and-revalidation coverage. Protocol surface tests do not verify that
+  generated field docs distinguish supported configuration from unstable `_log` and
+  `_backlog` runtime storage.
 
 ## UNITV-012 — Verify stable log groups and built-in optional activation
 

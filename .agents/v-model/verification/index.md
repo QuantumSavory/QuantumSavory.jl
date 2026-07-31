@@ -23,8 +23,10 @@ maintainer-reviewed merge.
 - [Network, Zoo, and extension component verification](component-network-zoo.md): open
   for focused transport, catalog, protocol, logging, and activation invariants.
 
-Known evidence limitations are nonconformances, not implicit waivers. Repository-owned
-optional integrations are in scope; these actions promise no third-party implementation
-seam. Reproduction evidence is meaningful only with the software environment, initial
-model, scheduling configuration, and Julia RNG state; the product makes no built-in
-reproducibility promise. Transient console output does not belong in the records.
+Known evidence limitations are nonconformances, not implicit waivers. Public backend,
+state-model, circuit, protocol, logging-context, and optional-capability extension
+interfaces are in scope. Generated package-extension modules and activation plumbing
+are implementation details. Reproduction evidence is meaningful only with the software
+environment, initial model, scheduling configuration, and Julia RNG state; the product
+makes no built-in reproducibility promise. Transient console output does not belong in
+the records.

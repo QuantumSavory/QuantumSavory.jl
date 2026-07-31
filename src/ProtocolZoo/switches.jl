@@ -138,19 +138,7 @@ This switch is mostly based on the architecture proposed in [promponas2024maximi
 Multiple switch management algorithms are suggested in that paper.
 By default we use the `QuantumSavory.ProtocolZoo.Switches.promponas_bruteforce_choice` algorithm.
 
-# Constructor parameters
-
-- `sim`: time-and-schedule-tracking `Simulation`.
-- `net`: network of registers.
-- `switchnode`: vertex index of the switch.
-- `clientnodes`: directly connected, distinct client vertex indices.
-- `success_probs`: per-client raw-entanglement success estimates in `[0, 1]`.
-- `ticktock`: positive duration of one decision cycle.
-- `rounds`: positive number of rounds, or `-1` for no fixed limit.
-- `assignment_algorithm`: memory-slot assignment algorithm.
-
-The convenience constructor initializes internal backlog bookkeeping. That bookkeeping
-and the concrete fields used to store it are internal.
+$TYPEDFIELDS
 """
 @kwdef struct SimpleSwitchDiscreteProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -169,6 +157,7 @@ and the concrete fields used to store it are internal.
     rounds::Int = -1
     """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
     assignment_algorithm::Function = promponas_bruteforce_choice
+    """internal backlog bookkeeping; the storage type is not part of the public API and may change in future versions"""
     _backlog::SymMatrix{Matrix{Int}}
     function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
