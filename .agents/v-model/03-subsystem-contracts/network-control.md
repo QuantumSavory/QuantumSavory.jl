@@ -5,7 +5,9 @@
 - **Normative statement:** The network-construction boundary shall associate every
   included register, channel, and incoming message store with one simulation scheduling
   domain, preserve the declared topology, and resolve classical and quantum delay
-  values independently for each directed edge.
+  values independently for each directed edge. Register count, scheduling-domain
+  compatibility, and other structural inputs shall be validated during construction
+  before a usable network is exposed.
 - **Parents:** SYS-006
 - **Acceptance criterion:** Given an undirected three-location topology, initially
   unused registers, and delay functions that return a distinct value for every ordered
@@ -16,8 +18,8 @@
   incompatible scheduling domain each report failure rather than producing a usable
   network.
 - **Verification:** INTV-004 (test)
-- **Origin / risk:** Network construction and directional-delay behavior; maintainer
-  confirmation pending; high scheduling-domain risk
+- **Origin / risk:** Network construction and directional-delay behavior plus
+  maintainer interview; high scheduling-domain risk
 - **Context:** [Transport](../../context/network/transport.md)
 
 ### Boundary semantics
@@ -71,7 +73,8 @@
   subsystem's logical ownership into a direct channel, advance it through configured
   delay and supported channel background evolution, and move it into an empty
   destination while preserving correlations with subsystems that did not enter the
-  channel.
+  channel. A delivery attempt into an assigned destination shall discard the
+  transmitted state and emit a warning; no recovery is provided.
 - **Parents:** SYS-006
 - **Acceptance criterion:** Given one half of a correlated two-subsystem state at a
   currently assigned source, the retained half elsewhere, a source access time no later
@@ -80,8 +83,9 @@
   is unassigned immediately after send, the destination remains unchanged before
   arrival, the destination owns the transmitted subsystem at arrival, and a joint
   observable with the retained half matches a stationary subsystem evolved under the
-  same background for the same interval; receiving into an assigned destination
-  reports failure.
+  same background for the same interval. Given an assigned destination instead, the
+  delivery attempt emits a warning and leaves no transmitted state available to
+  receive or recover.
 - **Verification:** INTV-004 (test)
 - **Origin / risk:** Quantum-channel state-transfer behavior; maintainer confirmation
   pending; high state-loss risk
@@ -95,8 +99,10 @@
   assignment after receive.
 - **State:** Ownership moves; the quantum state is not copied. Backreferences preserving
   correlations outside the channel remain valid.
-- **Errors:** Receiving into an assigned destination reports failure. Multi-hop quantum
-  routing and the behavior of sending an unassigned source are not specified.
+- **Errors:** Delivery into an assigned destination loses the transmitted state and
+  warns. Valid models ensure the source assignment and local time are compatible with
+  modeled arrival. Multi-hop quantum routing and sending an unassigned source are not
+  specified; no post-exception consistency guarantee applies.
 
 ## SUB-016 — Preserve topology access and metadata addressing
 

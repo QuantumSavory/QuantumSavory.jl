@@ -4,29 +4,27 @@
 
 - **Normative statement:** The symbolic boundary shall combine a supported symbolic
   description, its intended use as state, operation, or observable, and the involved
-  subsystem representation preferences to produce a semantically corresponding native
-  object only for a compatible capability combination. An external symbolic type shall
-  participate through the same documented lowering dispatch without core source
-  changes.
-- **Parents:** SYS-001, SYS-007, SYS-009
+  subsystem representation policy to produce a semantically corresponding native
+  object through a representation supporting the requested capability.
+- **Parents:** SYS-001, SYS-007
 - **Acceptance criterion:** Given supported symbolic state, operation, and observable
   fixtures, lowering for two compatible representations produces native objects with
-  the expected preparation, operation effect, and observable result; an incompatible
-  fixture does not report success; and an external symbolic fixture is selected through
-  the same boundary without changing a built-in baseline result.
+  the expected preparation, operation effect, and observable result; an unsupported
+  constrained representation is promoted according to the representation policy, and
+  a request with no applicable lowering or promotion produces a `MethodError`.
 - **Verification:** INTV-001 (test)
 - **Context:** [Backend support](../../context/simulation/backend-support.md)
 
 ### Boundary semantics
 
-- **Inputs:** A supported symbolic description, intended use, and involved subsystem
-  traits and representation preferences.
+- **Inputs:** A supported symbolic description, intended use, involved subsystem traits,
+  and declared or default representation policy.
 - **Outputs:** A native state, operation, or observable compatible with the selected
   representation.
 - **State:** Lowering itself does not assign or mutate logical subsystem ownership;
   the consuming operation owns that mutation.
-- **Errors:** Incompatible capabilities shall not be reported as successful. One common
-  unsupported-capability error type is not specified.
+- **Errors:** A request with no applicable implementation or promotion uses Julia's
+  `MethodError`; an error hint may add contextual guidance.
 
 ## SUB-004 — Schedule resumable events and exclusive resources
 
@@ -53,31 +51,37 @@
 - **Errors:** Invalid process work or unhandled process exceptions are observable.
   Deadlock recovery and real-time scheduling guarantees are not specified.
 
-## SUB-010 — Dispatch only through supported backend capabilities
+## SUB-010 — Dispatch and promote through supported backend capabilities
 
-- **Normative statement:** A numerical adapter shall declare or implement the
-  capabilities needed to create, compose, transform, observe, measure, reduce, or
-  evolve its native state, and the adapter boundary shall preserve representation-
-  specific exact, stochastic, or compact-state semantics for supported requests. An
-  external adapter shall participate through the same documented dispatch boundary
-  without modifying core product source.
-- **Parents:** SYS-001, SYS-003, SYS-007, SYS-009
+- **Normative statement:** A numerical adapter shall implement the capabilities needed
+  to create, compose, transform, observe, measure, reduce, or evolve its native state.
+  The coordination boundary shall preserve a supporting current representation,
+  automatically promote an insufficient constrained or mixed set to a configured
+  common general representation, and require an explicit twirling policy for
+  general-to-specialized conversion.
+- **Parents:** SYS-001, SYS-003, SYS-007
 - **Acceptance criterion:** Representative exact-state, trajectory, stabilizer, and
   Gaussian adapters return documented state manifolds, subsystem counts, and
-  normalization or weight for every designated capability; requests outside the matrix
-  do not report success; and an external adapter fixture is selected through the same
-  boundary without changing a representation-independent baseline result.
+  normalization or weight for every designated capability. `QuantumOpticsRepr` and
+  `QuantumMCRepr` remain general peers for supported requests; insufficient stabilizer,
+  Gaussian, or mixed representations promote for every capability class using the
+  target representation's configured approximation parameters and warn once per call
+  site with the initial and final representations. Specialization occurs only after an
+  explicit twirling request. A request with no applicable implementation or promotion
+  produces a `MethodError`.
 - **Verification:** INTV-005 (test)
 - **Context:** [Backend extension](../../context/simulation/backend-extension.md)
 
 ### Boundary semantics
 
-- **Inputs:** Native state, selected subsystem positions, requested supported
-  capability, and any symbolic object or background parameters required by that
+- **Inputs:** Native state, selected subsystem positions, requested capability,
+  representation configuration including approximation parameters, optional explicit
+  twirling policy, and any symbolic object or background parameters required by the
   capability.
 - **Outputs:** Updated or replacement native state, observable or measurement result,
   or an unsupported request.
 - **State:** The adapter may mutate or replace native state according to its documented
   manifold; the register-state boundary remains responsible for logical ownership.
-- **Errors:** Unsupported capability combinations do not have one standardized error
-  type. No adapter-independent scientific-accuracy or performance budget is specified.
+- **Errors:** Unsupported dispatch produces a `MethodError`; error hints may explain
+  relevant capability or promotion information. No adapter-independent scientific-
+  accuracy or performance budget is specified.

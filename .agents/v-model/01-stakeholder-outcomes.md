@@ -1,40 +1,46 @@
 # Stakeholder Outcomes
 
 These outcomes describe intended operational value without selecting implementation
-topology. They remain draft until the acceptance authority confirms them.
+topology. Quantum-network researchers, protocol designers, numerical-backend
+developers, students and educators, and application developers are all intended users.
+The outcomes remain draft until accepted by maintainer-reviewed merge.
 
 ## STK-001 — Model noisy, timed, distributed quantum systems
 
 - **Normative statement:** Quantum-network researchers and model developers shall be
   able to construct and execute one integrated model in which quantum operations,
   communication delay, background noise, and asynchronous protocol timing all affect
-  the reported result.
+  the reported result according to the documented mathematical model and selected
+  numerical representation.
 - **Parents:** None
 - **Acceptance criterion:** Given a two-location scenario with an entangled resource,
   nonzero classical and quantum communication delays, a background process, and a
   time-dependent control process, when the scenario is executed, then classical and
   quantum arrivals occur no earlier than their configured delays, the requested
   operations run in simulated-time order, and the final resource report reflects the
-  configured background evolution.
+  documented equations and configured background evolution for the selected
+  representation and approximation settings.
 - **Verification:** ACC-001 (demonstration)
-- **Origin / risk:** Public architecture and modeling documentation; maintainer
-  confirmation pending; high modeling-correctness risk
+- **Origin / risk:** Public architecture and modeling documentation plus maintainer
+  interview; high modeling-correctness risk
 - **Context:** None
 
 ## STK-002 — Reuse a model across compatible representations
 
 - **Normative statement:** Model developers shall be able to reuse the same logical
   state, operation, observable, register, and protocol description across compatible
-  numerical representations without rewriting representation-independent model logic.
+  numerical representations, including through supported promotion to a common
+  representation, without rewriting representation-independent model logic.
 - **Parents:** None
 - **Acceptance criterion:** Given one ideal Bell-pair scenario expressed without
-  representation-specific operations and two representations that both support every
-  requested capability, when the scenario is executed once with each representation,
-  then both executions satisfy the same deterministic parity checks and leave the
-  topology and protocol configuration unchanged.
+  representation-specific operations, two representations that support it directly,
+  and one constrained representation with a supported promotion path, when the scenario
+  is executed in all three configurations, then every execution satisfies the same
+  deterministic parity checks and leaves topology and protocol configuration
+  unchanged; the constrained execution promotes and emits its required warning.
 - **Verification:** ACC-002 (demonstration)
-- **Origin / risk:** Public backend and symbolic-model documentation; maintainer
-  confirmation pending; medium portability risk
+- **Origin / risk:** Public backend and symbolic-model documentation plus maintainer
+  interview; medium portability risk
 - **Context:** None
 
 ## STK-003 — Compose asynchronous protocols and reusable building blocks
@@ -50,51 +56,50 @@ topology. They remain draft until the acceptance authority confirms them.
   observes no overlapping ownership of the reserved slot, and produces the expected
   consumed-resource result.
 - **Verification:** ACC-003 (demonstration)
-- **Origin / risk:** Protocol and Zoo documentation plus representative examples;
-  maintainer confirmation pending; high concurrency-correctness risk
+- **Origin / risk:** Protocol and Zoo documentation plus representative examples and
+  maintainer interview; high concurrency-correctness risk
 - **Context:** None
 
-## STK-004 — Extend documented modeling seams
+## STK-004 — Use the documented repository-wide product
 
-- **Normative statement:** Third-party contributors shall be able to add behavior at
-  documented extension seams for representations, model building blocks, protocols,
-  and optional inspection features without changing representation-independent
-  product behavior.
+- **Normative statement:** Intended users shall be able to learn and use the supported
+  core, Zoos, built-in optional capabilities, and public workflows through generated
+  documentation and executable examples on declared compatible environments.
 - **Parents:** None
-- **Acceptance criterion:** Given separate external fixtures for every extension class
-  included in the confirmed support inventory, when each fixture is loaded, then its
-  new type or optional implementation is selected through the same user-facing boundary
-  as built-in behavior, an unsupported type remains unselected, and core product source
-  need not be modified. Running a representation-independent baseline fixture before
-  and after extension loading produces the same result.
+- **Acceptance criterion:** Given a clean declared CI environment, when generated
+  documentation is built and every checked-in example is executed against a
+  SemVer-compatible product version, then the build succeeds, every example completes,
+  documented public APIs are reachable, core use does not require optional UI
+  dependencies, and each fully available built-in optional dependency combination
+  activates and renders successfully.
 - **Verification:** ACC-004 (demonstration)
-- **Origin / risk:** Extension documentation and dispatch-based interfaces; maintainer
-  confirmation pending; medium ecosystem-compatibility risk
+- **Origin / risk:** Repository-wide documentation, examples, extensions, and CI plus
+  maintainer interview; medium adoption and compatibility risk
 - **Context:** None
 
-## STK-005 — Inspect, debug, and reproduce representative simulations
+## STK-005 — Inspect and diagnose representative simulations
 
-- **Normative statement:** Model developers and reviewers shall be able to inspect
-  configuration and state, diagnose representative simulation activity, and reproduce
-  selected results from a fixed model configuration and random seed.
+- **Normative statement:** Model developers, educators, and reviewers shall be able to
+  inspect configuration and state and diagnose representative simulation activity
+  through public inspection, supported rendering, and structured log groups.
 - **Parents:** None
-- **Acceptance criterion:** Given a representative scenario with inspectable
-  configuration/state, structured diagnostics, a declared software environment, and
-  fixed scheduling configuration, when two fresh executions start from the same
-  initial model and reset the Julia RNG state they use to the same seed, then inspection
-  exposes the configured representations, backgrounds, ownership, and final state;
-  selected diagnostics expose their documented domain, event, simulation time, and
-  process identity; and selected scientific outcomes, event times, and RNG-derived
-  protocol identifiers agree. Internal monotonic storage IDs are excluded unless their
-  counters are also reset.
+- **Acceptance criterion:** Given a representative scenario with assigned and
+  unassigned resources, network metadata, enabled public log groups, and each fully
+  available built-in inspection capability, when the scenario is inspected, logged,
+  and rendered, then inspection exposes the configured representation, background,
+  ownership, topology, metadata, and native state without mutation; records are
+  selectable by their documented log groups; and every activated rendering call
+  succeeds.
 - **Verification:** ACC-005 (demonstration)
-- **Origin / risk:** Inspection and logging documentation plus seeded backend tests and
-  protocol RNG behavior; maintainer confirmation pending; medium diagnosis risk
+- **Origin / risk:** Inspection, logging, and visualization documentation plus
+  maintainer interview; medium diagnosis risk
 - **Context:** None
 
 ## Shared limitations
 
 - These outcomes apply only to compatible supported capability combinations.
-- They establish no runtime-performance, scale, or scientific-accuracy budget.
-- They do not assign a support tier or cross-release stability promise to every
-  catalog entry.
+- They establish no formal runtime-performance, scale, universal numerical-accuracy,
+  or built-in reproducibility promise.
+- Every public Zoo entry is supported; internal helpers and tutorial-local helpers are
+  not public product interfaces.
+- The product is a research and education simulator.

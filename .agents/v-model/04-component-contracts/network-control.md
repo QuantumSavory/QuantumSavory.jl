@@ -19,13 +19,14 @@
   pending; high route-selection risk
 - **Context:** [Transport](../../context/network/transport.md)
 
-## CMP-008 — Transfer quantum ownership only into an empty destination
+## CMP-008 — Transfer quantum ownership and discard failed delivery
 
 - **Normative statement:** Quantum send shall swap, not copy, the source subsystem into
   in-transit ownership at the channel's current simulation time, apply supported
   background evolution through the arrival time, and on receive swap that ownership
   only into an unassigned destination while retaining every external owner
-  backreference of a correlated state.
+  backreference of a correlated state. If the destination is assigned, receipt shall
+  discard the transmitted state and emit a warning without providing recovery.
 - **Parents:** SUB-009
 - **Acceptance criterion:** Given a correlated two-subsystem state with one currently
   assigned subsystem whose access time is no later than modeled arrival, when it is
@@ -35,17 +36,18 @@
   destination, then that owner is replaced by the destination, the mapping remains
   bidirectionally consistent, and a joint observable matches stationary evolution
   under the same background for the same interval; when the destination is assigned,
-  receive reports failure rather than overwriting it.
+  receipt emits a warning and the in-transit owner and transmitted state are no longer
+  available.
 - **Verification:** UNITV-007 (test)
-- **Origin / risk:** Quantum-channel swap and backreference behavior; maintainer
-  confirmation pending; critical no-cloning and state-loss risk
+- **Origin / risk:** Quantum-channel swap and backreference behavior plus maintainer
+  interview; critical no-cloning and state-loss risk
 - **Context:** [Transport](../../context/network/transport.md)
 
 ## Component limitations
 
 - Quantum multi-hop forwarding is outside this contract.
 - Sending an unassigned source is unresolved and therefore has no normative result.
-- A source access time later than the modeled arrival can currently cause a rewind
-  failure after ownership has moved into the channel; rollback is unresolved.
-- Receiving failure is not stated to consume, requeue, or roll back an in-transit
-  subsystem; that recovery policy requires maintainer confirmation.
+- Valid models ensure the source local time is no later than modeled arrival.
+- Assigned-destination receipt intentionally loses the transmitted state and warns; it
+  does not consume work to preserve, requeue, or recover that state.
+- Any exception ends the affected run without a post-exception consistency guarantee.

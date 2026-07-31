@@ -1,21 +1,23 @@
 # QuantumSavory V-Model
 
 - **Profile status:** draft
-- **Product boundary:** The current development package pinned at commit
-  `d7523d33e10bbb199e26a7dea074a54f34646d24`, including its built-in state,
-  circuit, and protocol catalogs and its optional Julia extensions. Third-party
-  dependencies, hosted demos or services, and `.agents/evals/` are outside this
-  product boundary.
-- **Acceptance authority:** QuantumSavory maintainers (developer confirmation pending)
-- **Last reviewed:** 2026-07-24
+- **Review state:** Maintainer interview incorporated; pending acceptance by
+  maintainer-reviewed merge
+- **Product boundary:** The living, repository-wide research and education simulator:
+  package code, all built-in state, circuit, and protocol Zoos, built-in optional
+  extensions, human and generated documentation, checked-in examples, and CI
+  definitions. External dependencies and services are not part of the product, but
+  their supported integrations are. `.agents/evals/` is unrelated and excluded.
+- **Evidence snapshot:** Repository commit
+  `ea409d15e138db957e646991478ec3c2d40257be`
+- **Acceptance authority:** QuantumSavory maintainers through a reviewed merge
+- **Last reviewed:** 2026-07-31
 
-This profile is a repository-specific specification and evidence map. It is not a
-claim of compliance with NASA, FDA, ECSS, or V-Modell XT.
-
-The normative statements below are a draft recovered from public documentation,
-implementation behavior, and tests at the pinned development commit. Those sources
-show current behavior but do not establish intended behavior without maintainer
-confirmation.
+This is a living, aspirational product specification grounded in behavior and direction
+recoverable from the current repository. Maintainer-validated intent and generated
+human documentation define desired behavior; contradictory implementation is recorded
+as a nonconformance. A planned record may describe an incomplete capability only when
+that direction is recoverable from repository evidence or maintainer review.
 
 ## Left-side specification
 
@@ -33,27 +35,37 @@ right-side action shards.
 
 ## Baseline notes
 
-- Whether this profile should baseline the pinned development state or a released
-  version remains unresolved.
-- Support applies only to documented compatible combinations of subsystem traits,
-  symbolic objects, numerical representations, operations, and background models.
+- Semantic versioning governs compatibility for the public surface: an API is public
+  only when it appears in generated prose documentation and is exported or declared
+  `public`. No preceding deprecation release is required for a breaking change.
+- Representation defaults are the specific exception to SemVer protection. The general
+  default is `QuantumOpticsRepr`; specialized representations are never defaults.
+- Every public Zoo entry is supported, although each state entry may designate only a
+  subset of numerical representations. Internal helpers are neither public nor
+  SemVer-protected.
+- Support otherwise applies only to documented compatible combinations of subsystem
+  traits, symbolic objects, representations, operations, and background models.
 - Preserved factorization means factorization explicitly present in a symbolic tensor
-  expression; this draft does not claim generic numerical separability detection.
-- Unsupported backend combinations do not yet share one standard error type or
-  diagnostic.
-- Failed multi-slot operations do not have a general atomicity or rollback guarantee.
-- The support maturity and cross-release stability of individual Zoo entries remain
-  unresolved.
-- No performance budget or scientific-accuracy budget has been confirmed.
-- Context links are supplementary forward references for the coordinated context
-  migration. Normative meaning remains entirely in this V-model.
-- Unresolved intent does not form part of a baseline.
+  expression; generic numerical separability detection is not promised.
+- Exceptions terminate the affected run: no public operation promises rollback,
+  failure atomicity, or a consistent simulation state after an exception.
+- Sharing the software environment, initial state, scheduling configuration, and Julia
+  RNG seed is necessary to assess reproducibility; the product makes no built-in
+  repeatability promise.
+- There is no formal performance, scale, universal numerical-accuracy, or service-level
+  threshold. Severe performance regressions still require maintainer review.
+- Supported external integrations must operate correctly when their dependencies and
+  services are available; availability, latency, and long-term external behavior are
+  outside the product contract.
 
-## Gates before baselining
+## Acceptance and promotion gates
 
-The acceptance authority must confirm the release/development boundary, enumerate the
-backend-by-capability combinations designated supported, identify the supported versus
-experimental entries in each Zoo, enumerate the supported external extension seams and
-optional entry points, and choose the public stability boundary. Until those
-inventories exist, a record using “supported” or “designated supported” is a candidate
-requirement: its action may be implemented, but it cannot be marked passing.
+A maintainer-reviewed merge accepts changes to this specification. A verification
+action may be marked passing only when its full criterion has focused automated
+evidence, relevant declared CI-environment coverage, public documentation, a
+user-oriented example where applicable, and explicit maintainer confirmation.
+
+The current backend capability matrix, public declarations for documented unexported
+APIs, automatic representation promotion, explicit twirling-based specialization, and
+several Zoo contracts remain incomplete. Keep their actions planned or implemented
+with explicit nonconformance until the corresponding evidence satisfies the full gate.

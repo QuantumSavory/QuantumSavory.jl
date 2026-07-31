@@ -2,40 +2,43 @@
 
 ## CMP-010 — Keep state-catalog parameters, expressions, and weights aligned
 
-- **Normative statement:** A supported state-catalog type shall expose an ordered
-  parameter tuple, one same-order exploratory range record per parameter, and a
-  constructor accepting that tuple; every compatible expression shall have the
-  declared subsystem arity, and its trace shall be one for a normalized model or the
-  documented success weight for a weighted model.
+- **Normative statement:** Every exported normalized or weighted state-catalog type
+  shall expose a constructor-ordered parameter description and expected-value
+  introspection without making its concrete field layout public; every designated
+  compatible representation shall produce the declared subsystem arity, and trace
+  shall be one for a normalized model or the documented success weight for a weighted
+  model.
 - **Parents:** SUB-011
-- **Acceptance criterion:** For every state type designated supported, when a value is
-  constructed from the declared good parameter of every range record and expressed in
-  every designated compatible representation, then construction succeeds, declared
-  parameter and range names and order agree, subsystem arity is two, expression is
-  nonzero, and symbolic and expressed traces agree with normalized or weighted
-  semantics.
+- **Acceptance criterion:** For every exported state type, when a value is constructed
+  from each introspected expected parameter value and expressed in every representation
+  that entry designates compatible, then construction succeeds, constructor parameter
+  names and order agree with introspection and generated documentation, subsystem arity
+  equals the entry's declaration, expression is nonzero, and symbolic and expressed
+  traces agree with normalized or weighted semantics. No check depends on concrete
+  struct field names.
 - **Verification:** UNITV-009 (test)
-- **Origin / risk:** State catalog API and expression tests; maintainer confirmation
-  pending; high normalization and parameter-mapping risk
+- **Origin / risk:** State catalog API, expression tests, and maintainer interview; high
+  normalization and parameter-mapping risk
 - **Context:** [State catalog](../../context/zoos/states-catalog.md)
 
 ## CMP-011 — Keep supported circuits immediate and explicitly destructive
 
-- **Normative statement:** A circuit type designated supported shall have one documented
-  callable form, report its total required logical-slot arity, complete without a
-  scheduling yield, and return all measurement or success information required by its
-  caller while clearing every input documented as measured, sacrificial, or reset on
-  failure.
+- **Normative statement:** Every public circuit type shall expose a consistent
+  documented feature interface and callable form that reports total required
+  logical-slot arity, return behavior, and destructive effects, completes without a
+  scheduling yield, and clears every input documented as measured, sacrificial, or
+  reset on a returned failure branch.
 - **Parents:** SUB-012
-- **Acceptance criterion:** For every circuit type included in the confirmed support
-  baseline, when its callable form is checked and then executed on a valid fixture,
-  then reported arity equals the number of required slot arguments, execution advances
-  no simulation time, return shape matches its documentation, every destructive input
-  is unassigned, and every documented retained success output remains assigned; for a
-  supported failure fixture, every output documented as reset is unassigned.
+- **Acceptance criterion:** For every public swap, purification (including Stringent
+  and Expedient families), encoding/decoding, and fusion circuit, feature introspection,
+  generated documentation, and the callable form agree. On a valid fixture, reported
+  arity equals required slot arguments, execution advances no simulation time, return
+  shape matches documentation, every destructive input is unassigned, and every
+  documented retained success output remains assigned; on a documented returned
+  failure branch, every output documented as reset is unassigned.
 - **Verification:** UNITV-010 (test)
-- **Origin / risk:** Circuit interfaces, docs, and tests; support-baseline confirmation
-  pending; critical destructive-state risk
+- **Origin / risk:** Circuit interfaces, docs, tests, and maintainer interview; critical
+  destructive-state risk
 - **Context:** [Circuit catalog](../../context/zoos/circuits-catalog.md)
 
 ## CMP-012 — Revalidate protocol snapshots and preserve pair identity
@@ -57,38 +60,44 @@
   matching history, used to advance a matching delete marker, or logged and dropped as
   stale; it never mutates an unrelated live pair.
 - **Verification:** UNITV-011 (test)
-- **Origin / risk:** Race-aware protocol paths and entanglement identity behavior;
-  maintainer confirmation pending; critical distributed-state risk
+- **Origin / risk:** Race-aware protocol paths, entanglement identity behavior, and
+  maintainer interview; critical distributed-state risk
 - **Context:** [Protocol development](../../context/network/protocol-development.md)
 
-## CMP-013 — Keep log context primitive and optional activation isolated
+## CMP-013 — Preserve log groups and isolate optional activation
 
-- **Normative statement:** Common simulation log context shall contain simulated time
-  and active process identity as primitive values, protocol context shall add protocol
-  identity and an immutable ordered participant tuple, and an optional implementation
-  shall add methods only after all dependencies declared for that capability are
-  loaded.
+- **Normative statement:** Public log-group identifiers shall remain compatible within
+  a SemVer-compatible release series, while individual events, payload fields,
+  messages, ordering, and record sequences may change. A built-in optional
+  implementation shall activate only after all dependencies declared for that
+  capability are loaded and shall render successfully when any required external
+  integration is available.
 - **Parents:** SUB-014
-- **Acceptance criterion:** Given representative free-function and protocol log events,
-  when their metadata is captured, then common fields have the documented primitive
-  types, participant order is preserved, and no field retains a simulation, network,
-  register, message, query, or protocol object; given optional dependencies absent,
-  partially present, and fully present, then core loading succeeds in all cases and the
-  optional implementation is selected only in the fully activated case.
+- **Acceptance criterion:** Given representative core and protocol activity, emitted
+  records are selectable under every documented public log group without asserting
+  payload fields or event identifiers. Given optional dependencies absent, partially
+  present, and fully present, core loading succeeds in all cases, the optional
+  implementation is selected only in the fully activated case, and every public
+  renderer completes against available dependencies or test services without an exact
+  content comparison.
 - **Verification:** UNITV-012 (test)
-- **Origin / risk:** Structured logging and extension activation behavior; maintainer
-  confirmation pending; medium observability and loading risk
+- **Origin / risk:** Structured logging, built-in optional activation, and maintainer
+  interview; medium observability and loading risk
 - **Context:** [Structured logging](../../context/network/structured-logging.md)
 
 ## Component limitations
 
 - Explorer parameter ranges are descriptive metadata, not a promise of constructor
   validation.
-- The supported circuit and advanced-protocol membership requires maintainer
-  confirmation before baselining; known current behavior is not silently promoted.
+- All public Zoo entries are supported. Current missing documentation, state
+  introspection gaps, circuit arity/return/cleanup inconsistencies, and incomplete QTCP
+  or MBQC paths remain nonconformances rather than experimental exclusions.
+- Internal Zoo helpers and tutorial-local helpers are not public.
 - A compatibility parameter retained by a wrapped state model need not affect the
   underlying physical expression unless its support is explicitly confirmed.
 - The combined pair-identity algebra can collide with its sentinel value; collision
   handling and any required bound are unresolved.
 - Optional mapping can depend on external map services; availability and latency of
-  those services are outside this contract.
+  those services are outside this contract, while integration behavior is supported
+  when a service is available.
+- Exceptions provide no Zoo-level rollback or post-exception consistency guarantee.

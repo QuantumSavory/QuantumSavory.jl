@@ -11,5 +11,8 @@ packages, files, and algorithms are intentionally excluded from their normative 
 
 ## System-level limitations
 
-The compatibility, failure-atomicity, Zoo-maturity, and budget limitations in the
-[profile index](../index.md) apply to every requirement.
+The exception, compatibility, reproducibility, external-service, and budget limitations
+in the [profile index](../index.md) apply throughout. Valid timed workflows request
+nondecreasing local times; behavior after an exception is not a continuation contract.
+Backend promotion, explicit specialization, public API marking, and parts of the Zoo
+support bar are aspirational requirements with current nonconformances.

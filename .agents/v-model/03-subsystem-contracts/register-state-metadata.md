@@ -23,16 +23,15 @@
 - **State:** Assignment, removal, swap, and composition update both slot-to-owner and
   owner-to-slot directions.
 - **Errors:** Arity mismatch and assignment into an already assigned destination report
-  failure. This contract does not specify one error type or rollback after a partial
-  multi-slot failure.
+  failure. After an exception, no consistency or rollback guarantee applies.
 
 ## SUB-003 — Coordinate register operations with state and time
 
 - **Normative statement:** The register-operation boundary shall synchronize every
-  selected assigned slot to the requested time, compose only the logical states needed
-  for a state-changing multi-slot operation, avoid persistent ownership changes for a
-  read-only observable, and update or remove ownership consistently after destructive
-  measurement or traceout.
+  selected assigned slot at one valid nondecreasing interaction time, compose only the
+  logical states needed for a state-changing multi-slot operation, avoid persistent
+  ownership changes for a read-only observable, and update or remove ownership
+  consistently after a successful destructive measurement or traceout.
 - **Parents:** SYS-002, SYS-003
 - **Acceptance criterion:** Given separate factors with distinct access times, a later
   coupling advances and composes selected slots, a cross-factor observable returns its
@@ -50,8 +49,8 @@
 - **State:** State-changing operations may compose owners permanently; read-only
   observations may compose temporary state without changing ownership.
 - **Errors:** Unassigned required input, unsupported capability, dimension mismatch, or
-  time rewind reports failure. Atomic rollback after a multi-slot failure is not
-  guaranteed.
+  invalid timing may report failure. An exception ends the affected run; no
+  post-exception state or rollback guarantee applies.
 
 ## SUB-005 — Preserve tag and query-store semantics
 
@@ -60,7 +59,8 @@
   provide exact, wildcard, predicate, observation, and consumption query modes with
   store-specific result shapes. Register entries shall expose stable identity, slot,
   and simulated timestamp; message results shall expose buffer depth and source rather
-  than a public identity or timestamp.
+  than a public identity or timestamp. Public tag types, field order, and field layout
+  are SemVer-protected interoperability schemas.
 - **Parents:** SYS-005
 - **Acceptance criterion:** Given duplicate and distinct tags in both store kinds,
   register exact, wildcard, predicate, FIFO/FILO, resource-filter, observation, and
@@ -68,7 +68,7 @@
   time; message exact, wildcard, predicate, FIFO observation, and consumption match
   their canonical scan and return depth or source plus tag as documented. Observation
   removes nothing and consumption removes only its result while subsequent queries
-  remain consistent.
+  remain consistent; every public tag matches its declared type and ordered layout.
 - **Verification:** INTV-003 (test)
 - **Context:** [Metadata and waits](../../context/core/metadata-and-waits.md)
 
@@ -88,12 +88,14 @@
 - **Normative statement:** The wait boundary shall check for a matching query result
   before blocking, distinguish observing waits from consuming waits, avoid implicit
   resource reservation, and preserve the documented difference between future-edge
-  resource notification and message-arrival notification with queued wakeups.
+  resource notification and message-arrival notification with queued wakeups. These
+  ordering, consumption, reservation, and wake semantics are SemVer-protected.
 - **Parents:** SYS-004, SYS-005
 - **Acceptance criterion:** Existing matches return immediately; observing waits retain
   them and consuming waits remove one. One future change or message wakes all current
   waiters, while each unattended message supplies one later immediate notification
-  without consuming its message.
+  without consuming its message; the same observable behavior holds across a
+  SemVer-compatible comparison.
 - **Verification:** INTV-002 (test)
 - **Context:** [Metadata and waits](../../context/core/metadata-and-waits.md)
 
@@ -113,14 +115,16 @@
 - **Normative statement:** The register-inspection boundary shall expose whether a
   logical slot is assigned, its shared state-owner identity and subsystem membership,
   the owner's native numerical state, and documented text or HTML summaries without
-  changing ownership, state, or access time.
+  changing ownership, state, or access time. Every documented qualified inspection
+  function shall be declared `public` when it is not exported.
 - **Parents:** SYS-013
 - **Acceptance criterion:** Given unassigned, separately assigned, and shared-state
   slots, inspection returns no owner for the unassigned slot, distinct owners for the
   separate slots, one shared owner whose member list contains exactly the shared slots,
   and the corresponding native state; repeating the inspection and rendering supported
   summaries leaves all owner identities, subsystem positions, state values, and access
-  times unchanged.
+  times unchanged, and every qualified inspection function used by the fixture is
+  exported or declared `public`.
 - **Verification:** INTV-009 (test)
 - **Context:** [Register model](../../context/core/register-model.md)
 

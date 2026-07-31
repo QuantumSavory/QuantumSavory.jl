@@ -5,7 +5,9 @@
 - **Normative statement:** The product shall provide directional delayed classical
   transport, explicit direct-versus-forwarded classical routing, per-location incoming
   message stores, and direct-link quantum transport that moves logical state ownership
-  after configured delay and supported in-transit evolution.
+  after configured delay and supported in-transit evolution. Delivery to an assigned
+  quantum destination shall discard the transmitted state and emit a warning rather
+  than overwrite the destination.
 - **Parents:** STK-001, STK-003
 - **Acceptance criterion:** Given a three-location path with directional delays, direct
   classical and quantum deliveries arrive no earlier than their configured delays; a
@@ -14,6 +16,8 @@
   empty destination without breaking a retained remote correlation; and a transmitted
   subsystem under a supported nontrivial channel background has the same joint
   observable as stationary evolution under that background for the same interval.
+  Delivery to an assigned destination leaves that destination assigned, makes the
+  transmitted state unavailable, and emits a warning.
 - **Verification:** SYSV-004 (test)
 - **Context:** [Transport](../../context/network/transport.md)
 
