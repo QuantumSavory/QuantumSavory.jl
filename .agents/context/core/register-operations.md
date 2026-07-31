@@ -27,16 +27,16 @@ accepts `GaussianState` plus `HomodyneMeasurement` and returns the continuous ho
 result. Other combinations stop at dispatch. An unassigned slot currently throws the
 raw string `"error"` rather than a typed diagnostic.
 
-`traceout!` groups slots that share a state reference. Multi-slot mutation is not
-atomic: an error after an earlier group succeeds may leave that group removed. See the
-[backend matrix](../simulation/backend-support.md) for representation-specific
-reduction semantics.
+`traceout!` groups slots that share a state reference. An exception after one group
+succeeds may leave that group removed; no rollback or post-exception consistency is
+promised. See the [backend matrix](../simulation/backend-support.md) for
+representation-specific reduction semantics.
 
 `uptotime!` evolves each distinct state through its background model toward the
-requested time. Current ordering can evolve a stored backend state before the
-no-rewind check raises, so catching a rewind error does not establish that nothing
-changed. Chronological access-time and background behavior belongs with the time/noise
-reference.
+requested time. Current ordering can evolve a stored backend state before detecting
+that the requested target precedes a selected slot's local access time. An exception
+does not establish that nothing changed. Local-time and background behavior belongs
+with the time/noise reference.
 
 ## Anchors
 
@@ -44,7 +44,7 @@ reference.
 - **Docs:** [`docs/src/register_interface.md`](../../../docs/src/register_interface.md) and [`docs/src/symbolic_frontend.md`](../../../docs/src/symbolic_frontend.md) — public operations and symbolic boundary.
 - **Test:** [`test/general/apply_tests.jl`](../../../test/general/apply_tests.jl), [`test/general/observable_tests.jl`](../../../test/general/observable_tests.jl), [`test/general/project_traceout_tests.jl`](../../../test/general/project_traceout_tests.jl), [`test/general/project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), and [`test/general/traceout_tests.jl`](../../../test/general/traceout_tests.jl) — executable behavior.
 
-## Unresolved questions
+## Failure boundary
 
-- Should rewind validation happen before any backend evolution?
-- Which multi-operation failure cases should acquire explicit atomicity guarantees?
+After any exception, stop the affected simulation. Public operations intentionally do
+not expend extra work restoring prior register, ownership, or time state.

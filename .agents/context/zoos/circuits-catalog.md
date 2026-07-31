@@ -3,7 +3,7 @@
 - **Context need:** Reference
 - **Open when:** Choosing a shipped immediate circuit or reviewing its destructive behavior.
 - **Do not open when:** Adding a circuit, coordinating asynchronous protocols, or selecting state models.
-- **Related specification IDs:** SYS-008, SUB-012, CMP-011
+- **Related specification IDs:** SYS-008, SYS-009, SUB-012, CMP-011
 - **Review when:** CircuitZoo exports, callable behavior, measurement cleanup, or failure semantics change.
 
 ## Circuit families
@@ -24,9 +24,14 @@ remain occupied after invocation. Return values range from Boolean success to
 measurement results; consult the concrete docstring rather than imposing one common
 result type.
 
-The shared executable surface is a callable method. `inputqubits` is useful but optional
-in the current API tests, so absence does not by itself mean a circuit is invalid.
-Code that needs capacity planning should check the selected type explicitly.
+The exported callable types are the intended supported entries. Helper types such as
+`StringentHead` and `StringentBody` are unexported internals even though the current API
+test discovers every direct `AbstractCircuit` subtype.
+
+The only current feature-introspection function is `inputqubits`. It is unexported,
+unmarked, optional in the API test, missing for `SDEncode` and `SDDecode`, and inaccurate
+for two Stringent body helpers. This does not yet provide the well-defined public
+feature/arity surface required by SUB-012 and CMP-011.
 
 Current purification limitations are concrete:
 
@@ -51,7 +56,9 @@ family test before reuse or documentation changes.
 - **Docs:** [`docs/src/API_CircuitZoo.md`](../../../docs/src/API_CircuitZoo.md) and [`docs/src/zoos_as_building_blocks.md`](../../../docs/src/zoos_as_building_blocks.md) — public catalog and composition guidance.
 - **Test:** [`test/general/circuitzoo_api_tests.jl`](../../../test/general/circuitzoo_api_tests.jl), [`test/general/circuitzoo_purification_tests.jl`](../../../test/general/circuitzoo_purification_tests.jl), and [`test/general/circuitzoo_fusion_tests.jl`](../../../test/general/circuitzoo_fusion_tests.jl) — callable surface and family behavior.
 
-## Unresolved questions
+## Known gaps
 
-- What exact reset and return contract should stringent/expedient node failures have?
-- Should `inputqubits` become mandatory for every public circuit?
+- Public feature and arity introspection is not marked or enforced consistently.
+- Stringent/expedient arity, return-shape, and documented reset behavior disagree with
+  implementation.
+- The equal-`leaveout` `Purify3to1` case lacks discriminating evidence.

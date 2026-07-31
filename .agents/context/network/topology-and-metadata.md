@@ -44,12 +44,12 @@ forms are defective. Set directed metadata one ordered pair at a time.
 
 ## Construction boundary
 
-Treat topology as static after `RegisterNet` construction. Construction sizes register,
-metadata, channel, buffer, reverse-lookup, and naming structures together.
-`add_vertex!(net)` changes only the wrapped graph. `add_register!` changes the graph and
-register vector but leaves the other structures incomplete and currently computes an
-invalid return value. Reconstruct a network instead of using either path for production
-mutation.
+Topology is effectively static after `RegisterNet` construction. Construction sizes
+register, metadata, channel, buffer, reverse-lookup, and naming structures together and
+is the intended validation boundary. `add_vertex!(net)` changes only the wrapped graph.
+The internal `add_register!` path changes the graph and register vector but leaves the
+other structures incomplete and computes an invalid return value. Reconstruct a network
+instead of using either path.
 
 ## Anchors
 
@@ -59,5 +59,4 @@ mutation.
 
 ## Unresolved questions
 
-- Should dynamic topology be removed, completed, or made explicitly unsupported?
 - Should directed bulk access enumerate both directions of every undirected edge?

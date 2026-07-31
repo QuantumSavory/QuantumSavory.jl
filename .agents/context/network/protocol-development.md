@@ -6,37 +6,42 @@
 - **Related specification IDs:** SYS-004, SYS-005, SYS-008, SYS-009, SUB-013, CMP-012
 - **Review when:** Protocol process structure, tag schemas, pair identifiers, resource locking, or cleanup rules change.
 
-## Develop and review a protocol
+## Develop and review a built-in protocol
 
 1. Represent long-running behavior as a callable `AbstractProtocol` executed by a
    ConcurrentSim process. Prefer the established shorthand constructor where applicable; it
    derives the simulation from the supplied `RegisterNet`, so do not maintain a
-   second, potentially inconsistent simulation argument.
+   second, potentially inconsistent simulation argument. These lifecycle hooks organize
+   repository-owned implementations; they are not a third-party extension contract.
 2. Declare the fixed tag payloads and slot ownership assumptions before coding. Use the
-   standard tag types when they express the protocol fact. Configurable typed tag heads
-   must be concrete `AbstractTag` subtypes. Pair identifiers deserve special review:
-   the current combined identifier scheme can collide with the zero sentinel.
+   public standard tag types when they express the protocol fact, preserving field
+   order and types. Configurable typed tag heads must be concrete `AbstractTag`
+   subtypes. Pair identifiers deserve special review: the current combined identifier
+   scheme can collide with the zero sentinel.
 3. Treat every query result as a snapshot. `query_wait` is non-consuming and
    non-locking. After every yield and after resource acquisition, revalidate slot
    occupancy, reciprocal counterpart tags, pair identifiers, and any remote-node
    assumptions before mutation.
 4. Keep exclusion windows small but sufficient. Acquire resources in a consistent
    order, re-check under ownership, and release on success, timeout, cancellation, and
-   error. A notification means “something changed,” not “your match is reserved.”
+   every other modeled outcome. A notification means “something changed,” not “your
+   match is reserved.” A thrown exception abandons the simulation; resource recovery is
+   not promised.
 5. Sequence physical and metadata effects consciously. State moves, traceout, tag
-   deletion, and message send are not one atomic transaction. Define cleanup for every
-   prefix of the sequence and do not assume an exception rolls it back.
+   deletion, and message send are separate mutations. Define cleanup for ordinary
+   protocol failure, timeout, and cancellation branches, but do not add rollback work
+   solely to recover from an exception.
 6. Emit structured records using the stable `LOG_GROUPS.protocol` group and
-   `protocol_log_context`. The helper contains primitive simulation fields, the
-   protocol type name as a `Symbol`, and an immutable ordered tuple of node integers;
-   keep protocols, networks, registers, messages, and other live objects out. Treat
-   individual event symbols and field sets as evolving unless separately contracted.
+   the current internal `protocol_log_context` helper. Keep protocols, networks,
+   registers, messages, and other live objects out. Only the group is a stable logging
+   contract; message, level, event, field, ordering, and occurrence may all evolve.
 7. Test adversarial interleavings, not only completion. Force stale query results,
    reciprocal-tag disagreement, occupied or emptied slots, competing consumers, and
    timeout cleanup. Run the relevant protocol tests plus the general shard.
 
 The existing tracker, swapper, switch, cutoff, QTCP, and MBQC tests contain reusable
-race patterns. Some zoo protocols remain incomplete, so copied behavior is evidence to
+race patterns. SYS-008 and SUB-013 classify every public family as supported, but QTCP
+and MBQC retain known implementation gaps; copied current behavior is evidence to
 review, not automatically a requirement.
 
 Counterpart metadata is not uniqueness-enforced. `_tag_entanglement_counterpart!` logs
@@ -50,7 +55,6 @@ duplicates explicitly.
 - **Docs:** [`docs/src/discreteeventsimulator.md`](../../../docs/src/discreteeventsimulator.md) and [`docs/src/tutorial/myswapperprot.md`](../../../docs/src/tutorial/myswapperprot.md) — protocol construction walkthroughs.
 - **Test:** [`test/general/protocolzoo_entanglement_tracker_lock_gap_tests.jl`](../../../test/general/protocolzoo_entanglement_tracker_lock_gap_tests.jl), [`test/general/protocolzoo_swapper_stale_query_tests.jl`](../../../test/general/protocolzoo_swapper_stale_query_tests.jl), and [`test/general/protocolzoo_entanglement_counterpart_invariant_tests.jl`](../../../test/general/protocolzoo_entanglement_counterpart_invariant_tests.jl) — race-focused examples.
 
-## Unresolved questions
+## Unresolved question
 
-- Which cross-resource mutations should become library-supported transactions?
 - How should pair identifiers avoid sentinel and composition collisions?

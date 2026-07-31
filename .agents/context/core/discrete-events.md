@@ -16,9 +16,10 @@ execution resumes.
 
 Resources serialize access where a protocol must exclude competitors. Acquire only the
 resources required for the imminent action, re-check all conditions after acquisition,
-and release them on every exit path. A tag match or notification alone is not ownership:
-another process can consume metadata, trace out a slot, or replace state before this
-process next runs.
+and release them on every modeled completion, timeout, or cancellation path. A thrown
+exception abandons the simulation rather than promising resource recovery. A tag match
+or notification alone is not ownership: another process can consume metadata, trace
+out a slot, or replace state before this process next runs.
 
 Metadata and message waits are change-driven loops. `query_wait` queries before
 blocking, waits on `ChangeNotifier` when no candidate matches, and queries again after

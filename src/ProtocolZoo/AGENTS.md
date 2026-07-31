@@ -8,5 +8,6 @@ query, lock, race, or cleanup logic, open the
 directly.
 
 Protocol correctness depends on snapshot revalidation, slot locks, reciprocal
-metadata, and pair identifiers. Test stale-query and cleanup paths as well as the
-happy path. Experimental limitations must remain visible in code and docs.
+metadata, pair identifiers, and documented constructor parameters. Test
+stale-query and modeled cleanup paths as well as the happy path. Current
+implementation gaps must remain visible in code and docs.

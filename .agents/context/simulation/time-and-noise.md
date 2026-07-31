@@ -6,7 +6,7 @@
 - **Related specification IDs:** SYS-003, SYS-007, SUB-003, SUB-010, CMP-004, CMP-009
 - **Review when:** `uptotime!`, background models, non-instant operations, or backend evolution methods change.
 
-## Chronological evolution contract
+## Local-time evolution
 
 Each register slot tracks an access time, while state references may span several
 slots. Advancement is demand-driven but not implicit in every operation:
@@ -18,16 +18,18 @@ slots. Advancement is demand-driven but not implicit in every operation:
 - `initialize!` changes access time only when given `time`.
 
 Explicit `uptotime!` groups affected state, applies configured backgrounds, and updates
-slot access times. Callers must not move a slot backward in time.
+slot access times. Each slot advances independently until an interaction synchronizes
+the selected slots to a common non-earlier local time.
 
-The current implementation checks rewind conditions after backend evolution within the
-grouped path. A request that throws for an earlier target can therefore follow an
-in-place backend mutation. Treat rewind failure as potentially state-changing until
-ordering is corrected and regression-tested.
+The current grouped path performs backend evolution before it checks whether the target
+precedes a selected slot's local access time. Such an invalid request can therefore
+throw after in-place mutation. As with other exceptions, the package does not restore
+or promise a consistent simulation; abandon the failed run.
 
 Background and default-representation support is backend-specific. Use the
 [backend support matrix](backend-support.md) as the canonical account of implemented
-combinations, the `PauliNoise` dispatch defect, and the unresolved `Qumode` default.
+combinations and the `PauliNoise` dispatch defect. Both qubits and qumodes currently
+default to `QuantumOpticsRepr`.
 
 `NonInstantGate` and `ConstantHamiltonianEvolution` are synchronous `apply!` methods,
 not ConcurrentSim processes: they do not yield, acquire scheduler resources, or advance
@@ -41,10 +43,11 @@ object it describes.
 ## Anchors
 
 - **Source:** [`src/baseops/uptotime.jl`](../../../src/baseops/uptotime.jl), [`src/backgrounds.jl`](../../../src/backgrounds.jl), [`src/noninstant.jl`](../../../src/noninstant.jl), and [`src/backends/`](../../../src/backends/) — time ordering and backend evolution.
-- **Docs:** [`docs/src/backgrounds.md`](../../../docs/src/backgrounds.md), [`docs/src/modeling_registers_and_time.md`](../../../docs/src/modeling_registers_and_time.md), [`docs/src/tutorial/noninstantgate.md`](../../../docs/src/tutorial/noninstantgate.md), and [`CHANGELOG.md`](../../../CHANGELOG.md) — background, non-instant, and conflicting default claims.
+- **Docs:** [`docs/src/backgrounds.md`](../../../docs/src/backgrounds.md), [`docs/src/modeling_registers_and_time.md`](../../../docs/src/modeling_registers_and_time.md), [`docs/src/tutorial/noninstantgate.md`](../../../docs/src/tutorial/noninstantgate.md), and [`CHANGELOG.md`](../../../CHANGELOG.md) — background, non-instant, and the stale default claim.
 - **Test:** [`test/general/noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl), [`test/general/noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl), and [`test/general/noninstant_and_backgrounds_qumode_tests.jl`](../../../test/general/noninstant_and_backgrounds_qumode_tests.jl) — backend-specific evolution.
 
-## Unresolved questions
+## Open capability boundary
 
-- Must rewind errors be guaranteed side-effect free?
-- Which background/backend combinations are intended requirements rather than opportunistic support?
+The intended backend/background combinations still require a complete documented
+matrix; current dispatch and focused tests establish only the combinations cited in the
+backend reference.

@@ -3,7 +3,7 @@
 - **Context need:** Reference
 - **Open when:** Adding, filtering, or reviewing diagnostic records and their simulation context.
 - **Do not open when:** Work has no logging, observability, or optional-inspection impact.
-- **Related specification IDs:** SYS-010, SUB-014, CMP-013
+- **Related specification IDs:** SYS-009, SYS-010, SUB-014, CMP-013
 - **Review when:** `LOG_GROUPS`, context helpers, emitted record fields, or logger-facing documentation changes.
 
 ## Logging contract
@@ -13,19 +13,16 @@ five stable group symbols: `backend`, `simulation`, `protocol`, `network`, and
 `visualization`. Use the exported values in `_group`; do not duplicate literal symbols
 throughout new code. Group filtering is the supported coarse selection mechanism.
 
-`simulation_log_context(sim)` supplies `sim_time::Float64` and
-`sim_process_id::Union{UInt,Nothing}`. `protocol_log_context(prot)` adds
-`protocol::Symbol` and `nodes::Tuple{Vararg{Int}}`, an immutable ordered snapshot.
-Merge these primitive fields into records; do not retain live protocol, network,
-register, message, or query objects. Records should still have a concise message that
-makes unfiltered output understandable.
+The current `simulation_log_context(sim)` helper supplies `sim_time::Float64` and
+`sim_process_id::Union{UInt,Nothing}`. `protocol_log_context(prot)` adds a protocol
+symbol and ordered node tuple. These helpers keep live protocol, network, register,
+message, and query objects out of base context, but their fields are implementation
+details rather than stable schemas.
 
-The groups are explicitly described as stable by source and human documentation.
-Individual event symbols, messages, levels, and field vocabularies are less settled.
-The logging tests cover representative backend, protocol, and network events and group
-filtering; they do not enumerate every emitter as a frozen schema. Consumers should
-treat the event vocabulary as sampled unless the specific event has a dedicated test
-and documentation statement.
+Only the five groups are stable. Messages, levels, event symbols, fields, semantic
+field details, ordering, presence, and event sequences may all change without a
+breaking release. Logging tests cover representative backend, protocol, and network
+records plus group filtering; they are implementation evidence, not frozen schemas.
 
 Choose level according to operational meaning: routine state transitions should remain
 filterable diagnostics, recoverable inconsistencies should carry enough identifiers
@@ -43,7 +40,9 @@ must remain loadable without those packages.
 - **Docs:** [`docs/src/architecture.md`](../../../docs/src/architecture.md) and [`docs/src/API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md) — public structured-logging convention.
 - **Test:** [`test/general/logging_tests.jl`](../../../test/general/logging_tests.jl) and [`test/general/observable_tests.jl`](../../../test/general/observable_tests.jl) — group filtering, contexts, and sampled records.
 
-## Unresolved questions
+## Public-surface mismatch
 
-- Which event names and fields, if any, should become versioned public schemas?
-- Should every subsystem receive representative logging contract tests?
+`protocol_log_context` is exported and human docs currently teach third-party
+overloading, but maintainer-confirmed intent does not support logging-context hooks as
+extension APIs. Source exports and human guidance need reconciliation under SYS-009;
+this does not alter the stability of `LOG_GROUPS`.

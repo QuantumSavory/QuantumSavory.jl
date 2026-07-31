@@ -3,13 +3,14 @@
 - **Context need:** Reference
 - **Open when:** Choosing among the shipped symbolic noisy two-qubit state families.
 - **Do not open when:** Adding a model, selecting a backend generally, or changing register storage.
-- **Related specification IDs:** SYS-008, SUB-011, CMP-010
+- **Related specification IDs:** SYS-008, SYS-009, SUB-011, CMP-010
 - **Review when:** StatesZoo exports, Genqo wrappers, parameters, or symbolic lowering changes.
 
 ## Model families
 
-StatesZoo currently contains five symbolic two-qubit model types. Use the human API page
-for constructors and formulas; this catalog records selection boundaries and maturity.
+StatesZoo currently contains five symbolic two-qubit model types. SYS-008 and SUB-011
+define support for entries that satisfy the public convention; use the human API page
+for constructor parameters and formulas.
 
 - `BarrettKokBellPair` represents a normalized noisy Barrett–Kok pair, while
   `BarrettKokBellPairW` preserves heralding probability in its trace.
@@ -20,17 +21,21 @@ for constructors and formulas; this catalog records selection boundaries and mat
 - `StatesZoo.Genqo.GenqoUnheraldedSPDCBellPairW` wraps the unheralded SPDC model.
 
 Genqo.jl is a direct package dependency, not an optional Python integration. The two
-wrappers are nested under `StatesZoo.Genqo`. In both current Genqo lowering paths the
-public `Pᵈ` parameter is retained for compatibility but ignored because the called
-Genqo density-matrix routines do not accept dark counts. Do not interpret a changed
-`Pᵈ` value as simulated noise until that boundary changes.
+wrappers are nested under `StatesZoo.Genqo`. They have docstrings and a dedicated
+generated-docs section, but are neither exported nor declared `public`; that marking gap
+keeps source and the intended public catalog out of alignment. In both lowering paths
+the constructor parameter `Pᵈ` is retained for compatibility but ignored because the
+called Genqo density-matrix routines do not accept dark counts. Do not interpret a
+changed `Pᵈ` value as simulated noise until that boundary changes.
 
 `stateparameters` and `stateparametersrange` drive exploration and communicate useful
 ranges. Those ranges are descriptive metadata; constructors do not consistently enforce
-them. Validate physical domains at the calling boundary when invalid values would make
-a study meaningless.
+them. They are the current expected-value introspection surface for constructor
+parameters; concrete state-object field layout is not the public contract.
 
-All five model types are covered by the API test’s default-QuantumOptics trace check.
+All five model types are covered by the API test’s default-QuantumOptics trace check,
+which does not establish every representation. Support is intentionally per-model and
+per-representation rather than universal.
 The separate Clifford check for `DepolarizedBellPair` lives in
 `test/test_stateszoo_depolarized.jl`, which the current `_tests.jl` filename filter does
 not discover. Only add an explicit `LinearAlgebra.tr` method when generic symbolic
@@ -43,7 +48,8 @@ trace methods are not a general StatesZoo requirement.
 - **Docs:** [`docs/src/API_StatesZoo.md`](../../../docs/src/API_StatesZoo.md) and [`docs/src/state_visualization.md`](../../../docs/src/state_visualization.md) — constructors, formulas, and exploration.
 - **Test:** [`test/general/stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl) and the currently orphaned [`test/test_stateszoo_depolarized.jl`](../../../test/test_stateszoo_depolarized.jl) — catalog surface and backend-specific evidence.
 
-## Unresolved questions
+## Known gaps
 
-- Should parameter ranges become constructor validation contracts?
-- How should Genqo wrappers expose that `Pᵈ` is currently ineffective?
+- The two Genqo model types lack `export` or `public` marking.
+- Both Genqo lowerings ignore their accepted `Pᵈ` constructor parameter.
+- The Clifford depolarized-state test is not discovered by the test runner.

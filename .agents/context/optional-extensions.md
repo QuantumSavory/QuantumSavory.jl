@@ -3,14 +3,15 @@
 - **Context need:** Reference
 - **Open when:** Checking weak-dependency activation, interactive discovery, plotting, state exploration, or map integration.
 - **Do not open when:** Core behavior, headless simulation, or backend work has no optional-package dependency.
-- **Related specification IDs:** SYS-010, SYS-011, SUB-014, CMP-013
+- **Related specification IDs:** SYS-009, SYS-010, SYS-011, SUB-014, CMP-013
 - **Review when:** Project weak dependencies, extension declarations, extension methods, or plotting tests change.
 
 ## Activation boundaries
 
-QuantumSavory declares three Julia package extensions. Core defines the public function
-seams, but implementations become available only when every weak dependency named for
-the extension is loaded:
+QuantumSavory declares three Julia package extensions. Documented, exported user calls
+become available only when every weak dependency named for the extension is loaded.
+The Julia extension-method seams themselves are internal and are not a supported
+third-party extension API:
 
 - `QuantumSavoryInteractiveUtils` requires both `InteractiveUtils` and `REPL`. It
   implements discovery of slot, background, and public protocol types plus constructor
@@ -32,8 +33,11 @@ including the state-explorer seams and `available_protocol_types`; uniform activ
 diagnostics are not a current contract.
 
 The plotting extension emits diagnostics under `LOG_GROUPS.visualization`. The group is
-part of the stable group set, while individual visualization event fields remain
-representative rather than a complete versioned schema.
+part of the stable group set; no other visualization log detail is stable.
+
+Optional visualization integrations promise successful rendering for their supported
+dependency combinations, not exact text, markup, layout, or pixels. The plotting tests
+exercise that integration boundary without freezing rendered content.
 
 Extension testing lives in the plotting project, whose `[sources]` entry resolves
 QuantumSavory from the repository root. The plotting shard covers Cairo/GL behavior,
@@ -47,8 +51,8 @@ shard, while Buildkite has a distinct plotting job.
 - **Docs:** [`docs/src/visualizations.md`](../../docs/src/visualizations.md), [`docs/src/state_visualization.md`](../../docs/src/state_visualization.md), and [`docs/src/tutorial/state_explorer.md`](../../docs/src/tutorial/state_explorer.md) — public optional features.
 - **Test:** [`test/projects/plotting/Project.toml`](../../test/projects/plotting/Project.toml) and [`test/plotting/`](../../test/plotting/) — extension environment and focused coverage.
 
-## Unresolved questions
+## Known gaps
 
-- Which extension APIs beyond activation and log groups should be treated as stable?
-- Should every unavailable optional seam provide an activation hint?
-- Should interactive discovery tolerate protocol types without the expected `sim`/`net` field layout?
+- Activation hints do not cover every unavailable optional user call.
+- Interactive discovery assumes protocol types expose particular `sim`/`net` fields
+  even though protocol lifecycle hooks are internal.

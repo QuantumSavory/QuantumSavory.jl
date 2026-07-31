@@ -30,18 +30,19 @@ temporary one-slot register with the channel's configured background: `put!` swa
 ownership into that slot at channel time and applies in-transit background evolution to
 the modeled arrival time before queueing.
 
-If the source access time is already later than channel time plus delay, that evolution
-can throw a rewind error after the source is empty. Receiving likewise dequeues the
-in-flight item before checking whether the destination is occupied. Neither failure
-path has a specified rollback. Sending from an empty source is also unresolved.
-Protocols should validate occupancy and time consistency while handling interleaving
-failures.
+The source/channel time relationship must be valid before transport. Today, if a source
+slot's local access time is later than the modeled arrival, `put!` can throw only after
+ownership has moved out of the source. Receiving likewise dequeues the in-flight item
+before checking whether the destination is occupied. An occupied-destination exception
+therefore loses the transmitted state. The intended warning for that loss is not
+implemented. No recovery or post-exception consistency is promised; abandon the run.
+`put!` does not reject an empty source; it queues an empty channel register.
 
-Two `RegisterNet` construction paths are defective. The constructor creates an
-`ArgumentError` for graph/register size mismatch but does not throw it, and
-`add_register!` updates only part of the network and computes an invalid return value.
-Do not rely on dynamic node insertion or mismatch rejection until those paths are fixed
-and tested.
+Construction is the validation boundary for register count and simulation-domain
+compatibility. The simulation-domain path validates before rehoming registers, but the
+graph/register size path merely constructs an `ArgumentError` without throwing it.
+`add_register!` is an internal incomplete path: it updates only the graph and register
+vector and computes an invalid return value. Reconstruct the network instead.
 
 The graph provides channels and physical-topology metadata, but locality is not a
 general register-operation guard: code can directly operate on slots from arbitrary
@@ -59,8 +60,13 @@ state handoff.
 - **Docs:** [`docs/src/classical_messaging.md`](../../../docs/src/classical_messaging.md) and [`docs/src/architecture.md`](../../../docs/src/architecture.md) — human messaging and architecture model.
 - **Test:** [`test/general/registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), and [`test/general/quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl) — exercised construction and delivery behavior.
 
-## Unresolved questions
+## Known gaps
 
-- What recovery guarantee should follow an occupied-destination quantum receive?
-- Should quantum channels gain explicit multi-hop forwarding, or remain direct primitives?
-- What are the intended `add_register!` updates and return value?
+- Occupied quantum receipt loses the state but emits no warning.
+- Graph/register count mismatch is not rejected because the constructed
+  `ArgumentError` is not thrown.
+- `add_register!` cannot update a complete network.
+- Empty-source quantum send is not validated.
+
+Quantum channels remain direct primitives; only classical transport currently has
+explicit multi-hop forwarding.

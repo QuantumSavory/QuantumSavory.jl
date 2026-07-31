@@ -3,7 +3,7 @@
 - **Context need:** Task playbook
 - **Open when:** Editing human docs, docstrings, navigation, doctests, or deployment configuration.
 - **Do not open when:** A source-only change has no public explanation or documentation validation impact.
-- **Related specification IDs:** None — repository-only workflow
+- **Related specification IDs:** SYS-009, SYS-011, SYS-012
 - **Review when:** `docs/make.jl`, docs dependencies, plotting doctests, or Buildkite documentation steps change.
 
 ## Change and validate documentation
@@ -27,8 +27,17 @@
    content generation, external embedding integration, and deployment. A failure in one
    does not establish the status of the others.
 
-Human docs are the detailed public API catalog. Agent context should link to them and
-record implementation boundaries, not copy their signatures and examples.
+Human docs are part of the product contract and the detailed API catalog. Under SYS-009,
+a Julia API is public only when generated prose documents it and source either exports
+it or marks it `public`. A documented constructor parameter is public, but the concrete
+field that stores it remains internal even when it has the same name. This checkout
+contains no `public` declarations, despite prose-documented unexported functions such as
+`stateof` and qualified standard protocol tags. Audit those gaps instead of treating
+documentation alone or an accidental export alone as sufficient.
+
+Generated pages and all checked-in examples are covered by SYS-012. Agent context should
+link to human docs and record current implementation boundaries, not copy their
+signatures and examples.
 
 ## Anchors
 

@@ -3,7 +3,7 @@
 - **Context need:** Reference
 - **Open when:** Choosing among shipped resumable protocols or assessing their current maturity.
 - **Do not open when:** Adding a protocol, selecting an immediate circuit, or changing transport internals.
-- **Related specification IDs:** SYS-008, SUB-013, CMP-012
+- **Related specification IDs:** SYS-005, SYS-008, SYS-009, SUB-013, CMP-012
 - **Review when:** ProtocolZoo includes/exports, protocol families, or known maturity limits change.
 
 ## Protocol families
@@ -22,16 +22,20 @@ datagrams, link requests/replies, and end/network/link controllers. `mbqc.jl` ad
 state construction, graph-to-resource mapping, purification measurements, and tracking.
 All three are part of ProtocolZoo, not separate external zoos.
 
-Maturity varies. QTCP contains unresolved drop detection, correction, and timeout work.
-MBQC currently uses contiguous node-number arithmetic in routing/mapping code, so it
-must not be assumed correct for arbitrary graph labels. Entanglement pair identifiers
-can collide with the zero sentinel under the current combination scheme. Switch tests
-cover several stale-match and reciprocal-delete races, but do not prove every scheduler
-policy.
+Every documented and public family is long-term supported intent under SYS-008 and
+SUB-013; implementation completeness still varies. QTCP contains unresolved drop
+detection, correction, and timeout work. MBQC currently uses contiguous node-number
+arithmetic in routing/mapping code, so it must not be assumed correct for arbitrary
+graph labels. Entanglement pair identifiers can collide with the zero sentinel under
+the current combination scheme. Switch tests cover several stale-match and
+reciprocal-delete races, but do not prove every scheduler policy.
 
-Treat catalog membership as reusable implementation, not a guarantee of production
-completeness. Check the relevant test family and unresolved source TODOs before basing a
-new protocol on QTCP or MBQC behavior.
+Public protocol constructors generally use documented DocStringExtensions field tables.
+Those tables describe constructor parameters; concrete struct layout is not stable.
+`AbstractProtocol`, process wiring, `permits_virtual_edge`, and logging-context
+overloads are internal implementation seams rather than third-party extension APIs.
+Current human docs teach custom `AbstractProtocol` and `protocol_log_context` methods,
+which is a public-boundary mismatch tracked by SYS-009.
 
 ## Anchors
 
@@ -39,8 +43,9 @@ new protocol on QTCP or MBQC behavior.
 - **Docs:** [`docs/src/API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md) and [`docs/src/zoos_as_building_blocks.md`](../../../docs/src/zoos_as_building_blocks.md) — public catalog and reuse guidance.
 - **Test:** [`test/general/protocolzoo_surface_contracts_tests.jl`](../../../test/general/protocolzoo_surface_contracts_tests.jl), [`test/general/protocolzoo_switch_tests.jl`](../../../test/general/protocolzoo_switch_tests.jl), [`test/general/protocolzoo_qtcp_tests.jl`](../../../test/general/protocolzoo_qtcp_tests.jl), and [`test/general/protocolzoo_mbqc_tests.jl`](../../../test/general/protocolzoo_mbqc_tests.jl) — family surfaces.
 
-## Unresolved questions
+## Known gaps
 
-- Which QTCP features define its minimum complete contract?
-- Must MBQC support arbitrary node labels?
-- How should combined entanglement identifiers avoid the zero sentinel?
+- QTCP has incomplete drop, correction, and timeout behavior.
+- MBQC assumes contiguous node labels in several paths.
+- Combined entanglement identifiers can collide with the zero sentinel.
+- Human guidance presents internal protocol hooks as third-party extension seams.

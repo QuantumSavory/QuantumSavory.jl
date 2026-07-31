@@ -28,7 +28,9 @@
 
 The GitHub workflow runs AirspeedVelocity on pull-request heads and can write to pull
 requests. It is characterization infrastructure: the repository defines no checked-in
-regression threshold or pass/fail performance budget. Because it uses
+regression threshold or pass/fail performance budget. Severe regressions still warrant
+maintainer investigation rather than being dismissed for lack of a formal budget.
+Because the workflow uses
 `pull_request_target` with `pull-requests: write`, do not describe replaying the workflow
 against untrusted changes as a safe local validation recipe.
 
@@ -39,7 +41,6 @@ against untrusted changes as a safe local validation recipe.
 - **Test:** [`benchmark/benchmark_tagquery.jl`](../../../benchmark/benchmark_tagquery.jl) and [`benchmark/benchmark_quantumstates.jl`](../../../benchmark/benchmark_quantumstates.jl) — representative scalar and state benchmarks.
 - **CI:** [`.github/workflows/benchmark.yml`](../../../.github/workflows/benchmark.yml) — AirspeedVelocity trigger and permissions.
 
-## Unresolved questions
+## Unresolved question
 
-- What baselines and thresholds should constitute a performance regression?
 - Should benchmark automation avoid `pull_request_target` write permissions?

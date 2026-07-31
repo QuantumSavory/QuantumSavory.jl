@@ -7,10 +7,11 @@ silently rewriting either side.
 
 ## Normative specification
 
-Open the [V-model index](v-model/index.md) when reviewing proposed normative
-requirements, observable contracts, acceptance criteria, or verification
-traceability. The profile is still draft; do not treat it as confirmed architecture
-or contract authority, and do not use working context as a substitute for intended
+Open the [V-model index](v-model/index.md) when reviewing normative requirements,
+observable contracts, acceptance criteria, or verification
+traceability. It is a living aspirational contract grounded in the repository and
+validated by maintainers; implemented defects and incomplete planned behavior remain
+visible as nonconformances. Do not use working context as a substitute for intended
 behavior.
 
 `.agents/evals/` is unrelated to this documentation system and excluded from the

@@ -9,10 +9,10 @@
 ## Metadata contract
 
 Tags are typed metadata attached to register slots or stored in message buffers.
-Concrete standard tags use fixed payload shapes: identifiers and slots are `Int`,
-tag kinds are `Symbol` or a tag `DataType`, and selected protocol fields use declared
-floating-point or type/symbol fields. Preserve these shapes when matching, forwarding,
-or adding standard protocol metadata; do not describe them as arbitrary tuples.
+Concrete standard tags use fixed payload shapes: identifiers and slots are `Int`, tag
+kinds are `Symbol` or a tag `DataType`, and selected protocol fields use declared
+floating-point or type/symbol fields. SYS-005 and CMP-005 make public tag field order
+and types the compatibility boundary; do not describe them as arbitrary tuples.
 Protocol fields typed as `Type{<:AbstractTag}` require a concrete subtype such as
 `struct MyTag <: AbstractTag end`.
 
@@ -45,6 +45,11 @@ Snapshot results can become stale between query and use because ConcurrentSim pr
 interleave at yields. Protocols should validate reciprocal tags, slot occupancy, and
 pair identifiers immediately before destructive actions.
 
+The generated standard-tag page also documents some qualified, unexported tag heads,
+including `EntanglementDelete` and `QTCP.QDatagramSuccess`. They have no Julia `public`
+declaration in this checkout, so their documented schema and source marking are not yet
+aligned with the repository's public-API convention.
+
 ## Anchors
 
 - **Source:** [`src/tags.jl`](../../../src/tags.jl), [`src/queries.jl`](../../../src/queries.jl), [`src/querywait.jl`](../../../src/querywait.jl), and [`src/messagebuffer.jl`](../../../src/messagebuffer.jl) — payload, indexing, query, and buffer behavior.
@@ -54,4 +59,3 @@ pair identifiers immediately before destructive actions.
 ## Unresolved questions
 
 - Should the message-buffer notification queue be replaced or documented as part of the contract?
-- Which protocol operations require a library-level atomic query-and-consume primitive?

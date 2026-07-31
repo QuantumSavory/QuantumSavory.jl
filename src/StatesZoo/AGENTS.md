@@ -5,5 +5,6 @@ existing models. Open [add a state model](../../.agents/context/zoos/add-state-m
 only when changing or adding a model.
 
 Keep symbolic parameters and backend representation separate. Verify formulas,
-normalization or mixture weights, exported names, documentation, and targeted
+normalization or mixture weights, documented constructor parameters and
+introspection, public marking, implemented representations, and targeted
 `general/stateszoo` tests.
