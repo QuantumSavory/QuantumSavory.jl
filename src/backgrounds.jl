@@ -47,8 +47,3 @@ end
 # TODO
 # T1TwirledDecay
 # T1T2TwirledNoise
-
-"""Display all available background types in QuantumSavory along with their documentation.
-
-The `InteractiveUtils` package must be installed and imported."""
-function available_background_types end

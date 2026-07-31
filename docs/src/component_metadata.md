@@ -41,6 +41,39 @@ An absent bound is represented by `nothing`; consumers should not invent a
 constraint when QuantumSavory does not declare one. The catalogs contain
 public modeling components only, not backend implementation helpers.
 
+## Protocol Catalog
+
+Protocol discovery uses the same explicit-schema approach:
+
+```@example component-metadata
+using QuantumSavory.ProtocolZoo
+
+map(schema -> (
+    protocol=schema.constructor.constructor,
+    placement=schema.placement,
+), protocol_schemas())
+```
+
+Each [`ProtocolSchema`](@ref) separates user-configurable constructor fields
+from injected simulation, network, placement, and private runtime fields.
+`placement_fields` identifies the node field or ordered edge fields. An edge
+schema also records whether that protocol can intentionally operate without a
+physical graph edge.
+
+```@example component-metadata
+schema = protocol_schema(EntanglementConsumer)
+(
+    protocol_placement(EntanglementConsumer),
+    schema.placement_fields,
+    schema.permits_virtual_edge,
+)
+```
+
+Custom protocols can extend `protocol_schema`; they default to
+[`FloatingProtocolPlacement`](@ref) until they explicitly extend
+`protocol_placement`. Defining a custom subtype never changes the deterministic
+built-in `protocol_schemas()` catalog.
+
 ## Extending Constructor Metadata
 
 A package that defines a custom component can add a
@@ -75,4 +108,9 @@ constructor_constraints
 slot_schemas
 representation_schemas
 background_schemas
+ProtocolPlacement
+ProtocolSchema
+protocol_schema
+protocol_placement
+protocol_schemas
 ```

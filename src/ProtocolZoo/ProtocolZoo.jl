@@ -17,6 +17,11 @@ import SumTypes
 using PrettyTables: PrettyTables, pretty_table
 
 export
+    # protocol interface and metadata
+    AbstractProtocol, permits_virtual_edge,
+    ProtocolPlacement, FloatingProtocolPlacement, NodeProtocolPlacement,
+    EdgeProtocolPlacement, ProtocolSchema, protocol_schema,
+    protocol_placement, protocol_schemas,
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
     protocol_log_context,
@@ -78,11 +83,6 @@ function protocol_log_context(prot::AbstractProtocol)
         nodes=_protocol_nodes(prot),
     )
 end
-
-"""Display all available background types in QuantumSavory along with their documentation.
-
-The `InteractiveUtils` package must be installed and imported."""
-function available_protocol_types end
 
 const QueryArgs = Union{Int,Function,Wildcard}
 
@@ -837,6 +837,8 @@ include("qtcp.jl")
 using .QTCP
 include("mbqc.jl")
 using .MBQCEntanglementDistillation
+
+include("metadata.jl")
 
 _protocol_nodes(prot::EntanglementTracker) = (prot.node,)
 _protocol_nodes(prot::SwapperProt) = (prot.node,)

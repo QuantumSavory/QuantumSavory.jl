@@ -35,6 +35,11 @@ This matters because the protocol object packages:
 That packaging is what makes protocols easier to reuse and compare than a large
 free function with many arguments.
 
+Configuration tools should use [`protocol_schemas`](@ref) for the explicit
+built-in catalog and [`protocol_schema`](@ref) for typed constructor and
+placement metadata. The catalog is deterministic and does not depend on loaded
+subtypes or documentation internals.
+
 When user-written protocols need to cooperate with these implementations, the
 main interface is the standard set of typed tags documented in
 [Standard Protocol Tags](@ref standard-protocol-tags).

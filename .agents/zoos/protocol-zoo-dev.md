@@ -24,6 +24,11 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 
 - Subtype `AbstractProtocol`.
 - Store `sim` and `net` in the protocol object.
+- Add `protocol_schema(::Type{MyProt})` when the protocol should expose stable
+  constructor metadata. Keep simulator, network, placement, and private runtime
+  fields out of its nested `ConstructorSchema`.
+- Extend `protocol_placement(::Type{MyProt})` for node or edge protocols;
+  unregistered custom protocols default to `FloatingProtocolPlacement`.
 - Implement `@resumable function (prot::MyProt)()`.
 - Overload `protocol_log_context(prot::MyProt)` with only primitive simulation
   fields, `protocol::Symbol`, and an immutable ordered node tuple. Do not retain
@@ -43,6 +48,18 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   permits such a type or `nothing`, while `EntanglementConsumer.tag` requires
   such a type.
 - If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::Type{<:MyProt}) = true`; instance queries delegate to this type-level trait.
+
+## Protocol Metadata Invariants
+
+- `protocol_schemas()` is an explicit built-in catalog; loading unrelated
+  packages must not change it.
+- `ProtocolSchema.placement_fields` has zero fields for floating protocols, one
+  for node protocols, and two ordered fields for edge protocols.
+- Placement fields belong to the protocol struct and never also appear as
+  configurable constructor fields.
+- Only an edge protocol can declare `permits_virtual_edge`.
+- Keep `protocol_schema`, `protocol_placement`, and `permits_virtual_edge`
+  consistent for every built-in protocol.
 
 ## Review Checks
 
@@ -93,6 +110,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `test/general/protocolzoo_qtcp_tests.jl`
 - `test/general/protocolzoo_shorthand_constructors_tests.jl`
 - `test/general/protocolzoo_virtual_edge_tests.jl`
+- `test/general/protocol_metadata_tests.jl`
 
 ## Public Docs And Paper To Cross-Check
 

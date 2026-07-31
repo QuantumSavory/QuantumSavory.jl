@@ -33,6 +33,16 @@ Other specialized families:
 - `SimpleSwitchDiscreteProt` for switch-style setups.
 - `EndNodeController`, `NetworkNodeController`, and `LinkController` for the QTCP stack.
 
+## Protocol Discovery
+
+- Use `protocol_schemas()` for the deterministic built-in catalog.
+- Use `protocol_schema(ProtocolType)` for typed constructor parameters,
+  placement fields, and virtual-edge capability.
+- Use `protocol_placement(ProtocolType)` when only the floating, node, or edge
+  category is needed.
+- Constructor fields exclude `sim`, `net`, node-placement fields, and private
+  runtime storage.
+
 ## Common Workflow
 
 ```julia
@@ -61,6 +71,7 @@ prot = EntanglerProt(sim, net, 1, 2; rounds=-1)
 - Use `protocol_log_context(prot)...` with Julia's standard logging macros.
   Custom protocols should overload `protocol_log_context` to return simulation
   fields, a protocol symbol, and an immutable ordered `nodes` tuple.
+- Do not discover protocols by walking subtypes or parsing docstrings.
 - Use `CircuitZoo` instead when all you need is a local gate sequence.
 
 ## Good Docs And Examples To Open Next
