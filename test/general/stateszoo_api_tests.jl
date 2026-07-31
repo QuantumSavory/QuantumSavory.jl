@@ -50,6 +50,13 @@ expected_normalization = (
     WeightedState,
     WeightedState,
 )
+expected_parameters = (
+    (:ηᴬ, :ηᴮ, :Pᵈ, :ηᵈ, :𝒱),
+    (:ηᴬ, :ηᴮ, :Pᵈ, :ηᵈ, :𝒱),
+    (:p,),
+    (:ηᵇ, :ηᵈ, :ηᵗ, :N),
+    (:ηᵈ, :ηᵗ, :N),
+)
 
 schemas = state_family_schemas()
 @test schemas isa Tuple
@@ -57,7 +64,7 @@ schemas = state_family_schemas()
 @test map(schema -> schema.normalization, schemas) ==
       expected_normalization
 
-for schema in schemas
+for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
     S = schema.family
     @test state_family_schema(S) === schema
     @test state_normalization_style(S) === schema.normalization
@@ -67,6 +74,7 @@ for schema in schemas
 
     params = QuantumSavory.StatesZoo.stateparameters(S)
     paramdict = QuantumSavory.StatesZoo.stateparametersrange(S)
+    @test params == expected_parameter_names
     @test params == map(parameter -> parameter.name, schema.parameters)
     @test paramdict == NamedTuple{params}(map(schema.parameters) do parameter
         (
@@ -101,6 +109,28 @@ for schema in schemas
         @test tr(express(state)) ≈ weight
         @test !(weight ≈ 1)
     end
+end
+
+@test filter(!=(:metadata), fieldnames(GenqoMultiplexedCascadedBellPairW)) ==
+      (:ηᵇ, :ηᵈ, :ηᵗ, :N)
+@test filter(!=(:metadata), fieldnames(GenqoUnheraldedSPDCBellPairW)) ==
+      (:ηᵈ, :ηᵗ, :N)
+@test_throws MethodError GenqoMultiplexedCascadedBellPairW(1, 1, 1, 0.1, 0)
+@test_throws MethodError GenqoUnheraldedSPDCBellPairW(1, 1, 0.1, 0)
+
+for (low_mean_photon_number, high_mean_photon_number) in (
+    (
+        GenqoMultiplexedCascadedBellPairW(1, 1, 1, 0.05),
+        GenqoMultiplexedCascadedBellPairW(1, 1, 1, 0.15),
+    ),
+    (
+        GenqoUnheraldedSPDCBellPairW(1, 1, 0.05),
+        GenqoUnheraldedSPDCBellPairW(1, 1, 0.15),
+    ),
+)
+    low_matrix = express(low_mean_photon_number).data
+    high_matrix = express(high_mean_photon_number).data
+    @test norm(low_matrix - high_matrix) > 1e-3
 end
 
 custom = state_family_schema(CustomMetadataState)

@@ -23,6 +23,10 @@ Based on the cascaded source from [prajit2022heralded](@cite) and [kevin2023zero
 Functions are included for both the photon-photon state as well as the spin-spin state following loading using Duan-Kimble style quantum memories
 
 Implemented as a wrapper around the `Genqo.jl` package.
+
+The constructor exposes only parameters consumed by Genqo's
+`zalm.spin_density_matrix` backend. Detector excess noise is not modeled by
+that backend.
 """
 @withmetadata struct GenqoMultiplexedCascadedBellPairW <: AbstractTwoQubitState
     """Loss (transmissivity) in the Bell state measurement at the source (modes 3, 4, 5, 6), ∈[0,1]"""
@@ -33,14 +37,10 @@ Implemented as a wrapper around the `Genqo.jl` package.
     ηᵗ
     """Mean photon number per mode of the state. This is a tradeoff parameter for fidelity vs rate. It has to be >0 (but the model becomes imprecise at N>0.2 due to the 2-photon cutoff of the Fock space used in derivation)"""
     N
-    """Excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1"""
-    Pᵈ
 end
 
 function _express_spin_spin_matrix(x::GenqoMultiplexedCascadedBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
-    # `Pᵈ` remains part of the wrapper API for compatibility, but Genqo.jl's
-    # spin-density-matrix backend does not currently take dark counts.
     (;ηᵇ, ηᵈ, ηᵗ, N) = x
     return zalm.spin_density_matrix(N, ηᵗ, ηᵈ, ηᵇ, [1,0,1,1,0,0,1,0])
 end
@@ -64,6 +64,10 @@ Unheralded source of polarization Bell pairs, as described by [kwiat1995new](@ci
 Functions are included for both the photon-photon state as well as the spin-spin state following loading using Duan-Kimble style quantum memories
 
 Implemented as a wrapper around the `Genqo.jl` package.
+
+The constructor exposes only parameters consumed by Genqo's
+`spdc.spin_density_matrix` backend. Detector excess noise is not modeled by
+that backend.
 """
 @withmetadata struct GenqoUnheraldedSPDCBellPairW <: AbstractTwoQubitState
     """Loss (transmissivity) in all of the detectors, ∈[0,1]"""
@@ -72,14 +76,10 @@ Implemented as a wrapper around the `Genqo.jl` package.
     ηᵗ
     """Mean photon number per mode of the state. This is a tradeoff parameter for fidelity vs rate. It has to be >0 (but the model becomes imprecise at N>0.2 due to the 2-photon cutoff of the Fock space used in derivation)"""
     N
-    """Excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1"""
-    Pᵈ
 end
 
 function _express_spin_spin_matrix(x::GenqoUnheraldedSPDCBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
-    # `Pᵈ` remains part of the wrapper API for compatibility, but Genqo.jl's
-    # spin-density-matrix backend does not currently take dark counts.
     (;ηᵈ, ηᵗ, N) = x
     return spdc.spin_density_matrix(N, ηᵗ, ηᵈ, [0,1,0,1])
 end

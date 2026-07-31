@@ -49,6 +49,8 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 - Verify `tr(state)` matches the expressed representation.
 - Keep weighted and normalized semantics explicit in docstrings and examples.
 - Keep constructor signatures synchronized with the state-family schema.
+- Expose only parameters that affect the selected backend; never retain a
+  wrapper field solely for compatibility when the backend ignores it.
 - Treat `Genqo` breakage as a possible dependency problem before assuming a Julia logic bug.
 - Review parameter ranges for physical sanity, not just API shape.
 

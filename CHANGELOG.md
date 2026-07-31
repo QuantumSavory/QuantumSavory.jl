@@ -18,6 +18,10 @@
   `normalized_state_and_weight` provide opt-in weight extraction and
   normalization; the existing `stateparameters` APIs now derive from the
   schemas.
+- **(breaking)** Removed the ignored `Pᵈ` field from the two Genqo state
+  wrappers, their metadata, and the example REST schema. The underlying Genqo
+  spin-density-matrix functions do not accept detector excess noise, so the
+  old field never affected a simulated state.
 - **(breaking)** Simulation, network, protocol, and visualization traces now use
   Julia's standard logging macros with stable `event` symbols and structured
   metadata. Rendered messages have changed, and routine low-level simulation

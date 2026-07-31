@@ -71,6 +71,9 @@ Private = false
 ## API list for the `QuantumSavory.StatesZoo.Genqo` states
 
 Implemented as wrappers to the `Genqo.jl` package.
+Their constructors and family schemas expose only parameters consumed by the
+corresponding Genqo backend. In particular, the current Genqo spin-density
+matrix functions do not model detector excess noise.
 
 ```@autodocs
 Modules = [QuantumSavory.StatesZoo.Genqo]

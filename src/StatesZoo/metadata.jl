@@ -177,14 +177,6 @@ const _GENQO_MULTIPLEXED_PARAMETERS = (
         10,
         0.1,
     ),
-    StateParameterSchema(
-        :Pᵈ,
-        Real,
-        "Excess detector noise in photons per qubit slot.",
-        0,
-        0.1,
-        1e-8,
-    ),
 )
 
 const _GENQO_UNHERALDED_PARAMETERS = (
@@ -211,14 +203,6 @@ const _GENQO_UNHERALDED_PARAMETERS = (
         0,
         10,
         0.1,
-    ),
-    StateParameterSchema(
-        :Pᵈ,
-        Real,
-        "Excess detector noise in photons per qubit slot.",
-        0,
-        0.1,
-        1e-6,
     ),
 )
 

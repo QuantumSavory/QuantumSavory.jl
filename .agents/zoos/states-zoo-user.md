@@ -64,6 +64,8 @@ stateexplorer(BarrettKokBellPair)
 - Use `state_weight(state)` to inspect the absolute trace without duplicating
   trace evaluation policy.
 - Treat `Genqo` families as optional-dependency models. They rely on Python tooling.
+- Genqo constructors expose only backend-supported parameters. The current
+  spin-density-matrix backends do not model detector excess noise.
 
 ## Good Docs And Examples To Open Next
 
