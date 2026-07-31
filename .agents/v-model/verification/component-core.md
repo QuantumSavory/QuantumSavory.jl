@@ -44,34 +44,38 @@ invariants with discriminating fixtures.
 - **Covers:** CMP-004
 - **Method:** test
 - **Procedure:** Advance three shared-state slots with `t1 < t2 < t3`, distinct
-  recording backgrounds, and target `T > t3`; then request a target below one selected
-  access time.
+  recording backgrounds, and interaction target `T > t3`; retain an unrelated slot at
+  its original local time.
 - **Environment / configuration:** Root test environment with a recording background
   that identifies active slots and chronological segment durations.
 - **Pass criterion:** The trace shows slot one active for `T-t1`, slot two for `T-t2`,
   and slot three for `T-t3` across ascending access-time segments; all selected times
-  become `T`, and the earlier target reports a rewind error.
+  become `T`, no time decreases, and the unrelated slot's local time is unchanged.
 - **Status:** implemented
 - **Evidence:** [`noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl), [`noninstant_and_backgrounds_qumode_tests.jl`](../../../test/general/noninstant_and_backgrounds_qumode_tests.jl)
 - **Nonconformance:** No recording-background fixture asserts three distinct
-  access-time groups and their chronological durations; backend cases differ.
+  access-time groups, chronological durations, synchronized selected times, and an
+  untouched unrelated local time; backend cases differ.
 
 ## UNITV-004 — Verify fixed tag shapes and query order
 
 - **Covers:** CMP-005
 - **Method:** test
-- **Procedure:** Generate interleaved duplicate heads and slots with stable IDs, then
+- **Procedure:** Inventory every public tag head and its ordered layout against the
+  prior SemVer-compatible schema, then generate interleaved duplicate heads/slots and
   compare every exact, wildcard, predicate, slot-filtered, and head-filtered query in
   both directions with and without secondary indexes; probe malformed selectors.
-- **Environment / configuration:** Root test environment with a canonical full-scan
-  oracle and predicates that distinguish every record.
+- **Environment / configuration:** Root test environment with a public schema manifest,
+  canonical full-scan oracle, and predicates that distinguish every record.
 - **Pass criterion:** Indexed and canonical scans return identical identities and order
   newest-first and oldest-first; wrong-length patterns return no match, and a
-  non-Boolean predicate reports failure.
+  non-Boolean predicate reports failure. Every public tag name and ordered field layout
+  matches the SemVer-compatible manifest.
 - **Status:** implemented
 - **Evidence:** [`abstract_tag_contract_tests.jl`](../../../test/general/abstract_tag_contract_tests.jl), [`tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl)
-- **Nonconformance:** No generated canonical-scan comparison exists; wrong-length and
-  non-Boolean predicate failures lack focused assertions.
+- **Nonconformance:** No public tag-schema manifest or generated canonical-scan
+  comparison exists; wrong-length and non-Boolean predicate failures lack focused
+  assertions.
 
 ## UNITV-005 — Verify register generations and message wake queues
 
@@ -91,21 +95,28 @@ invariants with discriminating fixtures.
 - **Nonconformance:** Current finite schedules do not establish the full resource
   generation and three-wait message sequence in one promotion fixture.
 
-## UNITV-008 — Verify backend manifolds and dispatch exits
+## UNITV-008 — Verify representation manifolds and conversion policy
 
 - **Covers:** CMP-009
 - **Method:** test
-- **Procedure:** Apply each designated initialization, composition, operation,
-  observation, measurement, background, and reduction subset to pure exact, mixed exact,
-  Monte Carlo trajectory, stabilizer, and Gaussian fixtures; probe unsupported
-  stabilizer and Gaussian requests.
-- **Environment / configuration:** Root test environment with type, manifold,
-  normalization, and statistically bounded result assertions.
-- **Pass criterion:** Each supported result stays in or performs the documented
-  promotion from its starting manifold; all-trajectory composition and supported
-  evolution remain trajectories, trajectory-plus-mixed composition becomes mixed, and
-  designated unsupported stabilizer and Gaussian requests do not report success.
-- **Status:** implemented
+- **Procedure:** Apply every capability class to QuantumOptics, Monte Carlo, stabilizer,
+  Gaussian, and mixed-representation fixtures; inspect stored representations,
+  approximation configuration, warnings, explicit twirling, and no-method exits.
+- **Environment / configuration:** Root tests with discriminating states/operations,
+  one configured approximate general representation, warning capture at repeated call
+  sites, and a configurable twirling fixture.
+- **Pass criterion:** Qubit and qumode defaults are QuantumOptics; explicit Clifford
+  and Gabs choices remain specialized, and Monte Carlo remains a general peer.
+  Directly supported requests preserve their manifold. Specialized or mixed requests
+  lacking direct support convert to a common compatible general representation across initialization,
+  composition, operation, observation, measurement, background, reduction, evolution,
+  and transport while preserving configured approximation parameters. A degrading
+  conversion warns once per call site with initial and final representation names.
+  No general-to-specialized conversion occurs without an explicit twirling object.
+  The absence of any applicable path yields a `MethodError` with an optional hint.
+- **Status:** planned
 - **Evidence:** [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), [`project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl)
-- **Nonconformance:** Current coverage is not the full designated subset matrix, and
-  unsupported stabilizer/Gaussian exits are not asserted for every requested class.
+- **Nonconformance:** Defaults and Monte Carlo manifold behavior have partial evidence,
+  and one Clifford observable conversion warns. Uniform promotion, approximation
+  parameters, general-to-specialized twirling, and complete MethodError/hint coverage
+  are absent.

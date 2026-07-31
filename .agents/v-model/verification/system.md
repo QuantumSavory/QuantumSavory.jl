@@ -19,97 +19,127 @@ These actions verify black-box behavior through public boundaries.
 - **Nonconformance:** No fixture jointly checks both representations, all declarations,
   factor identities, and touched-only composition.
 
-## SYSV-002 — Verify demand-driven monotonic time and backgrounds
+## SYSV-002 — Verify local monotonic time, synchronization, and backgrounds
 
 - **Covers:** SYS-003
 - **Method:** test
-- **Procedure:** Advance distinct-time subsystems with supported backgrounds, inspect
-  state/time, then request an earlier target.
+- **Procedure:** Advance independent subsystems from distinct local access times with
+  supported backgrounds, then perform an operation that makes selected subsystems
+  interact.
 - **Environment / configuration:** Root qubit, Clifford, and qumode tests.
-- **Pass criterion:** Each selected subsystem evolves only for its own elapsed interval,
-  every selected access time becomes the target, and the earlier-time request reports
-  an error.
+- **Pass criterion:** Independent slots evolve only for their own forward elapsed
+  intervals; the interaction advances selected slots to its time, synchronizes their
+  local access times, and leaves unrelated slot times unchanged.
 - **Status:** implemented
 - **Evidence:** [`noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl), [`noninstant_and_backgrounds_qumode_tests.jl`](../../../test/general/noninstant_and_backgrounds_qumode_tests.jl)
-- **Nonconformance:** Tests omit distinct elapsed intervals with every resulting time;
-  backend coverage differs.
+- **Nonconformance:** Existing tests do not jointly assert distinct local intervals,
+  interaction synchronization, and untouched unrelated times; backend coverage differs.
 
 ## SYSV-003 — Verify events, resources, metadata, and snapshots
 
 - **Covers:** SYS-004, SYS-005
 - **Method:** test
 - **Procedure:** Exercise process, resource, wait, register-query, and message APIs with
-  contention, all modes, and a snapshot across a yield.
+  contention, all modes, and a snapshot retained across a yield.
 - **Environment / configuration:** Deterministic root tests with duplicate metadata.
 - **Pass criterion:** Contenders never overlap, the second acquires only after release,
   the waiter wakes no earlier than the change, and an unhandled process error reaches
   the caller. Register exact, wildcard, predicate, first, all, FIFO/FILO, and consuming
-  modes return documented results; message stores return the first FIFO match, consume
-  one match, and reject all-results mode. Observation changes neither store,
-  consumption removes only its result, and a snapshot grants no reservation across a
-  yield.
+  modes return documented results, with register queries defaulting to FILO. Message
+  stores return the first FIFO match, consume one match, and reject all-results mode.
+  `query_wait` observes without consuming or locking, `querydelete_wait!` consumes one,
+  and a snapshot grants no reservation across a yield.
 - **Status:** implemented
 - **Evidence:** [`concurrentsim_helpers_tests.jl`](../../../test/general/concurrentsim_helpers_tests.jl), [`tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`querywait_tests.jl`](../../../test/general/querywait_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`semaphore_2_tests.jl`](../../../test/general/semaphore_2_tests.jl), [`semaphore_3_tests.jl`](../../../test/general/semaphore_3_tests.jl), [`protocolzoo_entanglement_id_tests.jl`](../../../test/general/protocolzoo_entanglement_id_tests.jl)
 - **Nonconformance:** Process-failure propagation and the complete register/message
-  matrix, including rejected message all-results, are unasserted.
+  matrix, including default order, absence of an implicit lock, and rejected message
+  all-results, are not asserted together.
 
 ## SYSV-004 — Verify delayed classical and quantum transport
 
 - **Covers:** SYS-006
 - **Method:** test
 - **Procedure:** On a three-node path, run directional direct transports, rejected and
-  forwarded classical sends, and noisy correlated quantum transfer.
+  forwarded classical sends, noisy correlated quantum transfer under valid source
+  timing, and receipt into an occupied destination.
 - **Environment / configuration:** Root tests with nonzero delays and transit background.
 - **Pass criterion:** Direct classical and quantum deliveries occur no earlier than
   their configured directional delays; the nonadjacent direct request reports no
   channel, while explicit forwarding reaches the final incoming store; and quantum
   ownership moves to the empty destination while bidirectional ownership and remote
   correlation remain valid and a joint observable matches supported in-transit
-  background evolution over the delay.
+  background evolution over the delay. Occupied receipt reports failure, discards the
+  transmitted state, and emits a warning.
 - **Status:** implemented
 - **Evidence:** [`registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl)
 - **Nonconformance:** Forwarding is untested. Quantum tests omit send/pre-arrival times,
   exact arrival, and in-transit backreferences; noisy cases check only end observables.
-  Late source time can fail after ownership moves.
+  The occupied-destination path emits no warning. Source access later than modeled
+  arrival can fail after ownership moves; that configuration is outside valid use.
 
-## SYSV-005 — Verify backend capability boundaries
+## SYSV-005 — Verify representation defaults, capabilities, and promotion
 
 - **Covers:** SYS-007
 - **Method:** test
-- **Procedure:** Execute supported and unsupported fixtures for every capability cell
-  in the confirmed backend inventory.
-- **Environment / configuration:** Root tests with discriminating physical results.
-- **Pass criterion:** Every supported fixture produces its documented physical result;
-  every designated unsupported fixture reports non-success and never substitutes
-  different physical semantics.
-- **Status:** implemented
+- **Procedure:** Exercise default construction and all capability classes with general,
+  specialized, mixed, and explicitly selected representations; request automatic and
+  approximate promotion, explicit twirling, and no-method dispatch.
+- **Environment / configuration:** Root tests with `QuantumOpticsRepr`,
+  `QuantumMCRepr`, `CliffordRepr`, `GabsRepr`, discriminating physical results, and
+  captured call-site warnings.
+- **Pass criterion:** Qubit and qumode default to `QuantumOpticsRepr`; Clifford and Gabs
+  are opt-in specialized representations, and Monte Carlo is a general peer. Supported
+  requests return their documented physical result. A specialized or mixed request
+  lacking direct support promotes across every capability class to a compatible common
+  general representation, carries approximation parameters, and warns once per call
+  site with only initial and final representation names. General-to-specialized
+  conversion requires an explicit configured twirling policy. If no path applies,
+  dispatch retains `MethodError`; a hint may supplement it.
+- **Status:** planned
 - **Evidence:** [`register_interface_tests.jl`](../../../test/general/register_interface_tests.jl), [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), [`project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), [`noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl), [`noninstant_and_backgrounds_qumode_tests.jl`](../../../test/general/noninstant_and_backgrounds_qumode_tests.jl)
-- **Nonconformance:** The inventory is unbaselined and fixtures are incomplete.
+- **Nonconformance:** Defaults and isolated conversions exist, but no complete matrix
+  does. Uniform promotion, approximation configuration, twirling objects, and the
+  common warning policy are unimplemented.
 
-## SYSV-006 — Verify distinct reusable Zoo surfaces
+## SYSV-006 — Verify the complete public Zoo surfaces
 
 - **Covers:** SYS-008
 - **Method:** test
-- **Procedure:** Execute one supported entry per Zoo independently and composed.
-- **Environment / configuration:** Root tests on one compatible representation.
-- **Pass criterion:** The state entry initializes a resource, the circuit entry acts
-  immediately on selected resources, and the protocol schedules as a resumable process,
-  both independently and in the composed scenario.
+- **Procedure:** Inventory and execute all public Zoo entries independently, then
+  compose one from each Zoo in a user-oriented example.
+- **Environment / configuration:** Generated API docs, root tests in each entry's
+  documented compatible representation subset, and examples project.
+- **Pass criterion:** Every exported public state documents its constructor parameters,
+  exposes expected-value introspection, and initializes with documented normalized or
+  weighted semantics. Every public circuit is documented, exposes consistent features
+  including arity, and acts immediately. Every public protocol family—including core,
+  Switch, QTCP, and MBQC—documents every constructor parameter and runs as a resumable
+  process. Each has API-reference and user-example coverage; internal helpers are absent.
 - **Status:** implemented
 - **Evidence:** [`stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl), [`circuitzoo_api_tests.jl`](../../../test/general/circuitzoo_api_tests.jl), [`protocolzoo_surface_contracts_tests.jl`](../../../test/general/protocolzoo_surface_contracts_tests.jl)
-- **Nonconformance:** API suites are separate; none asserts all three in one scenario.
+- **Nonconformance:** Existing API suites do not derive a complete public inventory or
+  validate documentation and examples. State representation/range coverage, circuit
+  feature consistency, and protocol constructor documentation—especially QTCP and
+  MBQC—are incomplete.
 
-## SYSV-007 — Verify public third-party extension seams
+## SYSV-007 — Verify the public and SemVer-protected boundary
 
 - **Covers:** SYS-009
 - **Method:** test
-- **Procedure:** Invoke external fixtures for every confirmed extension class through
-  normal product operations.
-- **Environment / configuration:** Clean external packages against the pinned revision.
-- **Pass criterion:** Normal product operations select every external implementation
-  through the same boundary as built-ins, each returns its documented result, and no
-  QuantumSavory core-source change is required.
-- **Status:** implemented
-- **Evidence:** [`abstract_tag_contract_tests.jl`](../../../test/general/abstract_tag_contract_tests.jl), [`logging_tests.jl`](../../../test/general/logging_tests.jl)
-- **Nonconformance:** Only in-repository tag/logging types exist; no external numerical
-  adapter, operation, model, protocol, or optional feature is tested.
+- **Procedure:** Build generated docs, inventory package-owned `export`/`public` names,
+  compare public tag schemas with the prior compatible baseline, and inspect internal
+  hooks and tutorial-local helpers.
+- **Environment / configuration:** Revision under review and the previous
+  SemVer-compatible public-surface manifest; exclude dependency-owned reexports.
+- **Pass criterion:** Every package-owned public API appears in generated prose and is
+  exported or marked `public`; documented unexported APIs use `public`. Internal
+  lowering, backend, lifecycle, logging, Zoo-subtype, activation, and tutorial-local
+  helpers are not public. Public tag names and ordered layouts match the compatible
+  baseline. Other incompatibilities require a breaking version; no preceding
+  deprecation release or stable representation default is required.
+- **Status:** planned
+- **Evidence:** [`API.md`](../../../docs/src/API.md), [`API_StatesZoo.md`](../../../docs/src/API_StatesZoo.md), [`API_CircuitZoo.md`](../../../docs/src/API_CircuitZoo.md), [`API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md), [`standard_protocol_tags.md`](../../../docs/src/standard_protocol_tags.md), [`abstract_tag_contract_tests.jl`](../../../test/general/abstract_tag_contract_tests.jl)
+- **Nonconformance:** No public-surface or compatible-schema manifest exists. Documented
+  unexported inspection functions lack `public` declarations, while prose currently
+  teaches internal protocol/logging extension hooks; public/internal classification is
+  not mechanically enforced.

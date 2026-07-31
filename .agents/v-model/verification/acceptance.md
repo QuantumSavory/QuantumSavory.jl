@@ -11,8 +11,8 @@ evidence that the complete promotion criteria currently pass.
 - **Procedure:** Execute one two-location scenario containing an entangled resource,
   delayed classical and quantum transfers, a background process, and time-dependent
   control while recording arrivals, operations, and the final resource.
-- **Environment / configuration:** Examples project at the profile-pinned product
-  revision with fixed nonzero delays and a supported background.
+- **Environment / configuration:** Examples project at the revision under review with
+  fixed nonzero delays and a supported background.
 - **Pass criterion:** Classical and quantum arrivals occur no earlier than their
   separately configured delays, requested operations execute in simulated-time order,
   and the final resource report equals the reference result including the configured
@@ -27,16 +27,19 @@ evidence that the complete promotion criteria currently pass.
 - **Covers:** STK-002
 - **Method:** demonstration
 - **Procedure:** Execute one representation-independent Bell-pair model and protocol
-  unchanged with two representations that support every requested capability.
-- **Environment / configuration:** Root or examples project with fixed inputs and two
-  confirmed compatible representations.
+  unchanged first with the general default and then with a specialized representation
+  that requires automatic promotion for one operation.
+- **Environment / configuration:** Root or examples project with fixed inputs,
+  `QuantumOpticsRepr`, and one compatible `CliffordRepr` or `GabsRepr` fixture.
 - **Pass criterion:** Both runs satisfy the same expected deterministic parity checks,
-  and the symbolic model, topology, and protocol configuration remain identical between
-  runs.
+  the symbolic model, topology, and protocol configuration remain identical, and the
+  specialized run warns once at the promotion call site with the initial and final
+  representation names.
 - **Status:** implemented
 - **Evidence:** [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`firstgenrepeater_lowlevel_6_1_tests.jl`](../../../test/examples/firstgenrepeater_lowlevel_6_1_tests.jl), [`assisted_cvteleportation_tests.jl`](../../../test/examples/assisted_cvteleportation_tests.jl)
-- **Nonconformance:** Existing parity and example fixtures are separate scenarios; none
-  proves unchanged topology and protocol configuration across two representations.
+- **Nonconformance:** Existing parity and example fixtures are separate scenarios.
+  They neither prove unchanged topology/protocol configuration nor exercise the
+  intended general automatic-promotion path.
 
 ## ACC-003 — Demonstrate asynchronous protocol composition
 
@@ -55,42 +58,41 @@ evidence that the complete promotion criteria currently pass.
 - **Nonconformance:** No single fixture combines all required building blocks and
   asserts prerequisite ordering, reservation non-overlap, and the consumed result.
 
-## ACC-004 — Demonstrate independently packaged extensions
+## ACC-004 — Demonstrate the complete repository-owned product
 
 - **Covers:** STK-004
 - **Method:** demonstration
-- **Procedure:** At product revision
-  `d7523d33e10bbb199e26a7dea074a54f34646d24`, build a separate external package
-  fixture for every extension class in the confirmed inventory, exercise each through
-  its normal user-facing boundary, probe an unsupported type, compare core source, and
-  repeat a representation-independent built-in baseline before and after loading.
-- **Environment / configuration:** Clean Julia environments developing that exact
-  QuantumSavory checkout plus only the fixture package and its declared dependencies.
-- **Pass criterion:** Every supported fixture is selected through the same boundary as
-  built-in behavior and returns its asserted result, the unsupported type remains
-  unselected, no QuantumSavory core source differs from the pinned checkout, and the
-  pre/post built-in baseline result is unchanged.
-- **Status:** planned
-- **Evidence:** None
-- **Nonconformance:** The inventory is unconfirmed; no independently packaged fixture
-  or pre/post built-in baseline comparison exists.
+- **Procedure:** Build the generated documentation and execute the CI-routed general,
+  Zoo, example, plotting, and built-in optional-integration workflows, including one
+  user-oriented scenario and one low-level modeling example.
+- **Environment / configuration:** Revision under review in every declared
+  CI-supported Julia/platform/dependency configuration; configured external services
+  are available for the documentation integration.
+- **Pass criterion:** Core operations, every public Zoo family, every checked-in
+  example, documentation generation, and each repository-owned optional feature
+  complete through their supported user boundary in the configurations that declare
+  them supported. The user-oriented and low-level examples remain clearly identified.
+- **Status:** implemented
+- **Evidence:** [`pipeline.yml`](../../../.buildkite/pipeline.yml), [`ci.yml`](../../../.github/workflows/ci.yml), [`runtests.jl`](../../../test/runtests.jl), [`make.jl`](../../../docs/make.jl), [`API_StatesZoo.md`](../../../docs/src/API_StatesZoo.md), [`API_CircuitZoo.md`](../../../docs/src/API_CircuitZoo.md), [`API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md)
+- **Nonconformance:** CI defines separate shards, but no durable whole-product run
+  proves every public Zoo entry and checked-in example across all declared
+  configurations. The documentation path also depends on credentials and an external
+  service.
 
-## ACC-005 — Demonstrate inspection, diagnostics, and reproducibility
+## ACC-005 — Demonstrate inspection and diagnosis
 
 - **Covers:** STK-005
 - **Method:** demonstration
 - **Procedure:** Inspect one representative scenario before and after execution, capture
-  selected structured records, then make two fresh runs from the same initial model and
-  scheduling configuration after resetting all Julia RNG state used by the scenario.
-- **Environment / configuration:** Declared software environment in examples and
-  plotting projects with fixed model configuration and seed.
+  records from each documented stable log group, and invoke every supported renderer.
+- **Environment / configuration:** Declared examples and plotting environments with a
+  fixed model configuration.
 - **Pass criterion:** Inspection exposes configured representations, backgrounds,
-  ownership, and final state; selected diagnostics expose their documented domain,
-  event, simulation time, and process identity; and, under the same fixed environment,
-  initial model, scheduling configuration, and reset Julia RNG state, the two fresh
-  runs agree on selected scientific outcomes, event times, and RNG-derived protocol
-  identifiers. Internal monotonic storage IDs are compared only if their counters reset.
+  ownership, and final state without changing simulation state; records are routed to
+  their documented log groups; and every supported text, HTML, image, plotting, or map
+  renderer completes. No exact log payload or rendered content is compared.
 - **Status:** implemented
 - **Evidence:** [`state_explorer_tests.jl`](../../../test/examples/state_explorer_tests.jl), [`qtcp_tutorial_2_tests.jl`](../../../test/examples/qtcp_tutorial_2_tests.jl), [`firstgenrepeater_lowlevel_1_tests.jl`](../../../test/examples/firstgenrepeater_lowlevel_1_tests.jl)
-- **Nonconformance:** Current fixtures neither inspect the complete declared state nor
-  repeat one fully seeded run to compare outcomes, times, and protocol identifiers.
+- **Nonconformance:** Current fixtures inspect and render selected objects only; they do
+  not cover every public inspection entry point, stable log group, or supported
+  renderer in one scenario.
