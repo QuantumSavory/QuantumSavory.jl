@@ -115,7 +115,7 @@ end
             "etaB" => "Individual channel transmissivity from source B to entanglement swapping station, ∈(0,1]",
             "Pd" => "Total excess noise (photons per qubit slot) in photon detectors, ∈[0,1), usually ≪1",
             "etad" => "Detection efficiency of photon detectors, ∈(0,1]",
-            "V" => "Mode matching parameter for individual interacting photonic pulses, |V|∈[0,1]",
+            "V" => "Real-valued mode overlap used by the standard parameter sweep, ∈[0,1]",
             "m" => "Parity bit determined by click pattern (0 or 1)"
         )
     )

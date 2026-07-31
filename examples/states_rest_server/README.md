@@ -39,7 +39,7 @@ The server will start on `http://localhost:8080`
   - `etaB` (optional): Transmissivity from source B, ∈(0,1], default=1.0
   - `Pd` (optional): Excess noise in detectors, ∈[0,1), default=0.0
   - `etad` (optional): Detection efficiency, ∈(0,1], default=1.0
-  - `V` (optional): Mode matching parameter, |V|∈[0,1], default=1.0
+  - `V` (optional): Real-valued mode overlap, ∈[0,1], default=1.0
   - `m` (optional): Parity bit (0 or 1), default=0
   - `weighted` (optional): Return weighted version (trace = success probability), default=false
 
@@ -195,7 +195,8 @@ A symbolic representation of the noisy Bell pair state obtained in a Barrett-Kok
 - **etaA, etaB**: Channel transmissivities from sources A and B
 - **Pd**: Excess noise in photon detectors
 - **etad**: Detection efficiency of photon detectors
-- **V**: Mode matching parameter (|V| = mode overlap, arg(V) = phase mismatch)
+- **V**: Real-valued mode overlap in [0,1]; this REST schema does not expose
+  the underlying state's phase degree of freedom
 - **m**: Parity bit from click pattern
 
 ### Genqo ZALM (Zero Added Loss Multiplexed)
