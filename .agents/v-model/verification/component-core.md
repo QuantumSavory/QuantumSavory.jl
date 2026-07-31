@@ -81,11 +81,11 @@ invariants with discriminating fixtures.
 
 - **Covers:** CMP-006
 - **Method:** test
-- **Procedure:** Attach several resource waiters including one that re-waits in a
-  same-time wake cascade and issue two changes; separately issue two unattended message
-  arrivals, three waits, and one future arrival.
-- **Environment / configuration:** Root test environment with deterministic scheduling
-  and retained messages inspected before explicit consumption.
+- **Procedure:** Attach several resource waiters, causally register one again before a
+  second same-timestamp change, and issue both changes; separately issue two unattended
+  message arrivals, three waits, and one future arrival.
+- **Environment / configuration:** Root test environment with controlled scheduling and
+  retained messages inspected before explicit consumption.
 - **Pass criterion:** All first-generation resource waiters wake on the first change,
   and the re-waiter wakes again only on the second. Message wait times are immediate,
   immediate, and the future arrival time, while all three messages remain queryable
@@ -93,7 +93,8 @@ invariants with discriminating fixtures.
 - **Status:** implemented
 - **Evidence:** [`semaphore_2_tests.jl`](../../../test/general/semaphore_2_tests.jl), [`semaphore_3_tests.jl`](../../../test/general/semaphore_3_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl)
 - **Nonconformance:** Current finite schedules do not establish the full resource
-  generation and three-wait message sequence in one promotion fixture.
+  generation and three-wait message sequence in one promotion fixture, and the
+  same-timestamp case does not isolate causal registration from scheduler tie-breaking.
 
 ## UNITV-008 — Verify representation manifolds and conversion policy
 

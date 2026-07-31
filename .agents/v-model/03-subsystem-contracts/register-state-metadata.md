@@ -89,13 +89,15 @@
   before blocking, distinguish observing waits from consuming waits, avoid implicit
   resource reservation, and preserve the documented difference between future-edge
   resource notification and message-arrival notification with queued wakeups. These
-  ordering, consumption, reservation, and wake semantics are SemVer-protected.
+  causal ordering, consumption, reservation, and wake semantics are SemVer-protected;
+  an identical timestamp alone adds no relative-order guarantee.
 - **Parents:** SYS-004, SYS-005
 - **Acceptance criterion:** Existing matches return immediately; observing waits retain
   them and consuming waits remove one. One future change or message wakes all current
   waiters, while each unattended message supplies one later immediate notification
-  without consuming its message; the same observable behavior holds across a
-  SemVer-compatible comparison.
+  without consuming its message. Which waiters are current is determined by causal
+  registration, not equal-time tie-breaking; the same observable behavior holds across
+  a SemVer-compatible comparison.
 - **Verification:** INTV-002 (test)
 - **Context:** [Metadata and waits](../../context/core/metadata-and-waits.md)
 

@@ -4,52 +4,53 @@
 
 - **Covers:** SYS-001, SYS-002
 - **Method:** test
-- **Procedure:** Run symbolic Bell-state, two-body-operation, and parity fixtures in two
-  representations; couple selected factors of a heterogeneous register.
-- **Environment / configuration:** Root tests with compatible representations and
-  distinct slot declarations.
-- **Pass criterion:** Both representations return expected deterministic parity; every
-  slot declaration remains observable, initialization leaves explicit factors
+- **Procedure:** Run Bell-state operation and parity fixtures in two representations;
+  couple selected factors of a heterogeneous register.
+- **Environment / configuration:** Tests with compatible representations and distinct
+  slot declarations.
+- **Pass criterion:** Both representations return expected parity; all slot
+  declarations remain observable, initialization keeps explicit factors
   separately owned, and coupling shares only touched factors.
 - **Status:** implemented
 - **Evidence:** [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`register_interface_tests.jl`](../../../test/general/register_interface_tests.jl), [`apply_tests.jl`](../../../test/general/apply_tests.jl), [`project_traceout_tests.jl`](../../../test/general/project_traceout_tests.jl)
-- **Nonconformance:** No fixture jointly checks both representations, all declarations,
-  factor identities, and touched-only composition.
+- **Nonconformance:** No fixture jointly checks representations, declarations, factor
+  identities, and touched-only composition.
 
 ## SYSV-002 — Verify local monotonic time, synchronization, and backgrounds
 
 - **Covers:** SYS-003
 - **Method:** test
-- **Procedure:** Advance independent subsystems from distinct local access times with
-  supported backgrounds, then perform an operation that makes selected subsystems
-  interact.
+- **Procedure:** Advance independent subsystems from distinct local times under
+  supported backgrounds, then make selected subsystems interact.
 - **Environment / configuration:** Root qubit, Clifford, and qumode tests.
-- **Pass criterion:** Independent slots evolve only for their own forward elapsed
-  intervals; the interaction advances selected slots to its time, synchronizes their
-  local access times, and leaves unrelated slot times unchanged.
+- **Pass criterion:** Independent slots evolve only over their forward elapsed
+  intervals; interaction advances selected slots to its time, synchronizes their local
+  times, and leaves others unchanged.
 - **Status:** implemented
 - **Evidence:** [`noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl), [`noninstant_and_backgrounds_qumode_tests.jl`](../../../test/general/noninstant_and_backgrounds_qumode_tests.jl)
-- **Nonconformance:** Tests do not jointly assert distinct local intervals, interaction
+- **Nonconformance:** Tests do not jointly assert local intervals, interaction
   synchronization, and untouched times; backend coverage differs.
 
 ## SYSV-003 — Verify events, resources, metadata, and snapshots
 
 - **Covers:** SYS-004, SYS-005
 - **Method:** test
-- **Procedure:** Exercise process, resource, wait, register-query, and message APIs
-  under contention, including a snapshot retained across a yield.
-- **Environment / configuration:** Deterministic root tests with duplicate metadata.
-- **Pass criterion:** Contenders never overlap, the second acquires only after release,
-  the waiter wakes no earlier than the change, and an unhandled process error reaches
-  the caller. Register exact, wildcard, predicate, first, all, FIFO/FILO, and consuming
-  modes return documented results, with register queries defaulting to FILO. Message
-  stores return the first FIFO match, consume one match, and reject all-results mode.
-  `query_wait` observes without consuming or locking, `querydelete_wait!` consumes one,
-  and a snapshot grants no reservation across a yield.
+- **Procedure:** Exercise resource contention, timeouts, change waits, register/message
+  queries, equal-time independence, a causal dependency, and a snapshot across a yield.
+- **Environment / configuration:** Controlled root tests with duplicate metadata.
+- **Pass criterion:** Resource owners never overlap; a blocked contender acquires only
+  after release. A timeout resumes no earlier than its scheduled simulated time; a
+  change waiter wakes no earlier than its change; process errors reach the caller.
+  Register exact, wildcard, predicate, first, all, FIFO/FILO, and consuming modes return
+  documented results; FILO is default. Messages return and consume the first FIFO match
+  and reject all-results mode. `query_wait` neither consumes nor locks,
+  `querydelete_wait!` consumes one, and snapshots grant no reservation across a yield.
+  Independent equal-time actions have no asserted order; dependencies are respected.
 - **Status:** implemented
 - **Evidence:** [`concurrentsim_helpers_tests.jl`](../../../test/general/concurrentsim_helpers_tests.jl), [`tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`querywait_tests.jl`](../../../test/general/querywait_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`semaphore_2_tests.jl`](../../../test/general/semaphore_2_tests.jl), [`semaphore_3_tests.jl`](../../../test/general/semaphore_3_tests.jl), [`protocolzoo_entanglement_id_tests.jl`](../../../test/general/protocolzoo_entanglement_id_tests.jl)
-- **Nonconformance:** No fixture jointly asserts process-failure propagation, the full
-  register/message matrix, default order, no implicit lock, and rejected all-results.
+- **Nonconformance:** No fixture jointly covers failures, full query matrices and
+  defaults, absence of an implicit lock, rejected all-results, and equal-time
+  independence.
 
 ## SYSV-004 — Verify delayed classical and quantum transport
 

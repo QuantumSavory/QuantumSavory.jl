@@ -34,8 +34,15 @@ Network directional delay functions schedule arrivals on the same simulation.
 Register `NonInstantGate` and `ConstantHamiltonianEvolution` calls are instead
 synchronous: they update slot access times without yielding or moving the scheduler
 clock; see [time and noise](../simulation/time-and-noise.md). Avoid manually changing
-simulation time or assuming that two processes scheduled for one timestamp run in a
-protocol-specific order unless a test and explicit event dependency establish it.
+simulation time.
+
+Identical simulated timestamps do not establish relative order between independent
+events or processes. Any tie-breaking observed from ConcurrentSim, including apparent
+insertion order, is an implementation detail that may change with future ConcurrentSim
+versions. When order matters, encode a causal dependency with an awaited event,
+message, resource handoff, or distinct simulated time. The notification guarantees
+below depend on which waiters are already registered when a change occurs, not on a
+general equal-time ordering rule.
 
 Race-oriented tests should force yields between selection and mutation, then verify
 revalidation and cleanup. The protocol tracker, swapper, switch, and cutoff suites
@@ -50,5 +57,4 @@ than straight-line happy paths.
 
 ## Unresolved questions
 
-- Which same-timestamp orderings are intentional contracts rather than ConcurrentSim implementation consequences?
 - Should resource-safe cleanup helpers become a shared protocol abstraction?

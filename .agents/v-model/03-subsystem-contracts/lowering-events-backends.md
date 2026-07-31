@@ -32,11 +32,14 @@
   one simulation clock, resume them only when their requested event, timeout, or
   resource condition is satisfied, enforce exclusive capacity for one or more distinct
   slot resources, and surface unhandled process failure to the simulation caller.
+  Equal timestamps alone shall not order independent resumptions; any required order
+  shall follow an explicit causal dependency.
 - **Parents:** SYS-004
 - **Acceptance criterion:** Under timeout, change, single-resource, and paired-resource
   contention over distinct resources, no process resumes before its trigger, capacity
   is never exceeded, a paired waiter retains no partial acquisition while blocked, and
-  an unhandled process error reaches the caller.
+  an unhandled process error reaches the caller. No result depends on tie-breaking
+  between independent equal-time events, while an explicit dependency is respected.
 - **Verification:** INTV-002 (test)
 - **Context:** [Discrete events](../../context/core/discrete-events.md)
 
@@ -47,7 +50,8 @@
 - **Outputs:** A scheduled process result, resumption event, acquired resource set, or
   surfaced failure.
 - **State:** The scheduler owns simulated time and process lifecycle; each exclusive
-  resource tracks current ownership and waiters.
+  resource tracks current ownership and waiters. ConcurrentSim's equal-time
+  tie-breaking is an internal implementation choice.
 - **Errors:** Invalid process work or unhandled process exceptions are observable.
   Deadlock recovery and real-time scheduling guarantees are not specified.
 

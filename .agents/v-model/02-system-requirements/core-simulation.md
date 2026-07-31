@@ -47,12 +47,18 @@
 
 - **Normative statement:** The product shall support resumable processes driven by
   simulated events, timeouts, change waits, and exclusive resource reservations, with
-  process failures observable to the simulation caller.
+  process failures observable to the simulation caller. Identical simulated timestamps
+  shall not establish a public relative order between otherwise independent events or
+  processes; required ordering shall be expressed through causal event or resource
+  dependencies.
 - **Parents:** STK-001, STK-003
-- **Acceptance criterion:** Given two contenders for one-capacity resource and a
-  delayed change, scheduling them never grants concurrent ownership, resumes the second
-  contender only after release, and wakes the change waiter no earlier than the change;
-  an unhandled process error reaches the simulation caller.
+- **Acceptance criterion:** Given two contenders for one-capacity resource, a timeout,
+  and a delayed change, scheduling them never grants concurrent ownership, lets a
+  blocked contender acquire only after the current owner releases, resumes the timeout
+  no earlier than its scheduled simulated time, and wakes the waiter no earlier than
+  the change; an unhandled process error reaches the simulation caller. Two independent
+  actions at one timestamp have no specified relative order, while an explicit
+  dependency orders dependent actions.
 - **Verification:** SYSV-003 (test)
 - **Context:** [Discrete events](../../context/core/discrete-events.md)
 

@@ -29,9 +29,9 @@ LOCC protocols are driven by events:
 - a timeout expires,
 - or a slot lock is released.
 
-Those events do not happen at the same time, and several protocol components
-may be active at once. Discrete-event execution lets each protocol wait only on
-the events it cares about.
+Those events may occur at different or identical simulated times, and several
+protocol components may be active at once. Discrete-event execution lets each
+protocol wait only on the events it cares about.
 
 ## `@resumable` Processes
 
@@ -63,6 +63,18 @@ sim = Simulation()
 
 Once scheduled, the process runs whenever the events it is waiting on become
 ready.
+
+## Identical Timestamps Do Not Imply Order
+
+Simulated time determines when an event becomes ready; it does not define a
+relative order between otherwise independent events or processes with the same
+timestamp. Any equal-time tie-breaking observed from ConcurrentSim—including
+apparent insertion order—is an implementation detail and may change in a future
+ConcurrentSim version.
+
+When a protocol requires ordering, express it as a causal dependency: await the
+earlier event or process, pass a message, hand off a resource, or use distinct
+simulated times. Do not rely on process launch order to resolve equal timestamps.
 
 ## Reusable Protocol Processes
 

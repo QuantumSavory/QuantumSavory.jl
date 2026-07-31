@@ -29,9 +29,9 @@ These actions exercise core subsystem boundaries and failure paths.
 
 - **Covers:** SUB-004, SUB-006
 - **Method:** test
-- **Procedure:** Run deterministic timeout, change, single-resource, paired-distinct-
-  resource, observing, consuming, re-wait, unattended-message, and failing-process
-  cases.
+- **Procedure:** Run controlled timeout, change, single-resource, paired-distinct-
+  resource, observing, consuming, re-wait, unattended-message, equal-time independent
+  and causally ordered, and failing-process cases.
 - **Environment / configuration:** Root tests with recorded event and ownership times.
 - **Pass criterion:** No process resumes before its trigger, capacity is never
   exceeded, a waiter for distinct paired resources holds no partial acquisition while
@@ -39,11 +39,13 @@ These actions exercise core subsystem boundaries and failure paths.
   observing waits retain and consuming waits remove one. A future change or message
   wakes all current waiters, while each unattended message supplies one later immediate
   notification without consuming its message. No post-exception simulation-state
-  condition is asserted.
+  condition is asserted. Independent equal-time actions have no asserted relative
+  order, while explicit event or resource dependencies are respected.
 - **Status:** implemented
 - **Evidence:** [`concurrentsim_helpers_tests.jl`](../../../test/general/concurrentsim_helpers_tests.jl), [`querywait_tests.jl`](../../../test/general/querywait_tests.jl), [`semaphore_2_tests.jl`](../../../test/general/semaphore_2_tests.jl), [`semaphore_3_tests.jl`](../../../test/general/semaphore_3_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl)
 - **Nonconformance:** Failure propagation, no partial paired acquisition, and the
-  distinct-resource precondition are unasserted; interleavings are selected.
+  distinct-resource precondition are unasserted. No fixture separates causal ordering
+  from incidental equal-time tie-breaking.
 
 ## INTV-003 — Verify metadata consistency and protocol revalidation
 

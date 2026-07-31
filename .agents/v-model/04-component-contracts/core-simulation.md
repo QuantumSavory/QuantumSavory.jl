@@ -97,15 +97,15 @@
   for that future change, while a waiter that blocks again after waking shall require a
   later change. A message arrival shall wake every currently blocked message waiter or,
   if none exists, supply exactly one later immediate wakeup; neither kind of
-  notification shall consume metadata or a message.
+  notification shall consume metadata or a message. Equal timestamps shall not
+  determine prior waiter registration.
 - **Parents:** SUB-006
 - **Acceptance criterion:** Given multiple resource waiters including one that re-waits
-  during a same-time wake cascade, when two changes occur, then all first-generation
-  waiters wake for the first change and the re-waiter wakes a second time only for the
-  second change; given two unattended message arrivals followed by three waits and one
-  future arrival, then the wait completion times are immediate, immediate, and the
-  future arrival time, while all three messages remain queryable until explicitly
-  consumed.
+  before a causally later change at the same timestamp, when the two changes occur,
+  then all first-generation waiters wake for the first and the re-waiter wakes again
+  only for the second; given two unattended message arrivals followed by three waits
+  and one future arrival, then completion times are immediate, immediate, and the future
+  arrival time, while all three messages remain queryable until explicitly consumed.
 - **Verification:** UNITV-005 (test)
 - **Origin / risk:** Resource-change and queued-message wakeup regression tests plus
   maintainer interview; critical lost-wakeup risk

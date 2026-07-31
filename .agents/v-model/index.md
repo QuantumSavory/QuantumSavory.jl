@@ -50,6 +50,8 @@ right-side action shards.
   expression; generic numerical separability detection is not promised.
 - Exceptions terminate the affected run: no public operation promises rollback,
   failure atomicity, or a consistent simulation state after an exception.
+- Identical simulated timestamps do not order independent events or processes;
+  ConcurrentSim tie-breaking is an implementation detail.
 - Sharing the software environment, initial state, scheduling configuration, and Julia
   RNG seed is necessary to assess reproducibility; the product makes no built-in
   repeatability promise.
