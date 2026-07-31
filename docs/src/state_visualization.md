@@ -3,7 +3,9 @@
 The quantum states objects in QuantumSavory have a variety of `show` methods
 implemented for them. Depending on the IDE you are working in,
 you will be able to see rich information about the quantum state you are working with,
-e.g. when accessing it with `stateof(network[register_index][slot_index])` or `stateof(register[slot_index])`.
+e.g. when accessing it with
+`QuantumSavory.stateof(network[register_index][slot_index])` or
+`QuantumSavory.stateof(register[slot_index])`.
 
 In particular:
 - in Pluto or Jupyter or VS Code you will see the `text/html` or `image/png` rendering.
