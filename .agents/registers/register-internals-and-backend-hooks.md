@@ -45,6 +45,19 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - `uptotime!(state, idx, background, dt)` and related methods
 - `default_repr(...)`
 - `consistent_representation(...)`
+- `constructor_schema(::Type{YourComponent})` for stable constructor metadata
+
+## Component Metadata Invariants
+
+- `slot_schemas`, `representation_schemas`, and `background_schemas` are
+  explicit built-in catalogs; loading an unrelated package must not change
+  them.
+- `ConstructorSchema.fields` contains only stable, user-facing fields in
+  presentation order.
+- Field types come from the declared constructor layout. Documentation and
+  constraints are maintained explicitly by the simulator.
+- Custom packages can extend `constructor_schema` for their own types, but do
+  not mutate the built-in catalogs.
 
 ## Important Lowering Paths
 
@@ -98,6 +111,7 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - `test/general/apply_tests.jl`
 - `test/general/observable_tests.jl`
 - `test/general/project_traceout_tests.jl`
+- `test/general/component_metadata_tests.jl`
 
 ## Paper And Docs Cross-Check
 
@@ -105,3 +119,4 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
 - `docs/src/modeling_registers_and_time.md`
 - `docs/src/properties.md`
 - `docs/src/architecture.md`
+- `docs/src/component_metadata.md`

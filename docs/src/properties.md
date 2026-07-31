@@ -47,8 +47,6 @@ The slot types currently available in QuantumSavory are:
 ```@example
 using QuantumSavory # hide
 
-
-using InteractiveUtils # hide
 import PrettyTables: pretty_table # hide
 
 function pt_to_html(args...; kwargs...) # hide
@@ -56,7 +54,7 @@ function pt_to_html(args...; kwargs...) # hide
     return Base.HTML(str) # hide
 end # hide
 
-types = QuantumSavory.available_slot_types() # hide
+types = [(type=s.constructor, doc=s.doc) for s in slot_schemas()] # hide
 pt_to_html(types; backend = :html, show_column_labels = false) # hide
 ```
 
@@ -66,3 +64,5 @@ pt_to_html(types; backend = :html, show_column_labels = false) # hide
   modeling-registers-time) for the larger modeling picture.
 - Read [Background Noise Processes](@ref) for the other half of the physical
   description attached to register slots.
+- Read [Component Metadata](@ref) for the stable constructor and representation
+  discovery API.

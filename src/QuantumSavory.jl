@@ -66,6 +66,9 @@ export
     CliffordRepr, QuantumOpticsRepr, QuantumMCRepr,
     UseAsState, UseAsObservable, UseAsOperation,
     AbstractBackground,
+    ConstructorFieldSchema, ConstructorSchema,
+    constructor_schema, constructor_constraints,
+    slot_schemas, representation_schemas, background_schemas,
     onchange_tag, onchange,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer,
@@ -155,6 +158,7 @@ include("querywait.jl")
 
 include("representations.jl")
 include("backgrounds.jl")
+include("component_metadata.jl")
 include("noninstant.jl")
 include("measurements.jl")
 

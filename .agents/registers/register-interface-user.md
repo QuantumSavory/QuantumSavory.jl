@@ -47,6 +47,11 @@ initialize!((net[1, 1], net[2, 1]), StabilizerState("XX ZZ"))
 - Construction:
   - `Register(...)`
   - `RegisterNet(...)`
+- Component discovery:
+  - `slot_schemas()`
+  - `representation_schemas()`
+  - `background_schemas()`
+  - `constructor_schema(ComponentType)`
 - Slot handles and inspection:
   - `reg[i]`
   - `stateof`
@@ -70,6 +75,8 @@ initialize!((net[1, 1], net[2, 1]), StabilizerState("XX ZZ"))
 
 - Prefer symbolic states and operations unless you explicitly need a backend object.
 - Put subsystem traits, preferred representations, and background processes on the register at construction time.
+- Use the explicit component-schema catalogs when building configuration tools;
+  do not discover choices by walking Julia subtypes.
 - Write protocol code against `RegRef`s, not backend state objects.
 - Use `RegisterNet` early if registers will participate in one simulation. It unifies time tracking and networking APIs.
 - Use locks when multiple simulated processes can touch the same slot.
@@ -81,6 +88,7 @@ initialize!((net[1, 1], net[2, 1]), StabilizerState("XX ZZ"))
 - `docs/src/register_interface.md`
 - `docs/src/modeling_registers_and_time.md`
 - `docs/src/properties.md`
+- `docs/src/component_metadata.md`
 - `examples/firstgenrepeater_lowlevel/README.md`
 - `examples/firstgenrepeater/README.md`
 

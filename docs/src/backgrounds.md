@@ -56,15 +56,13 @@ Currently QuantumSavory implements:
 ```@example
 using QuantumSavory # hide
 
-
-using InteractiveUtils # hide
 import PrettyTables: pretty_table # hide
 
 function pt_to_html(args...; kwargs...) # hide
     str = pretty_table(String, args...; kwargs...) # hide
     return Base.HTML(str) # hide
 end # hide
-types = QuantumSavory.available_background_types() # hide
+types = [(type=s.constructor, doc=s.doc) for s in background_schemas()] # hide
 pt_to_html(types; backend = :html, show_column_labels = false) # hide
 ```
 
@@ -79,3 +77,5 @@ If you want to inspect how a declared background process is represented, use
   framework-managed time.
 - Read [Properties](@ref) for the subsystem side of the same model
   description.
+- Read [Component Metadata](@ref) for the stable constructor, representation,
+  and background discovery API.
