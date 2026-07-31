@@ -3,14 +3,17 @@
 
 Stable metadata for one user-supplied constructor field.
 
-`declared_type` is the Julia type accepted by the constructor. `minimum` and
-`maximum` are inclusive numeric constraints when the simulator declares them;
-`nothing` means that the simulator does not declare that bound.
+`declared_type` is the Julia type accepted by the constructor. `required`
+records whether the advertised keyword must be supplied; it is independent of
+whether `declared_type` accepts `Nothing`. `minimum` and `maximum` are
+inclusive numeric constraints when the simulator declares them; `nothing`
+means that the simulator does not declare that bound.
 """
 struct ConstructorFieldSchema
     name::Symbol
     declared_type::Type
     doc::String
+    required::Bool
     minimum::Union{Nothing,Real}
     maximum::Union{Nothing,Real}
 
@@ -18,6 +21,7 @@ struct ConstructorFieldSchema
         name::Symbol,
         declared_type::Type,
         doc::AbstractString,
+        required::Bool,
         minimum::Union{Nothing,Real},
         maximum::Union{Nothing,Real},
     )
@@ -31,7 +35,14 @@ struct ConstructorFieldSchema
             throw(ArgumentError("constructor-field maximum must be finite"))
         minimum !== nothing && maximum !== nothing && minimum > maximum &&
             throw(ArgumentError("constructor-field minimum exceeds maximum"))
-        return new(name, declared_type, String(doc), minimum, maximum)
+        return new(
+            name,
+            declared_type,
+            String(doc),
+            required,
+            minimum,
+            maximum,
+        )
     end
 end
 
@@ -39,10 +50,18 @@ function ConstructorFieldSchema(
     name::Symbol,
     declared_type::Type,
     doc::AbstractString;
+    required::Bool,
     minimum::Union{Nothing,Real}=nothing,
     maximum::Union{Nothing,Real}=nothing,
 )
-    return ConstructorFieldSchema(name, declared_type, doc, minimum, maximum)
+    return ConstructorFieldSchema(
+        name,
+        declared_type,
+        doc,
+        required,
+        minimum,
+        maximum,
+    )
 end
 
 """
@@ -99,6 +118,7 @@ function _constructor_field(
     constructor::Type,
     name::Symbol,
     doc::AbstractString;
+    required::Bool,
     minimum::Union{Nothing,Real}=nothing,
     maximum::Union{Nothing,Real}=nothing,
 )
@@ -106,6 +126,7 @@ function _constructor_field(
         name,
         fieldtype(constructor, name),
         doc;
+        required,
         minimum,
         maximum,
     )
@@ -132,6 +153,7 @@ const _QUANTUM_OPTICS_REPR_SCHEMA = ConstructorSchema(
             QuantumOpticsRepr,
             :cutoff,
             "Fock-space cutoff dimension used for bosonic modes.";
+            required=false,
             minimum=1,
         ),
     ),
@@ -148,7 +170,8 @@ const _T1_DECAY_SCHEMA = ConstructorSchema(
         _constructor_field(
             T1Decay,
             :t1,
-            "T₁ relaxation time of the two-level system.",
+            "T₁ relaxation time of the two-level system.";
+            required=false,
         ),
     ),
 )
@@ -159,7 +182,8 @@ const _T2_DEPHASING_SCHEMA = ConstructorSchema(
         _constructor_field(
             T2Dephasing,
             :t2,
-            "T₂ dephasing time of the two-level system.",
+            "T₂ dephasing time of the two-level system.";
+            required=false,
         ),
     ),
 )
@@ -170,12 +194,14 @@ const _T1_T2_NOISE_SCHEMA = ConstructorSchema(
         _constructor_field(
             T1T2Noise,
             :t1,
-            "T₁ relaxation time of the two-level system.",
+            "T₁ relaxation time of the two-level system.";
+            required=false,
         ),
         _constructor_field(
             T1T2Noise,
             :t2,
-            "T₂ dephasing time of the two-level system.",
+            "T₂ dephasing time of the two-level system.";
+            required=false,
         ),
     ),
 )
@@ -186,7 +212,8 @@ const _DEPOLARIZATION_SCHEMA = ConstructorSchema(
         _constructor_field(
             Depolarization,
             :τ,
-            "Average time between depolarization events.",
+            "Average time between depolarization events.";
+            required=false,
         ),
     ),
 )
@@ -194,9 +221,24 @@ const _PAULI_NOISE_SCHEMA = ConstructorSchema(
     PauliNoise,
     "Independent Poisson-distributed Pauli noise events.",
     (
-        _constructor_field(PauliNoise, :τˣ, "Average time between X events."),
-        _constructor_field(PauliNoise, :τʸ, "Average time between Y events."),
-        _constructor_field(PauliNoise, :τᶻ, "Average time between Z events."),
+        _constructor_field(
+            PauliNoise,
+            :τˣ,
+            "Average time between X events.";
+            required=false,
+        ),
+        _constructor_field(
+            PauliNoise,
+            :τʸ,
+            "Average time between Y events.";
+            required=false,
+        ),
+        _constructor_field(
+            PauliNoise,
+            :τᶻ,
+            "Average time between Z events.";
+            required=false,
+        ),
     ),
 )
 const _AMPLITUDE_DAMPING_SCHEMA = ConstructorSchema(
@@ -206,7 +248,8 @@ const _AMPLITUDE_DAMPING_SCHEMA = ConstructorSchema(
         _constructor_field(
             AmplitudeDamping,
             :τ,
-            "Characteristic time of the amplitude-damping process.",
+            "Characteristic time of the amplitude-damping process.";
+            required=false,
         ),
     ),
 )

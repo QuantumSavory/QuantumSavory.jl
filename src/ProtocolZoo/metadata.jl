@@ -78,6 +78,7 @@ function _protocol_field(
     protocol::Type,
     name::Symbol,
     doc::AbstractString;
+    required::Bool,
     minimum::Union{Nothing,Real}=nothing,
     maximum::Union{Nothing,Real}=nothing,
 )
@@ -85,6 +86,7 @@ function _protocol_field(
         name,
         fieldtype(protocol, name),
         doc;
+        required,
         minimum,
         maximum,
     )
@@ -106,79 +108,94 @@ const _ENTANGLER_SCHEMA = ProtocolSchema(
             _protocol_field(
                 EntanglerProt,
                 :pairstate,
-                "State generated after a successful attempt.",
+                "State generated after a successful attempt.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :success_prob,
                 "Success probability for one generation attempt.";
+                required=false,
                 minimum=0.0,
                 maximum=1.0,
             ),
             _protocol_field(
                 EntanglerProt,
                 :attempt_time,
-                "Duration of one generation attempt.",
+                "Duration of one generation attempt.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :local_busy_time_pre,
-                "Local busy time before generation attempts.",
+                "Local busy time before generation attempts.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :local_busy_time_post,
-                "Local busy time after a successful attempt.",
+                "Local busy time after a successful attempt.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :retry_lock_time,
-                "Delay before retrying unavailable slot locks, or `nothing`.",
+                "Delay before retrying unavailable slot locks, or `nothing`.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :rounds,
-                "Number of rounds, with `-1` meaning indefinitely.",
+                "Number of rounds, with `-1` meaning indefinitely.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :attempts,
-                "Maximum attempts per round, with `-1` meaning indefinitely.",
+                "Maximum attempts per round, with `-1` meaning indefinitely.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :chooseslotA,
-                "Slot selector for the first node.",
+                "Slot selector for the first node.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :chooseslotB,
-                "Slot selector for the second node.",
+                "Slot selector for the second node.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :randomize,
-                "Whether to randomize the free-slot search.",
+                "Whether to randomize the free-slot search.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :uselock,
-                "Whether to lock selected slots during generation.",
+                "Whether to lock selected slots during generation.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :margin,
-                "Slots to leave free after entanglement already exists.",
+                "Slots to leave free after entanglement already exists.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :hardmargin,
-                "Slots to leave free before entanglement exists.",
+                "Slots to leave free before entanglement exists.";
+                required=false,
             ),
             _protocol_field(
                 EntanglerProt,
                 :tag,
-                "Tag-head type added to generated pairs, or `nothing`.",
+                "Tag-head type added to generated pairs, or `nothing`.";
+                required=false,
             ),
         ),
     ),
@@ -194,52 +211,62 @@ const _SWAPPER_SCHEMA = ProtocolSchema(
             _protocol_field(
                 SwapperProt,
                 :chooseslots,
-                "Selector for eligible local slots.",
+                "Selector for eligible local slots.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :nodeL,
-                "Query selecting one remote counterpart.",
+                "Query selecting one remote counterpart.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :nodeH,
-                "Query selecting the other remote counterpart.",
+                "Query selecting the other remote counterpart.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :chooseL,
-                "Chooser among matches for `nodeL`.",
+                "Chooser among matches for `nodeL`.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :chooseH,
-                "Chooser among matches for `nodeH`.",
+                "Chooser among matches for `nodeH`.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :local_busy_time,
-                "Local busy time before the swap.",
+                "Local busy time before the swap.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :retry_lock_time,
-                "Delay before retrying unavailable slots, or `nothing`.",
+                "Delay before retrying unavailable slots, or `nothing`.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :rounds,
-                "Number of rounds, with `-1` meaning indefinitely.",
+                "Number of rounds, with `-1` meaning indefinitely.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :agelimit,
-                "Maximum eligible pair age, or `nothing`.",
+                "Maximum eligible pair age, or `nothing`.";
+                required=false,
             ),
             _protocol_field(
                 SwapperProt,
                 :max_history_per_slot,
-                "Retained history-tag limit, or `nothing`.",
+                "Retained history-tag limit, or `nothing`.";
+                required=false,
             ),
         ),
     ),
@@ -264,12 +291,14 @@ const _ENTANGLEMENT_CONSUMER_SCHEMA = ProtocolSchema(
             _protocol_field(
                 EntanglementConsumer,
                 :period,
-                "Polling period, or `nothing` to wait for tag changes.",
+                "Polling period, or `nothing` to wait for tag changes.";
+                required=false,
             ),
             _protocol_field(
                 EntanglementConsumer,
                 :tag,
-                "Tag-head type identifying consumable pairs.",
+                "Tag-head type identifying consumable pairs.";
+                required=false,
             ),
         ),
     ),
@@ -286,22 +315,26 @@ const _CUTOFF_SCHEMA = ProtocolSchema(
             _protocol_field(
                 CutoffProt,
                 :period,
-                "Polling period, or `nothing` to wait for tag changes.",
+                "Polling period, or `nothing` to wait for tag changes.";
+                required=false,
             ),
             _protocol_field(
                 CutoffProt,
                 :retention_time,
-                "Age after which an entangled slot is emptied.",
+                "Age after which an entangled slot is emptied.";
+                required=false,
             ),
             _protocol_field(
                 CutoffProt,
                 :announce,
-                "Whether to notify the remote counterpart after deletion.",
+                "Whether to notify the remote counterpart after deletion.";
+                required=false,
             ),
             _protocol_field(
                 CutoffProt,
                 :max_delete_per_slot,
-                "Retained deletion-tag limit, or `nothing`.",
+                "Retained deletion-tag limit, or `nothing`.";
+                required=false,
             ),
         ),
     ),
@@ -317,27 +350,32 @@ const _SIMPLE_SWITCH_SCHEMA = ProtocolSchema(
             _protocol_field(
                 SimpleSwitchDiscreteProt,
                 :clientnodes,
-                "Client node indices served by the switch.",
+                "Client node indices served by the switch.";
+                required=true,
             ),
             _protocol_field(
                 SimpleSwitchDiscreteProt,
                 :success_probs,
-                "Per-client raw-entanglement success probabilities.",
+                "Per-client raw-entanglement success probabilities.";
+                required=true,
             ),
             _protocol_field(
                 SimpleSwitchDiscreteProt,
                 :ticktock,
-                "Duration of one switching cycle.",
+                "Duration of one switching cycle.";
+                required=false,
             ),
             _protocol_field(
                 SimpleSwitchDiscreteProt,
                 :rounds,
-                "Number of cycles, with `-1` meaning indefinitely.",
+                "Number of cycles, with `-1` meaning indefinitely.";
+                required=false,
             ),
             _protocol_field(
                 SimpleSwitchDiscreteProt,
                 :assignment_algorithm,
-                "Memory-slot assignment algorithm.",
+                "Memory-slot assignment algorithm.";
+                required=false,
             ),
         ),
     ),

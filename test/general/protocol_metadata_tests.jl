@@ -1,6 +1,7 @@
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
+using Graphs: complete_graph
 
 struct CustomFloatingProtocol <: AbstractProtocol
     value::Int
@@ -15,7 +16,8 @@ QuantumSavory.ProtocolZoo.protocol_schema(::Type{CustomFloatingProtocol}) =
                 ConstructorFieldSchema(
                     :value,
                     Int,
-                    "A test value.",
+                    "A test value.";
+                    required=true,
                 ),
             ),
         ),
@@ -62,6 +64,9 @@ end
     @test map(schema -> schema.constructor.constructor, schemas) ==
           expected_protocols
 
+    net = RegisterNet(complete_graph(3), [Register(1) for _ in 1:3])
+    sim = get_time_tracker(net)
+
     for schema in schemas
         protocol = schema.constructor.constructor
         @test protocol_schema(protocol) === schema
@@ -79,6 +84,23 @@ end
             @test field.declared_type === fieldtype(protocol, field.name)
             @test !isempty(field.doc)
         end
+
+        placement = NamedTuple{schema.placement_fields}(
+            ntuple(_ -> 1, length(schema.placement_fields)),
+        )
+        if schema.placement === EdgeProtocolPlacement
+            placement = NamedTuple{schema.placement_fields}((1, 2))
+        end
+        required = protocol === SimpleSwitchDiscreteProt ? (
+            clientnodes=[2, 3],
+            success_probs=[0.5, 0.5],
+        ) : NamedTuple()
+        baseline = protocol(; sim, net, placement..., required...)
+        advertised = (; map(
+            field -> field.name => getfield(baseline, field.name),
+            schema.constructor.fields,
+        )...)
+        @test protocol(; sim, net, placement..., advertised...) isa protocol
     end
 
     @test map(protocol_placement, expected_protocols) == (
@@ -128,6 +150,21 @@ end
         field -> field.name,
         switch_schema.constructor.fields,
     )
+    required_fields = [
+        (schema.constructor.constructor, field.name)
+        for schema in schemas for field in schema.constructor.fields
+        if field.required
+    ]
+    @test required_fields == [
+        (SimpleSwitchDiscreteProt, :clientnodes),
+        (SimpleSwitchDiscreteProt, :success_probs),
+    ]
+    @test sum(length(schema.constructor.fields) for schema in schemas) == 36
+    @test_throws UndefKeywordError SimpleSwitchDiscreteProt(;
+        sim,
+        net,
+        switchnode=1,
+    )
 
     custom = protocol_schema(CustomFloatingProtocol)
     @test custom.constructor.constructor === CustomFloatingProtocol
@@ -154,7 +191,8 @@ end
             ConstructorFieldSchema(
                 :node,
                 Int,
-                "Incorrectly duplicated placement.",
+                "Incorrectly duplicated placement.";
+                required=true,
             ),
         ),
     )
