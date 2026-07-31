@@ -26,16 +26,27 @@ map(schema -> schema.constructor, background_schemas())
 
 Every entry is a [`ConstructorSchema`](@ref). Its ordered `fields` are
 [`ConstructorFieldSchema`](@ref) values containing the declared Julia type,
-documentation, and any inclusive numeric bounds owned by the simulator.
+documentation, required-keyword status, and any inclusive numeric bounds owned
+by the simulator.
 
 ```@example component-metadata
 schema = constructor_schema(QuantumOpticsRepr)
 field = only(schema.fields)
-(field.name, field.declared_type, constructor_constraints(
+(field.name, field.declared_type, field.required, constructor_constraints(
     QuantumOpticsRepr,
     Val(:cutoff),
 ))
 ```
+
+`required=true` means that callers must supply the advertised keyword.
+`required=false` means that callers may omit it and let the constructor apply
+its simulator-owned default. Requiredness is unrelated to whether the declared
+type accepts `Nothing`: an optional keyword may reject `nothing`, while a
+required keyword may accept it.
+
+Constructor metadata deliberately does not contain default values. Consumers
+should preserve omission for optional fields instead of copying or serializing
+defaults that belong to QuantumSavory.
 
 An absent bound is represented by `nothing`; consumers should not invent a
 constraint when QuantumSavory does not declare one. The catalogs contain
@@ -82,7 +93,7 @@ intentional: merely loading a package or defining a subtype must not silently
 change QuantumSavory's built-in catalogs.
 
 ```julia
-struct MyBackground <: AbstractBackground
+Base.@kwdef struct MyBackground <: AbstractBackground
     rate::Float64
 end
 
@@ -94,6 +105,7 @@ QuantumSavory.constructor_schema(::Type{MyBackground}) = ConstructorSchema(
             :rate,
             Float64,
             "Event rate.";
+            required=true,
             minimum=0.0,
         ),
     ),

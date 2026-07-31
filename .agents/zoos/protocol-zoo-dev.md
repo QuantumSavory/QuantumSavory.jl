@@ -61,6 +61,14 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
   for node protocols, and two ordered fields for edge protocols.
 - Placement fields belong to the protocol struct and never also appear as
   configurable constructor fields.
+- Protocols are keyword-constructible from injected `sim` and `net`, their
+  placement fields, and advertised constructor fields. A field is required
+  exactly when omission is not supported by that keyword constructor.
+- `required` is independent of `Nothing`, and protocol schemas never carry
+  default values. Preserve omission for optional fields.
+- `SimpleSwitchDiscreteProt.clientnodes` and `success_probs` are its required
+  advertised fields. Its private `_backlog` is freshly allocated by the
+  constructor and must stay out of metadata and serialized configuration.
 - Only an edge protocol can declare `permits_virtual_edge`.
 - `protocol_placement` and `permits_virtual_edge` derive from
   `protocol_schema`; do not duplicate those facts in accessor methods.

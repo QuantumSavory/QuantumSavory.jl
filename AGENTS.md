@@ -13,7 +13,7 @@ Open only the topic files that match the task.
 
 ## Topic Router
 
-- Register API, factorization, time semantics, backend hooks:
+- Register API, constructor metadata, factorization, time semantics, backend hooks:
   - user: `.agents/registers/register-interface-user.md`
   - dev/review: `.agents/registers/register-internals-and-backend-hooks.md`
 - Tags, queries, metadata plane, waiting on tags/messages:

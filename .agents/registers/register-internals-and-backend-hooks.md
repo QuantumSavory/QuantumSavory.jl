@@ -54,8 +54,15 @@ Use `.agents/registers/register-interface-user.md` for public-facing tasks.
   them.
 - `ConstructorSchema.fields` contains only stable, user-facing fields in
   presentation order.
+- Every `ConstructorFieldSchema` declares `required` explicitly. `false` means
+  the keyword may be omitted so the constructor owns its default; it does not
+  mean that the field type accepts `Nothing`.
+- Constructor schemas never publish default values. Keep omitted optional
+  keywords omitted across configuration and serialization boundaries.
 - Field types come from the declared constructor layout. Documentation and
   constraints are maintained explicitly by the simulator.
+- Every catalogued type must be keyword-constructible from its advertised
+  fields. Constructor-private runtime state must be created internally.
 - Custom packages can extend `constructor_schema` for their own types, but do
   not mutate the built-in catalogs.
 
