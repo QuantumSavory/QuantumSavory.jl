@@ -10,6 +10,10 @@ import LinearAlgebra: tr
 
 export BarrettKokBellPair, BarrettKokBellPairW,
     DepolarizedBellPair,
+    StateNormalizationStyle, NormalizedState, WeightedState,
+    StateParameterSchema, StateFamilySchema,
+    state_family_schema, state_family_schemas, state_normalization_style,
+    state_weight, normalized_state_and_weight,
     stateexplorer, stateexplorer!, stateparameters, stateparametersrange
 
 
@@ -20,20 +24,13 @@ symbollabel(x::AbstractTwoQubitState) = "ρᵖᵃⁱʳ"
 
 _bspin = SpinBasis(1//2)
 
-"""Return the "interesting" parameters that a state from the StatesZoo has. A constructor that uses only these parameters needs to exist.
-
-Used by `stateexplorer` to generate the most valuable plots of figures of merit."""
-function stateparameters end
-"""Return the valid ranges and the "good" value for all parameters listed in `stateparameters`."""
-function stateparametersrange end
-stateparameters(::Any) = ()
-stateparametersrange(::Any) = ()
-
 include("barrett_kok.jl")
 
 include("depolarized.jl")
 
 include("genqo.jl")
+
+include("metadata.jl")
 
 include("state_explorer.jl")
 

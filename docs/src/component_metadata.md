@@ -70,7 +70,7 @@ schema = protocol_schema(EntanglementConsumer)
 ```
 
 Custom protocols can extend `protocol_schema`; they default to
-[`FloatingProtocolPlacement`](@ref) until they explicitly extend
+`FloatingProtocolPlacement` until they explicitly extend
 `protocol_placement`. Defining a custom subtype never changes the deterministic
 built-in `protocol_schemas()` catalog.
 

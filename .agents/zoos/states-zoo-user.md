@@ -24,6 +24,7 @@ Use `.agents/zoos/states-zoo-dev.md` for those.
 
 - `BarrettKokBellPair`
 - `BarrettKokBellPairW`
+- `DepolarizedBellPair`
 - `QuantumSavory.StatesZoo.Genqo.GenqoUnheraldedSPDCBellPairW`
 - `QuantumSavory.StatesZoo.Genqo.GenqoMultiplexedCascadedBellPairW`
 
@@ -32,6 +33,11 @@ Use `.agents/zoos/states-zoo-dev.md` for those.
 - `BarrettKokBellPair` is normalized.
 - Weighted families like `BarrettKokBellPairW` and the `Genqo...W` states use the trace as a success probability or rate-like weight.
 - Do not silently treat weighted states as normalized density matrices.
+- Use `state_family_schemas()` for the deterministic built-in catalog and
+  `state_family_schema(StateType)` for ordered parameters and normalization
+  style.
+- Use `normalized_state_and_weight(state)` when a weighted family must become a
+  normalized density matrix; keep the returned `weight` for the success model.
 
 ## Common Workflow
 
@@ -55,6 +61,8 @@ stateexplorer(BarrettKokBellPair)
 - Use `StatesZoo` when you care about the output of a source model more than its microscopic derivation.
 - Use the explorer to sweep parameters before baking one family into a larger simulation.
 - Keep the weighted-versus-normalized distinction explicit in user-facing analysis code.
+- Use `state_weight(state)` to inspect the absolute trace without duplicating
+  trace evaluation policy.
 - Treat `Genqo` families as optional-dependency models. They rely on Python tooling.
 
 ## Good Docs And Examples To Open Next

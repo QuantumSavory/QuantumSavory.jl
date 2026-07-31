@@ -1,7 +1,23 @@
 # News
 
-## v0.7.1 - unreleased
+## v0.8.0 - unreleased
 
+- **(breaking)** Replaced the non-public, reflection-driven component discovery
+  extension with public, typed, deterministic schemas:
+  `slot_schemas`, `representation_schemas`, `background_schemas`, and
+  `ProtocolZoo.protocol_schemas`. Protocol metadata now explicitly separates
+  configurable constructor fields from node/edge placement. The
+  `InteractiveUtils`/`REPL` extension and the old `available_*_types` and
+  `constructor_metadata` functions were removed.
+- Added explicit catalogs for named tag heads and generic `Tag` signatures,
+  plus JSON-neutral `tag_parts`, `tag_records`, `message_records`, and
+  `access_time` inspection APIs. Records retain simulator-domain IDs, indices,
+  values, and ordering.
+- Added typed `StatesZoo` family and parameter schemas with explicit normalized
+  versus weighted semantics. `state_weight` and
+  `normalized_state_and_weight` provide opt-in weight extraction and
+  normalization; the existing `stateparameters` APIs now derive from the
+  schemas.
 - **(breaking)** Simulation, network, protocol, and visualization traces now use
   Julia's standard logging macros with stable `event` symbols and structured
   metadata. Rendered messages have changed, and routine low-level simulation

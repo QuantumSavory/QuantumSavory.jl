@@ -1,7 +1,7 @@
 module Genqo
 
 import Genqo: zalm, spdc
-import QuantumSavory.StatesZoo: AbstractTwoQubitState, stateparameters, stateparametersrange, _bspin
+import QuantumSavory.StatesZoo: AbstractTwoQubitState, _bspin
 import QuantumSymbolics: Metadata # TODO fix the @withmetadata macro to not require this import
 import QuantumSymbolics: @withmetadata, symbollabel, QuantumOpticsRepr, express_nolookup, ⊗
 import QuantumOpticsBase
@@ -36,15 +36,6 @@ Implemented as a wrapper around the `Genqo.jl` package.
     """Excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1"""
     Pᵈ
 end
-
-stateparameters(::Type{GenqoMultiplexedCascadedBellPairW}) = (:ηᵇ, :ηᵈ, :ηᵗ, :N, :Pᵈ)
-stateparametersrange(::Type{GenqoMultiplexedCascadedBellPairW}) = (
-    ηᵇ =(;min=0,max=1,good=1),
-    ηᵈ =(;min=0,max=1,good=1),
-    ηᵗ =(;min=0,max=1,good=1),
-    N  =(;min=0,max=10,good=0.1),
-    Pᵈ =(;min=0,max=0.1,good=1e-8)
-)
 
 function _express_spin_spin_matrix(x::GenqoMultiplexedCascadedBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
@@ -84,14 +75,6 @@ Implemented as a wrapper around the `Genqo.jl` package.
     """Excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1"""
     Pᵈ
 end
-
-stateparameters(::Type{GenqoUnheraldedSPDCBellPairW}) = (:ηᵈ, :ηᵗ, :N, :Pᵈ)
-stateparametersrange(::Type{GenqoUnheraldedSPDCBellPairW}) = (
-    ηᵈ =(;min=0,max=1,good=1),
-    ηᵗ =(;min=0,max=1,good=1),
-    N   =(;min=0,max=10,good=0.1),
-    Pᵈ  =(;min=0,max=0.1,good=10^(-6))
-)
 
 function _express_spin_spin_matrix(x::GenqoUnheraldedSPDCBellPairW)
     # This function calculates the unnormalized spin-spin density matrix

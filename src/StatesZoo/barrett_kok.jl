@@ -33,17 +33,6 @@ end
     bkbp::BarrettKokBellPair
 end
 
-stateparameters(::Type{BarrettKokBellPair}) = (:ηᴬ, :ηᴮ, :Pᵈ, :ηᵈ, :𝒱)
-stateparametersrange(::Type{BarrettKokBellPair}) = (
-    ηᴬ=(;min=0,max=1,good=1),
-    ηᴮ=(;min=0,max=1,good=1),
-    Pᵈ=(;min=0,max=1,good=0),
-    ηᵈ=(;min=0,max=1,good=1),
-    𝒱 =(;min=0,max=1,good=1),
-)
-stateparameters(::Type{BarrettKokBellPairW}) = stateparameters(BarrettKokBellPair)
-stateparametersrange(::Type{BarrettKokBellPairW}) = stateparametersrange(BarrettKokBellPair)
-
 symbollabel(x::BarrettKokBellPair) = "ρᴮᴷ"
 symbollabel(x::BarrettKokBellPairW) = "ρ′ᴮᴷ"
 

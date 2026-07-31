@@ -33,6 +33,10 @@ does not want to rebuild the microscopic derivation every time. Instead of
 re-implementing a noisy entanglement source from scratch, the user selects a
 parameterized state family and initializes registers from it.
 
+`state_family_schemas()` is the stable catalog for configuration tooling. It
+also distinguishes normalized families from weighted families whose trace
+carries a success weight; normalization is always an explicit caller action.
+
 ## `CircuitZoo`
 
 `CircuitZoo` provides reusable quantum circuits such as swapping, purification,

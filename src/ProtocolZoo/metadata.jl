@@ -3,9 +3,9 @@
 
 The network placement required by a protocol:
 
-- [`FloatingProtocolPlacement`](@ref) for no fixed node,
-- [`NodeProtocolPlacement`](@ref) for one node, and
-- [`EdgeProtocolPlacement`](@ref) for an ordered pair of nodes.
+- `FloatingProtocolPlacement` for no fixed node,
+- `NodeProtocolPlacement` for one node, and
+- `EdgeProtocolPlacement` for an ordered pair of nodes.
 """
 @enum ProtocolPlacement::UInt8 begin
     FloatingProtocolPlacement
@@ -403,7 +403,7 @@ QuantumSavory.constructor_schema(::Type{T}) where {T<:AbstractProtocol} =
     protocol_placement(::AbstractProtocol)
 
 Return the network-placement category for a protocol. Custom protocols without
-an explicit schema default to [`FloatingProtocolPlacement`](@ref).
+an explicit schema default to `FloatingProtocolPlacement`.
 """
 protocol_placement(::Type{<:AbstractProtocol}) = FloatingProtocolPlacement
 protocol_placement(protocol::AbstractProtocol) = protocol_placement(typeof(protocol))

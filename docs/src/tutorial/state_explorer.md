@@ -84,12 +84,16 @@ next step is to use it as an initialization object in a normal register model.
 
 ```julia
 reg = Register(2)
-initialize!(reg[1:2], BarrettKokBellPairW(0.8, 0.8, 1e-6, 0.9, 0.95))
+weighted_pair = BarrettKokBellPairW(0.8, 0.8, 1e-6, 0.9, 0.95)
+pair = normalized_state_and_weight(weighted_pair)
+initialize!(reg[1:2], pair.state)
+success_weight = pair.weight
 ```
 
 The important point is that the state explorer is not separate from the rest of
 QuantumSavory. It is inspecting the same reusable state families that the rest
-of the library can consume.
+of the library can consume. Weighted source families retain their success
+weight until you explicitly normalize them as above.
 
 ## Live Version
 

@@ -25,9 +25,6 @@ end
 
 DepolarizedBellPair(; F) = DepolarizedBellPair((4 * F - 1) / 3)
 
-stateparameters(::Type{DepolarizedBellPair}) = (:p,)
-stateparametersrange(::Type{DepolarizedBellPair}) = (p=(;min=0,max=1,good=1),)
-
 symbollabel(x::DepolarizedBellPair) = "ρᵖ"
 
 function express_nolookup(x::DepolarizedBellPair, r::QuantumOpticsRepr)
@@ -41,3 +38,5 @@ function express_nolookup(x::DepolarizedBellPair, r::CliffordRepr)
     mixed_dm = MixedState(StabilizerState("ZZ XX"))
     return express(x.p * pure_dm + (1 - x.p) * mixed_dm, r)
 end
+
+tr(::DepolarizedBellPair) = 1
