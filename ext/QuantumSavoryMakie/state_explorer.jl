@@ -10,6 +10,13 @@ angleifnotε(x) = angle(x) * (abs(x)<0.001 ? 0.0 : 1.0)
 
 const PARAMCOLS = 5
 
+function _parameter_grid(bounds, length)
+    margin = (bounds.max - bounds.min) * 0.0001
+    first_value = bounds.min_inclusive ? bounds.min : bounds.min + margin
+    last_value = bounds.max_inclusive ? bounds.max : bounds.max - margin
+    return range(first_value, last_value; length)
+end
+
 function stateexplorer(S)
     sliders = length(stateparameters(S))
     rows = (sliders-1)÷PARAMCOLS+1
@@ -32,7 +39,6 @@ function stateexplorer!(fig,S)
     colormap=:cyclic_mrybm_35_75_c68_n256
     colorrange=(-pi,pi)
     nbxpoints = 30
-    εf = 0.0001
 
     slowcompute = false
     slowthreshold = 1.0/nbxpoints
@@ -70,8 +76,7 @@ function stateexplorer!(fig,S)
     for (i, param) in enumerate(params)
         subfparam = fparams[(i-1)÷PARAMCOLS+1,(i-1)%PARAMCOLS+1]
         (;min,max,good) = paramdict[param]
-        ε = (max-min)*εf
-        xs = range(min+ε,max-ε,length=nbxpoints)
+        xs = _parameter_grid(paramdict[param], nbxpoints)
 
         slider = Slider(subfparam[3,1], range=xs, startvalue=good)
         push!(sliders, slider)
@@ -95,8 +100,7 @@ function stateexplorer!(fig,S)
     if !slowcompute
     for (i, (aparamF, aparamTr, slider, param)) in enumerate(zip(aparamsF, aparamsTr, sliders, params))
         (;min,max,good) = paramdict[param]
-        ε = (max-min)*εf
-        xs = range(min+ε,max-ε,length=nbxpoints)
+        xs = _parameter_grid(paramdict[param], nbxpoints)
 
         data = lift((s.value for s in sliders)...) do paramvalues...
             states = [express(S((p==param ? x : pv for (p,pv) in zip(params,paramvalues))...)) for x in xs]

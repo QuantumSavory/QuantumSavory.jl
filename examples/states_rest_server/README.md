@@ -35,10 +35,10 @@ The server will start on `http://localhost:8080`
 #### Get Density Matrix
 - **GET** `/api/barrett-kok/density-matrix`
 - **Parameters:**
-  - `etaA` (optional): Transmissivity from source A, ∈[0,1], default=1.0
-  - `etaB` (optional): Transmissivity from source B, ∈[0,1], default=1.0
-  - `Pd` (optional): Excess noise in detectors, ≥0, default=0.0
-  - `etad` (optional): Detection efficiency, ∈[0,1], default=1.0
+  - `etaA` (optional): Transmissivity from source A, ∈(0,1], default=1.0
+  - `etaB` (optional): Transmissivity from source B, ∈(0,1], default=1.0
+  - `Pd` (optional): Excess noise in detectors, ∈[0,1), default=0.0
+  - `etad` (optional): Detection efficiency, ∈(0,1], default=1.0
   - `V` (optional): Mode matching parameter, |V|∈[0,1], default=1.0
   - `m` (optional): Parity bit (0 or 1), default=0
   - `weighted` (optional): Return weighted version (trace = success probability), default=false
@@ -52,9 +52,9 @@ The server will start on `http://localhost:8080`
 #### Get Density Matrix
 - **GET** `/api/genqo/zalm/density-matrix`
 - **Parameters:**
-  - `etab` (optional): BSM transmissivity, ∈[0,1], default=1.0
-  - `etad` (optional): Detector transmissivity, ∈[0,1], default=1.0
-  - `etat` (optional): Outcoupling transmissivity, ∈[0,1], default=1.0
+  - `etab` (optional): BSM transmissivity, ∈(0,1], default=1.0
+  - `etad` (optional): Detector transmissivity, ∈(0,1], default=1.0
+  - `etat` (optional): Outcoupling transmissivity, ∈(0,1], default=1.0
   - `N` (optional): Mean photon number, >0, default=0.1
 
 #### Get Parameters Info
@@ -66,8 +66,8 @@ The server will start on `http://localhost:8080`
 #### Get Density Matrix
 - **GET** `/api/genqo/spdc/density-matrix`
 - **Parameters:**
-  - `etad` (optional): Detector transmissivity, ∈[0,1], default=1.0
-  - `etat` (optional): Outcoupling transmissivity, ∈[0,1], default=1.0
+  - `etad` (optional): Detector transmissivity, ∈(0,1], default=1.0
+  - `etat` (optional): Outcoupling transmissivity, ∈(0,1], default=1.0
   - `N` (optional): Mean photon number, >0, default=0.1
 
 #### Get Parameters Info
@@ -102,8 +102,8 @@ The server will start on `http://localhost:8080`
 {
   "parameters": ["etaA", "etaB", "Pd", "etad", "V"],
   "ranges": {
-    "etaA": {"min": 0, "max": 1, "good": 1},
-    "etaB": {"min": 0, "max": 1, "good": 1},
+    "etaA": {"min": 0, "max": 1, "good": 1, "min_inclusive": false, "max_inclusive": true},
+    "etaB": {"min": 0, "max": 1, "good": 1, "min_inclusive": false, "max_inclusive": true},
     ...
   },
   "description": {
@@ -116,7 +116,7 @@ The server will start on `http://localhost:8080`
 ### Error Response
 ```json
 {
-  "error": "Invalid parameters: transmissivities must be in [0,1]"
+  "error": "Invalid parameters: values must satisfy the advertised state-family schema"
 }
 ```
 

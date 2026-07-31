@@ -6,6 +6,13 @@ using QuantumSavory.StatesZoo.Genqo: GenqoUnheraldedSPDCBellPairW, GenqoMultiple
 using QuantumOpticsBase
 using QuantumSymbolics
 
+function parameters_valid(family, values)
+    schema = state_family_schema(family)
+    return length(values) == length(schema.parameters) &&
+           all(value in parameter for (value, parameter) in
+               zip(values, schema.parameters))
+end
+
 @oxidise
 @get "/api/health" function()
     return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running -- see implementation details at https://github.com/QuantumSavory/QuantumSavory.jl/tree/main/examples/states_rest_api")
@@ -24,8 +31,9 @@ end
 
     try
         # Validate parameters
-        if !(0 ≤ ηᴬ ≤ 1) || !(0 ≤ ηᴮ ≤ 1) || !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ abs(𝒱) ≤ 1) || Pᵈ < 0
-            return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], Pd must be ≥0, |V| must be in [0,1]")
+        values = (ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱)
+        if !parameters_valid(BarrettKokBellPair, values) || m ∉ (0, 1)
+            return Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema and m must be 0 or 1")
         end
 
         # Create the state
@@ -69,10 +77,10 @@ end
         "parameters" => params,
         "ranges" => ranges,
         "description" => Dict(
-            "etaA" => "Individual channel transmissivity from source A to entanglement swapping station, ∈[0,1]",
-            "etaB" => "Individual channel transmissivity from source B to entanglement swapping station, ∈[0,1]",
-            "Pd" => "Total excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1",
-            "etad" => "Detection efficiency of photon detectors, ∈[0,1]",
+            "etaA" => "Individual channel transmissivity from source A to entanglement swapping station, ∈(0,1]",
+            "etaB" => "Individual channel transmissivity from source B to entanglement swapping station, ∈(0,1]",
+            "Pd" => "Total excess noise (photons per qubit slot) in photon detectors, ∈[0,1), usually ≪1",
+            "etad" => "Detection efficiency of photon detectors, ∈(0,1]",
             "V" => "Mode matching parameter for individual interacting photonic pulses, |V|∈[0,1]",
             "m" => "Parity bit determined by click pattern (0 or 1)"
         )
@@ -89,8 +97,11 @@ end
 
     try
         # Validate parameters
-        if !(0 ≤ ηᵇ ≤ 1) || !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0
-            return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], N must be >0")
+        if !parameters_valid(
+            GenqoMultiplexedCascadedBellPairW,
+            (ηᵇ, ηᵈ, ηᵗ, N),
+        )
+            return Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema")
         end
 
         # Create the state
@@ -127,9 +138,9 @@ end
         "parameters" => params,
         "ranges" => ranges,
         "description" => Dict(
-            "etab" => "Loss (transmissivity) in the Bell state measurement at the source, ∈[0,1]",
-            "etad" => "Loss (transmissivity) in all of the detectors, ∈[0,1]",
-            "etat" => "Outcoupling transmissivity for the bell-state modes, ∈[0,1]",
+            "etab" => "Loss (transmissivity) in the Bell state measurement at the source, ∈(0,1]",
+            "etad" => "Loss (transmissivity) in all of the detectors, ∈(0,1]",
+            "etat" => "Outcoupling transmissivity for the bell-state modes, ∈(0,1]",
             "N" => "Mean photon number per mode of the state (tradeoff for fidelity vs rate), >0"
         )
     )
@@ -144,8 +155,8 @@ end
 
     try
         # Validate parameters
-        if !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0
-            return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], N must be >0")
+        if !parameters_valid(GenqoUnheraldedSPDCBellPairW, (ηᵈ, ηᵗ, N))
+            return Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema")
         end
 
         # Create the state
@@ -181,8 +192,8 @@ end
         "parameters" => params,
         "ranges" => ranges,
         "description" => Dict(
-            "etad" => "Loss (transmissivity) in all of the detectors, ∈[0,1]",
-            "etat" => "Outcoupling transmissivity for the bell-state modes, ∈[0,1]",
+            "etad" => "Loss (transmissivity) in all of the detectors, ∈(0,1]",
+            "etat" => "Outcoupling transmissivity for the bell-state modes, ∈(0,1]",
             "N" => "Mean photon number per mode of the state (tradeoff for fidelity vs rate), >0"
         )
     )

@@ -14,8 +14,11 @@ end
 
 Stable metadata for one ordered, real-valued StatesZoo parameter.
 
-`minimum` and `maximum` are inclusive bounds. `recommended` is the default
-point used by explorers and examples.
+`minimum` and `maximum` are the exact interval boundaries.
+`minimum_inclusive` and `maximum_inclusive` state whether each boundary is
+part of the interval. `recommended` is the default point used by explorers and
+examples. Use `value in parameter_schema` to validate a value against its type
+and interval.
 """
 struct StateParameterSchema
     name::Symbol
@@ -23,6 +26,8 @@ struct StateParameterSchema
     doc::String
     minimum::Real
     maximum::Real
+    minimum_inclusive::Bool
+    maximum_inclusive::Bool
     recommended::Real
 
     function StateParameterSchema(
@@ -32,6 +37,9 @@ struct StateParameterSchema
         minimum::Real,
         maximum::Real,
         recommended::Real,
+        ;
+        minimum_inclusive::Bool=true,
+        maximum_inclusive::Bool=true,
     )
         value_type !== Bool && value_type <: Real ||
             throw(ArgumentError("state parameter type must be a Real subtype"))
@@ -39,15 +47,22 @@ struct StateParameterSchema
             throw(ArgumentError("state parameter bounds cannot be Bool"))
         all(isfinite, (minimum, maximum, recommended)) ||
             throw(ArgumentError("state parameter metadata must be finite"))
+        all(value -> value isa value_type, (minimum, maximum, recommended)) ||
+            throw(ArgumentError(
+                "state parameter metadata does not match its value type",
+            ))
         minimum <= maximum ||
             throw(ArgumentError("state parameter minimum exceeds maximum"))
-        minimum <= recommended <= maximum ||
+        minimum == maximum &&
+            !(minimum_inclusive && maximum_inclusive) &&
+            throw(ArgumentError("state parameter interval is empty"))
+        lower_recommendation_valid = minimum_inclusive ?
+            minimum <= recommended : minimum < recommended
+        upper_recommendation_valid = maximum_inclusive ?
+            recommended <= maximum : recommended < maximum
+        lower_recommendation_valid && upper_recommendation_valid ||
             throw(ArgumentError(
                 "state parameter recommendation is outside its bounds",
-            ))
-        recommended isa value_type ||
-            throw(ArgumentError(
-                "state parameter recommendation does not match its value type",
             ))
         return new(
             name,
@@ -55,9 +70,22 @@ struct StateParameterSchema
             String(doc),
             minimum,
             maximum,
+            minimum_inclusive,
+            maximum_inclusive,
             recommended,
         )
     end
+end
+
+function Base.in(value, parameter::StateParameterSchema)
+    value isa Bool && return false
+    value isa parameter.value_type || return false
+    isfinite(value) || return false
+    lower_valid = parameter.minimum_inclusive ?
+        parameter.minimum <= value : parameter.minimum < value
+    upper_valid = parameter.maximum_inclusive ?
+        value <= parameter.maximum : value < parameter.maximum
+    return lower_valid && upper_valid
 end
 
 """
@@ -98,6 +126,7 @@ const _BARRETT_KOK_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᴮ,
@@ -106,6 +135,7 @@ const _BARRETT_KOK_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :Pᵈ,
@@ -114,6 +144,7 @@ const _BARRETT_KOK_PARAMETERS = (
         0,
         1,
         0,
+        maximum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵈ,
@@ -122,6 +153,7 @@ const _BARRETT_KOK_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :𝒱,
@@ -152,6 +184,7 @@ const _GENQO_MULTIPLEXED_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵈ,
@@ -160,6 +193,7 @@ const _GENQO_MULTIPLEXED_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵗ,
@@ -168,6 +202,7 @@ const _GENQO_MULTIPLEXED_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :N,
@@ -176,6 +211,7 @@ const _GENQO_MULTIPLEXED_PARAMETERS = (
         0,
         10,
         0.1,
+        minimum_inclusive=false,
     ),
 )
 
@@ -187,6 +223,7 @@ const _GENQO_UNHERALDED_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵗ,
@@ -195,6 +232,7 @@ const _GENQO_UNHERALDED_PARAMETERS = (
         0,
         1,
         1,
+        minimum_inclusive=false,
     ),
     StateParameterSchema(
         :N,
@@ -203,6 +241,7 @@ const _GENQO_UNHERALDED_PARAMETERS = (
         0,
         10,
         0.1,
+        minimum_inclusive=false,
     ),
 )
 
@@ -338,8 +377,8 @@ end
 """
     stateparametersrange(::Type)
 
-Return legacy `(min, max, good)` parameter metadata derived from
-[`state_family_schema`](@ref).
+Return legacy `(min, max, good, min_inclusive, max_inclusive)` parameter
+metadata derived from [`state_family_schema`](@ref).
 """
 stateparametersrange(::Any) = ()
 function stateparametersrange(type::Type{<:AbstractTwoQubitState})
@@ -350,6 +389,8 @@ function stateparametersrange(type::Type{<:AbstractTwoQubitState})
             min=parameter.minimum,
             max=parameter.maximum,
             good=parameter.recommended,
+            min_inclusive=parameter.minimum_inclusive,
+            max_inclusive=parameter.maximum_inclusive,
         )
     end
     return NamedTuple{names}(values)

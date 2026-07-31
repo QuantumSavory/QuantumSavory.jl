@@ -36,6 +36,19 @@ struct UnregisteredMetadataState <:
 _evalf(x::Number) = x
 _evalf(x) = express(x)
 
+function _is_usable_state(schema, values)
+    try
+        state = schema.family(values...)
+        density_matrix = express(state)
+        trace_value = tr(density_matrix)
+        return all(isfinite, density_matrix.data) &&
+               isfinite(trace_value) &&
+               abs(trace_value) > 0
+    catch
+        return false
+    end
+end
+
 expected_families = (
     BarrettKokBellPair,
     BarrettKokBellPairW,
@@ -81,10 +94,16 @@ for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
             min=parameter.minimum,
             max=parameter.maximum,
             good=parameter.recommended,
+            min_inclusive=parameter.minimum_inclusive,
+            max_inclusive=parameter.maximum_inclusive,
         )
     end)
     @test all(
         parameter -> parameter.recommended isa parameter.value_type,
+        schema.parameters,
+    )
+    @test all(
+        parameter -> parameter.recommended in parameter,
         schema.parameters,
     )
 
@@ -108,6 +127,21 @@ for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
         @test normalized.state !== state
         @test tr(express(state)) ≈ weight
         @test !(weight ≈ 1)
+    end
+
+    recommended = map(parameter -> parameter.recommended, schema.parameters)
+    for (index, parameter) in pairs(schema.parameters)
+        @testset "$(schema.family).$(parameter.name) endpoints" begin
+            for (endpoint, included) in (
+                (parameter.minimum, parameter.minimum_inclusive),
+                (parameter.maximum, parameter.maximum_inclusive),
+            )
+                values = collect(recommended)
+                values[index] = endpoint
+                @test (endpoint in parameter) === included
+                @test _is_usable_state(schema, values) === included
+            end
+        end
     end
 end
 
@@ -137,7 +171,13 @@ custom = state_family_schema(CustomMetadataState)
 @test custom.family === CustomMetadataState
 @test stateparameters(CustomMetadataState) == (:x,)
 @test stateparametersrange(CustomMetadataState) ==
-      (x=(min=0.0, max=1.0, good=0.5),)
+      (x=(
+          min=0.0,
+          max=1.0,
+          good=0.5,
+          min_inclusive=true,
+          max_inclusive=true,
+      ),)
 @test normalized_state_and_weight(CustomMetadataState(0.25)) ==
       (state=CustomMetadataState(0.25), weight=1.0)
 @test map(schema -> schema.family, state_family_schemas()) ==
@@ -179,6 +219,60 @@ zero_weight = BarrettKokBellPairW(0, 0, 0, 1, 1)
     1,
     2,
 )
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    Float64,
+    "Invalid.",
+    0,
+    1,
+    0.5,
+)
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    Real,
+    "Invalid.",
+    0,
+    1,
+    0,
+    minimum_inclusive=false,
+)
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    Real,
+    "Invalid.",
+    0,
+    1,
+    1,
+    maximum_inclusive=false,
+)
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    Real,
+    "Invalid.",
+    0,
+    0,
+    0,
+    minimum_inclusive=false,
+)
+open_parameter = StateParameterSchema(
+    :open,
+    Float64,
+    "Open.",
+    0.0,
+    1.0,
+    0.5,
+    minimum_inclusive=false,
+    maximum_inclusive=false,
+)
+@test 0.0 ∉ open_parameter
+@test 0.5 ∈ open_parameter
+@test 1.0 ∉ open_parameter
+@test -0.1 ∉ open_parameter
+@test 1.1 ∉ open_parameter
+@test true ∉ open_parameter
+@test NaN ∉ open_parameter
+@test Inf ∉ open_parameter
+@test 1 ∉ open_parameter
 @test_throws ArgumentError StateFamilySchema(
     Int,
     "Invalid.",

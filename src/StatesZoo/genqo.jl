@@ -29,11 +29,11 @@ The constructor exposes only parameters consumed by Genqo's
 that backend.
 """
 @withmetadata struct GenqoMultiplexedCascadedBellPairW <: AbstractTwoQubitState
-    """Loss (transmissivity) in the Bell state measurement at the source (modes 3, 4, 5, 6), ∈[0,1]"""
+    """Loss (transmissivity) in the Bell state measurement at the source (modes 3, 4, 5, 6), ∈(0,1]"""
     ηᵇ
-    """Loss (transmissivity) in all of the detectors, ∈[0,1]"""
+    """Loss (transmissivity) in all of the detectors, ∈(0,1]"""
     ηᵈ
-    """Outcoupling transmissivity for the bell-state modes (1,2,7,8), ∈[0,1]"""
+    """Outcoupling transmissivity for the bell-state modes (1,2,7,8), ∈(0,1]"""
     ηᵗ
     """Mean photon number per mode of the state. This is a tradeoff parameter for fidelity vs rate. It has to be >0 (but the model becomes imprecise at N>0.2 due to the 2-photon cutoff of the Fock space used in derivation)"""
     N
@@ -70,9 +70,9 @@ The constructor exposes only parameters consumed by Genqo's
 that backend.
 """
 @withmetadata struct GenqoUnheraldedSPDCBellPairW <: AbstractTwoQubitState
-    """Loss (transmissivity) in all of the detectors, ∈[0,1]"""
+    """Loss (transmissivity) in all of the detectors, ∈(0,1]"""
     ηᵈ
-    """Outcoupling transmissivity for the bell-state modes (1,2,3,4), ∈[0,1]"""
+    """Outcoupling transmissivity for the bell-state modes (1,2,3,4), ∈(0,1]"""
     ηᵗ
     """Mean photon number per mode of the state. This is a tradeoff parameter for fidelity vs rate. It has to be >0 (but the model becomes imprecise at N>0.2 due to the 2-photon cutoff of the Fock space used in derivation)"""
     N

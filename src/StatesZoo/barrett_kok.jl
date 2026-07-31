@@ -14,13 +14,13 @@ in [prajit2023entangling](@cite) (see eq. C7).
 See also [`BarrettKokBellPairW`](@ref) for the weighted density matrix.
 """
 @withmetadata struct BarrettKokBellPair <: AbstractTwoQubitState
-    """Individual channel transmissivity from source A to entanglement swapping station, ∈[0,1]"""
+    """Individual channel transmissivity from source A to entanglement swapping station, ∈(0,1]"""
     ηᴬ
-    """Individual channel transmissivity from source B to entanglement swapping station, ∈[0,1]"""
+    """Individual channel transmissivity from source B to entanglement swapping station, ∈(0,1]"""
     ηᴮ
-    """Total excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1 """
+    """Total excess noise (photons per qubit slot) in photon detectors, ∈[0,1), usually ≪1"""
     Pᵈ
-    """Detection efficiency of photon detectors, ∈[0,1]"""
+    """Detection efficiency of photon detectors, ∈(0,1]"""
     ηᵈ
     """Mode matching parameter for individual interacting photonic pulses with `|V|` evaluates mode overlap and `arg(V)` evaluates the carrier phase mismatch, |V|∈[0,1]"""
     𝒱

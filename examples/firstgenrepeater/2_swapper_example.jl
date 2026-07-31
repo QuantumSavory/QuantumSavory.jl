@@ -84,6 +84,13 @@ function state_summary(state_conf::Dict{Symbol,Float64}, order)
     )
 end
 
+function parameter_grid(bounds, length)
+    margin = (bounds.max - bounds.min) * 0.0001
+    first_value = bounds.min_inclusive ? bounds.min : bounds.min + margin
+    last_value = bounds.max_inclusive ? bounds.max : bounds.max - margin
+    return LinRange(first_value, last_value, length)
+end
+
 function add_configuration_controls(block1, block2)
     config_defaults = Dict{Symbol,Any}(
         :len => 5,
@@ -162,7 +169,7 @@ function add_configuration_controls(block1, block2)
     state_slider_specs = [
         (
             label = string(param),
-            range = LinRange(state_ranges[param].min, state_ranges[param].max, 101),
+            range = parameter_grid(state_ranges[param], 101),
             format = "{:.4f}",
             startvalue = state_defaults[param],
         )

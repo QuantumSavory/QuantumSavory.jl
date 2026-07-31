@@ -36,6 +36,8 @@ Use `.agents/zoos/states-zoo-dev.md` for those.
 - Use `state_family_schemas()` for the deterministic built-in catalog and
   `state_family_schema(StateType)` for ordered parameters and normalization
   style.
+- Parameter schemas distinguish open from closed boundaries. Use
+  `value in parameter_schema` instead of duplicating interval checks.
 - Use `normalized_state_and_weight(state)` when a weighted family must become a
   normalized density matrix; keep the returned `weight` for the success model.
 
@@ -66,6 +68,8 @@ stateexplorer(BarrettKokBellPair)
 - Treat `Genqo` families as optional-dependency models. They rely on Python tooling.
 - Genqo constructors expose only backend-supported parameters. The current
   spin-density-matrix backends do not model detector excess noise.
+- Zero transmissivity, zero mean photon number, and other zero-weight or
+  singular endpoints are excluded by the relevant parameter schemas.
 
 ## Good Docs And Examples To Open Next
 

@@ -28,9 +28,25 @@ map(schema -> (
 
 Each [`StateFamilySchema`](@ref) contains ordered
 [`StateParameterSchema`](@ref) values with stable names, real-valued types,
-bounds, recommendations, and documentation. The older `stateparameters` and
+open or closed bounds, recommendations, and documentation. Validate a proposed
+value with `value in parameter_schema`; this checks its declared type,
+finiteness, and exact interval. The older `stateparameters` and
 `stateparametersrange` APIs remain available and are derived from these
-schemas.
+schemas, including their bound-inclusivity flags.
+
+```@example states-zoo-metadata
+eta_a = first(state_family_schema(BarrettKokBellPair).parameters)
+(
+    boundary=eta_a.minimum,
+    boundary_is_included=eta_a.minimum_inclusive,
+    zero_is_valid=0 in eta_a,
+    half_is_valid=0.5 in eta_a,
+)
+```
+
+Open endpoints identify singular or zero-weight choices that cannot produce a
+usable density matrix. For example, zero Barrett-Kok transmissivity and zero
+Genqo mean photon number are intentionally outside their schema intervals.
 
 Normalization is explicit. `NormalizedState` families already
 represent density matrices of trace one. `WeightedState` families

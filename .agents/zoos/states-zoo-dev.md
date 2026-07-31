@@ -34,8 +34,11 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 
 - `state_family_schemas()` is an explicit built-in catalog; loading unrelated
   packages must not change it.
-- Parameter names, inclusive bounds, recommendations, and docs have one source
-  of truth in `StateParameterSchema`.
+- Parameter names, exact boundaries, boundary inclusivity, recommendations, and
+  docs have one source of truth in `StateParameterSchema`.
+- `value in parameter_schema` is the validation boundary for configuration
+  tooling. Open endpoints represent singular or zero-weight states, not merely
+  UI hints.
 - `stateparameters` and `stateparametersrange` are derived compatibility APIs;
   do not add parallel family-specific methods for built-ins.
 - `state_weight` returns the finite absolute trace.
@@ -53,6 +56,9 @@ Use `.agents/zoos/states-zoo-user.md` for that.
   wrapper field solely for compatibility when the backend ignores it.
 - Treat `Genqo` breakage as a possible dependency problem before assuming a Julia logic bug.
 - Review parameter ranges for physical sanity, not just API shape.
+- For every built-in parameter, test both endpoints against finite,
+  positive-trace state expression and keep the inclusivity flags synchronized
+  with that result.
 
 ## Source Files To Read
 
