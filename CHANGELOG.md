@@ -11,6 +11,12 @@
   custom protocols are no longer introspectable through those accessors. The
   `InteractiveUtils`/`REPL` extension and the old `available_*_types` and
   `constructor_metadata` functions were removed.
+- **(breaking)** Every `ConstructorFieldSchema` now requires an explicit
+  `required` keyword. `required=false` means callers may omit that constructor
+  keyword; schemas do not publish or serialize the constructor-owned default.
+- **(fix)** `SimpleSwitchDiscreteProt` now exposes `clientnodes` and
+  `success_probs` as required keywords and allocates a fresh private backlog for
+  every keyword-constructed instance.
 - Added explicit catalogs for named tag heads and generic `Tag` signatures,
   plus JSON-neutral `tag_parts`, `tag_records`, `message_records`, and
   `access_time` inspection APIs. Records retain simulator-domain IDs, indices,
