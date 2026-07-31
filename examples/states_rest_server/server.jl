@@ -38,7 +38,7 @@ function validated_queryparams(req, allowed_parameters)
     return params, rejection
 end
 
-@oxidise
+@oxidize
 @get "/api/health" function(req)
     _, rejection = validated_queryparams(req, NO_QUERY_PARAMETERS)
     isnothing(rejection) || return rejection
