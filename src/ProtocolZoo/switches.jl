@@ -140,7 +140,7 @@ By default we use the `QuantumSavory.ProtocolZoo.Switches.promponas_bruteforce_c
 
 $TYPEDFIELDS
 """
-@kwdef struct SimpleSwitchDiscreteProt <: AbstractProtocol
+struct SimpleSwitchDiscreteProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
     sim::Simulation # TODO check that
     """a network graph of registers"""
@@ -152,11 +152,11 @@ $TYPEDFIELDS
     """best-guess about success of establishing raw entanglement between client and switch"""
     success_probs::Vector{Float64}
     """duration of a single full cycle of the switching decision algorithm"""
-    ticktock::Float64 = 1
+    ticktock::Float64
     """how many rounds of this protocol to run (`-1` for infinite)"""
-    rounds::Int = -1
+    rounds::Int
     """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
-    assignment_algorithm::Function = promponas_bruteforce_choice
+    assignment_algorithm::Function
     _backlog::SymMatrix{Matrix{Int}}
     function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
@@ -169,12 +169,59 @@ $TYPEDFIELDS
     end
 end
 
-function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs; kwrags...)
+function SimpleSwitchDiscreteProt(;
+    sim,
+    net,
+    switchnode,
+    clientnodes,
+    success_probs,
+    ticktock=1,
+    rounds=-1,
+    assignment_algorithm=promponas_bruteforce_choice,
+)
+    clientnodes = collect(clientnodes)
+    success_probs = collect(success_probs)
     n = length(clientnodes)
     _backlog = SymMatrix(zeros(Int, n, n))
-    SimpleSwitchDiscreteProt(;sim, net, switchnode, clientnodes=collect(clientnodes), success_probs=collect(success_probs), _backlog, kwrags...)
+    return SimpleSwitchDiscreteProt(
+        sim,
+        net,
+        switchnode,
+        clientnodes,
+        success_probs,
+        ticktock,
+        rounds,
+        assignment_algorithm,
+        _backlog,
+    )
 end
-SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...) = SimpleSwitchDiscreteProt(get_time_tracker(net), net, switchnode, clientnodes, success_probs; kwrags...)
+
+function SimpleSwitchDiscreteProt(
+    sim,
+    net,
+    switchnode,
+    clientnodes,
+    success_probs;
+    kwargs...,
+)
+    return SimpleSwitchDiscreteProt(;
+        sim,
+        net,
+        switchnode,
+        clientnodes,
+        success_probs,
+        kwargs...,
+    )
+end
+SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwargs...) =
+    SimpleSwitchDiscreteProt(
+        get_time_tracker(net),
+        net,
+        switchnode,
+        clientnodes,
+        success_probs;
+        kwargs...,
+    )
 
 @resumable function (prot::SimpleSwitchDiscreteProt)()
     rounds = prot.rounds

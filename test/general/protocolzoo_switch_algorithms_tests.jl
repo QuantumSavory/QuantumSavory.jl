@@ -52,6 +52,31 @@ const Switches = QuantumSavory.ProtocolZoo.Switches
         @test assignment == [1, 3, 4, 5]
     end
 
+    @testset "keyword construction owns fresh private state" begin
+        graph = star_graph(2)
+        net = RegisterNet(graph, [Register(1), Register(1)])
+        sim = get_time_tracker(net)
+
+        first = SimpleSwitchDiscreteProt(;
+            sim,
+            net,
+            switchnode=1,
+            clientnodes=[2],
+            success_probs=[1.0],
+        )
+        second = SimpleSwitchDiscreteProt(;
+            sim,
+            net,
+            switchnode=1,
+            clientnodes=[2],
+            success_probs=[1.0],
+        )
+
+        @test first._backlog !== second._backlog
+        first._backlog[1, 1] = 3
+        @test second._backlog[1, 1] == 0
+    end
+
     @testset "synchronized switch cleanup deletes unused raw links on both ends" begin
         graph = star_graph(2)
         net = RegisterNet(graph, [Register(1), Register(1)])
