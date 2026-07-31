@@ -74,24 +74,6 @@ struct ProtocolSchema
     end
 end
 
-function _protocol_field(
-    protocol::Type,
-    name::Symbol,
-    doc::AbstractString;
-    required::Bool,
-    minimum::Union{Nothing,Real}=nothing,
-    maximum::Union{Nothing,Real}=nothing,
-)
-    return ConstructorFieldSchema(
-        name,
-        fieldtype(protocol, name),
-        doc;
-        required,
-        minimum,
-        maximum,
-    )
-end
-
 function _protocol_constructor(
     protocol::Type,
     doc::AbstractString,
@@ -105,13 +87,13 @@ const _ENTANGLER_SCHEMA = ProtocolSchema(
         EntanglerProt,
         "Generate entanglement between two network nodes.",
         (
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :pairstate,
                 "State generated after a successful attempt.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :success_prob,
                 "Success probability for one generation attempt.";
@@ -119,79 +101,79 @@ const _ENTANGLER_SCHEMA = ProtocolSchema(
                 minimum=0.0,
                 maximum=1.0,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :attempt_time,
                 "Duration of one generation attempt.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :local_busy_time_pre,
                 "Local busy time before generation attempts.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :local_busy_time_post,
                 "Local busy time after a successful attempt.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :retry_lock_time,
                 "Delay before retrying unavailable slot locks, or `nothing`.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :rounds,
                 "Number of rounds, with `-1` meaning indefinitely.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :attempts,
                 "Maximum attempts per round, with `-1` meaning indefinitely.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :chooseslotA,
                 "Slot selector for the first node.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :chooseslotB,
                 "Slot selector for the second node.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :randomize,
                 "Whether to randomize the free-slot search.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :uselock,
                 "Whether to lock selected slots during generation.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :margin,
                 "Slots to leave free after entanglement already exists.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :hardmargin,
                 "Slots to leave free before entanglement exists.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglerProt,
                 :tag,
                 "Tag-head type added to generated pairs, or `nothing`.";
@@ -208,61 +190,61 @@ const _SWAPPER_SCHEMA = ProtocolSchema(
         SwapperProt,
         "Swap two entangled pairs at one network node.",
         (
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :chooseslots,
                 "Selector for eligible local slots.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :nodeL,
                 "Query selecting one remote counterpart.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :nodeH,
                 "Query selecting the other remote counterpart.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :chooseL,
                 "Chooser among matches for `nodeL`.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :chooseH,
                 "Chooser among matches for `nodeH`.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :local_busy_time,
                 "Local busy time before the swap.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :retry_lock_time,
                 "Delay before retrying unavailable slots, or `nothing`.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :rounds,
                 "Number of rounds, with `-1` meaning indefinitely.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :agelimit,
                 "Maximum eligible pair age, or `nothing`.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SwapperProt,
                 :max_history_per_slot,
                 "Retained history-tag limit, or `nothing`.";
@@ -288,13 +270,13 @@ const _ENTANGLEMENT_CONSUMER_SCHEMA = ProtocolSchema(
         EntanglementConsumer,
         "Consume completed entanglement between two nodes.",
         (
-            _protocol_field(
+            _constructor_field(
                 EntanglementConsumer,
                 :period,
                 "Polling period, or `nothing` to wait for tag changes.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 EntanglementConsumer,
                 :tag,
                 "Tag-head type identifying consumable pairs.";
@@ -312,25 +294,25 @@ const _CUTOFF_SCHEMA = ProtocolSchema(
         CutoffProt,
         "Remove entanglement older than a retention threshold at one node.",
         (
-            _protocol_field(
+            _constructor_field(
                 CutoffProt,
                 :period,
                 "Polling period, or `nothing` to wait for tag changes.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 CutoffProt,
                 :retention_time,
                 "Age after which an entangled slot is emptied.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 CutoffProt,
                 :announce,
                 "Whether to notify the remote counterpart after deletion.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 CutoffProt,
                 :max_delete_per_slot,
                 "Retained deletion-tag limit, or `nothing`.";
@@ -347,31 +329,31 @@ const _SIMPLE_SWITCH_SCHEMA = ProtocolSchema(
         SimpleSwitchDiscreteProt,
         "Serve client-pair requests from one discrete-time switch node.",
         (
-            _protocol_field(
+            _constructor_field(
                 SimpleSwitchDiscreteProt,
                 :clientnodes,
                 "Client node indices served by the switch.";
                 required=true,
             ),
-            _protocol_field(
+            _constructor_field(
                 SimpleSwitchDiscreteProt,
                 :success_probs,
                 "Per-client raw-entanglement success probabilities.";
                 required=true,
             ),
-            _protocol_field(
+            _constructor_field(
                 SimpleSwitchDiscreteProt,
                 :ticktock,
                 "Duration of one switching cycle.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SimpleSwitchDiscreteProt,
                 :rounds,
                 "Number of cycles, with `-1` meaning indefinitely.";
                 required=false,
             ),
-            _protocol_field(
+            _constructor_field(
                 SimpleSwitchDiscreteProt,
                 :assignment_algorithm,
                 "Memory-slot assignment algorithm.";

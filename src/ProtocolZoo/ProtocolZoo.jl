@@ -3,7 +3,7 @@ module ProtocolZoo
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange, QueryOnRegResult
 import QuantumSavory: _message_type
-using QuantumSavory: Wildcard, alwaystrue, compactstr
+using QuantumSavory: Wildcard, _constructor_field, alwaystrue, compactstr
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
