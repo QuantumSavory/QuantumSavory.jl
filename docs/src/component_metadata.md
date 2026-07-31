@@ -65,14 +65,14 @@ schema = protocol_schema(EntanglementConsumer)
 (
     protocol_placement(EntanglementConsumer),
     schema.placement_fields,
-    schema.permits_virtual_edge,
+    permits_virtual_edge(EntanglementConsumer),
 )
 ```
 
-Custom protocols can extend `protocol_schema`; they default to
-`FloatingProtocolPlacement` until they explicitly extend
-`protocol_placement`. Defining a custom subtype never changes the deterministic
-built-in `protocol_schemas()` catalog.
+Custom protocols expose all three facts by extending `protocol_schema`;
+`protocol_placement` and `permits_virtual_edge` derive from that one schema.
+An unregistered custom protocol is not introspectable. Defining a custom
+subtype never changes the deterministic built-in `protocol_schemas()` catalog.
 
 ## Extending Constructor Metadata
 

@@ -38,18 +38,6 @@ export
 
 abstract type AbstractProtocol end
 
-"""
-Check whether a protocol type or instance permits virtual edges between nodes.
-
-Virtual edges refer to protocol connections between two nodes that do not correspond
-to actual network edges/links. Some protocols like [`EntanglementConsumer`](@ref) can operate
-between any two nodes in the network regardless of physical connectivity.
-
-The capability is defined on protocol types; instance queries delegate to their type.
-"""
-permits_virtual_edge(::Type{<:AbstractProtocol}) = false
-permits_virtual_edge(prot::AbstractProtocol) = permits_virtual_edge(typeof(prot))
-
 get_time_tracker(prot::AbstractProtocol) = prot.sim::Simulation
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
@@ -685,8 +673,6 @@ end
 function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
 end
-
-permits_virtual_edge(::Type{EntanglementConsumer}) = true
 
 @resumable function (prot::EntanglementConsumer)()
     regA = prot.net[prot.nodeA]

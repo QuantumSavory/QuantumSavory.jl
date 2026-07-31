@@ -23,6 +23,23 @@ QuantumSavory.ProtocolZoo.protocol_schema(::Type{CustomFloatingProtocol}) =
         (),
     )
 
+struct CustomVirtualEdgeProtocol <: AbstractProtocol
+    nodeA::Int
+    nodeB::Int
+end
+
+QuantumSavory.ProtocolZoo.protocol_schema(
+    ::Type{CustomVirtualEdgeProtocol},
+) = ProtocolSchema(
+    ConstructorSchema(
+        CustomVirtualEdgeProtocol,
+        "A test-only virtual-edge protocol.",
+    ),
+    EdgeProtocolPlacement,
+    (:nodeA, :nodeB),
+    true,
+)
+
 struct InvalidNodeProtocol <: AbstractProtocol
     node::Int
 end
@@ -117,8 +134,18 @@ end
     @test protocol_placement(CustomFloatingProtocol) ===
           FloatingProtocolPlacement
     @test constructor_schema(CustomFloatingProtocol) === custom.constructor
+    custom_virtual = protocol_schema(CustomVirtualEdgeProtocol)
+    @test protocol_placement(CustomVirtualEdgeProtocol) ===
+          custom_virtual.placement === EdgeProtocolPlacement
+    @test permits_virtual_edge(CustomVirtualEdgeProtocol) ===
+          custom_virtual.permits_virtual_edge === true
+    @test protocol_placement(CustomVirtualEdgeProtocol(1, 2)) ===
+          EdgeProtocolPlacement
+    @test permits_virtual_edge(CustomVirtualEdgeProtocol(1, 2))
     @test map(schema -> schema.constructor.constructor, protocol_schemas()) ==
           expected_protocols
+    @test_throws ArgumentError protocol_placement(InvalidNodeProtocol)
+    @test_throws ArgumentError permits_virtual_edge(InvalidNodeProtocol)
 
     invalid_constructor = ConstructorSchema(
         InvalidNodeProtocol,

@@ -403,20 +403,24 @@ QuantumSavory.constructor_schema(::Type{T}) where {T<:AbstractProtocol} =
     protocol_placement(::AbstractProtocol)
 
 Return the network-placement category for a protocol. Custom protocols without
-an explicit schema default to `FloatingProtocolPlacement`.
+an explicit schema are not introspectable.
 """
-protocol_placement(::Type{<:AbstractProtocol}) = FloatingProtocolPlacement
+protocol_placement(type::Type{<:AbstractProtocol}) =
+    protocol_schema(type).placement
 protocol_placement(protocol::AbstractProtocol) = protocol_placement(typeof(protocol))
 
-protocol_placement(::Type{EntanglerProt}) = EdgeProtocolPlacement
-protocol_placement(::Type{SwapperProt}) = NodeProtocolPlacement
-protocol_placement(::Type{EntanglementTracker}) = NodeProtocolPlacement
-protocol_placement(::Type{EntanglementConsumer}) = EdgeProtocolPlacement
-protocol_placement(::Type{CutoffProt}) = NodeProtocolPlacement
-protocol_placement(::Type{SimpleSwitchDiscreteProt}) = NodeProtocolPlacement
-protocol_placement(::Type{EndNodeController}) = NodeProtocolPlacement
-protocol_placement(::Type{NetworkNodeController}) = NodeProtocolPlacement
-protocol_placement(::Type{LinkController}) = EdgeProtocolPlacement
+"""
+    permits_virtual_edge(::Type{<:AbstractProtocol})
+    permits_virtual_edge(::AbstractProtocol)
+
+Return whether a protocol can operate between nodes without a corresponding
+physical graph edge. The capability is defined by [`protocol_schema`](@ref);
+instance queries delegate to their type.
+"""
+permits_virtual_edge(type::Type{<:AbstractProtocol}) =
+    protocol_schema(type).permits_virtual_edge
+permits_virtual_edge(protocol::AbstractProtocol) =
+    permits_virtual_edge(typeof(protocol))
 
 """
     protocol_schemas()

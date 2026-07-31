@@ -40,6 +40,8 @@ Other specialized families:
   placement fields, and virtual-edge capability.
 - Use `protocol_placement(ProtocolType)` when only the floating, node, or edge
   category is needed.
+- Placement and virtual-edge accessors derive from the protocol schema; custom
+  protocols must register one before configuration tooling can inspect them.
 - Constructor fields exclude `sim`, `net`, node-placement fields, and private
   runtime storage.
 

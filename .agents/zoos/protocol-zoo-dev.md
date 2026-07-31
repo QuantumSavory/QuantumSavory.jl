@@ -26,9 +26,9 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - Store `sim` and `net` in the protocol object.
 - Add `protocol_schema(::Type{MyProt})` when the protocol should expose stable
   constructor metadata. Keep simulator, network, placement, and private runtime
-  fields out of its nested `ConstructorSchema`.
-- Extend `protocol_placement(::Type{MyProt})` for node or edge protocols;
-  unregistered custom protocols default to `FloatingProtocolPlacement`.
+  fields out of its nested `ConstructorSchema`. Put placement fields and the
+  virtual-edge capability in the enclosing `ProtocolSchema`; the public
+  accessors derive from it.
 - Implement `@resumable function (prot::MyProt)()`.
 - Overload `protocol_log_context(prot::MyProt)` with only primitive simulation
   fields, `protocol::Symbol`, and an immutable ordered node tuple. Do not retain
@@ -50,7 +50,8 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - Add every standard named tag head to the explicit `tag_head_schemas()`
   catalog, with fields in its stored `Tag` order. Do not discover tag heads by
   scanning `Tag` methods or Julia subtypes.
-- If the protocol intentionally works across non-physical edges, define `permits_virtual_edge(::Type{<:MyProt}) = true`; instance queries delegate to this type-level trait.
+- If the protocol intentionally works across non-physical edges, set the
+  `ProtocolSchema` capability to `true`; only edge schemas permit it.
 
 ## Protocol Metadata Invariants
 
@@ -61,8 +62,8 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - Placement fields belong to the protocol struct and never also appear as
   configurable constructor fields.
 - Only an edge protocol can declare `permits_virtual_edge`.
-- Keep `protocol_schema`, `protocol_placement`, and `permits_virtual_edge`
-  consistent for every built-in protocol.
+- `protocol_placement` and `permits_virtual_edge` derive from
+  `protocol_schema`; do not duplicate those facts in accessor methods.
 
 ## Review Checks
 

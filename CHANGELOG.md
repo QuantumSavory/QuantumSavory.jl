@@ -6,7 +6,9 @@
   extension with public, typed, deterministic schemas:
   `slot_schemas`, `representation_schemas`, `background_schemas`, and
   `ProtocolZoo.protocol_schemas`. Protocol metadata now explicitly separates
-  configurable constructor fields from node/edge placement. The
+  configurable constructor fields from node/edge placement, and the placement
+  and virtual-edge accessors derive from that single schema. Unregistered
+  custom protocols are no longer introspectable through those accessors. The
   `InteractiveUtils`/`REPL` extension and the old `available_*_types` and
   `constructor_metadata` functions were removed.
 - Added explicit catalogs for named tag heads and generic `Tag` signatures,
