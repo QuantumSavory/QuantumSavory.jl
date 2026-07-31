@@ -35,6 +35,12 @@ This matters because the protocol object packages:
 That packaging is what makes protocols easier to reuse and compare than a large
 free function with many arguments.
 
+For a public protocol, the supported construction surface consists of the
+constructor signatures and constructor parameters documented in this reference.
+Protocol objects may also carry scheduler state, logs, queues, or caches. Their
+concrete field layout—including underscore-prefixed bookkeeping—is internal and
+must not be used as an inspection API.
+
 When user-written protocols need to cooperate with these implementations, the
 main interface is the standard set of typed tags documented in
 [Standard Protocol Tags](@ref standard-protocol-tags).
@@ -59,36 +65,13 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
-## Protocol Logging Context
+## Protocol Diagnostics
 
-ProtocolZoo records use Julia's standard logging macros and the public
-[`protocol_log_context`](@ref) helper. The helper returns simulation time,
-active process id, protocol type name, and an ordered tuple of participating
-nodes. Custom `AbstractProtocol` implementations should overload it when their
-node layout is not already represented:
-
-```julia
-import QuantumSavory.ProtocolZoo: protocol_log_context
-
-protocol_log_context(prot::MyProtocol) = (
-    simulation_log_context(prot.sim)...,
-    protocol=:MyProtocol,
-    nodes=(prot.node,),
-)
-
-@debug(
-    "Consumed entanglement",
-    _group=LOG_GROUPS.protocol,
-    event=:entanglement_consumed,
-    protocol_log_context(prot)...,
-    slots=(left_slot, right_slot),
-    pair_id=pair_id,
-)
-```
-
-Keep selectors and runtime peers out of the base `nodes` tuple. Put the actual
-participants for one event in fields such as `src_node`, `dst_node`, or
-`remote_nodes`.
+ProtocolZoo records use Julia's standard logging macros under the stable
+`LOG_GROUPS.protocol` group. Their messages, event symbols, payloads, and
+ordering are not stable interfaces. The currently exported
+`protocol_log_context` helper and `AbstractProtocol` lifecycle hooks are
+internal implementation seams, not supported third-party extension APIs.
 
 ## Visualization Hooks
 
@@ -108,7 +91,8 @@ The current `ProtocolZoo` includes:
 - metadata tracking helpers,
 - consumer and cutoff protocols,
 - switch-style protocols,
-- and QTCP-related controllers and message types.
+- QTCP-related controllers and message types, and
+- MBQC graph-state construction and purification protocols.
 
 The autodocs below are the exact API reference.
 

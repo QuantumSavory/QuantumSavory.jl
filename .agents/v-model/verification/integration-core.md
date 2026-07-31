@@ -85,13 +85,15 @@ These actions exercise core subsystem boundaries and failure paths.
   request that lacks direct support converts state and operation data to a compatible
   common general representation for every capability class, retains representation
   configuration, and warns once per call site with initial and final representation
-  names. Monte Carlo remains general rather than being forced to another representation.
-  General-to-specialized conversion requires an explicit twirling object; when no
-  method or conversion applies, dispatch produces a `MethodError` with any hint
-  remaining supplemental.
+  names. Monte Carlo remains general rather than being forced to another
+  representation. A supported general input plus explicit twirling object converts to
+  the requested specialized representation with the object's declared semantics;
+  without that object it remains general. When no method or conversion applies,
+  dispatch produces a `MethodError` with any hint remaining supplemental.
 - **Status:** planned
 - **Evidence:** [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), [`project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl)
 - **Nonconformance:** The built-in matrix is partial. Only selected conversion paths
-  exist; uniform promotion, representation approximation parameters, explicit twirling,
-  warning policy, and complete MethodError/hint coverage are unimplemented. Backend
-  hooks are internal rather than third-party extension contracts.
+  exist; uniform promotion and propagation of configured representation approximation
+  settings, explicit twirling, warning policy, and complete MethodError/hint coverage
+  are unimplemented. Backend hooks are internal rather than third-party extension
+  contracts.

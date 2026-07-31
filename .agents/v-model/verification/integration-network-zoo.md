@@ -52,7 +52,8 @@ boundaries.
 - **Status:** implemented
 - **Evidence:** [`stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl), [`circuitzoo_api_tests.jl`](../../../test/general/circuitzoo_api_tests.jl), [`circuitzoo_ent_swap_tests.jl`](../../../test/general/circuitzoo_ent_swap_tests.jl), [`circuitzoo_fusion_tests.jl`](../../../test/general/circuitzoo_fusion_tests.jl), [`circuitzoo_superdense_tests.jl`](../../../test/general/circuitzoo_superdense_tests.jl), [`circuitzoo_purification_tests.jl`](../../../test/general/circuitzoo_purification_tests.jl)
 - **Nonconformance:** Public inventories, documentation fields, and examples are not
-  checked mechanically. State checks are weak and a depolarized test is undiscovered;
+  checked mechanically. State checks are weak, Barrett-Kok introspection omits `m`,
+  weighted constructor prose is incomplete, and a depolarized test is undiscovered;
   circuit feature introspection, timing, and Stringent/Expedient/Node arity, return, and
   cleanup behavior are incomplete.
 
@@ -76,8 +77,8 @@ boundaries.
 - **Evidence:** [`API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md), [`protocolzoo_surface_contracts_tests.jl`](../../../test/general/protocolzoo_surface_contracts_tests.jl), [`protocolzoo_entangler_tests.jl`](../../../test/general/protocolzoo_entangler_tests.jl), [`protocolzoo_entanglement_consumer_stale_query_tests.jl`](../../../test/general/protocolzoo_entanglement_consumer_stale_query_tests.jl), [`protocolzoo_entanglement_counterpart_invariant_tests.jl`](../../../test/general/protocolzoo_entanglement_counterpart_invariant_tests.jl), [`protocolzoo_entanglement_tracker_lock_gap_tests.jl`](../../../test/general/protocolzoo_entanglement_tracker_lock_gap_tests.jl), [`protocolzoo_swapper_stale_query_tests.jl`](../../../test/general/protocolzoo_swapper_stale_query_tests.jl), [`protocolzoo_entanglement_id_tests.jl`](../../../test/general/protocolzoo_entanglement_id_tests.jl), [`protocolzoo_switch_stale_match_accounting_tests.jl`](../../../test/general/protocolzoo_switch_stale_match_accounting_tests.jl), [`protocolzoo_switch_stale_reciprocal_delete_tests.jl`](../../../test/general/protocolzoo_switch_stale_reciprocal_delete_tests.jl), [`protocolzoo_qtcp_tests.jl`](../../../test/general/protocolzoo_qtcp_tests.jl), [`protocolzoo_mbqc_tests.jl`](../../../test/general/protocolzoo_mbqc_tests.jl), [`protocolzoo_cutoff_cleanup_tests.jl`](../../../test/general/protocolzoo_cutoff_cleanup_tests.jl), [`qtcp_tutorial_1_tests.jl`](../../../test/examples/qtcp_tutorial_1_tests.jl), [`purificationmbqc_tests.jl`](../../../test/examples/purificationmbqc_tests.jl)
 - **Nonconformance:** Separate tests do not jointly prove reciprocal creation, all
   delayed routes, revalidation, and exactly-once consumption. The public inventory and
-  constructor docs are not enforced; QTCP and MBQC lack the same lifecycle and
-  example-level evidence as core protocols.
+  constructor docs are not enforced; QTCP/MBQC lack core-level evidence. Generated
+  keyword constructors still accept internal `_log`/`_backlog` storage.
 
 ## INTV-008 — Verify built-in optional activation, log groups, and rendering
 
@@ -98,6 +99,7 @@ boundaries.
 - **Nonconformance:** No clean activation matrix exists; logging covers only selected
   groups, renderer coverage is incomplete, and map tests depend on an external tile
   service. Activation and logging hooks are internal, not public extension seams.
+  Some cited tests mix exact-content regressions with success probes.
 
 ## INTV-009 — Verify inspection and metadata addressing
 
@@ -121,4 +123,5 @@ boundaries.
 - **Nonconformance:** No test directly covers `stateof`/`quantumstate`/`slots` for all
   assignment shapes, and these documented unexported functions lack `public`
   declarations. Both directed bulk setters currently dispatch into the undirected
-  store; network metadata coverage is otherwise strong but not one complete fixture.
+  store; coverage is otherwise strong but not one complete fixture. Cited display tests
+  mix exact-content regressions with success probes.

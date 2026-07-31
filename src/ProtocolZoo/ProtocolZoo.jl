@@ -58,18 +58,9 @@ Return the structured logging context for `prot`. The fields are the simulation
 context followed by the concrete protocol type name and an immutable, ordered
 snapshot of the participating node identifiers.
 
-Custom protocols should overload this function when their node layout is not
-represented by a built-in protocol family:
-
-```julia
-import QuantumSavory.ProtocolZoo: protocol_log_context
-
-protocol_log_context(prot::MyProtocol) = (
-    simulation_log_context(prot.sim)...,
-    protocol = :MyProtocol,
-    nodes = (prot.node,),
-)
-```
+This is an internal helper for repository-owned ProtocolZoo implementations,
+not a supported third-party extension hook. Its fields are not a stable public
+schema; only the `LOG_GROUPS.protocol` group is stable.
 """
 function protocol_log_context(prot::AbstractProtocol)
     return (;
@@ -660,7 +651,16 @@ A protocol running between two nodes, checking periodically for any entangled pa
 
 This protocol permits virtual edges, meaning it can operate between any two nodes in the network regardless of whether they are physically connected by an edge.
 
-$FIELDS
+# Constructor parameters
+
+- `sim`: time-and-schedule-tracking `Simulation`.
+- `net`: network of registers.
+- `nodeA`, `nodeB`: endpoint vertex indices.
+- `period`: interval between queries, or `nothing` to wait for available pairs.
+- `tag`: concrete `AbstractTag` head type to consume.
+
+The convenience constructor may derive `sim` from `net`. Runtime bookkeeping and the
+concrete fields used to store it are internal.
 """
 @kwdef struct EntanglementConsumer <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
@@ -675,7 +675,7 @@ $FIELDS
     period::Union{Float64,Nothing} = 0.1
     """concrete `AbstractTag` subtype which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
     tag::Type{<:AbstractTag} = EntanglementCounterpart
-    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`"""
+    # Internal runtime observations used by the current renderer.
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end
 

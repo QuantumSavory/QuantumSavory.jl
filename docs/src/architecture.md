@@ -89,16 +89,16 @@ everything from scratch.
 QuantumSavory uses Julia's standard `@debug`, `@warn`, and `@error` macros for
 simulation, networking, protocol, and visualization records. Routine control
 flow is logged at `Debug`, recoverable anomalies at `Warn`, and invariant
-violations at `Error`. Messages are short, stable descriptions such as
-`"Entangled a pair"`; changing values belong in metadata instead of being
-interpolated into the message.
+violations at `Error`. Messages are currently short descriptions such as
+`"Entangled a pair"`; changing values generally belong in metadata instead of
+being interpolated into the message.
 
-Library records follow this schema:
+Only the `LOG_GROUPS` values are stable. Current library records commonly use:
 
 - `_group` is one of `LOG_GROUPS.backend`, `LOG_GROUPS.simulation`,
   `LOG_GROUPS.protocol`, `LOG_GROUPS.network`, or
   `LOG_GROUPS.visualization`;
-- `event` is a stable `Symbol`;
+- `event` as a more specific `Symbol`;
 - simulation records include `sim_time::Float64` and
   `sim_process_id::Union{UInt,Nothing}`;
 - protocol records additionally include `protocol::Symbol` and an immutable,
@@ -107,14 +107,15 @@ Library records follow this schema:
   `remote_nodes`, `slot`, `slots`, `pair_id`, `round`, `attempts`,
   `message_type`, and `correction`.
 
-Use [`simulation_log_context`](@ref) for a free-function process:
+Messages, levels, event symbols, payload fields and types, field presence and
+ordering, and event sequences may all change in a compatible release. For
+example, a current record can look like:
 
 ```julia
 @debug(
     "Swapped entanglement",
     _group=LOG_GROUPS.protocol,
     event=:entanglement_swapped,
-    simulation_log_context(sim)...,
     protocol=:my_swapper,
     nodes=(node,),
     slots=(slot_a, slot_b),
@@ -122,29 +123,12 @@ Use [`simulation_log_context`](@ref) for a free-function process:
 )
 ```
 
-Use [`QuantumSavory.ProtocolZoo.protocol_log_context`](@ref) for an
-`AbstractProtocol`. It takes a node snapshot rather than retaining the protocol,
-simulation, network, register, message, or query object in the log record.
-
-```julia
-@debug(
-    "Entangled a pair",
-    _group=LOG_GROUPS.protocol,
-    event=:pair_entangled,
-    protocol_log_context(prot)...,
-    round=round,
-    slots=(a.idx, b.idx),
-    pair_id=pair_id,
-    attempts=attempts,
-)
-```
-
 The `_group` keyword is special to Julia's logging macros. A logger can reject
-it through `Logging.shouldlog` before the message, context splat, and ordinary
+it through `Logging.shouldlog` before the message and ordinary
 metadata are constructed. `event` and the other metadata are available only
 after the record has passed that early filter.
 
-The library event vocabulary is organized by subsystem:
+The current, non-stable event vocabulary is organized by subsystem:
 
 | Family | Events |
 |---|---|

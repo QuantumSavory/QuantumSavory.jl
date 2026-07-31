@@ -138,7 +138,19 @@ This switch is mostly based on the architecture proposed in [promponas2024maximi
 Multiple switch management algorithms are suggested in that paper.
 By default we use the `QuantumSavory.ProtocolZoo.Switches.promponas_bruteforce_choice` algorithm.
 
-$TYPEDFIELDS
+# Constructor parameters
+
+- `sim`: time-and-schedule-tracking `Simulation`.
+- `net`: network of registers.
+- `switchnode`: vertex index of the switch.
+- `clientnodes`: directly connected, distinct client vertex indices.
+- `success_probs`: per-client raw-entanglement success estimates in `[0, 1]`.
+- `ticktock`: positive duration of one decision cycle.
+- `rounds`: positive number of rounds, or `-1` for no fixed limit.
+- `assignment_algorithm`: memory-slot assignment algorithm.
+
+The convenience constructor initializes internal backlog bookkeeping. That bookkeeping
+and the concrete fields used to store it are internal.
 """
 @kwdef struct SimpleSwitchDiscreteProt <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""

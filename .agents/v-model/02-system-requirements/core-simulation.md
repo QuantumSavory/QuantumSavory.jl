@@ -76,12 +76,16 @@
 
 ## SYS-007 — Select and promote representations by capability
 
-- **Normative statement:** The product shall use `QuantumOpticsRepr` as the default for
-  qubits and qumodes, treat `QuantumMCRepr` as a general peer, never select
-  `CliffordRepr` or `GabsRepr` as a default, and automatically promote constrained or
-  mixed-representation state to a compatible more-general representation when the
-  requested capability requires it. General-to-specialized conversion shall occur only
-  through an explicit configurable twirling policy.
+- **Normative statement:** When a register slot representation is omitted, the product
+  shall use `QuantumOpticsRepr` for qubits and qumodes, treat `QuantumMCRepr` as a
+  general peer, never select `CliffordRepr` or `GabsRepr` as an implicit slot default,
+  and automatically promote constrained or mixed-representation state to a compatible
+  more-general representation when the requested capability requires it.
+  The product shall support explicitly requested general-to-specialized conversion
+  through a configurable object describing the twirling and shall not specialize
+  automatically. Representation-specific approximation controls shall be constructor
+  arguments on the representation, and promotion shall use the selected target
+  instance's configuration.
 - **Parents:** STK-002
 - **Acceptance criterion:** Registers with unspecified qubit or qumode representation
   select `QuantumOpticsRepr`. For every initialization, composition, operation,
@@ -90,9 +94,11 @@
   representation; an unsupported constrained or mixed-representation request promotes
   to a supporting common representation using its configured approximation parameters
   and emits, once per call site, a warning naming only the initial and final
-  representations. Supported Monte Carlo requests remain Monte Carlo. No
-  general-to-specialized conversion occurs without an explicit twirling policy, and
-  when no applicable implementation or promotion exists, Julia dispatch produces a
-  `MethodError`, optionally augmented by an error hint.
+  representations. Supported Monte Carlo requests remain Monte Carlo. Given a
+  supported general state, requested specialized representation, and configured
+  twirling object, conversion produces that representation according to the object's
+  declared semantics; without the object no specialization occurs. When no applicable
+  implementation or promotion exists, Julia dispatch produces a `MethodError`,
+  optionally augmented by an error hint.
 - **Verification:** SYSV-005 (test)
 - **Context:** [Backend support](../../context/simulation/backend-support.md)

@@ -56,3 +56,12 @@ No discoverable wrapper directly includes
 `graphstate/graph_preparer.jl`, or `states_rest_server/server.jl`. The latter two may be
 helper/service entry points, but the current suite does not yet demonstrate the
 all-checked-in-examples criterion. Most existing wrappers remain smoke tests.
+
+Several checked-in examples depend on package internals rather than only public
+QuantumSavory APIs. Assisted-CV, graph-state, MySwapper, custom-QTCP, distributed-GHZ,
+first-generation-repeater, low-level repeater, and piecemaker code use
+`AbstractProtocol` or logging-context hooks; the low-level human how-to embeds the same
+pattern. Repeater-grid and simple-switch code read concrete `_log` or `_backlog` fields,
+assisted-CV reads `StateRef.state`, and the color-center cluster setup uses exported but
+undocumented `nongreedymultilock`. These are SYS-012 nonconformances even when they pass
+against the same checkout.

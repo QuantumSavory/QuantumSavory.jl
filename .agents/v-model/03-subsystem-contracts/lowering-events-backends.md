@@ -57,8 +57,8 @@
   to create, compose, transform, observe, measure, reduce, or evolve its native state.
   The coordination boundary shall preserve a supporting current representation,
   automatically promote an insufficient constrained or mixed set to a configured
-  common general representation, and require an explicit twirling policy for
-  general-to-specialized conversion.
+  common general representation, and perform requested general-to-specialized
+  conversion through an explicit configurable object describing the twirling.
 - **Parents:** SYS-001, SYS-003, SYS-007
 - **Acceptance criterion:** Representative exact-state, trajectory, stabilizer, and
   Gaussian adapters return documented state manifolds, subsystem counts, and
@@ -66,8 +66,10 @@
   `QuantumMCRepr` remain general peers for supported requests; insufficient stabilizer,
   Gaussian, or mixed representations promote for every capability class using the
   target representation's configured approximation parameters and warn once per call
-  site with the initial and final representations. Specialization occurs only after an
-  explicit twirling request. A request with no applicable implementation or promotion
+  site with the initial and final representations. Given a supported general input and
+  requested specialized representation, an explicit twirling object produces that
+  representation with the object's declared semantics; without the object no
+  specialization occurs. A request with no applicable implementation or promotion
   produces a `MethodError`.
 - **Verification:** INTV-005 (test)
 - **Context:** [Backend extension](../../context/simulation/backend-extension.md)
@@ -75,9 +77,9 @@
 ### Boundary semantics
 
 - **Inputs:** Native state, selected subsystem positions, requested capability,
-  representation configuration including approximation parameters, optional explicit
-  twirling policy, and any symbolic object or background parameters required by the
-  capability.
+  representation instance with constructor-configured approximation parameters,
+  optional explicit twirling object, and any symbolic object or background parameters
+  required by the capability.
 - **Outputs:** Updated or replacement native state, observable or measurement result,
   or an unsupported request.
 - **State:** The adapter may mutate or replace native state according to its documented

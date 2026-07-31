@@ -20,7 +20,8 @@ Return the structured logging context for `sim`.
 
 The result contains the current simulated time and the active ConcurrentSim
 process identifier. `sim_process_id` is `nothing` when called outside a running
-process.
+process. This is an internal helper for repository-owned logging; its fields are
+not a stable public schema. Use [`LOG_GROUPS`](@ref) for stable coarse filtering.
 """
 function simulation_log_context(sim::Simulation)
     process = active_process(sim)

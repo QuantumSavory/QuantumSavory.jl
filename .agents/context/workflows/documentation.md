@@ -10,8 +10,9 @@
 
 1. Place concepts, tutorials, how-to guides, and API reference in their existing
    Diátaxis-oriented sections. Update `docs/make.jl` navigation when adding a page.
-   `docs/src/howto/repeatergrid/repeatergrid.md` currently exists but is omitted from
-   the page list, so filesystem presence is not proof that a page is published.
+   `docs/src/howto/repeatergrid/repeatergrid.md` is an explicitly labeled unpublished
+   draft, and `docs/outdated/` is explicitly archival, so filesystem presence is not
+   proof that a page is published.
 2. Keep runnable docstrings compatible with the plotting doctest setup. The main
    `makedocs` call sets `doctest=false`; it does not execute documentation-page
    `jldoctest` blocks. A separate plotting test calls `doctest(QuantumSavory)`, which
@@ -29,25 +30,50 @@
 
 Human docs are part of the product contract and the detailed API catalog. Under SYS-009,
 a Julia API is public only when generated prose documents it and source either exports
-it or marks it `public`. A documented constructor parameter is public, but the concrete
-field that stores it remains internal even when it has the same name. This checkout
-contains no `public` declarations, despite prose-documented unexported functions such as
-`stateof` and qualified standard protocol tags. Audit those gaps instead of treating
-documentation alone or an accidental export alone as sufficient.
+it or marks it `public`. A dependency-owned name intentionally reexported and documented
+through QuantumSavory is part of that product surface; dependency internals that the
+package does not expose are not. A documented constructor parameter is public, but the
+concrete field that stores it remains internal even when it has the same name. This
+checkout contains no `public` declarations. The current public-intent inventory is:
 
-Generated pages and all checked-in examples are covered by SYS-012. Agent context should
-link to human docs and record current implementation boundaries, not copy their
-signatures and examples.
+- generated prose but no marking: qualified `stateof`, `quantumstate`, `swap!`,
+  `showmetadata`, `Switches.promponas_bruteforce_choice`,
+  `ProtocolZoo.EntanglementDelete`, `ProtocolZoo.QTCP.QDatagramSuccess`, the three Zoo
+  module bindings, their documented `Genqo`/`Switches`/`QTCP`/MBQC nested modules, and
+  the two Genqo state models;
+- source docstring but no generated prose or marking: `slots`; and
+- not ready to mark: CircuitZoo's inconsistent `inputqubits` feature seam.
+
+Audit those gaps instead of treating documentation alone or an accidental export alone
+as sufficient. The Zoo catalogs give the model and feature details.
+
+Every checked-in human-documentation file and example is covered by SYS-012. Published
+pages must build; unpublished drafts and archives must be explicitly classified and
+must not silently contradict the maintained contract. Agent context should link to
+human docs and record current implementation boundaries, not copy their signatures and
+examples.
+
+At this audit revision, `docs/src/` has 43 Markdown content pages: 42 are listed in the
+Documenter page tree and the repeater-grid page is the one labeled unpublished draft.
+`docs/outdated/` has two labeled archival content pages plus its classification README.
+Recount this inventory when navigation or Markdown files change.
+
+Navigation classification applies to human prose pages. `docs/make.jl`,
+`docs/Project.toml`, CSS, the bibliography, and referenced image/video assets are
+documentation-support artifacts: validate them through build, link, citation, and
+rendering success, not as standalone pages or exact-content promises. `docs/AGENTS.md`
+is an agent router rather than human product prose. The congestion-chain MP4 and
+statistics PNG are currently unreferenced retained example outputs; their presence and
+exact bytes are not a rendering-content promise.
 
 ## Anchors
 
 - **Source:** [`docs/make.jl`](../../../docs/make.jl) and [`docs/Project.toml`](../../../docs/Project.toml) — build, external integration, navigation, and deployment.
-- **Docs:** [`docs/src/index.md`](../../../docs/src/index.md) and [`docs/src/howto/repeatergrid/repeatergrid.md`](../../../docs/src/howto/repeatergrid/repeatergrid.md) — published entry and omitted-page evidence.
+- **Docs:** [`docs/src/index.md`](../../../docs/src/index.md), [`docs/src/howto/repeatergrid/repeatergrid.md`](../../../docs/src/howto/repeatergrid/repeatergrid.md), and [`docs/outdated/README.md`](../../../docs/outdated/README.md) — published, draft, and archival classifications.
 - **Test:** [`test/plotting/doctests_tests.jl`](../../../test/plotting/doctests_tests.jl) — the separately executed docstring doctests.
 - **CI:** [`.buildkite/pipeline.yml`](../../../.buildkite/pipeline.yml) — credentials and full-build invocation.
 
 ## Unresolved questions
 
 - Should `docs/make.jl` gain explicit offline, no-embedding, and no-deploy modes?
-- Is the repeater-grid page intentionally unpublished?
 - Should Markdown-page doctests be enabled in a separate safe job?

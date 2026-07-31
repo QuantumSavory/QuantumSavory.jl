@@ -59,4 +59,8 @@ explicit twirling-based specialization are not implemented yet.
 
 - Automatic specialized-to-general and mixed-representation promotion is absent.
 - General-to-specialized conversion and its configurable twirling object are absent.
-- Representation constructors do not yet carry promotion approximation parameters.
+- Promotion does not yet select or propagate representation-specific approximation
+  settings; `QuantumOpticsRepr` already exposes its independent finite-basis `cutoff`.
+- Several repository-owned backend hooks remain exported or generated-documented
+  despite their intended internal status; examples include state construction,
+  composition, and backend noise-lowering helpers.

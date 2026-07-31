@@ -77,19 +77,25 @@
 - **Verification:** SYSV-008 (test)
 - **Context:** [Optional extensions](../../context/optional-extensions.md)
 
-## SYS-012 — Publish and execute product documentation and examples
+## SYS-012 — Maintain human documentation and execute product examples
 
-- **Normative statement:** Generated human documentation shall describe the public API
-  in prose and API reference, and every checked-in example shall execute on future
-  SemVer-compatible product versions. Helpers defined only inside a tutorial or example
-  are not public unless they independently satisfy the public-interface convention.
+- **Normative statement:** Every checked-in human-documentation file shall be classified
+  as published, unpublished draft, or archival and remain consistent with that
+  classification; historical or draft differences from current supported behavior
+  shall be explicit rather than silently contradictory. Published generated
+  documentation shall describe the public API in prose and API reference, and every
+  checked-in example shall execute on future SemVer-compatible product versions.
+  Helpers defined only inside a tutorial or example are not public unless they
+  independently satisfy the public-interface convention.
 - **Parents:** STK-004
-- **Acceptance criterion:** In every declared documentation and example environment,
-  the generated documentation builds without unresolved public references and every
-  checked-in low-level and user-oriented example completes. Every public Zoo entry has
-  API-reference coverage and applicable example coverage; tutorial-local helpers are
-  excluded from the public inventory unless documented and exported or declared
-  `public`.
+- **Acceptance criterion:** An inventory accounts for every human-documentation file;
+  published pages build without unresolved public references, while drafts and archives
+  are conspicuously classified and explicitly identify any known historical or planned
+  difference from current supported behavior. In every declared example environment,
+  every checked-in low-level and user-oriented example completes. Every public Zoo
+  entry has API-reference coverage and applicable example coverage; tutorial-local
+  helpers are excluded from the public inventory unless documented and exported or
+  declared `public`.
 - **Verification:** SYSV-009 (test)
 - **Context:** [Documentation workflow](../../context/workflows/documentation.md) and
   [example workflow](../../context/workflows/examples.md)

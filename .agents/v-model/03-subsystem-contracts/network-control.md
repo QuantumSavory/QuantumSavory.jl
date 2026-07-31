@@ -5,9 +5,9 @@
 - **Normative statement:** The network-construction boundary shall associate every
   included register, channel, and incoming message store with one simulation scheduling
   domain, preserve the declared topology, and resolve classical and quantum delay
-  values independently for each directed edge. Register count, scheduling-domain
-  compatibility, and other structural inputs shall be validated during construction
-  before a usable network is exposed.
+  values independently for each directed edge. Register count and scheduling-domain
+  compatibility shall be validated during construction before a usable network is
+  exposed.
 - **Parents:** SYS-006
 - **Acceptance criterion:** Given an undirected three-location topology, initially
   unused registers, and delay functions that return a distinct value for every ordered
@@ -50,8 +50,8 @@
   message is sent with forwarding it reaches the final destination over the shortest
   declared path and retains its payload.
 - **Verification:** INTV-004 (test)
-- **Origin / risk:** Classical channel and forwarding behavior; maintainer confirmation
-  pending; high routing risk
+- **Origin / risk:** Classical channel, forwarding documentation, and implementation;
+  high routing risk
 - **Context:** [Transport](../../context/network/transport.md)
 
 ### Boundary semantics
@@ -78,17 +78,17 @@
 - **Parents:** SYS-006
 - **Acceptance criterion:** Given one half of a correlated two-subsystem state at a
   currently assigned source, the retained half elsewhere, a source access time no later
-  than modeled arrival, a direct quantum link with nonzero delay and a supported
-  background, and an empty destination, when send and receive complete, then the source
-  is unassigned immediately after send, the destination remains unchanged before
-  arrival, the destination owns the transmitted subsystem at arrival, and a joint
-  observable with the retained half matches a stationary subsystem evolved under the
-  same background for the same interval. Given an assigned destination instead, the
-  delivery attempt emits a warning and leaves no transmitted state available to
-  receive or recover.
+  than modeled arrival, compatible source/channel/destination traits, a direct quantum
+  link with nonzero delay and a supported background, and an empty destination, when
+  send and receive complete, then the source is unassigned immediately after send, the
+  destination remains unchanged before arrival, the destination owns the transmitted
+  subsystem at arrival, and a joint observable with the retained half matches a
+  stationary subsystem evolved under the same background for the same interval. Given
+  an assigned destination instead, the delivery attempt emits a warning and leaves no
+  transmitted state available to receive or recover.
 - **Verification:** INTV-004 (test)
-- **Origin / risk:** Quantum-channel state-transfer behavior; maintainer confirmation
-  pending; high state-loss risk
+- **Origin / risk:** Quantum-channel state-transfer behavior and maintainer interview;
+  high state-loss risk
 - **Context:** [Transport](../../context/network/transport.md)
 
 ### Boundary semantics
@@ -100,9 +100,9 @@
 - **State:** Ownership moves; the quantum state is not copied. Backreferences preserving
   correlations outside the channel remain valid.
 - **Errors:** Delivery into an assigned destination loses the transmitted state and
-  warns. Valid models ensure the source assignment and local time are compatible with
-  modeled arrival. Multi-hop quantum routing and sending an unassigned source are not
-  specified; no post-exception consistency guarantee applies.
+  warns. Valid models ensure source assignment, source/channel/destination trait
+  compatibility, and local time compatible with modeled arrival. Multi-hop quantum
+  routing is not specified; no post-exception consistency guarantee applies.
 
 ## SUB-016 — Preserve topology access and metadata addressing
 

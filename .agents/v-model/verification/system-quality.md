@@ -23,27 +23,37 @@ and inspection behavior.
 - **Evidence:** [`Project.toml`](../../../Project.toml), [`ci.yml`](../../../.github/workflows/ci.yml), [`downgrade.yml`](../../../.github/workflows/downgrade.yml), [`pipeline.yml`](../../../.buildkite/pipeline.yml), [`logging_tests.jl`](../../../test/general/logging_tests.jl), [`interactiveutils_tests.jl`](../../../test/general/interactiveutils_tests.jl), [`show_html_tests.jl`](../../../test/general/show_html_tests.jl), [`protocol_show_html_contracts_tests.jl`](../../../test/general/protocol_show_html_contracts_tests.jl), [`cairo_tests.jl`](../../../test/plotting/cairo_tests.jl), [`gl_tests.jl`](../../../test/plotting/gl_tests.jl), [`show_png_tests.jl`](../../../test/plotting/show_png_tests.jl), [`doctests_tests.jl`](../../../test/plotting/doctests_tests.jl)
 - **Nonconformance:** No clean absent/partial/complete activation matrix exists;
   log groups and renderers are sampled, the documentation integration needs credentials
-  and an external service, and only the general shard is cross-platform.
+  and an external service, and only the general shard is cross-platform. Some cited
+  renderer tests combine success probes with exact tooltip or HTML-content regression
+  assertions that may fail after an allowed content change.
 
-## SYSV-009 — Verify generated documentation and executable examples
+## SYSV-009 — Verify human documentation and executable examples
 
 - **Covers:** SYS-012
 - **Method:** test
-- **Procedure:** Build the generated human documentation, map every checked-in example
-  entry point to a discoverable CI wrapper or bounded test mode, and run the complete
-  docs and examples shards against a SemVer-compatible package revision.
+- **Procedure:** Inventory and classify every checked-in human-documentation file, build
+  the published generated documentation, map every checked-in example entry point to a
+  discoverable CI wrapper or bounded test mode, and run the complete docs and examples
+  shards against a SemVer-compatible package revision.
 - **Environment / configuration:** Documentation and examples projects with declared
   dependencies; configured services available for the full docs integration.
-- **Pass criterion:** Documentation generation completes; every checked-in example
-  executes through CI without relying on unsupported tutorial-local helpers; and the
-  same examples run on any SemVer-compatible QuantumSavory version admitted by their
-  declared environment. Published examples use only public package APIs.
+- **Pass criterion:** Every human-documentation file is inventoried; published
+  generation completes without unresolved public references, and every draft or archive
+  is conspicuously classified without presenting an unmarked historical or planned
+  difference as current supported behavior. Every public Zoo entry has API-reference
+  and applicable example coverage. Every checked-in example executes through CI;
+  tutorial-local helpers remain local; every QuantumSavory-owned symbol or field those
+  examples depend on is public; and the same examples run on any SemVer-compatible
+  QuantumSavory version admitted by their declared environment.
 - **Status:** implemented
 - **Evidence:** [`make.jl`](../../../docs/make.jl), [`pipeline.yml`](../../../.buildkite/pipeline.yml), [`runtests.jl`](../../../test/runtests.jl), [`examples`](../../../test/examples), [`Project.toml`](../../../examples/Project.toml)
 - **Nonconformance:** The examples shard has many smoke wrappers but no durable audit
   maps every checked-in script, interactive path, and server to a bounded test. It is
   not run across the full compatible-version range, and the credentialed docs build has
-  no isolated integration test.
+  no isolated integration test. The current 42-published/one-draft/two-archived-page
+  inventory is manual rather than mechanically enforced. Several examples depend on internal
+  `AbstractProtocol`/logging hooks, concrete `_log`/`_backlog` or `StateRef.state`
+  fields, or exported-but-undocumented `nongreedymultilock`.
 
 ## SYSV-010 — Verify public inspection and network metadata
 
@@ -65,4 +75,5 @@ and inspection behavior.
 - **Nonconformance:** Network tests cover most addressing modes, but both directed bulk
   setters currently dispatch into the undirected store. No fixture covers every
   documented state inspection function and metadata mode; the unexported inspection
-  functions also lack `public` declarations.
+  functions also lack `public` declarations. Some cited display tests assert exact
+  headings and values, so they are not isolated success-only contract probes.

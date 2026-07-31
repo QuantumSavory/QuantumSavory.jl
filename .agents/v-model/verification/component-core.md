@@ -112,11 +112,14 @@ invariants with discriminating fixtures.
   composition, operation, observation, measurement, background, reduction, evolution,
   and transport while preserving configured approximation parameters. A degrading
   conversion warns once per call site with initial and final representation names.
-  No general-to-specialized conversion occurs without an explicit twirling object.
-  The absence of any applicable path yields a `MethodError` with an optional hint.
+  A supported general input plus explicit twirling object converts to the requested
+  specialized representation with the object's declared semantics; without that
+  object it remains general. The absence of any applicable path yields a `MethodError`
+  with an optional hint.
 - **Status:** planned
 - **Evidence:** [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), [`project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl)
 - **Nonconformance:** Defaults and Monte Carlo manifold behavior have partial evidence,
-  and one Clifford observable conversion warns. Uniform promotion, approximation
-  parameters, general-to-specialized twirling, and complete MethodError/hint coverage
-  are absent.
+  `QuantumOpticsRepr` exposes a finite-basis cutoff, and one Clifford observable
+  conversion warns. Uniform promotion and propagation of configured approximation
+  settings, general-to-specialized twirling, and complete MethodError/hint coverage are
+  absent.

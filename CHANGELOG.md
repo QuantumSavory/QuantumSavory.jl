@@ -3,12 +3,11 @@
 ## v0.7.1 - unreleased
 
 - **(breaking)** Simulation, network, protocol, and visualization traces now use
-  Julia's standard logging macros with stable `event` symbols and structured
-  metadata. Rendered messages have changed, and routine low-level simulation
-  and protocol control-flow records now use `Debug` severity in the
-  `LOG_GROUPS.protocol` group. The `@simlog` macro and both non-public `timestr`
-  methods were removed immediately; use `simulation_log_context` or
-  `ProtocolZoo.protocol_log_context` with `@debug`, `@warn`, or `@error`.
+  Julia's standard logging macros under stable `LOG_GROUPS`. Event symbols,
+  structured metadata, messages, levels, and ordering may change compatibly.
+  Routine low-level simulation and protocol control-flow records now use
+  `Debug` severity in the `LOG_GROUPS.protocol` group. The `@simlog` macro and
+  both non-public `timestr` methods were removed immediately.
 - Additional visualization methods for states of registers.
 - **(fix)** `observable` now locally composes separately factorized states, and pure
   Clifford states accept dense QuantumOptics observables.
@@ -25,8 +24,8 @@
   samples the discarded subsystem's canonical basis and preserves the conditional
   trajectory as an `MCKet`; its ensemble equals the exact partial trace. Grouped
   `traceout!` calls that delete every slot of a shared state skip backend reduction and
-  RNG sampling entirely. `stateref.state[]` exposes the wrapper, and `StateRef` displays
-  identify its implementation module as `QuantumSavory`.
+  RNG sampling entirely. `quantumstate(stateref)` exposes the wrapper, and `StateRef`
+  displays identify its implementation module as `QuantumSavory`.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
 - **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.

@@ -66,8 +66,8 @@
   `T-t2`, and slot three for `T-t3` across chronological segments and all selected
   access times become `T`, while an unselected slot retains its local time.
 - **Verification:** UNITV-003 (test)
-- **Origin / risk:** Current grouped time-evolution algorithm; maintainer confirmation
-  pending; critical temporal-physics risk
+- **Origin / risk:** Current grouped time-evolution algorithm and maintainer interview;
+  critical temporal-physics risk
 - **Context:** [Time and noise](../../context/simulation/time-and-noise.md)
 
 ## CMP-005 — Preserve fixed tag shapes and semantic query order
@@ -116,10 +116,12 @@
 - **Normative statement:** Numerical dispatch shall preserve each supported adapter's
   documented state manifold while it supports the request. `QuantumOpticsRepr` and
   `QuantumMCRepr` shall be general peers; `CliffordRepr` and `GabsRepr` shall never be
-  defaults and shall promote automatically to a configured compatible general
-  representation when insufficient. Mixed representations shall promote to a common
-  general representation. General-to-specialized conversion shall require an explicit
-  configurable twirling object and shall never occur automatically.
+  implicit register-slot defaults and shall promote automatically to a configured
+  compatible general representation when insufficient. Mixed representations shall
+  promote to a common general representation while preserving constructor-configured
+  target approximation settings. An explicit configurable twirling object shall
+  convert a supported general input to the requested specialized representation with
+  the object's declared semantics; specialization shall never occur automatically.
 - **Parents:** SUB-010
 - **Acceptance criterion:** Given pure exact, mixed exact, Monte Carlo trajectory,
   stabilizer, and Gaussian fixtures, when supported initialization, composition,
@@ -129,8 +131,9 @@
   Carlo. An unsupported stabilizer or Gaussian request and a
   mixed-representation interaction promote to a supporting common general
   representation using target approximation settings and warn once per call site with
-  only the initial and final representation names. A general representation remains
-  general absent an explicit twirling request. If no
+  only the initial and final representation names. A supported explicit twirling
+  request produces its requested specialized representation according to the object's
+  declared semantics; a general representation otherwise remains general. If no
   implementation or promotion applies, dispatch produces a `MethodError`, with an
   optional error hint permitted.
 - **Verification:** UNITV-008 (test)
@@ -143,9 +146,9 @@
 - Explicit symbolic tensor structure, not generic numerical separability analysis,
   defines the factorization guarantee.
 - Only valid nondecreasing time requests participate in temporal guarantees.
-- Automatic constrained or mixed-representation promotion, representation constructor
-  approximation configuration, and explicit twirling-based specialization are not yet
-  implemented across the required capability matrix.
+- Automatic constrained or mixed-representation promotion, propagation of configured
+  approximation settings during promotion, and explicit twirling-based specialization
+  are not yet implemented across the required capability matrix.
 - Exceptions use ordinary Julia dispatch semantics where applicable and provide no
   rollback or post-exception consistency guarantee.
 - No adapter-independent accuracy, performance, or scale budget is specified.

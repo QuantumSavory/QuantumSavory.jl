@@ -2,14 +2,14 @@
 
 ## SUB-011 — Provide parameterized state-model catalog entries
 
-- **Normative statement:** Every exported normalized or weighted state-catalog entry
+- **Normative statement:** Every public normalized or weighted state-catalog entry
   shall be supported, document its constructor parameters and compatible
   representations, expose introspection of expected parameter values, and distinguish
   unit-trace models from weighted models whose trace carries a documented success
   weight. Constructor parameters, not concrete struct fields, form the public
   interface.
 - **Parents:** SYS-007, SYS-008, SYS-009, SYS-012
-- **Acceptance criterion:** For every exported state entry, generated API and example
+- **Acceptance criterion:** For every public state entry, generated API and example
   documentation names every constructor parameter, introspection returns an expected
   value or exploratory range for each parameter in constructor order, and lowering to
   every representation designated compatible produces the declared subsystem arity.

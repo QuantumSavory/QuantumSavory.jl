@@ -1,10 +1,10 @@
 # Protocols Catalog
 
 - **Context need:** Reference
-- **Open when:** Choosing among shipped resumable protocols or assessing their current maturity.
+- **Open when:** Choosing among shipped resumable protocols or assessing their current implementation status.
 - **Do not open when:** Adding a protocol, selecting an immediate circuit, or changing transport internals.
 - **Related specification IDs:** SYS-005, SYS-008, SYS-009, SUB-013, CMP-012
-- **Review when:** ProtocolZoo includes/exports, protocol families, or known maturity limits change.
+- **Review when:** ProtocolZoo includes/exports, protocol families, or known implementation gaps change.
 
 ## Protocol families
 
@@ -34,8 +34,8 @@ Public protocol constructors generally use documented DocStringExtensions field 
 Those tables describe constructor parameters; concrete struct layout is not stable.
 `AbstractProtocol`, process wiring, `permits_virtual_edge`, and logging-context
 overloads are internal implementation seams rather than third-party extension APIs.
-Current human docs teach custom `AbstractProtocol` and `protocol_log_context` methods,
-which is a public-boundary mismatch tracked by SYS-009.
+Human API prose now labels those seams internal, but they remain exported or are used by
+checked-in examples. That source/example mismatch is tracked by SYS-009 and SYS-012.
 
 ## Anchors
 
@@ -48,4 +48,11 @@ which is a public-boundary mismatch tracked by SYS-009.
 - QTCP has incomplete drop, correction, and timeout behavior.
 - MBQC assumes contiguous node labels in several paths.
 - Combined entanglement identifiers can collide with the zero sentinel.
-- Human guidance presents internal protocol hooks as third-party extension seams.
+- The documented qualified `promponas_bruteforce_choice` switch selector and Zoo module
+  bindings lack `public` declarations.
+- Generated constructor-reference coverage is not mechanically audited. Runtime
+  `_log`/`_backlog` storage remains accepted by generated `@kwdef` constructor paths and
+  is read by examples, although maintained constructor prose excludes it. Public outer
+  constructors still need to hide that internal storage completely.
+- Internal protocol hooks remain exported or used by checked-in examples even though
+  maintained API prose now classifies them as internal.

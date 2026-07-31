@@ -34,8 +34,9 @@
    maintenance boundaries.
 
 When copying the Genqo wrappers, do not propagate their unresolved `Pᵈ` behavior:
-the field is currently ignored by the external routines. Make every accepted parameter
-observable in lowering or explicitly document compatibility-only fields.
+the field is currently ignored by the external routines. Make every accepted public
+constructor parameter affect the declared model, or remove it through the applicable
+breaking-release process.
 
 ## Anchors
 

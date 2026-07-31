@@ -4,7 +4,7 @@
 - **Open when:** Checking current register operation ordering, composition, tracing, or backend-dispatch boundaries.
 - **Do not open when:** Learning the ownership model, adding a backend, or working only on tags and messages.
 - **Related specification IDs:** SYS-001, SYS-002, SYS-003, SUB-001, SUB-003, CMP-002, CMP-003, CMP-004
-- **Review when:** `initialize!`, `apply!`, `observable`, `project_traceout!`, `traceout!`, `uptotime!`, or symbolic lowering changes.
+- **Review when:** `initialize!`, `apply!`, `observable`, `project_traceout!`, `traceout!`, `uptotime!`, `overwritetime!`, or symbolic lowering changes.
 
 ## Operation contract
 
@@ -18,6 +18,7 @@ advancement is operation-specific, not automatic:
 | `observable` | Advances only when `time` is supplied | Temporarily composes independent references without changing factorization |
 | `project_traceout!` | Advances only when `time` is supplied | Returns the backend outcome and destructively removes the measured subsystem and back-reference |
 | `traceout!` | Does not advance time | Destructively removes requested subsystems |
+| `overwritetime!` | Writes the supplied value without evolution or monotonicity validation | Access-time metadata only; valid use remains nondecreasing |
 
 `project_traceout!` returns a one-based outcome index for the discrete projective
 backends. QuantumOptics accepts `Ket`/`Operator` states and symbolic or native basis

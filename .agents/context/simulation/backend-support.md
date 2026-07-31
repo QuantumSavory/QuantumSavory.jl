@@ -22,13 +22,12 @@ defines `krausops(::PauliNoise)` and Clifford defines
 `paulinoise(::PauliNoise)`, but their callers supply a duration argument. The apparent
 helpers therefore do not implement those backend/noise pairs.
 
-The trait implementation and backend guide map both `Qubit` and `Qumode` to
-`QuantumOpticsRepr`; `Register` applies those defaults slot by slot. The 0.7.0
-`CHANGELOG.md` statement that Gabs became the qumode default is incorrect. Gabs and
-Clifford are explicit specialized choices, while `QuantumMCRepr` is a general peer of
-the ordinary QuantumOptics representation and does not require conversion to it.
-SYS-007 treats representation-default changes as the specific exception to ordinary
-SemVer protection; this does not make the stale changelog statement current.
+The trait implementation, backend guide, and corrected 0.7.0 changelog entry map both
+`Qubit` and `Qumode` to `QuantumOpticsRepr`; `Register` applies those defaults slot by
+slot. Gabs and Clifford are explicit specialized choices, while `QuantumMCRepr` is a
+general peer of the ordinary QuantumOptics representation and does not require
+conversion to it. SYS-007 treats representation-default changes as the specific
+exception to ordinary SemVer protection.
 
 Generic register operations may work for a backend when its primitive methods and
 traits satisfy the contract. Conversely, exported symbols or included files alone are
@@ -41,9 +40,11 @@ This checkout has no generic representation-promotion layer. Symbolic initializa
 calls `consistent_representation`, which currently rejects mixed requested
 representations; later register operations lower from the stored native state and
 normally expose missing dispatch. There is no general specialized-to-QuantumOptics
-conversion, mixed-state common-representation selection, approximation configuration
-on representation constructors, or explicit twirling object for a requested
-general-to-specialized conversion.
+conversion, mixed-state common-representation selection, promotion-time selection or
+propagation of representation approximation settings, or explicit twirling object for
+a requested general-to-specialized conversion. `QuantumOpticsRepr` already carries a
+finite-basis `cutoff`; future representation-specific controls belong on representation
+constructors, and the existing setting is not promotion plumbing.
 
 The dense-observable Clifford path is a narrow exception: a pure tableau is converted
 to a ket and emits a `maxlog=1` backend warning. It is not the generic promotion and
@@ -51,10 +52,16 @@ once-per-call-site warning mechanism described by SYS-007, SUB-010, and CMP-009.
 planned warning names only the initial and final representations; no such generic
 warning exists yet.
 
+Unsupported paths do not uniformly preserve Julia's `MethodError` signal.
+`consistent_representation` and generic symbolic lowering use ordinary `error(...)` in
+some mixed or missing cases, and selected Clifford/background implementations also
+raise explicit generic errors. Registered `MethodError` hints currently cover optional
+plotting and discovery calls, not representation capability or promotion failures.
+
 ## Anchors
 
 - **Source:** [`src/traits_and_defaults.jl`](../../../src/traits_and_defaults.jl), [`src/baseops/initialize.jl`](../../../src/baseops/initialize.jl), [`src/backends/quantumoptics/`](../../../src/backends/quantumoptics/), [`src/backends/clifford/`](../../../src/backends/clifford/), and [`src/backends/gabs/`](../../../src/backends/gabs/) — defaults, current consistency selection, and backend implementations.
-- **Docs:** [`docs/src/backendsimulator.md`](../../../docs/src/backendsimulator.md), [`docs/src/restricted_formalisms.md`](../../../docs/src/restricted_formalisms.md), and [`CHANGELOG.md`](../../../CHANGELOG.md) — current guidance and the stale 0.7.0 default claim.
+- **Docs:** [`docs/src/backendsimulator.md`](../../../docs/src/backendsimulator.md), [`docs/src/restricted_formalisms.md`](../../../docs/src/restricted_formalisms.md), and [`CHANGELOG.md`](../../../CHANGELOG.md) — current representation guidance and default policy.
 - **Test:** [`test/general/representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`test/general/quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), and [`test/general/project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl) — exercised capabilities.
 
 ## Unresolved questions

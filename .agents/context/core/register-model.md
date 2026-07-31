@@ -41,8 +41,8 @@ For inspection, qualified `QuantumSavory.stateof(slot)` returns its `StateRef` o
 `nothing`, `QuantumSavory.quantumstate(stateref)` unwraps the native backend state, and
 `QuantumSavory.slots(stateref)` reconstructs live `RegRef` back-references. These are
 unexported and have no Julia `public` declaration. Maintainers classified all three as a
-public-surface gap: human docs already teach `stateof`, while `quantumstate` and `slots`
-still need generated prose as well as source marking under SYS-009. They are not
+public-surface gap: human docs teach `stateof` and `quantumstate`, while `slots` still
+needs generated prose; all three need source marking under SYS-009. They are not
 serialization APIs. Text display summarizes `Register`, `RegRef`, `StateRef`, and
 `RegisterNet`; HTML display is specialized for `RegRef` and `StateRef`, with
 backend-specific `stateshow` hooks and an escaped plain-text fallback. Rendering success

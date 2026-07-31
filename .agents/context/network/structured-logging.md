@@ -42,7 +42,8 @@ must remain loadable without those packages.
 
 ## Public-surface mismatch
 
-`protocol_log_context` is exported and human docs currently teach third-party
-overloading, but maintainer-confirmed intent does not support logging-context hooks as
-extension APIs. Source exports and human guidance need reconciliation under SYS-009;
-this does not alter the stability of `LOG_GROUPS`.
+`simulation_log_context` and `protocol_log_context` remain exported even though
+maintainer-confirmed intent treats logging-context hooks as internal rather than
+third-party extension APIs. Human prose and their docstrings now say so, but source
+exports and checked-in examples that call them still need reconciliation under SYS-009
+and SYS-012. This does not alter the stability of `LOG_GROUPS`.

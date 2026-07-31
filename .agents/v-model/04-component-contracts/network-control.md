@@ -15,8 +15,8 @@
   forwarding the message reaches `C`, traverses only declared path edges, and has the
   same inner tag shape and values at final arrival.
 - **Verification:** UNITV-006 (test)
-- **Origin / risk:** Directional-delay and forwarding behavior; maintainer confirmation
-  pending; high route-selection risk
+- **Origin / risk:** Directional-delay and forwarding documentation and implementation;
+  high route-selection risk
 - **Context:** [Transport](../../context/network/transport.md)
 
 ## CMP-008 — Transfer quantum ownership and discard failed delivery
@@ -46,7 +46,8 @@
 ## Component limitations
 
 - Quantum multi-hop forwarding is outside this contract.
-- Sending an unassigned source is unresolved and therefore has no normative result.
+- Sending from an unassigned source is outside valid modeled use and has no guaranteed
+  result.
 - Valid models ensure the source local time is no later than modeled arrival.
 - Assigned-destination receipt intentionally loses the transmitted state and warns; it
   does not consume work to preserve, requeue, or recover that state.

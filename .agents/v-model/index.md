@@ -38,8 +38,9 @@ right-side action shards.
 - Semantic versioning governs compatibility for the public surface: an API is public
   only when it appears in generated prose documentation and is exported or declared
   `public`. No preceding deprecation release is required for a breaking change.
-- Representation defaults are the specific exception to SemVer protection. The general
-  default is `QuantumOpticsRepr`; specialized representations are never defaults.
+- Register trait defaults are the specific exception to SemVer protection. Omitting a
+  slot representation selects `QuantumOpticsRepr`; specialized representations are
+  never implicit slot defaults.
 - Every public Zoo entry is supported, although each state entry may designate only a
   subset of numerical representations. Internal helpers are neither public nor
   SemVer-protected.

@@ -19,6 +19,7 @@ ENV["COLUMNS"] = "100"
 ENV["LINES"] = "24"
 
 using CairoMakie
+using Gabs: QuadBlockBasis
 using QuantumSavory
 
 CairoMakie.activate!()
@@ -39,7 +40,7 @@ function statevis_qubit_register(repr)
 end
 
 function statevis_gabs_register()
-    reg = Register(fill(Qumode(), 5), fill(GabsRepr(QuantumSavory.Gabs.QuadBlockBasis), 5))
+    reg = Register(fill(Qumode(), 5), fill(GabsRepr(QuadBlockBasis), 5))
     for i in 1:5
         initialize!(reg[i], SqueezedState(0.15 * i))
         apply!(reg[i], DisplaceOp(0.1 * i - 0.05im * i))

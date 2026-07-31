@@ -2,14 +2,14 @@
 
 ## CMP-010 — Keep state-catalog parameters, expressions, and weights aligned
 
-- **Normative statement:** Every exported normalized or weighted state-catalog type
+- **Normative statement:** Every public normalized or weighted state-catalog type
   shall expose a constructor-ordered parameter description and expected-value
   introspection without making its concrete field layout public; every designated
   compatible representation shall produce the declared subsystem arity, and trace
   shall be one for a normalized model or the documented success weight for a weighted
   model.
 - **Parents:** SUB-011
-- **Acceptance criterion:** For every exported state type, when a value is constructed
+- **Acceptance criterion:** For every public state type, when a value is constructed
   from each introspected expected parameter value and expressed in every representation
   that entry designates compatible, then construction succeeds, constructor parameter
   names and order agree with introspection and generated documentation, subsystem arity
@@ -93,10 +93,11 @@
   introspection gaps, circuit arity/return/cleanup inconsistencies, and incomplete QTCP
   or MBQC paths remain nonconformances rather than experimental exclusions.
 - Internal Zoo helpers and tutorial-local helpers are not public.
-- A compatibility parameter retained by a wrapped state model need not affect the
-  underlying physical expression unless its support is explicitly confirmed.
-- The combined pair-identity algebra can collide with its sentinel value; collision
-  handling and any required bound are unresolved.
+- The Genqo wrappers currently accept a documented `Pᵈ` parameter that does not affect
+  their physical expression; this is a visible implementation gap, not a general
+  waiver for public constructor behavior.
+- The combined pair-identity algebra can collide with its sentinel value; this is a
+  current protocol defect, not an experimental-support exclusion.
 - Optional mapping can depend on external map services; availability and latency of
   those services are outside this contract, while integration behavior is supported
   when a service is available.

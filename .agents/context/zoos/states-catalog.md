@@ -52,4 +52,7 @@ trace methods are not a general StatesZoo requirement.
 
 - The two Genqo model types lack `export` or `public` marking.
 - Both Genqo lowerings ignore their accepted `Pᵈ` constructor parameter.
+- `BarrettKokBellPair` accepts and documents `m`, but its parameter/range
+  introspection omits it; the weighted model's convenience constructors also lack
+  constructor-parameter prose.
 - The Clifford depolarized-state test is not discovered by the test runner.

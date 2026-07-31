@@ -48,12 +48,13 @@ activation invariants.
 
 - **Covers:** CMP-010
 - **Method:** test
-- **Procedure:** Enumerate every exported public state type from generated docs,
+- **Procedure:** Enumerate every public state type from generated docs and
+  `export`/`public` declarations,
   construct it from each expected-value introspection record, and express it in every
   representation documented for that entry.
 - **Environment / configuration:** Root test runner with constructor/introspection
   order, declared arity, nonzero-expression, and symbolic/native trace assertions.
-- **Pass criterion:** Every public exported normalized or weighted state has API and
+- **Pass criterion:** Every public normalized or weighted state has API and
   example documentation; its documented constructor parameters and expected-value
   introspection names/order agree; every declared-good construction succeeds; declared
   arity and expression are correct; and symbolic and expressed traces agree with its
@@ -61,8 +62,10 @@ activation invariants.
 - **Status:** implemented
 - **Evidence:** [`stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl), [`test_stateszoo_depolarized.jl`](../../../test/test_stateszoo_depolarized.jl)
 - **Nonconformance:** Public inventory, constructor docs, examples, expected-value
-  introspection, representation, and normalization coverage is incomplete. The
-  DepolarizedBellPair Clifford assertions are in
+  introspection, representation, and normalization coverage is incomplete.
+  `BarrettKokBellPair` omits its documented `m` parameter from introspection, and
+  weighted convenience constructors lack parameter prose. The DepolarizedBellPair
+  Clifford assertions are in
   `test/test_stateszoo_depolarized.jl`, whose name lacks `_tests` and is therefore
   excluded by `test/runtests.jl`.
 
@@ -112,7 +115,8 @@ activation invariants.
 - **Nonconformance:** No generated-pair test asserts reciprocal equal nonzero IDs, and
   no uncontended swap asserts the exact consumed-ID combination. Stale/update routes
   remain split, and QTCP/MBQC tests do not exercise adversarial valid interleavings or
-  prove lock-and-revalidation coverage.
+  prove lock-and-revalidation coverage. Protocol surface tests do not reject internal
+  `_log`/`_backlog` constructor keywords.
 
 ## UNITV-012 — Verify stable log groups and built-in optional activation
 
@@ -132,4 +136,5 @@ activation invariants.
 - **Evidence:** [`Project.toml`](../../../Project.toml), [`logging_tests.jl`](../../../test/general/logging_tests.jl), [`interactiveutils_tests.jl`](../../../test/general/interactiveutils_tests.jl), [`cairo_tests.jl`](../../../test/plotting/cairo_tests.jl), [`gl_tests.jl`](../../../test/plotting/gl_tests.jl), [`show_png_tests.jl`](../../../test/plotting/show_png_tests.jl)
 - **Nonconformance:** Logging tests sample groups rather than covering the full stable
   inventory; no clean absent/partial/full activation matrix or complete renderer-success
-  fixture exists.
+  fixture exists. Some cited renderer tests also assert exact tooltip or HTML content,
+  so they are not isolated success-only contract probes.

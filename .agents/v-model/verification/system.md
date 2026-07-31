@@ -1,19 +1,16 @@
 # System Verification
 
-These actions verify black-box behavior through public boundaries.
-
 ## SYSV-001 — Verify symbolic lowering and factorized registers
 
 - **Covers:** SYS-001, SYS-002
 - **Method:** test
 - **Procedure:** Run symbolic Bell-state, two-body-operation, and parity fixtures in two
-  representations, then couple selected factors of a heterogeneous register.
+  representations; couple selected factors of a heterogeneous register.
 - **Environment / configuration:** Root tests with compatible representations and
   distinct slot declarations.
-- **Pass criterion:** Both representations initialize and operate successfully and
-  return the expected deterministic parity; every slot declaration remains observable,
-  initialization leaves every explicit factor separately owned, and coupling makes only
-  the touched factors share ownership.
+- **Pass criterion:** Both representations return expected deterministic parity; every
+  slot declaration remains observable, initialization leaves explicit factors
+  separately owned, and coupling shares only touched factors.
 - **Status:** implemented
 - **Evidence:** [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`register_interface_tests.jl`](../../../test/general/register_interface_tests.jl), [`apply_tests.jl`](../../../test/general/apply_tests.jl), [`project_traceout_tests.jl`](../../../test/general/project_traceout_tests.jl)
 - **Nonconformance:** No fixture jointly checks both representations, all declarations,
@@ -32,15 +29,15 @@ These actions verify black-box behavior through public boundaries.
   local access times, and leaves unrelated slot times unchanged.
 - **Status:** implemented
 - **Evidence:** [`noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl), [`noninstant_and_backgrounds_qumode_tests.jl`](../../../test/general/noninstant_and_backgrounds_qumode_tests.jl)
-- **Nonconformance:** Existing tests do not jointly assert distinct local intervals,
-  interaction synchronization, and untouched unrelated times; backend coverage differs.
+- **Nonconformance:** Tests do not jointly assert distinct local intervals, interaction
+  synchronization, and untouched times; backend coverage differs.
 
 ## SYSV-003 — Verify events, resources, metadata, and snapshots
 
 - **Covers:** SYS-004, SYS-005
 - **Method:** test
-- **Procedure:** Exercise process, resource, wait, register-query, and message APIs with
-  contention, all modes, and a snapshot retained across a yield.
+- **Procedure:** Exercise process, resource, wait, register-query, and message APIs
+  under contention, including a snapshot retained across a yield.
 - **Environment / configuration:** Deterministic root tests with duplicate metadata.
 - **Pass criterion:** Contenders never overlap, the second acquires only after release,
   the waiter wakes no earlier than the change, and an unhandled process error reaches
@@ -51,9 +48,8 @@ These actions verify black-box behavior through public boundaries.
   and a snapshot grants no reservation across a yield.
 - **Status:** implemented
 - **Evidence:** [`concurrentsim_helpers_tests.jl`](../../../test/general/concurrentsim_helpers_tests.jl), [`tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`querywait_tests.jl`](../../../test/general/querywait_tests.jl), [`messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), [`semaphore_2_tests.jl`](../../../test/general/semaphore_2_tests.jl), [`semaphore_3_tests.jl`](../../../test/general/semaphore_3_tests.jl), [`protocolzoo_entanglement_id_tests.jl`](../../../test/general/protocolzoo_entanglement_id_tests.jl)
-- **Nonconformance:** Process-failure propagation and the complete register/message
-  matrix, including default order, absence of an implicit lock, and rejected message
-  all-results, are not asserted together.
+- **Nonconformance:** No fixture jointly asserts process-failure propagation, the full
+  register/message matrix, default order, no implicit lock, and rejected all-results.
 
 ## SYSV-004 — Verify delayed classical and quantum transport
 
@@ -63,8 +59,8 @@ These actions verify black-box behavior through public boundaries.
   forwarded classical sends, noisy correlated quantum transfer under valid source
   timing, and receipt into an occupied destination.
 - **Environment / configuration:** Root tests with nonzero delays and transit background.
-- **Pass criterion:** Direct classical and quantum deliveries occur no earlier than
-  their configured directional delays; the nonadjacent direct request reports no
+- **Pass criterion:** Direct classical and quantum deliveries respect directional
+  delays; a nonadjacent direct request reports no
   channel, while explicit forwarding reaches the final incoming store; and quantum
   ownership moves to the empty destination while bidirectional ownership and remote
   correlation remain valid and a joint observable matches supported in-transit
@@ -92,14 +88,17 @@ These actions verify black-box behavior through public boundaries.
   requests return their documented physical result. A specialized or mixed request
   lacking direct support promotes across every capability class to a compatible common
   general representation, carries approximation parameters, and warns once per call
-  site with only initial and final representation names. General-to-specialized
-  conversion requires an explicit configured twirling policy. If no path applies,
-  dispatch retains `MethodError`; a hint may supplement it.
+  site with only initial and final representation names. A supported general input plus
+  explicit configured twirling object converts to the requested specialized
+  representation with the object's declared semantics; without that object it remains
+  general. If no path applies, dispatch retains `MethodError`; a hint may supplement
+  it.
 - **Status:** planned
 - **Evidence:** [`register_interface_tests.jl`](../../../test/general/register_interface_tests.jl), [`representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`observable_tests.jl`](../../../test/general/observable_tests.jl), [`quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), [`project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), [`noninstant_and_backgrounds_qubit_tests.jl`](../../../test/general/noninstant_and_backgrounds_qubit_tests.jl), [`noninstant_and_backgrounds_clifford_tests.jl`](../../../test/general/noninstant_and_backgrounds_clifford_tests.jl), [`noninstant_and_backgrounds_qumode_tests.jl`](../../../test/general/noninstant_and_backgrounds_qumode_tests.jl)
-- **Nonconformance:** Defaults and isolated conversions exist, but no complete matrix
-  does. Uniform promotion, approximation configuration, twirling objects, and the
-  common warning policy are unimplemented.
+- **Nonconformance:** Defaults, `QuantumOpticsRepr` cutoff configuration, and isolated
+  conversions exist, but no complete matrix does. Uniform promotion and propagation of
+  configured approximation settings, twirling objects, and the common warning policy
+  are unimplemented.
 
 ## SYSV-006 — Verify the complete public Zoo surfaces
 
@@ -109,7 +108,7 @@ These actions verify black-box behavior through public boundaries.
   compose one from each Zoo in a user-oriented example.
 - **Environment / configuration:** Generated API docs, root tests in each entry's
   documented compatible representation subset, and examples project.
-- **Pass criterion:** Every exported public state documents its constructor parameters,
+- **Pass criterion:** Every public state documents its constructor parameters,
   exposes expected-value introspection, and initializes with documented normalized or
   weighted semantics. Every public circuit is documented, exposes consistent features
   including arity, and acts immediately. Every public protocol family—including core,
@@ -120,26 +119,28 @@ These actions verify black-box behavior through public boundaries.
 - **Nonconformance:** Existing API suites do not derive a complete public inventory or
   validate documentation and examples. State representation/range coverage, circuit
   feature consistency, and protocol constructor documentation—especially QTCP and
-  MBQC—are incomplete.
+  MBQC—are incomplete. Internal `_log`/`_backlog` storage remains accepted by generated
+  protocol keyword-constructor paths.
 
 ## SYSV-007 — Verify the public and SemVer-protected boundary
 
 - **Covers:** SYS-009
 - **Method:** test
-- **Procedure:** Build generated docs, inventory package-owned `export`/`public` names,
-  compare public tag schemas with the prior compatible baseline, and inspect internal
-  hooks and tutorial-local helpers.
+- **Procedure:** Build generated docs; inventory every exported, reexported, or `public`
+  QuantumSavory name and its provenance; compare public tag schemas with the compatible
+  baseline; and inspect internals and tutorial-local helpers.
 - **Environment / configuration:** Revision under review and the previous
-  SemVer-compatible public-surface manifest; exclude dependency-owned reexports.
-- **Pass criterion:** Every package-owned public API appears in generated prose and is
-  exported or marked `public`; documented unexported APIs use `public`. Internal
-  lowering, backend, lifecycle, logging, Zoo-subtype, activation, and tutorial-local
+  SemVer-compatible public-surface manifest; dependency internals that QuantumSavory
+  does not expose remain out of scope.
+- **Pass criterion:** Every public API, including chosen reexports, appears in generated
+  prose and is exported or marked `public`; documented unexported APIs use `public`.
+  Internal lowering, backend, lifecycle, logging, Zoo-subtype, activation, and tutorial
   helpers are not public. Public tag names and ordered layouts match the compatible
   baseline. Other incompatibilities require a breaking version; no preceding
   deprecation release or stable representation default is required.
 - **Status:** planned
 - **Evidence:** [`API.md`](../../../docs/src/API.md), [`API_StatesZoo.md`](../../../docs/src/API_StatesZoo.md), [`API_CircuitZoo.md`](../../../docs/src/API_CircuitZoo.md), [`API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md), [`standard_protocol_tags.md`](../../../docs/src/standard_protocol_tags.md), [`abstract_tag_contract_tests.jl`](../../../test/general/abstract_tag_contract_tests.jl)
 - **Nonconformance:** No public-surface or compatible-schema manifest exists. Documented
-  unexported inspection functions lack `public` declarations, while prose currently
-  teaches internal protocol/logging extension hooks; public/internal classification is
-  not mechanically enforced.
+  unexported inspection/discovery functions and qualified Zoo module bindings lack
+  `public` declarations, while internal backend/protocol/logging hooks remain exported;
+  public/internal classification is not mechanically enforced.

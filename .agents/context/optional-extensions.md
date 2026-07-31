@@ -36,8 +36,9 @@ The plotting extension emits diagnostics under `LOG_GROUPS.visualization`. The g
 part of the stable group set; no other visualization log detail is stable.
 
 Optional visualization integrations promise successful rendering for their supported
-dependency combinations, not exact text, markup, layout, or pixels. The plotting tests
-exercise that integration boundary without freezing rendered content.
+dependency combinations, not exact text, markup, layout, or pixels. Some tests make
+exact tooltip, text, or HTML assertions as implementation-level regression checks;
+those assertions do not turn the compared content into a SemVer-protected interface.
 
 Extension testing lives in the plotting project, whose `[sources]` entry resolves
 QuantumSavory from the repository root. The plotting shard covers Cairo/GL behavior,
@@ -54,5 +55,7 @@ shard, while Buildkite has a distinct plotting job.
 ## Known gaps
 
 - Activation hints do not cover every unavailable optional user call.
+- The prose-documented qualified `showmetadata` visualization call lacks `export` or
+  `public` marking.
 - Interactive discovery assumes protocol types expose particular `sim`/`net` fields
   even though protocol lifecycle hooks are internal.
