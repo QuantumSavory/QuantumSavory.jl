@@ -1,78 +1,148 @@
 """
-    ProtocolPlacement
+    ProtocolAttachment
 
-The network placement required by a protocol:
+The network scope that owns a protocol process:
 
-- `FloatingProtocolPlacement` for no fixed node,
-- `NodeProtocolPlacement` for one node, and
-- `EdgeProtocolPlacement` for an ordered pair of nodes.
+- `NetworkAttachment` for a network-wide process,
+- `NodeAttachment` for one owning node, and
+- `EdgeAttachment` for one ordered owning edge.
+
+Other participating nodes are represented separately by
+[`ProtocolNodeRole`](@ref).
 """
-@enum ProtocolPlacement::UInt8 begin
-    FloatingProtocolPlacement
-    NodeProtocolPlacement
-    EdgeProtocolPlacement
+@enum ProtocolAttachment::UInt8 begin
+    NetworkAttachment
+    NodeAttachment
+    EdgeAttachment
+end
+
+"""
+    ProtocolNodeCardinality
+
+Whether a protocol node role names one node (`OneNode`) or an ordered collection
+of nodes (`ManyNodes`).
+"""
+@enum ProtocolNodeCardinality::UInt8 begin
+    OneNode
+    ManyNodes
+end
+
+"""
+    ProtocolNodeBinding
+
+How a protocol node role is supplied:
+
+- `AttachmentBound` roles define the node or edge that owns the process and are
+  injected by attachment-aware tooling.
+- `Configurable` roles are ordinary advertised constructor fields.
+"""
+@enum ProtocolNodeBinding::UInt8 begin
+    AttachmentBound
+    Configurable
+end
+
+"""
+    ProtocolNodeRole(name, cardinality, binding)
+
+Stable metadata for a protocol struct field that identifies one or many
+participating network nodes.
+"""
+struct ProtocolNodeRole
+    name::Symbol
+    cardinality::ProtocolNodeCardinality
+    binding::ProtocolNodeBinding
 end
 
 """
     ProtocolSchema
 
-Stable metadata for a protocol constructor and its network placement.
+Stable metadata for a protocol constructor, attachment, and node roles.
 
 `constructor` describes only user-configurable protocol parameters. Simulator,
-network, placement, and private runtime fields are deliberately excluded.
-`placement_fields` names the fields that carry the node or edge placement.
+network, attachment-bound, and private runtime fields are deliberately excluded.
+Configurable node roles remain constructor fields so their types, requiredness,
+and documentation have one owner.
 """
 struct ProtocolSchema
     constructor::ConstructorSchema
-    placement::ProtocolPlacement
-    placement_fields::Tuple{Vararg{Symbol}}
+    attachment::ProtocolAttachment
+    node_roles::Tuple{Vararg{ProtocolNodeRole}}
     permits_virtual_edge::Bool
 
     function ProtocolSchema(
         constructor::ConstructorSchema,
-        placement::ProtocolPlacement,
-        placement_fields::Tuple{Vararg{Symbol}},
+        attachment::ProtocolAttachment,
+        node_roles::Tuple{Vararg{ProtocolNodeRole}},
         permits_virtual_edge::Bool=false,
     )
         protocol = constructor.constructor
         protocol <: AbstractProtocol ||
             throw(ArgumentError("$protocol is not an AbstractProtocol subtype"))
 
-        expected_fields = if placement === FloatingProtocolPlacement
+        attachment_roles = filter(
+            role -> role.binding === AttachmentBound,
+            node_roles,
+        )
+        expected_attachment_roles = if attachment === NetworkAttachment
             0
-        elseif placement === NodeProtocolPlacement
+        elseif attachment === NodeAttachment
             1
         else
             2
         end
-        length(placement_fields) == expected_fields ||
+        length(attachment_roles) == expected_attachment_roles ||
             throw(ArgumentError(
-                "$placement requires $expected_fields placement fields",
+                "$attachment requires $expected_attachment_roles AttachmentBound roles",
             ))
-        allunique(placement_fields) ||
-            throw(ArgumentError("protocol placement fields must be unique"))
-        all(name -> name in fieldnames(protocol), placement_fields) ||
+        all(role -> role.cardinality === OneNode, attachment_roles) ||
             throw(ArgumentError(
-                "protocol placement fields must belong to $protocol",
+                "attachment-bound protocol node roles must identify one node",
             ))
+        role_names = map(role -> role.name, node_roles)
+        allunique(role_names) ||
+            throw(ArgumentError("protocol node roles must be unique"))
+        all(name -> name in fieldnames(protocol), role_names) ||
+            throw(ArgumentError("protocol node roles must belong to $protocol"))
+        for role in node_roles
+            expected_type = role.cardinality === OneNode ? Int : Vector{Int}
+            fieldtype(protocol, role.name) === expected_type ||
+                throw(ArgumentError(
+                    "node role $(role.name) must have declared type $expected_type",
+                ))
+        end
         parameter_names = map(field -> field.name, constructor.fields)
-        isempty(intersect(placement_fields, parameter_names)) ||
+        for role in node_roles
+            is_parameter = role.name in parameter_names
+            if role.binding === AttachmentBound && is_parameter
+                throw(ArgumentError(
+                    "attachment-bound node roles cannot also be constructor parameters",
+                ))
+            elseif role.binding === Configurable && !is_parameter
+                throw(ArgumentError(
+                    "configurable node roles must be constructor parameters",
+                ))
+            end
+        end
+        permits_virtual_edge && attachment !== EdgeAttachment &&
             throw(ArgumentError(
-                "protocol placement fields cannot also be constructor parameters",
-            ))
-        permits_virtual_edge && placement !== EdgeProtocolPlacement &&
-            throw(ArgumentError(
-                "only edge protocols can permit virtual edges",
+                "only edge-attached protocols can permit virtual edges",
             ))
 
         return new(
             constructor,
-            placement,
-            placement_fields,
+            attachment,
+            node_roles,
             permits_virtual_edge,
         )
     end
 end
+
+_attached_node(name::Symbol) =
+    ProtocolNodeRole(name, OneNode, AttachmentBound)
+_configurable_node(name::Symbol) =
+    ProtocolNodeRole(name, OneNode, Configurable)
+_configurable_nodes(name::Symbol) =
+    ProtocolNodeRole(name, ManyNodes, Configurable)
 
 function _protocol_constructor(
     protocol::Type,
@@ -181,8 +251,8 @@ const _ENTANGLER_SCHEMA = ProtocolSchema(
             ),
         ),
     ),
-    EdgeProtocolPlacement,
-    (:nodeA, :nodeB),
+    EdgeAttachment,
+    (_attached_node(:nodeA), _attached_node(:nodeB)),
 )
 
 const _SWAPPER_SCHEMA = ProtocolSchema(
@@ -252,8 +322,8 @@ const _SWAPPER_SCHEMA = ProtocolSchema(
             ),
         ),
     ),
-    NodeProtocolPlacement,
-    (:node,),
+    NodeAttachment,
+    (_attached_node(:node),),
 )
 
 const _ENTANGLEMENT_TRACKER_SCHEMA = ProtocolSchema(
@@ -261,8 +331,8 @@ const _ENTANGLEMENT_TRACKER_SCHEMA = ProtocolSchema(
         EntanglementTracker,
         "Track remote pair metadata and swap corrections at one node.",
     ),
-    NodeProtocolPlacement,
-    (:node,),
+    NodeAttachment,
+    (_attached_node(:node),),
 )
 
 const _ENTANGLEMENT_CONSUMER_SCHEMA = ProtocolSchema(
@@ -284,8 +354,8 @@ const _ENTANGLEMENT_CONSUMER_SCHEMA = ProtocolSchema(
             ),
         ),
     ),
-    EdgeProtocolPlacement,
-    (:nodeA, :nodeB),
+    EdgeAttachment,
+    (_attached_node(:nodeA), _attached_node(:nodeB)),
     true,
 )
 
@@ -320,8 +390,8 @@ const _CUTOFF_SCHEMA = ProtocolSchema(
             ),
         ),
     ),
-    NodeProtocolPlacement,
-    (:node,),
+    NodeAttachment,
+    (_attached_node(:node),),
 )
 
 const _SIMPLE_SWITCH_SCHEMA = ProtocolSchema(
@@ -361,8 +431,11 @@ const _SIMPLE_SWITCH_SCHEMA = ProtocolSchema(
             ),
         ),
     ),
-    NodeProtocolPlacement,
-    (:switchnode,),
+    NodeAttachment,
+    (
+        _attached_node(:switchnode),
+        _configurable_nodes(:clientnodes),
+    ),
 )
 
 const _END_NODE_CONTROLLER_SCHEMA = ProtocolSchema(
@@ -370,8 +443,8 @@ const _END_NODE_CONTROLLER_SCHEMA = ProtocolSchema(
         EndNodeController,
         "Manage QTCP control signals at an endpoint node.",
     ),
-    NodeProtocolPlacement,
-    (:node,),
+    NodeAttachment,
+    (_attached_node(:node),),
 )
 
 const _NETWORK_NODE_CONTROLLER_SCHEMA = ProtocolSchema(
@@ -379,8 +452,8 @@ const _NETWORK_NODE_CONTROLLER_SCHEMA = ProtocolSchema(
         NetworkNodeController,
         "Route QTCP traffic and swaps at an intermediate node.",
     ),
-    NodeProtocolPlacement,
-    (:node,),
+    NodeAttachment,
+    (_attached_node(:node),),
 )
 
 const _LINK_CONTROLLER_SCHEMA = ProtocolSchema(
@@ -388,16 +461,206 @@ const _LINK_CONTROLLER_SCHEMA = ProtocolSchema(
         LinkController,
         "Establish link-level entanglement for QTCP between adjacent nodes.",
     ),
-    EdgeProtocolPlacement,
-    (:nodeA, :nodeB),
+    EdgeAttachment,
+    (_attached_node(:nodeA), _attached_node(:nodeB)),
+)
+
+const _GRAPH_STATE_CONSTRUCTOR_SCHEMA = ProtocolSchema(
+    _protocol_constructor(
+        GraphStateConstructor,
+        "Construct a graph state across a configurable set of network nodes.",
+        (
+            _constructor_field(
+                GraphStateConstructor,
+                :graph,
+                "Graph whose vertices correspond to the ordered node role.";
+                required=true,
+            ),
+            _constructor_field(
+                GraphStateConstructor,
+                :nodes,
+                "Ordered network nodes that store the graph-state vertices.";
+                required=true,
+            ),
+            _constructor_field(
+                GraphStateConstructor,
+                :communication_slot,
+                "Slot used to generate pairwise entanglement.";
+                required=true,
+            ),
+            _constructor_field(
+                GraphStateConstructor,
+                :storage_slot,
+                "Slot used to store each graph-state qubit.";
+                required=true,
+            ),
+        ),
+    ),
+    NetworkAttachment,
+    (_configurable_nodes(:nodes),),
+)
+
+const _GRAPH_TO_RESOURCE_SCHEMA = ProtocolSchema(
+    _protocol_constructor(
+        GraphToResource,
+        "Convert a distributed graph state to a stabilizer resource state.",
+        (
+            _constructor_field(
+                GraphToResource,
+                :nodes,
+                "Ordered network nodes that store the distributed state.";
+                required=true,
+            ),
+            _constructor_field(
+                GraphToResource,
+                :slot,
+                "Slot at each node that stores the graph-state qubit.";
+                required=true,
+            ),
+            _constructor_field(
+                GraphToResource,
+                :hadamard_idx,
+                "Node-role indices receiving Hadamard corrections.";
+                required=true,
+            ),
+            _constructor_field(
+                GraphToResource,
+                :iphase_idx,
+                "Node-role indices receiving inverse-phase corrections.";
+                required=true,
+            ),
+            _constructor_field(
+                GraphToResource,
+                :flips_idx,
+                "Node-role indices receiving Z corrections.";
+                required=true,
+            ),
+        ),
+    ),
+    NetworkAttachment,
+    (_configurable_nodes(:nodes),),
+)
+
+const _PURIFIER_BELL_MEASUREMENTS_SCHEMA = ProtocolSchema(
+    _protocol_constructor(
+        PurifierBellMeasurements,
+        "Measure local purifier pairs and send packed results to a remote chief.",
+        (
+            _constructor_field(
+                PurifierBellMeasurements,
+                :nodes,
+                "Ordered local nodes at which Bell measurements are performed.";
+                required=true,
+            ),
+            _constructor_field(
+                PurifierBellMeasurements,
+                :remote_chief_idx,
+                "Remote chief node that receives the packed result.";
+                required=true,
+            ),
+            _constructor_field(
+                PurifierBellMeasurements,
+                :x_slot,
+                "Shared slot on which X measurements are performed.";
+                required=true,
+            ),
+            _constructor_field(
+                PurifierBellMeasurements,
+                :z_slot,
+                "Shared slot on which Z measurements are performed.";
+                required=true,
+            ),
+        ),
+    ),
+    NodeAttachment,
+    (
+        _configurable_nodes(:nodes),
+        _attached_node(:local_chief_idx),
+        _configurable_node(:remote_chief_idx),
+    ),
+)
+
+const _MBQC_PURIFICATION_TRACKER_SCHEMA = ProtocolSchema(
+    _protocol_constructor(
+        MBQCPurificationTracker,
+        "Track local and remote MBQC purification outcomes at one chief node.",
+        (
+            _constructor_field(
+                MBQCPurificationTracker,
+                :nodes,
+                "Ordered local nodes that store resource and purified pairs.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :n,
+                "Number of initial Bell pairs in the resource state.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :remote_chief_idx,
+                "Remote chief node whose measurement results are tracked.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :H1,
+                "X parity-check matrix for the purification code.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :H2,
+                "Z parity-check matrix for the purification code.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :logxs,
+                "Logical X operators for the purification code.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :logzs,
+                "Logical Z operators for the purification code.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :communication_slot,
+                "Slot used for initial pair entanglement.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :storage_slot,
+                "Slot used for resource and purified state storage.";
+                required=true,
+            ),
+            _constructor_field(
+                MBQCPurificationTracker,
+                :correct,
+                "Whether to apply logical correction operations.";
+                required=false,
+            ),
+        ),
+    ),
+    NodeAttachment,
+    (
+        _configurable_nodes(:nodes),
+        _attached_node(:local_chief_idx),
+        _configurable_node(:remote_chief_idx),
+    ),
 )
 
 """
     protocol_schema(::Type{<:AbstractProtocol})
 
-Return stable, simulator-owned constructor and placement metadata for a
-supported protocol. Packages defining custom protocols can add a method for
-their protocol type.
+Return stable, simulator-owned constructor, attachment, and node-role metadata
+for a supported protocol. Packages defining custom protocols can add a method
+for their protocol type.
 """
 function protocol_schema(::Type{T}) where {T<:AbstractProtocol}
     throw(ArgumentError("no protocol schema is registered for $T"))
@@ -414,20 +677,28 @@ protocol_schema(::Type{EndNodeController}) = _END_NODE_CONTROLLER_SCHEMA
 protocol_schema(::Type{NetworkNodeController}) =
     _NETWORK_NODE_CONTROLLER_SCHEMA
 protocol_schema(::Type{LinkController}) = _LINK_CONTROLLER_SCHEMA
+protocol_schema(::Type{GraphStateConstructor}) =
+    _GRAPH_STATE_CONSTRUCTOR_SCHEMA
+protocol_schema(::Type{GraphToResource}) = _GRAPH_TO_RESOURCE_SCHEMA
+protocol_schema(::Type{PurifierBellMeasurements}) =
+    _PURIFIER_BELL_MEASUREMENTS_SCHEMA
+protocol_schema(::Type{MBQCPurificationTracker}) =
+    _MBQC_PURIFICATION_TRACKER_SCHEMA
 
 QuantumSavory.constructor_schema(::Type{T}) where {T<:AbstractProtocol} =
     protocol_schema(T).constructor
 
 """
-    protocol_placement(::Type{<:AbstractProtocol})
-    protocol_placement(::AbstractProtocol)
+    protocol_attachment(::Type{<:AbstractProtocol})
+    protocol_attachment(::AbstractProtocol)
 
-Return the network-placement category for a protocol. Custom protocols without
+Return the network attachment for a protocol. Custom protocols without
 an explicit schema are not introspectable.
 """
-protocol_placement(type::Type{<:AbstractProtocol}) =
-    protocol_schema(type).placement
-protocol_placement(protocol::AbstractProtocol) = protocol_placement(typeof(protocol))
+protocol_attachment(type::Type{<:AbstractProtocol}) =
+    protocol_schema(type).attachment
+protocol_attachment(protocol::AbstractProtocol) =
+    protocol_attachment(typeof(protocol))
 
 """
     permits_virtual_edge(::Type{<:AbstractProtocol})
@@ -459,5 +730,9 @@ function protocol_schemas()
         _END_NODE_CONTROLLER_SCHEMA,
         _NETWORK_NODE_CONTROLLER_SCHEMA,
         _LINK_CONTROLLER_SCHEMA,
+        _GRAPH_STATE_CONSTRUCTOR_SCHEMA,
+        _GRAPH_TO_RESOURCE_SCHEMA,
+        _PURIFIER_BELL_MEASUREMENTS_SCHEMA,
+        _MBQC_PURIFICATION_TRACKER_SCHEMA,
     )
 end

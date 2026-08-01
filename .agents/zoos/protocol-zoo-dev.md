@@ -2,7 +2,7 @@
 
 Open this file when:
 
-- adding or reviewing a protocol in `ProtocolZoo`;
+- adding or reviewing a core, switch, QTCP, or MBQC protocol;
 - changing shared tag/message schemas;
 - debugging tracker, swapper, cutoff, switch, or QTCP behavior;
 - reviewing protocol concurrency assumptions.
@@ -19,16 +19,19 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `src/ProtocolZoo/cutoff.jl` handles stale-entanglement cleanup.
 - `src/ProtocolZoo/qtcp.jl` is a higher-level protocol stack built on the same tag/message model.
 - `src/ProtocolZoo/switches.jl` is a separate subsystem with its own request and matching machinery.
+- `src/ProtocolZoo/mbqc.jl` contains distributed graph-state construction and
+  measurement-based purification protocols.
 
 ## Extension Pattern
 
 - Subtype `AbstractProtocol`.
 - Store `sim` and `net` in the protocol object.
 - Add `protocol_schema(::Type{MyProt})` when the protocol should expose stable
-  constructor metadata. Keep simulator, network, placement, and private runtime
-  fields out of its nested `ConstructorSchema`. Put placement fields and the
-  virtual-edge capability in the enclosing `ProtocolSchema`; the public
-  accessors derive from it.
+  constructor metadata. Keep simulator, network, attachment-bound roles, and
+  private runtime fields out of its nested `ConstructorSchema`. Put the owning
+  attachment, all statically configured node roles, and the virtual-edge
+  capability in the enclosing `ProtocolSchema`; the public accessors derive
+  from it. Configurable node roles must remain in `ConstructorSchema`.
 - Implement `@resumable function (prot::MyProt)()`.
 - Overload `protocol_log_context(prot::MyProt)` with only primitive simulation
   fields, `protocol::Symbol`, and an immutable ordered node tuple. Do not retain
@@ -56,21 +59,31 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 ## Protocol Metadata Invariants
 
 - `protocol_schemas()` is an explicit built-in catalog; loading unrelated
-  packages must not change it.
-- `ProtocolSchema.placement_fields` has zero fields for floating protocols, one
-  for node protocols, and two ordered fields for edge protocols.
-- Placement fields belong to the protocol struct and never also appear as
-  configurable constructor fields.
+  packages must not change it. It covers all 13 exported concrete built-ins:
+  five core protocols, the simple switch, three QTCP controllers, and four MBQC
+  protocols. Export completeness is checked by tests, not runtime reflection.
+- `NetworkAttachment`, `NodeAttachment`, and `EdgeAttachment` have zero, one,
+  and two attachment-bound roles respectively. Edge roles are ordered.
+- Every node role belongs to the protocol struct. `OneNode` roles have declared
+  type `Int`; `ManyNodes` roles have declared type `Vector{Int}`.
+- Attachment-bound roles are scalar and never also appear as configurable
+  constructor fields. Configurable roles always appear in constructor metadata.
 - Protocols are keyword-constructible from injected `sim` and `net`, their
-  placement fields, and advertised constructor fields. A field is required
-  exactly when omission is not supported by that keyword constructor.
+  attachment-bound roles, and advertised constructor fields. A field is
+  required exactly when omission is not supported by that keyword constructor.
 - `required` is independent of `Nothing`, and protocol schemas never carry
   default values. Preserve omission for optional fields.
 - `SimpleSwitchDiscreteProt.clientnodes` and `success_probs` are its required
-  advertised fields. Its private `_backlog` is freshly allocated by the
-  constructor and must stay out of metadata and serialized configuration.
-- Only an edge protocol can declare `permits_virtual_edge`.
-- `protocol_placement` and `permits_virtual_edge` derive from
+  advertised fields. `switchnode` is its attachment-bound role, while
+  `clientnodes` is a configurable many-node role. Its private `_backlog` is
+  freshly allocated by the constructor and must stay out of metadata and
+  serialized configuration.
+- The two network-attached MBQC protocols expose `nodes` as a configurable
+  many-node role. The two node-attached MBQC protocols bind
+  `local_chief_idx` to the attachment and advertise `nodes` plus
+  `remote_chief_idx` as configurable roles.
+- Only an edge-attached protocol can declare `permits_virtual_edge`.
+- `protocol_attachment` and `permits_virtual_edge` derive from
   `protocol_schema`; do not duplicate those facts in accessor methods.
 
 ## Review Checks
@@ -108,6 +121,8 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `src/ProtocolZoo/cutoff.jl`
 - `src/ProtocolZoo/qtcp.jl`
 - `src/ProtocolZoo/switches.jl`
+- `src/ProtocolZoo/mbqc.jl`
+- `src/ProtocolZoo/metadata.jl`
 - `src/ProtocolZoo/show.jl`
 
 ## Tests To Anchor Behavior
@@ -120,6 +135,7 @@ Use `.agents/zoos/protocol-zoo-user.md` for that.
 - `test/general/protocolzoo_switch_tests.jl`
 - `test/general/protocolzoo_throws_tests.jl`
 - `test/general/protocolzoo_qtcp_tests.jl`
+- `test/general/protocolzoo_mbqc_tests.jl`
 - `test/general/protocolzoo_shorthand_constructors_tests.jl`
 - `test/general/protocolzoo_virtual_edge_tests.jl`
 - `test/general/protocol_metadata_tests.jl`

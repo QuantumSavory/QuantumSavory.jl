@@ -28,17 +28,24 @@ prot = EntanglerProt(sim, net, 1, 2)
 This matters because the protocol object packages:
 
 - the simulation handle,
-- the network it acts on,
-- the node or nodes it belongs to,
+- the register network it acts on,
+- the network, node, or edge attachment that owns its process,
+- any other statically configured node roles,
 - and the parameters controlling its behavior.
 
 That packaging is what makes protocols easier to reuse and compare than a large
 free function with many arguments.
 
 Configuration tools should use [`protocol_schemas`](@ref) for the explicit
-built-in catalog and [`protocol_schema`](@ref) for typed constructor and
-placement metadata. The catalog is deterministic and does not depend on loaded
+built-in catalog and [`protocol_schema`](@ref) for typed constructor,
+attachment, and node-role metadata. Attachment records which network scope
+owns a process; node roles separately record its statically configured
+participants. The catalog is deterministic and does not depend on loaded
 subtypes or documentation internals.
+
+The MBQC protocol types are exported by the nested
+`QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation` module. Import that
+module when constructing those protocols by unqualified name.
 
 When user-written protocols need to cooperate with these implementations, the
 main interface is the standard set of typed tags documented in
@@ -113,6 +120,7 @@ The current `ProtocolZoo` includes:
 - metadata tracking helpers,
 - consumer and cutoff protocols,
 - switch-style protocols,
+- distributed graph-state and MBQC purification protocols,
 - and QTCP-related controllers and message types.
 
 The autodocs below are the exact API reference.

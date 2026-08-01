@@ -6,11 +6,18 @@
   extension with public, typed, deterministic schemas:
   `slot_schemas`, `representation_schemas`, `background_schemas`, and
   `ProtocolZoo.protocol_schemas`. Protocol metadata now explicitly separates
-  configurable constructor fields from node/edge placement, and the placement
-  and virtual-edge accessors derive from that single schema. Unregistered
-  custom protocols are no longer introspectable through those accessors. The
-  `InteractiveUtils`/`REPL` extension and the old `available_*_types` and
-  `constructor_metadata` functions were removed.
+  configurable constructor fields from owning attachment and participating node
+  roles. The attachment and virtual-edge accessors derive from that single
+  schema. `ProtocolPlacement`, its enum values, `ProtocolSchema.placement`,
+  `ProtocolSchema.placement_fields`, and `protocol_placement` are replaced by
+  `ProtocolAttachment`, node-role cardinality and binding metadata,
+  `ProtocolSchema.attachment`, `ProtocolSchema.node_roles`, and
+  `protocol_attachment`. The explicit catalog now covers all 13 exported
+  concrete built-in protocols, including `SimpleSwitchDiscreteProt` and all
+  four MBQC protocols. Unregistered custom protocols are no longer
+  introspectable through those accessors. The `InteractiveUtils`/`REPL`
+  extension and the old `available_*_types` and `constructor_metadata`
+  functions were removed.
 - **(breaking)** Every `ConstructorFieldSchema` now requires an explicit
   `required` keyword. `required=false` means callers may omit that constructor
   keyword; schemas do not publish or serialize the constructor-owned default.

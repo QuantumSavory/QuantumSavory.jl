@@ -3,7 +3,8 @@
 Open this file when:
 
 - you want reusable long-running protocol components;
-- you need entanglers, swappers, trackers, cutoff logic, switch controllers, or QTCP controllers;
+- you need entanglers, swappers, trackers, cutoff logic, switch, MBQC, or QTCP
+  controllers;
 - you are composing a network stack out of existing protocol objects.
 
 Do not use this file for:
@@ -32,17 +33,29 @@ Other specialized families:
 
 - `SimpleSwitchDiscreteProt` for switch-style setups.
 - `EndNodeController`, `NetworkNodeController`, and `LinkController` for the QTCP stack.
+- `GraphStateConstructor`, `GraphToResource`, `PurifierBellMeasurements`, and
+  `MBQCPurificationTracker` for distributed graph-state and MBQC purification
+  workflows. These four types are exported by the nested
+  `QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation` module.
 
 ## Protocol Discovery
 
 - Use `protocol_schemas()` for the deterministic built-in catalog.
 - Use `protocol_schema(ProtocolType)` for typed constructor parameters,
-  placement fields, and virtual-edge capability.
-- Use `protocol_placement(ProtocolType)` when only the floating, node, or edge
-  category is needed.
-- Placement and virtual-edge accessors derive from the protocol schema; custom
+  attachment, node roles, and virtual-edge capability. The catalog contains all
+  13 exported concrete built-in protocols, including the switch and MBQC
+  families above.
+- Use `protocol_attachment(ProtocolType)` when only the network, node, or edge
+  ownership scope is needed.
+- An attachment describes where a process is owned, not every node it acts on.
+  `ProtocolNodeRole` records those statically configured nodes separately, with
+  `OneNode` or `ManyNodes` cardinality and `AttachmentBound` or `Configurable`
+  binding.
+- Attachment-bound roles are injected and excluded from constructor metadata.
+  Configurable roles remain advertised constructor fields.
+- Attachment and virtual-edge accessors derive from the protocol schema; custom
   protocols must register one before configuration tooling can inspect them.
-- Constructor fields exclude `sim`, `net`, node-placement fields, and private
+- Constructor fields exclude `sim`, `net`, attachment-bound roles, and private
   runtime storage.
 
 ## Common Workflow

@@ -6,6 +6,7 @@ The docs describe it as including:
 - metadata tracking helpers;
 - consumer and cutoff protocols;
 - switch-style protocols;
+- distributed graph-state and MBQC purification protocols;
 - and QTCP-related controllers and message types.
 
 In user-facing terms, the common stack includes:
@@ -22,6 +23,14 @@ and more specialized families such as:
 - `EndNodeController`
 - `NetworkNodeController`
 - `LinkController`
+
+The nested `QuantumSavory.ProtocolZoo.MBQCEntanglementDistillation` module
+exports:
+
+- `GraphStateConstructor`
+- `GraphToResource`
+- `PurifierBellMeasurements`
+- `MBQCPurificationTracker`
 
 These are ready-to-run `AbstractProtocol` objects launched with `@process`.
 
@@ -40,4 +49,3 @@ In those cases, the package expects you to write either:
 If the quantum part is standard but the control logic is custom, the idiomatic
 split is to reuse `CircuitZoo` for the local quantum routine and write your own
 protocol around it.
-

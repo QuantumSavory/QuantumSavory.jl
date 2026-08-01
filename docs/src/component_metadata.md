@@ -1,14 +1,13 @@
 # Component Metadata
 
-QuantumSavory exposes typed, simulator-owned metadata for the components that
-can be selected when constructing registers. This is the stable discovery
-surface for editors, configuration tools, and other packages that need to
-present constructor choices without inspecting Julia's type hierarchy or
-documentation internals.
+QuantumSavory exposes typed, simulator-owned metadata for public modeling
+components and protocols. This is the stable discovery surface for editors,
+configuration tools, and other packages that need to present constructor
+choices without inspecting Julia's type hierarchy or documentation internals.
 
 ## Built-in Catalogs
 
-The three catalogs are explicit and deterministic:
+The three register-component catalogs are explicit and deterministic:
 
 ```@example component-metadata
 using QuantumSavory
@@ -61,29 +60,40 @@ using QuantumSavory.ProtocolZoo
 
 map(schema -> (
     protocol=schema.constructor.constructor,
-    placement=schema.placement,
+    attachment=schema.attachment,
+    node_roles=schema.node_roles,
 ), protocol_schemas())
 ```
 
 Each [`ProtocolSchema`](@ref) separates user-configurable constructor fields
-from injected simulation, network, placement, and private runtime fields.
-`placement_fields` identifies the node field or ordered edge fields. An edge
-schema also records whether that protocol can intentionally operate without a
-physical graph edge.
+from injected simulation, network, attachment-bound, and private runtime
+fields. Its attachment identifies the scope that owns the process:
+`NetworkAttachment`, `NodeAttachment`, or `EdgeAttachment`.
+
+Node participation is represented separately by ordered
+[`ProtocolNodeRole`](@ref) values. A role identifies either one node
+(`OneNode`) or an ordered collection (`ManyNodes`). `AttachmentBound` roles are
+injected by attachment-aware tooling and do not appear in constructor metadata;
+`Configurable` roles remain ordinary advertised constructor fields. This keeps
+ownership distinct from every node that a protocol may act on. An edge schema
+also records whether that protocol can intentionally operate without a physical
+graph edge.
 
 ```@example component-metadata
 schema = protocol_schema(EntanglementConsumer)
 (
-    protocol_placement(EntanglementConsumer),
-    schema.placement_fields,
+    protocol_attachment(EntanglementConsumer),
+    schema.node_roles,
     permits_virtual_edge(EntanglementConsumer),
 )
 ```
 
-Custom protocols expose all three facts by extending `protocol_schema`;
-`protocol_placement` and `permits_virtual_edge` derive from that one schema.
+Custom protocols expose these facts by extending `protocol_schema`;
+`protocol_attachment` and `permits_virtual_edge` derive from that one schema.
 An unregistered custom protocol is not introspectable. Defining a custom
 subtype never changes the deterministic built-in `protocol_schemas()` catalog.
+The catalog contains all 13 exported concrete built-in protocols, including
+`SimpleSwitchDiscreteProt` and the four MBQC protocols.
 
 ## Extending Constructor Metadata
 
@@ -120,9 +130,12 @@ constructor_constraints
 slot_schemas
 representation_schemas
 background_schemas
-ProtocolPlacement
+ProtocolAttachment
+ProtocolNodeCardinality
+ProtocolNodeBinding
+ProtocolNodeRole
 ProtocolSchema
 protocol_schema
-protocol_placement
+protocol_attachment
 protocol_schemas
 ```

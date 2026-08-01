@@ -19,9 +19,11 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocol interface and metadata
     AbstractProtocol, permits_virtual_edge,
-    ProtocolPlacement, FloatingProtocolPlacement, NodeProtocolPlacement,
-    EdgeProtocolPlacement, ProtocolSchema, protocol_schema,
-    protocol_placement, protocol_schemas,
+    ProtocolAttachment, NetworkAttachment, NodeAttachment, EdgeAttachment,
+    ProtocolNodeCardinality, OneNode, ManyNodes,
+    ProtocolNodeBinding, AttachmentBound, Configurable,
+    ProtocolNodeRole, ProtocolSchema, protocol_schema,
+    protocol_attachment, protocol_schemas,
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
     protocol_log_context,
