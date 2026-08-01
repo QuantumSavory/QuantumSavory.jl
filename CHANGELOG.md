@@ -35,6 +35,11 @@
   spin-density-matrix functions do not accept detector excess noise, so the
   old field never affected a simulated state. The REST example now rejects
   undeclared query parameters with HTTP 400 instead of silently ignoring them.
+- **(breaking)** The StatesZoo REST example now derives discovery, parsing,
+  defaults, bounds, and parameter documentation from one complete schema
+  registry. It adds `DepolarizedBellPair` and gives normalized and weighted
+  Barrett-Kok families separate endpoints, removing the `weighted` query
+  switch.
 - **(breaking)** Simulation, network, protocol, and visualization traces now use
   Julia's standard logging macros with stable `event` symbols and structured
   metadata. Rendered messages have changed, and routine low-level simulation

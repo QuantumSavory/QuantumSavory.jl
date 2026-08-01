@@ -1,235 +1,103 @@
 # QuantumSavory StatesZoo REST API
 
-This REST API provides access to density matrices from quantum states in the QuantumSavory StatesZoo, including Barrett-Kok Bell pairs and states from the Genqo package.
+This example exposes every built-in `StatesZoo` family through a small Oxygen
+REST API. Its state list, ASCII query names, defaults, numeric types, bounds,
+normalization styles, and parameter documentation come from one validated
+registry layered over `state_family_schemas()`.
 
-## Quick Start
+## Run It
 
-### Prerequisites
-
-1. Julia 1.12+ with QuantumSavory.jl installed
-2. Oxygen.jl for the REST API framework
-3. JSON3.jl for JSON handling
-
-### Running the Server
-
-From the folder containing the server and the Project.toml file with the dependencies:
+From this directory:
 
 ```bash
 julia --project=. server.jl
 ```
 
-The server will start on `http://localhost:8080`
+The default base URL is `http://127.0.0.1:8080`. Oxygen serves generated
+interactive API documentation at `/docs`; set
+`QS_STATES_REST_SERVER_DOCPATH` to change that path.
 
-## API Endpoints
+## Discover The Contract
 
-### Health Check
-- **GET** `/api/health`
-- Returns server status
+- `GET /api/health` reports service health.
+- `GET /api/states` lists every available family and its two endpoints.
+- `GET /api/<state>/parameters` returns the exact ordered query schema.
+- `GET /api/<state>/density-matrix` evaluates the family.
 
-### Available States
-- **GET** `/api/states`
-- Lists all available quantum state types with their endpoints
+The current state slugs are:
 
-### Barrett-Kok Bell Pairs
+- `barrett-kok`
+- `barrett-kok-weighted`
+- `depolarized`
+- `genqo/zalm`
+- `genqo/spdc`
 
-#### Get Density Matrix
-- **GET** `/api/barrett-kok/density-matrix`
-- **Parameters:**
-  - `etaA` (optional): Transmissivity from source A, ∈(0,1], default=1.0
-  - `etaB` (optional): Transmissivity from source B, ∈(0,1], default=1.0
-  - `Pd` (optional): Excess noise in detectors, ∈[0,1), default=0.0
-  - `etad` (optional): Detection efficiency, ∈(0,1], default=1.0
-  - `V` (optional): Real-valued mode overlap, ∈[0,1], default=1.0
-  - `m` (optional): Parity bit (0 or 1), default=0
-  - `weighted` (optional): Return weighted version (trace = success probability),
-    exact `true` or `false`, default=false
+For example:
 
-#### Get Parameters Info
-- **GET** `/api/barrett-kok/parameters`
-- Returns parameter descriptions and valid ranges
+```bash
+curl http://127.0.0.1:8080/api/states
+curl http://127.0.0.1:8080/api/barrett-kok/parameters
+curl 'http://127.0.0.1:8080/api/barrett-kok/density-matrix?etaA=0.9&m=1'
+curl http://127.0.0.1:8080/api/barrett-kok-weighted/density-matrix
+curl 'http://127.0.0.1:8080/api/depolarized/density-matrix?p=0.95'
+```
 
-### Genqo ZALM (Multiplexed Cascaded Source)
+Each parameter record has this shape:
 
-#### Get Density Matrix
-- **GET** `/api/genqo/zalm/density-matrix`
-- **Parameters:**
-  - `etab` (optional): BSM transmissivity, ∈(0,1], default=1.0
-  - `etad` (optional): Detector transmissivity, ∈(0,1], default=1.0
-  - `etat` (optional): Outcoupling transmissivity, ∈(0,1], default=1.0
-  - `N` (optional): Mean photon number, >0, default=0.1
-
-#### Get Parameters Info
-- **GET** `/api/genqo/zalm/parameters`
-- Returns parameter descriptions and valid ranges
-
-### Genqo SPDC (Unheralded Source)
-
-#### Get Density Matrix
-- **GET** `/api/genqo/spdc/density-matrix`
-- **Parameters:**
-  - `etad` (optional): Detector transmissivity, ∈(0,1], default=1.0
-  - `etat` (optional): Outcoupling transmissivity, ∈(0,1], default=1.0
-  - `N` (optional): Mean photon number, >0, default=0.1
-
-#### Get Parameters Info
-- **GET** `/api/genqo/spdc/parameters`
-- Returns parameter descriptions and valid ranges
-
-## Response Format
-
-### Density Matrix Response
 ```json
 {
-  "state_type": "BarrettKokBellPair",
-  "parameters": {
-    "etaA": 1.0,
-    "etaB": 1.0,
-    "Pd": 0.0,
-    "etad": 1.0,
-    "V": 1.0,
-    "m": 0
-  },
+  "name": "etaA",
+  "simulator_name": "ηᴬ",
+  "type": "number",
+  "description": "Channel transmissivity from source A to the swapping station.",
+  "minimum": 0,
+  "maximum": 1,
+  "minimum_inclusive": false,
+  "maximum_inclusive": true,
+  "default": 1
+}
+```
+
+`name` is the ASCII query key. `simulator_name` identifies the corresponding
+`StateParameterSchema`; clients do not send it.
+
+## Density-Matrix Response
+
+```json
+{
+  "state_type": "DepolarizedBellPair",
+  "parameters": {"p": 0.95},
   "density_matrix": {
-    "real": [[...], [...], ...],
-    "imag": [[...], [...], ...]
+    "real": [[0.4875, 0, 0, 0.475], [0, 0.0125, 0, 0], [0, 0, 0.0125, 0], [0.475, 0, 0, 0.4875]],
+    "imag": [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
   },
-  "trace": 1.0,
+  "trace": 1,
   "dimensions": [4, 4]
 }
 ```
 
-### Parameters Info Response
-```json
-{
-  "parameters": ["etaA", "etaB", "Pd", "etad", "V"],
-  "ranges": {
-    "etaA": {"min": 0, "max": 1, "good": 1, "min_inclusive": false, "max_inclusive": true},
-    "etaB": {"min": 0, "max": 1, "good": 1, "min_inclusive": false, "max_inclusive": true},
-    ...
-  },
-  "description": {
-    "etaA": "Individual channel transmissivity from source A...",
-    ...
-  }
-}
-```
+Weighted families have a trace that carries their success weight. The server
+does not silently normalize them.
 
-### Error Response
-```json
-{
-  "error": "Invalid parameters: values must satisfy the advertised state-family schema"
-}
-```
+## Validation
 
-Every endpoint has a closed query schema. Undeclared query parameters are rejected
-with HTTP 400 instead of being silently ignored:
+Every route has a closed query schema. Unknown keys, values that cannot be
+parsed as the advertised numeric type, and values outside the exact simulator
+bounds return HTTP 400. For example:
 
 ```json
 {
   "error": "Unknown query parameters",
-  "unknown_parameters": ["Pd"]
+  "unknown_parameters": ["weighted"]
 }
 ```
 
-Declared parameters that cannot be parsed, values outside the advertised state-family
-bounds, and invalid enum-like values such as `weighted=yes` also return HTTP 400.
+Normalized and weighted Barrett–Kok states use distinct endpoints; the old
+`weighted` Boolean switch is intentionally not accepted.
 
-## Example Usage
+Environment variables can override the listener:
 
-### Using curl
-
-```bash
-# Get default Barrett-Kok state
-curl "http://localhost:8080/api/barrett-kok/density-matrix"
-
-# Get Barrett-Kok state with custom parameters
-curl "http://localhost:8080/api/barrett-kok/density-matrix?etaA=0.9&etaB=0.8&Pd=0.01"
-
-# Get weighted Barrett-Kok state
-curl "http://localhost:8080/api/barrett-kok/density-matrix?weighted=true"
-
-# Get available states
-curl "http://localhost:8080/api/states"
-```
-
-### Using Julia HTTP.jl
-
-```julia
-using HTTP, JSON3
-
-# Get Barrett-Kok density matrix
-response = HTTP.get("http://localhost:8080/api/barrett-kok/density-matrix?etaA=0.95")
-data = JSON3.read(String(response.body))
-
-# Extract the density matrix
-ρ_real = data.density_matrix.real
-ρ_imag = data.density_matrix.imag
-ρ = complex.(ρ_real, ρ_imag)
-
-println("Density matrix trace: ", data.trace)
-println("Matrix dimensions: ", data.dimensions)
-```
-
-### Using Python requests
-
-```python
-import requests
-import numpy as np
-
-# Get Barrett-Kok density matrix
-response = requests.get("http://localhost:8080/api/barrett-kok/density-matrix",
-                       params={"etaA": 0.95, "etaB": 0.90})
-data = response.json()
-
-# Reconstruct complex density matrix
-rho_real = np.array(data["density_matrix"]["real"])
-rho_imag = np.array(data["density_matrix"]["imag"])
-rho = rho_real + 1j * rho_imag
-
-print(f"Trace: {data['trace']}")
-print(f"Dimensions: {data['dimensions']}")
-```
-
-## Quantum States Documentation
-
-### Barrett-Kok Bell Pair
-A symbolic representation of the noisy Bell pair state obtained in a Barrett-Kok style protocol (sequence of two successful entanglement swaps). Based on the "dual rail photonic qubit swap" protocol.
-
-**Key Parameters:**
-- **etaA, etaB**: Channel transmissivities from sources A and B
-- **Pd**: Excess noise in photon detectors
-- **etad**: Detection efficiency of photon detectors
-- **V**: Real-valued mode overlap in [0,1]; this REST schema does not expose
-  the underlying state's phase degree of freedom
-- **m**: Parity bit from click pattern
-
-### Genqo ZALM (Zero Added Loss Multiplexed)
-Heralded multiplexed cascaded source for generating Bell pairs.
-
-**Key Parameters:**
-- **etab**: Bell state measurement transmissivity
-- **etad**: Detector transmissivity
-- **etat**: Outcoupling transmissivity
-- **N**: Mean photon number (fidelity vs rate tradeoff)
-
-### Genqo SPDC
-Unheralded spontaneous parametric down-conversion Bell pair source, as described by Kwiat et al.
-
-**Key Parameters:**
-- **etad**: Detector transmissivity
-- **etat**: Outcoupling transmissivity
-- **N**: Mean photon number
-
-## Notes
-
-- The density matrices are returned as separate real and imaginary parts to ensure JSON compatibility
-- For Genqo states, `Genqo.jl` must be available in the active Julia environment
-- The current Genqo backends do not model detector excess noise, so the Genqo
-  endpoints reject a `Pd` parameter with HTTP 400
-- All states represent two-qubit systems with 4×4 density matrices
-- Parameter validation is performed server-side with appropriate error messages
-- The weighted versions return unnormalized density matrices where the trace represents the success probability
-
-# TODO future improvements
-
-The API end points for states and their documentation can be generated programmatically through the available introspection tools of the library. That would make the code a bit less legible, but drastically shorter and easier to maintain. Instead, the current setup will rapidly become outdated as new states are added and the documentation of old states gets improved.
+- `QS_STATES_REST_SERVER_PORT` (default `8080`)
+- `QS_STATES_REST_SERVER_IP` (default `127.0.0.1`)
+- `QS_STATES_REST_SERVER_PROXY`
+- `QS_STATES_REST_SERVER_DOCPATH` (default `/docs`)
