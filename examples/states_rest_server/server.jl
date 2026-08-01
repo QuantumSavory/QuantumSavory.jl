@@ -17,22 +17,25 @@ const SOURCE_URL = string(
 struct RestStateSpec
     family::Type
     slug::String
-    aliases::Tuple{Vararg{String}}
+    parameter_aliases::Tuple{Vararg{Pair{Symbol,String}}}
 
     function RestStateSpec(
         family::Type,
         slug::AbstractString,
-        aliases::Tuple{Vararg{String}},
+        parameter_aliases::Tuple{Vararg{Pair{Symbol,String}}},
     )
         schema = state_family_schema(family)
-        length(aliases) == length(schema.parameters) ||
-            throw(ArgumentError("REST aliases must match the state-family schema"))
+        simulator_names = map(parameter -> parameter.name, schema.parameters)
+        first.(parameter_aliases) == simulator_names || throw(ArgumentError(
+            "REST parameter mappings must match the ordered state-family schema",
+        ))
+        aliases = last.(parameter_aliases)
         all(alias -> !isempty(alias) && isascii(alias), aliases) ||
             throw(ArgumentError("REST aliases must be nonempty ASCII strings"))
         allunique(aliases) ||
             throw(ArgumentError("REST aliases must be unique"))
         isempty(slug) && throw(ArgumentError("REST state slug cannot be empty"))
-        return new(family, String(slug), aliases)
+        return new(family, String(slug), parameter_aliases)
     end
 end
 
@@ -40,23 +43,37 @@ const STATE_REST_SPECS = (
     RestStateSpec(
         BarrettKokBellPair,
         "barrett-kok",
-        ("etaA", "etaB", "Pd", "etad", "V", "m"),
+        (
+            :ηᴬ => "etaA",
+            :ηᴮ => "etaB",
+            :Pᵈ => "Pd",
+            :ηᵈ => "etad",
+            :𝒱 => "V",
+            :m => "m",
+        ),
     ),
     RestStateSpec(
         BarrettKokBellPairW,
         "barrett-kok-weighted",
-        ("etaA", "etaB", "Pd", "etad", "V", "m"),
+        (
+            :ηᴬ => "etaA",
+            :ηᴮ => "etaB",
+            :Pᵈ => "Pd",
+            :ηᵈ => "etad",
+            :𝒱 => "V",
+            :m => "m",
+        ),
     ),
-    RestStateSpec(DepolarizedBellPair, "depolarized", ("p",)),
+    RestStateSpec(DepolarizedBellPair, "depolarized", (:p => "p",)),
     RestStateSpec(
         GenqoMultiplexedCascadedBellPairW,
         "genqo/zalm",
-        ("etab", "etad", "etat", "N"),
+        (:ηᵇ => "etab", :ηᵈ => "etad", :ηᵗ => "etat", :N => "N"),
     ),
     RestStateSpec(
         GenqoUnheraldedSPDCBellPairW,
         "genqo/spdc",
-        ("etad", "etat", "N"),
+        (:ηᵈ => "etad", :ηᵗ => "etat", :N => "N"),
     ),
 )
 
@@ -68,6 +85,7 @@ density_endpoint(spec::RestStateSpec) =
     "/api/$(spec.slug)/density-matrix"
 parameters_endpoint(spec::RestStateSpec) =
     "/api/$(spec.slug)/parameters"
+parameter_aliases(spec::RestStateSpec) = last.(spec.parameter_aliases)
 
 query_value_type(parameter::StateParameterSchema) =
     parameter.value_type <: Integer ? Int : Float64
@@ -80,7 +98,7 @@ function state_query_parameters(spec::RestStateSpec)
             query_value_type(parameter),
             convert(query_value_type(parameter), parameter.recommended),
         )
-        for (alias, parameter) in zip(spec.aliases, schema.parameters)
+        for (alias, parameter) in zip(parameter_aliases(spec), schema.parameters)
     )
 end
 
@@ -158,7 +176,8 @@ function parameters_response(req, spec::RestStateSpec)
         "normalization" => normalization_name(schema.normalization),
         "parameters" => [
             parameter_record(alias, parameter)
-            for (alias, parameter) in zip(spec.aliases, schema.parameters)
+            for (alias, parameter) in
+                zip(parameter_aliases(spec), schema.parameters)
         ],
     )
 end
@@ -167,7 +186,8 @@ function density_matrix_response(req, spec::RestStateSpec)
     params, rejection = validated_queryparams(req, state_query_parameters(spec))
     isnothing(rejection) || return rejection
 
-    values = Tuple(params[alias] for alias in spec.aliases)
+    aliases = parameter_aliases(spec)
+    values = Tuple(params[alias] for alias in aliases)
     if !parameters_valid(spec, values)
         return json(
             Dict(
@@ -186,7 +206,7 @@ function density_matrix_response(req, spec::RestStateSpec)
         density_matrix = Array(density_operator.data)
         return Dict(
             "state_type" => String(nameof(spec.family)),
-            "parameters" => Dict(zip(spec.aliases, values)),
+            "parameters" => Dict(zip(aliases, values)),
             "density_matrix" => Dict(
                 "real" => real.(density_matrix),
                 "imag" => imag.(density_matrix),

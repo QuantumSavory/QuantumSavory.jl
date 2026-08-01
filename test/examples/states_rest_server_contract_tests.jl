@@ -69,6 +69,11 @@ response_body(response) = JSON3.read(String(response.body))
 end
 
 @testset "StatesZoo REST discovery is schema-derived" begin
+    @test_throws ArgumentError RestStateSpec(
+        DepolarizedBellPair,
+        "invalid",
+        (:wrong => "p",),
+    )
     catalog_response = request("/api/states")
     @test catalog_response.status == 200
     states = collect(response_body(catalog_response).available_states)
@@ -99,7 +104,7 @@ end
               (schema.normalization === NormalizedState ?
                "normalized" : "weighted")
         @test String[parameter.name for parameter in parameters] ==
-              collect(spec.aliases)
+              collect(parameter_aliases(spec))
         @test String[parameter.simulator_name for parameter in parameters] ==
               String[String(parameter.name) for parameter in schema.parameters]
 
@@ -117,7 +122,7 @@ end
         density = response_body(request(density_endpoint(spec)))
         @test density.state_type == String(nameof(schema.family))
         @test sort!(String.(collect(keys(density.parameters)))) ==
-              sort!(collect(spec.aliases))
+              sort!(collect(parameter_aliases(spec)))
         @test density.dimensions == [4, 4]
     end
 end
