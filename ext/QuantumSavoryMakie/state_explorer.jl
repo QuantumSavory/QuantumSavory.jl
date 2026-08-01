@@ -1,5 +1,5 @@
-using QuantumSavory.StatesZoo: state_family_schema, state_parameter_values,
-    stateparametersrange, stateparameters
+using QuantumSavory.StatesZoo: AbstractTwoQubitState, state_family_schema,
+    state_parameter_values
 import QuantumSavory.StatesZoo: stateexplorer, stateexplorer!
 import Printf: @sprintf
 
@@ -11,8 +11,12 @@ angleifnotε(x) = angle(x) * (abs(x)<0.001 ? 0.0 : 1.0)
 
 const PARAMCOLS = 5
 
+_state_parameter_schemas(::Any) = ()
+_state_parameter_schemas(S::Type{<:AbstractTwoQubitState}) =
+    state_family_schema(S).parameters
+
 function stateexplorer(S)
-    sliders = length(stateparameters(S))
+    sliders = length(_state_parameter_schemas(S))
     rows = (sliders-1)÷PARAMCOLS+1
     yplot = 220
     ytext = 40
@@ -27,9 +31,8 @@ function stateexplorer(S)
 end
 
 function stateexplorer!(fig,S)
-    params = stateparameters(S)
-    paramdict = stateparametersrange(S)
-    parameter_schemas = isempty(params) ? () : state_family_schema(S).parameters
+    parameter_schemas = _state_parameter_schemas(S)
+    params = map(parameter -> parameter.name, parameter_schemas)
 
     colormap=:cyclic_mrybm_35_75_c68_n256
     colorrange=(-pi,pi)
@@ -40,7 +43,9 @@ function stateexplorer!(fig,S)
 
 
     if !isempty(params)
-        timed_result = @timed express(S((paramdict[p].good for p in params)...))
+        timed_result = @timed express(S((
+            parameter.recommended for parameter in parameter_schemas
+        )...))
         slowcompute = timed_result.time > slowthreshold
         @debug(
             "Computed the initial state",
@@ -71,7 +76,9 @@ function stateexplorer!(fig,S)
     for (i, parameter) in enumerate(parameter_schemas)
         param = parameter.name
         subfparam = fparams[(i-1)÷PARAMCOLS+1,(i-1)%PARAMCOLS+1]
-        (;min,max,good) = paramdict[param]
+        min = parameter.minimum
+        max = parameter.maximum
+        good = parameter.recommended
         xs = state_parameter_values(parameter, nbxpoints)
 
         slider = Slider(subfparam[3,1], range=xs, startvalue=good)
@@ -96,7 +103,6 @@ function stateexplorer!(fig,S)
     if !slowcompute
     for (i, (aparamF, aparamTr, slider, parameter)) in enumerate(zip(aparamsF, aparamsTr, sliders, parameter_schemas))
         param = parameter.name
-        (;min,max,good) = paramdict[param]
         xs = state_parameter_values(parameter, nbxpoints)
 
         data = lift((s.value for s in sliders)...) do paramvalues...
@@ -146,8 +152,9 @@ function stateexplorer!(fig,S)
     ylims!(a3dρB,5,1-0.1)
 
     if isempty(params) # TODO fix the code repetition on both sides
-        ρdata = S.data
-        ρBdata = (B*S*B').data
+        static_state = S isa Type ? express(S()) : S
+        ρdata = static_state.data
+        ρBdata = (B*static_state*B').data
         for ij in keys(ρdata)
             mesh!(a3dρ, Rect3f(ij[1],ij[2],0,0.9,0.9,abs(ρdata[ij])+1e-4); color=angleifnotε(ρdata[ij]), colorrange, colormap)
         end

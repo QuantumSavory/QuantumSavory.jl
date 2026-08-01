@@ -426,37 +426,3 @@ function state_parameter_values(
         throw(ArgumentError("parameter interval cannot produce a valid grid"))
     return values
 end
-
-"""
-    stateparameters(::Type)
-
-Return the ordered parameter names used by `stateexplorer`. This compatibility
-API is derived from [`state_family_schema`](@ref).
-"""
-stateparameters(::Any) = ()
-function stateparameters(type::Type{<:AbstractTwoQubitState})
-    return map(parameter -> parameter.name, state_family_schema(type).parameters)
-end
-
-"""
-    stateparametersrange(::Type)
-
-Return legacy `(min, max, good, min_inclusive, max_inclusive)` parameter
-metadata derived from [`state_family_schema`](@ref).
-"""
-stateparametersrange(::Any) = ()
-function stateparametersrange(type::Type{<:AbstractTwoQubitState})
-    parameters = state_family_schema(type).parameters
-    names = map(parameter -> parameter.name, parameters)
-    values = map(parameters) do parameter
-        (
-            min=parameter.minimum,
-            max=parameter.maximum,
-            good=parameter.recommended,
-            value_type=parameter.value_type,
-            min_inclusive=parameter.minimum_inclusive,
-            max_inclusive=parameter.maximum_inclusive,
-        )
-    end
-    return NamedTuple{names}(values)
-end

@@ -15,7 +15,7 @@ export BarrettKokBellPair, BarrettKokBellPairW,
     state_family_schema, state_family_schemas, state_normalization_style,
     state_weight, normalized_state_and_weight,
     state_parameter_values,
-    stateexplorer, stateexplorer!, stateparameters, stateparametersrange
+    stateexplorer, stateexplorer!
 
 
 # TODO this abstract type should specify isexpr()==false

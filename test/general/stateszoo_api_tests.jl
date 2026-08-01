@@ -85,20 +85,8 @@ for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
     @test allunique(map(parameter -> parameter.name, schema.parameters))
     @test all(parameter -> !isempty(parameter.doc), schema.parameters)
 
-    params = QuantumSavory.StatesZoo.stateparameters(S)
-    paramdict = QuantumSavory.StatesZoo.stateparametersrange(S)
+    params = map(parameter -> parameter.name, schema.parameters)
     @test params == expected_parameter_names
-    @test params == map(parameter -> parameter.name, schema.parameters)
-    @test paramdict == NamedTuple{params}(map(schema.parameters) do parameter
-        (
-            min=parameter.minimum,
-            max=parameter.maximum,
-            good=parameter.recommended,
-            value_type=parameter.value_type,
-            min_inclusive=parameter.minimum_inclusive,
-            max_inclusive=parameter.maximum_inclusive,
-        )
-    end)
     @test all(
         parameter -> parameter.recommended isa parameter.value_type,
         schema.parameters,
@@ -113,7 +101,7 @@ for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
             all(value -> value in parameter, values)
     end
 
-    state = S((paramdict[p].good for p in params)...)
+    state = S((parameter.recommended for parameter in schema.parameters)...)
     @test state_family_schema(state) === schema
     @test state_normalization_style(state) === schema.normalization
 
@@ -175,16 +163,6 @@ end
 
 custom = state_family_schema(CustomMetadataState)
 @test custom.family === CustomMetadataState
-@test stateparameters(CustomMetadataState) == (:x,)
-@test stateparametersrange(CustomMetadataState) ==
-      (x=(
-          min=0.0,
-          max=1.0,
-          good=0.5,
-          value_type=Float64,
-          min_inclusive=true,
-          max_inclusive=true,
-      ),)
 @test normalized_state_and_weight(CustomMetadataState(0.25)) ==
       (state=CustomMetadataState(0.25), weight=1.0)
 @test map(schema -> schema.family, state_family_schemas()) ==
@@ -197,10 +175,7 @@ zero_weight = BarrettKokBellPairW(0, 0, 0, 1, 1)
     BarrettKokBellPairW(1, 1, NaN, 1, 1),
 )
 
-@test stateparameters(Int) == ()
-@test stateparametersrange(Int) == ()
 @test_throws ArgumentError state_family_schema(UnregisteredMetadataState)
-@test_throws ArgumentError stateparameters(UnregisteredMetadataState)
 
 @test_throws ArgumentError StateParameterSchema(
     :invalid,

@@ -28,8 +28,7 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 - `src/StatesZoo/state_explorer.jl` declares the interface.
 - The main UI implementation lives in `ext/QuantumSavoryMakie/state_explorer.jl`.
 - Explorer defaults and sweep ranges come from `StateFamilySchema.parameters`.
-  Use `state_parameter_values` so integer schemas stay discrete; the
-  `stateparameters` and `stateparametersrange` APIs are compatibility views.
+  Use `state_parameter_values` so integer schemas stay discrete.
 
 ## Metadata And Normalization Invariants
 
@@ -47,8 +46,7 @@ Use `.agents/zoos/states-zoo-user.md` for that.
   normalization, parsing, and parameter docs derive from those two sources.
   Every built-in family appears exactly once. Routes reject undeclared,
   unparseable, or out-of-range query parameters with HTTP 400.
-- `stateparameters` and `stateparametersrange` are derived compatibility APIs;
-  do not add parallel family-specific methods for built-ins.
+- Do not add parallel family-specific parameter metadata methods.
 - `state_weight` returns the finite absolute trace.
 - `normalized_state_and_weight` returns normalized families unchanged and
   divides only declared weighted families, returning the original weight.

@@ -30,9 +30,7 @@ Each [`StateFamilySchema`](@ref) contains ordered
 [`StateParameterSchema`](@ref) values with stable names, real-valued types,
 open or closed bounds, recommendations, and documentation. Validate a proposed
 value with `value in parameter_schema`; this checks its declared type,
-finiteness, and exact interval. The older `stateparameters` and
-`stateparametersrange` APIs remain available and are derived from these
-schemas, including parameter types and bound-inclusivity flags.
+finiteness, and exact interval.
 [`state_parameter_values`](@ref) creates bounded explorer grids without
 turning discrete parameters into invalid fractional values.
 

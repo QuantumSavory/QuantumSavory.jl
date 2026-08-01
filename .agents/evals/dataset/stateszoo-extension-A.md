@@ -16,8 +16,7 @@ The explorer assumptions matter:
 - the explorer is built around a fixed two-qubit family interface;
 - default values, slider sweep ranges, boundary inclusivity, and parameter
   order come from `state_family_schema`;
-- `stateparameters` and `stateparametersrange` are derived compatibility APIs,
-  not extension points for new families.
+- `StateFamilySchema` is the only parameter metadata extension point.
 
 The main review checks are:
 
