@@ -12,7 +12,8 @@ end
 """
     StateParameterSchema
 
-Stable metadata for one ordered, real-valued StatesZoo parameter.
+Stable metadata for one ordered StatesZoo parameter with a concrete
+`AbstractFloat` or machine-`Int` domain.
 
 `minimum` and `maximum` are the exact interval boundaries.
 `minimum_inclusive` and `maximum_inclusive` state whether each boundary is
@@ -41,11 +42,11 @@ struct StateParameterSchema
         minimum_inclusive::Bool=true,
         maximum_inclusive::Bool=true,
     )
-        supported_type = value_type === Real || value_type === Int || (
+        supported_type = value_type === Int || (
             isconcretetype(value_type) && value_type <: AbstractFloat
         )
         supported_type || throw(ArgumentError(
-            "state parameter type must be Real, Int, or a concrete AbstractFloat",
+            "state parameter type must be Int or a concrete AbstractFloat",
         ))
         any(value -> value isa Bool, (minimum, maximum, recommended)) &&
             throw(ArgumentError("state parameter bounds cannot be Bool"))
@@ -125,47 +126,47 @@ end
 const _BARRETT_KOK_PARAMETERS = (
     StateParameterSchema(
         :ηᴬ,
-        Real,
+        Float64,
         "Channel transmissivity from source A to the swapping station.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᴮ,
-        Real,
+        Float64,
         "Channel transmissivity from source B to the swapping station.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :Pᵈ,
-        Real,
+        Float64,
         "Total excess detector noise in photons per qubit slot.",
-        0,
-        1,
-        0,
+        0.0,
+        1.0,
+        0.0,
         maximum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵈ,
-        Real,
+        Float64,
         "Photon-detector efficiency.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :𝒱,
-        Real,
+        Float64,
         "Real-valued mode overlap used by the standard parameter sweep.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
     ),
     StateParameterSchema(
         :m,
@@ -180,48 +181,48 @@ const _BARRETT_KOK_PARAMETERS = (
 const _DEPOLARIZED_PARAMETERS = (
     StateParameterSchema(
         :p,
-        Real,
+        Float64,
         "Depolarization parameter, related to fidelity by F=(3p+1)/4.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
     ),
 )
 
 const _GENQO_MULTIPLEXED_PARAMETERS = (
     StateParameterSchema(
         :ηᵇ,
-        Real,
+        Float64,
         "Bell-state-measurement transmissivity at the source.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵈ,
-        Real,
+        Float64,
         "Detector transmissivity.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵗ,
-        Real,
+        Float64,
         "Outcoupling transmissivity for the Bell-state modes.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :N,
-        Real,
+        Float64,
         "Mean photon number per mode.",
-        0,
-        10,
+        0.0,
+        10.0,
         0.1,
         minimum_inclusive=false,
     ),
@@ -230,28 +231,28 @@ const _GENQO_MULTIPLEXED_PARAMETERS = (
 const _GENQO_UNHERALDED_PARAMETERS = (
     StateParameterSchema(
         :ηᵈ,
-        Real,
+        Float64,
         "Detector transmissivity.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :ηᵗ,
-        Real,
+        Float64,
         "Outcoupling transmissivity for the Bell-state modes.",
-        0,
-        1,
-        1,
+        0.0,
+        1.0,
+        1.0,
         minimum_inclusive=false,
     ),
     StateParameterSchema(
         :N,
-        Real,
+        Float64,
         "Mean photon number per mode.",
-        0,
-        10,
+        0.0,
+        10.0,
         0.1,
         minimum_inclusive=false,
     ),
@@ -381,7 +382,8 @@ end
 Return an ordered grid of valid values for a state-family parameter. Integer
 parameters produce integer-only grids, while continuous parameters respect
 open and closed interval boundaries. At most `maximum_points` values are
-returned.
+returned; `maximum_points` must fit in `Int`. If floating-point spacing cannot
+produce a valid sweep, the grid is the valid recommended value alone.
 """
 function state_parameter_values(
     parameter::StateParameterSchema,
@@ -391,28 +393,41 @@ function state_parameter_values(
         throw(ArgumentError("maximum_points must be a positive integer"))
     maximum_points > 0 ||
         throw(ArgumentError("maximum_points must be a positive integer"))
+    maximum_points <= typemax(Int) ||
+        throw(ArgumentError("maximum_points must fit in Int"))
+    point_limit = Int(maximum_points)
+    point_limit == 1 && return [parameter.recommended]
 
     if parameter.value_type === Int
-        first_value = Int(parameter.minimum) + !parameter.minimum_inclusive
-        last_value = Int(parameter.maximum) - !parameter.maximum_inclusive
+        # BigInt intermediates cover the full machine-Int domain without
+        # overflow or lossy floating-point interpolation.
+        first_value =
+            BigInt(parameter.minimum) + Int(!parameter.minimum_inclusive)
+        last_value =
+            BigInt(parameter.maximum) - Int(!parameter.maximum_inclusive)
         value_count = last_value - first_value + 1
         value_count > 0 ||
             throw(ArgumentError("integer parameter interval contains no values"))
-        point_count = min(Int(maximum_points), value_count)
+        point_count = Int(min(BigInt(point_limit), value_count))
         point_count == 1 && return [parameter.recommended]
-        values = round.(
-            typeof(parameter.recommended),
-            range(first_value, last_value; length=point_count),
-        )
-        return unique(values)
+        denominator = BigInt(point_count - 1)
+        span = last_value - first_value
+        rounding_offset = denominator ÷ 2
+        return [
+            Int(
+                first_value +
+                div(span * index + rounding_offset, denominator),
+            )
+            for index in 0:(point_count - 1)
+        ]
     end
 
-    value_type = parameter.value_type
-    grid_type = value_type <: AbstractFloat ?
-        value_type : Float64
+    grid_type = parameter.value_type
     minimum = convert(grid_type, parameter.minimum)
     maximum = convert(grid_type, parameter.maximum)
-    margin = convert(grid_type, (maximum - minimum) * 0.0001)
+    span = maximum - minimum
+    isfinite(span) || return [parameter.recommended]
+    margin = convert(grid_type, span * 0.0001)
     first_value = if parameter.minimum_inclusive
         minimum
     else
@@ -425,8 +440,8 @@ function state_parameter_values(
         candidate = maximum - margin
         candidate < maximum ? candidate : prevfloat(maximum)
     end
-    values = range(first_value, last_value; length=Int(maximum_points))
+    values = range(first_value, last_value; length=point_limit)
     all(value -> value in parameter, values) ||
-        throw(ArgumentError("parameter interval cannot produce a valid grid"))
+        return [parameter.recommended]
     return values
 end

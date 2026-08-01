@@ -27,24 +27,24 @@ map(schema -> (
 ```
 
 Each [`StateFamilySchema`](@ref) contains ordered
-[`StateParameterSchema`](@ref) values with stable names, real-valued types,
-open or closed bounds, recommendations, and documentation. Validate a proposed
-value with `value in parameter_schema`; this checks its declared type,
-finiteness, and exact interval.
+[`StateParameterSchema`](@ref) values with stable names, concrete
+floating-point or machine-`Int` types, open or closed bounds, recommendations,
+and documentation. Validate a proposed value with `value in parameter_schema`;
+this checks its declared type, finiteness, and exact interval.
 [`state_parameter_values`](@ref) creates bounded explorer grids without
 turning discrete parameters into invalid fractional values.
 
-Parameter schemas intentionally support continuous `Real`/concrete
-`AbstractFloat` domains and discrete machine-`Int` intervals. Other `Real`
-subtypes are rejected so every accepted schema can supply a type-correct
-explorer grid.
+Parameter schemas intentionally support concrete `AbstractFloat` domains and
+discrete machine-`Int` intervals. Abstract numeric types and other `Real`
+subtypes are rejected so every accepted schema can supply a nonempty,
+type-correct explorer grid.
 
 ```@example states-zoo-metadata
 eta_a = first(state_family_schema(BarrettKokBellPair).parameters)
 (
     boundary=eta_a.minimum,
     boundary_is_included=eta_a.minimum_inclusive,
-    zero_is_valid=0 in eta_a,
+    zero_is_valid=0.0 in eta_a,
     half_is_valid=0.5 in eta_a,
 )
 ```

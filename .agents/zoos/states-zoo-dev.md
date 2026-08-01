@@ -36,8 +36,8 @@ Use `.agents/zoos/states-zoo-user.md` for that.
   packages must not change it.
 - Parameter names, exact boundaries, boundary inclusivity, recommendations, and
   docs have one source of truth in `StateParameterSchema`.
-- Supported domains are continuous `Real`/concrete `AbstractFloat` intervals
-  and discrete `Int` intervals. Do not advertise a numeric type that
+- Supported domains are concrete `AbstractFloat` intervals and discrete `Int`
+  intervals. Do not advertise an abstract type or a concrete numeric type that
   `state_parameter_values` cannot preserve.
 - Every generated explorer value must satisfy `value in parameter_schema`.
   Do not independently implement endpoint-grid logic in examples.

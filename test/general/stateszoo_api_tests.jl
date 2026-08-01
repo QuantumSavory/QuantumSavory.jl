@@ -76,6 +76,16 @@ schemas = state_family_schemas()
 @test map(schema -> schema.family, schemas) == expected_families
 @test map(schema -> schema.normalization, schemas) ==
       expected_normalization
+@test map(
+    schema -> map(parameter -> parameter.value_type, schema.parameters),
+    schemas,
+) == (
+    (Float64, Float64, Float64, Float64, Float64, Int),
+    (Float64, Float64, Float64, Float64, Float64, Int),
+    (Float64,),
+    (Float64, Float64, Float64, Float64),
+    (Float64, Float64, Float64),
+)
 
 for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
     S = schema.family
@@ -201,21 +211,50 @@ zero_weight = BarrettKokBellPairW(0, 0, 0, 1, 1)
     UInt(1),
     UInt(0),
 )
+huge_integer = big(10)^400
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    BigInt,
+    "Invalid.",
+    huge_integer,
+    huge_integer,
+    huge_integer,
+)
+narrow_denominator = big(2)^60
+narrow_minimum = (narrow_denominator + 1) // narrow_denominator
+narrow_maximum = narrow_minimum + 1 // narrow_denominator
+narrow_recommended = (narrow_minimum + narrow_maximum) / 2
 @test_throws ArgumentError StateParameterSchema(
     :invalid,
     Real,
     "Invalid.",
-    1,
-    0,
-    0,
+    narrow_minimum,
+    narrow_maximum,
+    narrow_recommended,
 )
 @test_throws ArgumentError StateParameterSchema(
     :invalid,
-    Real,
+    AbstractFloat,
     "Invalid.",
-    0,
-    1,
-    2,
+    0.0,
+    1.0,
+    0.5,
+)
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    Float64,
+    "Invalid.",
+    1.0,
+    0.0,
+    0.0,
+)
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    Float64,
+    "Invalid.",
+    0.0,
+    1.0,
+    2.0,
 )
 @test_throws ArgumentError StateParameterSchema(
     :invalid,
@@ -227,29 +266,29 @@ zero_weight = BarrettKokBellPairW(0, 0, 0, 1, 1)
 )
 @test_throws ArgumentError StateParameterSchema(
     :invalid,
-    Real,
+    Float64,
     "Invalid.",
-    0,
-    1,
-    0,
+    0.0,
+    1.0,
+    0.0,
     minimum_inclusive=false,
 )
 @test_throws ArgumentError StateParameterSchema(
     :invalid,
-    Real,
+    Float64,
     "Invalid.",
-    0,
-    1,
-    1,
+    0.0,
+    1.0,
+    1.0,
     maximum_inclusive=false,
 )
 @test_throws ArgumentError StateParameterSchema(
     :invalid,
-    Real,
+    Float64,
     "Invalid.",
-    0,
-    0,
-    0,
+    0.0,
+    0.0,
+    0.0,
     minimum_inclusive=false,
 )
 open_parameter = StateParameterSchema(
@@ -272,6 +311,41 @@ open_parameter = StateParameterSchema(
 @test Inf ∉ open_parameter
 @test 1 ∉ open_parameter
 @test length(state_parameter_values(open_parameter, 30)) == 30
+@test state_parameter_values(open_parameter, 1) == [0.5]
+float32_parameter = StateParameterSchema(
+    :float32,
+    Float32,
+    "Float32.",
+    0.0f0,
+    1.0f0,
+    0.5f0,
+)
+float32_values = state_parameter_values(float32_parameter, 3)
+@test all(value -> value isa Float32, float32_values)
+@test all(value -> value in float32_parameter, float32_values)
+@test state_parameter_values(float32_parameter, 1) == [0.5f0]
+bigfloat_parameter = StateParameterSchema(
+    :bigfloat,
+    BigFloat,
+    "BigFloat.",
+    BigFloat(0),
+    BigFloat(1),
+    BigFloat(0.5),
+)
+bigfloat_values = state_parameter_values(bigfloat_parameter, 3)
+@test eltype(bigfloat_values) === BigFloat
+@test length(bigfloat_values) == 3
+@test all(value -> value in bigfloat_parameter, bigfloat_values)
+@test state_parameter_values(bigfloat_parameter, 1) == [BigFloat(0.5)]
+overflowing_span_parameter = StateParameterSchema(
+    :overflowing_span,
+    Float64,
+    "Finite bounds with an overflowing span.",
+    -floatmax(Float64),
+    floatmax(Float64),
+    0.0,
+)
+@test state_parameter_values(overflowing_span_parameter, 30) == [0.0]
 integer_parameter = StateParameterSchema(
     :integer,
     Int,
@@ -283,8 +357,36 @@ integer_parameter = StateParameterSchema(
 @test state_parameter_values(integer_parameter, 30) == collect(0:10)
 @test state_parameter_values(integer_parameter, 3) == [0, 5, 10]
 @test all(value -> value isa Int, state_parameter_values(integer_parameter, 3))
+maximum_integer_parameter = StateParameterSchema(
+    :maximum_integer,
+    Int,
+    "Maximum integer singleton.",
+    typemax(Int),
+    typemax(Int),
+    typemax(Int),
+)
+@test state_parameter_values(maximum_integer_parameter, 30) == [typemax(Int)]
+full_integer_parameter = StateParameterSchema(
+    :full_integer,
+    Int,
+    "Full machine-integer interval.",
+    typemin(Int),
+    typemax(Int),
+    0,
+)
+@test state_parameter_values(full_integer_parameter, 3) ==
+      [typemin(Int), 0, typemax(Int)]
+full_integer_values = state_parameter_values(full_integer_parameter, 30)
+@test length(full_integer_values) == 30
+@test issorted(full_integer_values)
+@test allunique(full_integer_values)
+@test all(value -> value in full_integer_parameter, full_integer_values)
 @test_throws ArgumentError state_parameter_values(integer_parameter, 0)
 @test_throws ArgumentError state_parameter_values(integer_parameter, true)
+@test_throws ArgumentError state_parameter_values(
+    integer_parameter,
+    big(typemax(Int)) + 1,
+)
 @test_throws ArgumentError StateFamilySchema(
     Int,
     "Invalid.",
@@ -293,11 +395,11 @@ integer_parameter = StateParameterSchema(
 )
 duplicate_parameter = StateParameterSchema(
     :duplicate,
-    Real,
+    Float64,
     "Duplicate.",
-    0,
-    1,
-    0,
+    0.0,
+    1.0,
+    0.0,
 )
 @test_throws ArgumentError StateFamilySchema(
     CustomMetadataState,
