@@ -41,8 +41,12 @@ struct StateParameterSchema
         minimum_inclusive::Bool=true,
         maximum_inclusive::Bool=true,
     )
-        value_type !== Bool && value_type <: Real ||
-            throw(ArgumentError("state parameter type must be a Real subtype"))
+        supported_type = value_type === Real || value_type === Int || (
+            isconcretetype(value_type) && value_type <: AbstractFloat
+        )
+        supported_type || throw(ArgumentError(
+            "state parameter type must be Real, Int, or a concrete AbstractFloat",
+        ))
         any(value -> value isa Bool, (minimum, maximum, recommended)) &&
             throw(ArgumentError("state parameter bounds cannot be Bool"))
         all(isfinite, (minimum, maximum, recommended)) ||
@@ -388,7 +392,7 @@ function state_parameter_values(
     maximum_points > 0 ||
         throw(ArgumentError("maximum_points must be a positive integer"))
 
-    if parameter.value_type <: Integer
+    if parameter.value_type === Int
         first_value = Int(parameter.minimum) + !parameter.minimum_inclusive
         last_value = Int(parameter.maximum) - !parameter.maximum_inclusive
         value_count = last_value - first_value + 1
@@ -404,7 +408,7 @@ function state_parameter_values(
     end
 
     value_type = parameter.value_type
-    grid_type = isconcretetype(value_type) && value_type <: AbstractFloat ?
+    grid_type = value_type <: AbstractFloat ?
         value_type : Float64
     minimum = convert(grid_type, parameter.minimum)
     maximum = convert(grid_type, parameter.maximum)

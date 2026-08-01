@@ -187,6 +187,22 @@ zero_weight = BarrettKokBellPairW(0, 0, 0, 1, 1)
 )
 @test_throws ArgumentError StateParameterSchema(
     :invalid,
+    Rational{Int},
+    "Invalid.",
+    0 // 1,
+    1 // 1,
+    1 // 2,
+)
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
+    UInt,
+    "Invalid.",
+    UInt(0),
+    UInt(1),
+    UInt(0),
+)
+@test_throws ArgumentError StateParameterSchema(
+    :invalid,
     Real,
     "Invalid.",
     1,

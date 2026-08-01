@@ -14,10 +14,17 @@ using QuantumSavory.StatesZoo: BarrettKokBellPair, state_family_schema,
 
 const custom_css = Bonito.DOM.style("ul {list-style: circle !important;}")
 
+function barrett_kok_pair(state_config)
+    parameters = state_family_schema(BarrettKokBellPair).parameters
+    return BarrettKokBellPair((
+        state_config[parameter.name] for parameter in parameters
+    )...)
+end
+
 function prepare_swapping_simulation(
     fig;
     config::Dict{Symbol,Any},
-    state_config::Dict{Symbol,Float64},
+    state_config,
 )
     len = config[:len]
     regsize = config[:regsize]
@@ -25,13 +32,7 @@ function prepare_swapping_simulation(
 
     sim, network = simulation_setup(sizes, config[:T2])
 
-    pairstate = BarrettKokBellPair(
-        state_config[:ηᴬ],
-        state_config[:ηᴮ],
-        state_config[:Pᵈ],
-        state_config[:ηᵈ],
-        state_config[:𝒱],
-    )
+    pairstate = barrett_kok_pair(state_config)
 
     for (; src, dst) in edges(network)
         eprot = EntanglerProt(

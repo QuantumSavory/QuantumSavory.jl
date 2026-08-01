@@ -34,6 +34,11 @@ finiteness, and exact interval.
 [`state_parameter_values`](@ref) creates bounded explorer grids without
 turning discrete parameters into invalid fractional values.
 
+Parameter schemas intentionally support continuous `Real`/concrete
+`AbstractFloat` domains and discrete machine-`Int` intervals. Other `Real`
+subtypes are rejected so every accepted schema can supply a type-correct
+explorer grid.
+
 ```@example states-zoo-metadata
 eta_a = first(state_family_schema(BarrettKokBellPair).parameters)
 (
