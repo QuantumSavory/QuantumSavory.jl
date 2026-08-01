@@ -27,8 +27,9 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 - The explorer is meant for two-qubit state families.
 - `src/StatesZoo/state_explorer.jl` declares the interface.
 - The main UI implementation lives in `ext/QuantumSavoryMakie/state_explorer.jl`.
-- Explorer defaults and sweep ranges come from `StateFamilySchema.parameters`
-  through the compatibility `stateparameters` and `stateparametersrange` APIs.
+- Explorer defaults and sweep ranges come from `StateFamilySchema.parameters`.
+  Use `state_parameter_values` so integer schemas stay discrete; the
+  `stateparameters` and `stateparametersrange` APIs are compatibility views.
 
 ## Metadata And Normalization Invariants
 
@@ -36,6 +37,8 @@ Use `.agents/zoos/states-zoo-user.md` for that.
   packages must not change it.
 - Parameter names, exact boundaries, boundary inclusivity, recommendations, and
   docs have one source of truth in `StateParameterSchema`.
+- Every generated explorer value must satisfy `value in parameter_schema`.
+  Do not independently implement endpoint-grid logic in examples.
 - `value in parameter_schema` is the validation boundary for configuration
   tooling. Open endpoints represent singular or zero-weight states, not merely
   UI hints.

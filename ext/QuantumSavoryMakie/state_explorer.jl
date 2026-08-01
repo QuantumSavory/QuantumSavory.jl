@@ -1,4 +1,5 @@
-using QuantumSavory.StatesZoo: stateparametersrange, stateparameters
+using QuantumSavory.StatesZoo: state_family_schema, state_parameter_values,
+    stateparametersrange, stateparameters
 import QuantumSavory.StatesZoo: stateexplorer, stateexplorer!
 import Printf: @sprintf
 
@@ -9,13 +10,6 @@ const B = sum(projector(l,b') for (l,b) in zip(lls,bells))
 angleifnotε(x) = angle(x) * (abs(x)<0.001 ? 0.0 : 1.0)
 
 const PARAMCOLS = 5
-
-function _parameter_grid(bounds, length)
-    margin = (bounds.max - bounds.min) * 0.0001
-    first_value = bounds.min_inclusive ? bounds.min : bounds.min + margin
-    last_value = bounds.max_inclusive ? bounds.max : bounds.max - margin
-    return range(first_value, last_value; length)
-end
 
 function stateexplorer(S)
     sliders = length(stateparameters(S))
@@ -35,6 +29,7 @@ end
 function stateexplorer!(fig,S)
     params = stateparameters(S)
     paramdict = stateparametersrange(S)
+    parameter_schemas = isempty(params) ? () : state_family_schema(S).parameters
 
     colormap=:cyclic_mrybm_35_75_c68_n256
     colorrange=(-pi,pi)
@@ -73,10 +68,11 @@ function stateexplorer!(fig,S)
     aparamsF = []
     aparamsTr = []
     sliders = []
-    for (i, param) in enumerate(params)
+    for (i, parameter) in enumerate(parameter_schemas)
+        param = parameter.name
         subfparam = fparams[(i-1)÷PARAMCOLS+1,(i-1)%PARAMCOLS+1]
         (;min,max,good) = paramdict[param]
-        xs = _parameter_grid(paramdict[param], nbxpoints)
+        xs = state_parameter_values(parameter, nbxpoints)
 
         slider = Slider(subfparam[3,1], range=xs, startvalue=good)
         push!(sliders, slider)
@@ -98,9 +94,10 @@ function stateexplorer!(fig,S)
     slowcompute && Makie.Label(ftext[1,4], "This model is slow!\n Skipping parameter sweep plots.", tellheight=false, tellwidth=false)
 
     if !slowcompute
-    for (i, (aparamF, aparamTr, slider, param)) in enumerate(zip(aparamsF, aparamsTr, sliders, params))
+    for (i, (aparamF, aparamTr, slider, parameter)) in enumerate(zip(aparamsF, aparamsTr, sliders, parameter_schemas))
+        param = parameter.name
         (;min,max,good) = paramdict[param]
-        xs = _parameter_grid(paramdict[param], nbxpoints)
+        xs = state_parameter_values(parameter, nbxpoints)
 
         data = lift((s.value for s in sliders)...) do paramvalues...
             states = [express(S((p==param ? x : pv for (p,pv) in zip(params,paramvalues))...)) for x in xs]

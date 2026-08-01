@@ -32,7 +32,9 @@ open or closed bounds, recommendations, and documentation. Validate a proposed
 value with `value in parameter_schema`; this checks its declared type,
 finiteness, and exact interval. The older `stateparameters` and
 `stateparametersrange` APIs remain available and are derived from these
-schemas, including their bound-inclusivity flags.
+schemas, including parameter types and bound-inclusivity flags.
+[`state_parameter_values`](@ref) creates bounded explorer grids without
+turning discrete parameters into invalid fractional values.
 
 ```@example states-zoo-metadata
 eta_a = first(state_family_schema(BarrettKokBellPair).parameters)
@@ -72,6 +74,7 @@ StateParameterSchema
 StateFamilySchema
 state_family_schema
 state_family_schemas
+state_parameter_values
 state_normalization_style
 state_weight
 normalized_state_and_weight

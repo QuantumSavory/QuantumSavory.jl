@@ -13,7 +13,12 @@ function state_query_parameters(family, names)
     length(names) == length(parameters) ||
         throw(ArgumentError("REST aliases must match the state-family schema"))
     return Tuple(
-        (String(name), Float64, Float64(parameter.recommended))
+        (
+            String(name),
+            parameter.value_type <: Integer ? Int : Float64,
+            parameter.value_type <: Integer ?
+                Int(parameter.recommended) : Float64(parameter.recommended),
+        )
         for (name, parameter) in zip(names, parameters)
     )
 end
@@ -21,9 +26,8 @@ end
 const BARRETT_KOK_QUERY_PARAMETERS = (
     state_query_parameters(
         BarrettKokBellPair,
-        ("etaA", "etaB", "Pd", "etad", "V"),
+        ("etaA", "etaB", "Pd", "etad", "V", "m"),
     )...,
-    ("m", Int, 0),
     ("weighted", Bool, false),
 )
 const GENQO_ZALM_QUERY_PARAMETERS = state_query_parameters(
@@ -108,10 +112,10 @@ end
 
     try
         # Validate parameters
-        values = (ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱)
-        if !parameters_valid(BarrettKokBellPair, values) || m ∉ (0, 1)
+        values = (ηᴬ, ηᴮ, Pᵈ, ηᵈ, 𝒱, m)
+        if !parameters_valid(BarrettKokBellPair, values)
             return json(
-                Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema and m must be 0 or 1");
+                Dict("error" => "Invalid parameters: values must satisfy the advertised state-family schema");
                 status=400,
             )
         end

@@ -7,7 +7,8 @@ using Markdown
 using Base.Threads
 using Makie
 using QuantumSavory.StatesZoo
-using QuantumSavory.StatesZoo: BarrettKokBellPair, stateparameters, stateparametersrange
+using QuantumSavory.StatesZoo: BarrettKokBellPair, state_family_schema,
+    state_parameter_values
 
 @info "all library imports are complete"
 
@@ -77,18 +78,11 @@ function run_swapping_simulation!(sim, network, observables, axes, running; stop
     running[] = false
 end
 
-function state_summary(state_conf::Dict{Symbol,Float64}, order)
+function state_summary(state_conf, order)
     join(
         ["$(string(key))=$(round(state_conf[key]; digits = 3))" for key in order],
         ", ",
     )
-end
-
-function parameter_grid(bounds, length)
-    margin = (bounds.max - bounds.min) * 0.0001
-    first_value = bounds.min_inclusive ? bounds.min : bounds.min + margin
-    last_value = bounds.max_inclusive ? bounds.max : bounds.max - margin
-    return LinRange(first_value, last_value, length)
 end
 
 function add_configuration_controls(block1, block2)
@@ -105,9 +99,12 @@ function add_configuration_controls(block1, block2)
     )
     config_obs = Observable(copy(config_defaults))
 
-    state_params = stateparameters(BarrettKokBellPair)
-    state_ranges = stateparametersrange(BarrettKokBellPair)
-    state_defaults = Dict{Symbol,Float64}(p => Float64(state_ranges[p].good) for p in state_params)
+    state_parameter_schemas = state_family_schema(BarrettKokBellPair).parameters
+    state_params = map(parameter -> parameter.name, state_parameter_schemas)
+    state_defaults = Dict{Symbol,Any}(
+        parameter.name => parameter.recommended
+        for parameter in state_parameter_schemas
+    )
     state_obs = Observable(copy(state_defaults))
 
     config_section = block1[1, 1] = GridLayout(tellwidth = false)
@@ -168,12 +165,12 @@ function add_configuration_controls(block1, block2)
 
     state_slider_specs = [
         (
-            label = string(param),
-            range = parameter_grid(state_ranges[param], 101),
-            format = "{:.4f}",
-            startvalue = state_defaults[param],
+            label = string(parameter.name),
+            range = state_parameter_values(parameter, 101),
+            format = parameter.value_type <: Integer ? "{:d}" : "{:.4f}",
+            startvalue = parameter.recommended,
         )
-        for param in state_params
+        for parameter in state_parameter_schemas
     ]
     state_slider_grid = SliderGrid(state_section[2, 1], state_slider_specs...; width = 360)
 
@@ -185,10 +182,8 @@ function add_configuration_controls(block1, block2)
     )
 
     function update_state!(name::Symbol, value)
-        range = state_ranges[name]
-        clamped = clamp(Float64(value), range.min, range.max)
         current = copy(state_obs[])
-        current[name] = clamped
+        current[name] = value
         state_obs[] = current
         state_label.text[] = "state parameters: " * state_summary(current, state_params)
     end

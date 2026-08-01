@@ -163,6 +163,14 @@ const _BARRETT_KOK_PARAMETERS = (
         1,
         1,
     ),
+    StateParameterSchema(
+        :m,
+        Int,
+        "Parity bit determined by the detector click pattern.",
+        0,
+        1,
+        0,
+    ),
 )
 
 const _DEPOLARIZED_PARAMETERS = (
@@ -364,6 +372,62 @@ function normalized_state_and_weight(state::AbstractTwoQubitState)
 end
 
 """
+    state_parameter_values(parameter::StateParameterSchema, maximum_points::Integer)
+
+Return an ordered grid of valid values for a state-family parameter. Integer
+parameters produce integer-only grids, while continuous parameters respect
+open and closed interval boundaries. At most `maximum_points` values are
+returned.
+"""
+function state_parameter_values(
+    parameter::StateParameterSchema,
+    maximum_points::Integer,
+)
+    maximum_points isa Bool &&
+        throw(ArgumentError("maximum_points must be a positive integer"))
+    maximum_points > 0 ||
+        throw(ArgumentError("maximum_points must be a positive integer"))
+
+    if parameter.value_type <: Integer
+        first_value = Int(parameter.minimum) + !parameter.minimum_inclusive
+        last_value = Int(parameter.maximum) - !parameter.maximum_inclusive
+        value_count = last_value - first_value + 1
+        value_count > 0 ||
+            throw(ArgumentError("integer parameter interval contains no values"))
+        point_count = min(Int(maximum_points), value_count)
+        point_count == 1 && return [parameter.recommended]
+        values = round.(
+            typeof(parameter.recommended),
+            range(first_value, last_value; length=point_count),
+        )
+        return unique(values)
+    end
+
+    value_type = parameter.value_type
+    grid_type = isconcretetype(value_type) && value_type <: AbstractFloat ?
+        value_type : Float64
+    minimum = convert(grid_type, parameter.minimum)
+    maximum = convert(grid_type, parameter.maximum)
+    margin = convert(grid_type, (maximum - minimum) * 0.0001)
+    first_value = if parameter.minimum_inclusive
+        minimum
+    else
+        candidate = minimum + margin
+        candidate > minimum ? candidate : nextfloat(minimum)
+    end
+    last_value = if parameter.maximum_inclusive
+        maximum
+    else
+        candidate = maximum - margin
+        candidate < maximum ? candidate : prevfloat(maximum)
+    end
+    values = range(first_value, last_value; length=Int(maximum_points))
+    all(value -> value in parameter, values) ||
+        throw(ArgumentError("parameter interval cannot produce a valid grid"))
+    return values
+end
+
+"""
     stateparameters(::Type)
 
 Return the ordered parameter names used by `stateexplorer`. This compatibility
@@ -389,6 +453,7 @@ function stateparametersrange(type::Type{<:AbstractTwoQubitState})
             min=parameter.minimum,
             max=parameter.maximum,
             good=parameter.recommended,
+            value_type=parameter.value_type,
             min_inclusive=parameter.minimum_inclusive,
             max_inclusive=parameter.maximum_inclusive,
         )

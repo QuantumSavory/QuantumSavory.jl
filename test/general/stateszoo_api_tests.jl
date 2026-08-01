@@ -64,8 +64,8 @@ expected_normalization = (
     WeightedState,
 )
 expected_parameters = (
-    (:ηᴬ, :ηᴮ, :Pᵈ, :ηᵈ, :𝒱),
-    (:ηᴬ, :ηᴮ, :Pᵈ, :ηᵈ, :𝒱),
+    (:ηᴬ, :ηᴮ, :Pᵈ, :ηᵈ, :𝒱, :m),
+    (:ηᴬ, :ηᴮ, :Pᵈ, :ηᵈ, :𝒱, :m),
     (:p,),
     (:ηᵇ, :ηᵈ, :ηᵗ, :N),
     (:ηᵈ, :ηᵗ, :N),
@@ -94,6 +94,7 @@ for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
             min=parameter.minimum,
             max=parameter.maximum,
             good=parameter.recommended,
+            value_type=parameter.value_type,
             min_inclusive=parameter.minimum_inclusive,
             max_inclusive=parameter.maximum_inclusive,
         )
@@ -106,6 +107,11 @@ for (schema, expected_parameter_names) in zip(schemas, expected_parameters)
         parameter -> parameter.recommended in parameter,
         schema.parameters,
     )
+    @test all(schema.parameters) do parameter
+        values = state_parameter_values(parameter, 30)
+        !isempty(values) && length(values) <= 30 &&
+            all(value -> value in parameter, values)
+    end
 
     state = S((paramdict[p].good for p in params)...)
     @test state_family_schema(state) === schema
@@ -175,6 +181,7 @@ custom = state_family_schema(CustomMetadataState)
           min=0.0,
           max=1.0,
           good=0.5,
+          value_type=Float64,
           min_inclusive=true,
           max_inclusive=true,
       ),)
@@ -273,6 +280,20 @@ open_parameter = StateParameterSchema(
 @test NaN ∉ open_parameter
 @test Inf ∉ open_parameter
 @test 1 ∉ open_parameter
+@test length(state_parameter_values(open_parameter, 30)) == 30
+integer_parameter = StateParameterSchema(
+    :integer,
+    Int,
+    "Integer.",
+    0,
+    10,
+    5,
+)
+@test state_parameter_values(integer_parameter, 30) == collect(0:10)
+@test state_parameter_values(integer_parameter, 3) == [0, 5, 10]
+@test all(value -> value isa Int, state_parameter_values(integer_parameter, 3))
+@test_throws ArgumentError state_parameter_values(integer_parameter, 0)
+@test_throws ArgumentError state_parameter_values(integer_parameter, true)
 @test_throws ArgumentError StateFamilySchema(
     Int,
     "Invalid.",

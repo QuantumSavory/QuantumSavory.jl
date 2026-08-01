@@ -27,7 +27,9 @@
   normalization. Parameter schemas distinguish open from closed boundaries and
   support `value in parameter_schema` validation, so singular and zero-weight
   endpoints are not advertised as usable. The existing `stateparameters` APIs
-  now derive from the schemas.
+  now derive from the schemas. Barrett-Kok parity `m` is part of the schema,
+  and `state_parameter_values` produces type-correct continuous or discrete
+  explorer grids from the same metadata.
 - **(breaking)** Removed the ignored `Pᵈ` field from the two Genqo state
   wrappers, their metadata, and the example REST schema. The underlying Genqo
   spin-density-matrix functions do not accept detector excess noise, so the
