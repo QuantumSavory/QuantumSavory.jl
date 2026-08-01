@@ -37,7 +37,8 @@ Open only the topic files that match the task.
 - Public docs live in `docs/src/`.
 - Core implementation lives in `src/`.
 - Example scripts live in `examples/`.
-- Regression and behavior anchors live in `test/general/` and `test/examples/`.
+- Regression and behavior anchors live in `test/general/`, `test/examples/`,
+  and `test/plotting/`.
 
 ## Repo Workflow
 

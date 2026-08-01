@@ -29,6 +29,9 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 - The main UI implementation lives in `ext/QuantumSavoryMakie/state_explorer.jl`.
 - Explorer defaults and sweep ranges come from `StateFamilySchema.parameters`.
   Use `state_parameter_values` so integer schemas stay discrete.
+- Keep `_state_parameter_slider_specs` as the pure schema-to-UI projection.
+  Rendering and tests consume its precomputed ranges instead of rebuilding
+  parameter grids.
 
 ## Metadata And Normalization Invariants
 
@@ -83,6 +86,7 @@ Use `.agents/zoos/states-zoo-user.md` for that.
 - `test/general/stateszoo_api_tests.jl`
 - `test/examples/state_explorer_tests.jl`
 - `test/examples/states_rest_server_contract_tests.jl`
+- `test/plotting/state_explorer_tests.jl`
 - `examples/state_explorer/README.md`
 - `examples/state_explorer/state_explorer.jl`
 

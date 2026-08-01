@@ -10,10 +10,26 @@ const B = sum(projector(l,b') for (l,b) in zip(lls,bells))
 angleifnotε(x) = angle(x) * (abs(x)<0.001 ? 0.0 : 1.0)
 
 const PARAMCOLS = 5
+const STATE_EXPLORER_SWEEP_POINTS = 30
 
 _state_parameter_schemas(::Any) = ()
 _state_parameter_schemas(S::Type{<:AbstractTwoQubitState}) =
     state_family_schema(S).parameters
+
+function _state_parameter_slider_specs(
+    S;
+    maximum_points::Integer=STATE_EXPLORER_SWEEP_POINTS,
+)
+    return map(_state_parameter_schemas(S)) do parameter
+        return (
+            name=parameter.name,
+            minimum=parameter.minimum,
+            maximum=parameter.maximum,
+            recommended=parameter.recommended,
+            range=state_parameter_values(parameter, maximum_points),
+        )
+    end
+end
 
 function stateexplorer(S)
     sliders = length(_state_parameter_schemas(S))
@@ -31,20 +47,19 @@ function stateexplorer(S)
 end
 
 function stateexplorer!(fig,S)
-    parameter_schemas = _state_parameter_schemas(S)
-    params = map(parameter -> parameter.name, parameter_schemas)
+    slider_specs = _state_parameter_slider_specs(S)
+    params = map(spec -> spec.name, slider_specs)
 
     colormap=:cyclic_mrybm_35_75_c68_n256
     colorrange=(-pi,pi)
-    nbxpoints = 30
 
     slowcompute = false
-    slowthreshold = 1.0/nbxpoints
+    slowthreshold = 1.0/STATE_EXPLORER_SWEEP_POINTS
 
 
     if !isempty(params)
         timed_result = @timed express(S((
-            parameter.recommended for parameter in parameter_schemas
+            spec.recommended for spec in slider_specs
         )...))
         slowcompute = timed_result.time > slowthreshold
         @debug(
@@ -73,13 +88,13 @@ function stateexplorer!(fig,S)
     aparamsF = []
     aparamsTr = []
     sliders = []
-    for (i, parameter) in enumerate(parameter_schemas)
-        param = parameter.name
+    for (i, spec) in enumerate(slider_specs)
+        param = spec.name
         subfparam = fparams[(i-1)÷PARAMCOLS+1,(i-1)%PARAMCOLS+1]
-        min = parameter.minimum
-        max = parameter.maximum
-        good = parameter.recommended
-        xs = state_parameter_values(parameter, nbxpoints)
+        min = spec.minimum
+        max = spec.maximum
+        good = spec.recommended
+        xs = spec.range
 
         slider = Slider(subfparam[3,1], range=xs, startvalue=good)
         push!(sliders, slider)
@@ -101,9 +116,14 @@ function stateexplorer!(fig,S)
     slowcompute && Makie.Label(ftext[1,4], "This model is slow!\n Skipping parameter sweep plots.", tellheight=false, tellwidth=false)
 
     if !slowcompute
-    for (i, (aparamF, aparamTr, slider, parameter)) in enumerate(zip(aparamsF, aparamsTr, sliders, parameter_schemas))
-        param = parameter.name
-        xs = state_parameter_values(parameter, nbxpoints)
+    for (aparamF, aparamTr, slider, spec) in zip(
+        aparamsF,
+        aparamsTr,
+        sliders,
+        slider_specs,
+    )
+        param = spec.name
+        xs = spec.range
 
         data = lift((s.value for s in sliders)...) do paramvalues...
             states = [express(S((p==param ? x : pv for (p,pv) in zip(params,paramvalues))...)) for x in xs]
