@@ -1,12 +1,11 @@
-# Benchmark Folder
+# Benchmark Router
 
-This folder contains the BenchmarkTools suite for `QuantumSavory.jl`.
+Open the [benchmarking workflow](../.agents/context/workflows/benchmarking.md)
+and the context page for the measured subsystem.
 
-Organization:
-- `benchmarks.jl` is the entrypoint (shared imports/setup + `include(...)` calls).
-- `benchmark_*.jl` files contain benchmark definitions grouped by top-level `SUITE` key.
-- Keep related benchmarks together and add short comments when introducing a new subgroup.
+`benchmarks.jl` owns shared imports and includes; keep related cases in the
+existing `benchmark_*.jl` files. For mutating operations, isolate each sample
+with `setup`, normally using `deepcopy`, and `evals=1`.
 
-Conventions:
-- For mutating benchmarks (`querydelete!`, `untag!`, etc.), use `setup` with `deepcopy(...)` and `evals=1`.
-- Add new benchmarks without deleting existing coverage unless explicitly requested.
+Preserve historical benchmark keys unless a migration is intentional. Treat
+AirspeedVelocity comparisons as performance evidence, not behavioral tests.
