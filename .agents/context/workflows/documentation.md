@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Editing human docs, docstrings, navigation, doctests, or deployment configuration.
 - **Do not open when:** A source-only change has no public explanation or documentation validation impact.
-- **Related specification IDs:** SYS-009, SYS-011, SYS-012
 - **Review when:** `docs/make.jl`, docs dependencies, plotting doctests, or Buildkite documentation steps change.
 
 ## Change and validate documentation
@@ -28,13 +27,13 @@
    content generation, external embedding integration, and deployment. A failure in one
    does not establish the status of the others.
 
-Human docs are part of the product contract and the detailed API catalog. Under SYS-009,
-a Julia API is public only when generated prose documents it and source either exports
-it or marks it `public`. A dependency-owned name intentionally reexported and documented
-through QuantumSavory is part of that product surface; dependency internals that the
-package does not expose are not. A documented constructor parameter is public, but the
-concrete field that stores it remains internal even when it has the same name. This
-checkout contains no `public` declarations. The current public-intent inventory is:
+Human docs are part of the product contract and the detailed API catalog. A Julia API is
+public only when generated prose documents it and source either exports it or marks it
+`public`. A dependency-owned name intentionally reexported and documented through
+QuantumSavory is part of that product surface; dependency internals that the package does
+not expose are not. A documented constructor parameter is public, but the concrete field
+that stores it remains internal even when it has the same name. This checkout contains
+no `public` declarations. The current public-intent inventory is:
 
 - generated prose but no marking: qualified `stateof`, `quantumstate`, `swap!`,
   `showmetadata`, `default_repr`, `Switches.promponas_bruteforce_choice`,
@@ -49,11 +48,11 @@ checkout contains no `public` declarations. The current public-intent inventory 
 Audit those gaps instead of treating documentation alone or an accidental export alone
 as sufficient. The Zoo catalogs give the model and feature details.
 
-Every checked-in human-documentation file and example is covered by SYS-012. Published
-pages must build; unpublished drafts and archives must be explicitly classified and
-must not silently contradict the maintained contract. Agent context should link to
-human docs and record current implementation boundaries, not copy their signatures and
-examples.
+Every checked-in human-documentation file and example is part of the product contract.
+Published pages must build; unpublished drafts and archives must be explicitly
+classified and must not silently contradict the maintained contract. Agent context
+should link to human docs and record current implementation boundaries, not copy their
+signatures and examples.
 
 At this audit revision, `docs/src/` has 43 Markdown content pages: 42 are listed in the
 Documenter page tree and the repeater-grid page is the one labeled unpublished draft.

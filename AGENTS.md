@@ -1,11 +1,11 @@
 # QuantumSavory.jl Agent Router
 
 Open the [agent documentation index](.agents/index.md) and follow the task's
-narrowest route; never scan `.agents/` wholesale. Its V-model is the living,
-maintainer-confirmed statement of intended product behavior, including
-repository-grounded work not implemented yet. Context describes current
-implementation and explicit gaps. `.agents/evals/` is unrelated evaluation
-data; ignore it unless the task explicitly targets evals.
+narrowest route; never scan `.agents/` wholesale. The routed context describes
+supported behavior, current implementation, and explicit gaps, grounded in
+human documentation, source, tests, and maintainer decisions. `.agents/evals/`
+is unrelated evaluation data; ignore it unless the task explicitly targets
+evals.
 
 ## Route by work area
 

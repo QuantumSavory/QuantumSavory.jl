@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Checking tag payloads, indexed queries, consumption order, message buffers, or wake-up behavior.
 - **Do not open when:** Editing quantum-state operations, network routing, or backend evolution.
-- **Related specification IDs:** SYS-004, SYS-005, SUB-005, SUB-006, CMP-005, CMP-006
 - **Review when:** Tag definitions, query indexing/order, `query_wait`, `MessageBuffer`, or `ChangeNotifier` changes.
 
 ## Metadata contract
@@ -11,8 +10,8 @@
 Tags are typed metadata attached to register slots or stored in message buffers.
 Concrete standard tags use fixed payload shapes: identifiers and slots are `Int`, tag
 kinds are `Symbol` or a tag `DataType`, and selected protocol fields use declared
-floating-point or type/symbol fields. SYS-005 and CMP-005 make public tag field order
-and types the compatibility boundary; do not describe them as arbitrary tuples.
+floating-point or type/symbol fields. Public tag field order and types are the
+compatibility boundary; do not describe them as arbitrary tuples.
 Protocol fields typed as `Type{<:AbstractTag}` require a concrete subtype such as
 `struct MyTag <: AbstractTag end`.
 

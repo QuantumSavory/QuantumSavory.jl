@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Implementing or reviewing a resumable protocol where metadata or resource races matter.
 - **Do not open when:** Looking up the shipped protocol catalog or changing transport without protocol behavior.
-- **Related specification IDs:** SYS-004, SYS-005, SYS-008, SYS-009, SUB-013, CMP-012
 - **Review when:** Protocol process structure, tag schemas, pair identifiers, resource locking, or cleanup rules change.
 
 ## Develop and review a reusable protocol
@@ -42,9 +41,9 @@
    timeout cleanup. Run the relevant protocol tests plus the general shard.
 
 The existing tracker, swapper, switch, cutoff, QTCP, and MBQC tests contain reusable
-race patterns. SYS-008 and SUB-013 classify every public family as supported, but QTCP
-and MBQC retain known implementation gaps; copied current behavior is evidence to
-review, not automatically a requirement.
+race patterns. Every public family is supported, but QTCP and MBQC retain known
+implementation gaps; copied current behavior is evidence to review, not automatically
+a requirement.
 
 Counterpart metadata is not uniqueness-enforced. `_tag_entanglement_counterpart!` logs
 an error when one tag already exists, then still calls `tag!` and adds another. A logged

@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Implementing or repairing a representation backend or its symbolic lowering.
 - **Do not open when:** Only comparing existing support or changing a backend-independent protocol.
-- **Related specification IDs:** STK-004, SYS-007, SYS-009, SUB-001, SUB-010, CMP-009
 - **Review when:** Backend extension seams, representation traits, or the shared operation interface changes.
 
 ## Implement or repair a backend

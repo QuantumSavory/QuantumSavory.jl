@@ -3,14 +3,13 @@
 - **Context need:** Reference
 - **Open when:** Choosing among the shipped symbolic noisy two-qubit state families.
 - **Do not open when:** Adding a model, selecting a backend generally, or changing register storage.
-- **Related specification IDs:** SYS-008, SYS-009, SUB-011, CMP-010
 - **Review when:** StatesZoo exports, Genqo wrappers, parameters, or symbolic lowering changes.
 
 ## Model families
 
-StatesZoo currently contains five symbolic two-qubit model types. SYS-008 and SUB-011
-define support for entries that satisfy the public convention; use the human API page
-for constructor parameters and formulas.
+StatesZoo currently contains five symbolic two-qubit model types. Entries that satisfy
+the public convention are supported; use the human API page for constructor parameters
+and formulas.
 
 - `BarrettKokBellPair` represents a normalized noisy Barrett–Kok pair, while
   `BarrettKokBellPairW` preserves heralding probability in its trace.

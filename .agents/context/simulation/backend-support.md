@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Comparing representation support for lowering, operations, noise, traceout, and observables.
 - **Do not open when:** Adding a backend, learning the public register API, or changing only protocol logic.
-- **Related specification IDs:** SYS-001, SYS-003, SYS-007, SUB-010, CMP-009
 - **Review when:** Representation traits, backend modules, default representations, or backend-specific tests change.
 
 ## Implemented capability boundaries
@@ -25,8 +24,8 @@ helpers therefore do not implement those backend/noise pairs.
 The trait implementation and backend guide map both `Qubit` and `Qumode` to
 `QuantumOpticsRepr`; `Register` applies those defaults slot by slot. Gabs and Clifford
 are explicit specialized choices, while `QuantumMCRepr` is a general peer of the
-ordinary QuantumOptics representation and does not require conversion to it. SYS-007
-treats representation-default changes as the specific exception to ordinary SemVer
+ordinary QuantumOptics representation and does not require conversion to it.
+Representation-default changes are the specific exception to ordinary SemVer
 protection.
 
 Generic register operations may work for a backend when its primitive methods and
@@ -48,9 +47,9 @@ constructors, and the existing setting is not promotion plumbing.
 
 The dense-observable Clifford path is a narrow exception: a pure tableau is converted
 to a ket and emits a `maxlog=1` backend warning. It is not the generic promotion and
-once-per-call-site warning mechanism described by SYS-007, SUB-010, and CMP-009. The
-planned warning names only the initial and final representations; no such generic
-warning exists yet.
+once-per-call-site warning mechanism expected for automatic promotion. The planned
+warning names only the initial and final representations; no such generic warning
+exists yet.
 
 Unsupported paths do not uniformly preserve Julia's `MethodError` signal.
 `consistent_representation` and generic symbolic lowering use ordinary `error(...)` in

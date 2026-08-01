@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Checking access times, chronological evolution, background dispatch, or non-instant operation behavior.
 - **Do not open when:** Working only on tags, transport routing, or zoo inventory.
-- **Related specification IDs:** SYS-003, SYS-007, SUB-003, SUB-010, CMP-004, CMP-009
 - **Review when:** `uptotime!`, `overwritetime!`, background models, non-instant operations, or backend evolution methods change.
 
 ## Local-time evolution

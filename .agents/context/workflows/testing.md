@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Selecting local checks, adding a test file, or interpreting CI shard coverage.
 - **Do not open when:** Only reasoning about product behavior without running or changing verification.
-- **Related specification IDs:** SYS-011, SYS-012
 - **Review when:** `test/runtests.jl`, test projects, workspace membership, or CI shard configuration changes.
 
 ## Select and run checks
@@ -31,9 +30,29 @@
 
 The default general shard and CI scope leave plotting, examples, JET, and docs as
 separate evidence. Report them independently rather than summarizing all verification
-as “tests pass.” SYS-011 treats combinations declared and exercised by CI as the
-current supported compatibility matrix; inspect the actual job, environment, and
-selector before extending that claim.
+as “tests pass.” Combinations declared and exercised by CI form the current supported
+compatibility matrix; inspect the actual job, environment, and selector before extending
+that claim.
+
+## Known coverage gaps
+
+- No single end-to-end fixture combines directional delays, noisy quantum transport,
+  chronological background evolution, and final-resource assertions. Representation
+  reuse/promotion and asynchronous protocol composition are likewise split across tests.
+- Core tests do not exhaustively traverse ownership/removal layouts or jointly cover
+  reduction order and randomness, local-time evolution, the full tag/query/wait matrix,
+  and causal behavior at equal timestamps.
+- Network tests lack a discriminating direct-versus-forwarded routing fixture and exact
+  send, pre-arrival, arrival, ownership, and reciprocal-backreference assertions for
+  quantum transport.
+- Zoo tests do not mechanically derive public inventories or consistently verify API
+  prose, examples, constructor introspection, circuit features, and destructive effects.
+  Independent external state and circuit conformance fixtures are also absent.
+- Optional activation, stable log groups, renderers, and inspection APIs are sampled;
+  there is no clean absent/partial/complete activation matrix or success-only renderer
+  suite.
+- CI has no whole-product run covering every public Zoo entry, checked-in example,
+  documentation integration, and supported configuration together.
 
 ## Anchors
 

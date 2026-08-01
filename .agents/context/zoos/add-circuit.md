@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Implementing or revising an immediate callable CircuitZoo operation.
 - **Do not open when:** Merely selecting an existing circuit or writing a resumable network protocol.
-- **Related specification IDs:** SYS-008, SYS-009, SUB-012, CMP-011
 - **Review when:** The callable circuit interface, register operation semantics, or CircuitZoo API tests change.
 
 ## Add the circuit
@@ -21,8 +20,8 @@
    `observable`, and `traceout!`) rather than reaching into state references. Implement
    cleanup for modeled Boolean/measurement failure branches. A thrown exception may
    leave partial mutation and ends the run; do not build rollback solely for it.
-4. Implement the supported public `inputqubits` feature/arity interface required by
-   SUB-012. It remains unexported and optional in the current surface test, so do not
+4. Implement the supported public `inputqubits` feature/arity interface for every
+   circuit. It remains unexported and optional in the current surface test, so do not
    extend those marking and coverage gaps. Count fixed purified inputs as well as
    sacrificed varargs. For a callable with non-slot arguments such as `SDEncode`'s
    message, distinguish data from slots.

@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Checking weak-dependency activation, interactive discovery, plotting, state exploration, or map integration.
 - **Do not open when:** Core behavior, headless simulation, or backend work has no optional-package dependency.
-- **Related specification IDs:** SYS-009, SYS-010, SYS-011, SUB-014, CMP-013
 - **Review when:** Project weak dependencies, extension declarations, extension methods, or plotting tests change.
 
 ## Activation boundaries

@@ -12,9 +12,9 @@ Open only the context for changed code:
 - Optional loading or visualization hooks:
   [extension context](../.agents/context/optional-extensions.md).
 
-Use the component contract and verification action linked from the
-context page. Keep backend capability limits explicit; dispatch failure is not
-evidence that a representation is supported.
+Use the intended-behavior and known-gap guidance on the referenced context page.
+Keep backend capability limits explicit; dispatch failure is not evidence that a
+representation is supported.
 
 Run its test prefix from the root—for example, `general/apply` selects
 `test/general/apply_tests.jl`—before the full `general` suite.

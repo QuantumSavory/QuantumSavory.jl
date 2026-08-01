@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Checking current register operation ordering, composition, tracing, or backend-dispatch boundaries.
 - **Do not open when:** Learning the ownership model, adding a backend, or working only on tags and messages.
-- **Related specification IDs:** SYS-001, SYS-002, SYS-003, SUB-001, SUB-003, CMP-002, CMP-003, CMP-004
 - **Review when:** `initialize!`, `apply!`, `observable`, `project_traceout!`, `traceout!`, `uptotime!`, `overwritetime!`, or symbolic lowering changes.
 
 ## Operation contract

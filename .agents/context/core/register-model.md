@@ -3,7 +3,6 @@
 - **Context need:** Explanation
 - **Open when:** Reasoning about slot ownership, subsystem grouping, initialization, or register/network structure.
 - **Do not open when:** Looking up operation signatures, backend coverage, or metadata-query syntax.
-- **Related specification IDs:** SYS-002, SYS-003, SYS-009, SYS-010, SYS-013, SUB-002, SUB-015, CMP-001, CMP-002
 - **Review when:** Register storage, `StateRef`, initialization, factorization, inspection marking, display, or `RegisterNet` construction changes.
 
 ## Ownership and factorization
@@ -42,11 +41,12 @@ For inspection, qualified `QuantumSavory.stateof(slot)` returns its `StateRef` o
 `QuantumSavory.slots(stateref)` reconstructs live `RegRef` back-references. These are
 unexported and have no Julia `public` declaration. Maintainers classified all three as a
 public-surface gap: human docs teach `stateof` and `quantumstate`, while `slots` still
-needs generated prose; all three need source marking under SYS-009. They are not
+needs generated prose; all three need source marking to satisfy the public-API
+convention. They are not
 serialization APIs. Text display summarizes `Register`, `RegRef`, `StateRef`, and
 `RegisterNet`; HTML display is specialized for `RegRef` and `StateRef`, with
 backend-specific `stateshow` hooks and an escaped plain-text fallback. Rendering success
-is covered by SYS-010, but exact display content is not stable data.
+is supported, but exact display content is not stable data.
 
 `RegisterNet` adds graph and simulation ownership around registers. Its constructor,
 locality model, and known dynamic-insertion defects are canonicalized in the

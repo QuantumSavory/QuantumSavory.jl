@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Checking network construction, directional delays, classical forwarding, or quantum handoff behavior.
 - **Do not open when:** Developing protocol race logic, changing backend evolution, or browsing zoo catalogs.
-- **Related specification IDs:** SYS-006, SYS-007, SUB-007, SUB-008, SUB-009, SUB-010, CMP-007, CMP-008, CMP-009
 - **Review when:** `RegisterNet`, classical channels, message buffers, quantum channels, or delay configuration changes.
 
 ## Current transport boundaries
@@ -34,7 +33,7 @@ The temporary register uses the channel trait and that trait's default represent
 but `swap!` moves state ownership without reconciling the source, channel, or
 destination representation declarations. RegisterNet edge channels also currently
 default to `Qubit`. Transport does not validate trait compatibility. It also lacks the
-automatic common-representation promotion and warning required by SYS-007 and SUB-010.
+intended automatic common-representation promotion and performance warning.
 
 The source/channel time relationship must be valid before transport. Today, if a source
 slot's local access time is later than the modeled arrival, `put!` can throw only after

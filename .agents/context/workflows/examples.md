@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Adding, changing, or validating a runnable example or tutorial script.
 - **Do not open when:** Work is confined to unit tests, documentation prose, or benchmark definitions.
-- **Related specification IDs:** SYS-011, SYS-012
 - **Review when:** The examples project, wrapper inventory, example shard routing, or docs/example coupling changes.
 
 ## Change and validate an example
@@ -39,8 +38,7 @@ actual asserted properties or label the result a smoke test.
 
 Tutorial-local setup and helper functions are not a supported library API. Public
 QuantumSavory APIs demonstrated by examples remain governed by the package contract,
-and SYS-012 requires every checked-in example to remain executable across compatible
-versions.
+and every checked-in example must remain executable across compatible versions.
 
 ## Anchors
 
@@ -62,5 +60,5 @@ public APIs, including `AbstractProtocol`, logging-context overloads, and the re
 backend interface. The remaining concrete boundary violations are direct reads of
 unstable `_log` or `_backlog` protocol bookkeeping in repeater-grid and simple-switch
 code, plus the exported but undocumented `nongreedymultilock` used by the color-center
-cluster setup. These are SYS-012 nonconformances even when they pass against the same
-checkout.
+cluster setup. These remain coverage and compatibility gaps even when they pass against
+the same checkout.

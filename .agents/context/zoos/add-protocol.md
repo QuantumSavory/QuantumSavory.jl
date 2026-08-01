@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Adding a reusable resumable protocol and its tags, logging, tests, and documentation.
 - **Do not open when:** Merely choosing a shipped protocol or implementing an immediate local circuit.
-- **Related specification IDs:** SYS-004, SYS-005, SYS-008, SYS-009, SUB-013, CMP-012, CMP-013
 - **Review when:** `AbstractProtocol`, shorthand constructors, tag/query semantics, or logging conventions change.
 
 ## Add a reusable protocol

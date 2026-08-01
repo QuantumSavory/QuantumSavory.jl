@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Implementing or revising a symbolic model in StatesZoo.
 - **Do not open when:** Merely selecting an existing model or extending a general backend.
-- **Related specification IDs:** SYS-008, SYS-009, SUB-011, CMP-010
 - **Review when:** The StatesZoo model interface, explorer metadata, or supported representation boundary changes.
 
 ## Add the model

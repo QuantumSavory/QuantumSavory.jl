@@ -3,7 +3,6 @@
 - **Context need:** Explanation
 - **Open when:** Reasoning about ConcurrentSim processes, waits, resource ownership, or event ordering.
 - **Do not open when:** Looking up register operations, backend methods, or zoo inventory.
-- **Related specification IDs:** SYS-004, SUB-004, SUB-006
 - **Review when:** Simulation-process helpers, resource acquisition, notifier behavior, or wait composition changes.
 
 ## Scheduling model

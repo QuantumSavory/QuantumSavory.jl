@@ -3,7 +3,6 @@
 - **Context need:** Task playbook
 - **Open when:** Adding a benchmark, running a focused measurement, or interpreting benchmark automation.
 - **Do not open when:** Establishing functional correctness or investigating behavior without a performance question.
-- **Related specification IDs:** None — repository-only workflow
 - **Review when:** Benchmark suite groups, environment resolution, or the AirspeedVelocity workflow changes.
 
 ## Measure performance
@@ -37,7 +36,7 @@ against untrusted changes as a safe local validation recipe.
 ## Anchors
 
 - **Source:** [`benchmark/benchmarks.jl`](../../../benchmark/benchmarks.jl), [`benchmark/Project.toml`](../../../benchmark/Project.toml), and [`benchmark/AGENTS.md`](../../../benchmark/AGENTS.md) — entry point, environment, and mutation conventions.
-- **Docs:** [`README.md`](../../../README.md) — repository-level project context; no normative performance budget is declared.
+- **Docs:** [`README.md`](../../../README.md) — repository-level project context; no formal performance budget is declared.
 - **Test:** [`benchmark/benchmark_tagquery.jl`](../../../benchmark/benchmark_tagquery.jl) and [`benchmark/benchmark_quantumstates.jl`](../../../benchmark/benchmark_quantumstates.jl) — representative scalar and state benchmarks.
 - **CI:** [`.github/workflows/benchmark.yml`](../../../.github/workflows/benchmark.yml) — AirspeedVelocity trigger and permissions.
 

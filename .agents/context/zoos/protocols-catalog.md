@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Choosing among shipped resumable protocols or assessing their current implementation status.
 - **Do not open when:** Adding a protocol, selecting an immediate circuit, or changing transport internals.
-- **Related specification IDs:** SYS-005, SYS-008, SYS-009, SUB-013, CMP-012
 - **Review when:** ProtocolZoo includes/exports, protocol families, or known implementation gaps change.
 
 ## Protocol families
@@ -22,13 +21,13 @@ datagrams, link requests/replies, and end/network/link controllers. `mbqc.jl` ad
 state construction, graph-to-resource mapping, purification measurements, and tracking.
 All three are part of ProtocolZoo, not separate external zoos.
 
-Every documented and public family is long-term supported intent under SYS-008 and
-SUB-013; implementation completeness still varies. QTCP contains unresolved drop
-detection, correction, and timeout work. MBQC currently uses contiguous node-number
-arithmetic in routing/mapping code, so it must not be assumed correct for arbitrary
-graph labels. Entanglement pair identifiers can collide with the zero sentinel under
-the current combination scheme. Switch tests cover several stale-match and
-reciprocal-delete races, but do not prove every scheduler policy.
+Every documented and public family is intended for long-term support; implementation
+completeness still varies. QTCP contains unresolved drop detection, correction, and
+timeout work. MBQC currently uses contiguous node-number arithmetic in routing/mapping
+code, so it must not be assumed correct for arbitrary graph labels. Entanglement pair
+identifiers can collide with the zero sentinel under the current combination scheme.
+Switch tests cover several stale-match and reciprocal-delete races, but do not prove
+every scheduler policy.
 
 The supported authoring surface includes the documented `AbstractProtocol` callable
 pattern, virtual-edge capability, and logging-context overload, so external libraries

@@ -2,7 +2,7 @@
 
 Open the [examples workflow](../.agents/context/workflows/examples.md), then the
 context page for the demonstrated subsystem. Examples are executable
-documentation, not a second behavioral specification.
+documentation; tutorial-local helpers are not supported package APIs.
 
 Prefer the runner prefix corresponding to the mirrored wrapper—for example,
 `examples/qtcp_tutorial_1` selects

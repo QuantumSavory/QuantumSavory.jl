@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Choosing a shipped immediate circuit or reviewing its destructive behavior.
 - **Do not open when:** Adding a circuit, coordinating asynchronous protocols, or selecting state models.
-- **Related specification IDs:** SYS-008, SYS-009, SUB-012, CMP-011
 - **Review when:** CircuitZoo exports, callable behavior, measurement cleanup, or failure semantics change.
 
 ## Circuit families
@@ -32,7 +31,7 @@ The supported public feature-introspection function is `inputqubits`, part of th
 documented `AbstractCircuit` interface in source. It is unexported, unmarked, absent
 from generated prose, optional in the API test, missing for `SDEncode` and `SDDecode`,
 and inaccurate for two Stringent body helpers. The public feature/arity surface
-required by SUB-012 and CMP-011 therefore remains incomplete.
+therefore remains incomplete.
 
 Current purification limitations are concrete:
 

@@ -1,24 +1,16 @@
 # QuantumSavory Agent Knowledge
 
-Load only the route needed for the current task. Normative intent belongs in the
-V-model; implementation context records how the repository currently realizes that
-intent. When they disagree, treat the mismatch as evidence to investigate rather than
-silently rewriting either side.
-
-## Normative specification
-
-Open the [V-model index](v-model/index.md) when reviewing normative requirements,
-observable contracts, acceptance criteria, or verification
-traceability. It is a living aspirational contract grounded in the repository and
-validated by maintainers; implemented defects and incomplete planned behavior remain
-visible as nonconformances. Do not use working context as a substitute for intended
-behavior.
+Load only the route needed for the current task. Context records supported behavior,
+current implementation, and explicit gaps based on maintainer decisions, human
+documentation, source, tests, examples, and CI. When those sources disagree, preserve
+the mismatch for investigation; maintainer-validated intended behavior and human
+documentation take precedence over an accidental implementation detail.
 
 `.agents/evals/` is unrelated to this documentation system and excluded from the
-V-model. Open it only for evaluation work; do not load or reorganize it while navigating
-repository knowledge.
+context routes. Open it only for evaluation work; do not load or reorganize it while
+navigating repository knowledge.
 
-## Working context
+## Context routes
 
 Start with the narrowest route. Open another only when the task crosses that boundary;
 each route leads directly to a small set of leaves.

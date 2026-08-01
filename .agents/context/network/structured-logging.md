@@ -3,7 +3,6 @@
 - **Context need:** Reference
 - **Open when:** Adding, filtering, or reviewing diagnostic records and their simulation context.
 - **Do not open when:** Work has no logging, observability, or optional-inspection impact.
-- **Related specification IDs:** SYS-009, SYS-010, SUB-014, CMP-013
 - **Review when:** `LOG_GROUPS`, context helpers, emitted record fields, or logger-facing documentation changes.
 
 ## Logging contract
