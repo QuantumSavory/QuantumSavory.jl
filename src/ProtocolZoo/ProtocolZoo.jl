@@ -675,7 +675,7 @@ $FIELDS
     period::Union{Float64,Nothing} = 0.1
     """concrete `AbstractTag` subtype which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
     tag::Type{<:AbstractTag} = EntanglementCounterpart
-    """internal runtime observations used by the current renderer; the storage type is not part of the public API and may change in future versions"""
+    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`; the storage type is not part of the public API and may change in future versions"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end
 
