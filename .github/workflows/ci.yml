@@ -59,14 +59,29 @@ jobs:
 
   extended-tests:
     if: github.event_name == 'pull_request'
-    name: Julia 1 - ${{ matrix.suite }} - ubuntu-latest - x64 - pull_request
+    name: Julia 1 - ${{ matrix.name }} - ubuntu-latest - x64 - pull_request
     runs-on: ubuntu-latest
+    timeout-minutes: ${{ matrix.timeout }}
     strategy:
       fail-fast: false
       matrix:
-        suite:
-          - example
-          - plotting
+        include:
+          - name: example
+            args: example
+            threads: '5'
+            timeout: 120
+          - name: plotting-cairo
+            args: 'plotting/cairo --jobs=1 --verbose'
+            threads: '1'
+            timeout: 90
+          - name: plotting-gl
+            args: 'plotting/gl --jobs=1 --verbose'
+            threads: '1'
+            timeout: 90
+          - name: plotting-static
+            args: 'plotting/doctests plotting/show_png plotting/state_explorer --jobs=1 --verbose'
+            threads: '1'
+            timeout: 90
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
@@ -78,9 +93,9 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         with:
           prefix: xvfb-run -a
-          test_args: ${{ matrix.suite }}
+          test_args: ${{ matrix.args }}
         env:
-          JULIA_NUM_THREADS: '5'
+          JULIA_NUM_THREADS: ${{ matrix.threads }}
       - uses: julia-actions/julia-processcoverage@v1
         with:
           directories: src,ext
