@@ -159,7 +159,11 @@ $TYPEDFIELDS
     """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
     assignment_algorithm::Function = promponas_bruteforce_choice
     """internal backlog bookkeeping; the storage type is not part of the public API and may change in future versions"""
-    _backlog::SymMatrix{Matrix{Int}}
+    _backlog::SymMatrix{Matrix{Int}} = SymMatrix(zeros(
+        Int,
+        length(clientnodes),
+        length(clientnodes),
+    ))
     function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
         all(in(neighbors(net, switchnode)), clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be directly connected to the `switchnode`!"))
