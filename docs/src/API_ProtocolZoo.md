@@ -59,9 +59,6 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
-Protocols can opt into runtime catalogs for external tools through the trait described
-in [API Autodiscovery](@ref api-autodiscovery).
-
 ## Protocol Logging Context
 
 ProtocolZoo records use Julia's standard logging macros and the public

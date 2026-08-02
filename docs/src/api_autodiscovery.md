@@ -1,6 +1,6 @@
 # [API Autodiscovery](@id api-autodiscovery)
 
-QuantumSavory provides runtime catalogs for tools that need to present the models and
+QuantumSavory provides runtime catalogs for tools, like GUIs, that need all the models and
 protocols available in the current Julia process. A primary consumer is the
 [QuantumSavory Web GUI](https://gui.quantumsavory.org), developed in the
 [WebQuantumSavory repository](https://github.com/QuantumSavory/WebQuantumSavory).

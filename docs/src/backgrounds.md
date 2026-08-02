@@ -64,16 +64,10 @@ function pt_to_html(args...; kwargs...) # hide
     str = pretty_table(String, args...; kwargs...) # hide
     return Base.HTML(str) # hide
 end # hide
-# Includes public background types from every package loaded in this Julia process. # hide
 types = QuantumSavory.available_background_types() # hide
 pt_to_html(types; backend = :html, show_column_labels = false) # hide
 ```
 
-The catalog is recomputed recursively on each call, so public concrete
-background types from an independently loaded package appear without
-registration. Public abstract types and types whose canonical defining binding
-is private are not listed. See [API Autodiscovery](@ref api-autodiscovery) for
-the complete discovery contract.
 
 If you want to inspect how a declared background process is represented, use
 [`paulinoise`](@ref), [`krausops`](@ref), and [`lindbladop`](@ref).

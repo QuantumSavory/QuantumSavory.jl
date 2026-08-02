@@ -85,7 +85,7 @@ end
 """
     protocol_catalog_metadata(::Type{<:AbstractProtocol})
 
-Opt a protocol type into [`available_protocol_types`](@ref).
+Opt a protocol type into [`available_protocol_types`](@ref), to make it available to tools like the GUI WebQuantumSavory.
 
 Independent packages extend this method for their own public protocol types and return
 a named tuple with exactly these fields:
@@ -103,7 +103,9 @@ This generic intentionally has no fallback method so that dispatch is the opt-in
 """
 function protocol_catalog_metadata end
 
-"""Return metadata for loaded public protocol types that opt into the catalog.
+"""Return metadata for available protocol types.
+
+Used to make a protocol available to tools like the GUI WebQuantumSavory.
 
 The result is sorted by qualified type name. Each entry contains `type`, `doc`,
 `nodeargs`, `attachment`, `attachment_fields`, `parameters`, and

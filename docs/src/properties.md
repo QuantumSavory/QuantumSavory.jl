@@ -56,16 +56,9 @@ function pt_to_html(args...; kwargs...) # hide
     return Base.HTML(str) # hide
 end # hide
 
-# Includes public slot types from every package loaded in this Julia process. # hide
 types = QuantumSavory.available_slot_types() # hide
 pt_to_html(types; backend = :html, show_column_labels = false) # hide
 ```
-
-The catalog is recomputed recursively on each call, so public concrete slot
-types from an independently loaded package appear without registration. Public
-abstract types and types whose canonical defining binding is private are not
-listed. See [API Autodiscovery](@ref api-autodiscovery) for the complete
-discovery contract.
 
 ## Where To Go Next
 
