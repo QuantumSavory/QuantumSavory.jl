@@ -28,13 +28,14 @@ Explanation pages answer questions such as:
 4. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
 5. [Modeling Registers, Factorization, and Time](@ref
    modeling-registers-time)
-6. [Symbolic Frontend](@ref symbolic-frontend)
-7. [Metadata and Protocol Composition](@ref metadata-plane)
-8. [Classical Messaging and Buffers](@ref classical-messaging)
-9. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
-10. [Properties](@ref)
-11. [Background Noise Processes](@ref)
-12. [Discrete Event Simulator](@ref sim)
+6. [Register Networks](@ref register-networks)
+7. [Symbolic Frontend](@ref symbolic-frontend)
+8. [Metadata and Protocol Composition](@ref metadata-plane)
+9. [Classical Messaging and Buffers](@ref classical-messaging)
+10. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
+11. [Properties](@ref)
+12. [Background Noise Processes](@ref)
+13. [Discrete Event Simulator](@ref sim)
 
 ## Relationship To Other Sections
 
