@@ -59,6 +59,80 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
+## Opting Into the Interactive Protocol Catalog
+
+The public, non-exported
+`QuantumSavory.ProtocolZoo.available_protocol_types` function supplies the
+protocol catalog used by interactive and Web tooling. Load `InteractiveUtils`
+and `REPL` to activate it. The function recursively discovers concrete public
+subtypes of `AbstractProtocol` in every loaded package, but a protocol appears
+only when its package explicitly extends the public
+`protocol_catalog_metadata` trait for that type. There is no registry or
+initialization hook, and a package loaded later is visible on the next call.
+
+Here is a minimal independent-package definition:
+
+```julia
+module MyProtocolPackage
+
+using ConcurrentSim: Simulation
+using QuantumSavory: RegisterNet
+using QuantumSavory.ProtocolZoo: AbstractProtocol
+import QuantumSavory.ProtocolZoo: permits_virtual_edge, protocol_catalog_metadata
+
+public MyProtocol
+
+"""A protocol attached to one network node."""
+Base.@kwdef struct MyProtocol <: AbstractProtocol
+    "the simulation supplied by the framework"
+    sim::Simulation
+    "the register network supplied by the framework"
+    net::RegisterNet
+    "the topology-supplied host node"
+    host::Int
+    "the configurable target nodes"
+    targets::Vector{Int}
+    "optional retry delay"
+    retry_delay::Float64 = 0.1
+    _cache::Vector{Int} = Int[]
+end
+
+protocol_catalog_metadata(::Type{MyProtocol}) = (
+    attachment = :node,
+    attachment_fields = (node=:host,),
+    required_fields = (:targets,),
+)
+
+permits_virtual_edge(::Type{MyProtocol}) = true
+
+end
+```
+
+The trait result must be a named tuple with exactly the following keys, in this
+order:
+
+- `attachment` is `:network`, `:node`, or `:edge`;
+- `attachment_fields` maps topology roles to constructor fields. The mapping is
+  respectively empty, `(node=:field,)`, or
+  `(node_a=:field_a, node_b=:field_b)`. Mapped fields must be distinct and
+  documented; and
+- `required_fields` is a tuple of distinct configurable fields that have no
+  catalog-supplied value.
+
+Cataloged protocols follow the `sim`/`net` convention: both injected fields and
+every other non-underscore field must be documented. The topology mapping
+supplies attachment fields, while all remaining non-private fields become
+`parameters`. Each parameter descriptor contains `(field, type, doc, required)`.
+The protocol descriptor contains
+`(type, doc, nodeargs, attachment, attachment_fields, parameters,
+permits_virtual_edge)`, with `nodeargs` derived from the number of attachment
+fields. Underscore-prefixed runtime storage is never configurable.
+
+The canonical defining binding must be public (declared with `public` or
+`export`). Re-exporting a private-origin type does not opt it in, and aliases or
+re-exports do not duplicate an already-public type. Current MBQC implementation
+types deliberately remain outside this catalog until they add trait methods.
+
 ## Protocol Logging Context
 
 ProtocolZoo records use Julia's standard logging macros and the public

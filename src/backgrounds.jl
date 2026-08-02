@@ -48,7 +48,11 @@ end
 # T1TwirledDecay
 # T1T2TwirledNoise
 
-"""Display all available background types in QuantumSavory along with their documentation.
+public available_background_types
 
-The `InteractiveUtils` package must be installed and imported."""
+"""Return the loaded public background types along with their documentation.
+
+Concrete direct and indirect subtypes of [`AbstractBackground`](@ref) are discovered on
+each call. The defining binding of each type must be public. The `InteractiveUtils`
+and `REPL` standard libraries must be loaded to activate this optional method."""
 function available_background_types end

@@ -30,11 +30,14 @@ Switch tests cover several stale-match and reciprocal-delete races, but do not p
 every scheduler policy.
 
 The supported authoring surface includes the documented `AbstractProtocol` callable
-pattern, virtual-edge capability, and logging-context overload, so external libraries
-can define reusable protocols in the same style as ProtocolZoo. Public protocol
-constructors generally use DocStringExtensions field tables. Configuration fields are
-supported constructor inputs; runtime bookkeeping fields such as `_log` and `_backlog`
-are explicitly internal and their storage types may change.
+pattern, virtual-edge capability, logging-context overload, and the
+`protocol_catalog_metadata` opt-in trait, so external libraries can define reusable
+protocols in the same style as ProtocolZoo. The InteractiveUtils catalog discovers
+loaded public types recursively and validates attachment roles against documented
+constructor fields. Public protocol constructors generally use DocStringExtensions
+field tables. Configuration fields are supported constructor inputs; runtime
+bookkeeping fields such as `_log` and `_backlog` are explicitly internal and their
+storage types may change.
 
 ## Anchors
 
@@ -48,10 +51,7 @@ are explicitly internal and their storage types may change.
 - MBQC assumes contiguous node labels in several paths.
 - Combined entanglement identifiers can collide with the zero sentinel.
 - The documented qualified `promponas_bruteforce_choice` switch selector and Zoo module
-  bindings lack `public` declarations. The documented unexported `AbstractProtocol` and
-  `permits_virtual_edge` extension names have the same marking gap.
+  bindings lack `public` declarations.
 - Generated constructor-reference coverage is not mechanically audited. Runtime
   `_log`/`_backlog` storage remains accepted by generated `@kwdef` constructor paths and
   is read by examples even though its concrete type is not a supported interface.
-- No independent conformance fixture defines an external protocol and verifies the full
-  documented authoring surface.

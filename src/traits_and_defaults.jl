@@ -13,12 +13,18 @@ struct Qumode <: QuantumStateTrait end
 default_repr(::Qubit) = QuantumOpticsRepr()
 default_repr(::Qumode) = QuantumOpticsRepr()
 
-"""Display all available slot types in QuantumSavory along with their documentation.
+public available_slot_types, constructor_metadata
 
-The `InteractiveUtils` package must be installed and imported."""
+"""Return the loaded public slot types along with their documentation.
+
+Concrete direct and indirect subtypes of [`QuantumStateTrait`](@ref) are discovered on
+each call. The defining binding of each type must be public. The `InteractiveUtils`
+and `REPL` standard libraries must be loaded to activate this optional method."""
 function available_slot_types end
 
-"""Display all argument types and their documentation for the specified background type.
+"""Return documented constructor fields for a type.
 
-The `InteractiveUtils` package must be installed and imported."""
+Each entry has the fields `field`, `type`, and `doc`. Undocumented fields and fields
+whose names begin with an underscore are omitted. The `InteractiveUtils` and `REPL`
+standard libraries must be loaded to activate this optional method."""
 function constructor_metadata end

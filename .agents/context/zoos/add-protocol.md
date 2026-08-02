@@ -35,7 +35,13 @@
    by its public constructors without promising concrete struct layout. Add API
    reference and a user-oriented example; avoid copying the field catalog into agent
    context.
-8. Test happy-path completion and forced races. Add stale-query, reciprocal-tag,
+8. To expose the type to interactive and Web catalogs, extend
+   `protocol_catalog_metadata(::Type{MyProtocol})` with its network/node/edge attachment
+   roles and required configurable fields. Keep documented `sim` and `net` fields,
+   document every non-private constructor field, and use an underscore prefix for
+   runtime-only storage. Catalog participation is explicit; publicity alone does not
+   opt in.
+9. Test happy-path completion and forced races. Add stale-query, reciprocal-tag,
    cleanup, shorthand-simulation, logging-context, and virtual-edge cases as applicable.
    Run the focused tests followed by the general shard.
 
@@ -52,7 +58,8 @@ node arithmetic as a design contract.
 ## Supported boundary
 
 The documented `AbstractProtocol` callable pattern, `permits_virtual_edge` capability,
-and `protocol_log_context` overload are supported extension points. Public concrete
-protocols and their documented constructors are also supported. Underscore-prefixed
-runtime storage such as `_log` and `_backlog` is internal; its concrete type may change
-between compatible versions even when generated field documentation displays it.
+`protocol_log_context` overload, and `protocol_catalog_metadata` trait are supported
+extension points. Public concrete protocols and their documented constructors are also
+supported. Underscore-prefixed runtime storage such as `_log` and `_backlog` is
+internal; its concrete type may change between compatible versions even when generated
+field documentation displays it.

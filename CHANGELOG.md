@@ -28,6 +28,16 @@
   RNG sampling entirely. `stateref.state[]` exposes the wrapper, and `StateRef` displays
   identify its implementation module as `QuantumSavory`.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
+- **(breaking)** Interactive slot, background, and protocol catalogs are now
+  public, non-exported, open-world APIs. They recursively discover public concrete
+  types from every loaded package and return deterministic qualified-name order.
+  Protocol packages opt in through the public `protocol_catalog_metadata` dispatch
+  trait; catalog entries now include attachment roles, configurable parameters,
+  required-field flags, and `permits_virtual_edge`. The built-in switch protocol is
+  classified as a node attachment, so `SimpleSwitchDiscreteProt.nodeargs` changes
+  from `0` to `1`. `constructor_metadata` continues to omit undocumented and
+  underscore-prefixed fields; cataloged protocols require documentation for every
+  non-private field.
 - **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - **(breaking)** Named tag heads now subtype the exported `AbstractTag` marker.
   Custom types passed to `EntanglerProt(...; tag=MyTag)` or

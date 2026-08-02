@@ -31,6 +31,9 @@ export
     LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
     NetworkNodeController, EndNodeController, LinkController
 
+public AbstractProtocol, available_protocol_types, protocol_catalog_metadata,
+    permits_virtual_edge
+
 abstract type AbstractProtocol end
 
 """
@@ -79,9 +82,34 @@ function protocol_log_context(prot::AbstractProtocol)
     )
 end
 
-"""Display all available background types in QuantumSavory along with their documentation.
+"""
+    protocol_catalog_metadata(::Type{<:AbstractProtocol})
 
-The `InteractiveUtils` package must be installed and imported."""
+Opt a protocol type into [`available_protocol_types`](@ref).
+
+Independent packages extend this method for their own public protocol types and return
+a named tuple with exactly these fields:
+
+- `attachment`: one of `:network`, `:node`, or `:edge`;
+- `attachment_fields`: respectively `NamedTuple()`, `(node=:field,)`, or
+  `(node_a=:field_a, node_b=:field_b)`; and
+- `required_fields`: a tuple of configurable constructor-field names which callers
+  must supply.
+
+The protocol must have documented `sim` and `net` fields. Every other non-private
+field must also be documented; attachment fields are supplied by topology and the
+remaining fields are configurable parameters. Underscore-prefixed fields are private.
+This generic intentionally has no fallback method so that dispatch is the opt-in.
+"""
+function protocol_catalog_metadata end
+
+"""Return metadata for loaded public protocol types that opt into the catalog.
+
+The result is sorted by qualified type name. Each entry contains `type`, `doc`,
+`nodeargs`, `attachment`, `attachment_fields`, `parameters`, and
+`permits_virtual_edge`. A parameter entry contains `field`, `type`, `doc`, and
+`required`. The `InteractiveUtils` and `REPL` standard libraries must be loaded to
+activate this optional method."""
 function available_protocol_types end
 
 const QueryArgs = Union{Int,Function,Wildcard}
