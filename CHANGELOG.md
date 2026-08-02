@@ -13,9 +13,6 @@
 - `QuantumMCRepr` is supported much more thoroughly, providing a faster alternative to `QuantumOpticsRepr` that is just as general.
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
 - Introspection tools for generating catalogs of available slot, background, and protocol types are now public.
-- **(fix)** `SimpleSwitchDiscreteProt` now derives its internal backlog from
-  `clientnodes`, so its catalog-advertised parameters are sufficient for keyword
-  construction.
 - **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - Named tag heads now subtype the exported `AbstractTag` marker.
   Custom types passed to `EntanglerProt(...; tag=MyTag)` or
