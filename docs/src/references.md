@@ -16,6 +16,7 @@ want exact signatures, exported names, or generated API listings.
 
 ## Module Reference Pages
 
+- [API Autodiscovery](@ref api-autodiscovery)
 - [API](@ref Full-API)
 - [CircuitZoo API](API_CircuitZoo.md)
 - [StatesZoo API](@ref Predefined-Models-of-Quantum-States)

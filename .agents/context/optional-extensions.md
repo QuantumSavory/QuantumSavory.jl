@@ -52,7 +52,7 @@ shard, while Buildkite has a distinct plotting job.
 
 - **Source:** [`Project.toml`](../../Project.toml), [`ext/QuantumSavoryInteractiveUtils/QuantumSavoryInteractiveUtils.jl`](../../ext/QuantumSavoryInteractiveUtils/QuantumSavoryInteractiveUtils.jl), [`ext/QuantumSavoryMakie/QuantumSavoryMakie.jl`](../../ext/QuantumSavoryMakie/QuantumSavoryMakie.jl), and [`ext/QuantumSavoryTylerMakie/QuantumSavoryTylerMakie.jl`](../../ext/QuantumSavoryTylerMakie/QuantumSavoryTylerMakie.jl) — activation and methods.
 - **Docs:** [`docs/src/visualizations.md`](../../docs/src/visualizations.md), [`docs/src/state_visualization.md`](../../docs/src/state_visualization.md), and [`docs/src/tutorial/state_explorer.md`](../../docs/src/tutorial/state_explorer.md) — public optional features.
-- **Test:** [`test/general/interactiveutils_tests.jl`](../../test/general/interactiveutils_tests.jl), its isolated external-package fixture, [`test/projects/plotting/Project.toml`](../../test/projects/plotting/Project.toml), and [`test/plotting/`](../../test/plotting/) — discovery, extension environments, and focused coverage.
+- **Test:** [`test/general/interactiveutils_tests.jl`](../../test/general/interactiveutils_tests.jl), [`test/projects/plotting/Project.toml`](../../test/projects/plotting/Project.toml), and [`test/plotting/`](../../test/plotting/) — discovery, extension environments, and focused coverage.
 
 ## Known gaps
 

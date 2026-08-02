@@ -6,60 +6,6 @@ using QuantumSavory.ProtocolZoo # make protocol bindings available for doc resol
 import InteractiveUtils: subtypes
 import REPL # load the Base.Docs.doc methods
 
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.EntanglerProt}) = (
-    attachment = :edge,
-    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.EntanglementConsumer}) = (
-    attachment = :edge,
-    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.LinkController}) = (
-    attachment = :edge,
-    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.SwapperProt}) = (
-    attachment = :node,
-    attachment_fields = (node=:node,),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.EntanglementTracker}) = (
-    attachment = :node,
-    attachment_fields = (node=:node,),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.CutoffProt}) = (
-    attachment = :node,
-    attachment_fields = (node=:node,),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.EndNodeController}) = (
-    attachment = :node,
-    attachment_fields = (node=:node,),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.NetworkNodeController}) = (
-    attachment = :node,
-    attachment_fields = (node=:node,),
-    required_fields = (),
-)
-
-ProtocolZoo.protocol_catalog_metadata(::Type{ProtocolZoo.SimpleSwitchDiscreteProt}) = (
-    attachment = :node,
-    attachment_fields = (node=:switchnode,),
-    required_fields = (:clientnodes, :success_probs),
-)
-
 _qualified_type_name(T) = string(parentmodule(T), ".", nameof(T))
 
 function _available_types(root)

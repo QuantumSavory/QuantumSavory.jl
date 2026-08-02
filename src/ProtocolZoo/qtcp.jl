@@ -4,6 +4,7 @@ using QuantumSavory
 import QuantumSavory: Tag, get_time_tracker
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol
+import QuantumSavory.ProtocolZoo: protocol_catalog_metadata
 using QuantumSavory.CircuitZoo: LocalEntanglementSwap
 import ConcurrentSim
 using ConcurrentSim: Simulation, @yield, timeout, @process, now, Process, Resource
@@ -215,6 +216,12 @@ Managing the following transformations of classical control signals:
     node::Int
 end
 
+protocol_catalog_metadata(::Type{EndNodeController}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
+
 EndNodeController(net::RegisterNet, node::Int) = EndNodeController(get_time_tracker(net), net, node)
 
 """
@@ -241,6 +248,12 @@ Managing the following transformations of classical control signals:
     node::Int
 end
 
+protocol_catalog_metadata(::Type{NetworkNodeController}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
+
 NetworkNodeController(net::RegisterNet, node::Int) = NetworkNodeController(get_time_tracker(net), net, node)
 
 """
@@ -263,6 +276,12 @@ Managing the following transformations of classical control signals:
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
 end
+
+protocol_catalog_metadata(::Type{LinkController}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
 
 LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_time_tracker(net), net, nodeA, nodeB)
 

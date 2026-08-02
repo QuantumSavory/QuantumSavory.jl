@@ -90,6 +90,7 @@ function main()
         "Tag and Query API" => "tag_query.md",
         "Standard Protocol Tags" => "standard_protocol_tags.md",
         "Symbolic Expressions Reference" => "symbolics.md",
+        "API Autodiscovery" => "api_autodiscovery.md",
         "API" => "API.md",
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",

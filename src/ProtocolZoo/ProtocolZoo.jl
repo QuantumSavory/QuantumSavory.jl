@@ -324,6 +324,12 @@ $TYPEDFIELDS
     tag::Union{Type{<:AbstractTag},Nothing} = EntanglementCounterpart
 end
 
+protocol_catalog_metadata(::Type{EntanglerProt}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
+
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
 function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
     if isnothing(rate)
@@ -465,6 +471,12 @@ $TYPEDFIELDS
     """the vertex of the node where the tracker is working"""
     node::Int
 end
+
+protocol_catalog_metadata(::Type{EntanglementTracker}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
 
 EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
@@ -706,6 +718,12 @@ $FIELDS
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`; the storage type is not part of the public API and may change in future versions"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end
+
+protocol_catalog_metadata(::Type{EntanglementConsumer}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
 
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)

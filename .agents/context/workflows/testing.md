@@ -47,8 +47,7 @@ that claim.
   quantum transport.
 - Zoo tests do not mechanically derive public inventories or consistently verify API
   prose, examples, constructor introspection, circuit features, and destructive effects.
-  The protocol catalog has an isolated external-package conformance fixture; equivalent
-  independent state and circuit conformance fixtures are still absent.
+  Independent external state and circuit conformance fixtures are also absent.
 - Optional activation, stable log groups, renderers, and inspection APIs are sampled;
   there is no clean absent/partial/complete activation matrix or success-only renderer
   suite.
