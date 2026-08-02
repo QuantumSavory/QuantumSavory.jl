@@ -18,3 +18,7 @@ Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [sources]
 QuantumSavory = {path = "../../.."}
+
+[compat]
+FileIO = "1.20.0"
+ParallelTestRunner = "2.6.3"

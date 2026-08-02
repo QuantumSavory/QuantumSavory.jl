@@ -122,7 +122,9 @@ Use these rules in protocol code:
   the slot before deleting the tag or using the result;
 - for paired resources, re-check both sides before deleting either side (e.g. in an entanglement swapper that needs to lock two qubits).
 
-`query_wait` is useful for observing that a matching tag exists. It is going to lock or reserve the tag it returns (or the register in which that tag is).
+`query_wait` is useful for observing that a matching tag exists. It neither
+consumes nor locks or reserves the tag (or the register containing it); recheck
+the result after any yield before acting on it.
 
 ## Filtering By Resource State
 

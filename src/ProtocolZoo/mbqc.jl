@@ -422,14 +422,14 @@ Base.show(io::IO, tag::PurifiedEntanglementCounterpart) = print(io, "PurifiedEnt
 Tag(tag::PurifiedEntanglementCounterpart) = Tag(PurifiedEntanglementCounterpart, tag.remote_node, tag.remote_slot)
 
 """
-\$TYPEDEF
+$TYPEDEF
 
 Track results of Bell measurements sent from other locations, deciding how to proceed. The two options are:
 
 - success: tag the purified Bell pairs with `PurifiedEntanglementCounterpart` tag
 - failure: clean up all involved qubit slots
 
-\$TYPEDFIELDS
+$TYPEDFIELDS
 """
 @kwdef struct MBQCPurificationTracker <: AbstractProtocol
     """time-and-schedule-tracking instance from `ConcurrentSim`"""
