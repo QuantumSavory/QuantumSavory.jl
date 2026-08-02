@@ -148,6 +148,7 @@ The currently supported concrete tag signatures are:
 
 ```@example
 using QuantumSavory #hide
+ENV["LINES"] = "100" # hide
 [tuple(m.sig.types[2:end]...) for m in methods(Tag) if m.sig.types[2] ∈ (Symbol, DataType)]
 ```
 
