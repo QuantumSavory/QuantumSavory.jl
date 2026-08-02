@@ -71,6 +71,7 @@ function main()
         "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
         "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
+        "Grid of Repeaters" => "howto/repeatergrid/repeatergrid.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
         "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
