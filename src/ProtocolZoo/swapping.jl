@@ -65,6 +65,12 @@ $TYPEDFIELDS
     max_history_per_slot::Union{Int,Nothing} = 3
 end
 
+protocol_catalog_metadata(::Type{SwapperProt}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
+
 #TODO "convenience constructor for the missing things and finish this docstring"
 function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return SwapperProt(;sim, net, node, kwargs...)

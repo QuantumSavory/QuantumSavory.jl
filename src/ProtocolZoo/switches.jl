@@ -3,6 +3,7 @@ module Switches
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, AbstractProtocol
+import QuantumSavory.ProtocolZoo: protocol_catalog_metadata
 using Graphs: nv, edges, complete_graph, neighbors, adjacency_matrix
 using GraphsMatching: maximum_weight_matching
 using Combinatorics: combinations
@@ -169,6 +170,12 @@ $TYPEDFIELDS
         new(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
     end
 end
+
+protocol_catalog_metadata(::Type{SimpleSwitchDiscreteProt}) = (
+    attachment = :node,
+    attachment_fields = (node=:switchnode,),
+    required_fields = (:clientnodes, :success_probs),
+)
 
 function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs; kwrags...)
     n = length(clientnodes)

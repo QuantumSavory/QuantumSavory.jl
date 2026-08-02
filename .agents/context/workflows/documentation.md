@@ -32,18 +32,18 @@ public only when generated prose documents it and source either exports it or ma
 `public`. A dependency-owned name intentionally reexported and documented through
 QuantumSavory is part of that product surface; dependency internals that the package does
 not expose are not. A documented constructor parameter is public, but the concrete field
-that stores it remains internal even when it has the same name. This checkout contains
-no `public` declarations. The current public-intent inventory is:
+that stores it remains internal even when it has the same name. The interactive metadata
+catalogs, `ProtocolZoo.AbstractProtocol`, `ProtocolZoo.permits_virtual_edge`, and the
+protocol catalog trait now use targeted `public` declarations. The remaining
+public-intent inventory is:
 
 - generated prose but no marking: qualified `stateof`, `quantumstate`, `swap!`,
   `showmetadata`, `default_repr`, `Switches.promponas_bruteforce_choice`,
-  `ProtocolZoo.AbstractProtocol`,
   `ProtocolZoo.EntanglementDelete`, `ProtocolZoo.QTCP.QDatagramSuccess`, the three Zoo
   module bindings, their documented `Genqo`/`Switches`/`QTCP`/MBQC nested modules, and
   the two Genqo state models; and
 - source docstring but no generated prose or marking: `slots`,
-  `ProtocolZoo.permits_virtual_edge`, `CircuitZoo.AbstractCircuit`, and its incomplete
-  `inputqubits` feature interface.
+  `CircuitZoo.AbstractCircuit`, and its incomplete `inputqubits` feature interface.
 
 Audit those gaps instead of treating documentation alone or an accidental export alone
 as sufficient. The Zoo catalogs give the model and feature details.

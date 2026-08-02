@@ -95,6 +95,7 @@ function main()
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",
         "ProtocolZoo API" => "API_ProtocolZoo.md",
+        "API Autodiscovery" => "api_autodiscovery.md",
         "QuantumInterface API" => "API_Interface.md",
         "QuantumSymbolics API" => "API_Symbolics.md",
         "Visualizations" => "visualizations.md",

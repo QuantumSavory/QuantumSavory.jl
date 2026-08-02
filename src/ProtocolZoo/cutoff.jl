@@ -30,6 +30,12 @@ $FIELDS
     max_delete_per_slot::Union{Int,Nothing} = 3
 end
 
+protocol_catalog_metadata(::Type{CutoffProt}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
+
 function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return CutoffProt(;sim, net, node, kwargs...)
 end

@@ -31,6 +31,9 @@ export
     LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
     NetworkNodeController, EndNodeController, LinkController
 
+public AbstractProtocol, available_protocol_types, protocol_catalog_metadata,
+    permits_virtual_edge
+
 abstract type AbstractProtocol end
 
 """
@@ -79,9 +82,36 @@ function protocol_log_context(prot::AbstractProtocol)
     )
 end
 
-"""Display all available background types in QuantumSavory along with their documentation.
+"""
+    protocol_catalog_metadata(::Type{<:AbstractProtocol})
 
-The `InteractiveUtils` package must be installed and imported."""
+Opt a protocol type into [`available_protocol_types`](@ref), to make it available to tools like the GUI WebQuantumSavory.
+
+Independent packages extend this method for their own public protocol types and return
+a named tuple with exactly these fields:
+
+- `attachment`: one of `:network`, `:node`, or `:edge`;
+- `attachment_fields`: respectively `NamedTuple()`, `(node=:field,)`, or
+  `(node_a=:field_a, node_b=:field_b)`; and
+- `required_fields`: a tuple of configurable constructor-field names which callers
+  must supply.
+
+The protocol must have documented `sim` and `net` fields. Every other non-private
+field must also be documented; attachment fields are supplied by topology and the
+remaining fields are configurable parameters. Underscore-prefixed fields are private.
+This generic intentionally has no fallback method so that dispatch is the opt-in.
+"""
+function protocol_catalog_metadata end
+
+"""Return metadata for available protocol types.
+
+Used to make a protocol available to tools like the GUI WebQuantumSavory.
+
+The result is sorted by qualified type name. Each entry contains `type`, `doc`,
+`nodeargs`, `attachment`, `attachment_fields`, `parameters`, and
+`permits_virtual_edge`. A parameter entry contains `field`, `type`, `doc`, and
+`required`. The `InteractiveUtils` and `REPL` standard libraries must be loaded to
+activate this optional method."""
 function available_protocol_types end
 
 const QueryArgs = Union{Int,Function,Wildcard}
@@ -296,6 +326,12 @@ $TYPEDFIELDS
     tag::Union{Type{<:AbstractTag},Nothing} = EntanglementCounterpart
 end
 
+protocol_catalog_metadata(::Type{EntanglerProt}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
+
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
 function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
     if isnothing(rate)
@@ -437,6 +473,12 @@ $TYPEDFIELDS
     """the vertex of the node where the tracker is working"""
     node::Int
 end
+
+protocol_catalog_metadata(::Type{EntanglementTracker}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
 
 EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
@@ -678,6 +720,12 @@ $FIELDS
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`; the storage type is not part of the public API and may change in future versions"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 end
+
+protocol_catalog_metadata(::Type{EntanglementConsumer}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
 
 function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
     return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)
