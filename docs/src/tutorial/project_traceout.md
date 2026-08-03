@@ -12,9 +12,8 @@ For a discrete measurement, the function returns a one-based index into the
 measurement basis. The index is not an eigenvalue. For a homodyne measurement,
 the function returns continuous quadrature data.
 
-The examples set the random seed so that the displayed results are repeatable.
-A measurement in a simulation is still random unless the input state fixes its
-result.
+The sampled value can change between runs. The examples do not require one
+specific value. They check relations that must hold for every valid value.
 
 The first three examples use the default `QuantumOpticsRepr()`. The homodyne
 example selects `GabsRepr` explicitly.
@@ -26,27 +25,27 @@ Pass `Z` to select its eigenbasis, `(Z1, Z2)`.
 
 ```@example project_traceout
 using QuantumSavory
-using Random
-
-Random.seed!(42)
 
 qubits = Register(2)
 bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
 initialize!(qubits[1:2], bell)
 
-outcome = project_traceout!(qubits[1], Z)
-partner_state = (Z1, Z2)[outcome]
+first_outcome = project_traceout!(qubits[1], Z)
+partner_state = (Z1, Z2)[first_outcome]
+partner_fidelity = observable(qubits[2], SProjector(partner_state))
+second_outcome = project_traceout!(qubits[2], Z)
 
 (
-    outcome = outcome,
-    measured_slot_is_assigned = isassigned(qubits, 1),
-    partner_fidelity = observable(qubits[2], SProjector(partner_state)),
+    measurements_match = first_outcome == second_outcome,
+    partner_matches_first = isapprox(partner_fidelity, 1; atol = 1e-12),
+    both_slots_are_empty = !isassigned(qubits, 1) && !isassigned(qubits, 2),
 )
 ```
 
-The result is `2`, so the measured qubit was projected onto `Z2`. The
-`partner_fidelity` is `1.0`, so the other qubit also collapsed to `Z2`. The
-measured slot is now empty.
+Each outcome is either `1` or `2`. The two values are always equal because the
+Bell state has equal ``Z``-basis results. The projector observable checks that
+the second qubit is in the state selected by the first outcome. Both slots are
+empty after the second measurement.
 
 You can use `X` or `Y` in the same way. Each operator selects its own pair of
 eigenstates.
@@ -57,24 +56,25 @@ An explicit tuple or vector sets both the basis and the order of the outcomes.
 Measure a new Bell pair in the ``X`` basis.
 
 ```@example project_traceout
-Random.seed!(42)
-
 qubits = Register(2)
 initialize!(qubits[1:2], bell)
 
 x_basis = (X1, X2)
-outcome = project_traceout!(qubits[1], x_basis)
-partner_state = x_basis[outcome]
+first_outcome = project_traceout!(qubits[1], x_basis)
+partner_state = x_basis[first_outcome]
+partner_fidelity = observable(qubits[2], SProjector(partner_state))
+second_outcome = project_traceout!(qubits[2], x_basis)
 
 (
-    outcome = outcome,
-    partner_fidelity = observable(qubits[2], SProjector(partner_state)),
+    measurements_match = first_outcome == second_outcome,
+    partner_matches_first = isapprox(partner_fidelity, 1; atol = 1e-12),
 )
 ```
 
-The Bell pair is also correlated in the ``X`` basis. Outcome `2` means `X2`
-because `X2` is the second item in `x_basis`. The projector observable confirms
-that the other qubit is in the same state.
+The Bell pair is also correlated in the ``X`` basis. If the first outcome is
+`1`, the selected state is `X1`. If it is `2`, the selected state is `X2`.
+The projector observable and the second measurement both confirm the
+correlation without requiring either value.
 
 Use this form when you need direct control of the basis order. The basis states
 must form a complete orthonormal basis for the measured system.
@@ -87,26 +87,33 @@ default `QuantumOpticsRepr()`, which has Fock states `F0`, `F1`, and
 photon in both modes.
 
 ```@example project_traceout
-Random.seed!(42)
-
 modes = Register(fill(Qumode(), 2))
 mode_pair = (F0 ⊗ F0 + F1 ⊗ F1) / sqrt(2)
 initialize!(modes[1:2], mode_pair)
 
 fock_basis = (F0, F1, FockState(2))
-outcome = project_traceout!(modes[1], fock_basis)
-partner_state = fock_basis[outcome]
+first_outcome = project_traceout!(modes[1], fock_basis)
+partner_state = fock_basis[first_outcome]
+partner_photon_number = real(observable(modes[2], N))
+partner_fidelity = observable(modes[2], SProjector(partner_state))
+second_outcome = project_traceout!(modes[2], fock_basis)
 
 (
-    outcome = outcome,
-    partner_photon_number = real(observable(modes[2], N)),
-    partner_fidelity = observable(modes[2], SProjector(partner_state)),
+    populated_outcome = first_outcome in (1, 2),
+    measurements_match = first_outcome == second_outcome,
+    photon_number_matches = isapprox(
+        partner_photon_number,
+        first_outcome - 1;
+        atol = 1e-12,
+    ),
+    partner_matches_first = isapprox(partner_fidelity, 1; atol = 1e-12),
 )
 ```
 
-Outcome `2` selects `F1`, which is the one-photon state. The photon-number
-observable is therefore `1.0`. The projector observable also gives a fidelity
-of `1.0` for `F1`.
+The first outcome can select `F0` or `F1`. It cannot select `FockState(2)`
+because that state has zero amplitude in the prepared pair. The photon-number
+observable is zero after an `F0` result and one after an `F1` result. The two
+mode measurements have the same basis index.
 
 Pass the Fock states explicitly for this measurement. `N` is available as an
 observable, but it is not currently available as the basis argument of
@@ -125,8 +132,6 @@ still have zero photons.
 ```@example project_traceout
 using Gabs
 
-Random.seed!(42)
-
 gabs_repr = GabsRepr(QuadBlockBasis)
 modes = Register(fill(Qumode(), 2), fill(gabs_repr, 2))
 initialize!(modes[1:2], CoherentState(0.3 + 0.2im) ⊗ F0)
@@ -141,9 +146,14 @@ remaining_state = copy(QuantumSavory.stateof(modes[2]).state[])
 check_state = express(remaining_state, QuantumOpticsRepr())
 
 (
-    x_result = round(result[1]; digits = 3),
-    measured_slot_is_assigned = isassigned(modes, 1),
-    remaining_photons = real(observable(check_state, [1], N)),
+    result_has_x_and_p = length(result) == 2,
+    measured_x_is_finite = isfinite(result[1]),
+    measured_slot_is_empty = !isassigned(modes, 1),
+    remaining_mode_is_vacuum = isapprox(
+        real(observable(check_state, [1], N)),
+        0;
+        atol = 1e-12,
+    ),
 )
 ```
 
@@ -152,8 +162,11 @@ is the measured ``x`` value in this example. For a ``p`` measurement, use angle
 `pi / 2` and read index `2`. The other value is the conjugate quadrature in the
 finite-squeezing approximation.
 
-The final observable is zero, as expected for the vacuum state. The conversion
-is only a check on a copy of the state. It does not change the register.
+The sampled ``x`` value can change between runs. The example checks only that
+the result has the expected form and contains a finite measured value. The
+final observable confirms that the independent second mode remains in the
+vacuum state. The conversion is only a check on a copy of the state. It does
+not change the register.
 
 ## What to carry forward
 
