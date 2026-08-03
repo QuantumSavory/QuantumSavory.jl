@@ -78,10 +78,10 @@ function main()
     ],
     "Tutorials" => [
         "tutorial.md",
-        "Gate Duration" => "tutorial/noninstantgate.md",
+        "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",
-        "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
+        "Gate Duration" => "tutorial/noninstantgate.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
         #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
     ],

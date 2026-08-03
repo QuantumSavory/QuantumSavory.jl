@@ -12,10 +12,7 @@ For a discrete measurement, the function returns a one-based index into the
 measurement basis. The index is not an eigenvalue. For a homodyne measurement,
 the function returns continuous quadrature data.
 
-The sampled value can change between runs. The examples do not require one
-specific value. They check relations that must hold for every valid value.
-
-The first three examples use the default `QuantumOpticsRepr()`. The homodyne
+The first few examples use the default `QuantumOpticsRepr()`. The homodyne
 example selects `GabsRepr` explicitly.
 
 ## Measure a qubit with a Pauli operator
