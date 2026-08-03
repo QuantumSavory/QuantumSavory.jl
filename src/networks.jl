@@ -5,17 +5,12 @@
         classical_delay=0, quantum_delay=0, name=nothing, names=String[])
 
 Store one [`Register`](@ref) for each vertex of an undirected `SimpleGraph`.
-If `graph` is omitted, use a chain with one vertex per register. When registers
-have separate time trackers, construct the network before you schedule work.
-The constructor places unused registers on one tracker. Registers with
-scheduled work must already share one tracker.
+If `graph` is omitted, use a chain with one vertex per register.
 
 `RegisterNet` directly supports these read operations from Graphs.jl:
 `vertices`, `edges`, `neighbors`, `nv`, `ne`, and `adjacency_matrix`. It is not
 a subtype of `Graphs.AbstractGraph`, so other Graphs.jl functions are not part
 of this interface. Treat the topology as fixed after construction.
-`add_vertex!(net)` changes only the wrapped graph; it does not add a register,
-metadata, channels, or a message buffer.
 
 Index a network to move from the network to a register or a register slot:
 
@@ -37,6 +32,8 @@ net[1, :label] = "left endpoint"
 
 Vertex metadata uses `net[i, :key]`. Undirected edge metadata uses
 `net[(i, j), :key]`, and directed edge metadata uses `net[i => j, :key]`.
+
+For more sophisticated metadata handling, check out the independent tag and query capabilities of QuantumSavory.
 
 `classical_delay` and `quantum_delay` each accept a constant or a callable
 `(src, dst) -> delay`. A callable is evaluated in both directions of each

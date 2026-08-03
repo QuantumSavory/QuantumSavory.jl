@@ -53,10 +53,6 @@ classified and must not silently contradict the maintained contract. Agent conte
 should link to human docs and record current implementation boundaries, not copy their
 signatures and examples.
 
-At this audit revision, `docs/src/` has 45 Markdown content pages, and all 45 are listed
-in the Documenter page tree.
-`docs/outdated/` has two individually labeled archival content pages. Recount this
-inventory when navigation or Markdown files change.
 
 Navigation classification applies to human prose pages. `docs/make.jl`,
 `docs/Project.toml`, CSS, the bibliography, and referenced image/video assets are
