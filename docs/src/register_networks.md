@@ -1,12 +1,6 @@
 # [Register Networks](@id register-networks)
 
-A [`RegisterNet`](@ref) joins an undirected graph, one [`Register`](@ref) per
-vertex, network metadata, and the channels used by network protocols. The
-registers and channels use one discrete-event simulation clock.
-
-Use a register network when a model has separate nodes and links. For the
-storage and time model inside each node, read
-[Modeling Registers, Factorization, and Time](@ref modeling-registers-time).
+A [`RegisterNet`](@ref) joins is an undirected graph with one [`Register`](@ref) per vertex.
 
 ## Construct a Network
 
@@ -24,10 +18,6 @@ If you omit the graph, `RegisterNet` makes a chain:
 ```julia
 net = RegisterNet([Register(2), Register(2), Register(2)])
 ```
-
-When registers have separate time trackers, construct the network before you
-schedule work. The constructor places unused registers on one tracker.
-Registers with scheduled work must already share one tracker.
 
 ## Use the Supported Graph Interface
 
@@ -52,12 +42,7 @@ neighbors(net, 2)
 
 A `RegisterNet` is not a subtype of `Graphs.AbstractGraph`. Do not assume that
 other Graphs.jl functions accept it. Keep the graph used for construction when
-you need the full Graphs.jl API.
-
-Treat the topology as fixed after construction. An `add_vertex!(net)` method
-exists, but it changes only the wrapped graph. It does not add the corresponding
-register, metadata, channels, or message buffer. Construct a new network when
-the topology changes.
+you need the full Graphs.jl API. Treat the topology as fixed after construction.
 
 ## Index Registers and Slots
 
@@ -93,16 +78,10 @@ net = RegisterNet([Register(2) for _ in 1:3];
 These names appear in register and protocol displays. They do not change the
 integer vertex identifiers.
 
-A label is ordinary vertex metadata. It is independent of the display name:
+Other static metadata uses the following indexing scheme:
 
 ```julia
-net[1, :label] = "end node"
-net[1, :label]
-```
-
-Other static metadata uses the same indexing scheme:
-
-```julia
+net[1, :description] = "end node"
 net[(1, 2), :length] = 20.0  # undirected edge
 net[1 => 2, :loss] = 0.1     # directed edge
 ```
@@ -110,6 +89,9 @@ net[1 => 2, :loss] = 0.1     # directed edge
 For undirected metadata, `(1, 2)` and `(2, 1)` select the same entry. For
 directed metadata, `1 => 2` and `2 => 1` select separate entries. A metadata
 read requires the key to exist.
+
+For more sophisticated treatment of metadata, especially if it is used by
+protocols being simulated in the network, consult the [tagging and querying infrastructure](metadata-plane.md).
 
 ## Configure Link Delays
 
