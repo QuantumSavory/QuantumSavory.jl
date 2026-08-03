@@ -109,6 +109,8 @@ graph of callbacks and explicit peer handles.
 
 ## Where To Go Next
 
+- Read [Register Networks](@ref register-networks) for network construction,
+  topology, metadata, and direct-link delay configuration.
 - Read [Metadata and Protocol Composition](@ref metadata-plane) for the higher
   level view of why this control style is useful.
 - Read [Tag and Query API](tag_query.md) for the matching and consumption

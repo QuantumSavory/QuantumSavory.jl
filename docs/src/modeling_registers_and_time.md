@@ -82,6 +82,8 @@ simulation strategy changes.
 
 ## Where To Go Next
 
+- Read [Register Networks](@ref register-networks) for how registers are
+  assigned to graph vertices and connected by channels.
 - Read [Properties](@ref) for how subsystem types and preferred
   representations are attached to slots.
 - Read [Background Noise Processes](@ref) for how background processes are

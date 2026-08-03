@@ -9,6 +9,8 @@ to inspect.
 
 QuantumSavory provides visualization tools built on top of
 [Makie.jl](https://docs.makie.org/stable/).
+For network construction, graph access, and indexing, read
+[Register Networks](@ref register-networks).
 
 The plotting functions generally return a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates the plot with the current state of the network without replotting from scratch.

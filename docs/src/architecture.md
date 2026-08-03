@@ -25,7 +25,9 @@ and debugging or visualization can cut across the whole stack.
 
 A [`Register`](@ref) stores local quantum subsystems such as qubits or modes.
 Each slot can carry its own physical properties and background processes. A
-[`RegisterNet`](@ref) groups registers into a networked simulation.
+[`RegisterNet`](@ref) groups registers into a networked simulation. Read
+[Register Networks](@ref register-networks) for its topology, indexing,
+metadata, naming, and delay interfaces.
 
 ### Symbolic Frontend
 

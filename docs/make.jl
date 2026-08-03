@@ -57,6 +57,7 @@ function main()
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
         "Modeling Registers, Factorization, and Time" =>
             "modeling_registers_and_time.md",
+        "Register Networks" => "register_networks.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Classical Messaging and Buffers" => "classical_messaging.md",
         "Zoos as Composable Building Blocks" => "zoos_as_building_blocks.md",

@@ -9,9 +9,8 @@
 
 1. Place concepts, tutorials, how-to guides, and API reference in their existing
    Diátaxis-oriented sections. Update `docs/make.jl` navigation when adding a page.
-   `docs/src/howto/repeatergrid/repeatergrid.md` is an explicitly labeled unpublished
-   draft, and each page under `docs/outdated/` is labeled archival, so filesystem
-   presence is not proof that a page is published.
+   Each page under `docs/outdated/` is labeled archival, so filesystem presence is not
+   proof that a page is published.
 2. Keep runnable docstrings compatible with the plotting doctest setup. The main
    `makedocs` call sets `doctest=false`; it does not execute documentation-page
    `jldoctest` blocks. A separate plotting test calls `doctest(QuantumSavory)`, which
@@ -54,10 +53,6 @@ classified and must not silently contradict the maintained contract. Agent conte
 should link to human docs and record current implementation boundaries, not copy their
 signatures and examples.
 
-At this audit revision, `docs/src/` has 43 Markdown content pages: 42 are listed in the
-Documenter page tree and the repeater-grid page is the one labeled unpublished draft.
-`docs/outdated/` has two individually labeled archival content pages. Recount this
-inventory when navigation or Markdown files change.
 
 Navigation classification applies to human prose pages. `docs/make.jl`,
 `docs/Project.toml`, CSS, the bibliography, and referenced image/video assets are
@@ -70,7 +65,7 @@ exact bytes are not a rendering-content promise.
 ## Anchors
 
 - **Source:** [`docs/make.jl`](../../../docs/make.jl) and [`docs/Project.toml`](../../../docs/Project.toml) — build, external integration, navigation, and deployment.
-- **Docs:** [`docs/src/index.md`](../../../docs/src/index.md), [`docs/src/howto/repeatergrid/repeatergrid.md`](../../../docs/src/howto/repeatergrid/repeatergrid.md), and [`docs/outdated/message_queues.md`](../../../docs/outdated/message_queues.md) — published, draft, and archival classifications.
+- **Docs:** [`docs/src/index.md`](../../../docs/src/index.md), [`docs/src/register_networks.md`](../../../docs/src/register_networks.md), and [`docs/outdated/message_queues.md`](../../../docs/outdated/message_queues.md) — published entry point, published explanation, and archival classification.
 - **Test:** [`test/plotting/doctests_tests.jl`](../../../test/plotting/doctests_tests.jl) — the separately executed docstring doctests.
 - **CI:** [`.buildkite/pipeline.yml`](../../../.buildkite/pipeline.yml) — credentials and full-build invocation.
 
