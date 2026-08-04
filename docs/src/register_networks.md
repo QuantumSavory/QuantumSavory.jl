@@ -91,7 +91,7 @@ directed metadata, `1 => 2` and `2 => 1` select separate entries. A metadata
 read requires the key to exist.
 
 For more sophisticated treatment of metadata, especially if it is used by
-protocols being simulated in the network, consult the [tagging and querying infrastructure](metadata-plane.md).
+protocols being simulated in the network, consult the [tagging and querying infrastructure](metadata_plane.md).
 
 ## Configure Link Delays
 

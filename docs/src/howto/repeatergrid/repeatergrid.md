@@ -158,7 +158,7 @@ end
 
 # Result
 
-```@repl
+```@setup repeatergrid
 include("../../../../examples/repeatergrid/1a_async_interactive_visualization.jl") # hide
 ```
 
