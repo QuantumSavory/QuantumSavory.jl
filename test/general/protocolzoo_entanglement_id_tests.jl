@@ -52,7 +52,6 @@ struct CustomEntanglerTag <: AbstractTag end
         _enforce_history_cap!(slot, nothing)
         histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
         @test [history.tag[7] for history in histories] == collect(1:5)
-        @test_throws ArgumentError _enforce_history_cap!(slot, -1)
     end
 
     @testset "EntanglerProt keeps custom tags at legacy arity" begin

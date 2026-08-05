@@ -56,7 +56,6 @@ The server will start on `http://localhost:8080`
   - `etad` (optional): Detector transmissivity, ∈[0,1], default=1.0
   - `etat` (optional): Outcoupling transmissivity, ∈[0,1], default=1.0
   - `N` (optional): Mean photon number, >0, default=0.1
-  - `Pd` (optional): Excess noise, ≥0, default=1e-8
 
 #### Get Parameters Info
 - **GET** `/api/genqo/zalm/parameters`
@@ -70,7 +69,6 @@ The server will start on `http://localhost:8080`
   - `etad` (optional): Detector transmissivity, ∈[0,1], default=1.0
   - `etat` (optional): Outcoupling transmissivity, ∈[0,1], default=1.0
   - `N` (optional): Mean photon number, >0, default=0.1
-  - `Pd` (optional): Excess noise, ≥0, default=1e-6
 
 #### Get Parameters Info
 - **GET** `/api/genqo/spdc/parameters`
@@ -198,7 +196,6 @@ Heralded multiplexed cascaded source for generating Bell pairs.
 - **etad**: Detector transmissivity
 - **etat**: Outcoupling transmissivity
 - **N**: Mean photon number (fidelity vs rate tradeoff)
-- **Pd**: Excess noise in detectors
 
 ### Genqo SPDC
 Unheralded spontaneous parametric down-conversion Bell pair source, as described by Kwiat et al.
@@ -207,7 +204,6 @@ Unheralded spontaneous parametric down-conversion Bell pair source, as described
 - **etad**: Detector transmissivity
 - **etat**: Outcoupling transmissivity
 - **N**: Mean photon number
-- **Pd**: Excess noise in detectors
 
 ## Notes
 

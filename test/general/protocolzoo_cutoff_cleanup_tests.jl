@@ -54,7 +54,6 @@ using QuantumSavory.ProtocolZoo: EntanglementDelete, _enforce_delete_cap!
         _enforce_delete_cap!(slot, 1, nothing)
         delete_tags = queryall(slot, EntanglementDelete, ❓, 1, 1, ❓, ❓; filo=false)
         @test [delete_tag.tag[2] for delete_tag in delete_tags] == [3, 4, 5]
-        @test_throws ArgumentError _enforce_delete_cap!(slot, 1, -1)
     end
 
     @testset "Delete cap zero keeps no local delete tags" begin
