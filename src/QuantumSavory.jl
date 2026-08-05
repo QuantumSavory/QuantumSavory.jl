@@ -154,6 +154,7 @@ include("queries.jl")
 include("querywait.jl")
 
 include("representations.jl")
+include("domain_validation.jl")
 include("backgrounds.jl")
 include("noninstant.jl")
 include("measurements.jl")
