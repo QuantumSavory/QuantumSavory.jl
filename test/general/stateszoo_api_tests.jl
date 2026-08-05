@@ -52,4 +52,9 @@ end
     @test_throws MethodError GenqoUnheraldedSPDCBellPairW(1.0, 1.0, 0.1, 1e-6)
 end
 
+@testset "StatesZoo ranges are exploration metadata" begin
+    @test stateparametersrange(DepolarizedBellPair).p.max == 1
+    @test DepolarizedBellPair(2.0) isa DepolarizedBellPair
+end
+
 end

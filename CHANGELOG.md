@@ -2,6 +2,10 @@
 
 ## v0.7.1 - unreleased
 
+- **(breaking)** Background-noise and protocol execution-control constructors now
+  reject invalid scalar domains immediately. The Genqo state wrappers no longer
+  accept the ignored `Pᵈ` dark-count parameters, and `stateparametersrange` is
+  explicitly exploration/UI metadata rather than a constructor validity contract.
 - Simulation, network, protocol, and visualization traces now use
   Julia's standard logging macros with stable `event` symbols and structured
   metadata. Logs expose stable, filterable domain groups through `LOG_GROUPS`.
