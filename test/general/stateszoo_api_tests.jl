@@ -31,4 +31,25 @@ for S in [BarrettKokBellPair] # TODO use some abstract supertype
     @test tr(state) ≈ 1
 end
 
+@testset "Genqo wrapper constructor surface" begin
+    @test stateparameters(GenqoMultiplexedCascadedBellPairW) == (:ηᵇ, :ηᵈ, :ηᵗ, :N)
+    @test keys(stateparametersrange(GenqoMultiplexedCascadedBellPairW)) ==
+        (:ηᵇ, :ηᵈ, :ηᵗ, :N)
+    @test GenqoMultiplexedCascadedBellPairW(1.0, 1.0, 1.0, 0.1) isa
+        GenqoMultiplexedCascadedBellPairW
+    @test_throws MethodError GenqoMultiplexedCascadedBellPairW(
+        1.0,
+        1.0,
+        1.0,
+        0.1,
+        1e-8,
+    )
+
+    @test stateparameters(GenqoUnheraldedSPDCBellPairW) == (:ηᵈ, :ηᵗ, :N)
+    @test keys(stateparametersrange(GenqoUnheraldedSPDCBellPairW)) == (:ηᵈ, :ηᵗ, :N)
+    @test GenqoUnheraldedSPDCBellPairW(1.0, 1.0, 0.1) isa
+        GenqoUnheraldedSPDCBellPairW
+    @test_throws MethodError GenqoUnheraldedSPDCBellPairW(1.0, 1.0, 0.1, 1e-6)
+end
+
 end
