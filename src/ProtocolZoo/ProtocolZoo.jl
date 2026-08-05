@@ -3,7 +3,7 @@ module ProtocolZoo
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange, QueryOnRegResult
 import QuantumSavory: _message_type
-using QuantumSavory: Wildcard, alwaystrue, compactstr
+using QuantumSavory: Wildcard, alwaystrue, compactstr, @domain
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
@@ -324,6 +324,19 @@ $TYPEDFIELDS
     hardmargin::Int = 0
     """concrete `AbstractTag` subtype to add to the entangled qubits, or `nothing` to add no tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
     tag::Union{Type{<:AbstractTag},Nothing} = EntanglementCounterpart
+
+    function EntanglerProt(sim, net, nodeA, nodeB, pairstate, success_prob, attempt_time, local_busy_time_pre, local_busy_time_post, retry_lock_time, rounds, attempts, chooseslotA, chooseslotB, randomize, uselock, margin, hardmargin, tag)
+        @domain 0 < success_prob ≤ 1
+        @domain attempt_time ≥ 0
+        @domain local_busy_time_pre ≥ 0
+        @domain local_busy_time_post ≥ 0
+        @domain isnothing(retry_lock_time) || retry_lock_time > 0
+        @domain rounds == -1 || rounds ≥ 0
+        @domain attempts == -1 || attempts ≥ 0
+        @domain margin ≥ 0
+        @domain hardmargin ≥ 0
+        return new(sim, net, nodeA, nodeB, pairstate, success_prob, attempt_time, local_busy_time_pre, local_busy_time_post, retry_lock_time, rounds, attempts, chooseslotA, chooseslotB, randomize, uselock, margin, hardmargin, tag)
+    end
 end
 
 protocol_catalog_metadata(::Type{EntanglerProt}) = (
@@ -719,6 +732,11 @@ $FIELDS
     tag::Type{<:AbstractTag} = EntanglementCounterpart
     """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`; the storage type is not part of the public API and may change in future versions"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
+
+    function EntanglementConsumer(sim, net, nodeA, nodeB, period, tag, _log)
+        @domain isnothing(period) || period > 0
+        return new(sim, net, nodeA, nodeB, period, tag, _log)
+    end
 end
 
 protocol_catalog_metadata(::Type{EntanglementConsumer}) = (

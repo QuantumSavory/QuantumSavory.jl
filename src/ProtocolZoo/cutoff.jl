@@ -28,6 +28,13 @@ $FIELDS
     announce::Bool = true
     """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
     max_delete_per_slot::Union{Int,Nothing} = 3
+
+    function CutoffProt(sim, net, node, period, retention_time, announce, max_delete_per_slot)
+        @domain isnothing(period) || period > 0
+        @domain retention_time ≥ 0
+        @domain isnothing(max_delete_per_slot) || max_delete_per_slot ≥ 0
+        return new(sim, net, node, period, retention_time, announce, max_delete_per_slot)
+    end
 end
 
 protocol_catalog_metadata(::Type{CutoffProt}) = (
@@ -44,7 +51,6 @@ CutoffProt(net::RegisterNet, node::Int; kwargs...) = CutoffProt(get_time_tracker
 
 function _enforce_delete_cap!(slot::RegRef, node::Int, max_delete_per_slot::Union{Int,Nothing})
     isnothing(max_delete_per_slot) && return nothing
-    max_delete_per_slot < 0 && throw(ArgumentError("max_delete_per_slot must be nonnegative"))
     delete_tags = queryall(slot, EntanglementDelete, ❓, node, slot.idx, ❓, ❓; filo=false)
     for delete_tag in Iterators.take(delete_tags, max(0, length(delete_tags) - max_delete_per_slot))
         untag!(slot, delete_tag.id)

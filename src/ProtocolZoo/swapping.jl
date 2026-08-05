@@ -63,6 +63,15 @@ $TYPEDFIELDS
     agelimit::Union{Float64,Nothing} = nothing
     """maximum number of history tags to retain per slot in FIFO order (`nothing` for unbounded retention)"""
     max_history_per_slot::Union{Int,Nothing} = 3
+
+    function SwapperProt(sim, net, node, chooseslots, nodeL, nodeH, chooseL, chooseH, local_busy_time, retry_lock_time, rounds, agelimit, max_history_per_slot)
+        @domain local_busy_time ≥ 0
+        @domain isnothing(retry_lock_time) || retry_lock_time > 0
+        @domain rounds == -1 || rounds ≥ 0
+        @domain isnothing(agelimit) || agelimit ≥ 0
+        @domain isnothing(max_history_per_slot) || max_history_per_slot ≥ 0
+        return new(sim, net, node, chooseslots, nodeL, nodeH, chooseL, chooseH, local_busy_time, retry_lock_time, rounds, agelimit, max_history_per_slot)
+    end
 end
 
 protocol_catalog_metadata(::Type{SwapperProt}) = (
@@ -80,7 +89,6 @@ SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_track
 
 function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Union{Int,Nothing})
     isnothing(max_history_per_slot) && return nothing
-    max_history_per_slot < 0 && throw(ArgumentError("max_history_per_slot must be nonnegative"))
     histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
     for history in Iterators.take(histories, max(0, length(histories) - max_history_per_slot))
         untag!(slot, history.id)
