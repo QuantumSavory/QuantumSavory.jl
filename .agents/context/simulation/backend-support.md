@@ -13,7 +13,7 @@ Backend support is a dispatch matrix, not a single “supported” flag:
 |---|---|---|
 | `QuantumOpticsRepr` | `Ket` and `Operator` paths for symbolic lowering, application, observables, project/traceout, backgrounds, and non-instant evolution | Cost grows densely; individual state/background combinations still depend on lowering helpers |
 | `QuantumMCRepr` | General QuantumOptics-family simulation with a distinct internal `MCKet` pure-trajectory wrapper; sampled background branches, projective measurement, and canonical-basis sampled traceout | All-`MCKet` composition preserves the wrapper; mixing with a plain `Ket` exits to `Ket`, and composition with an `Operator` promotes through a density operator |
-| `CliffordRepr` | `MixedDestabilizer` stabilizer application, Pauli observables/projective measurement, traceout, and T2/depolarization trajectories | Dense observables convert only pure tableaux to exponentially sized kets; mixed dense observables error, and `SProjector` requires the entire stored tableau rather than an embedded subset |
+| `CliffordRepr` | `MixedDestabilizer` stabilizer application, Pauli observables/projective measurement, symbolic stabilizer-projector observables on indexed and mixed tableaux, traceout, and T2/depolarization trajectories | Dense observables convert only pure tableaux to exponentially sized kets; mixed dense observables error |
 | `GabsRepr` | Gaussian-state composition and Gaussian unitary/channel application; homodyne `project_traceout!` performs measurement and partial trace | No general `observable`, native background `uptotime!`, or `apply_noninstant!` for `ConstantHamiltonianEvolution` |
 
 `PauliNoise` is not currently usable through normal evolution dispatch. QuantumOptics

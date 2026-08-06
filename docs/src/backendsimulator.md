@@ -163,10 +163,12 @@ state vectors or density operators; composing a ket with a density operator firs
 promotes the ket to a density operator. `CliffordRepr()` and `GabsRepr(...)` keep
 their compact tableau and Gaussian representations, respectively.
 
-A dense `QuantumOpticsBase.Operator` observable on a Clifford state is a more
-important boundary: QuantumSavory converts the entire stabilizer state to a dense
-ket. Its size grows exponentially with the number of qubits, even if the observable
-addresses only some subsystems.
+Symbolic stabilizer projectors evaluate directly on selected, reordered subsystems
+of pure or mixed Clifford tableaux. A dense `QuantumOpticsBase.Operator` observable
+is a more important boundary: for a pure Clifford state, QuantumSavory converts the
+entire stabilizer state to a dense ket. Its size grows exponentially with the number
+of qubits, even if the observable addresses only some subsystems. Dense observables
+on mixed Clifford states are not supported.
 
 ## Where To Go Next
 
