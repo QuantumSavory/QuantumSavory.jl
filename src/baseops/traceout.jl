@@ -21,9 +21,11 @@ function removebackref!(s::StateRef, i) # To be used only with something that up
     s
 end
 
+_traceout_state(state, i) = traceout!(state, i)
+
 function traceout!(s::StateRef, i::Int)
     state = s.state[]
-    newstate = traceout!(state, i)
+    newstate = _traceout_state(state, i)
     s.state[] = newstate
     removebackref!(s, i)
     s
