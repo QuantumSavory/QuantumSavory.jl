@@ -2,6 +2,7 @@ using Test
 using Random
 using Statistics: mean
 using QuantumSavory
+import QuantumClifford
 using QuantumOpticsBase: dm
 
 struct ThrowingTraceoutState
@@ -24,6 +25,49 @@ function backreferences_are_consistent(stateref)
 end
 
 @testset "traceout!" begin
+
+@testset "Clifford partial trace shrinks native state" begin
+    reg = Register(3, CliffordRepr())
+    stateref = initialize!(reg[1:3], StabilizerState("XII IYI IIZ"))
+
+    @test observable(reg[1], X) ≈ 1
+    @test observable(reg[2], Y) ≈ 1
+    @test observable(reg[3], Z) ≈ 1
+
+    traceout!(reg[2])
+    @test map(i -> isassigned(reg, i), 1:3) == [true, false, true]
+    @test reg.stateindices == [1, 0, 2]
+    @test reg.staterefs[1] === reg.staterefs[3] === stateref
+    @test stateref.registerindices == [1, 3]
+    @test all(r -> r === reg, stateref.registers)
+    @test backreferences_are_consistent(stateref)
+    @test QuantumClifford.nqubits(stateref.state[]) == 2
+    @test observable(reg[1], X) ≈ 1
+    @test observable(reg[3], Z) ≈ 1
+
+    traceout!(reg[1])
+    @test map(i -> isassigned(reg, i), 1:3) == [false, false, true]
+    @test reg.stateindices == [0, 0, 1]
+    @test reg.staterefs[3] === stateref
+    @test stateref.registerindices == [3]
+    @test length(stateref.registers) == 1
+    @test stateref.registers[1] === reg
+    @test backreferences_are_consistent(stateref)
+    @test QuantumClifford.nqubits(stateref.state[]) == 1
+    @test observable(reg[3], Z) ≈ 1
+end
+
+@testset "Clifford trace of an entangled subsystem" begin
+    reg = Register(3, CliffordRepr())
+    stateref = initialize!(reg[1:3], StabilizerState("XXX ZZI IZZ"))
+
+    traceout!(reg[2])
+    @test QuantumClifford.nqubits(stateref.state[]) == 2
+    @test backreferences_are_consistent(stateref)
+    @test observable((reg[1], reg[3]), Z ⊗ Z) ≈ 1
+    @test observable(reg[1], X) ≈ 0
+    @test observable(reg[3], X) ≈ 0
+end
 
 @testset "QuantumMC stochastic partial trace" begin
     product_reg = Register(2, QuantumMCRepr())

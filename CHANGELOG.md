@@ -4,6 +4,10 @@
 
 - `observable` now rejects mismatched register/index collections and repeated
   physical register slots before backend processing.
+- **(fix)** Clifford stabilizer-projector observables now return probabilities
+  and support selected or reordered subsystems of pure and mixed tableaux.
+- **(fix)** Partial trace of Clifford states now removes the discarded qubit
+  from the native tableau and keeps register subsystem indices consistent.
 - Indexed Gaussian operations now delegate to Gabs' canonical
   `apply!(state, indices, operation)` API; Gabs 1.3.8 is now required.
 - Simulation, network, protocol, and visualization traces now use

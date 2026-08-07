@@ -58,6 +58,29 @@ end
     end
 end
 
+@testset "stabilizer projector probabilities" begin
+    xstate = StabilizerState("X")
+    zstate = StabilizerState("Z")
+    for rep in [QuantumOpticsRepr(), CliffordRepr()]
+        reg = Register(1, rep)
+        initialize!(reg[1], xstate)
+        @test observable(reg[1], SProjector(zstate)) ≈ 0.5
+    end
+
+    bell = StabilizerState("XX ZZ")
+    ghz = StabilizerState("XXX ZZI IZZ")
+    probabilities = map([QuantumOpticsRepr(), CliffordRepr()]) do rep
+        reg = Register(3, rep)
+        initialize!(reg[1:3], ghz)
+        observable((reg[1], reg[3]), SProjector(bell))
+    end
+    @test probabilities[1] ≈ probabilities[2] ≈ 0.5
+
+    reg = Register(2, CliffordRepr())
+    initialize!(reg[1:2], MixedDestabilizer(S"ZZ"))
+    @test observable(reg[1:2], SProjector(bell)) ≈ 0.5
+end
+
 @testset "separable observable with order flipping" begin
     A = StabilizerState("X")
     B = StabilizerState("Z")
@@ -76,11 +99,7 @@ end
         initialize!((r21[2], r21[1]), BA)
 
         @test observable(r12[1:2], SProjector(AB)) ≈ 1.0
-        if rep == CliffordRepr()
-            @test_throws "entangled with other qubits" observable(r12[1], SProjector(A)) ≈ 1.0
-        else
-            @test observable(r12[1], SProjector(A)) ≈ 1.0
-        end
+        @test observable(r12[1], SProjector(A)) ≈ 1.0
         @test observable(r21[1:2], SProjector(AB)) ≈ 1.0
         @test observable((r1[1], r2[2]), SProjector(AB)) ≈ 1.0
         @test observable(r1[1], SProjector(A)) ≈ 1.0
