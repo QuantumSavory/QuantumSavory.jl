@@ -2,6 +2,8 @@
 
 ## v0.7.1 - unreleased
 
+- `observable` now rejects mismatched register/index collections and repeated
+  physical register slots before backend processing.
 - **(fix)** Clifford stabilizer-projector observables now return probabilities
   and support selected or reordered subsystems of pure and mixed tableaux.
 - **(fix)** Partial trace of Clifford states now removes the discarded qubit

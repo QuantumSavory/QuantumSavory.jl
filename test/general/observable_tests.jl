@@ -7,6 +7,30 @@ using QuantumOpticsBase: Ket
 
 @testset "Observable" begin
 
+@testset "observable slot validation" begin
+    reg = Register(1)
+    @test_throws DimensionMismatch(
+        "The number of registers (1) does not match the number of slot indices (2)."
+    ) observable([reg], [1, 1], Z; something=:empty)
+    @test_throws DimensionMismatch(
+        "The number of registers (2) does not match the number of slot indices (1)."
+    ) observable([reg, reg], [1], Z; something=:empty)
+
+    duplicate_slot = ArgumentError(
+        "Each physical register slot can be observed at most once."
+    )
+    @test_throws duplicate_slot observable((reg[1], reg[1]), Z ⊗ Z; something=:empty)
+    @test_throws duplicate_slot observable([reg, reg], [1, 1], Z ⊗ Z; something=:empty)
+    @test_throws BoundsError observable([reg, reg], [1, 2], Z ⊗ Z; something=:empty)
+    @test_throws BoundsError observable([reg, reg], [2, 2], Z ⊗ Z; something=:empty)
+
+    reg1 = Register(1)
+    reg2 = Register(1)
+    initialize!(reg1[1], Z1)
+    initialize!(reg2[1], Z1)
+    @test observable([reg1, reg2], [1, 1], Z ⊗ Z) ≈ 1
+end
+
 @testset "dense observable on a mixed Clifford state" begin
     reg = Register(2, CliffordRepr())
     initialize!(reg[1:2], MixedDestabilizer(S"ZZ"))
