@@ -2,6 +2,8 @@
 
 ## v0.7.1 - unreleased
 
+- **(fix)** Clifford stabilizer-projector observables now return probabilities
+  and support selected or reordered subsystems of pure and mixed tableaux.
 - Indexed Gaussian operations now delegate to Gabs' canonical
   `apply!(state, indices, operation)` API; Gabs 1.3.8 is now required.
 - Simulation, network, protocol, and visualization traces now use
