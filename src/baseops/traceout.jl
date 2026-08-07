@@ -21,9 +21,33 @@ function removebackref!(s::StateRef, i) # To be used only with something that up
     s
 end
 
+"""
+    _traceout_state(state, i)
+
+Backend adapter for removing subsystem `i` from the state stored by a [`StateRef`](@ref).
+Its return value must follow the storage contract reported by `ispadded`. For an
+unpadded state, native storage must no longer contain that subsystem so that
+[`removebackref!`](@ref) can renumber the surviving register slots consistently.
+
+The default delegates to the backend's `traceout!`. Backends whose `traceout!` uses a
+different storage contract must specialize this adapter. For example,
+QuantumClifford's in-place `traceout!` reduces the stabilizer information but retains
+the traced qubit's tableau columns, so the Clifford specialization uses `ptrace` to
+return a physically smaller tableau.
+
+On the other hand, `traceout!` for Gabs Gaussian states and QuantumOptics state
+vectors already delegates to `ptrace`, as does the QuantumOptics operator method, so
+these backends return physically smaller states. The Monte Carlo backend wraps a
+QuantumOptics ket but keeps each trajectory pure: its `traceout!` samples a projection
+onto the discarded subsystem's canonical basis, discards the outcome, and returns the
+smaller conditional state. The ensemble of such trajectories reproduces the partial
+trace.
+"""
+_traceout_state(state, i) = traceout!(state, i)
+
 function traceout!(s::StateRef, i::Int)
     state = s.state[]
-    newstate = traceout!(state, i)
+    newstate = _traceout_state(state, i)
     s.state[] = newstate
     removebackref!(s, i)
     s

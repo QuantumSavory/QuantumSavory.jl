@@ -4,8 +4,27 @@ Calculate the expectation value of a quantum observable on the given register an
 `observable([regA, regB], [slot1, slot2], obs)` would calculate the expectation value
 of the `obs` observable (using the appropriate formalism, depending on the state
 representation in the given registers).
+
+The register and slot-index collections must have equal lengths, and each physical
+register slot may appear at most once. Invalid selections are rejected before empty
+slots are handled, time is advanced, or backend work begins.
 """
 function observable(regs::Base.AbstractVecOrTuple{Register}, indices::Base.AbstractVecOrTuple{Int}, obs; something=nothing, time=nothing)
+    nregs = length(regs)
+    nindices = length(indices)
+    nregs == nindices || throw(DimensionMismatch(
+        "The number of registers ($nregs) does not match the number of slot indices ($nindices)."
+    ))
+    slots = Set{Tuple{UInt,Int}}()
+    for (r, i) in zip(regs, indices)
+        checkbounds(r.staterefs, i)
+        slot = _slot_identity(r, i)
+        slot in slots && throw(ArgumentError(
+            "Each physical register slot can be observed at most once."
+        ))
+        push!(slots, slot)
+    end
+
     staterefs = StateRef[]
     for (r, i) in zip(regs, indices)
         ref = r.staterefs[i]

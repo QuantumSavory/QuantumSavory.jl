@@ -150,11 +150,11 @@ When you switch backends, the following usually stays the same:
 What changes is the numerical representation used once symbolic objects are
 lowered and the set of operations that can be executed efficiently.
 
-## Performance Boundaries
+## Performance Considerations
 
 Operations that span separately factorized states compose those states into a
 larger tensor product. In particular, `apply!` and non-instant operations merge
-the touched state references, while `observable` builds a temporary composition
+the touched states, while `observable` builds a temporary composition
 without changing the register. Repeated cross-state observables therefore repeat
 that tensor-product work.
 
@@ -163,10 +163,11 @@ state vectors or density operators; composing a ket with a density operator firs
 promotes the ket to a density operator. `CliffordRepr()` and `GabsRepr(...)` keep
 their compact tableau and Gaussian representations, respectively.
 
-A dense `QuantumOpticsBase.Operator` observable on a Clifford state is a more
-important boundary: QuantumSavory converts the entire stabilizer state to a dense
-ket. Its size grows exponentially with the number of qubits, even if the observable
-addresses only some subsystems.
+Symbolic stabilizer projectors evaluate directly on selected, reordered subsystems
+of pure or mixed Clifford tableaux. A dense `QuantumOpticsBase.Operator` observable
+is however more problematic: for a pure Clifford state, QuantumSavory converts the
+entire stabilizer state to a dense ket. Its size grows exponentially with the number
+of qubits, even if the observable addresses only some subsystems.
 
 ## Where To Go Next
 

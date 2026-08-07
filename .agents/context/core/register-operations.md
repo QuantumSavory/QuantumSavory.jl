@@ -29,6 +29,11 @@ result. Other combinations stop at dispatch. An unassigned slot throws
 before time advancement. Clifford's supported symbolic Pauli bases are specifically
 `X`, `Y`, and `Z`; explicit basis vectors remain a QuantumOptics/QuantumMC feature.
 
+`observable` requires equal register and slot-index collection lengths and rejects
+repeated physical register slots. These checks run before empty-slot fallback, time
+advancement, state composition, or backend dispatch. Length mismatches raise
+`DimensionMismatch`; duplicate slots raise `ArgumentError`.
+
 `traceout!` groups slots that share a state reference. An exception after one group
 succeeds may leave that group removed; no rollback or post-exception consistency is
 promised. See the [backend matrix](../simulation/backend-support.md) for
