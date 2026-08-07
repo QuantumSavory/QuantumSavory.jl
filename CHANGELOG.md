@@ -2,6 +2,8 @@
 
 ## v0.7.1 - unreleased
 
+- `observable` now rejects mismatched register/index collections and repeated
+  physical register slots before backend processing.
 - Indexed Gaussian operations now delegate to Gabs' canonical
   `apply!(state, indices, operation)` API; Gabs 1.3.8 is now required.
 - Simulation, network, protocol, and visualization traces now use
