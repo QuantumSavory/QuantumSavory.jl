@@ -2,6 +2,7 @@
 
 ## v0.7.1 - unreleased
 
+- Support for more observables and projectors thanks to fixes to QuantumSymbolics and QuantumClifford.
 - `project_traceout!` validates its arguments in more detail.
 - `observable` now rejects mismatched register/index collections and repeated
   physical register slots before backend processing.
