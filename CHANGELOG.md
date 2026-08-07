@@ -2,6 +2,9 @@
 
 ## v0.7.1 - unreleased
 
+- Symbolic Pauli observables with three or more factors or identity factors now
+  work through the public Clifford backend; QuantumSymbolics 0.4.17 is now
+  required.
 - `project_traceout!` validates its arguments in more detail.
 - `observable` now rejects mismatched register/index collections and repeated
   physical register slots before backend processing.
