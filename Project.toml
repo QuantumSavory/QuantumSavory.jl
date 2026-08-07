@@ -1,7 +1,7 @@
 name = "QuantumSavory"
 uuid = "2de2e421-972c-4cb5-a0c3-999c85908079"
-version = "0.7.0"
-authors = ["Stefan Krastanov <stefan@krastanov.org>"]
+version = "0.7.1"
+authors = ["QuantumSavory team"]
 
 [workspace]
 projects = ["docs", "test", "test/projects/plotting", "test/projects/examples", "benchmark", "examples", "examples/states_rest_server"]

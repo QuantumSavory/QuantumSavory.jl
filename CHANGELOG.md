@@ -1,29 +1,18 @@
 # News
 
-## v0.7.1 - unreleased
+## v0.7.1 - 2026-08-07
 
-- Support for more observables and projectors thanks to fixes to QuantumSymbolics and QuantumClifford.
+- **(fix)** Fixes for edge cases and support for more observables and projectors thanks to updates to QuantumSymbolics and QuantumClifford.
 - `project_traceout!` validates its arguments in more detail.
 - `observable` now rejects mismatched register/index collections and repeated
   physical register slots before backend processing.
-- **(fix)** Clifford stabilizer-projector observables now return probabilities
-  and support selected or reordered subsystems of pure and mixed tableaux.
-- **(fix)** Partial trace of Clifford states now removes the discarded qubit
-  from the native tableau and keeps register subsystem indices consistent.
-- Indexed Gaussian operations now delegate to Gabs' canonical
-  `apply!(state, indices, operation)` API; Gabs 1.3.8 is now required.
 - Simulation, network, protocol, and visualization traces now use
   Julia's standard logging macros with stable `event` symbols and structured
   metadata. Logs expose stable, filterable domain groups through `LOG_GROUPS`.
 - Additional visualization methods for states of registers.
-- **(fix)** `observable` now locally composes separately factorized states, and pure
-  Clifford states accept dense QuantumOptics observables.
 - Dense observables on pure Clifford states now warn before converting the entire
   stabilizer state to an exponentially sized ket.
 - `QuantumMCRepr` is supported much more thoroughly, providing a faster alternative to `QuantumOpticsRepr` that is just as general.
-- `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
-- Introspection tools for generating catalogs of available slot, background, and protocol types are now public.
-- **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 - Named tag heads now subtype the exported `AbstractTag` marker.
   Custom types passed to `EntanglerProt(...; tag=MyTag)` or
   `EntanglementConsumer(...; tag=MyTag)` must be concrete and migrate to
@@ -33,6 +22,9 @@
 - `RegisterNet` now accepts `(src, dst) -> delay` callables for
   `classical_delay` and `quantum_delay`, enabling per-link and asymmetric
   transport delays while retaining scalar delay support.
+- `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
+- Introspection tools for generating catalogs of available slot, background, and protocol types are now public.
+- **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 
 ## v0.7.0 - 2026-06-12
 
