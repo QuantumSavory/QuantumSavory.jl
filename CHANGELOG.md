@@ -2,8 +2,7 @@
 
 ## v0.7.1 - unreleased
 
-- Discrete Clifford `project_traceout!` outcomes are now one-based `Int` values,
-  and unassigned slots raise `ArgumentError` before time advancement.
+- `project_traceout!` validates its arguments in more detail.
 - Indexed Gaussian operations now delegate to Gabs' canonical
   `apply!(state, indices, operation)` API; Gabs 1.3.8 is now required.
 - Simulation, network, protocol, and visualization traces now use
