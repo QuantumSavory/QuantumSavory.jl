@@ -128,6 +128,10 @@ for the Hilbert space. The Hilbert space of the register is automatically shrunk
 
 A basis object can be specified on its own as well, e.g.
 `project_traceout!(reg, slot, basis)`.
+
+Discrete qubit backends return a one-based `Int` outcome. Gabs homodyne
+measurements return continuous quadrature data. Clifford qubit measurements
+currently support the symbolic `X`, `Y`, and `Z` bases.
 """
 function project_traceout! end
 
@@ -137,12 +141,12 @@ end
 project_traceout!(r::RegRef, basis; time=nothing) = project_traceout!(r.reg, r.idx, basis; time)
 
 function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
-    !isnothing(time) && uptotime!([reg], [i], time)
     stateref = reg.staterefs[i]
+    isnothing(stateref) && throw(ArgumentError(
+        "Cannot project and trace out an unassigned register slot."
+    ))
+    !isnothing(time) && uptotime!([reg], [i], time)
     stateindex = reg.stateindices[i]
-    if isnothing(stateref) # TODO maybe use isassigned
-        throw("error") # make it more descriptive
-    end
     j, stateref.state[] = project_traceout!(stateref.state[],stateindex,basis)
     removebackref!(stateref, stateindex)
     f(j)

@@ -6,7 +6,7 @@ function project_traceout!(state::QuantumClifford.MixedDestabilizer,stateindex::
     proj = QuantumClifford.projectremoverand!(state, express_qc_proj(basis), stateindex)
     state = proj[1]
     res = proj[2]::UInt8 # type assert to help with inference # TODO fix this upstream in QuantumClifford
-    res÷2+1, state
+    Int(res) ÷ 2 + 1, state
 end
 
 express_qc_proj(::XGate) = QuantumClifford.projectX! # should be project*rand! if ispadded()=true

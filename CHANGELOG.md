@@ -2,6 +2,7 @@
 
 ## v0.7.1 - unreleased
 
+- `project_traceout!` validates its arguments in more detail.
 - `observable` now rejects mismatched register/index collections and repeated
   physical register slots before backend processing.
 - **(fix)** Clifford stabilizer-projector observables now return probabilities

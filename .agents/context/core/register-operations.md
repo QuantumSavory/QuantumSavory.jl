@@ -24,8 +24,10 @@ backends. QuantumOptics accepts `Ket`/`Operator` states and symbolic or native b
 vectors; `MCKet` preserves its wrapper when a ket remains. Clifford accepts a
 `MixedDestabilizer` with supported symbolic Pauli measurement bases. Gabs instead
 accepts `GaussianState` plus `HomodyneMeasurement` and returns the continuous homodyne
-result. Other combinations stop at dispatch. An unassigned slot currently throws the
-raw string `"error"` rather than a typed diagnostic.
+result. Other combinations stop at dispatch. An unassigned slot throws
+`ArgumentError("Cannot project and trace out an unassigned register slot.")`
+before time advancement. Clifford's supported symbolic Pauli bases are specifically
+`X`, `Y`, and `Z`; explicit basis vectors remain a QuantumOptics/QuantumMC feature.
 
 `observable` requires equal register and slot-index collection lengths and rejects
 repeated physical register slots. These checks run before empty-slot fallback, time

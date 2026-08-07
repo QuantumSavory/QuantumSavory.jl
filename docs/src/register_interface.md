@@ -211,6 +211,10 @@ Backend implementations.
 If `basis` is an operator, call `eigvecs` to convert it into a matrix whose columns are the eigenvectors of the operator.
 If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` to convert it to the necessary representation.
 
+`CliffordRepr` currently accepts only the symbolic `X`, `Y`, and `Z` qubit
+measurement bases. Explicit basis vectors are supported by `QuantumOpticsRepr`
+and `QuantumMCRepr`, not by the Clifford backend.
+
 #### Interface Overview
 
 ```mermaid

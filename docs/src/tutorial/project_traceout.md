@@ -47,6 +47,10 @@ empty after the second measurement.
 You can use `X` or `Y` in the same way. Each operator selects its own pair of
 eigenstates.
 
+For `CliffordRepr`, symbolic `X`, `Y`, and `Z` are the currently supported
+measurement bases. The explicit basis-vector form in the next section is
+available with `QuantumOpticsRepr` and `QuantumMCRepr`.
+
 ## Give the qubit basis explicitly
 
 An explicit tuple or vector sets both the basis and the order of the outcomes.
