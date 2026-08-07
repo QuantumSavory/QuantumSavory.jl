@@ -189,17 +189,23 @@ end
 </details>
 ```
 
-Notice that the entangler uses the [`initialize!`](@ref) function to set the state of certain registers, but we never need to explicitly construct the numerical representation of these kets. Rather, we use the symbolic algebra system of [`QuantumSymbolics.jl`](https://github.com/QuantumSavory/QuantumSymbolics.jl), and let the simulator automatically convert the symbolic expression into numerical density matrices. This conversion was governed by the choice of `representation = QuantumOpticsRepr`. The example takes its `noisy_pair` from the predefined [`DepolarizedBellPair`](@ref) in [`StatesZoo`](@ref Predefined-Models-of-Quantum-States), but it also keeps the equivalent hand-written symbolic definition around (commented out) to show how you would build such a state yourself:
+Notice that the entangler uses the [`initialize!`](@ref) function to set the state of certain registers, but we never need to explicitly construct the numerical representation of these kets. Rather, we use the symbolic algebra system of [`QuantumSymbolics.jl`](https://github.com/QuantumSavory/QuantumSymbolics.jl), and let the simulator automatically convert the symbolic expression into numerical density matrices. This conversion was governed by the choice of `representation = QuantumOpticsRepr`. The example takes its `noisy_pair` from the predefined [`DepolarizedBellPair`](@ref) in [`StatesZoo`](@ref Predefined-Models-of-Quantum-States), but it also keeps an equivalent hand-written symbolic definition to show how you would build such a state yourself:
 
 ```julia
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
 noisy_pair_func(F) = DepolarizedBellPair(;F)
-# Here is how you can do it manually if you want to have a more general state provided by QuantumSymbolics.
-# Check out also the StatesZoo as a source of other predefined types of noisy Bell pairs:
-# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
+function manual_noisy_pair_func(F)
+    p = (4F - 1) / 3
+    p*perfect_pair_dm + (1-p)*mixed_dm
+end
 ```
+
+Here `mixed_dm` is the maximally mixed two-qubit state, so the overlap with
+`perfect_pair_dm` is `(3p+1)/4`. The Bell-projector weight must therefore be
+`p = (4F-1)/3` when `F` is the requested fidelity. Prefer
+`DepolarizedBellPair(; F)` unless you need a custom symbolic state.
 
 The symbolic-expression-to-density-matrix conversion is cached inside of the symbolic expression, so that it does not need to be recomputed each time.
 
@@ -435,6 +441,7 @@ end
         @yield timeout(sim, purifier_busy_time)
         rega = network[nodea]
         regb = network[nodeb]
+        uptotime!((rega[pair1qa], regb[pair1qb], rega[pair2qa], regb[pair2qb]), now(sim))
         purifyerror =  (:X, :Z)[round%2+1]
         purificationcircuit = Purify2to1(purifyerror)
         success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb])
@@ -565,7 +572,14 @@ The digital-ish dynamics was implemented through the use of
 - [`project_traceout!`](@ref) for projective measurements over qubits
 - [`observable`](@ref) for calculating expectation values of quantum observables
 
-Many of the above functions take the `time` keyword argument, which ensures that various background analog processes are simulated before the given operation is performed.
+Many of the above functions take the `time` keyword argument. A
+`ConcurrentSim.timeout` advances the scheduler, but it does not itself update
+register backgrounds. Pass `time=now(sim)` when a direct register operation
+occurs at scheduler time. For circuit helpers that do not accept `time`, call
+[`uptotime!`](@ref) on the affected slots first, as the swapper and purifier do
+above. See [Modeling Registers, Factorization, and Time](@ref
+modeling-registers-time) for the operation-specific behavior when `time` is
+omitted.
 
 Of note is that we also used
 `Makie.jl` for plotting,

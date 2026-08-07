@@ -49,6 +49,35 @@ For example:
 The symbolic frontend therefore separates model description from backend choice,
 but it does not erase the mathematical limits of a backend.
 
+## Keep Register Code Backend Neutral
+
+Use QuantumSavory's exported symbolic gates and Pauli operators in register
+operations. The same code can then select another compatible representation
+without replacing every operation:
+
+```julia
+reg = Register(2, CliffordRepr())
+initialize!(reg[1:2], Z1 ⊗ Z1)
+apply!(reg[1], H)
+apply!((reg[1], reg[2]), CNOT)
+observable(reg[1:2], X ⊗ X)
+```
+
+The order of the tensor factors must match the order of the selected register
+references. Build longer observables from the exported `X`, `Y`, `Z`, and `I`
+objects. Clifford observables with three or more tensor factors, and any
+identity-containing Clifford tensor, require QuantumSymbolics 0.4.17 or later.
+
+Native values such as `QuantumClifford.sHadamard`, `QuantumClifford.sCNOT`, and
+`QuantumClifford.PauliOperator` remain useful interoperability escape hatches,
+but code that uses them is coupled to the Clifford backend. Directly using a
+native `PauliOperator` as an observable also requires QuantumSymbolics 0.4.17
+or later.
+
+A [`RegRef`](@ref) is a stable view of a register slot; it is not `nothing`
+when its slot is empty. Test occupancy with `isassigned(ref)` or
+`isassigned(register, slot)`.
+
 ## Lowering Happens At The Boundary
 
 The key operation is `express`, which converts a symbolic object into a

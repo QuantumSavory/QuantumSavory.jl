@@ -65,9 +65,12 @@ const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
 noisy_pair_func(F) = DepolarizedBellPair(;F)
-# Here is how you can do it manually if you want to have a more general state provided by QuantumSymbolics.
-# Check out also the StatesZoo as a source of other predefined types of noisy Bell pairs:
-# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
+# Here is how to construct the same mixture manually with QuantumSymbolics.
+# F is the Bell-state fidelity, while p is the weight of the Bell projector.
+function manual_noisy_pair_func(F)
+    p = (4F - 1) / 3
+    p*perfect_pair_dm + (1-p)*mixed_dm
+end
 const XX = X⊗X
 const ZZ = Z⊗Z
 const YY = Y⊗Y
@@ -204,6 +207,7 @@ end
         @yield timeout(sim, purifier_busy_time)
         rega = network[nodea]
         regb = network[nodeb]
+        uptotime!((rega[pair1qa], regb[pair1qb], rega[pair2qa], regb[pair2qb]), now(sim))
         purifyerror =  (:X, :Z)[round%2+1]
         purificationcircuit = Purify2to1(purifyerror)
         success = purificationcircuit(rega[pair1qa],regb[pair1qb],rega[pair2qa],regb[pair2qb])

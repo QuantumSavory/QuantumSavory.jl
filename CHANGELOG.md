@@ -2,6 +2,9 @@
 
 ## v0.7.1 - unreleased
 
+- **(fix)** Correct the Bell-fidelity parameter in the low-level repeater
+  example and clarify backend-neutral operations, register time, factorization,
+  Clifford trajectories, and one-round entangler scheduling in the guides.
 - Indexed Gaussian operations now delegate to Gabs' canonical
   `apply!(state, indices, operation)` API; Gabs 1.3.8 is now required.
 - Simulation, network, protocol, and visualization traces now use

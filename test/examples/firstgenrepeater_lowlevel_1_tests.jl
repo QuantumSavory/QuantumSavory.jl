@@ -33,4 +33,9 @@ end
     @test record.metadata.sim_process_id isa UInt
     @test record.metadata.nodes isa NTuple{2,Int}
     @test record.metadata.slots isa NTuple{2,Int}
+
+    fidelity = 0.83
+    pair = Register(2, QuantumOpticsRepr())
+    initialize!(pair[1:2], manual_noisy_pair_func(fidelity))
+    @test real(observable(pair[1:2], perfect_pair_dm)) ≈ fidelity
 end

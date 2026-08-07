@@ -25,6 +25,20 @@ prot = EntanglerProt(sim, net, 1, 2)
 @process prot()
 ```
 
+`@process prot()` schedules the protocol and lets the caller continue. Inside
+an `@resumable` caller, wait for a one-round protocol when later work requires
+the generated pair:
+
+```julia
+prot = EntanglerProt(sim, net, 1, 2; rounds=1)
+@yield @process prot()
+```
+
+If `chooseslotA` and `chooseslotB` select fixed communication slots, do not
+request further rounds unless another process consumes or clears the generated
+pair between rounds. Further rounds otherwise wait for those occupied slots to
+become free.
+
 This matters because the protocol object packages:
 
 - the simulation handle,

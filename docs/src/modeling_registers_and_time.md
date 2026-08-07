@@ -30,36 +30,61 @@ This keeps the model close to the hardware description. You describe the
 system once, then reuse that description across protocols, measurements, and
 backend experiments.
 
-## States Stay Factored Until Interaction Requires More
+## Symbolic Structure Controls Initial Factorization
 
-Quantum states are not eagerly expanded into one giant Hilbert space. If two
-subsystems have not interacted, QuantumSavory keeps them as separate state
-objects. When an operation actually couples them, only then does the simulator
-compose the needed joint state.
+Quantum states are not eagerly expanded into one giant Hilbert space. During
+initialization, QuantumSavory splits a top-level symbolic tensor. For example,
+`X1 ⊗ Z1` can install two separate factor states. Wrapping the complete product
+in `SProjector(X1 ⊗ Z1)` or `MixedState(X1 ⊗ Z1)` instead installs one joint
+state, while `SProjector(X1) ⊗ SProjector(Z1)` remains structurally factorized.
+
+This is a structural rule, not a general separability test. Numeric backend
+states and symbolic expressions nested inside another operation are not
+inspected to discover independent factors.
 
 This matters because memory cost grows very quickly for general wavefunction
 methods. Keeping independent parts factored out means memory grows with the
 size of the entangled clusters you have created, not with the full product
 space of the whole register.
 
-Measurements, observables, and trace-out operations follow the same idea. They
-operate on the needed subsystems and only merge or reduce states when the
-physics requires it.
+An `apply!` call over separate factors composes them and stores the resulting
+joint state. An `observable` over separate factors composes a temporary state
+without changing their stored factorization. Measurements and trace-out
+operations reduce the selected stored states as required.
 
-## Time Is Tracked For You
+## Scheduler Time And Register Time Are Separate
 
-Background evolution is not something you manually weave through every gate and
-measurement call. Each subsystem carries its own local simulation time, and the
-framework advances it only when an operation, observable, or synchronization
-point demands it.
+A `ConcurrentSim.timeout` advances the event scheduler only. It does not apply
+register backgrounds. Each subsystem instead carries a local access time, and
+register operations advance background evolution according to their own time
+contract.
+
+When an operation is intended to occur at scheduler time, pass that time
+explicitly:
+
+```julia
+t = now(sim)
+initialize!(reg[1], Z1; time=t)
+apply!(reg[1], H; time=t)
+value = observable(reg[1], Z; time=t)
+outcome = project_traceout!(reg[1], Z; time=t)
+```
+
+If `time` is omitted, `initialize!` leaves the slot's local time unchanged and
+`apply!` synchronizes the selected slots only to their greatest recorded local
+time. `observable` and `project_traceout!` do not evolve backgrounds without an
+explicit time. Plain `traceout!` never advances time. A circuit helper that
+does not accept `time` must be preceded by `uptotime!(refs, now(sim))` when it
+is intended to run at scheduler time.
 
 This demand-driven time handling does two useful things:
 
 - it avoids spending work on subsystems that nobody has touched yet, and
 - it lets protocol code stay focused on protocol logic instead of bookkeeping.
 
-Different parts of the same model can therefore sit at different effective
-times until an interaction forces them to be synchronized.
+Different parts of the same model can therefore sit at different local times
+until an operation explicitly advances or synchronizes them. QuantumSavory
+does not infer `now(sim)` from a register operation.
 
 ## Noise Is Declared Once, Then Lowered By The Backend
 

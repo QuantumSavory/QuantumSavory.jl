@@ -16,9 +16,10 @@ const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
 noisy_pair_func(F) = DepolarizedBellPair(;F)
-# Here is how you can do it manually if you want to have a more general state provided by QuantumSymbolics.
-# Check out also the StatesZoo as a source of other predefined types of noisy Bell pairs:
-# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
+function manual_noisy_pair_func(F)
+    p = (4F - 1) / 3
+    p*perfect_pair_dm + (1-p)*mixed_dm
+end
 ```
 
 Here we switch to tableau representation for our initial states.
@@ -30,8 +31,15 @@ You can actually use the tableau definition below for all types of simulations (
 # a tableau corresponding to a Bell pair
 const stab_perfect_pair = StabilizerState("XX ZZ")
 const stab_perfect_pair_dm = SProjector(stab_perfect_pair)
-stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*mixed_dm
+function stab_noisy_pair_func(F)
+    p = (4F - 1) / 3
+    p*stab_perfect_pair_dm + (1-p)*mixed_dm
+end
 ```
+
+The overlap of `mixed_dm = I/4` with the Bell projector is `1/4`, so
+the Bell-projector weight is `p = (4F-1)/3`, not `F`. This formula applies for
+Bell fidelities `1/4 ≤ F ≤ 1`.
 
 We then use that in the entangler setup (the same way we used a similar function when we were doing wavefunction simulations), simply by selecting the appropriate default representation type ([`CliffordRepr`](@ref) instead of [`QuantumOpticsRepr`](@ref)):
 
@@ -41,7 +49,19 @@ sim, network = simulation_setup(sizes, T2; representation = CliffordRepr)
 noisy_pair = stab_noisy_pair_func(F)
 ```
 
-The symbolic-expression-to-density-matrix conversion is cached inside of the symbolic expression `noisy_pair`, so that it does not need to be recomputed each time. In particular, given that this arbitrary mixed state can not be represented as a tableau, rather as a probability distribution over different tableaux, the cache provides for efficient random sampling.
+The symbolic conversion is cached inside `noisy_pair`. For a Clifford register,
+this convex sum samples one tableau at each initialization. Supported Clifford
+background noise likewise samples trajectory events. A single run is therefore
+one trajectory; estimate an ensemble fidelity curve from multiple independent
+runs and average their results. Some rank-deficient mixed stabilizer states can
+be represented exactly by a mixed tableau, so this sampling statement applies
+to the convex sum and noise model used here, not to every mixed Clifford state.
+
+!!! note "Background parameters"
+    This example configures every slot with `T2Dephasing(T2)`. A separate
+    variable named `T1` has no effect unless it is used to construct the slot
+    background. See [Background Noise Processes](@ref) for backend support when
+    both T1 and T2 are needed.
 
 !!! note "You can use tableaux states in the Schroedinger simulations."
 
@@ -49,7 +69,7 @@ The symbolic-expression-to-density-matrix conversion is cached inside of the sym
 
 ## Simulation Trace
 
-Similarly to the wavefunction simulations from the previous tutorial, here we can see how the various observables evolve over time for a Clifford-base simulation. Notice that unlike the wavefunction simulation, the results are very discrete, and we will certainly need to average over multiple repeated simulations of this trajectory.
+Similarly to the wavefunction simulations from the previous tutorial, here we can see how the various observables evolve over time for a Clifford-base simulation. Notice that unlike the wavefunction simulation, the results are very discrete. The comparison below therefore averages multiple independent trajectories.
 
 ```@raw html
 <video src="../firstgenrepeater-08.clifford.mp4" autoplay loop muted></video>

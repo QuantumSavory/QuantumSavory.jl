@@ -7,4 +7,7 @@ include("setup.jl")
 # for all types of simulations (tableau, ket, others).
 const stab_perfect_pair = StabilizerState("XX ZZ")
 const stab_perfect_pair_dm = SProjector(stab_perfect_pair)
-stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*mixed_dm
+function stab_noisy_pair_func(F)
+    p = (4F - 1) / 3
+    p*stab_perfect_pair_dm + (1-p)*mixed_dm
+end
