@@ -72,17 +72,17 @@ landing = Bonito.App() do
 
     fig[1, 1] = buttongrid = GridLayout(tellwidth = false)
 
-    running = Observable{Any}(false)
+    running = Observable{Union{Bool, Nothing}}(false)
     buttongrid[1,1] = b = Makie.Button(fig, label = @lift(isnothing($running) ? "Done" : $running ? "Running..." : "Run once"))
     conf_obs = add_conf_sliders(fig[1,2])
 
     on(b.clicks) do _
-        if !running[]
+        if running[] === false
             running[] = true
         end
     end
     on(running) do r
-        if r
+        if r === true
             sim, network, obs, ts, ax, ax_fidXX, ax_fidZZ = prepare_singlerun(fig[2,1:2]; conf_obs[]...)
             Threads.@spawn continue_singlerun!(sim, network, (obs, ts), (ax, ax_fidXX, ax_fidZZ), running)
         end
