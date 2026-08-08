@@ -6,13 +6,17 @@ ENV JULIA_DEPOT_PATH=/opt/julia-depot \
     JULIA_PKG_PRECOMPILE_AUTO=0
 WORKDIR /app
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends xauth xvfb && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY Project.toml ./
 COPY src ./src
 COPY ext ./ext
 COPY examples/Project.toml ./examples/Project.toml
 COPY examples/states_rest_server/Project.toml ./examples/states_rest_server/Project.toml
 
-RUN julia --startup-file=no --threads=auto --project=examples -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()' && \
+RUN xvfb-run -a julia --startup-file=no --threads=auto --project=examples -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()' && \
     julia --startup-file=no --threads=auto --project=examples/states_rest_server -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 
 COPY examples/firstgenrepeater/setup.jl examples/firstgenrepeater/2_swapper_example.jl ./examples/firstgenrepeater/
