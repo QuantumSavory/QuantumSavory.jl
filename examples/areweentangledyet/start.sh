@@ -70,13 +70,84 @@ trap on_exit EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-validate_public_url() {
-    local port=""
+validate_ipv4_address() {
+    local address="$1"
+    local octet
+    local -a octets
 
-    if [[ ! "$PUBLIC_URL" =~ ^https?://(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?)(:([0-9]{1,5}))?$ ]]; then
-        die "PUBLIC_URL must be an absolute HTTP(S) origin without a trailing slash, path, query, fragment, or user information"
+    IFS=. read -r -a octets <<<"$address"
+    ((${#octets[@]} == 4)) || return 1
+    for octet in "${octets[@]}"; do
+        [[ "$octet" =~ ^(0|[1-9][0-9]{0,2})$ ]] || return 1
+        ((10#$octet <= 255)) || return 1
+    done
+}
+
+validate_dns_host() {
+    local host="$1"
+    local label
+    local -a labels
+
+    ((${#host} <= 253)) || return 1
+    [[ "$host" != *..* ]] || return 1
+    IFS=. read -r -a labels <<<"$host"
+    for label in "${labels[@]}"; do
+        ((${#label} <= 63)) || return 1
+        [[ "$label" =~ ^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?$ ]] || return 1
+    done
+}
+
+validate_ipv6_address() {
+    local address="$1"
+    local left right remainder part group
+    local group_count=0
+    local -a groups
+
+    [[ "$address" =~ ^[0-9A-Fa-f:]+$ && "$address" != *:::* ]] || return 1
+    if [[ "$address" == *::* ]]; then
+        left="${address%%::*}"
+        remainder="${address#*::}"
+        [[ "$remainder" != *::* ]] || return 1
+        right="$remainder"
+        for part in "$left" "$right"; do
+            [[ -z "$part" ]] && continue
+            [[ "$part" != :* && "$part" != *: ]] || return 1
+            IFS=: read -r -a groups <<<"$part"
+            for group in "${groups[@]}"; do
+                [[ "$group" =~ ^[0-9A-Fa-f]{1,4}$ ]] || return 1
+            done
+            group_count=$((group_count + ${#groups[@]}))
+        done
+        ((group_count < 8))
+    else
+        [[ "$address" != :* && "$address" != *: ]] || return 1
+        IFS=: read -r -a groups <<<"$address"
+        ((${#groups[@]} == 8)) || return 1
+        for group in "${groups[@]}"; do
+            [[ "$group" =~ ^[0-9A-Fa-f]{1,4}$ ]] || return 1
+        done
     fi
-    port="${BASH_REMATCH[4]:-}"
+}
+
+validate_public_url() {
+    local host port=""
+    local origin_error="PUBLIC_URL must be an absolute HTTP(S) origin with a valid host and without a trailing slash, path, query, fragment, or user information"
+
+    if [[ "$PUBLIC_URL" =~ ^https?://\[([0-9A-Fa-f:]+)\](:([0-9]{1,5}))?$ ]]; then
+        host="${BASH_REMATCH[1]}"
+        port="${BASH_REMATCH[3]:-}"
+        validate_ipv6_address "$host" || die "$origin_error"
+    elif [[ "$PUBLIC_URL" =~ ^https?://([A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?)(:([0-9]{1,5}))?$ ]]; then
+        host="${BASH_REMATCH[1]}"
+        port="${BASH_REMATCH[4]:-}"
+        if [[ "$host" =~ ^[0-9.]+$ ]]; then
+            validate_ipv4_address "$host" || die "$origin_error"
+        else
+            validate_dns_host "$host" || die "$origin_error"
+        fi
+    else
+        die "$origin_error"
+    fi
     if [[ -n "$port" ]] && ((10#$port < 1 || 10#$port > 65535)); then
         die "PUBLIC_URL contains an invalid port"
     fi

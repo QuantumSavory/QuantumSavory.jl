@@ -10,7 +10,7 @@ Hosted API endpoints remain below `/states_rest_server/api/`.
 
 ### Prerequisites
 
-1. Julia 1.11+ with QuantumSavory.jl installed
+1. Julia 1.12 or later with QuantumSavory.jl installed
 2. Oxygen.jl for the REST API framework
 3. JSON3.jl for JSON handling
 
