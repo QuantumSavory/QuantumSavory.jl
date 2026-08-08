@@ -1,0 +1,19 @@
+services:
+  areweentangledyet:
+    build:
+      context: ../..
+      dockerfile: examples/areweentangledyet/Containerfile
+    image: quantumsavory/areweentangledyet:local
+    ports:
+      - "8000:8000"
+    environment:
+      PUBLIC_URL: "${PUBLIC_URL:-http://localhost:8000}"
+      STARTUP_TIMEOUT_SECONDS: "${STARTUP_TIMEOUT_SECONDS:-600}"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10m
+    restart: unless-stopped
+    stop_grace_period: 30s
