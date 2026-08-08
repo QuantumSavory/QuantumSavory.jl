@@ -145,6 +145,11 @@ generate_caddyfile() {
     {
         printf '{\n\tauto_https off\n\tadmin off\n}\n\n'
         printf ':%s {\n' "$PUBLIC_PORT"
+        printf '\thandle /favicon.ico {\n'
+        printf '\t\trewrite * /quantumsavory-logo.png\n'
+        printf '\t\troot * "%s"\n' "$PUBLIC_DIR"
+        printf '\t\tfile_server\n'
+        printf '\t}\n'
         while IFS= read -r item; do
             slug="$(jq -r '.slug' <<<"$item")"
             runtime="$(jq -r '.runtime' <<<"$item")"
