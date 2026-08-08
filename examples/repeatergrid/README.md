@@ -1,5 +1,10 @@
 # Large Grid Network with Classical Synchronization of Messages and only "Local Knowledge" Control
 
+Hosted applications:
+
+- [asynchronous repeater grid](https://areweentangledyet.com/repeatergrid_async/)
+- [synchronous repeater grid](https://areweentangledyet.com/repeatergrid_sync/)
+
 Our goal is to simply entangle two specific clients on a grid network.
 All nodes of the network are capable of running nearest-neighbor entanglement generation, swaps, potentially cutoff-time deletion of old qubits, all of the classical communication machinery to distribute the necessary metadata among neighbors.
 
@@ -17,3 +22,18 @@ This module provides two ways of running the simulation:
 - [`SwapperProt`](@ref) and [`CutoffProt`](@ref) in an asynchronous manner where they run independently and all the classical information about the quantum states is reconciled using asynchronous messages sent to the tracker.
 
 - [`SwapperProt`](@ref) does not use qubits that are too old (and independently expected to be thrown away by the [`CutoffProt`](@ref)), by checking their `agelimit` parameter passed to it during initialization. Here, there are no outgoing messages from the [`CutoffProt`](@ref).
+
+## Interactive servers
+
+Run the asynchronous and synchronous web applications with:
+
+```bash
+julia --threads=2 --project=examples examples/repeatergrid/1b_async_wglmakie_interactive.jl
+julia --threads=2 --project=examples examples/repeatergrid/2b_sync_wglmakie_interactive.jl
+```
+
+The asynchronous server uses `QS_ASYNC_REPEATERGRID_IP`,
+`QS_ASYNC_REPEATERGRID_PORT`, and `QS_ASYNC_REPEATERGRID_PROXY`; its default port
+is 8894. The synchronous server uses the corresponding
+`QS_SYNC_REPEATERGRID_*` variables and port 8895. Proxy URLs are absolute and
+include a trailing slash.

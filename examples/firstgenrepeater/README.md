@@ -1,5 +1,8 @@
 # A Much Simpler Simulation of First Generation Quantum Repeater Chain
 
+The interactive swapping example is hosted at
+[areweentangledyet.com/firstgenrepeater/](https://areweentangledyet.com/firstgenrepeater/).
+
 This `firstgenrepeater` is a much simpler implementation compared to the `firstgenrepeater_lowlevel`. Behind the scenes the simulation is basically the same, but this version uses much more convenient higher-level abstractions using ProtocolZoo, so the user needs to write much less code.
 
 The `setup.jl` file implements all the shared base functionality (network setup, the custom purifier process).
@@ -28,6 +31,11 @@ julia --project=examples examples/firstgenrepeater/2_swapper_example.jl
 ```
 
 This launches a WGLMakie web app (default `http://127.0.0.1:8890`). Configure the repeater chain and Barrett-Kok source, then press **Run simulation** to watch entanglement propagate end-to-end. Purification is not included in this example.
+
+Configure the listening address, port, and absolute proxy URL with
+`QS_FIRSTGENREPEATER_V2_IP`, `QS_FIRSTGENREPEATER_V2_PORT`, and
+`QS_FIRSTGENREPEATER_V2_PROXY`. A subpath proxy URL must include its trailing
+slash, for example `https://areweentangledyet.com/firstgenrepeater/`.
 
 ## Example 3 — Purifier
 

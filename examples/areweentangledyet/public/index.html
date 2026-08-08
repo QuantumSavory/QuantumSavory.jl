@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive quantum-network simulations powered by QuantumSavory.jl">
+  <title>Are We Entangled Yet?</title>
+  <link rel="icon" type="image/png" href="./quantumsavory-logo.png">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <button id="skip-link" class="skip-link" type="button">Skip to demos</button>
+
+  <header class="site-header">
+    <nav class="site-nav" aria-label="QuantumSavory resources">
+      <a href="https://quantumsavory.org/" target="_blank" rel="noopener noreferrer">QuantumSavory.org <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+      <a href="https://gui.quantumsavory.org/" target="_blank" rel="noopener noreferrer">GUI <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+      <a href="https://qs.quantumsavory.org/stable/" target="_blank" rel="noopener noreferrer">Package docs <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+      <a href="https://github.com/QuantumSavory/QuantumSavory.jl" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+    </nav>
+
+    <div class="hero">
+      <img class="logo" src="./quantumsavory-logo.png" width="96" height="96" alt="QuantumSavory logo">
+      <div>
+        <p class="eyebrow">QuantumSavory live applications</p>
+        <h1>Are We <span>Entangled</span> Yet?</h1>
+        <p class="tagline">Run interactive quantum-network simulations and inspect physical state models directly in your browser.</p>
+      </div>
+    </div>
+  </header>
+
+  <main id="demos" tabindex="-1">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Explore</p>
+        <h2>Live applications</h2>
+      </div>
+      <p>Each application runs against the same QuantumSavory source revision.</p>
+    </div>
+
+    <div id="demo-grid" class="demo-grid" aria-busy="true">
+      <p id="catalog-status" class="catalog-status" role="status" aria-live="polite">Loading applications…</p>
+    </div>
+    <noscript><p class="catalog-status error">JavaScript is required to load the application catalog.</p></noscript>
+  </main>
+
+  <footer>
+    <p>QuantumSavory is managed at <a href="https://lab.krastanov.org/" target="_blank" rel="noopener noreferrer">Prof. Stefan Krastanov’s Quantum Information Lab <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a> at <a href="https://www.umass.edu/quantum/" target="_blank" rel="noopener noreferrer">UMass Amherst <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>.</p>
+    <p>Supported in part by the U.S. National Science Foundation through the NSF Engineering Research Center for Quantum Networks, Cooperative Agreement 1941583, and NSF Grant 2346089. The content is the authors’ responsibility and does not necessarily represent NSF views.</p>
+    <p><a href="https://quantumsavory.org/community/funding/" target="_blank" rel="noopener noreferrer">Funding and host information <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a></p>
+  </footer>
+</body>
+</html>
