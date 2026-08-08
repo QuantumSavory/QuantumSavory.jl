@@ -1,4 +1,5 @@
-# Keep synchronized with ../../../.dockerignore for classic builder compatibility.
+# Keep synchronized with examples/areweentangledyet/Containerfile.dockerignore.
+# The context-root file is required by Docker's classic builder.
 **
 !Project.toml
 !src/
