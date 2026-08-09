@@ -25,6 +25,9 @@
 - `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
 - Introspection tools for generating catalogs of available slot, background, and protocol types are now public.
 - **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
+- Add the self-contained areweentangledyet.com deployment with a catalog-driven
+  landing page, seven interactive examples, the StatesZoo REST API, and one
+  Caddy/Compose container.
 
 ## v0.7.0 - 2026-06-12
 
