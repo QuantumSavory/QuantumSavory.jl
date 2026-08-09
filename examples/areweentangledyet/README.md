@@ -25,10 +25,10 @@ startup deadline is 600 seconds.
 
 ## Local startup
 
-From this directory, build and start the service:
+From a committed and pushed checkout, build and start that exact revision:
 
 ```bash
-docker compose up --build
+QUANTUMSAVORY_REVISION="$(git rev-parse HEAD)" docker compose up --build
 ```
 
 Open [http://localhost:8000](http://localhost:8000). Stop the foreground process
@@ -46,13 +46,8 @@ clone a repository or run `Pkg.resolve`, `Pkg.update`, or any other
 package-network operation.
 
 The builder reads source from GitHub, not from the local Docker build context.
-Local changes must be committed and pushed before they can enter an image. Use
-an exact commit SHA to select the current pushed checkout and invalidate the
-source layer cache:
-
-```bash
-QUANTUMSAVORY_REVISION="$(git rev-parse HEAD)" docker compose up --build
-```
+Local changes must be committed and pushed before they can enter an image. An
+exact commit SHA selects one checkout and invalidates the source layer cache.
 
 ## Production startup
 
