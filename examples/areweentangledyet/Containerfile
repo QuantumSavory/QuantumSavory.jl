@@ -2,14 +2,14 @@ FROM caddy:2.10.2 AS caddy
 
 FROM julia:1.12.6-bookworm AS build
 
-ARG QUANTUMSAVORY_REVISION=master
-
 ENV JULIA_DEPOT_PATH=/opt/julia-depot \
     JULIA_PKG_PRECOMPILE_AUTO=0
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git xauth xvfb && \
     rm -rf /var/lib/apt/lists/*
+
+ARG QUANTUMSAVORY_REVISION=master
 
 RUN git clone --no-checkout https://github.com/QuantumSavory/QuantumSavory.jl.git /app && \
     git -C /app checkout --detach "$QUANTUMSAVORY_REVISION" && \
