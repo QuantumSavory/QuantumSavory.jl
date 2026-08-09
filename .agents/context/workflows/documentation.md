@@ -39,8 +39,8 @@ public-intent inventory is:
 - generated prose but no marking: qualified `stateof`, `quantumstate`, `swap!`,
   `showmetadata`, `default_repr`, `Switches.promponas_bruteforce_choice`,
   `ProtocolZoo.EntanglementDelete`, `ProtocolZoo.QTCP.QDatagramSuccess`, the three Zoo
-  module bindings, their documented `Genqo`/`Switches`/`QTCP`/MBQC nested modules, and
-  the two Genqo state models; and
+  module bindings, and their documented `Genqo`/`Switches`/`QTCP`/MBQC nested
+  modules; and
 - source docstring but no generated prose or marking: `slots`,
   `CircuitZoo.AbstractCircuit`, and its incomplete `inputqubits` feature interface.
 
