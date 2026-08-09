@@ -13,6 +13,7 @@ then restarts the complete unit.
 ## Requirements
 
 - Docker with the Compose plugin
+- Outbound HTTPS access to GitHub and the Julia package servers during builds
 - At least 16 GiB of available memory and 16 logical CPU cores for concurrent
   startup and interactive use
 - Additional disk space and time for the first build because the image contains
@@ -37,10 +38,21 @@ with `Ctrl-C`, or stop a detached deployment with:
 docker compose down
 ```
 
-The build uses `julia:1.12.6-bookworm` and Caddy 2.10.2. It instantiates and
-precompiles both Julia environments during the image build. Container startup
-does not clone a repository or run `Pkg.resolve`, `Pkg.update`, or any other
+The build uses `julia:1.12.6-bookworm` and Caddy 2.10.2. It clones the complete
+QuantumSavory.jl repository at `QUANTUMSAVORY_REVISION` (default `master`),
+removes the Git history, and retains the tracked checkout in the image. It then
+instantiates and precompiles both Julia environments. Container startup does not
+clone a repository or run `Pkg.resolve`, `Pkg.update`, or any other
 package-network operation.
+
+The builder reads source from GitHub, not from the local Docker build context.
+Local changes must be committed and pushed before they can enter an image. Use
+an exact commit SHA to select the current pushed checkout and invalidate the
+source layer cache:
+
+```bash
+QUANTUMSAVORY_REVISION="$(git rev-parse HEAD)" docker compose up --build
+```
 
 ## Production startup
 
@@ -48,8 +60,11 @@ Set `PUBLIC_URL` to the public HTTP origin. It must contain only a scheme, host,
 and optional port. Do not add a trailing slash, path, query, fragment, or user
 information.
 
+Build a fixed pushed revision, then start that image:
+
 ```bash
-PUBLIC_URL=https://areweentangledyet.com docker compose up --build --detach
+QUANTUMSAVORY_REVISION=<full-commit-sha> docker compose build --pull
+PUBLIC_URL=https://areweentangledyet.com docker compose up --detach --no-build
 ```
 
 Use one host-level TLS reverse proxy in front of container port 8000. Proxy all
@@ -87,13 +102,17 @@ Oxygen, both paths include the service prefix because Caddy preserves it. The
 launcher validates all fields, uniqueness constraints, path containment, and
 the generated Caddy configuration before it starts a child process.
 
-After a catalog or source change, rebuild the image and replace the running
-unit:
+After a catalog or source change, push the new commit, rebuild that revision,
+and replace the running unit:
 
 ```bash
-docker compose build --pull
-docker compose up --detach
+QUANTUMSAVORY_REVISION=<new-full-commit-sha> docker compose build --pull
+docker compose up --detach --no-build
 ```
+
+Changing the commit SHA invalidates the cached clone. If a moving branch such
+as `master` must be fetched again under the same name, add `--no-cache` to the
+build command.
 
 To validate the catalog and generated Caddyfile in an already built image:
 

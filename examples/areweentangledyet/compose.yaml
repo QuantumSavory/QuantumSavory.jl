@@ -1,8 +1,10 @@
 services:
   areweentangledyet:
     build:
-      context: ../..
-      dockerfile: examples/areweentangledyet/Containerfile
+      context: .
+      dockerfile: Containerfile
+      args:
+        QUANTUMSAVORY_REVISION: "${QUANTUMSAVORY_REVISION:-master}"
     image: quantumsavory/areweentangledyet:local
     ports:
       - "8000:8000"
