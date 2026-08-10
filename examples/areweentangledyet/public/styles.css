@@ -145,6 +145,36 @@ main {
   padding: 3.5rem 1.5rem 5rem;
 }
 
+.gui-callout {
+  display: grid;
+  margin-bottom: 3.75rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  grid-template-columns: minmax(14rem, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(1.5rem, 5vw, 4rem);
+  border: 1px solid var(--line);
+  border-left: 0.35rem solid var(--purple);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgb(148 89 164 / 10%), transparent 24rem),
+    var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.gui-callout h2 {
+  margin-bottom: 0;
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  line-height: 1.15;
+}
+
+.gui-callout-copy p {
+  max-width: 68ch;
+  color: var(--muted);
+}
+
+.gui-callout-copy p:last-of-type {
+  margin-bottom: 1.4rem;
+}
+
 .section-heading {
   display: flex;
   margin-bottom: 1.4rem;
@@ -352,6 +382,11 @@ footer p:last-child {
 
   .section-heading > p {
     text-align: left;
+  }
+
+  .gui-callout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 
