@@ -54,13 +54,14 @@ function prepare_singlerun(
     sim, network, obs, ts, ax, ax_fidXX, ax_fidZZ
 end
 
-function continue_singlerun!(sim, network, observables, axes, running)
-    step_ts = range(0, 1000, step=0.1)
+function continue_singlerun!(sim, network, observables, axes, running;
+    step_ts = range(0, 100, step=1.0))
     for t in step_ts
         run(sim, t)
         # axes[1].title = "t=$(t)" # TODO does not update consistently
         notify.(observables)
         autolimits!.(axes)
+        yield()
     end
     running[] = nothing
 end
@@ -84,7 +85,7 @@ landing = Bonito.App() do
     on(running) do r
         if r === true
             sim, network, obs, ts, ax, ax_fidXX, ax_fidZZ = prepare_singlerun(fig[2,1:2]; conf_obs[]...)
-            Threads.@spawn continue_singlerun!(sim, network, (obs, ts), (ax, ax_fidXX, ax_fidZZ), running)
+            @async continue_singlerun!(sim, network, (obs, ts), (ax, ax_fidXX, ax_fidZZ), running)
         end
     end
 

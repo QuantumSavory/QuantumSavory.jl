@@ -73,7 +73,7 @@ end
 # All the calls that happen in the main event loop of the simulation,
 # encapsulated here so that we can conveniently pause the simulation from the WGLMakie app.
 function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, fid_axis, num_epr_axis, running;
-    step_ts = range(0, 1000, step=0.1))
+    step_ts = range(0, 50, step=1.0))
     for t in step_ts
         run(sim, t)
         notify.((obs,entlog))
@@ -85,6 +85,7 @@ function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, fid
         autolimits!(histaxis)
         ylims!(num_epr_axis, (0, 4))
         xlims!(num_epr_axis, max(0, t-50), 1+t)
+        yield()
     end
     running[] = nothing
 end
@@ -95,7 +96,7 @@ landing = Bonito.App() do
     sim, net, obs, entlog, entlogaxis, histaxis, fid_axis, num_epr_axis, fig, params = prepare_singlerun()
 
     running = Observable{Union{Bool, Nothing}}(false)
-    fig[4,1] = buttongrid = GridLayout(tellwidth = false)
+    fig[5,:] = buttongrid = GridLayout(tellwidth = false)
     buttongrid[1,1] = b = Makie.Button(fig, label = @lift(isnothing($running) ? "Done" : $running ? "Running..." : "Run once"), height=30, tellwidth=false)
 
     on(b.clicks) do _
@@ -105,7 +106,7 @@ landing = Bonito.App() do
     end
     on(running) do r
         if r === true
-            Threads.@spawn begin
+            @async begin
                 continue_singlerun!(
                     sim, obs, entlog, params, entlogaxis, histaxis, fid_axis, num_epr_axis, running)
             end
