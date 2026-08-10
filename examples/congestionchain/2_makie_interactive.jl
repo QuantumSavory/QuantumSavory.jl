@@ -55,7 +55,7 @@ function prepare_singlerun(
 end
 
 function continue_singlerun!(sim, network, observables, axes, running;
-    step_ts = range(0, 100, step=1.0))
+    step_ts = range(0, 100, step=5.0))
     for t in step_ts
         run(sim, t)
         # axes[1].title = "t=$(t)" # TODO does not update consistently

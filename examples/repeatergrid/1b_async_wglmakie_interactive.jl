@@ -73,7 +73,7 @@ end
 # All the calls that happen in the main event loop of the simulation,
 # encapsulated here so that we can conveniently pause the simulation from the WGLMakie app.
 function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, fid_axis, num_epr_axis, running;
-    step_ts = range(0, 50, step=1.0))
+    step_ts = range(0, 50, step=5.0))
     for t in step_ts
         run(sim, t)
         notify.((obs,entlog))
