@@ -68,10 +68,9 @@ function project_traceout!(state::Union{Ket,Operator}, subsystem::Int, meas::Hom
     b = nsubsystems(state) == 1 ? basis(state) : basis(state).bases[subsystem]
     a = destroy(b)
     xop = (cis(-θ)*a + cis(θ)*a') / sqrt(2) # a' is the creation operator on this truncated basis
-    F = LinearAlgebra.eigen(Matrix(xop.data))
-    kets = [Ket(b, ComplexF64.(F.vectors[:, k])) for k in axes(F.vectors, 2)]
+    values, kets = QuantumOptics.eigenstates(QuantumOpticsBase.dense(xop))
     result_index, remaining = project_traceout!(state, subsystem, kets)
-    F.values[result_index], remaining
+    values[result_index], remaining
 end
 
 const _l = copy(express(Z1, QuantumOpticsRepr()))
