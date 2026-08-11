@@ -10,7 +10,6 @@ readonly WARMUP_PORT=7999
 
 PUBLIC_URL="${PUBLIC_URL:-http://localhost:8000}"
 STARTUP_TIMEOUT_SECONDS="${STARTUP_TIMEOUT_SECONDS:-600}"
-WARMUP_TIMEOUT_SECONDS="${WARMUP_TIMEOUT_SECONDS:-600}"
 
 declare -a CHILD_PIDS=()
 declare -A CHILD_NAMES=()
@@ -393,7 +392,6 @@ main() {
     local mode="${1:-run}"
     [[ "$mode" == "run" || "$mode" == "--validate-only" ]] || die "usage: $0 [--validate-only]"
     [[ "$STARTUP_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "STARTUP_TIMEOUT_SECONDS must be a positive integer"
-    [[ "$WARMUP_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "WARMUP_TIMEOUT_SECONDS must be a positive integer"
 
     validate_public_url
     validate_catalog

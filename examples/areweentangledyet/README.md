@@ -21,8 +21,8 @@ status. Compose then restarts the complete unit.
   two precompiled Julia environments and Chromium
 
 Actual resource use depends on concurrent simulations. The color-center
-application is normally the slowest service to become ready. Backend startup
-and browser warmup have separate 600-second deadlines by default.
+application is normally the slowest service to become ready. The default
+backend startup deadline is 600 seconds; browser warmup adds several minutes.
 
 ## Local startup
 
@@ -70,11 +70,10 @@ public routes to the Julia ports. The Compose file publishes one `8000:8000`
 mapping; use the host firewall or reverse-proxy host policy to restrict direct
 access when necessary.
 
-For a slower host, override either startup deadline:
+For a slower host, override the backend startup deadline:
 
 ```bash
-STARTUP_TIMEOUT_SECONDS=900 WARMUP_TIMEOUT_SECONDS=900 \
-    PUBLIC_URL=https://areweentangledyet.com \
+STARTUP_TIMEOUT_SECONDS=900 PUBLIC_URL=https://areweentangledyet.com \
     docker compose up --detach
 ```
 
@@ -131,22 +130,16 @@ certificate accepted only by the warmup browser.
 
 [`warmup.mjs`](warmup.mjs) contains the complete deployment-specific action
 table. Each action is a click expressed as fractions of the current canvas width
-and height. The driver checks the exact expected canvas dimensions before every
-action, so a layout change fails startup instead of clicking an unrelated
-control. It changes representative sliders, runs every finite simulation to
-completion, starts and stops the continuous ensemble simulation, and exercises
-all four state-explorer models. Each route gets one retry in a new browser
-context.
+and height. The driver waits ten seconds after each page load and click, and
+only checks that the click produces some server-to-browser WebSocket activity.
+It does not inspect pixels or try to infer application state.
 
-When a canvas layout or control position changes, update its dimensions and
-relative coordinates in `warmup.mjs`, then rebuild the image. Add at least one
-directive for every new Bonito catalog entry. Keep this deployment automation
-out of the example scripts so those files remain short pedagogical examples.
+When a canvas layout changes, update the relative coordinates in `warmup.mjs`,
+then rebuild the image. Keep this deployment automation out of the example
+scripts so those files remain short pedagogical examples.
 
-The public port remains closed during warmup. A failed action, browser error,
-backend exit, or timeout fails the container so Compose restarts the full unit.
-Chromium, temporary Caddy state, and browser sessions are removed or terminated
-before the public listener starts.
+The public port remains closed until the warmup exits. A browser or backend
+failure makes the container exit, so Compose restarts the full unit.
 
 ## Public routing
 
