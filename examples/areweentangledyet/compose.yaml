@@ -11,11 +11,12 @@ services:
     environment:
       PUBLIC_URL: "${PUBLIC_URL:-http://localhost:8000}"
       STARTUP_TIMEOUT_SECONDS: "${STARTUP_TIMEOUT_SECONDS:-600}"
+      WARMUP_TIMEOUT_SECONDS: "${WARMUP_TIMEOUT_SECONDS:-600}"
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8000/"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10m
+      start_period: 20m
     restart: unless-stopped
     stop_grace_period: 30s
