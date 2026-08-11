@@ -5,10 +5,11 @@ deployment as one container image. Caddy serves the landing page on port 8000 an
 proxies HTTP and WebSocket traffic to seven Bonito applications and one Oxygen
 API. The Julia services listen only on the container loopback interface.
 
-The deployment is one failure domain. The launcher waits for every service
-before it starts Caddy. If Caddy, Xvfb, or any Julia process exits, the launcher
-stops and reaps the remaining processes and returns a nonzero status. Compose
-then restarts the complete unit.
+The deployment is one failure domain. The launcher waits for every service,
+warms the Bonito applications with a private Playwright browser, and only then
+starts public Caddy. If startup, warmup, Caddy, Xvfb, or any Julia process fails,
+the launcher stops and reaps the remaining processes and returns a nonzero
+status. Compose then restarts the complete unit.
 
 ## Requirements
 
@@ -17,11 +18,11 @@ then restarts the complete unit.
 - At least 16 GiB of available memory and 16 logical CPU cores for concurrent
   startup and interactive use
 - Additional disk space and time for the first build because the image contains
-  two precompiled Julia environments
+  two precompiled Julia environments and Chromium
 
 Actual resource use depends on concurrent simulations. The color-center
-application is normally the slowest service to become ready. The default
-startup deadline is 600 seconds.
+application is normally the slowest service to become ready. Backend startup
+and browser warmup have separate 600-second deadlines by default.
 
 ## Local startup
 
@@ -38,12 +39,13 @@ with `Ctrl-C`, or stop a detached deployment with:
 docker compose down
 ```
 
-The build uses `julia:1.12.6-bookworm` and Caddy 2.10.2. It clones the complete
+The build uses `julia:1.12.6-bookworm`, Caddy 2.10.2, Node 24.18.0,
+Playwright Core 1.62.1, and Debian's Chromium package. It clones the complete
 QuantumSavory.jl repository at `QUANTUMSAVORY_REVISION` (default `master`),
 removes the Git history, and retains the tracked checkout in the image. It then
 instantiates and precompiles both Julia environments. Container startup does not
-clone a repository or run `Pkg.resolve`, `Pkg.update`, or any other
-package-network operation.
+clone a repository, download browser packages, or run `Pkg.resolve`,
+`Pkg.update`, or any other package-network operation.
 
 The builder reads source from GitHub, not from the local Docker build context.
 Local changes must be committed and pushed before they can enter an image. An
@@ -68,10 +70,11 @@ public routes to the Julia ports. The Compose file publishes one `8000:8000`
 mapping; use the host firewall or reverse-proxy host policy to restrict direct
 access when necessary.
 
-For a slower host, override the startup deadline:
+For a slower host, override either startup deadline:
 
 ```bash
-STARTUP_TIMEOUT_SECONDS=900 PUBLIC_URL=https://areweentangledyet.com \
+STARTUP_TIMEOUT_SECONDS=900 WARMUP_TIMEOUT_SECONDS=900 \
+    PUBLIC_URL=https://areweentangledyet.com \
     docker compose up --detach
 ```
 
@@ -95,7 +98,9 @@ entry contains:
 For Bonito, `entry_path` must be `/<slug>/` and `health_path` is `/`. For
 Oxygen, both paths include the service prefix because Caddy preserves it. The
 launcher validates all fields, uniqueness constraints, path containment, and
-the generated Caddy configuration before it starts a child process.
+the generated Caddy configurations before it starts a child process. Internal
+port 7999 is reserved for browser warmup and cannot be assigned to an
+application.
 
 After a catalog or source change, push the new commit, rebuild that revision,
 and replace the running unit:
@@ -114,6 +119,34 @@ To validate the catalog and generated Caddyfile in an already built image:
 ```bash
 docker compose run --rm --no-deps areweentangledyet --validate-only
 ```
+
+## Browser warmup
+
+After all direct backend health checks pass, the launcher runs Chromium against
+a temporary Caddy listener on `127.0.0.1:7999`. Chromium keeps `PUBLIC_URL` as
+the page origin while it maps connections to that private listener. This also
+exercises prefixed Bonito assets and WebSockets with production-like absolute
+URLs. For an HTTPS origin, temporary Caddy uses a short-lived internal
+certificate accepted only by the warmup browser.
+
+[`warmup.mjs`](warmup.mjs) contains the complete deployment-specific action
+table. Each action is a click expressed as fractions of the current canvas width
+and height. The driver checks the exact expected canvas dimensions before every
+action, so a layout change fails startup instead of clicking an unrelated
+control. It changes representative sliders, runs every finite simulation to
+completion, starts and stops the continuous ensemble simulation, and exercises
+all four state-explorer models. Each route gets one retry in a new browser
+context.
+
+When a canvas layout or control position changes, update its dimensions and
+relative coordinates in `warmup.mjs`, then rebuild the image. Add at least one
+directive for every new Bonito catalog entry. Keep this deployment automation
+out of the example scripts so those files remain short pedagogical examples.
+
+The public port remains closed during warmup. A failed action, browser error,
+backend exit, or timeout fails the container so Compose restarts the full unit.
+Chromium, temporary Caddy state, and browser sessions are removed or terminated
+before the public listener starts.
 
 ## Public routing
 
@@ -138,10 +171,10 @@ example:
 
 ## Operations
 
-Use `docker compose logs --follow` to inspect startup and service output. The
-Compose health check reports healthy only after the landing page is available,
-which means every backend passed its startup health check. A backend exit makes
-the whole container exit nonzero and restart.
+Use `docker compose logs --follow` to inspect backend startup and each named
+warmup action. The Compose health check reports healthy only after the landing
+page is available, which means every backend and browser warmup passed. A
+backend exit makes the whole container exit nonzero and restart.
 
 After a production cutover, retire the old external deployment directory only
 after the TLS proxy has been verified against this single port. TLS configuration
