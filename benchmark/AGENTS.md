@@ -9,3 +9,16 @@ with `setup`, normally using `deepcopy`, and `evals=1`.
 
 Preserve historical benchmark keys unless a migration is intentional. Treat
 AirspeedVelocity comparisons as performance evidence, not behavioral tests.
+
+## Cold-start measurements
+
+Use `precompile/run.sh` for package-cache build, import, and first-use latency.
+It runs fresh Julia processes against isolated depots and does not use
+BenchmarkTools. Keep its scenario assertions deterministic and based on public
+QuantumSavory APIs. Do not add cold-start measurements to `benchmarks.jl`:
+AirspeedVelocity imports QuantumSavory before it measures the steady-state
+suite.
+
+Run candidate variants serially. Keep the first variant as the unchanged
+baseline, use the same resolved Manifest for all variants, and report both raw
+TSV and the generated median/IQR summary.

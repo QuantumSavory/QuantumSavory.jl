@@ -5,7 +5,7 @@
 - **Do not open when:** Establishing functional correctness or investigating behavior without a performance question.
 - **Review when:** Benchmark suite groups, environment resolution, or the AirspeedVelocity workflow changes.
 
-## Measure performance
+## Measure steady-state performance
 
 1. Start from `benchmark/benchmarks.jl`. It loads shared dependencies, creates `SUITE`,
    obtains the current QuantumSavory version from the active manifest, and includes the
@@ -25,21 +25,38 @@
 5. Record samples, Julia version, thread count, checkout, and comparison baseline.
    Avoid interpreting a single local timing as a regression budget.
 
-The GitHub workflow runs AirspeedVelocity on pull-request heads and can write to pull
-requests. It is characterization infrastructure: the repository defines no checked-in
-regression threshold or pass/fail performance budget. Severe regressions still warrant
-maintainer investigation rather than being dismissed for lack of a formal budget.
-Because the workflow uses
-`pull_request_target` with `pull-requests: write`, do not describe replaying the workflow
-against untrusted changes as a safe local validation recipe.
+The GitHub workflow runs AirspeedVelocity on pull-request heads. It is
+characterization infrastructure: the repository defines no checked-in regression
+threshold or pass/fail performance budget. Severe regressions still warrant maintainer
+investigation rather than being dismissed for lack of a formal budget.
+
+## Measure cold-start performance
+
+Use `benchmark/precompile/run.sh` when the question concerns package-cache
+creation, import, or the first execution of a user workflow. The harness uses a
+standalone consumer environment, one resolved Manifest, a dependency-only seed
+depot, fresh writable depots for QuantumSavory cache builds, and fresh Julia
+processes for recorded samples. It fixes compilation and numerical-library
+thread counts to one and disables startup files, history files, package
+auto-precompilation. Package resolution runs in offline mode during measurement.
+
+The default scenarios are the documented Bell measurement and a deterministic
+one-round `EntanglerProt` simulation. Scenario functions include
+self-consistency assertions. Select repetitions and scenarios with
+`QS_PRECOMPILE_BUILDS`, `QS_PRECOMPILE_SAMPLES`, and
+`QS_PRECOMPILE_SCENARIOS`; see `benchmark/precompile/README.md` for the command
+and output files.
+
+The PR-only cold-start workflow compares the exact pull-request base and head,
+uploads raw results, and writes medians and interquartile ranges to the job
+summary. Timing deltas do not fail the job. A broken package cache, scenario
+assertion, dependency-control check, or harness command does fail it. Do not
+compare these results with AirspeedVelocity values: that suite measures loaded,
+steady-state operations.
 
 ## Anchors
 
-- **Source:** [`benchmark/benchmarks.jl`](../../../benchmark/benchmarks.jl), [`benchmark/Project.toml`](../../../benchmark/Project.toml), and [`benchmark/AGENTS.md`](../../../benchmark/AGENTS.md) — entry point, environment, and mutation conventions.
+- **Source:** [`benchmark/benchmarks.jl`](../../../benchmark/benchmarks.jl), [`benchmark/Project.toml`](../../../benchmark/Project.toml), [`benchmark/precompile/run.sh`](../../../benchmark/precompile/run.sh), and [`benchmark/AGENTS.md`](../../../benchmark/AGENTS.md) — steady-state and cold-start entry points, environments, and conventions.
 - **Docs:** [`README.md`](../../../README.md) — repository-level project context; no formal performance budget is declared.
 - **Test:** [`benchmark/benchmark_tagquery.jl`](../../../benchmark/benchmark_tagquery.jl) and [`benchmark/benchmark_quantumstates.jl`](../../../benchmark/benchmark_quantumstates.jl) — representative scalar and state benchmarks.
-- **CI:** [`.github/workflows/benchmark.yml`](../../../.github/workflows/benchmark.yml) — AirspeedVelocity trigger and permissions.
-
-## Unresolved question
-
-- Should benchmark automation avoid `pull_request_target` write permissions?
+- **CI:** [`.github/workflows/benchmark.yml`](../../../.github/workflows/benchmark.yml) and [`.github/workflows/precompile.yml`](../../../.github/workflows/precompile.yml) — steady-state and cold-start automation.
