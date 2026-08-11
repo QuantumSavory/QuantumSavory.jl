@@ -6,12 +6,16 @@ readonly REPO_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 readonly PUBLIC_DIR="$SCRIPT_DIR/public"
 readonly CATALOG="$PUBLIC_DIR/demos.json"
 readonly PUBLIC_PORT=8000
+readonly WARMUP_PORT=7999
 
 PUBLIC_URL="${PUBLIC_URL:-http://localhost:8000}"
 STARTUP_TIMEOUT_SECONDS="${STARTUP_TIMEOUT_SECONDS:-600}"
+WARMUP_TIMEOUT_SECONDS="${WARMUP_TIMEOUT_SECONDS:-600}"
 
 declare -a CHILD_PIDS=()
 declare -A CHILD_NAMES=()
+TRANSIENT_PID=""
+TRANSIENT_NAME=""
 RUNTIME_DIR=""
 
 die() {
@@ -31,14 +35,16 @@ child_is_running() {
 terminate_children() {
     local pid
     local deadline
+    local -a pids=("${CHILD_PIDS[@]}")
 
-    ((${#CHILD_PIDS[@]} == 0)) && return
-    kill -TERM "${CHILD_PIDS[@]}" 2>/dev/null || true
+    [[ -n "$TRANSIENT_PID" ]] && pids+=("$TRANSIENT_PID")
+    ((${#pids[@]} == 0)) && return
+    kill -TERM "${pids[@]}" 2>/dev/null || true
     deadline=$((SECONDS + 15))
 
     while ((SECONDS < deadline)); do
         local any_running=false
-        for pid in "${CHILD_PIDS[@]}"; do
+        for pid in "${pids[@]}"; do
             if child_is_running "$pid"; then
                 any_running=true
                 break
@@ -48,10 +54,10 @@ terminate_children() {
         sleep 0.2
     done
 
-    for pid in "${CHILD_PIDS[@]}"; do
+    for pid in "${pids[@]}"; do
         child_is_running "$pid" && kill -KILL "$pid" 2>/dev/null || true
     done
-    for pid in "${CHILD_PIDS[@]}"; do
+    for pid in "${pids[@]}"; do
         wait "$pid" 2>/dev/null || true
     done
 }
@@ -176,7 +182,7 @@ validate_catalog() {
             (.runtime == "bonito" or .runtime == "oxygen") and
             (.project | safe_relative_path) and
             (.script | safe_relative_path and endswith(".jl")) and
-            (.port | type == "number" and . == floor and . >= 1 and . <= 65535 and . != 8000) and
+            (.port | type == "number" and . == floor and . >= 1 and . <= 65535 and . != 7999 and . != 8000) and
             (.threads | type == "number" and . == floor and . >= 1 and . <= 64) and
             (.env_prefix | nonempty_string and test("^QS_[A-Z0-9]+(_[A-Z0-9]+)*$")) and
             (.entry_path | nonempty_string and test("^/[a-z0-9_/-]+$") and (contains("//") | not)) and
@@ -272,6 +278,29 @@ check_startup_children() {
     done
 }
 
+run_warmup() {
+    local status
+
+    node "$SCRIPT_DIR/warmup.mjs" &
+    TRANSIENT_PID=$!
+    TRANSIENT_NAME="Bonito browser warmup"
+    printf 'Started %s (PID %s)\n' "$TRANSIENT_NAME" "$TRANSIENT_PID"
+
+    while child_is_running "$TRANSIENT_PID"; do
+        check_startup_children
+        sleep 0.2
+    done
+
+    set +e
+    wait "$TRANSIENT_PID"
+    status=$?
+    set -e
+    TRANSIENT_PID=""
+    ((status == 0)) || die "$TRANSIENT_NAME exited with status $status"
+    printf 'Completed %s\n' "$TRANSIENT_NAME"
+    TRANSIENT_NAME=""
+}
+
 start_xvfb() {
     export DISPLAY=:99
     start_child "Xvfb" Xvfb "$DISPLAY" -screen 0 1280x1024x24 -nolisten tcp -noreset
@@ -364,21 +393,24 @@ main() {
     local mode="${1:-run}"
     [[ "$mode" == "run" || "$mode" == "--validate-only" ]] || die "usage: $0 [--validate-only]"
     [[ "$STARTUP_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "STARTUP_TIMEOUT_SECONDS must be a positive integer"
+    [[ "$WARMUP_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]] || die "WARMUP_TIMEOUT_SECONDS must be a positive integer"
 
     validate_public_url
     validate_catalog
     RUNTIME_DIR="$(mktemp -d)"
     generate_caddyfile "$RUNTIME_DIR/Caddyfile"
     caddy validate --config "$RUNTIME_DIR/Caddyfile" --adapter caddyfile
+    node "$SCRIPT_DIR/warmup.mjs" --validate-only
 
     if [[ "$mode" == "--validate-only" ]]; then
-        printf 'Catalog, PUBLIC_URL, and generated Caddy configuration are valid.\n'
+        printf 'Catalog, PUBLIC_URL, browser warmup, and generated Caddy configurations are valid.\n'
         return
     fi
 
     start_xvfb
     start_services
     wait_for_services
+    run_warmup
     start_child "Caddy" caddy run --config "$RUNTIME_DIR/Caddyfile" --adapter caddyfile
     supervise
 }
