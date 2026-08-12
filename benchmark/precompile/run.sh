@@ -518,6 +518,7 @@ export OMP_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
 export LC_ALL=C
+unset JULIA_CPU_TARGET JULIA_PROJECT JULIA_DEPOT_PATH
 unset QS_PRECOMPILE_TRACE
 unset JULIA_PKG_OFFLINE
 julia_flags=(--startup-file=no --history-file=no --threads=1)

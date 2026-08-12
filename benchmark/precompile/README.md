@@ -105,8 +105,9 @@ must remain byte-identical to the inputs or the harness fails.
 The default scenarios are `bell` and `entangler`. Each scenario also gets one
 discarded filesystem warm-up per build. The harness fixes Julia,
 package-precompile, BLAS, and OpenMP thread counts to one; disables startup and
-history files; and uses `JULIA_LOAD_PATH=@:@stdlib`. It requires GNU/Linux and
-Julia 1.12.6. Set `JULIA` to select that Julia executable. A different Julia
+history files; uses `JULIA_LOAD_PATH=@:@stdlib`; and clears inherited Julia CPU
+target, project, and depot overrides. It requires GNU/Linux and Julia 1.12.6.
+Set `JULIA` to select that Julia executable. A different Julia
 version or a dirty checkout is allowed only for a non-reportable smoke run by
 setting `QS_PRECOMPILE_ALLOW_JULIA_MISMATCH=1` or
 `QS_PRECOMPILE_ALLOW_DIRTY=1`, respectively. Enabling either override records

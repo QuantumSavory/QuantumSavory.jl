@@ -38,7 +38,8 @@ standalone consumer environment, one consumer Manifest, a dependency-only seed
 depot, fresh writable depots for QuantumSavory cache builds, and fresh Julia
 processes for recorded samples. It fixes compilation and numerical-library
 thread counts to one and disables startup files, history files, package
-auto-precompilation. Dependency setup loads QuantumSavory through a detached
+auto-precompilation, and inherited Julia CPU-target, project, and depot
+overrides. Dependency setup loads QuantumSavory through a detached
 source snapshot, not a measured checkout. After deleting that package cache, the
 harness gives each measured variant one discarded cache build in a fresh
 overlay depot. It verifies that every discarded build emits cache bytes and
