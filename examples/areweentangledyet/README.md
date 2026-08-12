@@ -5,7 +5,7 @@ deployment as one container image. Caddy serves the landing page on port 8000 an
 proxies HTTP and WebSocket traffic to seven Bonito applications and one Oxygen
 API. The Julia services listen only on the container loopback interface.
 
-The deployment is one failure domain. The launcher waits for every service,
+The launcher waits for every service,
 warms the Bonito applications with a private Playwright browser, and only then
 starts public Caddy. If startup, warmup, Caddy, Xvfb, or any Julia process fails,
 the launcher stops and reaps the remaining processes and returns a nonzero
@@ -20,8 +20,7 @@ status. Compose then restarts the complete unit.
 - Additional disk space and time for the first build because the image contains
   two precompiled Julia environments and Chromium
 
-Actual resource use depends on concurrent simulations. The color-center
-application is normally the slowest service to become ready. The default
+Actual resource use depends on concurrent simulations. The default
 backend startup deadline is 600 seconds; browser warmup adds several minutes.
 
 ## Local startup
@@ -39,8 +38,8 @@ with `Ctrl-C`, or stop a detached deployment with:
 docker compose down
 ```
 
-The build uses `julia:1.12.6-bookworm`, Caddy 2.10.2, Node 24.18.0,
-Playwright Core 1.62.1, and Debian's Chromium package. It clones the complete
+The build uses `julia`, Caddy, Node,
+Playwright Core, and Debian's Chromium package. It clones the complete
 QuantumSavory.jl repository at `QUANTUMSAVORY_REVISION` (default `master`),
 removes the Git history, and retains the tracked checkout in the image. It then
 instantiates and precompiles both Julia environments. Container startup does not
