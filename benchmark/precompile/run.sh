@@ -42,9 +42,24 @@ extra_scenario_list=${QS_PRECOMPILE_EXTRA_SCENARIOS:-}
 baseline_map_list=${QS_PRECOMPILE_BASELINES:-}
 julia=${JULIA:-julia}
 expected_julia='julia version 1.12.6'
+token_pattern='^[A-Za-z0-9][A-Za-z0-9_.-]*$'
+token_list_pattern='^[A-Za-z0-9][A-Za-z0-9_.-]*(,[A-Za-z0-9][A-Za-z0-9_.-]*)*$'
+mapping_list_pattern='^[A-Za-z0-9][A-Za-z0-9_.-]*=[A-Za-z0-9][A-Za-z0-9_.-]*(,[A-Za-z0-9][A-Za-z0-9_.-]*=[A-Za-z0-9][A-Za-z0-9_.-]*)*$'
 
 [[ $builds =~ ^[1-9][0-9]*$ ]] || { echo "QS_PRECOMPILE_BUILDS must be a positive integer" >&2; exit 2; }
 [[ $samples =~ ^[1-9][0-9]*$ ]] || { echo "QS_PRECOMPILE_SAMPLES must be a positive integer" >&2; exit 2; }
+[[ $scenario_list =~ $token_list_pattern ]] || {
+    echo "QS_PRECOMPILE_SCENARIOS must be a comma-separated list of scenario tokens" >&2
+    exit 2
+}
+[[ -z $extra_scenario_list || $extra_scenario_list =~ $mapping_list_pattern ]] || {
+    echo "QS_PRECOMPILE_EXTRA_SCENARIOS must be a comma-separated LABEL=SCENARIO list" >&2
+    exit 2
+}
+[[ -z $baseline_map_list || $baseline_map_list =~ $mapping_list_pattern ]] || {
+    echo "QS_PRECOMPILE_BASELINES must be a comma-separated CANDIDATE=BASELINE list" >&2
+    exit 2
+}
 command -v "$julia" >/dev/null 2>&1 || { echo "Julia executable not found: $julia" >&2; exit 2; }
 julia_version=$("$julia" --version)
 if [[ $julia_version != "$expected_julia" && ${QS_PRECOMPILE_ALLOW_JULIA_MISMATCH:-0} != 1 ]]; then
@@ -78,6 +93,15 @@ fi
 }
 IFS=',' read -r -a scenarios <<< "$scenario_list"
 [[ ${#scenarios[@]} -gt 0 ]] || { echo "QS_PRECOMPILE_SCENARIOS must not be empty" >&2; exit 2; }
+for scenario_index in "${!scenarios[@]}"; do
+    for previous_index in "${!scenarios[@]}"; do
+        [[ $previous_index -ge $scenario_index ]] && break
+        [[ ${scenarios[$previous_index]} != "${scenarios[$scenario_index]}" ]] || {
+            echo "duplicate scenario: ${scenarios[$scenario_index]}" >&2
+            exit 2
+        }
+    done
+done
 extra_scenario_labels=()
 extra_scenarios=()
 if [[ -n $extra_scenario_list ]]; then
@@ -93,6 +117,12 @@ if [[ -n $extra_scenario_list ]]; then
             echo "invalid extra scenario entry: $specification" >&2
             exit 2
         }
+        for extra_index in "${!extra_scenarios[@]}"; do
+            [[ ${extra_scenario_labels[$extra_index]} != "$extra_label" || ${extra_scenarios[$extra_index]} != "$extra_scenario" ]] || {
+                echo "duplicate extra scenario: $specification" >&2
+                exit 2
+            }
+        done
         extra_scenario_labels+=("$extra_label")
         extra_scenarios+=("$extra_scenario")
     done
@@ -104,8 +134,8 @@ for specification in "$@"; do
     [[ $specification == *=* ]] || usage
     label=${specification%%=*}
     checkout=${specification#*=}
-    [[ -n $label && $label != *$'\t'* && $label != *$'\n'* ]] || {
-        echo "variant labels must be nonempty and must not contain tabs or newlines" >&2
+    [[ $label =~ $token_pattern ]] || {
+        echo "variant labels must start with an ASCII letter or digit and contain only letters, digits, dots, underscores, or hyphens" >&2
         exit 2
     }
     [[ -n $checkout && $checkout != *$'\t'* && $checkout != *$'\n'* ]] || {
@@ -117,6 +147,10 @@ for specification in "$@"; do
         exit 2
     }
     checkout=$(cd -- "$checkout" && pwd -P)
+    [[ $checkout != *$'\t'* && $checkout != *$'\n'* ]] || {
+        echo "canonical variant checkout paths must not contain tabs or newlines" >&2
+        exit 2
+    }
     for existing_label in "${labels[@]}"; do
         [[ $label != "$existing_label" ]] || { echo "duplicate variant label: $label" >&2; exit 2; }
     done

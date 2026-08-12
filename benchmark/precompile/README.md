@@ -19,6 +19,11 @@ at each checkout in turn. It creates one seed depot with dependency caches and
 a new writable depot for every QuantumSavory package-cache build. Package
 resolution runs in offline mode after setup.
 
+Variant labels and scenario names must start with an ASCII letter or digit and
+contain only ASCII letters, digits, dots, underscores, or hyphens. This keeps
+the comma-separated controls, TSV output, metadata keys, and Markdown output
+unambiguous.
+
 Use environment variables to select the amount of work and the comma-separated
 scenario list:
 

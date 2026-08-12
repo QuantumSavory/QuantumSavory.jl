@@ -1,22 +1,182 @@
 using Printf
 using Statistics
 
+const RAW_COLUMNS = [
+    "comparison", "label", "checkout", "commit", "build", "sample", "scenario",
+    "build_seconds", "cache_bytes", "import_seconds", "first_seconds",
+    "first_compile_seconds", "first_recompile_seconds", "total_seconds",
+    "warm_seconds", "warm_compile_seconds", "warm_recompile_seconds",
+]
+const TIMING_COLUMNS = [
+    "build_seconds", "import_seconds", "first_seconds", "first_compile_seconds",
+    "first_recompile_seconds", "total_seconds", "warm_seconds",
+    "warm_compile_seconds", "warm_recompile_seconds",
+]
+const TOKEN_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+
 length(ARGS) == 4 || error("usage: summarize.jl RAW_TSV SUMMARY_TSV BUILD_SUMMARY_TSV SUMMARY_MD")
 raw_path, summary_path, build_summary_path, markdown_path = ARGS
 
 lines = readlines(raw_path)
 isempty(lines) && error("raw result file is empty: $raw_path")
-header = split(first(lines), '\t')
+header = String.(split(first(lines), '\t'; keepempty=true))
+header == RAW_COLUMNS || error("raw result header does not match the expected schema")
 rows = map(Iterators.drop(lines, 1)) do line
     fields = split(line, '\t'; keepempty=true)
     length(fields) == length(header) || error("raw result row has $(length(fields)) fields; expected $(length(header))")
-    Dict(zip(header, fields))
+    Dict(zip(header, String.(fields)))
 end
 isempty(rows) && error("raw result file contains no measurements: $raw_path")
-comparisons = unique(row["comparison"] for row in rows)
 
 number(row, name) = parse(Float64, row[name])
 median_iqr(values) = (median(values), quantile(values, 0.75) - quantile(values, 0.25))
+
+function positive_integer(value, description)
+    parsed = tryparse(Int, value)
+    !isnothing(parsed) && parsed > 0 || error("$description must be a positive integer")
+    return parsed
+end
+
+comma_list(value) = isempty(value) ? String[] : String.(split(value, ','))
+
+function mapping_list(value, description)
+    mappings = Pair{String,String}[]
+    for specification in comma_list(value)
+        fields = split(specification, '='; limit=2)
+        length(fields) == 2 && all(!isempty, fields) || error("invalid $description entry: $specification")
+        push!(mappings, String(first(fields)) => String(last(fields)))
+    end
+    return mappings
+end
+
+function read_design(raw_path)
+    metadata_path = joinpath(dirname(raw_path), "metadata.txt")
+    isfile(metadata_path) || error("benchmark metadata is missing: $metadata_path")
+    metadata = Dict{String,String}()
+    variants = String[]
+    for (line_number, line) in enumerate(eachline(metadata_path))
+        fields = split(line, '='; limit=2)
+        length(fields) == 2 || error("malformed metadata line $line_number")
+        key, value = String.(fields)
+        haskey(metadata, key) && error("duplicate metadata key: $key")
+        metadata[key] = value
+        variant = match(r"^variant\.([A-Za-z0-9][A-Za-z0-9_.-]*)\.commit$", key)
+        isnothing(variant) || push!(variants, only(variant.captures))
+    end
+
+    builds = positive_integer(get(metadata, "builds", ""), "metadata builds")
+    samples = positive_integer(
+        get(metadata, "recorded_samples_per_build", ""),
+        "metadata recorded_samples_per_build",
+    )
+    scenarios = comma_list(get(metadata, "scenarios", ""))
+    isempty(scenarios) && error("metadata scenarios must not be empty")
+    all(scenario -> occursin(TOKEN_PATTERN, scenario), scenarios) || error("metadata contains an invalid scenario token")
+    allunique(scenarios) || error("metadata contains duplicate common scenarios")
+    length(variants) >= 2 || error("metadata must describe at least two variants")
+    allunique(variants) || error("metadata contains duplicate variants")
+
+    checkouts = Dict{String,String}()
+    commits = Dict{String,String}()
+    for label in variants
+        checkouts[label] = get(metadata, "variant.$label.checkout", "")
+        commits[label] = get(metadata, "variant.$label.commit", "")
+        isempty(checkouts[label]) && error("metadata has no checkout for variant $label")
+        isempty(commits[label]) && error("metadata has no commit for variant $label")
+    end
+
+    extra_scenarios = Dict{String,Vector{String}}()
+    for (label, scenario) in mapping_list(get(metadata, "extra_scenarios", ""), "extra scenario")
+        label in variants[2:end] || error("extra scenario has unknown candidate: $label")
+        occursin(TOKEN_PATTERN, scenario) || error("invalid extra scenario token: $scenario")
+        selected = get!(Vector{String}, extra_scenarios, label)
+        scenario in selected && error("duplicate extra scenario: $label=$scenario")
+        push!(selected, scenario)
+    end
+
+    baselines = Dict{String,String}()
+    for (candidate, baseline) in mapping_list(get(metadata, "candidate_baselines", ""), "candidate baseline")
+        candidate in variants[2:end] || error("baseline map has unknown candidate: $candidate")
+        baseline in variants || error("baseline map has unknown baseline: $baseline")
+        candidate != baseline || error("candidate cannot be its own baseline: $candidate")
+        haskey(baselines, candidate) && error("duplicate baseline map for candidate: $candidate")
+        baselines[candidate] = baseline
+    end
+
+    return (; builds, samples, scenarios, variants, checkouts, commits, extra_scenarios, baselines)
+end
+
+function validate_rows(rows, design)
+    expected_keys = Set{NTuple{5,String}}()
+    default_baseline = first(design.variants)
+    for comparison in design.variants[2:end]
+        scenarios = copy(design.scenarios)
+        for scenario in get(design.extra_scenarios, comparison, String[])
+            scenario in scenarios || push!(scenarios, scenario)
+        end
+        baseline = get(design.baselines, comparison, default_baseline)
+        for label in (baseline, comparison), build in 1:design.builds,
+            sample in 1:design.samples, scenario in scenarios
+            push!(expected_keys, (comparison, label, string(build), string(sample), scenario))
+        end
+    end
+
+    actual_keys = Set{NTuple{5,String}}()
+    build_values = Dict{NTuple{3,String},Tuple{String,String}}()
+    for (row_number, row) in enumerate(rows)
+        key = (
+            row["comparison"], row["label"], row["build"], row["sample"], row["scenario"],
+        )
+        key in actual_keys && error("duplicate raw sample key at data row $row_number: $key")
+        push!(actual_keys, key)
+        positive_integer(row["build"], "raw build at data row $row_number")
+        positive_integer(row["sample"], "raw sample at data row $row_number")
+        positive_integer(row["cache_bytes"], "raw cache_bytes at data row $row_number")
+
+        label = row["label"]
+        haskey(design.checkouts, label) || error("unknown raw variant label at data row $row_number: $label")
+        row["checkout"] == design.checkouts[label] || error("checkout mismatch at data row $row_number")
+        row["commit"] == design.commits[label] || error("commit mismatch at data row $row_number")
+        for field in TIMING_COLUMNS
+            value = number(row, field)
+            isfinite(value) || error("non-finite $field at data row $row_number")
+            value >= 0 || error("negative $field at data row $row_number")
+        end
+
+        import_time = number(row, "import_seconds")
+        first_time = number(row, "first_seconds")
+        total_time = number(row, "total_seconds")
+        isapprox(total_time, import_time + first_time; atol=1e-12, rtol=1e-12) ||
+            error("total_seconds does not equal import_seconds plus first_seconds at data row $row_number")
+        tolerance = 1e-6
+        number(row, "first_compile_seconds") <= first_time + tolerance ||
+            error("first compile time exceeds first task time at data row $row_number")
+        number(row, "first_recompile_seconds") <= number(row, "first_compile_seconds") + tolerance ||
+            error("first recompile time exceeds first compile time at data row $row_number")
+        warm_time = number(row, "warm_seconds")
+        number(row, "warm_compile_seconds") <= warm_time + tolerance ||
+            error("warm compile time exceeds warm task time at data row $row_number")
+        number(row, "warm_recompile_seconds") <= number(row, "warm_compile_seconds") + tolerance ||
+            error("warm recompile time exceeds warm compile time at data row $row_number")
+
+        build_key = (row["comparison"], label, row["build"])
+        value = (row["build_seconds"], row["cache_bytes"])
+        if haskey(build_values, build_key) && build_values[build_key] != value
+            error("cache build values vary within $build_key")
+        end
+        build_values[build_key] = value
+    end
+
+    missing = setdiff(expected_keys, actual_keys)
+    unexpected = setdiff(actual_keys, expected_keys)
+    isempty(missing) && isempty(unexpected) || error(
+        "raw result design does not match metadata: $(length(missing)) missing and $(length(unexpected)) unexpected sample keys"
+    )
+end
+
+design = read_design(raw_path)
+validate_rows(rows, design)
+comparisons = unique(row["comparison"] for row in rows)
 
 function comparison_labels(comparison)
     labels = unique(row["label"] for row in rows if row["comparison"] == comparison)
@@ -44,7 +204,12 @@ function build_stats(comparison, label, field)
     values_by_build = Dict{String,Float64}()
     for row in rows
         row["comparison"] == comparison && row["label"] == label || continue
-        values_by_build[row["build"]] = number(row, field)
+        build = row["build"]
+        value = number(row, field)
+        if haskey(values_by_build, build) && values_by_build[build] != value
+            error("$field varies within $comparison: $label build $build")
+        end
+        values_by_build[build] = value
     end
     isempty(values_by_build) && error("no $field build results for $comparison: $label")
     return median_iqr(collect(values(values_by_build)))
@@ -63,7 +228,10 @@ function material_counts(comparison, label, scenario)
     baseline_label = first(comparison_labels(comparison))
     baseline = sample_medians_by_build(comparison, baseline_label, scenario, "total_seconds")
     variant = sample_medians_by_build(comparison, label, scenario, "total_seconds")
-    builds = sort!(collect(intersect(keys(baseline), keys(variant))); by=x -> parse(Int, x))
+    Set(keys(baseline)) == Set(keys(variant)) || error(
+        "baseline and candidate build sets differ for $comparison/$scenario"
+    )
+    builds = sort!(collect(keys(baseline)); by=x -> parse(Int, x))
     improved = count(builds) do build
         threshold = max(0.050, 0.05 * baseline[build])
         variant[build] <= baseline[build] - threshold
