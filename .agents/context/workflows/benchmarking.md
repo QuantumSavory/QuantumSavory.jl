@@ -52,7 +52,10 @@ files.
 
 Use clean committed variants, a new output directory, five independent cache
 builds, and four recorded fresh processes per scenario for reportable candidate
-measurements. Run timed measurements serially. Retain a candidate only if its
+measurements. Run timed measurements serially. The harness counterbalances
+drift by reversing comparison order on even builds and alternating whether the
+mapped baseline or candidate runs first; keep this schedule and its metadata
+when extending the harness. Retain a candidate only if its
 motivating total latency improves by at least `max(50 ms, 5%)` in at least four
 builds, neither headline scenario regresses by that amount, and there is no
 reproducible correctness, recompilation, or warm-runtime regression. Run trace

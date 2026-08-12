@@ -76,9 +76,16 @@ version or a dirty checkout is allowed only for a non-reportable smoke run by
 setting `QS_PRECOMPILE_ALLOW_JULIA_MISMATCH=1` or
 `QS_PRECOMPILE_ALLOW_DIRTY=1`, respectively.
 
-Each candidate gets a separate comparison. For every build number, its mapped
-baseline cache and samples run immediately before the candidate cache and
-samples. Thus, material-change counts pair nearby, independent cache builds.
+Each candidate gets a separate comparison, with nearby independent cache
+builds for the candidate and its mapped baseline. To counterbalance systematic
+drift, odd-numbered builds visit candidate arguments in ascending order and
+even-numbered builds visit them in descending order. Candidate indices are
+their one-based positions after the baseline argument. Within a comparison,
+the baseline runs before the candidate when `build + candidate_index` is odd;
+the candidate runs first when it is even. Five-build reportable runs therefore
+use a deterministic 3/2 split of pair order, while preserving adjacency. The
+metadata records these policies, each candidate index, and the exact comparison
+and pair sequence for every build as `schedule.build.N`.
 
 The output directory contains `raw.tsv`, the per-build `build-summary.tsv`, the
 aggregate `summary.tsv`, the rendered `summary.md`, `metadata.txt`, and the

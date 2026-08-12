@@ -236,6 +236,48 @@ for mapping_index in "${!baseline_candidates[@]}"; do
     done
 done
 
+candidate_baseline_indices=()
+for ((candidate_index = 1; candidate_index < ${#labels[@]}; candidate_index++)); do
+    baseline_index=0
+    for mapping_index in "${!baseline_candidates[@]}"; do
+        [[ ${baseline_candidates[$mapping_index]} == "${labels[$candidate_index]}" ]] || continue
+        for label_index in "${!labels[@]}"; do
+            if [[ ${labels[$label_index]} == "${baseline_labels[$mapping_index]}" ]]; then
+                baseline_index=$label_index
+                break
+            fi
+        done
+        break
+    done
+    candidate_baseline_indices[$candidate_index]=$baseline_index
+done
+
+set_comparison_order() {
+    local build_number=$1
+    local candidate_index
+    comparison_indices=()
+    if ((build_number % 2 == 1)); then
+        for ((candidate_index = 1; candidate_index < ${#labels[@]}; candidate_index++)); do
+            comparison_indices+=("$candidate_index")
+        done
+    else
+        for ((candidate_index = ${#labels[@]} - 1; candidate_index >= 1; candidate_index--)); do
+            comparison_indices+=("$candidate_index")
+        done
+    fi
+}
+
+set_pair_order() {
+    local build_number=$1
+    local candidate_index=$2
+    local baseline_index=${candidate_baseline_indices[$candidate_index]}
+    if (((build_number + candidate_index) % 2 == 1)); then
+        pair_indices=("$baseline_index" "$candidate_index")
+    else
+        pair_indices=("$candidate_index" "$baseline_index")
+    fi
+}
+
 temporary_root=$(mktemp -d "${TMPDIR:-/tmp}/quantumsavory-precompile.XXXXXX")
 cleanup() {
     if [[ ${QS_PRECOMPILE_KEEP_TMP:-0} == 1 ]]; then
@@ -330,6 +372,34 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
     echo "scenarios=$scenario_list"
     echo "extra_scenarios=$extra_scenario_list"
     echo "candidate_baselines=$baseline_map_list"
+    echo "schedule_policy=counterbalanced-v1"
+    echo "schedule_candidate_index=one_based_candidate_argument_position"
+    echo "schedule_comparison_policy=ascending_candidate_index_on_odd_builds_descending_candidate_index_on_even_builds"
+    echo "schedule_pair_policy=baseline_then_candidate_when_build_plus_candidate_index_is_odd_candidate_then_baseline_when_even"
+    for ((schedule_candidate_index = 1; schedule_candidate_index < ${#labels[@]}; schedule_candidate_index++)); do
+        echo "schedule.candidate_index.${labels[$schedule_candidate_index]}=$schedule_candidate_index"
+    done
+    for ((schedule_build = 1; schedule_build <= builds; schedule_build++)); do
+        set_comparison_order "$schedule_build"
+        schedule_value=
+        for schedule_candidate_index in "${comparison_indices[@]}"; do
+            set_pair_order "$schedule_build" "$schedule_candidate_index"
+            baseline_index=${candidate_baseline_indices[$schedule_candidate_index]}
+            pair_value=
+            for schedule_variant_index in "${pair_indices[@]}"; do
+                if [[ $schedule_variant_index -eq $baseline_index ]]; then
+                    schedule_role=baseline
+                else
+                    schedule_role=candidate
+                fi
+                [[ -z $pair_value ]] || pair_value+=,
+                pair_value+="$schedule_role:${labels[$schedule_variant_index]}"
+            done
+            [[ -z $schedule_value ]] || schedule_value+=';'
+            schedule_value+="comparison:${labels[$schedule_candidate_index]},$pair_value"
+        done
+        echo "schedule.build.$schedule_build=$schedule_value"
+    done
     echo "manifest_sha256=$normalized_manifest_sha256"
     echo "resolved_manifest_sha256=$resolved_manifest_sha256"
     echo "harness_commit=$harness_commit"
@@ -346,19 +416,10 @@ printf '%s\n' $'comparison\tlabel\tcheckout\tcommit\tbuild\tsample\tscenario\tbu
 
 export JULIA_PKG_OFFLINE=true
 for build in $(seq 1 "$builds"); do
-    for candidate_index in $(seq 1 $((${#labels[@]} - 1))); do
+    set_comparison_order "$build"
+    for candidate_index in "${comparison_indices[@]}"; do
         comparison=${labels[$candidate_index]}
-        baseline_index=0
-        for mapping_index in "${!baseline_candidates[@]}"; do
-            [[ ${baseline_candidates[$mapping_index]} == "$comparison" ]] || continue
-            for label_index in "${!labels[@]}"; do
-                if [[ ${labels[$label_index]} == "${baseline_labels[$mapping_index]}" ]]; then
-                    baseline_index=$label_index
-                    break
-                fi
-            done
-            break
-        done
+        baseline_index=${candidate_baseline_indices[$candidate_index]}
         variant_scenarios=("${scenarios[@]}")
         for extra_index in "${!extra_scenarios[@]}"; do
             if [[ ${extra_scenario_labels[$extra_index]} == "$comparison" ]]; then
@@ -371,7 +432,8 @@ for build in $(seq 1 "$builds"); do
             fi
         done
 
-        for index in "$baseline_index" "$candidate_index"; do
+        set_pair_order "$build" "$candidate_index"
+        for index in "${pair_indices[@]}"; do
             verify_checkout "$index"
             label=${labels[$index]}
             checkout=${checkouts[$index]}
