@@ -23,10 +23,14 @@ Run candidate variants serially. Keep the first variant as the default
 unchanged baseline, and use `QS_PRECOMPILE_BASELINES` when a cumulative stage
 needs the preceding stage as its baseline. Use
 `QS_PRECOMPILE_EXTRA_SCENARIOS` for candidate-specific tasks. Keep one resolved
-Manifest for all variants. Preserve the harness counterbalancing: comparison
-order reverses on even builds, and pair order alternates by build plus the
-candidate's original argument index. Report the recorded schedule metadata,
-raw TSV, per-build results, and the generated median/IQR summary.
+Manifest for all variants. When reportable comparisons require more than one
+harness invocation, pass the first result's normalized consumer Project and
+Manifest through `QS_PRECOMPILE_CONSUMER_PROJECT` and
+`QS_PRECOMPILE_CONSUMER_MANIFEST` so every invocation uses the same dependency
+graph. Preserve the harness counterbalancing: comparison order reverses on even
+builds, and pair order alternates by build plus the candidate's original
+argument index. Report the recorded environment mode, schedule metadata, raw
+TSV, per-build results, and the generated median/IQR summary.
 
 Use clean committed checkouts and a new output directory for reportable runs.
 Use five independent cache builds with four recorded fresh processes per

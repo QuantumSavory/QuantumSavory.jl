@@ -34,7 +34,7 @@ investigation rather than being dismissed for lack of a formal budget.
 
 Use `benchmark/precompile/run.sh` when the question concerns package-cache
 creation, import, or the first execution of a user workflow. The harness uses a
-standalone consumer environment, one resolved Manifest, a dependency-only seed
+standalone consumer environment, one consumer Manifest, a dependency-only seed
 depot, fresh writable depots for QuantumSavory cache builds, and fresh Julia
 processes for recorded samples. It fixes compilation and numerical-library
 thread counts to one and disables startup files, history files, package
@@ -47,8 +47,10 @@ self-consistency assertions. Select repetitions and scenarios with
 `QS_PRECOMPILE_BUILDS`, `QS_PRECOMPILE_SAMPLES`, and
 `QS_PRECOMPILE_SCENARIOS`. Use `QS_PRECOMPILE_EXTRA_SCENARIOS` for
 candidate-specific tasks and `QS_PRECOMPILE_BASELINES` for stage-specific
-baselines. See `benchmark/precompile/README.md` for the command and output
-files.
+baselines. When an experiment spans separate harness invocations, use
+`QS_PRECOMPILE_CONSUMER_PROJECT` and `QS_PRECOMPILE_CONSUMER_MANIFEST` to reuse
+the first invocation's exact normalized consumer environment. See
+`benchmark/precompile/README.md` for the command and output files.
 
 Use clean committed variants, a new output directory, five independent cache
 builds, and four recorded fresh processes per scenario for reportable candidate

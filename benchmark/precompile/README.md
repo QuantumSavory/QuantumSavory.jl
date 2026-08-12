@@ -15,11 +15,12 @@ benchmark/precompile/run.sh results \
 
 The first variant is the default baseline. Each variant must be a clean,
 committed checkout, and all variants must have identical `Project.toml` files.
-The harness refuses to overwrite existing result files. It resolves one
-consumer Manifest and points it at each checkout in turn. It creates one seed
-depot with dependency caches and a new writable depot for every QuantumSavory
-package-cache build. Dependency setup may access package servers. After setup,
-cache builds and samples run with package offline mode enabled.
+The harness refuses to overwrite existing result files. By default, it
+resolves one consumer Manifest and points it at each checkout in turn. It
+creates one seed depot with dependency caches and a new writable depot for
+every QuantumSavory package-cache build. Dependency setup may access package
+servers. After setup, cache builds and samples run with package offline mode
+enabled.
 
 Variant labels and scenario names must start with an ASCII letter or digit and
 contain only ASCII letters, digits, dots, underscores, or hyphens. This keeps
@@ -67,6 +68,26 @@ benchmark/precompile/run.sh results \
     stage3=/path/to/stage3
 ```
 
+To keep exact dependency versions across separate harness invocations, reuse
+the normalized consumer files from the first result directory:
+
+```sh
+QS_PRECOMPILE_CONSUMER_PROJECT=/path/to/first-results/consumer-Project.toml \
+QS_PRECOMPILE_CONSUMER_MANIFEST=/path/to/first-results/consumer-Manifest.toml \
+benchmark/precompile/run.sh later-results \
+    base=/path/to/base \
+    head=/path/to/head
+```
+
+Set both variables together. The Project must match the harness-generated
+QuantumSavory, ConcurrentSim, and Gabs consumer Project. The normalized
+Manifest must contain exactly one `__QUANTUMSAVORY_CHECKOUT__` path in its
+QuantumSavory entry. Setup materializes that placeholder as the stable
+temporary checkout link and runs only `Pkg.instantiate()` against the saved
+dependency graph. It does not resolve or update dependencies. The copied
+consumer files in the new result directory must remain byte-identical to the
+inputs or the harness fails.
+
 The default scenarios are `bell` and `entangler`. Each scenario also gets one
 discarded filesystem warm-up per build. The harness fixes Julia,
 package-precompile, BLAS, and OpenMP thread counts to one; disables startup and
@@ -104,7 +125,9 @@ The `total_metric` metadata field records this definition.
 The copied Manifest uses `__QUANTUMSAVORY_CHECKOUT__` as a path placeholder;
 replace it with the checkout used for reproduction. The `manifest_sha256`
 metadata field hashes this normalized copy. The metadata also records the
-pre-normalization Manifest hash, harness commit, and harness file hashes.
+consumer-environment mode, consumer Project hash, pre-normalization Manifest
+hash, harness commit, and harness file hashes. Reuse mode additionally records
+the canonical source paths and hashes for both inputs.
 
 See the [Julia command-line reference](https://docs.julialang.org/en/v1/manual/command-line-interface/)
 for the compilation controls and the [PrecompileTools workload guide](https://julialang.github.io/PrecompileTools.jl/stable/)

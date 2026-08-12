@@ -4,8 +4,58 @@ set -euo pipefail
 
 usage() {
     echo "usage: $0 OUTPUT_DIR LABEL=CHECKOUT [LABEL=CHECKOUT ...]" >&2
-    echo "environment: QS_PRECOMPILE_BUILDS, QS_PRECOMPILE_SAMPLES, QS_PRECOMPILE_SCENARIOS, QS_PRECOMPILE_EXTRA_SCENARIOS, QS_PRECOMPILE_BASELINES" >&2
+    echo "environment: QS_PRECOMPILE_BUILDS, QS_PRECOMPILE_SAMPLES, QS_PRECOMPILE_SCENARIOS, QS_PRECOMPILE_EXTRA_SCENARIOS, QS_PRECOMPILE_BASELINES, QS_PRECOMPILE_CONSUMER_PROJECT, QS_PRECOMPILE_CONSUMER_MANIFEST" >&2
     exit 2
+}
+
+rewrite_quantumsavory_manifest_path() {
+    local input_path=$1
+    local output_path=$2
+    local old_path=$3
+    local new_path=$4
+    if ! awk -v old_path="$old_path" -v new_path="$new_path" '
+        BEGIN {
+            package_header = "[[deps.QuantumSavory]]"
+            old_line = "path = \"" old_path "\""
+            new_line = "path = \"" new_path "\""
+        }
+        {
+            remainder = $0
+            while ((position = index(remainder, old_path)) != 0) {
+                occurrences += 1
+                remainder = substr(remainder, position + length(old_path))
+            }
+            if ($0 == package_header) {
+                package_stanzas += 1
+                in_package = 1
+            } else if ($0 ~ /^\[\[deps\./) {
+                in_package = 0
+            }
+            if ($0 == old_line) {
+                path_lines += 1
+                in_package || misplaced_path = 1
+                print new_line
+            } else {
+                print
+            }
+        }
+        END {
+            if (package_stanzas != 1 || occurrences != 1 || path_lines != 1 || misplaced_path)
+                exit 42
+        }
+    ' "$input_path" > "$output_path"; then
+        rm -f -- "$output_path"
+        return 1
+    fi
+}
+
+validate_consumer_project() {
+    local project_path=$1
+    cmp -s -- <(printf '%s\n' \
+        '[deps]' \
+        'ConcurrentSim = "6ed1e86c-fcaf-46a9-97e0-2b26a2cdb499"' \
+        'Gabs = "0eb812ee-a11f-4f5e-b8d4-bb8a44f06f50"' \
+        'QuantumSavory = "2de2e421-972c-4cb5-a0c3-999c85908079"') "$project_path"
 }
 
 [[ $# -ge 3 ]] || usage
@@ -40,6 +90,8 @@ samples=${QS_PRECOMPILE_SAMPLES:-2}
 scenario_list=${QS_PRECOMPILE_SCENARIOS:-bell,entangler}
 extra_scenario_list=${QS_PRECOMPILE_EXTRA_SCENARIOS:-}
 baseline_map_list=${QS_PRECOMPILE_BASELINES:-}
+reuse_consumer_project=${QS_PRECOMPILE_CONSUMER_PROJECT:-}
+reuse_consumer_manifest=${QS_PRECOMPILE_CONSUMER_MANIFEST:-}
 julia=${JULIA:-julia}
 expected_julia='julia version 1.12.6'
 token_pattern='^[A-Za-z0-9][A-Za-z0-9_.-]*$'
@@ -60,6 +112,30 @@ mapping_list_pattern='^[A-Za-z0-9][A-Za-z0-9_.-]*=[A-Za-z0-9][A-Za-z0-9_.-]*(,[A
     echo "QS_PRECOMPILE_BASELINES must be a comma-separated CANDIDATE=BASELINE list" >&2
     exit 2
 }
+if [[ -n $reuse_consumer_project || -n $reuse_consumer_manifest ]]; then
+    [[ -n $reuse_consumer_project && -n $reuse_consumer_manifest ]] || {
+        echo "QS_PRECOMPILE_CONSUMER_PROJECT and QS_PRECOMPILE_CONSUMER_MANIFEST must be set together" >&2
+        exit 2
+    }
+    for source_path in "$reuse_consumer_project" "$reuse_consumer_manifest"; do
+        [[ $source_path != *$'\t'* && $source_path != *$'\n'* && $source_path != *$'\r'* ]] || {
+            echo "consumer environment paths must not contain tabs or line endings" >&2
+            exit 2
+        }
+        [[ -f $source_path && -r $source_path ]] || {
+            echo "consumer environment input is not a readable regular file: $source_path" >&2
+            exit 2
+        }
+    done
+    reuse_consumer_project=$(realpath -e -- "$reuse_consumer_project")
+    reuse_consumer_manifest=$(realpath -e -- "$reuse_consumer_manifest")
+    for source_path in "$reuse_consumer_project" "$reuse_consumer_manifest"; do
+        [[ $source_path != *$'\t'* && $source_path != *$'\n'* && $source_path != *$'\r'* ]] || {
+            echo "canonical consumer environment paths must not contain tabs or line endings" >&2
+            exit 2
+        }
+    done
+fi
 command -v "$julia" >/dev/null 2>&1 || { echo "Julia executable not found: $julia" >&2; exit 2; }
 julia_version=$("$julia" --version)
 if [[ $julia_version != "$expected_julia" && ${QS_PRECOMPILE_ALLOW_JULIA_MISMATCH:-0} != 1 ]]; then
@@ -293,6 +369,10 @@ seed_depot="$temporary_root/seed-depot"
 checkout_link="$temporary_root/checkout"
 mkdir -p -- "$environment_dir" "$seed_depot"
 ln -s -- "${checkouts[0]}" "$checkout_link"
+[[ $checkout_link != *$'\t'* && $checkout_link != *$'\n'* && $checkout_link != *$'\r'* && $checkout_link != *'"'* && $checkout_link != *'\'* ]] || {
+    echo "temporary checkout link cannot be represented safely in the consumer Manifest: $checkout_link" >&2
+    exit 1
+}
 
 export JULIA_NUM_THREADS=1
 export JULIA_NUM_PRECOMPILE_TASKS=1
@@ -308,13 +388,57 @@ unset JULIA_PKG_OFFLINE
 julia_flags=(--startup-file=no --history-file=no --threads=1)
 
 echo "Preparing one consumer manifest and seed depot..." >&2
-JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" -e '
-    using Pkg
-    Pkg.activate(ARGS[1])
-    Pkg.develop(path=ARGS[2])
-    Pkg.add(["ConcurrentSim", "Gabs"])
-    Pkg.instantiate()
-' "$environment_dir" "$checkout_link"
+consumer_environment_mode=resolved
+consumer_environment_source_project=
+consumer_environment_source_manifest=
+consumer_environment_source_project_sha256=
+consumer_environment_source_manifest_sha256=
+if [[ -n $reuse_consumer_project ]]; then
+    consumer_environment_mode=reused
+    consumer_environment_source_project=$reuse_consumer_project
+    consumer_environment_source_manifest=$reuse_consumer_manifest
+    validate_consumer_project "$reuse_consumer_project" || {
+        echo "reused consumer Project does not match the harness-generated Project" >&2
+        exit 2
+    }
+    cp -- "$reuse_consumer_project" "$environment_dir/Project.toml"
+    rewrite_quantumsavory_manifest_path \
+        "$reuse_consumer_manifest" "$environment_dir/Manifest.toml" \
+        '__QUANTUMSAVORY_CHECKOUT__' "$checkout_link" || {
+        echo "reused consumer Manifest must contain exactly one QuantumSavory checkout placeholder in its QuantumSavory path entry" >&2
+        exit 2
+    }
+    consumer_environment_source_project_sha256=$(sha256sum "$reuse_consumer_project" | awk '{print $1}')
+    consumer_environment_source_manifest_sha256=$(sha256sum "$reuse_consumer_manifest" | awk '{print $1}')
+    JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" -e '
+        using Pkg
+        Pkg.activate(ARGS[1])
+        Pkg.instantiate()
+    ' "$environment_dir"
+    cmp -s -- "$reuse_consumer_project" "$environment_dir/Project.toml" || {
+        echo "Pkg.instantiate changed the reused consumer Project" >&2
+        exit 1
+    }
+    reused_normalized_manifest="$temporary_root/reused-normalized-Manifest.toml"
+    rewrite_quantumsavory_manifest_path \
+        "$environment_dir/Manifest.toml" "$reused_normalized_manifest" \
+        "$checkout_link" '__QUANTUMSAVORY_CHECKOUT__' || {
+        echo "Pkg.instantiate did not preserve the reused QuantumSavory Manifest path" >&2
+        exit 1
+    }
+    cmp -s -- "$reuse_consumer_manifest" "$reused_normalized_manifest" || {
+        echo "Pkg.instantiate changed the reused consumer Manifest" >&2
+        exit 1
+    }
+else
+    JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" -e '
+        using Pkg
+        Pkg.activate(ARGS[1])
+        Pkg.develop(path=ARGS[2])
+        Pkg.add(["ConcurrentSim", "Gabs"])
+        Pkg.instantiate()
+    ' "$environment_dir" "$checkout_link"
+fi
 
 manifest_path="$environment_dir/Manifest.toml"
 [[ -f $manifest_path ]] || { echo "consumer manifest was not created" >&2; exit 1; }
@@ -338,13 +462,28 @@ JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" --project="$environm
 find "$seed_depot/compiled" -type f -path '*/QuantumSavory/*' -delete 2>/dev/null || true
 find "$seed_depot/compiled" -type d -path '*/QuantumSavory' -empty -delete 2>/dev/null || true
 
-cp -- "$environment_dir/Project.toml" "$consumer_project_path"
-cp -- "$manifest_path" "$consumer_manifest_path"
-sed -i -- "s|path = \"$checkout_link\"|path = \"__QUANTUMSAVORY_CHECKOUT__\"|" "$consumer_manifest_path"
-grep -q 'path = "__QUANTUMSAVORY_CHECKOUT__"' "$consumer_manifest_path" || {
-    echo "failed to replace the temporary QuantumSavory path in the copied Manifest" >&2
+validate_consumer_project "$environment_dir/Project.toml" || {
+    echo "consumer Project does not match the expected QuantumSavory, ConcurrentSim, and Gabs environment" >&2
     exit 1
 }
+cp -- "$environment_dir/Project.toml" "$consumer_project_path"
+rewrite_quantumsavory_manifest_path \
+    "$manifest_path" "$consumer_manifest_path" \
+    "$checkout_link" '__QUANTUMSAVORY_CHECKOUT__' || {
+    echo "failed to normalize exactly one QuantumSavory path in the copied Manifest" >&2
+    exit 1
+}
+if [[ $consumer_environment_mode == reused ]]; then
+    cmp -s -- "$reuse_consumer_project" "$consumer_project_path" || {
+        echo "copied consumer Project differs from the reused input" >&2
+        exit 1
+    }
+    cmp -s -- "$reuse_consumer_manifest" "$consumer_manifest_path" || {
+        echo "copied consumer Manifest differs from the reused input" >&2
+        exit 1
+    }
+fi
+consumer_project_sha256=$(sha256sum "$consumer_project_path" | awk '{print $1}')
 normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $1}')
 
 {
@@ -400,6 +539,14 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
         done
         echo "schedule.build.$schedule_build=$schedule_value"
     done
+    echo "consumer_environment_mode=$consumer_environment_mode"
+    echo "consumer_project_sha256=$consumer_project_sha256"
+    if [[ $consumer_environment_mode == reused ]]; then
+        echo "consumer_environment_source_project=$consumer_environment_source_project"
+        echo "consumer_environment_source_manifest=$consumer_environment_source_manifest"
+        echo "consumer_environment_source_project_sha256=$consumer_environment_source_project_sha256"
+        echo "consumer_environment_source_manifest_sha256=$consumer_environment_source_manifest_sha256"
+    fi
     echo "manifest_sha256=$normalized_manifest_sha256"
     echo "resolved_manifest_sha256=$resolved_manifest_sha256"
     echo "harness_commit=$harness_commit"
