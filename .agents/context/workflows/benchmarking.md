@@ -66,14 +66,17 @@ drift by reversing comparison order on even builds and alternating whether the
 mapped baseline or candidate runs first; keep this schedule and its metadata
 when extending the harness. Retain a candidate only if its
 motivating total latency improves by at least `max(50 ms, 5%)` in at least four
-builds, neither headline scenario regresses by that amount, and there is no
-reproducible correctness, recompilation, or warm-runtime regression. Run trace
-instrumentation only in separate diagnostic processes. Report the metadata,
-raw TSV, per-build results, aggregate medians and interquartile ranges, and all
-accepted and rejected candidates. Treat a run as reportable only when its
-metadata says `reportable=true`. The dirty-checkout and Julia-version overrides
-always make a run non-reportable. Checkout state hashes must remain unchanged
-throughout a run, including when the initial dirty state is allowed.
+builds, both headline scenarios have zero material-regression builds, and all
+scenario assertions pass. Require zero first-task recompilation samples, zero
+warm-call compilation or recompilation samples, and zero material warm-runtime
+regression builds. First-task compilation is expected and is not a rejection
+gate. Run trace instrumentation only in separate diagnostic processes. Report
+the metadata, raw TSV, per-build results, aggregate medians and interquartile
+ranges, and all accepted and rejected candidates. Treat a run as reportable
+only when its metadata says `reportable=true`. The dirty-checkout and
+Julia-version overrides always make a run non-reportable. Checkout state hashes
+must remain unchanged throughout a run, including when the initial dirty state
+is allowed.
 
 The PR-only cold-start workflow compares the exact pull-request base and head,
 uploads raw results, and writes medians and interquartile ranges to the job

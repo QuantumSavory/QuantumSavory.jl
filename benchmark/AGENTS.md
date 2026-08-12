@@ -43,8 +43,10 @@ Preserve the harness clearing of inherited Julia CPU-target, project, and depot
 overrides so caller configuration cannot silently change compilation controls.
 Use five independent cache builds with four recorded fresh processes per
 scenario. Retain a candidate only when its motivating total latency improves by
-at least `max(50 ms, 5%)` in at least four builds, neither the Bell nor
-Entangler headline scenario regresses by that amount, and no reproducible
-correctness, recompilation, or warm-runtime regression occurs. Do not run other
-timed Julia measurements concurrently, and enable trace instrumentation only
-in separate diagnostic processes.
+at least `max(50 ms, 5%)` in at least four builds, Bell and Entangler each have
+zero material-regression builds, and every scenario assertion passes. Require
+zero first-task recompilation samples, zero warm-call compilation or
+recompilation samples, and zero warm-runtime material-regression builds.
+First-task compilation is expected and is not a rejection gate. Do not run
+other timed Julia measurements concurrently, and enable trace instrumentation
+only in separate diagnostic processes.
