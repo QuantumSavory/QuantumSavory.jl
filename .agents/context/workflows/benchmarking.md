@@ -38,8 +38,12 @@ standalone consumer environment, one consumer Manifest, a dependency-only seed
 depot, fresh writable depots for QuantumSavory cache builds, and fresh Julia
 processes for recorded samples. It fixes compilation and numerical-library
 thread counts to one and disables startup files, history files, package
-auto-precompilation. Dependency setup may use the network; cache builds and
-samples use package offline mode after setup.
+auto-precompilation. Dependency setup loads QuantumSavory through a detached
+source snapshot, not a measured checkout. After deleting that package cache, the
+harness gives each measured variant one discarded cache build in a fresh
+overlay depot. It verifies that every discarded build emits cache bytes and
+uses a role-neutral hash order. Dependency setup may use the network; discarded
+and recorded cache builds and samples use package offline mode after setup.
 
 The default scenarios are the documented Bell measurement and a deterministic
 one-round `EntanglerProt` simulation. Scenario functions include
@@ -55,7 +59,8 @@ the first invocation's exact normalized consumer environment. See
 Use clean committed variants, a new output directory outside every measured
 checkout, five independent cache builds, and four recorded fresh processes per
 scenario for reportable candidate measurements. Run timed measurements
-serially. The harness counterbalances
+serially. Do not remove the per-variant discarded cache warm-up: it gives every
+measured source tree equivalent pre-timing filesystem exposure. The harness counterbalances
 drift by reversing comparison order on even builds and alternating whether the
 mapped baseline or candidate runs first; keep this schedule and its metadata
 when extending the harness. Retain a candidate only if its
@@ -64,7 +69,10 @@ builds, neither headline scenario regresses by that amount, and there is no
 reproducible correctness, recompilation, or warm-runtime regression. Run trace
 instrumentation only in separate diagnostic processes. Report the metadata,
 raw TSV, per-build results, aggregate medians and interquartile ranges, and all
-accepted and rejected candidates.
+accepted and rejected candidates. Treat a run as reportable only when its
+metadata says `reportable=true`. The dirty-checkout and Julia-version overrides
+always make a run non-reportable. Checkout state hashes must remain unchanged
+throughout a run, including when the initial dirty state is allowed.
 
 The PR-only cold-start workflow compares the exact pull-request base and head,
 uploads raw results, and writes medians and interquartile ranges to the job

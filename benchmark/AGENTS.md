@@ -27,13 +27,18 @@ Manifest for all variants. When reportable comparisons require more than one
 harness invocation, pass the first result's normalized consumer Project and
 Manifest through `QS_PRECOMPILE_CONSUMER_PROJECT` and
 `QS_PRECOMPILE_CONSUMER_MANIFEST` so every invocation uses the same dependency
-graph. Preserve the harness counterbalancing: comparison order reverses on even
-builds, and pair order alternates by build plus the candidate's original
-argument index. Report the recorded environment mode, schedule metadata, raw
-TSV, per-build results, and the generated median/IQR summary.
+graph. Preserve the detached seed source and the one discarded cache build in
+a fresh overlay for every measured variant. These controls prevent seed setup
+from page-warming only the baseline. Preserve the harness counterbalancing:
+comparison order reverses on even builds, and pair order alternates by build
+plus the candidate's original argument index. Report the recorded environment
+mode, schedule metadata, raw TSV, per-build results, and the generated
+median/IQR summary.
 
 Use clean committed checkouts and a new output directory outside every
-measured checkout for reportable runs.
+measured checkout for reportable runs. Dirty-checkout or Julia-version
+overrides make the run non-reportable, and measured checkout content must not
+change after its initial state hash is recorded.
 Use five independent cache builds with four recorded fresh processes per
 scenario. Retain a candidate only when its motivating total latency improves by
 at least `max(50 ms, 5%)` in at least four builds, neither the Bell nor

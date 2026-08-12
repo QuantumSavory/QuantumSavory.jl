@@ -267,6 +267,7 @@ columns = [
 open(build_summary_path, "w") do io
     println(io, join((
         "comparison", "label", "scenario", "build", "samples",
+        "build_seconds", "cache_bytes",
         "import_ms_median", "first_ms_median", "compile_ms_median",
         "recompile_ms_median", "total_ms_median", "warm_ms_median",
         "warm_compile_ms_median", "warm_recompile_ms_median",
@@ -295,6 +296,7 @@ open(build_summary_path, "w") do io
                 threshold = max(0.050, 0.05 * baseline_total)
                 println(io, join(Any[
                     comparison, label, scenario, build, length(matching),
+                    first(matching)["build_seconds"], first(matching)["cache_bytes"],
                     med("import_seconds") * 1e3,
                     med("first_seconds") * 1e3,
                     med("first_compile_seconds") * 1e3,

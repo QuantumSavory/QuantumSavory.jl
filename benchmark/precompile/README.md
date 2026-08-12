@@ -20,7 +20,18 @@ refuses to overwrite existing result files. By default, it resolves one
 consumer Manifest and points it at each checkout in turn. It creates one seed
 depot with dependency caches and a new writable depot for every QuantumSavory
 package-cache build. Dependency setup may access package servers. After setup,
-cache builds and samples run with package offline mode enabled.
+cache builds and samples run with package offline mode enabled. For reportable
+runs, seed setup loads QuantumSavory from a detached Git archive with separate
+source-file inodes, then deletes that package cache. It therefore does not
+page-warm a measured checkout. A non-reportable run with a dirty baseline uses
+a detached copy of that fixed working state so setup and measurement still use
+the same source.
+Before timing, every measured variant gets one discarded QuantumSavory cache
+build in a fresh overlay depot through the same stable checkout link. Each
+discarded build must emit cache bytes. The harness orders these builds by a
+SHA-256 value derived from the commit and initial checkout-state hash,
+independent of baseline/candidate role. Identical source states retain argument
+order because their filesystem exposure is equivalent.
 
 Variant labels and scenario names must start with an ASCII letter or digit and
 contain only ASCII letters, digits, dots, underscores, or hyphens. This keeps
@@ -98,13 +109,20 @@ history files; and uses `JULIA_LOAD_PATH=@:@stdlib`. It requires GNU/Linux and
 Julia 1.12.6. Set `JULIA` to select that Julia executable. A different Julia
 version or a dirty checkout is allowed only for a non-reportable smoke run by
 setting `QS_PRECOMPILE_ALLOW_JULIA_MISMATCH=1` or
-`QS_PRECOMPILE_ALLOW_DIRTY=1`, respectively.
+`QS_PRECOMPILE_ALLOW_DIRTY=1`, respectively. Enabling either override records
+`reportable=false` and a reason in `metadata.txt`, even when the current Julia
+version matches or the checkout is clean. A normal run records
+`reportable=true` and an empty `nonreportable_reasons` list.
 
 The harness commit and its three source hashes are checked before setup and
 again before summarization. Recorded processes execute temporary read-only
 snapshots of `scenarios.jl` and `summarize.jl`; their hashes are
 checked after creation and before summarization. An edit in the harness
-checkout therefore cannot mix source versions within a long run.
+checkout therefore cannot mix source versions within a long run. The harness
+also snapshots a Git worktree-state hash for every measured checkout, including
+tracked differences and nonignored untracked contents. It rechecks the hash
+before each cache build and after all measurements. This rejects source mutation
+during an allow-dirty run; the override permits a fixed initial dirty state only.
 
 Each candidate gets a separate comparison, with nearby independent cache
 builds for the candidate and its mapped baseline. To counterbalance systematic
@@ -120,7 +138,9 @@ and pair sequence for every build as `schedule.build.N`.
 The output directory contains `raw.tsv`, the per-build `build-summary.tsv`, the
 aggregate `summary.tsv`, the rendered `summary.md`, `metadata.txt`, the saved
 consumer Project `consumer-Project.toml`, and the normalized consumer Manifest
-`consumer-Manifest.toml`. The aggregate
+`consumer-Manifest.toml`. Each `build-summary.tsv` row includes the raw
+`build_seconds` and integer `cache_bytes` values for that build, in addition to
+the scenario medians. The aggregate
 summary reports medians, interquartile ranges, and the number of builds with a
 material total-latency change. A material change is at least 50 ms and 5% is
 used when it is larger. Performance differences are descriptive; scenario
@@ -136,8 +156,9 @@ The copied Manifest uses `__QUANTUMSAVORY_CHECKOUT__` as a path placeholder;
 replace it with the checkout used for reproduction. The `manifest_sha256`
 metadata field hashes this normalized copy. The metadata also records the
 consumer-environment mode, consumer Project hash, pre-normalization Manifest
-hash, harness commit, and harness file hashes. Reuse mode additionally records
-the canonical source paths and hashes for both inputs. The pre-normalization
+hash, harness commit, harness file hashes, reportability state, checkout state
+hashes, and the discarded cache-warm-up count, policy, and order. Reuse mode
+additionally records the canonical source paths and hashes for both inputs. The pre-normalization
 `resolved_manifest_sha256` includes an invocation-specific temporary checkout
 path and is expected to change across reuse invocations; use `manifest_sha256`
 as the stable normalized dependency identity.

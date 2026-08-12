@@ -152,6 +152,7 @@ function quantummc()
     register = Register(2, QuantumMCRepr())
     initialize!(register[1:2], StabilizerState("XX ZZ"))
     first_outcome = project_traceout!(register[1], Z)
+    check(!isassigned(register, 1) && isassigned(register, 2), "QuantumMC measurement did not trace out one qubit")
     partner_fidelity = real(observable(register[2], SProjector((Z1, Z2)[first_outcome])))
     check(isapprox(partner_fidelity, 1; atol=1e-12), "QuantumMC measurement or traceout failed")
     return partner_fidelity

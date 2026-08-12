@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
     echo "usage: $0 OUTPUT_DIR LABEL=CHECKOUT [LABEL=CHECKOUT ...]" >&2
-    echo "environment: QS_PRECOMPILE_BUILDS, QS_PRECOMPILE_SAMPLES, QS_PRECOMPILE_SCENARIOS, QS_PRECOMPILE_EXTRA_SCENARIOS, QS_PRECOMPILE_BASELINES, QS_PRECOMPILE_CONSUMER_PROJECT, QS_PRECOMPILE_CONSUMER_MANIFEST" >&2
+    echo "environment: QS_PRECOMPILE_BUILDS, QS_PRECOMPILE_SAMPLES, QS_PRECOMPILE_SCENARIOS, QS_PRECOMPILE_EXTRA_SCENARIOS, QS_PRECOMPILE_BASELINES, QS_PRECOMPILE_CONSUMER_PROJECT, QS_PRECOMPILE_CONSUMER_MANIFEST, QS_PRECOMPILE_ALLOW_DIRTY, QS_PRECOMPILE_ALLOW_JULIA_MISMATCH" >&2
     exit 2
 }
 
@@ -107,7 +107,7 @@ metadata_path="$output_dir/metadata.txt"
 consumer_project_path="$output_dir/consumer-Project.toml"
 consumer_manifest_path="$output_dir/consumer-Manifest.toml"
 for path in "$raw_path" "$summary_path" "$build_summary_path" "$markdown_path" "$metadata_path" "$consumer_project_path" "$consumer_manifest_path"; do
-    [[ ! -e "$path" ]] || {
+    [[ ! -e "$path" && ! -L "$path" ]] || {
         echo "refusing to overwrite existing result file: $path" >&2
         exit 2
     }
@@ -120,6 +120,8 @@ extra_scenario_list=${QS_PRECOMPILE_EXTRA_SCENARIOS:-}
 baseline_map_list=${QS_PRECOMPILE_BASELINES:-}
 reuse_consumer_project=${QS_PRECOMPILE_CONSUMER_PROJECT:-}
 reuse_consumer_manifest=${QS_PRECOMPILE_CONSUMER_MANIFEST:-}
+allow_dirty=${QS_PRECOMPILE_ALLOW_DIRTY:-0}
+allow_julia_mismatch=${QS_PRECOMPILE_ALLOW_JULIA_MISMATCH:-0}
 julia=${JULIA:-julia}
 expected_julia='julia version 1.12.6'
 token_pattern='^[A-Za-z0-9][A-Za-z0-9_.-]*$'
@@ -128,6 +130,8 @@ mapping_list_pattern='^[A-Za-z0-9][A-Za-z0-9_.-]*=[A-Za-z0-9][A-Za-z0-9_.-]*(,[A
 
 [[ $builds =~ ^[1-9][0-9]*$ ]] || { echo "QS_PRECOMPILE_BUILDS must be a positive integer" >&2; exit 2; }
 [[ $samples =~ ^[1-9][0-9]*$ ]] || { echo "QS_PRECOMPILE_SAMPLES must be a positive integer" >&2; exit 2; }
+[[ $allow_dirty == 0 || $allow_dirty == 1 ]] || { echo "QS_PRECOMPILE_ALLOW_DIRTY must be 0 or 1" >&2; exit 2; }
+[[ $allow_julia_mismatch == 0 || $allow_julia_mismatch == 1 ]] || { echo "QS_PRECOMPILE_ALLOW_JULIA_MISMATCH must be 0 or 1" >&2; exit 2; }
 [[ $scenario_list =~ $token_list_pattern ]] || {
     echo "QS_PRECOMPILE_SCENARIOS must be a comma-separated list of scenario tokens" >&2
     exit 2
@@ -176,7 +180,7 @@ if [[ -n $reuse_consumer_project || -n $reuse_consumer_manifest ]]; then
 fi
 command -v "$julia" >/dev/null 2>&1 || { echo "Julia executable not found: $julia" >&2; exit 2; }
 julia_version=$("$julia" --version)
-if [[ $julia_version != "$expected_julia" && ${QS_PRECOMPILE_ALLOW_JULIA_MISMATCH:-0} != 1 ]]; then
+if [[ $julia_version != "$expected_julia" && $allow_julia_mismatch != 1 ]]; then
     echo "cold-start comparisons require $expected_julia (found $julia_version)" >&2
     echo "set QS_PRECOMPILE_ALLOW_JULIA_MISMATCH=1 only for a non-reportable smoke run" >&2
     exit 2
@@ -279,14 +283,67 @@ for checkout in "${checkouts[@]}"; do
     fi
 done
 
+checkout_state_sha256() {
+    local checkout=$1
+    local file_path file_sha256 file_state link_target relative_path
+    (
+        printf 'status\0'
+        git -C "$checkout" status --porcelain=v1 -z --untracked-files=all
+        printf 'tracked-diff\0'
+        git -C "$checkout" diff --no-ext-diff --no-textconv --binary HEAD --
+        printf '\0untracked\0'
+        while IFS= read -r -d '' relative_path; do
+            file_path="$checkout/$relative_path"
+            printf 'path\0%s\0' "$relative_path"
+            if [[ -L $file_path ]]; then
+                link_target=$(readlink -- "$file_path")
+                printf 'symlink\0%s\0' "$link_target"
+            elif [[ -f $file_path ]]; then
+                file_state=$(stat -c '%a:%s' -- "$file_path")
+                file_sha256=$(sha256sum < "$file_path" | awk '{print $1}')
+                printf 'file\0%s\0%s\0' "$file_state" "$file_sha256"
+            elif [[ -d $file_path ]]; then
+                file_state=$(stat -c '%a' -- "$file_path")
+                printf 'directory\0%s\0' "$file_state"
+            elif [[ -e $file_path ]]; then
+                file_state=$(stat -c '%F:%a:%s' -- "$file_path")
+                printf 'other\0%s\0' "$file_state"
+            else
+                printf 'missing\0'
+            fi
+        done < <(git -C "$checkout" ls-files -z --others --exclude-standard)
+    ) | sha256sum | awk '{print $1}'
+}
+
+copy_checkout_snapshot() {
+    local checkout=$1
+    local destination=$2
+    local destination_path relative_path source_path
+    while IFS= read -r -d '' relative_path; do
+        source_path="$checkout/$relative_path"
+        [[ -e $source_path || -L $source_path ]] || continue
+        destination_path="$destination/$relative_path"
+        mkdir -p -- "$(dirname -- "$destination_path")"
+        cp -a --reflink=never -- "$source_path" "$destination_path"
+    done < <(git -C "$checkout" ls-files -z --cached --others --exclude-standard)
+}
+
 commits=()
+checkout_initial_dirty=()
+checkout_state_sha256s=()
 for index in "${!labels[@]}"; do
     checkout=${checkouts[$index]}
     commits+=("$(git -C "$checkout" rev-parse HEAD)")
-    if [[ -n $(git -C "$checkout" status --porcelain) && ${QS_PRECOMPILE_ALLOW_DIRTY:-0} != 1 ]]; then
+    if [[ -n $(git -C "$checkout" status --porcelain=v1 --untracked-files=all) ]]; then
+        checkout_initial_dirty+=(true)
+    else
+        checkout_initial_dirty+=(false)
+    fi
+    if [[ ${checkout_initial_dirty[$index]} == true && $allow_dirty != 1 ]]; then
         echo "variant checkout is dirty; commit it or set QS_PRECOMPILE_ALLOW_DIRTY=1 for a non-reportable smoke run: ${labels[$index]}" >&2
         exit 1
     fi
+    checkout_state_sha256s+=("$(checkout_state_sha256 "$checkout")")
 done
 
 verify_checkout() {
@@ -297,10 +354,10 @@ verify_checkout() {
         echo "variant HEAD changed during measurement: ${labels[$index]}" >&2
         exit 1
     }
-    if [[ -n $(git -C "$checkout" status --porcelain) && ${QS_PRECOMPILE_ALLOW_DIRTY:-0} != 1 ]]; then
-        echo "variant became dirty during measurement: ${labels[$index]}" >&2
+    [[ $(checkout_state_sha256 "$checkout") == "${checkout_state_sha256s[$index]}" ]] || {
+        echo "variant checkout contents changed during measurement: ${labels[$index]}" >&2
         exit 1
-    fi
+    }
 }
 
 for checkout in "${checkouts[@]:1}"; do
@@ -412,6 +469,7 @@ trap cleanup EXIT
 environment_dir="$temporary_root/environment"
 seed_depot="$temporary_root/seed-depot"
 checkout_link="$temporary_root/checkout"
+seed_checkout="$temporary_root/seed-checkout"
 harness_snapshot_dir="$temporary_root/harness"
 scenario_script="$harness_snapshot_dir/scenarios.jl"
 summarize_script="$harness_snapshot_dir/summarize.jl"
@@ -425,12 +483,27 @@ verify_harness_snapshots() {
         exit 1
     }
 }
-mkdir -p -- "$environment_dir" "$seed_depot" "$harness_snapshot_dir"
+mkdir -p -- "$environment_dir" "$seed_depot" "$seed_checkout" "$harness_snapshot_dir"
 cp -- "$script_dir/scenarios.jl" "$scenario_script"
 cp -- "$script_dir/summarize.jl" "$summarize_script"
 chmod 0444 "$scenario_script" "$summarize_script"
 verify_harness_snapshots
-ln -s -- "${checkouts[0]}" "$checkout_link"
+# Seed dependency caches through separate inodes so setup cannot page-warm a measured checkout.
+verify_checkout 0
+if [[ ${checkout_initial_dirty[0]} == true ]]; then
+    seed_checkout_mode=dirty_working_tree_copy
+    # A non-reportable dirty run still uses its fixed working source rather than HEAD.
+    copy_checkout_snapshot "${checkouts[0]}" "$seed_checkout"
+else
+    seed_checkout_mode=committed_git_archive
+    git -C "${checkouts[0]}" archive --format=tar "${commits[0]}" | tar -xf - -C "$seed_checkout"
+fi
+verify_checkout 0
+[[ -f "$seed_checkout/Project.toml" && -d "$seed_checkout/src" ]] || {
+    echo "failed to create the detached seed checkout" >&2
+    exit 1
+}
+ln -s -- "$seed_checkout" "$checkout_link"
 [[ $checkout_link != *$'\t'* && $checkout_link != *$'\n'* && $checkout_link != *$'\r'* && $checkout_link != *'"'* && $checkout_link != *'\'* ]] || {
     echo "temporary checkout link cannot be represented safely in the consumer Manifest: $checkout_link" >&2
     exit 1
@@ -540,6 +613,38 @@ JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" --project="$environm
 find "$seed_depot/compiled" -type f -path '*/QuantumSavory/*' -delete 2>/dev/null || true
 find "$seed_depot/compiled" -type d -path '*/QuantumSavory' -empty -delete 2>/dev/null || true
 
+# Give every measured source tree one equivalent discarded cache build. Content-hash
+# order is independent of baseline/candidate role; equal source states retain input order.
+discarded_cache_warmup_indices=()
+while IFS=$'\t' read -r _ warmup_index; do
+    discarded_cache_warmup_indices+=("$warmup_index")
+done < <(
+    for index in "${!labels[@]}"; do
+        warmup_key=$(printf '%s\0%s\0' "${commits[$index]}" "${checkout_state_sha256s[$index]}" | sha256sum | awk '{print $1}')
+        printf '%s\t%s\n' "$warmup_key" "$index"
+    done | sort -k1,1 -k2,2n
+)
+discarded_cache_warmup_order=
+for warmup_position in "${!discarded_cache_warmup_indices[@]}"; do
+    index=${discarded_cache_warmup_indices[$warmup_position]}
+    verify_checkout "$index"
+    label=${labels[$index]}
+    checkout=${checkouts[$index]}
+    ln -sfn -- "$checkout" "$checkout_link"
+    warmup_depot="$temporary_root/discarded-cache-warmup-$warmup_position"
+    mkdir -p -- "$warmup_depot"
+    echo "Discarding cache warm-up for $label..." >&2
+    JULIA_PKG_OFFLINE=true JULIA_DEPOT_PATH="$warmup_depot:$seed_depot" \
+        "$julia" "${julia_flags[@]}" --project="$environment_dir" -e 'using QuantumSavory'
+    warmup_cache_bytes=$(find "$warmup_depot/compiled" -type f -path '*/QuantumSavory/*' -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')
+    [[ $warmup_cache_bytes -gt 0 ]] || {
+        echo "discarded QuantumSavory cache warm-up wrote no cache bytes: $label" >&2
+        exit 1
+    }
+    [[ -z $discarded_cache_warmup_order ]] || discarded_cache_warmup_order+=,
+    discarded_cache_warmup_order+="$label"
+done
+
 validate_consumer_project "$environment_dir/Project.toml" || {
     echo "consumer Project does not match the expected QuantumSavory, ConcurrentSim, and Gabs environment" >&2
     exit 1
@@ -564,6 +669,17 @@ fi
 consumer_project_sha256=$(sha256sum "$consumer_project_path" | awk '{print $1}')
 normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $1}')
 
+non_reportable_reasons=()
+[[ $allow_dirty == 0 ]] || non_reportable_reasons+=(allow_dirty_override_enabled)
+[[ $allow_julia_mismatch == 0 ]] || non_reportable_reasons+=(julia_mismatch_override_enabled)
+if [[ ${#non_reportable_reasons[@]} -eq 0 ]]; then
+    reportable=true
+    non_reportable_reason_list=
+else
+    reportable=false
+    non_reportable_reason_list=$(IFS=,; echo "${non_reportable_reasons[*]}")
+fi
+
 {
     printf '%s\n' "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     printf '%s\n' "julia=$julia_version"
@@ -584,7 +700,14 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
     printf '%s\n' "pkg_offline_during_measurement=true"
     printf '%s\n' "builds=$builds"
     printf '%s\n' "recorded_samples_per_build=$samples"
+    printf '%s\n' "discarded_cache_warmups_per_variant=1"
+    printf '%s\n' "discarded_cache_warmup_order_policy=sha256_of_commit_and_state_then_argument_index"
+    printf '%s\n' "discarded_cache_warmup_order=$discarded_cache_warmup_order"
     printf '%s\n' "discarded_warmups_per_build_and_scenario=1"
+    printf '%s\n' "reportable=$reportable"
+    printf '%s\n' "nonreportable_reasons=$non_reportable_reason_list"
+    printf '%s\n' "allow_dirty=$allow_dirty"
+    printf '%s\n' "allow_julia_mismatch=$allow_julia_mismatch"
     printf '%s\n' "total_metric=wall_import_start_to_first_task_end"
     printf '%s\n' "scenarios=$scenario_list"
     printf '%s\n' "extra_scenarios=$extra_scenario_list"
@@ -618,6 +741,7 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
         printf '%s\n' "schedule.build.$schedule_build=$schedule_value"
     done
     printf '%s\n' "consumer_environment_mode=$consumer_environment_mode"
+    printf '%s\n' "seed_checkout_mode=$seed_checkout_mode"
     printf '%s\n' "consumer_project_sha256=$consumer_project_sha256"
     if [[ $consumer_environment_mode == reused ]]; then
         printf '%s\n' "consumer_environment_source_project=$consumer_environment_source_project"
@@ -634,6 +758,8 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
     for index in "${!labels[@]}"; do
         printf '%s\n' "variant.${labels[$index]}.checkout=${checkouts[$index]}"
         printf '%s\n' "variant.${labels[$index]}.commit=${commits[$index]}"
+        printf '%s\n' "variant.${labels[$index]}.initial_dirty=${checkout_initial_dirty[$index]}"
+        printf '%s\n' "variant.${labels[$index]}.state_sha256=${checkout_state_sha256s[$index]}"
     done
 } > "$metadata_path"
 
