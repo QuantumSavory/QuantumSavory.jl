@@ -32,11 +32,6 @@ julia --project=examples examples/firstgenrepeater/2_swapper_example.jl
 
 This launches a WGLMakie web app (default `http://127.0.0.1:8890`). Configure the repeater chain and Barrett-Kok source, then press **Run simulation** to watch entanglement propagate end-to-end. Purification is not included in this example.
 
-Configure the listening address, port, and absolute proxy URL with
-`QS_FIRSTGENREPEATER_V2_IP`, `QS_FIRSTGENREPEATER_V2_PORT`, and
-`QS_FIRSTGENREPEATER_V2_PROXY`. A subpath proxy URL must include its trailing
-slash, for example `https://areweentangledyet.com/firstgenrepeater/`.
-
 ## Example 3 — Purifier
 
 Adds a purification step to example 2. All three protocol layers run together: `EntanglerProt` generates raw pairs on each link, `SwapperProt` extends entanglement across the chain, and a custom `purifier` process distills pairs between every node pair that shares two or more Bell pairs. This example is meant to showcase how to build a very simple custom protocol without committing to the entirety of the AbstractProtocol machinery behind ProtocolZoo.

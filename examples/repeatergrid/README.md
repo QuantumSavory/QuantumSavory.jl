@@ -25,15 +25,9 @@ This module provides two ways of running the simulation:
 
 ## Interactive servers
 
-Run the asynchronous and synchronous web applications with:
+We provide interactive visualizations for these simulations as apps that can be viewed in the browser. Run the asynchronous and synchronous web applications with:
 
 ```bash
 julia --threads=2 --project=examples examples/repeatergrid/1b_async_wglmakie_interactive.jl
 julia --threads=2 --project=examples examples/repeatergrid/2b_sync_wglmakie_interactive.jl
 ```
-
-The asynchronous server uses `QS_ASYNC_REPEATERGRID_IP`,
-`QS_ASYNC_REPEATERGRID_PORT`, and `QS_ASYNC_REPEATERGRID_PROXY`; its default port
-is 8894. The synchronous server uses the corresponding
-`QS_SYNC_REPEATERGRID_*` variables and port 8895. Proxy URLs are absolute and
-include a trailing slash.
