@@ -79,14 +79,16 @@ benchmark/precompile/run.sh later-results \
     head=/path/to/head
 ```
 
-Set both variables together. The Project must match the harness-generated
+Set both variables together and use a new output directory. The inputs must be
+distinct regular files. The Project must match the harness-generated
 QuantumSavory, ConcurrentSim, and Gabs consumer Project. The normalized
 Manifest must contain exactly one `__QUANTUMSAVORY_CHECKOUT__` path in its
 QuantumSavory entry. Setup materializes that placeholder as the stable
-temporary checkout link and runs only `Pkg.instantiate()` against the saved
-dependency graph. It does not resolve or update dependencies. The copied
-consumer files in the new result directory must remain byte-identical to the
-inputs or the harness fails.
+temporary checkout link. It first uses `Pkg.is_manifest_current` in offline
+mode to require a Manifest resolved from that Project, then runs only
+`Pkg.instantiate()` against the saved dependency graph. It does not resolve or
+update dependencies. The copied consumer files in the new result directory
+must remain byte-identical to the inputs or the harness fails.
 
 The default scenarios are `bell` and `entangler`. Each scenario also gets one
 discarded filesystem warm-up per build. The harness fixes Julia,

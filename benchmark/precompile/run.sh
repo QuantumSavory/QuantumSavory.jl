@@ -127,14 +127,24 @@ if [[ -n $reuse_consumer_project || -n $reuse_consumer_manifest ]]; then
             exit 2
         }
     done
-    reuse_consumer_project=$(realpath -e -- "$reuse_consumer_project")
-    reuse_consumer_manifest=$(realpath -e -- "$reuse_consumer_manifest")
+    if ! IFS= read -r -d '' reuse_consumer_project < <(realpath -ze -- "$reuse_consumer_project"); then
+        echo "failed to canonicalize consumer Project input" >&2
+        exit 2
+    fi
+    if ! IFS= read -r -d '' reuse_consumer_manifest < <(realpath -ze -- "$reuse_consumer_manifest"); then
+        echo "failed to canonicalize consumer Manifest input" >&2
+        exit 2
+    fi
     for source_path in "$reuse_consumer_project" "$reuse_consumer_manifest"; do
         [[ $source_path != *$'\t'* && $source_path != *$'\n'* && $source_path != *$'\r'* ]] || {
             echo "canonical consumer environment paths must not contain tabs or line endings" >&2
             exit 2
         }
     done
+    [[ ! $reuse_consumer_project -ef $reuse_consumer_manifest ]] || {
+        echo "consumer Project and Manifest inputs must be distinct files" >&2
+        exit 2
+    }
 fi
 command -v "$julia" >/dev/null 2>&1 || { echo "Julia executable not found: $julia" >&2; exit 2; }
 julia_version=$("$julia" --version)
@@ -410,6 +420,22 @@ if [[ -n $reuse_consumer_project ]]; then
     }
     consumer_environment_source_project_sha256=$(sha256sum "$reuse_consumer_project" | awk '{print $1}')
     consumer_environment_source_manifest_sha256=$(sha256sum "$reuse_consumer_manifest" | awk '{print $1}')
+    if ! JULIA_PKG_OFFLINE=true JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" -e '
+        using Pkg, TOML
+        manifest = TOML.parsefile(joinpath(ARGS[1], "Manifest.toml"))
+        dependencies = get(manifest, "deps", nothing)
+        dependencies isa AbstractDict || error("consumer Manifest does not contain a deps table")
+        entries = get(dependencies, "QuantumSavory", nothing)
+        entries isa AbstractVector && length(entries) == 1 ||
+            error("consumer Manifest must contain exactly one QuantumSavory entry")
+        entry = only(entries)
+        entry isa AbstractDict && get(entry, "path", nothing) == ARGS[2] ||
+            error("consumer Manifest QuantumSavory path does not match the temporary checkout link")
+        Pkg.is_manifest_current(ARGS[1]) === true || error("consumer Manifest was not resolved from the consumer Project")
+    ' "$environment_dir" "$checkout_link"; then
+        echo "reused consumer Project and Manifest failed semantic validation" >&2
+        exit 2
+    fi
     JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" -e '
         using Pkg
         Pkg.activate(ARGS[1])
@@ -487,36 +513,36 @@ consumer_project_sha256=$(sha256sum "$consumer_project_path" | awk '{print $1}')
 normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $1}')
 
 {
-    echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    echo "julia=$julia_version"
-    echo "kernel=$(uname -srvmo)"
+    printf '%s\n' "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf '%s\n' "julia=$julia_version"
+    printf '%s\n' "kernel=$(uname -srvmo)"
     if [[ -r /etc/os-release ]]; then
         os_name=$(awk '$0 ~ /^PRETTY_NAME=/ { sub(/^[^=]*=/, ""); sub(/^"/, ""); sub(/"$/, ""); print; exit }' /etc/os-release)
-        echo "os=$os_name"
+        printf '%s\n' "os=$os_name"
     fi
     if command -v lscpu >/dev/null 2>&1; then
-        echo "cpu=$(lscpu | awk -F: '/Model name/ { sub(/^[[:space:]]+/, "", $2); print $2; exit }')"
+        printf '%s\n' "cpu=$(lscpu | awk -F: '/Model name/ { sub(/^[[:space:]]+/, "", $2); print $2; exit }')"
     fi
-    echo "julia_num_threads=$JULIA_NUM_THREADS"
-    echo "julia_num_precompile_tasks=$JULIA_NUM_PRECOMPILE_TASKS"
-    echo "openblas_num_threads=$OPENBLAS_NUM_THREADS"
-    echo "omp_num_threads=$OMP_NUM_THREADS"
-    echo "julia_load_path=$JULIA_LOAD_PATH"
-    echo "pkg_auto_precompile=$JULIA_PKG_PRECOMPILE_AUTO"
-    echo "pkg_offline_during_measurement=true"
-    echo "builds=$builds"
-    echo "recorded_samples_per_build=$samples"
-    echo "discarded_warmups_per_build_and_scenario=1"
-    echo "total_metric=wall_import_start_to_first_task_end"
-    echo "scenarios=$scenario_list"
-    echo "extra_scenarios=$extra_scenario_list"
-    echo "candidate_baselines=$baseline_map_list"
-    echo "schedule_policy=counterbalanced-v1"
-    echo "schedule_candidate_index=one_based_candidate_argument_position"
-    echo "schedule_comparison_policy=ascending_candidate_index_on_odd_builds_descending_candidate_index_on_even_builds"
-    echo "schedule_pair_policy=baseline_then_candidate_when_build_plus_candidate_index_is_odd_candidate_then_baseline_when_even"
+    printf '%s\n' "julia_num_threads=$JULIA_NUM_THREADS"
+    printf '%s\n' "julia_num_precompile_tasks=$JULIA_NUM_PRECOMPILE_TASKS"
+    printf '%s\n' "openblas_num_threads=$OPENBLAS_NUM_THREADS"
+    printf '%s\n' "omp_num_threads=$OMP_NUM_THREADS"
+    printf '%s\n' "julia_load_path=$JULIA_LOAD_PATH"
+    printf '%s\n' "pkg_auto_precompile=$JULIA_PKG_PRECOMPILE_AUTO"
+    printf '%s\n' "pkg_offline_during_measurement=true"
+    printf '%s\n' "builds=$builds"
+    printf '%s\n' "recorded_samples_per_build=$samples"
+    printf '%s\n' "discarded_warmups_per_build_and_scenario=1"
+    printf '%s\n' "total_metric=wall_import_start_to_first_task_end"
+    printf '%s\n' "scenarios=$scenario_list"
+    printf '%s\n' "extra_scenarios=$extra_scenario_list"
+    printf '%s\n' "candidate_baselines=$baseline_map_list"
+    printf '%s\n' "schedule_policy=counterbalanced-v1"
+    printf '%s\n' "schedule_candidate_index=one_based_candidate_argument_position"
+    printf '%s\n' "schedule_comparison_policy=ascending_candidate_index_on_odd_builds_descending_candidate_index_on_even_builds"
+    printf '%s\n' "schedule_pair_policy=baseline_then_candidate_when_build_plus_candidate_index_is_odd_candidate_then_baseline_when_even"
     for ((schedule_candidate_index = 1; schedule_candidate_index < ${#labels[@]}; schedule_candidate_index++)); do
-        echo "schedule.candidate_index.${labels[$schedule_candidate_index]}=$schedule_candidate_index"
+        printf '%s\n' "schedule.candidate_index.${labels[$schedule_candidate_index]}=$schedule_candidate_index"
     done
     for ((schedule_build = 1; schedule_build <= builds; schedule_build++)); do
         set_comparison_order "$schedule_build"
@@ -537,25 +563,25 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
             [[ -z $schedule_value ]] || schedule_value+=';'
             schedule_value+="comparison:${labels[$schedule_candidate_index]},$pair_value"
         done
-        echo "schedule.build.$schedule_build=$schedule_value"
+        printf '%s\n' "schedule.build.$schedule_build=$schedule_value"
     done
-    echo "consumer_environment_mode=$consumer_environment_mode"
-    echo "consumer_project_sha256=$consumer_project_sha256"
+    printf '%s\n' "consumer_environment_mode=$consumer_environment_mode"
+    printf '%s\n' "consumer_project_sha256=$consumer_project_sha256"
     if [[ $consumer_environment_mode == reused ]]; then
-        echo "consumer_environment_source_project=$consumer_environment_source_project"
-        echo "consumer_environment_source_manifest=$consumer_environment_source_manifest"
-        echo "consumer_environment_source_project_sha256=$consumer_environment_source_project_sha256"
-        echo "consumer_environment_source_manifest_sha256=$consumer_environment_source_manifest_sha256"
+        printf '%s\n' "consumer_environment_source_project=$consumer_environment_source_project"
+        printf '%s\n' "consumer_environment_source_manifest=$consumer_environment_source_manifest"
+        printf '%s\n' "consumer_environment_source_project_sha256=$consumer_environment_source_project_sha256"
+        printf '%s\n' "consumer_environment_source_manifest_sha256=$consumer_environment_source_manifest_sha256"
     fi
-    echo "manifest_sha256=$normalized_manifest_sha256"
-    echo "resolved_manifest_sha256=$resolved_manifest_sha256"
-    echo "harness_commit=$harness_commit"
-    echo "harness_run_sha256=$harness_run_sha256"
-    echo "harness_scenarios_sha256=$harness_scenarios_sha256"
-    echo "harness_summarize_sha256=$harness_summarize_sha256"
+    printf '%s\n' "manifest_sha256=$normalized_manifest_sha256"
+    printf '%s\n' "resolved_manifest_sha256=$resolved_manifest_sha256"
+    printf '%s\n' "harness_commit=$harness_commit"
+    printf '%s\n' "harness_run_sha256=$harness_run_sha256"
+    printf '%s\n' "harness_scenarios_sha256=$harness_scenarios_sha256"
+    printf '%s\n' "harness_summarize_sha256=$harness_summarize_sha256"
     for index in "${!labels[@]}"; do
-        echo "variant.${labels[$index]}.checkout=${checkouts[$index]}"
-        echo "variant.${labels[$index]}.commit=${commits[$index]}"
+        printf '%s\n' "variant.${labels[$index]}.checkout=${checkouts[$index]}"
+        printf '%s\n' "variant.${labels[$index]}.commit=${commits[$index]}"
     done
 } > "$metadata_path"
 
