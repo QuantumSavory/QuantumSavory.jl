@@ -7,7 +7,11 @@ raw_path, summary_path, build_summary_path, markdown_path = ARGS
 lines = readlines(raw_path)
 isempty(lines) && error("raw result file is empty: $raw_path")
 header = split(first(lines), '\t')
-rows = [Dict(zip(header, split(line, '\t'; keepempty=true))) for line in Iterators.drop(lines, 1)]
+rows = map(Iterators.drop(lines, 1)) do line
+    fields = split(line, '\t'; keepempty=true)
+    length(fields) == length(header) || error("raw result row has $(length(fields)) fields; expected $(length(header))")
+    Dict(zip(header, fields))
+end
 isempty(rows) && error("raw result file contains no measurements: $raw_path")
 comparisons = unique(row["comparison"] for row in rows)
 
@@ -17,7 +21,10 @@ median_iqr(values) = (median(values), quantile(values, 0.75) - quantile(values, 
 function comparison_labels(comparison)
     labels = unique(row["label"] for row in rows if row["comparison"] == comparison)
     length(labels) == 2 || error("comparison $comparison must have one baseline and one candidate")
-    return labels
+    comparison in labels || error("comparison $comparison has no matching candidate label")
+    baseline_labels = filter(!=(comparison), labels)
+    length(baseline_labels) == 1 || error("comparison $comparison must have one distinct baseline")
+    return (only(baseline_labels), comparison)
 end
 
 function comparison_scenarios(comparison)

@@ -76,8 +76,9 @@ differences are descriptive; scenario assertion, package-cache,
 dependency-control, or harness failures return a nonzero status.
 
 The copied Manifest uses `__QUANTUMSAVORY_CHECKOUT__` as a path placeholder;
-replace it with the checkout used for reproduction. The metadata records the
-SHA-256 hash of the resolved Manifest before this replacement.
+replace it with the checkout used for reproduction. The `manifest_sha256`
+metadata field hashes this normalized copy. The metadata also records the
+pre-normalization Manifest hash, harness commit, and harness file hashes.
 
 See the [Julia command-line reference](https://docs.julialang.org/en/v1/manual/command-line-interface/)
 for the compilation controls and the [PrecompileTools workload guide](https://julialang.github.io/PrecompileTools.jl/stable/)

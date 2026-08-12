@@ -19,6 +19,9 @@ QuantumSavory APIs. Do not add cold-start measurements to `benchmarks.jl`:
 AirspeedVelocity imports QuantumSavory before it measures the steady-state
 suite.
 
-Run candidate variants serially. Keep the first variant as the unchanged
-baseline, use the same resolved Manifest for all variants, and report both raw
-TSV and the generated median/IQR summary.
+Run candidate variants serially. Keep the first variant as the default
+unchanged baseline, and use `QS_PRECOMPILE_BASELINES` when a cumulative stage
+needs the preceding stage as its baseline. Use
+`QS_PRECOMPILE_EXTRA_SCENARIOS` for candidate-specific tasks. Keep one resolved
+Manifest for all variants, and report both raw TSV and the generated median/IQR
+summary.

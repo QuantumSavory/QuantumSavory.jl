@@ -11,6 +11,11 @@ usage() {
 [[ $# -ge 3 ]] || usage
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+harness_root=$(cd -- "$script_dir/../.." && pwd -P)
+harness_commit=$(git -C "$harness_root" rev-parse HEAD 2>/dev/null || echo unavailable)
+harness_run_sha256=$(sha256sum "$script_dir/run.sh" | awk '{print $1}')
+harness_scenarios_sha256=$(sha256sum "$script_dir/scenarios.jl" | awk '{print $1}')
+harness_summarize_sha256=$(sha256sum "$script_dir/summarize.jl" | awk '{print $1}')
 output_dir=$1
 shift
 mkdir -p -- "$output_dir"
@@ -101,6 +106,10 @@ for specification in "$@"; do
     checkout=${specification#*=}
     [[ -n $label && $label != *$'\t'* && $label != *$'\n'* ]] || {
         echo "variant labels must be nonempty and must not contain tabs or newlines" >&2
+        exit 2
+    }
+    [[ -n $checkout && $checkout != *$'\t'* && $checkout != *$'\n'* ]] || {
+        echo "variant checkouts must be nonempty and must not contain tabs or newlines" >&2
         exit 2
     }
     [[ -f "$checkout/Project.toml" && -d "$checkout/src" ]] || {
@@ -219,6 +228,7 @@ export MKL_NUM_THREADS=1
 export VECLIB_MAXIMUM_THREADS=1
 export LC_ALL=C
 unset QS_PRECOMPILE_TRACE
+unset JULIA_PKG_OFFLINE
 julia_flags=(--startup-file=no --history-file=no --threads=1)
 
 echo "Preparing one consumer manifest and seed depot..." >&2
@@ -232,6 +242,7 @@ JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" -e '
 
 manifest_path="$environment_dir/Manifest.toml"
 [[ -f $manifest_path ]] || { echo "consumer manifest was not created" >&2; exit 1; }
+resolved_manifest_sha256=$(sha256sum "$manifest_path" | awk '{print $1}')
 manifest_checkout=$(awk '
     $0 == "[[deps.QuantumSavory]]" { in_package = 1; next }
     in_package && /^\[\[deps\./ { in_package = 0 }
@@ -258,6 +269,7 @@ grep -q 'path = "__QUANTUMSAVORY_CHECKOUT__"' "$consumer_manifest_path" || {
     echo "failed to replace the temporary QuantumSavory path in the copied Manifest" >&2
     exit 1
 }
+normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $1}')
 
 {
     echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -283,7 +295,12 @@ grep -q 'path = "__QUANTUMSAVORY_CHECKOUT__"' "$consumer_manifest_path" || {
     echo "scenarios=$scenario_list"
     echo "extra_scenarios=$extra_scenario_list"
     echo "candidate_baselines=$baseline_map_list"
-    echo "manifest_sha256=$(sha256sum "$manifest_path" | awk '{print $1}')"
+    echo "manifest_sha256=$normalized_manifest_sha256"
+    echo "resolved_manifest_sha256=$resolved_manifest_sha256"
+    echo "harness_commit=$harness_commit"
+    echo "harness_run_sha256=$harness_run_sha256"
+    echo "harness_scenarios_sha256=$harness_scenarios_sha256"
+    echo "harness_summarize_sha256=$harness_summarize_sha256"
     for index in "${!labels[@]}"; do
         echo "variant.${labels[$index]}.checkout=${checkouts[$index]}"
         echo "variant.${labels[$index]}.commit=${commits[$index]}"

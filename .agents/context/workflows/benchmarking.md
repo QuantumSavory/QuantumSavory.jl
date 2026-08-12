@@ -44,8 +44,10 @@ The default scenarios are the documented Bell measurement and a deterministic
 one-round `EntanglerProt` simulation. Scenario functions include
 self-consistency assertions. Select repetitions and scenarios with
 `QS_PRECOMPILE_BUILDS`, `QS_PRECOMPILE_SAMPLES`, and
-`QS_PRECOMPILE_SCENARIOS`; see `benchmark/precompile/README.md` for the command
-and output files.
+`QS_PRECOMPILE_SCENARIOS`. Use `QS_PRECOMPILE_EXTRA_SCENARIOS` for
+candidate-specific tasks and `QS_PRECOMPILE_BASELINES` for stage-specific
+baselines. See `benchmark/precompile/README.md` for the command and output
+files.
 
 The PR-only cold-start workflow compares the exact pull-request base and head,
 uploads raw results, and writes medians and interquartile ranges to the job
