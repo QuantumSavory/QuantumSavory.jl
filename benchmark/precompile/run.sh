@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
     echo "usage: $0 OUTPUT_DIR LABEL=CHECKOUT [LABEL=CHECKOUT ...]" >&2
-    echo "environment: QS_PRECOMPILE_BUILDS, QS_PRECOMPILE_SAMPLES, QS_PRECOMPILE_SCENARIOS, QS_PRECOMPILE_EXTRA_SCENARIOS" >&2
+    echo "environment: QS_PRECOMPILE_BUILDS, QS_PRECOMPILE_SAMPLES, QS_PRECOMPILE_SCENARIOS, QS_PRECOMPILE_EXTRA_SCENARIOS, QS_PRECOMPILE_BASELINES" >&2
     exit 2
 }
 
@@ -34,6 +34,7 @@ builds=${QS_PRECOMPILE_BUILDS:-1}
 samples=${QS_PRECOMPILE_SAMPLES:-2}
 scenario_list=${QS_PRECOMPILE_SCENARIOS:-bell,entangler}
 extra_scenario_list=${QS_PRECOMPILE_EXTRA_SCENARIOS:-}
+baseline_map_list=${QS_PRECOMPILE_BASELINES:-}
 julia=${JULIA:-julia}
 expected_julia='julia version 1.12.6'
 
@@ -45,6 +46,26 @@ if [[ $julia_version != "$expected_julia" && ${QS_PRECOMPILE_ALLOW_JULIA_MISMATC
     echo "cold-start comparisons require $expected_julia (found $julia_version)" >&2
     echo "set QS_PRECOMPILE_ALLOW_JULIA_MISMATCH=1 only for a non-reportable smoke run" >&2
     exit 2
+fi
+
+baseline_candidates=()
+baseline_labels=()
+if [[ -n $baseline_map_list ]]; then
+    IFS=',' read -r -a baseline_specifications <<< "$baseline_map_list"
+    for specification in "${baseline_specifications[@]}"; do
+        [[ $specification == *=* ]] || {
+            echo "QS_PRECOMPILE_BASELINES entries must have CANDIDATE=BASELINE form" >&2
+            exit 2
+        }
+        baseline_candidate=${specification%%=*}
+        baseline_label=${specification#*=}
+        [[ -n $baseline_candidate && -n $baseline_label ]] || {
+            echo "invalid baseline entry: $specification" >&2
+            exit 2
+        }
+        baseline_candidates+=("$baseline_candidate")
+        baseline_labels+=("$baseline_label")
+    done
 fi
 [[ $(uname -s) == Linux ]] || {
     echo "the cold-start harness currently requires GNU/Linux" >&2
@@ -138,6 +159,39 @@ for extra_label in "${extra_scenario_labels[@]}"; do
         exit 2
     }
 done
+for mapping_index in "${!baseline_candidates[@]}"; do
+    baseline_candidate=${baseline_candidates[$mapping_index]}
+    baseline_label=${baseline_labels[$mapping_index]}
+    candidate_known=false
+    baseline_known=false
+    for label in "${labels[@]}"; do
+        [[ $label == "$baseline_candidate" ]] && candidate_known=true
+        [[ $label == "$baseline_label" ]] && baseline_known=true
+    done
+    $candidate_known || {
+        echo "baseline map refers to an unknown candidate label: $baseline_candidate" >&2
+        exit 2
+    }
+    $baseline_known || {
+        echo "baseline map refers to an unknown baseline label: $baseline_label" >&2
+        exit 2
+    }
+    [[ $baseline_candidate != "${labels[0]}" ]] || {
+        echo "the first variant cannot be a mapped candidate: $baseline_candidate" >&2
+        exit 2
+    }
+    [[ $baseline_candidate != "$baseline_label" ]] || {
+        echo "a candidate cannot be its own baseline: $baseline_candidate" >&2
+        exit 2
+    }
+    for previous_index in "${!baseline_candidates[@]}"; do
+        [[ $previous_index -ge $mapping_index ]] && break
+        [[ ${baseline_candidates[$previous_index]} != "$baseline_candidate" ]] || {
+            echo "duplicate baseline map for candidate: $baseline_candidate" >&2
+            exit 2
+        }
+    done
+done
 
 temporary_root=$(mktemp -d "${TMPDIR:-/tmp}/quantumsavory-precompile.XXXXXX")
 cleanup() {
@@ -228,6 +282,7 @@ grep -q 'path = "__QUANTUMSAVORY_CHECKOUT__"' "$consumer_manifest_path" || {
     echo "discarded_warmups_per_build_and_scenario=1"
     echo "scenarios=$scenario_list"
     echo "extra_scenarios=$extra_scenario_list"
+    echo "candidate_baselines=$baseline_map_list"
     echo "manifest_sha256=$(sha256sum "$manifest_path" | awk '{print $1}')"
     for index in "${!labels[@]}"; do
         echo "variant.${labels[$index]}.checkout=${checkouts[$index]}"
@@ -241,6 +296,17 @@ export JULIA_PKG_OFFLINE=true
 for build in $(seq 1 "$builds"); do
     for candidate_index in $(seq 1 $((${#labels[@]} - 1))); do
         comparison=${labels[$candidate_index]}
+        baseline_index=0
+        for mapping_index in "${!baseline_candidates[@]}"; do
+            [[ ${baseline_candidates[$mapping_index]} == "$comparison" ]] || continue
+            for label_index in "${!labels[@]}"; do
+                if [[ ${labels[$label_index]} == "${baseline_labels[$mapping_index]}" ]]; then
+                    baseline_index=$label_index
+                    break
+                fi
+            done
+            break
+        done
         variant_scenarios=("${scenarios[@]}")
         for extra_index in "${!extra_scenarios[@]}"; do
             if [[ ${extra_scenario_labels[$extra_index]} == "$comparison" ]]; then
@@ -253,14 +319,14 @@ for build in $(seq 1 "$builds"); do
             fi
         done
 
-        for index in 0 "$candidate_index"; do
+        for index in "$baseline_index" "$candidate_index"; do
             verify_checkout "$index"
             label=${labels[$index]}
             checkout=${checkouts[$index]}
             commit=${commits[$index]}
             ln -sfn -- "$checkout" "$checkout_link"
 
-            if [[ $index -eq 0 ]]; then
+            if [[ $index -eq $baseline_index ]]; then
                 role=baseline
             else
                 role=candidate

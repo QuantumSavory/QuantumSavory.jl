@@ -13,7 +13,7 @@ benchmark/precompile/run.sh results \
     head=/path/to/head/QuantumSavory.jl
 ```
 
-The first variant is the baseline. The variants must have identical
+The first variant is the default baseline. The variants must have identical
 `Project.toml` files. The harness resolves one consumer Manifest and points it
 at each checkout in turn. It creates one seed depot with dependency caches and
 a new writable depot for every QuantumSavory package-cache build. Package
@@ -40,6 +40,20 @@ benchmark/precompile/run.sh results \
     base=/path/to/base metadata=/path/to/metadata channel=/path/to/channel
 ```
 
+By default, the first variant is the baseline for every candidate. Use
+`QS_PRECOMPILE_BASELINES` when candidates need different baselines, such as a
+cumulative experiment in which every stage is compared with the preceding
+stage:
+
+```sh
+QS_PRECOMPILE_BASELINES=stage2=stage1,stage3=stage2 \
+benchmark/precompile/run.sh results \
+    base=/path/to/base \
+    stage1=/path/to/stage1 \
+    stage2=/path/to/stage2 \
+    stage3=/path/to/stage3
+```
+
 Defaults are one cache build, two recorded samples, and the `bell` and
 `entangler` scenarios. Each scenario also gets one discarded filesystem
 warm-up per build. The harness fixes Julia, package-precompile, BLAS, and OpenMP
@@ -49,7 +63,7 @@ thread counts to one; disables startup and history files; and uses
 only for a non-reportable smoke run by setting
 `QS_PRECOMPILE_ALLOW_JULIA_MISMATCH=1`.
 
-Each candidate gets a separate comparison. For every build number, its
+Each candidate gets a separate comparison. For every build number, its mapped
 baseline cache and samples run immediately before the candidate cache and
 samples. Thus, material-change counts pair nearby, independent cache builds.
 
