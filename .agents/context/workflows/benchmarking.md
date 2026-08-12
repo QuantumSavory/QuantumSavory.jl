@@ -38,7 +38,8 @@ standalone consumer environment, one resolved Manifest, a dependency-only seed
 depot, fresh writable depots for QuantumSavory cache builds, and fresh Julia
 processes for recorded samples. It fixes compilation and numerical-library
 thread counts to one and disables startup files, history files, package
-auto-precompilation. Package resolution runs in offline mode during measurement.
+auto-precompilation. Dependency setup may use the network; cache builds and
+samples use package offline mode after setup.
 
 The default scenarios are the documented Bell measurement and a deterministic
 one-round `EntanglerProt` simulation. Scenario functions include
@@ -48,6 +49,16 @@ self-consistency assertions. Select repetitions and scenarios with
 candidate-specific tasks and `QS_PRECOMPILE_BASELINES` for stage-specific
 baselines. See `benchmark/precompile/README.md` for the command and output
 files.
+
+Use clean committed variants, a new output directory, five independent cache
+builds, and four recorded fresh processes per scenario for reportable candidate
+measurements. Run timed measurements serially. Retain a candidate only if its
+motivating total latency improves by at least `max(50 ms, 5%)` in at least four
+builds, neither headline scenario regresses by that amount, and there is no
+reproducible correctness, recompilation, or warm-runtime regression. Run trace
+instrumentation only in separate diagnostic processes. Report the metadata,
+raw TSV, per-build results, aggregate medians and interquartile ranges, and all
+accepted and rejected candidates.
 
 The PR-only cold-start workflow compares the exact pull-request base and head,
 uploads raw results, and writes medians and interquartile ranges to the job

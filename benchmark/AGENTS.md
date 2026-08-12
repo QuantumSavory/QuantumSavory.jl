@@ -23,5 +23,14 @@ Run candidate variants serially. Keep the first variant as the default
 unchanged baseline, and use `QS_PRECOMPILE_BASELINES` when a cumulative stage
 needs the preceding stage as its baseline. Use
 `QS_PRECOMPILE_EXTRA_SCENARIOS` for candidate-specific tasks. Keep one resolved
-Manifest for all variants, and report both raw TSV and the generated median/IQR
-summary.
+Manifest for all variants. Report metadata, raw TSV, per-build results, and the
+generated median/IQR summary.
+
+Use clean committed checkouts and a new output directory for reportable runs.
+Use five independent cache builds with four recorded fresh processes per
+scenario. Retain a candidate only when its motivating total latency improves by
+at least `max(50 ms, 5%)` in at least four builds, neither the Bell nor
+Entangler headline scenario regresses by that amount, and no reproducible
+correctness, recompilation, or warm-runtime regression occurs. Do not run other
+timed Julia measurements concurrently, and enable trace instrumentation only
+in separate diagnostic processes.
