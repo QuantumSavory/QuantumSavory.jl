@@ -62,10 +62,38 @@ validate_consumer_project() {
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 harness_root=$(cd -- "$script_dir/../.." && pwd -P)
-harness_commit=$(git -C "$harness_root" rev-parse HEAD 2>/dev/null || echo unavailable)
+if ! harness_commit=$(git -C "$harness_root" rev-parse HEAD 2>/dev/null); then
+    echo "the cold-start harness must run from a committed Git checkout" >&2
+    exit 1
+fi
 harness_run_sha256=$(sha256sum "$script_dir/run.sh" | awk '{print $1}')
 harness_scenarios_sha256=$(sha256sum "$script_dir/scenarios.jl" | awk '{print $1}')
 harness_summarize_sha256=$(sha256sum "$script_dir/summarize.jl" | awk '{print $1}')
+
+verify_harness_checkout() {
+    local current_commit relative_path current_sha256 committed_sha256
+    current_commit=$(git -C "$harness_root" rev-parse HEAD 2>/dev/null) || {
+        echo "failed to read the cold-start harness commit" >&2
+        exit 1
+    }
+    [[ $current_commit == "$harness_commit" ]] || {
+        echo "cold-start harness HEAD changed during measurement" >&2
+        exit 1
+    }
+    for relative_path in \
+        benchmark/precompile/run.sh \
+        benchmark/precompile/scenarios.jl \
+        benchmark/precompile/summarize.jl; do
+        current_sha256=$(sha256sum "$harness_root/$relative_path" | awk '{print $1}')
+        committed_sha256=$(git -C "$harness_root" show "$harness_commit:$relative_path" | sha256sum | awk '{print $1}')
+        [[ $current_sha256 == "$committed_sha256" ]] || {
+            echo "cold-start harness file differs from $harness_commit: $relative_path" >&2
+            exit 1
+        }
+    done
+}
+
+verify_harness_checkout
 output_dir=$1
 shift
 mkdir -p -- "$output_dir"
@@ -244,6 +272,13 @@ for specification in "$@"; do
     checkouts+=("$checkout")
 done
 
+for checkout in "${checkouts[@]}"; do
+    if [[ $output_dir == "$checkout" || $output_dir == "$checkout/"* ]]; then
+        echo "output directory must be outside every measured checkout: $output_dir" >&2
+        exit 2
+    fi
+done
+
 commits=()
 for index in "${!labels[@]}"; do
     checkout=${checkouts[$index]}
@@ -377,7 +412,24 @@ trap cleanup EXIT
 environment_dir="$temporary_root/environment"
 seed_depot="$temporary_root/seed-depot"
 checkout_link="$temporary_root/checkout"
-mkdir -p -- "$environment_dir" "$seed_depot"
+harness_snapshot_dir="$temporary_root/harness"
+scenario_script="$harness_snapshot_dir/scenarios.jl"
+summarize_script="$harness_snapshot_dir/summarize.jl"
+verify_harness_snapshots() {
+    [[ $(sha256sum "$scenario_script" | awk '{print $1}') == "$harness_scenarios_sha256" ]] || {
+        echo "recorded scenario harness snapshot changed during measurement" >&2
+        exit 1
+    }
+    [[ $(sha256sum "$summarize_script" | awk '{print $1}') == "$harness_summarize_sha256" ]] || {
+        echo "summary harness snapshot changed during measurement" >&2
+        exit 1
+    }
+}
+mkdir -p -- "$environment_dir" "$seed_depot" "$harness_snapshot_dir"
+cp -- "$script_dir/scenarios.jl" "$scenario_script"
+cp -- "$script_dir/summarize.jl" "$summarize_script"
+chmod 0444 "$scenario_script" "$summarize_script"
+verify_harness_snapshots
 ln -s -- "${checkouts[0]}" "$checkout_link"
 [[ $checkout_link != *$'\t'* && $checkout_link != *$'\n'* && $checkout_link != *$'\r'* && $checkout_link != *'"'* && $checkout_link != *'\'* ]] || {
     echo "temporary checkout link cannot be represented safely in the consumer Manifest: $checkout_link" >&2
@@ -634,11 +686,11 @@ for build in $(seq 1 "$builds"); do
                     exit 2
                 }
                 echo "Discarding filesystem warm-up for $comparison: $label/$scenario build $build..." >&2
-                JULIA_DEPOT_PATH="$run_depot:$seed_depot" "$julia" "${julia_flags[@]}" --project="$environment_dir" "$script_dir/scenarios.jl" "$scenario" >/dev/null
+                JULIA_DEPOT_PATH="$run_depot:$seed_depot" "$julia" "${julia_flags[@]}" --project="$environment_dir" "$scenario_script" "$scenario" >/dev/null
 
                 for sample in $(seq 1 "$samples"); do
                     echo "Sampling $comparison: $label/$scenario build $build ($sample/$samples)..." >&2
-                    scenario_output=$(JULIA_DEPOT_PATH="$run_depot:$seed_depot" "$julia" "${julia_flags[@]}" --project="$environment_dir" "$script_dir/scenarios.jl" "$scenario")
+                    scenario_output=$(JULIA_DEPOT_PATH="$run_depot:$seed_depot" "$julia" "${julia_flags[@]}" --project="$environment_dir" "$scenario_script" "$scenario")
                     result=$(printf '%s\n' "$scenario_output" | awk -F '\t' '$1 == "RESULT" { print; count += 1 } END { if (count != 1) exit 1 }') || {
                         echo "scenario did not emit exactly one RESULT row: $label/$scenario" >&2
                         exit 1
@@ -662,7 +714,9 @@ done
 for index in "${!labels[@]}"; do
     verify_checkout "$index"
 done
+verify_harness_checkout
+verify_harness_snapshots
 
-JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" "$script_dir/summarize.jl" \
+JULIA_DEPOT_PATH="$seed_depot" "$julia" "${julia_flags[@]}" "$summarize_script" \
     "$raw_path" "$summary_path" "$build_summary_path" "$markdown_path"
 echo "Wrote $raw_path, $summary_path, $build_summary_path, and $markdown_path" >&2

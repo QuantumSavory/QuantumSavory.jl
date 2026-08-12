@@ -52,9 +52,10 @@ baselines. When an experiment spans separate harness invocations, use
 the first invocation's exact normalized consumer environment. See
 `benchmark/precompile/README.md` for the command and output files.
 
-Use clean committed variants, a new output directory, five independent cache
-builds, and four recorded fresh processes per scenario for reportable candidate
-measurements. Run timed measurements serially. The harness counterbalances
+Use clean committed variants, a new output directory outside every measured
+checkout, five independent cache builds, and four recorded fresh processes per
+scenario for reportable candidate measurements. Run timed measurements
+serially. The harness counterbalances
 drift by reversing comparison order on even builds and alternating whether the
 mapped baseline or candidate runs first; keep this schedule and its metadata
 when extending the harness. Retain a candidate only if its

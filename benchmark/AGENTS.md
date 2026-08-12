@@ -32,7 +32,8 @@ builds, and pair order alternates by build plus the candidate's original
 argument index. Report the recorded environment mode, schedule metadata, raw
 TSV, per-build results, and the generated median/IQR summary.
 
-Use clean committed checkouts and a new output directory for reportable runs.
+Use clean committed checkouts and a new output directory outside every
+measured checkout for reportable runs.
 Use five independent cache builds with four recorded fresh processes per
 scenario. Retain a candidate only when its motivating total latency improves by
 at least `max(50 ms, 5%)` in at least four builds, neither the Bell nor
