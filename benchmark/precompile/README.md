@@ -89,6 +89,11 @@ used when it is larger. Performance differences are descriptive; scenario
 assertion, package-cache, dependency-control, or harness failures return a
 nonzero status.
 
+The total-latency timer starts immediately before `using QuantumSavory` and
+stops after the first scenario call. It therefore includes the small amount of
+harness setup between the separately reported import and first-call timers.
+The `total_metric` metadata field records this definition.
+
 The copied Manifest uses `__QUANTUMSAVORY_CHECKOUT__` as a path placeholder;
 replace it with the checkout used for reproduction. The `manifest_sha256`
 metadata field hashes this normalized copy. The metadata also records the

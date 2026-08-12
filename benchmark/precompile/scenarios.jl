@@ -1,4 +1,5 @@
-const import_started_ns = time_ns()
+const total_started_ns = time_ns()
+const import_started_ns = total_started_ns
 using QuantumSavory
 const import_seconds = (time_ns() - import_started_ns) / 1.0e9
 
@@ -197,7 +198,7 @@ elseif isempty(trace_mode)
 else
     error("QS_PRECOMPILE_TRACE must be empty, compile, or dispatch")
 end
-total_seconds = import_seconds + first_result.time
+total_seconds = (time_ns() - total_started_ns) / 1.0e9
 warm_result = @timed scenario()
 
 println(join((

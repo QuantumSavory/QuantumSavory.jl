@@ -326,6 +326,7 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
     echo "builds=$builds"
     echo "recorded_samples_per_build=$samples"
     echo "discarded_warmups_per_build_and_scenario=1"
+    echo "total_metric=wall_import_start_to_first_task_end"
     echo "scenarios=$scenario_list"
     echo "extra_scenarios=$extra_scenario_list"
     echo "candidate_baselines=$baseline_map_list"

@@ -146,8 +146,10 @@ function validate_rows(rows, design)
         import_time = number(row, "import_seconds")
         first_time = number(row, "first_seconds")
         total_time = number(row, "total_seconds")
-        isapprox(total_time, import_time + first_time; atol=1e-12, rtol=1e-12) ||
-            error("total_seconds does not equal import_seconds plus first_seconds at data row $row_number")
+        minimum_total = import_time + first_time
+        total_tolerance = 1e-9 * max(1.0, total_time, minimum_total)
+        total_time + total_tolerance >= minimum_total ||
+            error("total_seconds is shorter than import_seconds plus first_seconds at data row $row_number")
         tolerance = 1e-6
         number(row, "first_compile_seconds") <= first_time + tolerance ||
             error("first compile time exceeds first task time at data row $row_number")
