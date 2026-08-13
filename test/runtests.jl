@@ -57,6 +57,8 @@ if jet_only
     # (at least not in the presence of menaces like ResumableFunctions.jl)
     include(JET_TEST_PATH)
 else
+    using Pkg
+    Pkg.precompile()
     using QuantumSavory
     runtests(QuantumSavory, args; testsuite, test_worker)
 end

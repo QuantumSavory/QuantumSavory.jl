@@ -14,6 +14,7 @@ using QuantumSavory: Tag, get_time_tracker
 using QuantumSavory.ProtocolZoo: AbstractProtocol,
     QDatagram, QTCPPairBegin, QTCPPairEnd,
     LinkLevelReplyAtSource, LinkLevelReplyAtHop, Flow
+import QuantumSavory.ProtocolZoo: protocol_log_context
 using QuantumSavory.ProtocolZoo.QTCP: QDatagramSuccess
 import ConcurrentSim: Process
 using ConcurrentSim: @yield, now, @process, timeout
@@ -39,6 +40,12 @@ end
 
 CustomEndNodeController(net::RegisterNet, node::Int; kwargs...) =
     CustomEndNodeController(;sim=get_time_tracker(net), net, node, kwargs...)
+
+protocol_log_context(prot::CustomEndNodeController) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:CustomEndNodeController,
+    nodes=(prot.node,),
+)
 
 # --- CUSTOMIZATION POINT 2 ---
 # This helper is not part of the stock EndNodeController.
@@ -83,7 +90,16 @@ end
                 # window or per-flow delivery count for growth.
                 windows[uuid]                = initial_window
                 delivered_since_growth[uuid] = 0
-                @debug "[$(now(sim))]: CustomEndNodeController flow $(uuid) started with window=$(initial_window)"
+                @debug(
+                    "Started a flow",
+                    _group=LOG_GROUPS.protocol,
+                    event=:flow_started,
+                    protocol_log_context(prot)...,
+                    flow_id=uuid,
+                    src_node=node,
+                    dst_node=dst,
+                    window=initial_window,
+                )
             end
 
             # Check for QDatagramSuccess (ACK from destination)
@@ -108,6 +124,16 @@ end
                     start_time
                 )
                 put!(net[node], pair_begin)
+                @debug(
+                    "Acknowledged a datagram",
+                    _group=LOG_GROUPS.protocol,
+                    event=:datagram_acknowledged,
+                    protocol_log_context(prot)...,
+                    flow_id=flow_uuid,
+                    sequence_number=seq_num,
+                    src_node=success.src,
+                    dst_node=node,
+                )
 
                 # --- CUSTOMIZATION POINT 4 ---
                 # This window-growth policy is the main behavioral change relative
@@ -116,7 +142,14 @@ end
                 if delivered_since_growth[flow_uuid] >= growth_interval && windows[flow_uuid] < max_window
                     windows[flow_uuid] += 1
                     delivered_since_growth[flow_uuid] = 0
-                    @debug "[$(now(sim))]: flow $(flow_uuid) window increased to $(windows[flow_uuid])"
+                    @debug(
+                        "Increased a flow window",
+                        _group=LOG_GROUPS.protocol,
+                        event=:flow_window_increased,
+                        protocol_log_context(prot)...,
+                        flow_id=flow_uuid,
+                        window=windows[flow_uuid],
+                    )
                 end
 
                 # Clean up completed flows
@@ -131,7 +164,13 @@ end
                     # controller maintains dynamic per-flow window state.
                     delete!(windows, flow_uuid)
                     delete!(delivered_since_growth, flow_uuid)
-                    @debug "[$(now(sim))]: flow $(flow_uuid) completed"
+                    @debug(
+                        "Completed a flow",
+                        _group=LOG_GROUPS.protocol,
+                        event=:flow_completed,
+                        protocol_log_context(prot)...,
+                        flow_id=flow_uuid,
+                    )
                 end
             end
 
@@ -156,6 +195,16 @@ end
                     start_time
                 )
                 put!(net[node], pair_end)
+                @debug(
+                    "Delivered a datagram",
+                    _group=LOG_GROUPS.protocol,
+                    event=:datagram_delivered,
+                    protocol_log_context(prot)...,
+                    flow_id=flow_uuid,
+                    sequence_number=seq_num,
+                    src_node=flow_src,
+                    dst_node=node,
+                )
             end
         end
 

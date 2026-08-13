@@ -32,6 +32,14 @@ using PrecompileTools
         apply!([net[i,2], net[i,3]], CNOT, time=3.0)
         net[i].staterefs[2].state[] isa MixedDestabilizer
         nsubsystems(net[i].staterefs[2]) == 2
+        i = 3
+        initialize!(net[i,2], time=1.0)
+        nsubsystems(net[i].staterefs[2]) == 1
+        initialize!(net[i,3],X1, time=2.0)
+        nsubsystems(net[i].staterefs[2]) == 1
+        apply!([net[i,2], net[i,3]], CNOT, time=3.0)
+        net[i].staterefs[2].state[] isa MCKet
+        nsubsystems(net[i].staterefs[2]) == 2
 
         # Symbolics and state expression
         state = 1im*X2⊗Z1+2*Y1⊗(Z2+X2)+StabilizerState("XZ YY")

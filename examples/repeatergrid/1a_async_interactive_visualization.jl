@@ -1,7 +1,7 @@
 using GLMakie
 # TODO significant code duplication with the other examples
 
-include("setup.jl")
+include(joinpath(@__DIR__, "setup.jl"))
 
 sim, net, graph, consumer, params... = prepare_simulation()
 

@@ -9,6 +9,8 @@ to inspect.
 
 QuantumSavory provides visualization tools built on top of
 [Makie.jl](https://docs.makie.org/stable/).
+For network construction, graph access, and indexing, read
+[Register Networks](@ref register-networks).
 
 The plotting functions generally return a tuple of (subfigure, axis, plot, observable).
 The observable can be used to issue a `notify` call that updates the plot with the current state of the network without replotting from scratch.
@@ -64,12 +66,12 @@ subfig, ax, map = generate_map()
 fig, ax, plt, obs = registernetplot_axis(ax, net, registercoords=coords, state_linecolor = :black)
 fig
 ```
-In general, if you have a custom background axis, you can use it as the axis parameter in `registerplot_axis`.
+In general, if you have a custom background axis, you can use it as the axis parameter in `registernetplot_axis`.
 ## State and tag metadata in interactive visualizations
 
 When working with interactive plots, you can also hover over different parts of the visualization to see the registers, what is stored in them, and potentially whether they contain any [tagged metadata in use by simulated networking protocols](@ref tagging-and-querying).
 
-Here is what the data panels look like. (`showmetada` is used to force-show the panel, but when working interactively you simply need to hover with the cursor)
+Here is what the data panels look like. (`showmetadata` is used to force-show the panel, but when working interactively you simply need to hover with the cursor)
 
 ```@example vis
 network = RegisterNet([Register(2),Register(3),Register(2),Register(5)]) # hide

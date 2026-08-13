@@ -3,6 +3,7 @@ module Switches
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, AbstractProtocol
+import QuantumSavory.ProtocolZoo: protocol_catalog_metadata
 using Graphs: nv, edges, complete_graph, neighbors, adjacency_matrix
 using GraphsMatching: maximum_weight_matching
 using Combinatorics: combinations
@@ -157,7 +158,12 @@ $TYPEDFIELDS
     rounds::Int = -1
     """the algorithm to use for memory slot assignment, defaulting to `promponas_bruteforce_choice`"""
     assignment_algorithm::Function = promponas_bruteforce_choice
-    _backlog::SymMatrix{Matrix{Int}}
+    """internal backlog bookkeeping; the storage type is not part of the public API and may change in future versions"""
+    _backlog::SymMatrix{Matrix{Int}} = SymMatrix(zeros(
+        Int,
+        length(clientnodes),
+        length(clientnodes),
+    ))
     function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
         all(in(neighbors(net, switchnode)), clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be directly connected to the `switchnode`!"))
@@ -168,6 +174,12 @@ $TYPEDFIELDS
         new(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
     end
 end
+
+protocol_catalog_metadata(::Type{SimpleSwitchDiscreteProt}) = (
+    attachment = :node,
+    attachment_fields = (node=:switchnode,),
+    required_fields = (:clientnodes, :success_probs),
+)
 
 function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs; kwrags...)
     n = length(clientnodes)
@@ -200,11 +212,26 @@ SimpleSwitchDiscreteProt(net, switchnode, clientnodes, success_probs; kwrags...)
         # pick a set of client nodes to which to assign local memory slots
         assignment = prot.assignment_algorithm(m,n,_backlog,prot.success_probs)
         if isnothing(assignment)
-            @debug "Switch $switchnode found no useful memory slot assignments"
+            @debug(
+                "Memory assignment unavailable",
+                _group=LOG_GROUPS.protocol,
+                event=:memory_assignment_unavailable,
+                protocol_log_context(prot)...,
+                round=round,
+            )
             @yield timeout(prot.sim, prot.ticktock) # TODO this is a pretty arbitrary value # TODO timeouts should work on prot and on net
             continue
         end
-        @debug "Switch $switchnode assigns memory slots to clients $([prot.clientnodes[a] for a in assignment])"
+        assigned_clients = Tuple(prot.clientnodes[a] for a in assignment)
+        @debug(
+            "Assigned switch memory slots",
+            _group=LOG_GROUPS.protocol,
+            event=:memory_slots_assigned,
+            protocol_log_context(prot)...,
+            round=round,
+            slots=Tuple(eachindex(assignment)),
+            client_nodes=assigned_clients,
+        )
 
         # run entangler
         _switch_entangler(prot, assignment)
@@ -243,9 +270,18 @@ QuantumSavory.get_time_tracker(deleter::_SwitchSynchronizedDelete) = get_time_tr
             switchslot = res.slot.idx
             clientnode = res.tag[2]
             clientslot = res.tag[3]
-            @debug "Switch $(prot.switchnode).$(switchslot) deletes unused entanglement with client $(clientnode).$(clientslot)"
+            @debug(
+                "Deleted unused entanglement",
+                _group=LOG_GROUPS.protocol,
+                event=:unused_entanglement_deleted,
+                protocol_log_context(deleter)...,
+                switch_slot=switchslot,
+                dst_node=clientnode,
+                client_slot=clientslot,
+                pair_id=res.tag[4],
+            )
             clientres = query(prot.net[clientnode][clientslot], EntanglementCounterpart, prot.switchnode, switchslot, res.tag[4])
-            # We expect `clientres` to not be nothing because the client should not have destroyed entanglement 
+            # We expect `clientres` to not be nothing because the client should not have destroyed entanglement
             # that has been promised for use by the switch -- but just so we are a bit more resilient to misbehaving clients
             # let's guard against such an eventuality and double check that the client has not lost the qubit
             if isnothing(clientres)
@@ -303,13 +339,24 @@ function _switch_successful_entanglements_best_match(prot, reverseclientindex)
     successes = queryall(switch, EntanglementCounterpart, in(prot.clientnodes), ❓, ❓)
     entangled_clients = [r.tag[2] for r in successes]
     if isempty(entangled_clients)
-        @debug "Switch $(prot.switchnode) failed to entangle with any clients"
+        @debug(
+            "Failed to entangle with clients",
+            _group=LOG_GROUPS.protocol,
+            event=:client_entanglement_failed,
+            protocol_log_context(prot)...,
+        )
         return nothing
     end
     # get the maximum match for the actually connected nodes
     ne = length(entangled_clients)
     entangled_clients_revindex = [reverseclientindex[k] for k in entangled_clients]
-    @debug "Switch $(prot.switchnode) successfully entangled with clients $entangled_clients" # (indexed as $entangled_clients_revindex)"
+    @debug(
+        "Entangled switch clients",
+        _group=LOG_GROUPS.protocol,
+        event=:clients_entangled,
+        protocol_log_context(prot)...,
+        client_nodes=Tuple(entangled_clients),
+    )
 
     (;weight, mate) = match_entangled_pattern(prot._backlog, entangled_clients_revindex, complete_graph(ne), zeros(Int, ne, ne))
 
@@ -338,7 +385,14 @@ perform swaps to connect them and decrement the backlog counter.
 end
 
 function _switch_run_swaps(prot, match)
-    @debug "Switch $(prot.switchnode) performs swaps for client pairs $([(prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match])"
+    client_pairs = Tuple((prot.clientnodes[i], prot.clientnodes[j]) for (i,j) in match)
+    @debug(
+        "Scheduled client swaps",
+        _group=LOG_GROUPS.protocol,
+        event=:swaps_scheduled,
+        protocol_log_context(prot)...,
+        client_nodes=client_pairs,
+    )
     for (i,j) in match
         @process _switch_run_accounted_swap(prot.sim, prot, i, j)
     end
@@ -354,7 +408,7 @@ Notify a switch that you request to be entangled with another node.
 
 $TYPEDFIELDS
 """
-@kwdef struct SwitchRequest
+@kwdef struct SwitchRequest <: AbstractTag
     "the id of the node making the request"
     requester::Int
     "the id of the remote node to which we want to be entangled"

@@ -1,6 +1,7 @@
 using Test
 using QuantumSavory
 using QuantumSavory.ProtocolZoo
+using Gabs
 
 @testset "show text/html" begin
 
@@ -39,5 +40,13 @@ show(out, MIME"text/html"(), QuantumSavory.stateof(reg1[1]))
 
 prot = EntanglerProt(get_time_tracker(net), net, 1, 2)
 show(out, MIME"text/html"(), prot)
+
+
+reg1 = Register([Qumode()], [GabsRepr(QuadPairBasis)])
+initialize!(reg1[1], CoherentState(0.2 - 0.5im))
+apply!(reg1[1], DisplaceOp(0.6 - 0.4im))
+html = sprint(show, MIME"text/html"(), QuantumSavory.stateof(reg1[1]))
+@test !occursin("does not support rich visualization", html)
+
 
 end

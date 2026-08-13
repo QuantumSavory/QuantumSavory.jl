@@ -68,17 +68,18 @@ function newstate(::Qubit,::QuantumOpticsRepr)
     copy(_l)
 end
 function newstate(::Qubit,::QuantumMCRepr)
-    copy(_l)
+    MCKet(copy(_l))
 end
 const _vac = copy(express(F0, QuantumOpticsRepr()))
 function newstate(::Qumode,::QuantumOpticsRepr)
     copy(_vac)
 end
 function newstate(::Qumode,::QuantumMCRepr)
-    copy(_vac)
+    MCKet(copy(_vac))
 end
 
 include("should_upstream.jl")
 include("express.jl")
+include("mcket.jl")
 include("uptotime.jl")
 include("noninstant.jl")

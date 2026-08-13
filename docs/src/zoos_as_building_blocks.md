@@ -51,6 +51,10 @@ swappers, trackers, consumers, and switch-style controllers.
 These are full discrete-event processes packaged as `AbstractProtocol`
 implementations. They compose through the metadata and messaging interfaces
 rather than by requiring direct knowledge of each other's internal state.
+The standard tag schemas used by these protocols are documented in
+[Standard Protocol Tags](@ref standard-protocol-tags), and are the main
+interoperability surface for user-written protocols that want to cooperate with
+the zoo.
 
 That is what makes them a practical building-block layer instead of a bag of
 isolated examples.
@@ -87,3 +91,5 @@ the user to define their own state, circuit, or protocol in the same style.
   circuit layer.
 - Read [Predefined Networking Protocols](API_ProtocolZoo.md) for the reusable
   protocol layer.
+- Read [Standard Protocol Tags](@ref standard-protocol-tags) for the shared
+  metadata interface used by the protocol layer.

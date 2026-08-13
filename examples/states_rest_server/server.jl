@@ -86,16 +86,15 @@ end
     ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
     ηᵗ = Base.get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
     N = Base.get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
-    Pᵈ = Base.get(queryparams(req), "Pd", "1e-8") |> x -> parse(Float64, x)
 
     try
         # Validate parameters
-        if !(0 ≤ ηᵇ ≤ 1) || !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0 || Pᵈ < 0
-            return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], N must be >0, Pd must be ≥0")
+        if !(0 ≤ ηᵇ ≤ 1) || !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0
+            return Dict("error" => "Invalid parameters: transmissivities must be in [0,1] and N must be >0")
         end
 
         # Create the state
-        state = GenqoMultiplexedCascadedBellPairW(ηᵇ, ηᵈ, ηᵗ, N, Pᵈ)
+        state = GenqoMultiplexedCascadedBellPairW(ηᵇ, ηᵈ, ηᵗ, N)
 
         ρ = express(state, QuantumOpticsRepr())
         density_matrix = Array(ρ.data)
@@ -106,8 +105,7 @@ end
                 "etab" => ηᵇ,
                 "etad" => ηᵈ,
                 "etat" => ηᵗ,
-                "N" => N,
-                "Pd" => Pᵈ
+                "N" => N
             ),
             "density_matrix" => Dict(
                 "real" => real.(density_matrix),
@@ -132,8 +130,7 @@ end
             "etab" => "Loss (transmissivity) in the Bell state measurement at the source, ∈[0,1]",
             "etad" => "Loss (transmissivity) in all of the detectors, ∈[0,1]",
             "etat" => "Outcoupling transmissivity for the bell-state modes, ∈[0,1]",
-            "N" => "Mean photon number per mode of the state (tradeoff for fidelity vs rate), >0",
-            "Pd" => "Excess noise (photons per qubit slot) in photon detectors, ≥0"
+            "N" => "Mean photon number per mode of the state (tradeoff for fidelity vs rate), >0"
         )
     )
 end
@@ -144,16 +141,15 @@ end
     ηᵈ = Base.get(queryparams(req), "etad", "1.0") |> x -> parse(Float64, x)
     ηᵗ = Base.get(queryparams(req), "etat", "1.0") |> x -> parse(Float64, x)
     N = Base.get(queryparams(req), "N", "0.1") |> x -> parse(Float64, x)
-    Pᵈ = Base.get(queryparams(req), "Pd", "1e-6") |> x -> parse(Float64, x)
 
     try
         # Validate parameters
-        if !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0 || Pᵈ < 0
-            return Dict("error" => "Invalid parameters: transmissivities must be in [0,1], N must be >0, Pd must be ≥0")
+        if !(0 ≤ ηᵈ ≤ 1) || !(0 ≤ ηᵗ ≤ 1) || N ≤ 0
+            return Dict("error" => "Invalid parameters: transmissivities must be in [0,1] and N must be >0")
         end
 
         # Create the state
-        state = GenqoUnheraldedSPDCBellPairW(ηᵈ, ηᵗ, N, Pᵈ)
+        state = GenqoUnheraldedSPDCBellPairW(ηᵈ, ηᵗ, N)
 
         ρ = express(state, QuantumOpticsRepr())
         density_matrix = Array(ρ.data)
@@ -163,8 +159,7 @@ end
             "parameters" => Dict(
                 "etad" => ηᵈ,
                 "etat" => ηᵗ,
-                "N" => N,
-                "Pd" => Pᵈ
+                "N" => N
             ),
             "density_matrix" => Dict(
                 "real" => real.(density_matrix),
@@ -188,8 +183,7 @@ end
         "description" => Dict(
             "etad" => "Loss (transmissivity) in all of the detectors, ∈[0,1]",
             "etat" => "Outcoupling transmissivity for the bell-state modes, ∈[0,1]",
-            "N" => "Mean photon number per mode of the state (tradeoff for fidelity vs rate), >0",
-            "Pd" => "Excess noise (photons per qubit slot) in photon detectors, ≥0"
+            "N" => "Mean photon number per mode of the state (tradeoff for fidelity vs rate), >0"
         )
     )
 end

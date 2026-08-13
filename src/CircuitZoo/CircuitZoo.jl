@@ -155,8 +155,7 @@ function (circuit::Purify2to1)(purifiedL,purifiedR,sacrificedL,sacrificedR)
     measb = project_traceout!(sacrificedR, basis)
     success = measa == measb
     if !success
-        traceout!(purifiedL)
-        traceout!(purifiedR)
+        traceout!(purifiedL, purifiedR)
     end
     success
 end
@@ -300,8 +299,7 @@ function (circuit::Purify3to1)(purifiedL, purifiedR, sacrificedL1, sacrificedL2,
     success2 = measa2 == measb2
 
     if !(success1 && success2)
-        traceout!(purifiedL)
-        traceout!(purifiedR)
+        traceout!(purifiedL, purifiedR)
     end
     (success1 && success2)
 end

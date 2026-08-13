@@ -1,5 +1,55 @@
 """
-A network of [`Register`](@ref)s with convenient graph API as well.
+    RegisterNet(graph::SimpleGraph, registers;
+        classical_delay=0, quantum_delay=0, name=nothing, names=String[])
+    RegisterNet(registers::Vector{Register};
+        classical_delay=0, quantum_delay=0, name=nothing, names=String[])
+
+Store one [`Register`](@ref) for each vertex of an undirected `SimpleGraph`.
+If `graph` is omitted, use a chain with one vertex per register.
+
+`RegisterNet` directly supports these read operations from Graphs.jl:
+`vertices`, `edges`, `neighbors`, `nv`, `ne`, and `adjacency_matrix`. It is not
+a subtype of `Graphs.AbstractGraph`, so other Graphs.jl functions are not part
+of this interface. Treat the topology as fixed after construction.
+
+Index a network to move from the network to a register or a register slot:
+
+```julia
+net[i]       # Register at vertex i
+net[i][j]    # RegRef for slot j of that register
+net[i, j]    # the same RegRef
+net[:]       # all registers
+net[:, j]    # slot j from every register
+```
+
+The `name` keyword gives the network a display name. `names` gives display
+names to its registers. These names do not replace the integer graph vertex
+identifiers. A label can instead be stored as vertex metadata:
+
+```julia
+net[1, :label] = "left endpoint"
+```
+
+Vertex metadata uses `net[i, :key]`. Undirected edge metadata uses
+`net[(i, j), :key]`, and directed edge metadata uses `net[i => j, :key]`.
+
+For more sophisticated metadata handling, check out the independent tag and query capabilities of QuantumSavory.
+
+`classical_delay` and `quantum_delay` each accept a constant or a callable
+`(src, dst) -> delay`. A callable is evaluated in both directions of each
+edge, so it can give the two directions different delays.
+
+```julia
+using Graphs
+
+graph = path_graph(3)
+delay(src, dst) = src < dst ? 0.1 : 0.2
+net = RegisterNet(graph, [Register(2) for _ in 1:3];
+    name="line", names=["left", "middle", "right"],
+    classical_delay=delay, quantum_delay=0.05)
+```
+
+See [Register Networks](@ref register-networks) for the complete explanation.
 """
 struct RegisterNet
     graph::SimpleGraph{Int64}
@@ -14,6 +64,8 @@ struct RegisterNet
     name::Union{Nothing,String}
     names::Vector{String}
 end
+
+_resolve_link_delay(delay, src, dst) = applicable(delay, src, dst) ? delay(src, dst) : delay
 
 function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metadata, directed_edge_metadata; classical_delay=0, quantum_delay=0, name=nothing, names=String[])
     env = get_time_tracker(registers[1])
@@ -46,10 +98,15 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
     end
 
     for (;src,dst) in edges(graph)
-        cchannels[src=>dst] = DelayQueue{Tag}(env, classical_delay)
-        qchannels[src=>dst] = QuantumChannel(env, quantum_delay)
-        cchannels[dst=>src] = DelayQueue{Tag}(env, classical_delay)
-        qchannels[dst=>src] = QuantumChannel(env, quantum_delay)
+        forward_classical_delay = _resolve_link_delay(classical_delay, src, dst)
+        forward_quantum_delay = _resolve_link_delay(quantum_delay, src, dst)
+        reverse_classical_delay = _resolve_link_delay(classical_delay, dst, src)
+        reverse_quantum_delay = _resolve_link_delay(quantum_delay, dst, src)
+
+        cchannels[src=>dst] = DelayQueue{Tag}(env, forward_classical_delay)
+        qchannels[src=>dst] = QuantumChannel(env, forward_quantum_delay)
+        cchannels[dst=>src] = DelayQueue{Tag}(env, reverse_classical_delay)
+        qchannels[dst=>src] = QuantumChannel(env, reverse_quantum_delay)
     end
     for (v,r) in zip(vertices(graph), registers)
         channels = [(;src=w, channel=cchannels[w=>v]) for w in neighbors(graph, v)]
@@ -64,6 +121,10 @@ end
 
 """
 Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s and a graph.
+
+The `classical_delay` and `quantum_delay` keyword arguments each accept either a
+single delay used for every channel or a callable `(src, dst) -> delay`. The
+callable is evaluated separately for both directions of every graph edge.
 
 ```jldoctest
 julia> graph = grid([2,2]) # from Graphs.jl

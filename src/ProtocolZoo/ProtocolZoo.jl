@@ -2,8 +2,8 @@ module ProtocolZoo
 
 using QuantumSavory
 import QuantumSavory: get_time_tracker, Tag, isolderthan, onchange, QueryOnRegResult
-using QuantumSavory: Wildcard, alwaystrue
-using QuantumSavory: timestr, compactstr
+import QuantumSavory: _message_type
+using QuantumSavory: Wildcard, alwaystrue, compactstr, @domain
 using QuantumSavory.CircuitZoo: EntanglementSwap, LocalEntanglementSwap
 
 using DocStringExtensions
@@ -18,7 +18,8 @@ using PrettyTables: PrettyTables, pretty_table
 
 export
     # protocols
-    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, EntanglementConsumerLog, CutoffProt,
+    EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    protocol_log_context,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     EntanglementID, NO_ENTANGLEMENT_ID, fresh_entanglement_id, combine_entanglement_ids,
@@ -29,24 +30,88 @@ export
     QTCPPairBegin, QTCPPairEnd,
     LinkLevelReply, LinkLevelReplyAtHop, LinkLevelReplyAtSource,
     NetworkNodeController, EndNodeController, LinkController
+
+public AbstractProtocol, available_protocol_types, protocol_catalog_metadata,
+    permits_virtual_edge
+
 abstract type AbstractProtocol end
 
 """
-Check whether a protocol permits virtual edges between nodes.
+Check whether a protocol type or instance permits virtual edges between nodes.
 
 Virtual edges refer to protocol connections between two nodes that do not correspond
 to actual network edges/links. Some protocols like [`EntanglementConsumer`](@ref) can operate
 between any two nodes in the network regardless of physical connectivity.
+
+The capability is defined on protocol types; instance queries delegate to their type.
 """
-permits_virtual_edge(::AbstractProtocol) = false
+permits_virtual_edge(::Type{<:AbstractProtocol}) = false
+permits_virtual_edge(prot::AbstractProtocol) = permits_virtual_edge(typeof(prot))
 
 get_time_tracker(prot::AbstractProtocol) = prot.sim::Simulation
 
 Process(prot::AbstractProtocol, args...; kwargs...) = Process((e,a...;k...)->prot(a...;k...), get_time_tracker(prot), args...; kwargs...)
 
-"""Display all available background types in QuantumSavory along with their documentation.
+_protocol_nodes(::AbstractProtocol) = ()
 
-The `InteractiveUtils` package must be installed and imported."""
+"""
+    protocol_log_context(prot::AbstractProtocol)
+
+Return the structured logging context for `prot`. The fields are the simulation
+context followed by the concrete protocol type name and an immutable, ordered
+snapshot of the participating node identifiers.
+
+Custom protocols should overload this function when their node layout is not
+represented by a built-in protocol family:
+
+```julia
+import QuantumSavory.ProtocolZoo: protocol_log_context
+
+protocol_log_context(prot::MyProtocol) = (
+    simulation_log_context(prot.sim)...,
+    protocol = :MyProtocol,
+    nodes = (prot.node,),
+)
+```
+"""
+function protocol_log_context(prot::AbstractProtocol)
+    return (;
+        simulation_log_context(get_time_tracker(prot))...,
+        protocol=nameof(typeof(prot)),
+        nodes=_protocol_nodes(prot),
+    )
+end
+
+"""
+    protocol_catalog_metadata(::Type{<:AbstractProtocol})
+
+Opt a protocol type into [`available_protocol_types`](@ref), to make it available to tools like the GUI WebQuantumSavory.
+
+Independent packages extend this method for their own public protocol types and return
+a named tuple with exactly these fields:
+
+- `attachment`: one of `:network`, `:node`, or `:edge`;
+- `attachment_fields`: respectively `NamedTuple()`, `(node=:field,)`, or
+  `(node_a=:field_a, node_b=:field_b)`; and
+- `required_fields`: a tuple of configurable constructor-field names which callers
+  must supply.
+
+The protocol must have documented `sim` and `net` fields. Every other non-private
+field must also be documented; attachment fields are supplied by topology and the
+remaining fields are configurable parameters. Underscore-prefixed fields are private.
+This generic intentionally has no fallback method so that dispatch is the opt-in.
+"""
+function protocol_catalog_metadata end
+
+"""Return metadata for available protocol types.
+
+Used to make a protocol available to tools like the GUI WebQuantumSavory.
+
+The result is sorted by qualified type name. Each entry contains `type`, `doc`,
+`nodeargs`, `attachment`, `attachment_fields`, `parameters`, and
+`permits_virtual_edge`. A parameter entry contains `field`, `type`, `doc`, and
+`required`. The `InteractiveUtils` and `REPL` standard libraries must be loaded to
+activate this optional method."""
 function available_protocol_types end
 
 const QueryArgs = Union{Int,Function,Wildcard}
@@ -62,7 +127,7 @@ Indicates the current entanglement status with a remote node's slot. Added when 
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementCounterpart
+@kwdef struct EntanglementCounterpart <: AbstractTag
     "the id of the remote node to which we are entangled"
     remote_node::Int
     "the slot in the remote node containing the qubit we are entangled to"
@@ -74,12 +139,21 @@ EntanglementCounterpart(remote_node::Int, remote_slot::Int) = EntanglementCounte
 Base.show(io::IO, tag::EntanglementCounterpart) = print(io, "Entangled to $(tag.remote_node).$(tag.remote_slot) with id $(tag.pair_id)")
 Tag(tag::EntanglementCounterpart) = Tag(EntanglementCounterpart, tag.remote_node, tag.remote_slot, tag.pair_id)
 
-function _tag_entanglement_counterpart!(slot, remote_node, remote_slot, pair_id, protocol)
+function _tag_entanglement_counterpart!(
+    slot, remote_node, remote_slot, pair_id, prot::AbstractProtocol
+)
     existing = query(slot, EntanglementCounterpart, ❓, ❓, ❓)
     if !isnothing(existing)
-        new_tag = Tag(EntanglementCounterpart, remote_node, remote_slot, pair_id)
-        @error "$(protocol): adding `$new_tag` to a slot that already has an " *
-               "`EntanglementCounterpart` tag" slot existing
+        @error(
+            "Counterpart tag conflicts with an existing tag",
+            _group=LOG_GROUPS.protocol,
+            event=:counterpart_tag_conflict,
+            protocol_log_context(prot)...,
+            slot=slot.idx,
+            dst_node=remote_node,
+            dst_slot=remote_slot,
+            pair_id=pair_id,
+        )
     end
     tag!(slot, EntanglementCounterpart, remote_node, remote_slot, pair_id)
 end
@@ -95,7 +169,7 @@ have outdated information about who is entangled to whom and we need to update t
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementHistory
+@kwdef struct EntanglementHistory <: AbstractTag
     "the id of the remote node we used to be entangled to"
     remote_node::Int
     "the slot of the remote node we used to be entangled to"
@@ -123,7 +197,7 @@ entanglement information and apply an `X` correction after the remote node perfo
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementUpdateX
+@kwdef struct EntanglementUpdateX <: AbstractTag
     "the pair id currently known by the receiver for the target slot"
     target_pair_id::EntanglementID
     "the pair-id chunk to combine into the target pair"
@@ -153,7 +227,7 @@ entanglement information and apply a `Z` correction after the remote node perfor
 
 $TYPEDFIELDS
 """
-@kwdef struct EntanglementUpdateZ
+@kwdef struct EntanglementUpdateZ <: AbstractTag
     "the pair id currently known by the receiver for the target slot"
     target_pair_id::EntanglementID
     "the pair-id chunk to combine into the target pair"
@@ -186,7 +260,7 @@ $TYPEDFIELDS
 
 See also: [`CutoffProt`](@ref)
 """
-@kwdef struct EntanglementDelete
+@kwdef struct EntanglementDelete <: AbstractTag
     "the pair id targeted by this deletion"
     target_pair_id::EntanglementID
     "the node that sent the deletion announcement message after they delete their local qubit"
@@ -248,9 +322,28 @@ $TYPEDFIELDS
     margin::Int = 0
     """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
     hardmargin::Int = 0
-    """Tag to be added to the entangled qubits or nothing to not add any tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
-    tag::Union{DataType,Nothing} = EntanglementCounterpart
+    """concrete `AbstractTag` subtype to add to the entangled qubits, or `nothing` to add no tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
+    tag::Union{Type{<:AbstractTag},Nothing} = EntanglementCounterpart
+
+    function EntanglerProt(sim, net, nodeA, nodeB, pairstate, success_prob, attempt_time, local_busy_time_pre, local_busy_time_post, retry_lock_time, rounds, attempts, chooseslotA, chooseslotB, randomize, uselock, margin, hardmargin, tag)
+        @domain 0 < success_prob ≤ 1
+        @domain attempt_time ≥ 0
+        @domain local_busy_time_pre ≥ 0
+        @domain local_busy_time_post ≥ 0
+        @domain isnothing(retry_lock_time) || retry_lock_time > 0
+        @domain rounds == -1 || rounds ≥ 0
+        @domain attempts == -1 || attempts ≥ 0
+        @domain margin ≥ 0
+        @domain hardmargin ≥ 0
+        return new(sim, net, nodeA, nodeB, pairstate, success_prob, attempt_time, local_busy_time_pre, local_busy_time_post, retry_lock_time, rounds, attempts, chooseslotA, chooseslotB, randomize, uselock, margin, hardmargin, tag)
+    end
 end
+
+protocol_catalog_metadata(::Type{EntanglerProt}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
 
 """Convenience constructor for specifying `rate` of generation instead of success probability and time"""
 function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
@@ -285,10 +378,26 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
 
         if isnothing(a_) || isnothing(b_)
             if isnothing(prot.retry_lock_time)
-                @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Failed to find free slots, waiting for changes to tags..."
+                @debug(
+                    "Free slots unavailable",
+                    _group=LOG_GROUPS.protocol,
+                    event=:free_slots_unavailable,
+                    protocol_log_context(prot)...,
+                    round=round,
+                    wait_mode=:tag_change,
+                    retry_after_s=nothing,
+                )
                 @yield onchange(regA, Tag) | onchange(regB, Tag)
             else
-                @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Failed to find free slots, waiting a fixed amount of time..."
+                @debug(
+                    "Free slots unavailable",
+                    _group=LOG_GROUPS.protocol,
+                    event=:free_slots_unavailable,
+                    protocol_log_context(prot)...,
+                    round=round,
+                    wait_mode=:fixed_delay,
+                    retry_after_s=prot.retry_lock_time,
+                )
                 @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
@@ -317,23 +426,39 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
             pair_id = fresh_entanglement_id()
             # tag local node a with EntanglementCounterpart remote_node_idx_b remote_slot_idx_b pair_id
             if tagtype === EntanglementCounterpart
-                _tag_entanglement_counterpart!(a, prot.nodeB, b.idx, pair_id, "EntanglerProt")
+                _tag_entanglement_counterpart!(a, prot.nodeB, b.idx, pair_id, prot)
             elseif !isnothing(tagtype)
                 tag!(a, tagtype::DataType, prot.nodeB, b.idx)
             end
             last_a = a.idx
             # tag local node b with EntanglementCounterpart remote_node_idx_a remote_slot_idx_a pair_id
             if tagtype === EntanglementCounterpart
-                _tag_entanglement_counterpart!(b, prot.nodeA, a.idx, pair_id, "EntanglerProt")
+                _tag_entanglement_counterpart!(b, prot.nodeA, a.idx, pair_id, prot)
             elseif !isnothing(tagtype)
                 tag!(b, tagtype::DataType, prot.nodeA, a.idx)
             end
             last_b = b.idx
 
-            @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Entangled .$(a.idx) and .$(b.idx)"
+            @debug(
+                "Entangled a pair",
+                _group=LOG_GROUPS.protocol,
+                event=:pair_entangled,
+                protocol_log_context(prot)...,
+                round=round,
+                slots=(a.idx, b.idx),
+                pair_id=pair_id,
+                attempts=attempts,
+            )
         else
             @yield timeout(prot.sim, prot.attempts * prot.attempt_time)
-            @debug "$(timestr(prot.sim)) EntanglerProt($(compactstr(regA)), $(compactstr(regB))), round $(round): Performed the maximum number of attempts and gave up"
+            @debug(
+                "Exhausted entanglement attempts",
+                _group=LOG_GROUPS.protocol,
+                event=:attempts_exhausted,
+                protocol_log_context(prot)...,
+                round=round,
+                attempts=prot.attempts,
+            )
         end
         if uselock
             unlock(a)
@@ -361,6 +486,12 @@ $TYPEDFIELDS
     """the vertex of the node where the tracker is working"""
     node::Int
 end
+
+protocol_catalog_metadata(::Type{EntanglementTracker}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
 
 EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
@@ -390,7 +521,17 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                     correction = 0
                 end
 
-                @debug "EntanglementTracker @$(prot.node): Received from $(msg.src).$(pastremoteslotid) | message=`$(msg.tag)` | time=$(now(prot.sim))"
+                @debug(
+                    "Received an entanglement update",
+                    _group=LOG_GROUPS.protocol,
+                    event=:message_received,
+                    protocol_log_context(prot)...,
+                    src_node=src,
+                    src_slot=pastremoteslotid,
+                    dst_slot=localslotid,
+                    message_type=_message_type(msg.tag),
+                    pair_id=target_pair_id,
+                )
                 workwasdone = true
                 localslot = nodereg[localslotid]
 
@@ -402,9 +543,23 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                 # metadata path without waiting behind unrelated reuse of an empty slot.
                 counterpart = query(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
                 if !isnothing(counterpart)
-                    @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart requesting lock at $(now(prot.sim))"
+                    @debug(
+                        "Requested a slot lock",
+                        _group=LOG_GROUPS.protocol,
+                        event=:slot_lock_requested,
+                        protocol_log_context(prot)...,
+                        slot=localslotid,
+                        pair_id=target_pair_id,
+                    )
                     @yield lock(localslot)
-                    @debug "EntanglementTracker @$(prot.node): EntanglementCounterpart getting lock at $(now(prot.sim))"
+                    @debug(
+                        "Acquired a slot lock",
+                        _group=LOG_GROUPS.protocol,
+                        event=:slot_lock_acquired,
+                        protocol_log_context(prot)...,
+                        slot=localslotid,
+                        pair_id=target_pair_id,
+                    )
                     counterpart = querydelete!(localslot, EntanglementCounterpart, pastremotenode, pastremoteslotid, target_pair_id)
                     if !isnothing(counterpart)
                         if !isassigned(localslot)
@@ -420,12 +575,12 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                                 # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
                                 _tag_entanglement_counterpart!(
                                     localslot, newremotenode, newremoteslotid,
-                                    new_pair_id, "EntanglementTracker"
+                                    new_pair_id, prot
                                 )
                             else
                                 _tag_entanglement_counterpart!(
                                     localslot, pastremotenode, pastremoteslotid,
-                                    target_pair_id, "EntanglementTracker"
+                                    target_pair_id, prot
                                 )
                             end
                         else # EntanglementDelete
@@ -456,12 +611,32 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                         # when notifying the opposite side.
                         updated_local_chunk_id = combine_entanglement_ids(local_chunk_id::EntanglementID, other_pair_id::EntanglementID)
                         tag!(localslot, EntanglementHistory, newremotenode, newremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx, swappedlocal_slotidx, updated_local_chunk_id, swapped_chunk_id)
-                        @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
+                        @debug(
+                            "Forwarded an entanglement update",
+                            _group=LOG_GROUPS.protocol,
+                            event=:message_forwarded,
+                            protocol_log_context(prot)...,
+                            src_slot=localslotid,
+                            dst_node=whoweswappedwith_node,
+                            dst_slot=whoweswappedwith_slotidx,
+                            message_type=_message_type(msg.tag),
+                            pair_id=forwarded_target_pair_id,
+                        )
                         msghist = Tag(updatetagsymbol, forwarded_target_pair_id, other_pair_id, pastremotenode, pastremoteslotid, whoweswappedwith_slotidx, newremotenode, newremoteslotid, correction)
                         put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
                     else # EntanglementDelete
                         # We have a delete message but the qubit was swapped so add a tag and forward to swapped node
-                        @debug "EntanglementTracker @$(prot.node): history=`$(history)` | message=`$msg` | Sending to $(whoweswappedwith_node).$(whoweswappedwith_slotidx)"
+                        @debug(
+                            "Forwarded an entanglement deletion",
+                            _group=LOG_GROUPS.protocol,
+                            event=:message_forwarded,
+                            protocol_log_context(prot)...,
+                            src_slot=localslotid,
+                            dst_node=whoweswappedwith_node,
+                            dst_slot=whoweswappedwith_slotidx,
+                            message_type=_message_type(msg.tag),
+                            pair_id=forwarded_target_pair_id,
+                        )
                         msghist = Tag(updatetagsymbol, forwarded_target_pair_id, pastremotenode, pastremoteslotid, whoweswappedwith_node, whoweswappedwith_slotidx)
                         tag!(localslot, updatetagsymbol, target_pair_id, prot.node, localslot.idx, pastremotenode, pastremoteslotid)
                         put!(channel(prot.net, prot.node=>whoweswappedwith_node; permit_forward=true), msghist)
@@ -476,10 +651,26 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                     if !(isnothing(updategate)) # EntanglementUpdate
                         # to handle a possible delete-swap-swap case, we need to update the EntanglementDelete tag
                         tag!(localslot, EntanglementDelete, combine_entanglement_ids(target_pair_id::EntanglementID, other_pair_id::EntanglementID), prot.node, localslot.idx, newremotenode, newremoteslotid)
-                        @debug "EntanglementTracker @$(prot.node): message=`$msg` for deleted qubit handled and EntanglementDelete tag updated"
+                        @debug(
+                            "Applied an update to a deleted qubit marker",
+                            _group=LOG_GROUPS.protocol,
+                            event=:deleted_qubit_update_applied,
+                            protocol_log_context(prot)...,
+                            slot=localslotid,
+                            message_type=_message_type(msg.tag),
+                            pair_id=target_pair_id,
+                        )
                     else # EntanglementDelete
                         # when the message is EntanglementDelete and the slot history also has an EntanglementDelete tag (both qubits were deleted), do nothing
-                        @debug "EntanglementTracker @$(prot.node): message=`$msg` is for a deleted qubit and is thus dropped"
+                        @debug(
+                            "Dropped a message for a deleted qubit",
+                            _group=LOG_GROUPS.protocol,
+                            event=:message_dropped,
+                            protocol_log_context(prot)...,
+                            slot=localslotid,
+                            message_type=_message_type(msg.tag),
+                            pair_id=target_pair_id,
+                        )
                     end
                     continue
                 end
@@ -489,18 +680,221 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                 # carry the target ID until the message is handled. The expected
                 # benign cause is a bounded history log that discarded the needed
                 # entry before a delayed message arrived.
-                stale_kind = isnothing(updategate) ? "delete" : "update"
-                @warn "EntanglementTracker @$(prot.node): stale $(stale_kind) message=`$msg` is dropped. This is likely because SwapperProt.max_history_per_slot is too small and history garbage collection removed a still-needed entry; consider increasing max_history_per_slot on the swapper. If the history cap is not the cause, this is a tracker bug."
+                @warn(
+                    "Dropped a stale entanglement message",
+                    _group=LOG_GROUPS.protocol,
+                    event=:stale_message_dropped,
+                    protocol_log_context(prot)...,
+                    slot=localslotid,
+                    message_type=_message_type(msg.tag),
+                    pair_id=target_pair_id,
+                )
                 continue
             end
         end
-        @debug "EntanglementTracker @$(prot.node): Starting message wait at $(now(prot.sim)) with MessageBuffer containing: $(mb.buffer)"
+        @debug(
+            "Started waiting for a message",
+            _group=LOG_GROUPS.protocol,
+            event=:message_wait_started,
+            protocol_log_context(prot)...,
+        )
         @yield onchange(mb)
-        @debug "EntanglementTracker @$(prot.node): Message wait ends at $(now(prot.sim))"
+        @debug(
+            "Finished waiting for a message",
+            _group=LOG_GROUPS.protocol,
+            event=:message_wait_finished,
+            protocol_log_context(prot)...,
+        )
     end
 end
 
-include("consumer.jl")
+"""
+$TYPEDEF
+
+A protocol running between two nodes, checking periodically for any entangled pairs between the two nodes and consuming/emptying the qubit slots.
+
+This protocol permits virtual edges, meaning it can operate between any two nodes in the network regardless of whether they are physically connected by an edge.
+
+$FIELDS
+"""
+@kwdef struct EntanglementConsumer <: AbstractProtocol
+    """time-and-schedule-tracking instance from `ConcurrentSim`"""
+    sim::Simulation
+    """a network graph of registers"""
+    net::RegisterNet
+    """the vertex index of node A"""
+    nodeA::Int
+    """the vertex index of node B"""
+    nodeB::Int
+    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    period::Union{Float64,Nothing} = 0.1
+    """concrete `AbstractTag` subtype which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
+    tag::Type{<:AbstractTag} = EntanglementCounterpart
+    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`; the storage type is not part of the public API and may change in future versions"""
+    _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
+
+    function EntanglementConsumer(sim, net, nodeA, nodeB, period, tag, _log)
+        @domain isnothing(period) || period > 0
+        return new(sim, net, nodeA, nodeB, period, tag, _log)
+    end
+end
+
+protocol_catalog_metadata(::Type{EntanglementConsumer}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
+
+function EntanglementConsumer(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return EntanglementConsumer(;sim, net, nodeA, nodeB, kwargs...)
+end
+function EntanglementConsumer(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return EntanglementConsumer(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+end
+
+permits_virtual_edge(::Type{EntanglementConsumer}) = true
+
+@resumable function (prot::EntanglementConsumer)()
+    regA = prot.net[prot.nodeA]
+    regB = prot.net[prot.nodeB]
+    while true
+        use_pair_id = prot.tag === EntanglementCounterpart
+        query1 = if use_pair_id
+            query(regA, prot.tag, prot.nodeB, ❓, ❓; locked=false, assigned=true)
+        else
+            query(regA, prot.tag, prot.nodeB, ❓; locked=false, assigned=true)
+        end # TODO Need a `querydelete!` dispatch on `Register` rather than using `query` here followed by `untag!` below
+        if isnothing(query1)
+            if isnothing(prot.period)
+                @debug(
+                    "Entanglement unavailable",
+                    _group=LOG_GROUPS.protocol,
+                    event=:entanglement_unavailable,
+                    protocol_log_context(prot)...,
+                    src_node=prot.nodeA,
+                    wait_mode=:tag_change,
+                    retry_after_s=nothing,
+                )
+                @yield onchange(regA, Tag)
+            else
+                @debug(
+                    "Entanglement unavailable",
+                    _group=LOG_GROUPS.protocol,
+                    event=:entanglement_unavailable,
+                    protocol_log_context(prot)...,
+                    src_node=prot.nodeA,
+                    wait_mode=:fixed_delay,
+                    retry_after_s=prot.period,
+                )
+                @yield timeout(prot.sim, prot.period::Float64)
+            end
+            continue
+        else
+            pair_id = use_pair_id ? query1.tag[4] : nothing
+            query2 = if use_pair_id
+                query(regB, prot.tag, prot.nodeA, query1.slot.idx, pair_id; locked=false, assigned=true)
+            else
+                query(regB, prot.tag, prot.nodeA, query1.slot.idx; locked=false, assigned=true)
+            end
+            if isnothing(query2) # in case EntanglementUpdate hasn't reached the second node yet, but the first node has the EntanglementCounterpart
+                if isnothing(prot.period)
+                    @debug(
+                        "Entanglement unavailable",
+                        _group=LOG_GROUPS.protocol,
+                        event=:entanglement_unavailable,
+                        protocol_log_context(prot)...,
+                        dst_node=prot.nodeB,
+                        wait_mode=:tag_change,
+                        retry_after_s=nothing,
+                    )
+                    @yield onchange(regB, Tag)
+                else
+                    @debug(
+                        "Entanglement unavailable",
+                        _group=LOG_GROUPS.protocol,
+                        event=:entanglement_unavailable,
+                        protocol_log_context(prot)...,
+                        dst_node=prot.nodeB,
+                        wait_mode=:fixed_delay,
+                        retry_after_s=prot.period,
+                    )
+                    @yield timeout(prot.sim, prot.period::Float64)
+                end
+                continue
+            end
+        end
+
+        q1 = query1.slot
+        q2 = query2.slot
+        @yield lock(q1) & lock(q2)
+        # Re-query under lock and require reciprocal pair IDs. The slot tuple is
+        # routing metadata; `pair_id` is the actual entangled-pair identity.
+        query1 = if use_pair_id
+            query(q1, prot.tag, prot.nodeB, q2.idx, pair_id; locked=true, assigned=true)
+        else
+            query(q1, prot.tag, prot.nodeB, q2.idx; locked=true, assigned=true)
+        end
+        query2 = if use_pair_id
+            query(q2, prot.tag, prot.nodeA, q1.idx, pair_id; locked=true, assigned=true)
+        else
+            query(q2, prot.tag, prot.nodeA, q1.idx; locked=true, assigned=true)
+        end
+        if isnothing(query1) || isnothing(query2)
+            @debug(
+                "Entanglement query was invalidated",
+                _group=LOG_GROUPS.protocol,
+                event=:query_invalidated,
+                protocol_log_context(prot)...,
+                slots=(q1.idx, q2.idx),
+                pair_id=pair_id,
+            )
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+
+        @debug(
+            "Consumed entanglement",
+            _group=LOG_GROUPS.protocol,
+            event=:entanglement_consumed,
+            protocol_log_context(prot)...,
+            slots=(q1.idx, q2.idx),
+            pair_id=pair_id,
+        )
+        untag!(q1, query1.id)
+        untag!(q2, query2.id)
+        # TODO do we need to add EntanglementHistory or EntanglementDelete and should that be a different EntanglementHistory since the current one is specifically for Swapper
+        # TODO currently when calculating the observable we assume that EntanglerProt.pairstate is always (|00⟩ + |11⟩)/√2, make it more general for other states
+        ob1 = observable((q1, q2), Z⊗Z)
+        ob2 = observable((q1, q2), X⊗X)
+        if isnothing(ob1) || isnothing(ob2)
+            @error(
+                "Dropped a stale entangled pair",
+                _group=LOG_GROUPS.protocol,
+                event=:stale_pair_dropped,
+                protocol_log_context(prot)...,
+                slots=(q1.idx, q2.idx),
+                pair_id=pair_id,
+            )
+            traceout!(regA[q1.idx], regB[q2.idx])
+            unlock(q1)
+            unlock(q2)
+            continue
+        end
+        ob1 = real(ob1)
+        ob2 = real(ob2)
+
+        traceout!(regA[q1.idx], regB[q2.idx])
+        push!(prot._log, (now(prot.sim), ob1, ob2))
+        unlock(q1)
+        unlock(q2)
+        if !isnothing(prot.period)
+            @yield timeout(prot.sim, prot.period::Float64)
+        end
+    end
+end
+
+
 include("cutoff.jl")
 include("swapping.jl")
 include("switches.jl")
@@ -509,6 +903,30 @@ include("qtcp.jl")
 using .QTCP
 include("mbqc.jl")
 using .MBQCEntanglementDistillation
+
+_protocol_nodes(prot::EntanglementTracker) = (prot.node,)
+_protocol_nodes(prot::SwapperProt) = (prot.node,)
+_protocol_nodes(prot::CutoffProt) = (prot.node,)
+_protocol_nodes(prot::EntanglerProt) = (prot.nodeA, prot.nodeB)
+_protocol_nodes(prot::EntanglementConsumer) = (prot.nodeA, prot.nodeB)
+
+_protocol_nodes(prot::Switches.SimpleSwitchDiscreteProt) =
+    (prot.switchnode, Tuple(prot.clientnodes)...)
+protocol_log_context(deleter::Switches._SwitchSynchronizedDelete) =
+    protocol_log_context(deleter.prot)
+
+_protocol_nodes(prot::QTCP.EndNodeController) = (prot.node,)
+_protocol_nodes(prot::QTCP.NetworkNodeController) = (prot.node,)
+_protocol_nodes(prot::QTCP.LinkController) = (prot.nodeA, prot.nodeB)
+
+_protocol_nodes(prot::MBQCEntanglementDistillation.GraphStateConstructor) =
+    Tuple(prot.nodes)
+_protocol_nodes(prot::MBQCEntanglementDistillation.GraphToResource) =
+    Tuple(prot.nodes)
+_protocol_nodes(prot::MBQCEntanglementDistillation.PurifierBellMeasurements) =
+    Tuple(prot.nodes)
+_protocol_nodes(prot::MBQCEntanglementDistillation.MBQCPurificationTracker) =
+    Tuple(prot.nodes)
 
 include("show.jl")
 

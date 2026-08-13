@@ -4,6 +4,25 @@ using QuantumSavory.CircuitZoo
 using QuantumSavory.CircuitZoo: EntanglementSwap, Purify2to1, Purify3to1, Purify3to1Node, Purify2to1Node, PurifyStringent, StringentHead, StringentBody, PurifyExpedient, PurifyStringentNode, PurifyExpedient
 include("setup_circuitzoo_purification.jl")
 
+# A maximally mixed Bell pair is the uniform mixture of these four trajectories.
+# Enumerating them keeps the Clifford fidelity tests deterministic and guarantees
+# that every acceptance and fidelity assertion is exercised.
+const clifford_target_errors = ((:I, nothing), (:X, X), (:Y, Y), (:Z, Z))
+
+function clifford_pairs_with_target_error(pair_count, error)
+    r = Register(2 * pair_count, CliffordRepr())
+    for i in 1:pair_count
+        initialize!(r[(2 * i - 1):(2 * i)], bell)
+    end
+    !isnothing(error) && apply!(r[1], error)
+    r
+end
+
+function clifford_bell_fidelity(r)
+    (1 + observable(r[1:2], X ⊗ X) - observable(r[1:2], Y ⊗ Y) +
+     observable(r[1:2], Z ⊗ Z)) / 4
+end
+
 @testset "Circuit Zoo Purification - throws" begin
 
 @test_throws ArgumentError Purify2to1(:lalala)
@@ -143,19 +162,19 @@ end
 
 @testset "Circuit Zoo Purification - 3to1 -- Fidelity - CliffordRepr" begin
 
-    for rep in [CliffordRepr]
-        for leaveout1 in [:X, :Y, :Z]
-            for leaveout2 in [:X, :Y, :Z]
-                if (leaveout1 != leaveout2)
-                    r = Register(6, rep())
-                    noisy_pair = noisy_pair_func(0)
-                    initialize!(r[1:2], noisy_pair)
-                    initialize!(r[3:4], noisy_pair)
-                    initialize!(r[5:6], noisy_pair)
-                    if Purify3to1(leaveout1, leaveout2)(r[1], r[2], r[3], r[5], r[4], r[6])==true
-                        @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
-                    end
+    for leaveout1 in [:X, :Y, :Z]
+        for leaveout2 in [:X, :Y, :Z]
+            if leaveout1 != leaveout2
+                accepted = Pair{Symbol, Float64}[]
+                for (error_name, error) in clifford_target_errors
+                    r = clifford_pairs_with_target_error(3, error)
+                    success = Purify3to1(leaveout1, leaveout2)(
+                        r[1], r[2], r[3], r[5], r[4], r[6])
+                    success && push!(accepted, error_name => clifford_bell_fidelity(r))
                 end
+                @test first.(accepted) == [:I, leaveout1]
+                @test last.(accepted) ≈ [1.0, 0.0]
+                @test sum(last, accepted) / length(accepted) ≈ 0.5
             end
         end
     end
@@ -237,21 +256,20 @@ end
 
 @testset "Circuit Zoo Purification - 3to1 -- Node - Fidelity - CliffordRepr" begin
 
-    for rep in [CliffordRepr]
-        for leaveout1 in [:X, :Y, :Z]
-            for leaveout2 in [:X, :Y, :Z]
-                if (leaveout1 != leaveout2)
-                    r = Register(6, rep())
-                    noisy_pair = noisy_pair_func(0)
-                    initialize!(r[1:2], noisy_pair)
-                    initialize!(r[3:4], noisy_pair)
-                    initialize!(r[5:6], noisy_pair)
+    for leaveout1 in [:X, :Y, :Z]
+        for leaveout2 in [:X, :Y, :Z]
+            if leaveout1 != leaveout2
+                accepted = Pair{Symbol, Float64}[]
+                for (error_name, error) in clifford_target_errors
+                    r = clifford_pairs_with_target_error(3, error)
                     ma = Purify3to1Node(leaveout1, leaveout2)(r[1], r[3], r[5])
                     mb = Purify3to1Node(leaveout1, leaveout2)(r[2], r[4], r[6])
-                    if ma == mb
-                        @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
-                    end
+                    ma == mb && push!(accepted,
+                        error_name => clifford_bell_fidelity(r))
                 end
+                @test first.(accepted) == [:I, leaveout1]
+                @test last.(accepted) ≈ [1.0, 0.0]
+                @test sum(last, accepted) / length(accepted) ≈ 0.5
             end
         end
     end
@@ -286,16 +304,15 @@ end
 
 @testset "Circuit Zoo Purification - Stringent - Fidelity - CliffordRepr" begin
 
-    for rep in [CliffordRepr]
-        r = Register(26, rep())
-        noisy_pair = noisy_pair_func(0)
-        for i in 1:13
-            initialize!(r[(2*i-1):(2*i)], noisy_pair)
-        end
-        if PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...) == true
-            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
+    accepted = Pair{Symbol, Float64}[]
+    for (error_name, error) in clifford_target_errors
+        r = clifford_pairs_with_target_error(13, error)
+        if PurifyStringent()(r[1], r[2], r[3:2:25]..., r[4:2:26]...)
+            push!(accepted, error_name => clifford_bell_fidelity(r))
         end
     end
+    @test first.(accepted) == [:I]
+    @test last.(accepted) ≈ [1.0]
 end
 
 @testset "Circuit Zoo Purification - Expedient" begin
@@ -327,14 +344,13 @@ end
 
 @testset "Circuit Zoo Purification - Expedient - Fidelity - CliffordRepr" begin
 
-    for rep in [CliffordRepr]
-        r = Register(22, rep())
-        noisy_pair = noisy_pair_func(0)
-        for i in 1:11
-            initialize!(r[(2*i-1):(2*i)], noisy_pair)
-        end
-        if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...) == true
-            @test_broken observable(r[1:2], projector(bell)) ≈ 0.0 atol=1e-5 # This is a probabilistic test. It has a small chance of triggering
+    accepted = Pair{Symbol, Float64}[]
+    for (error_name, error) in clifford_target_errors
+        r = clifford_pairs_with_target_error(11, error)
+        if PurifyExpedient()(r[1], r[2], r[3:2:21]..., r[4:2:22]...)
+            push!(accepted, error_name => clifford_bell_fidelity(r))
         end
     end
+    @test first.(accepted) == [:I]
+    @test last.(accepted) ≈ [1.0]
 end

@@ -21,19 +21,53 @@ function removebackref!(s::StateRef, i) # To be used only with something that up
     s
 end
 
+"""
+    _traceout_state(state, i)
+
+Backend adapter for removing subsystem `i` from the state stored by a [`StateRef`](@ref).
+Its return value must follow the storage contract reported by `ispadded`. For an
+unpadded state, native storage must no longer contain that subsystem so that
+[`removebackref!`](@ref) can renumber the surviving register slots consistently.
+
+The default delegates to the backend's `traceout!`. Backends whose `traceout!` uses a
+different storage contract must specialize this adapter. For example,
+QuantumClifford's in-place `traceout!` reduces the stabilizer information but retains
+the traced qubit's tableau columns, so the Clifford specialization uses `ptrace` to
+return a physically smaller tableau.
+
+On the other hand, `traceout!` for Gabs Gaussian states and QuantumOptics state
+vectors already delegates to `ptrace`, as does the QuantumOptics operator method, so
+these backends return physically smaller states. The Monte Carlo backend wraps a
+QuantumOptics ket but keeps each trajectory pure: its `traceout!` samples a projection
+onto the discarded subsystem's canonical basis, discards the outcome, and returns the
+smaller conditional state. The ensemble of such trajectories reproduces the partial
+trace.
+"""
+_traceout_state(state, i) = traceout!(state, i)
+
 function traceout!(s::StateRef, i::Int)
     state = s.state[]
-    newstate = traceout!(state, i)
+    newstate = _traceout_state(state, i)
     s.state[] = newstate
     removebackref!(s, i)
     s
 end
 
 """
-Delete the given slot of the given register.
+Delete one or more register slots.
 
 `traceout!(reg, slot)` would reset (perform a partial trace) over the given subsystem.
 The Hilbert space of the register gets automatically shrunk.
+
+`traceout!(ref1, ref2, ...)` deletes several [`RegRef`](@ref)s in argument order
+and returns the corresponding registers as a tuple. When the arguments include
+every live slot backed by the same `StateRef`, that state is deleted as
+one group without calling the backend's partial-trace implementation. Incomplete
+groups are reduced one slot at a time.
+
+For `QuantumMCRepr` trajectories, partial reduction samples the discarded
+subsystem in its native canonical basis. Use [`project_traceout!`](@ref) instead
+when the sampled outcome is needed.
 """
 function traceout!(r::Register, i::Int)
     stateref = r.staterefs[i]
@@ -48,7 +82,41 @@ function traceout!(r::Register, i::Int)
     r
 end
 traceout!(r::RegRef) = traceout!(r.reg, r.idx)
-traceout!(rs::RegRef...) = map(traceout!, rs)
+
+_slot_identity(r::Register, i::Int) = (objectid(r.staterefs), i)
+
+function traceout!(refs::RegRef...)
+    materialized = RegRef[refs...]
+    requested_slots = Set{Tuple{UInt,Int}}()
+    candidate_states = IdDict{Base.RefValue{Any},StateRef}()
+    sizehint!(requested_slots, length(materialized))
+    sizehint!(candidate_states, length(materialized))
+
+    for ref in materialized
+        push!(requested_slots, _slot_identity(ref.reg, ref.idx))
+        stateref = ref.reg.staterefs[ref.idx]
+        if !isnothing(stateref) && nsubsystems(stateref) > 1
+            get!(candidate_states, stateref.state, stateref)
+        end
+    end
+
+    for stateref in values(candidate_states)
+        all_requested = all(
+            isnothing(reg) || _slot_identity(reg, index) in requested_slots
+            for (reg, index) in zip(stateref.registers, stateref.registerindices)
+        )
+        if all_requested
+            for stateindex in lastindex(stateref.registers):-1:firstindex(stateref.registers)
+                isnothing(stateref.registers[stateindex]) && continue
+                removebackref!(stateref, stateindex)
+            end
+        end
+    end
+
+    Tuple(map(materialized) do ref
+        isnothing(ref.reg.staterefs[ref.idx]) ? ref.reg : traceout!(ref)
+    end)
+end
 
 """
 Perform a projective measurement on the given slot of the given register.
@@ -60,6 +128,10 @@ for the Hilbert space. The Hilbert space of the register is automatically shrunk
 
 A basis object can be specified on its own as well, e.g.
 `project_traceout!(reg, slot, basis)`.
+
+Discrete qubit backends return a one-based `Int` outcome. Gabs homodyne
+measurements return continuous quadrature data. Clifford qubit measurements
+currently support the symbolic `X`, `Y`, and `Z` bases.
 """
 function project_traceout! end
 
@@ -69,12 +141,12 @@ end
 project_traceout!(r::RegRef, basis; time=nothing) = project_traceout!(r.reg, r.idx, basis; time)
 
 function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
-    !isnothing(time) && uptotime!([reg], [i], time)
     stateref = reg.staterefs[i]
+    isnothing(stateref) && throw(ArgumentError(
+        "Cannot project and trace out an unassigned register slot."
+    ))
+    !isnothing(time) && uptotime!([reg], [i], time)
     stateindex = reg.stateindices[i]
-    if isnothing(stateref) # TODO maybe use isassigned
-        throw("error") # make it more descriptive
-    end
     j, stateref.state[] = project_traceout!(stateref.state[],stateindex,basis)
     removebackref!(stateref, stateindex)
     f(j)

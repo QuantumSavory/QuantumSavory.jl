@@ -71,6 +71,9 @@ structured convention for reusable protocols: a callable struct subtype of
 `AbstractProtocol`.
 
 ```julia
+using QuantumSavory.ProtocolZoo: AbstractProtocol
+import QuantumSavory.ProtocolZoo: protocol_log_context
+
 struct MySwapperProt <: AbstractProtocol
     sim::Simulation
     net::RegisterNet
@@ -78,6 +81,12 @@ struct MySwapperProt <: AbstractProtocol
     alice::Int
     charlie::Int
 end
+
+protocol_log_context(prot::MySwapperProt) = (
+    simulation_log_context(prot.sim)...,
+    protocol=:MySwapperProt,
+    nodes=(prot.node,),
+)
 
 @resumable function (prot::MySwapperProt)()
     (; sim, net, node, alice, charlie) = prot
@@ -93,6 +102,15 @@ end
     # alice and charlie still have the properties we have queried for
     # (someone else might have consumed the entanglement in between)
     x, y = LocalEntanglementSwap()(a.slot, b.slot)
+    @debug(
+        "Swapped entanglement",
+        _group=LOG_GROUPS.protocol,
+        event=:entanglement_swapped,
+        protocol_log_context(prot)...,
+        slots=(a.slot.idx, b.slot.idx),
+        remote_nodes=(alice, charlie),
+        correction=(Int(x), Int(y)),
+    )
     unlock(a.slot)
     unlock(b.slot)
     return x, y
@@ -102,6 +120,12 @@ end
 This pattern is useful because configuration and runtime context stay packaged
 with the protocol. It is easier to pass around, store, visualize, and reuse
 than a large free function with many arguments.
+
+Custom protocols should overload
+[`QuantumSavory.ProtocolZoo.protocol_log_context`](@ref) as shown above. This
+is the public extension point for selecting a small, immutable node context;
+do not place the protocol, network, registers, or messages themselves in log
+metadata.
 
 ## Common Wait Conditions
 

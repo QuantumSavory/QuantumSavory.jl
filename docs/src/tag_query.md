@@ -56,6 +56,26 @@ The `Tag` type stores a small structured payload. Common patterns are:
 
 Typed tags are especially useful when several protocols share a common metadata
 schema. They make the intended meaning explicit and allow custom printing.
+`ProtocolZoo` defines a set of standard typed tags for interoperability with
+its reusable protocols; see [Standard Protocol Tags](@ref
+standard-protocol-tags).
+
+### Named Tag Heads And `AbstractTag`
+
+[`AbstractTag`](@ref) is the marker supertype for named tag heads used by
+QuantumSavory protocols. It describes the type at the head of a stored `Tag`;
+it does not replace the `Tag` sum type.
+
+Custom tag heads passed as `EntanglerProt(...; tag=MyTag)` or
+`EntanglementConsumer(...; tag=MyTag)` must be concrete subtypes of it:
+
+```julia
+struct MyTag <: AbstractTag end
+```
+
+This protocol-field contract does not restrict the generic metadata API.
+`Tag(Int, 1)`, `Tag(MyOtherType, ...)`, and matching queries continue to accept
+arbitrary `DataType` heads supported by the existing concrete tag signatures.
 
 ## Wildcards And Predicates
 
@@ -102,7 +122,9 @@ Use these rules in protocol code:
   the slot before deleting the tag or using the result;
 - for paired resources, re-check both sides before deleting either side (e.g. in an entanglement swapper that needs to lock two qubits).
 
-`query_wait` is useful for observing that a matching tag exists. It is going to lock or reserve the tag it returns (or the register in which that tag is).
+`query_wait` is useful for observing that a matching tag exists. It neither
+consumes nor locks or reserves the tag (or the register containing it); recheck
+the result after any yield before acting on it.
 
 ## Filtering By Resource State
 
@@ -118,6 +140,7 @@ reserved or empty.
 ## `Tag` Type
 
 ```@docs; canonical=false
+QuantumSavory.AbstractTag
 QuantumSavory.Tag
 ```
 
@@ -125,6 +148,7 @@ The currently supported concrete tag signatures are:
 
 ```@example
 using QuantumSavory #hide
+ENV["LINES"] = "100" # hide
 [tuple(m.sig.types[2:end]...) for m in methods(Tag) if m.sig.types[2] ∈ (Symbol, DataType)]
 ```
 
@@ -169,6 +193,8 @@ QuantumSavory.queryall
 
 - Read [Discrete Event Simulator](@ref sim) for `query_wait` and
   `querydelete_wait!`.
+- Read [Standard Protocol Tags](@ref standard-protocol-tags) for the typed tag
+  schemas used by `ProtocolZoo`.
 - Read [Backend Simulators](backendsimulator.md) and
   [Register Interface API](register_interface.md) for the quantum side of the
   same workflow.

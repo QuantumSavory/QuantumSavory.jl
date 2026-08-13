@@ -63,7 +63,22 @@ $TYPEDFIELDS
     agelimit::Union{Float64,Nothing} = nothing
     """maximum number of history tags to retain per slot in FIFO order (`nothing` for unbounded retention)"""
     max_history_per_slot::Union{Int,Nothing} = 3
+
+    function SwapperProt(sim, net, node, chooseslots, nodeL, nodeH, chooseL, chooseH, local_busy_time, retry_lock_time, rounds, agelimit, max_history_per_slot)
+        @domain local_busy_time ≥ 0
+        @domain isnothing(retry_lock_time) || retry_lock_time > 0
+        @domain rounds == -1 || rounds ≥ 0
+        @domain isnothing(agelimit) || agelimit ≥ 0
+        @domain isnothing(max_history_per_slot) || max_history_per_slot ≥ 0
+        return new(sim, net, node, chooseslots, nodeL, nodeH, chooseL, chooseH, local_busy_time, retry_lock_time, rounds, agelimit, max_history_per_slot)
+    end
 end
+
+protocol_catalog_metadata(::Type{SwapperProt}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
 
 #TODO "convenience constructor for the missing things and finish this docstring"
 function SwapperProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
@@ -74,7 +89,6 @@ SwapperProt(net::RegisterNet, node::Int; kwargs...) = SwapperProt(get_time_track
 
 function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Union{Int,Nothing})
     isnothing(max_history_per_slot) && return nothing
-    max_history_per_slot < 0 && throw(ArgumentError("max_history_per_slot must be nonnegative"))
     histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
     for history in Iterators.take(histories, max(0, length(histories) - max_history_per_slot))
         untag!(slot, history.id)
@@ -89,10 +103,26 @@ end
         qubit_pair_ = findswapablequbits(prot.net, prot.node, prot.nodeL, prot.nodeH, prot.chooseL, prot.chooseH, prot.chooseslots; agelimit=prot.agelimit)
         if isnothing(qubit_pair_)
             if isnothing(prot.retry_lock_time)
-                @debug "SwapperProt: no swappable qubits found. Waiting for tag change..."
+                @debug(
+                    "Swappable pair unavailable",
+                    _group=LOG_GROUPS.protocol,
+                    event=:swappable_pair_unavailable,
+                    protocol_log_context(prot)...,
+                    round=round,
+                    wait_mode=:tag_change,
+                    retry_after_s=nothing,
+                )
                 @yield onchange(prot.net[prot.node], Tag)
             else
-                @debug "SwapperProt: no swappable qubits found. Waiting a fixed amount of time..."
+                @debug(
+                    "Swappable pair unavailable",
+                    _group=LOG_GROUPS.protocol,
+                    event=:swappable_pair_unavailable,
+                    protocol_log_context(prot)...,
+                    round=round,
+                    wait_mode=:fixed_delay,
+                    retry_after_s=prot.retry_lock_time,
+                )
                 @yield timeout(prot.sim, prot.retry_lock_time::Float64)
             end
             continue
@@ -103,8 +133,15 @@ end
         (q1, tag1) = qubit_pair[1].slot, qubit_pair[1].tag
         (q2, tag2) = qubit_pair[2].slot, qubit_pair[2].tag
         if q1.idx == q2.idx
-            @error "SwapperProt @$(prot.node): one slot has multiple " *
-                   "`EntanglementCounterpart` tags" slot=q1 tag1 tag2
+            @error(
+                "Counterpart tags conflict on one slot",
+                _group=LOG_GROUPS.protocol,
+                event=:counterpart_tag_conflict,
+                protocol_log_context(prot)...,
+                slot=q1.idx,
+                remote_nodes=(tag1[2], tag2[2]),
+                pair_id=(tag1[4], tag2[4]),
+            )
             if isnothing(prot.retry_lock_time)
                 @yield onchange(prot.net[prot.node], Tag)
             else
@@ -144,12 +181,36 @@ end
         # tag with EntanglementUpdateX target_pair_id, other_pair_id, past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg1 = Tag(EntanglementUpdateX, tag1[4], tag2[4], prot.node, q1.idx, tag1[3], tag2[2], tag2[3], Int(xmeas))
         put!(channel(prot.net, prot.node=>tag1[2]; permit_forward=true), msg1)
-        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag1[2]) | message=`$msg1` | time = $(now(prot.sim))"
+        @debug(
+            "Sent a swap update",
+            _group=LOG_GROUPS.protocol,
+            event=:swap_update_sent,
+            protocol_log_context(prot)...,
+            round=round,
+            src_slot=q1.idx,
+            dst_node=tag1[2],
+            dst_slot=tag1[3],
+            message_type=:EntanglementUpdateX,
+            pair_id=tag1[4],
+            correction=Int(xmeas),
+        )
         # send from here to new entanglement counterpart:
         # tag with EntanglementUpdateZ target_pair_id, other_pair_id, past_local_node, past_local_slot_idx past_remote_slot_idx new_remote_node, new_remote_slot, correction
         msg2 = Tag(EntanglementUpdateZ, tag2[4], tag1[4], prot.node, q2.idx, tag2[3], tag1[2], tag1[3], Int(zmeas))
         put!(channel(prot.net, prot.node=>tag2[2]; permit_forward=true), msg2)
-        @debug "SwapperProt @$(prot.node)|round $(round): Send message to $(tag2[2]) | message=`$msg2` | time = $(now(prot.sim))"
+        @debug(
+            "Sent a swap update",
+            _group=LOG_GROUPS.protocol,
+            event=:swap_update_sent,
+            protocol_log_context(prot)...,
+            round=round,
+            src_slot=q2.idx,
+            dst_node=tag2[2],
+            dst_slot=tag2[3],
+            message_type=:EntanglementUpdateZ,
+            pair_id=tag2[4],
+            correction=Int(zmeas),
+        )
         @yield timeout(prot.sim, prot.local_busy_time)
         unlock(q1)
         unlock(q2)

@@ -1,4 +1,3 @@
-using Revise
 using ResumableFunctions
 using ConcurrentSim
 using QuantumSavory

@@ -4,20 +4,24 @@ using QuantumSavory
 using Graphs
 using NetworkLayout
 using ConcurrentSim: ConcurrentSim
-using Makie: Makie, Theme, Figure, Axis, Axis3, Label, get_scene,
+using LinearAlgebra: eigen
+using Makie: Makie, Theme, Figure, Axis, Axis3, Aspect, Label, PolyElement, Legend, get_scene, @L_str,
     @recipe, lift, @lift, Observable,
     Point2, Point2f, Rect2f, Rect3f,
-    scatter!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
+    scatter!, heatmap!, barplot!, poly!, linesegments!, lines!, hlines!, vlines!, mesh!, text!,
     xlims!, ylims!, zlims!,
     xticks!, yticks!,
     hidedecorations!, hidespines!,
+    colsize!, resize_to_layout!,
     deregister_interaction!, interactions,
-    DataInspector, Slider, Colorbar, axislegend
+    DataInspector, Slider, Colorbar, axislegend, cgrad
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 using QuantumSavory: compactstr
 using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
+using QuantumSavory: _mode_mean
 
+using Gabs: Gabs
 using QuantumClifford: QuantumClifford
 using QuantumOpticsBase: QuantumOpticsBase, dm
 

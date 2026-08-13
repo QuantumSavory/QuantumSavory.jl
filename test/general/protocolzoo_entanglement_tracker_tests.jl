@@ -5,7 +5,6 @@ using ConcurrentSim
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ
 using Graphs
-using Revise
 using Random
 using Logging
 
