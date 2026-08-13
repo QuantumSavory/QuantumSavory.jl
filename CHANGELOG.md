@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Precompile representative Bell-pair, entanglement-generation, quantum-transport,
+  Clifford, entanglement-swapping, and Gabs homodyne workflows to reduce first-use
+  compilation latency.
 - Add an isolated cold-start benchmark and a descriptive pull-request
   comparison for package-cache build, import, and first-use latency.
 
