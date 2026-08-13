@@ -69,3 +69,27 @@ end
         @assert observable(bellreg[1:2], SProjector(bell)) ≈ 1
     end
 end
+
+@setup_workload let
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        measurement_reg = Register(2)
+        measurement_basis = (Z1, Z2)
+        measurement_bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
+        initialize!(measurement_reg[1:2], measurement_bell)
+
+        Random.seed!(rng, 0x5153)
+        @compile_workload begin
+            measurement_outcome = project_traceout!(measurement_reg[1], Z)
+            @assert observable(
+                measurement_reg[2], SProjector(measurement_basis[measurement_outcome])
+            ) ≈ 1
+            partner_outcome = project_traceout!(measurement_reg[2], Z)
+            @assert measurement_outcome == partner_outcome
+            @assert !isassigned(measurement_reg, 1) && !isassigned(measurement_reg, 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
