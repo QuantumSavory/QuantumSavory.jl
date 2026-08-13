@@ -37,8 +37,10 @@ median/IQR summary.
 
 Use clean committed checkouts and a new output directory outside every
 measured checkout for reportable runs. Dirty-checkout or Julia-version
-overrides make the run non-reportable, and measured checkout content must not
-change after its initial state hash is recorded.
+overrides, fewer than five builds, fewer than four samples per build, or a
+common scenario list missing Bell or Entangler make the run non-reportable.
+Measured checkout content must not change after its initial state hash is
+recorded.
 Preserve the harness clearing of inherited Julia CPU-target, project, and depot
 overrides so caller configuration cannot silently change compilation controls.
 Use five independent cache builds with four recorded fresh processes per

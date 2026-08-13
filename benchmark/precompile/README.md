@@ -112,8 +112,13 @@ version or a dirty checkout is allowed only for a non-reportable smoke run by
 setting `QS_PRECOMPILE_ALLOW_JULIA_MISMATCH=1` or
 `QS_PRECOMPILE_ALLOW_DIRTY=1`, respectively. Enabling either override records
 `reportable=false` and a reason in `metadata.txt`, even when the current Julia
-version matches or the checkout is clean. A normal run records
-`reportable=true` and an empty `nonreportable_reasons` list.
+version matches or the checkout is clean. A run also records
+`reportable=false` when it uses fewer than five builds, fewer than four samples
+per build, or omits either `bell` or `entangler` from the common scenarios.
+Thus the small default run and the descriptive pull-request workflow are
+explicitly non-reportable. A run that satisfies these repetition and headline
+requirements without an override records `reportable=true` and an empty
+`nonreportable_reasons` list.
 
 The harness commit and its three source hashes are checked before setup and
 again before summarization. Recorded processes execute temporary read-only

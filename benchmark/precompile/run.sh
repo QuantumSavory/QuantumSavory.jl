@@ -673,6 +673,10 @@ normalized_manifest_sha256=$(sha256sum "$consumer_manifest_path" | awk '{print $
 non_reportable_reasons=()
 [[ $allow_dirty == 0 ]] || non_reportable_reasons+=(allow_dirty_override_enabled)
 [[ $allow_julia_mismatch == 0 ]] || non_reportable_reasons+=(julia_mismatch_override_enabled)
+[[ $builds -ge 5 ]] || non_reportable_reasons+=(fewer_than_five_builds)
+[[ $samples -ge 4 ]] || non_reportable_reasons+=(fewer_than_four_samples_per_build)
+[[ ",${scenario_list}," == *,bell,* ]] || non_reportable_reasons+=(missing_bell_headline)
+[[ ",${scenario_list}," == *,entangler,* ]] || non_reportable_reasons+=(missing_entangler_headline)
 if [[ ${#non_reportable_reasons[@]} -eq 0 ]]; then
     reportable=true
     non_reportable_reason_list=

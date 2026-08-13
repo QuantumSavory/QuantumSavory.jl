@@ -74,14 +74,17 @@ gate. Run trace instrumentation only in separate diagnostic processes. Report
 the metadata, raw TSV, per-build results, aggregate medians and interquartile
 ranges, and all accepted and rejected candidates. Treat a run as reportable
 only when its metadata says `reportable=true`. The dirty-checkout and
-Julia-version overrides always make a run non-reportable. Checkout state hashes
-must remain unchanged throughout a run, including when the initial dirty state
-is allowed.
+Julia-version overrides, insufficient repetitions, or omission of either
+headline scenario always make a run non-reportable. Checkout state hashes must
+remain unchanged throughout a run, including when the initial dirty state is
+allowed.
 
 The PR-only cold-start workflow compares the exact pull-request base and head,
 uploads raw results, and writes medians and interquartile ranges to the job
-summary. Timing deltas do not fail the job. A broken package cache, scenario
-assertion, dependency-control check, or harness command does fail it. Do not
+summary. Its smaller repetition count makes its results descriptive and its
+metadata explicitly non-reportable. Timing deltas do not fail the job. A broken
+package cache, scenario assertion, dependency-control check, or harness command
+does fail it. Do not
 compare these results with AirspeedVelocity values: that suite measures loaded,
 steady-state operations.
 
