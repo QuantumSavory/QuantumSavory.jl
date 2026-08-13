@@ -199,3 +199,24 @@ end
         copy!(rng, saved_rng)
     end
 end
+
+@setup_workload let
+    # Gabs homodyne measurement
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5158)
+        @compile_workload begin
+            gabs_repr = GabsRepr(Gabs.QuadBlockBasis)
+            gabs_reg = Register(fill(Qumode(), 2), fill(gabs_repr, 2))
+            initialize!(gabs_reg[1:2], TwoSqueezedState(0.45))
+            gabs_result = project_traceout!(
+                gabs_reg[1], HomodyneMeasurement([0.0]; squeeze=1e-12)
+            )
+            @assert length(gabs_result) == 2 && all(isfinite, gabs_result)
+            @assert !isassigned(gabs_reg, 1) && isassigned(gabs_reg, 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
