@@ -147,3 +147,30 @@ end
         @assert isapprox(expectation, 1; atol=1e-12)
     end
 end
+
+@setup_workload let
+    # Clifford register operations
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5154)
+        @compile_workload begin
+            register = Register(2, CliffordRepr())
+            initialize!(register[1:2], StabilizerState("XX ZZ"))
+            apply!(register[1], H)
+            apply!(register[1], H)
+            @assert isapprox(real(observable(register[1:2], Z ⊗ Z)), 1; atol=1e-12)
+            first_outcome = project_traceout!(register[1], Z)
+            partner_fidelity = real(observable(
+                register[2],
+                SProjector((Z1, Z2)[first_outcome]),
+            ))
+            second_outcome = project_traceout!(register[2], Z)
+            @assert first_outcome == second_outcome
+            @assert isapprox(partner_fidelity, 1; atol=1e-12)
+            @assert !isassigned(register, 1) && !isassigned(register, 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
