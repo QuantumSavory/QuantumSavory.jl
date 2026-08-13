@@ -93,3 +93,40 @@ end
         copy!(rng, saved_rng)
     end
 end
+
+@setup_workload let
+    # ProtocolZoo entanglement generation
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5156)
+        saved_glcnt = glcnt[]
+        try
+            @compile_workload begin
+                network = RegisterNet([Register(1), Register(1)])
+                simulation = get_time_tracker(network)
+                protocol = ProtocolZoo.EntanglerProt(
+                    simulation,
+                    network,
+                    1,
+                    2;
+                    chooseslotA=1,
+                    chooseslotB=1,
+                    success_prob=1.0,
+                    rounds=1,
+                )
+                ConcurrentSim.@process protocol()
+                ConcurrentSim.run(simulation, 1.0)
+                fidelity = real(observable(
+                    (network[1][1], network[2][1]),
+                    SProjector((Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)),
+                ))
+                @assert isapprox(fidelity, 1; atol=1e-12)
+            end
+        finally
+            glcnt[] = saved_glcnt
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
