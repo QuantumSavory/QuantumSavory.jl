@@ -59,3 +59,13 @@ using PrecompileTools
         express(state2, CliffordRepr())
     end
 end
+
+@setup_workload let
+    # Default Bell-pair construction and observable
+    @compile_workload begin
+        bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
+        bellreg = Register(2)
+        initialize!(bellreg[1:2], bell)
+        @assert observable(bellreg[1:2], SProjector(bell)) ≈ 1
+    end
+end
