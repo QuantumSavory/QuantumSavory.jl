@@ -174,3 +174,28 @@ end
         copy!(rng, saved_rng)
     end
 end
+
+@setup_workload let
+    # CircuitZoo entanglement swapping
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5155)
+        @compile_workload begin
+            swap_network = RegisterNet([Register(1), Register(2), Register(1)])
+            bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
+            initialize!((swap_network[1][1], swap_network[2][1]), bell)
+            initialize!((swap_network[2][2], swap_network[3][1]), bell)
+            CircuitZoo.EntanglementSwap()(
+                swap_network[2][1], swap_network[1][1], swap_network[2][2], swap_network[3][1]
+            )
+            zz = real(observable((swap_network[1][1], swap_network[3][1]), Z ⊗ Z))
+            xx = real(observable((swap_network[1][1], swap_network[3][1]), X ⊗ X))
+            @assert isapprox(zz, 1; atol=1e-12)
+            @assert isapprox(xx, 1; atol=1e-12)
+            @assert !isassigned(swap_network[2], 1) && !isassigned(swap_network[2], 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
