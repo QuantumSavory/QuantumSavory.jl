@@ -130,3 +130,20 @@ end
         copy!(rng, saved_rng)
     end
 end
+
+@setup_workload let
+    # Quantum transport
+    @compile_workload begin
+        network = RegisterNet([Register(1), Register(1)]; quantum_delay=0.25)
+        simulation = get_time_tracker(network)
+        initialize!(network[1][1], X1)
+        quantum_channel = qchannel(network, 1 => 2)
+        put!(quantum_channel, network[1][1])
+        take!(quantum_channel, network[2][1])
+        ConcurrentSim.run(simulation, 1.0)
+        @assert !isassigned(network[1], 1)
+        @assert isassigned(network[2], 1)
+        expectation = real(observable(network[2][1], X))
+        @assert isapprox(expectation, 1; atol=1e-12)
+    end
+end
