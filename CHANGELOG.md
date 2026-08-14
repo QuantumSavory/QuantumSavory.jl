@@ -10,6 +10,8 @@
   Julia's standard logging macros with stable `event` symbols and structured
   metadata. Logs expose stable, filterable domain groups through `LOG_GROUPS`.
 - Additional visualization methods for states of registers.
+- QTCP's `NetworkNodeController` now reports per-flow backlog, average sojourn
+  time, and processed datagrams in HTML and PNG rich displays.
 - Dense observables on pure Clifford states now warn before converting the entire
   stabilizer state to an exponentially sized ket.
 - `QuantumMCRepr` is supported much more thoroughly, providing a faster alternative to `QuantumOpticsRepr` that is just as general.

@@ -139,3 +139,71 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     Makie.vlines!(ah, avg, color=:gray)
     Makie.text!(ah, avg, 0.0, text=" Mean time:\n$(@sprintf " %.4g" avg)", color=:black)
 end
+
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController)
+    statistics = QuantumSavory.ProtocolZoo.QTCP._network_node_controller_statistics(prot)
+    current_time = max(
+        ConcurrentSim.now(prot.sim),
+        maximum((event.t for event in prot._log); init=0.0),
+    )
+
+    Label(
+        subfig[1, 1:2],
+        text="NetworkNodeController on\n$(compactstr(prot.net[prot.node]))",
+        tellwidth=false,
+    )
+    backlog_axis = Axis(
+        subfig[2, 1],
+        title="QDatagram backlog",
+        xlabel="Simulation time",
+        ylabel="Queued QDatagrams",
+    )
+    processed_axis = Axis(
+        subfig[3, 1:2],
+        title="Processed QDatagrams",
+        xlabel="Simulation time",
+        ylabel="Processed QDatagrams",
+    )
+
+    table = subfig[2, 2]
+    Label(table[1, 1:2], text="Avg. sojourn time")
+    Label(table[2, 1], text="Flow ID")
+    Label(table[2, 2], text="Time")
+
+    if isempty(statistics)
+        Label(table[3, 1:2], text="No QDatagrams observed")
+        return
+    end
+
+    for (row, statistic) in enumerate(statistics)
+        events = filter(event -> event.flow_id == statistic.flow_id, prot._log)
+        backlog = cumsum(event.processed ? -1 : 1 for event in events)
+        backlog_times = [0.0; getproperty.(events, :t); current_time]
+        backlog_values = [0; backlog; last(backlog)]
+        Makie.stairs!(
+            backlog_axis,
+            backlog_times,
+            backlog_values;
+            step=:post,
+            label="Flow $(statistic.flow_id)",
+        )
+
+        processed_events = filter(event -> event.processed, events)
+        processed_times = [0.0; getproperty.(processed_events, :t); current_time]
+        processed_values = [0; eachindex(processed_events); length(processed_events)]
+        Makie.stairs!(
+            processed_axis,
+            processed_times,
+            processed_values;
+            step=:post,
+            label="Flow $(statistic.flow_id)",
+        )
+
+        Label(table[row + 2, 1], text=string(statistic.flow_id))
+        average = statistic.average_sojourn
+        Label(table[row + 2, 2], text=average isa AbstractString ? average : @sprintf("%.4g", average))
+    end
+
+    axislegend(backlog_axis)
+    axislegend(processed_axis)
+end
