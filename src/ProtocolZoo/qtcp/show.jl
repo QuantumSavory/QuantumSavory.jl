@@ -110,6 +110,24 @@ function _network_node_controller_statistics(prot::NetworkNodeController)
     end
 end
 
+function _endnode_flow_summary(prot::EndNodeController)
+    return map(sort!(collect(prot._log); by=first)) do (flow_id, stats)
+        duration = stats.last_delivery_time - stats.flow_start_time
+        average_latency = stats.delivered > 0 ?
+            stats.latency_sum / stats.delivered : nothing
+        average_rate = stats.delivered > 0 && duration > 0 ?
+            stats.delivered / duration : nothing
+        return (;
+            flow_id,
+            flow_src=stats.flow_src,
+            flow_dst=stats.flow_dst,
+            delivered=stats.delivered,
+            average_latency,
+            average_rate,
+        )
+    end
+end
+
 function Base.show(io::IO, ::MIME"text/html", prot::NetworkNodeController)
     node_label = QuantumSavory._html_escape_text(QuantumSavory.compactstr(prot.net[prot.node]))
     statistics = _network_node_controller_statistics(prot)
@@ -130,6 +148,84 @@ function Base.show(io::IO, ::MIME"text/html", prot::NetworkNodeController)
       <address>on <b>$(node_label)</b></address>
       <h2>Per-flow QDatagram statistics</h2>
       $(content)
+    </div>
+    """)
+end
+
+function _endnode_node_html(prot::EndNodeController, node::Int, role::Symbol)
+    label = QuantumSavory._html_escape_text(QuantumSavory.compactstr(prot.net[node]))
+    role_class = role === :source ?
+        "quantumsavory_protocol_flow_source" :
+        "quantumsavory_protocol_flow_destination"
+    locality_class = node == prot.node ?
+        "quantumsavory_protocol_local_node" :
+        "quantumsavory_protocol_remote_node"
+    contents = node == prot.node ? "<strong>$(label)</strong>" : label
+    return "<span class=\"quantumsavory_protocol_node $(role_class) $(locality_class)\">$(contents)</span>"
+end
+
+_endnode_metric_html(::Nothing) = "&mdash;"
+_endnode_metric_html(value::Float64) = string(round(value; sigdigits=4))
+
+function Base.show(io::IO, ::MIME"text/html", prot::EndNodeController)
+    rows = _endnode_flow_summary(prot)
+    node_label = QuantumSavory._html_escape_text(
+        QuantumSavory.compactstr(prot.net[prot.node])
+    )
+    flow_items = map(rows) do row
+        return """
+        <li class="quantumsavory_protocol_flow">
+          Flow <code class="quantumsavory_protocol_flow_id">$(row.flow_id)</code>:
+          $(_endnode_node_html(prot, row.flow_src, :source))
+          <span class="quantumsavory_protocol_flow_arrow">→</span>
+          $(_endnode_node_html(prot, row.flow_dst, :destination))
+        </li>
+        """
+    end
+    flow_list = isempty(rows) ?
+        "<p class=\"quantumsavory_protocol_empty\">No managed flows.</p>" :
+        "<ul class=\"quantumsavory_protocol_flow_list\">$(join(flow_items, '\n'))</ul>"
+
+    metric_rows = map(rows) do row
+        return """
+        <tr class="quantumsavory_protocol_flow_metrics">
+          <th scope="row"><code class="quantumsavory_protocol_flow_id">$(row.flow_id)</code></th>
+          <td class="quantumsavory_protocol_metric quantumsavory_protocol_delivered">$(row.delivered)</td>
+          <td class="quantumsavory_protocol_metric quantumsavory_protocol_average_latency">$(_endnode_metric_html(row.average_latency))</td>
+          <td class="quantumsavory_protocol_metric quantumsavory_protocol_average_delivery_rate">$(_endnode_metric_html(row.average_rate))</td>
+        </tr>
+        """
+    end
+    performance = if isempty(rows)
+        "<p class=\"quantumsavory_protocol_empty\">No delivery data.</p>"
+    else
+        """
+        <table class="quantumsavory_protocol_metrics">
+          <thead>
+            <tr>
+              <th scope="col">Flow</th>
+              <th scope="col">Delivered</th>
+              <th scope="col">Average end-to-end latency</th>
+              <th scope="col">Average delivery rate</th>
+            </tr>
+          </thead>
+          <tbody>$(join(metric_rows, '\n'))</tbody>
+        </table>
+        """
+    end
+
+    print(io, """
+    <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_end_node_controller">
+      <h1><code class="quantumsavory_typename quantumsavory_protocol_typename">EndNodeController</code> protocol</h1>
+      <address>on <strong class="quantumsavory_protocol_node quantumsavory_protocol_local_node">$(node_label)</strong></address>
+      <section class="quantumsavory_protocol_flows">
+        <h2>Flows</h2>
+        $(flow_list)
+      </section>
+      <section class="quantumsavory_protocol_performance">
+        <h2>Performance</h2>
+        $(performance)
+      </section>
     </div>
     """)
 end
