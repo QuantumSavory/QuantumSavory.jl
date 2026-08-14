@@ -246,6 +246,8 @@ Managing the following transformations of classical control signals:
     net::RegisterNet
     """the vertex index of where the protocol is located"""
     node::Int
+    """stores queue events used by protocol visualizations; the storage type is not part of the public API and may change in future versions"""
+    _log::Vector{@NamedTuple{t::Float64, flow_id::Int, processed::Bool, sojourn::Float64}} = @NamedTuple{t::Float64, flow_id::Int, processed::Bool, sojourn::Float64}[]
 end
 
 protocol_catalog_metadata(::Type{NetworkNodeController}) = (
@@ -254,7 +256,12 @@ protocol_catalog_metadata(::Type{NetworkNodeController}) = (
     required_fields = (),
 )
 
-NetworkNodeController(net::RegisterNet, node::Int) = NetworkNodeController(get_time_tracker(net), net, node)
+function NetworkNodeController(sim, net, node; kwargs...)
+    return NetworkNodeController(;sim, net, node, kwargs...)
+end
+function NetworkNodeController(net::RegisterNet, node::Int; kwargs...)
+    return NetworkNodeController(get_time_tracker(net), net, node; kwargs...)
+end
 
 const _LinkControllerLogEntry = @NamedTuple{
     originator_node::Int,
@@ -455,7 +462,7 @@ end
 @resumable function (prot::NetworkNodeController)()
     (;sim, net, node) = prot
     mb = messagebuffer(net, node)
-    datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int}}() # keyed by flow_uuid, seq_num; storing datagram tag and next hop
+    datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int,Float64}}() # keyed by flow_uuid, seq_num; storing datagram tag, next hop, and enqueue time
     while true
         workwasdone = true
         while workwasdone
@@ -467,7 +474,9 @@ end
                 _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = incoming_qdatagram.tag
                 nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
                 request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
-                datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop)
+                enqueued_at = now(sim)::Float64
+                datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop, enqueued_at)
+                push!(prot._log, (t=enqueued_at, flow_id=flow_uuid, processed=false, sojourn=0.0))
                 put!(mb, request)
             end
 
@@ -478,7 +487,7 @@ end
                 workwasdone = true
                 _, flow_uuid, seq_num, memory_slot = llreply.tag
                 # Find the corresponding QDatagram that matches this reply
-                queued_tag, nexthop = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
+                queued_tag, nexthop, enqueued_at = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
                 # Process the entanglement and forward the datagram
                 _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = queued_tag
 
@@ -498,6 +507,8 @@ end
                 # Forward the datagram to the next node in the path
                 new_qdatagram = QDatagram(flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time)
                 put!(channel(net, node=>nexthop; permit_forward=false), new_qdatagram)
+                processed_at = now(sim)::Float64
+                push!(prot._log, (t=processed_at, flow_id=flow_uuid, processed=true, sojourn=processed_at-enqueued_at))
             end
         end
 

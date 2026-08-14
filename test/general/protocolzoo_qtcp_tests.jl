@@ -216,6 +216,32 @@ end
 
 ##
 
+@testset "NetworkNodeController records queue history" begin
+    net = RegisterNet([Register(2), Register(2)])
+    sim = get_time_tracker(net)
+    controller = NetworkNodeController(sim, net, 1)
+
+    @test isempty(controller._log)
+    @test NetworkNodeController(sim, net, Int32(1)).node === 1
+
+    @process controller()
+    @process LinkController(net, 1, 2)()
+    for seq_num in 1:2
+        put!(net[1], QDatagram(42, 1, 2, 0, seq_num, 0.0))
+    end
+
+    run(sim, 3.0)
+
+    @test [event.processed for event in controller._log] == [false, false, true, true]
+    @test all(event.flow_id == 42 for event in controller._log)
+    @test all(iszero(event.sojourn) for event in controller._log if !event.processed)
+    @test sort([event.sojourn for event in controller._log if event.processed]) ≈ [1.0, 2.0]
+    @test sum(event.processed ? -1 : 1 for event in controller._log) == 0
+    @test count_matching_tags!(messagebuffer(net, 2), QDatagram, 42, 1, 2, ❓, ❓, ❓) == 2
+end
+
+##
+
 @testset "Complete QTCP protocol flow" begin
     # Create registers with a few qubits each
     registers = [Register(5) for _ in 1:5]
