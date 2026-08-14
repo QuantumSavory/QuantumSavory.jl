@@ -9,6 +9,7 @@ import InteractiveUtils, REPL
 
 #out = stdout
 out = IOBuffer()
+png_signature = UInt8[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
 reg = Register([Qubit(), Qumode()], [CliffordRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
 
@@ -68,6 +69,34 @@ png_signature = UInt8[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 @test first(empty_link_png, 8) == png_signature
 @test first(populated_link_png, 8) == png_signature
 @test empty_link_png != populated_link_png
+
+controller = EndNodeController(get_time_tracker(net), net, 1)
+empty_controller_image = IOBuffer()
+show(empty_controller_image, MIME"image/png"(), controller)
+empty_controller_png = take!(empty_controller_image)
+@test empty_controller_png[1:8] == png_signature
+
+controller._log[101] = (
+    flow_src=1,
+    flow_dst=2,
+    delivered=2,
+    latency_sum=6.0,
+    flow_start_time=1.0,
+    last_delivery_time=5.0,
+)
+controller._log[102] = (
+    flow_src=2,
+    flow_dst=1,
+    delivered=0,
+    latency_sum=0.0,
+    flow_start_time=5.0,
+    last_delivery_time=5.0,
+)
+controller_image = IOBuffer()
+show(controller_image, MIME"image/png"(), controller)
+controller_png = take!(controller_image)
+@test controller_png[1:8] == png_signature
+@test controller_png != empty_controller_png
 
 
 reg1 = Register([Qumode()], [GabsRepr(QuadBlockBasis)])

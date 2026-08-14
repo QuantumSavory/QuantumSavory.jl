@@ -214,3 +214,61 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
         )
     end
 end
+
+_endnode_metric_label(::Nothing) = "—"
+_endnode_metric_label(value::Float64) = string(round(value; sigdigits=4))
+
+function _endnode_endpoint_label(position, prot::EndNodeController, node::Int)
+    node == prot.node && Makie.Box(position)
+    return Label(position, text=compactstr(prot.net[node]), padding=(8, 8, 4, 4))
+end
+
+function protshowimage(subfig, prot::EndNodeController)
+    rows = ProtocolZoo.QTCP._endnode_flow_summary(prot)
+    Label(
+        subfig[1,1],
+        text="EndNodeController on\n$(compactstr(prot.net[prot.node]))",
+        font=:bold,
+        tellwidth=false,
+    )
+
+    Label(subfig[2,1], text="Flows", font=:bold, tellwidth=false)
+    flows = Makie.GridLayout(subfig[3,1])
+    if isempty(rows)
+        Label(flows[1,1], text="No managed flows.")
+    else
+        for (column, heading) in enumerate(("Flow", "Source", "", "Destination"))
+            Label(flows[1,column], text=heading, font=:bold)
+        end
+        for (row_index, row) in enumerate(rows)
+            row_number = row_index + 1
+            Label(flows[row_number,1], text=string(row.flow_id))
+            _endnode_endpoint_label(flows[row_number,2], prot, row.flow_src)
+            Label(flows[row_number,3], text="→", fontsize=24)
+            _endnode_endpoint_label(flows[row_number,4], prot, row.flow_dst)
+        end
+    end
+
+    Label(subfig[4,1], text="Performance", font=:bold, tellwidth=false)
+    metrics = Makie.GridLayout(subfig[5,1])
+    if isempty(rows)
+        Label(metrics[1,1], text="No delivery data.")
+    else
+        headings = ("Flow", "Delivered", "Avg latency", "Avg delivery rate")
+        for (column, heading) in enumerate(headings)
+            Label(metrics[1,column], text=heading, font=:bold)
+        end
+        for (row_index, row) in enumerate(rows)
+            row_number = row_index + 1
+            values = (
+                row.flow_id,
+                row.delivered,
+                _endnode_metric_label(row.average_latency),
+                _endnode_metric_label(row.average_rate),
+            )
+            for (column, value) in enumerate(values)
+                Label(metrics[row_number,column], text=string(value))
+            end
+        end
+    end
+end

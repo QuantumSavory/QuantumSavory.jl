@@ -18,7 +18,7 @@ using Makie: Makie, Theme, Figure, Axis, Axis3, Aspect, Label, PolyElement, Lege
 
 import QuantumSavory: registernetplot, registernetplot!, registernetplot_axis, resourceplot_axis, showonplot, showmetadata
 using QuantumSavory: compactstr
-using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer
+using QuantumSavory.ProtocolZoo: ProtocolZoo, EntanglerProt, EntanglementConsumer, EndNodeController
 using QuantumSavory: _mode_mean
 
 using Gabs: Gabs
