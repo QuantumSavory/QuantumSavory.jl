@@ -102,17 +102,17 @@ landing = Bonito.App() do
 
     n, sim, net, switch_protocol, client_pairs, client_unordered_pairs, consumers, rates, rate_scale, sim_time, fig, observables, axes = prepare_singlerun()
 
-    running = Observable{Any}(false)
+    running = Observable{Union{Bool, Nothing}}(false)
     fig[3,1] = buttongrid = GridLayout(tellwidth = false)
     buttongrid[1,1] = b = Makie.Button(fig, label = @lift(isnothing($running) ? "Done" : $running ? "Running..." : "Run once"), height=30, tellwidth=false)
 
     on(b.clicks) do _
-        if !running[]
+        if running[] === false
             running[] = true
         end
     end
     on(running) do r
-        if r
+        if r === true
             Threads.@spawn begin
                 continue_singlerun!(
                     n, fig, sim, sim_time, switch_protocol, client_unordered_pairs, consumers,

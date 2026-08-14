@@ -51,7 +51,7 @@ using QuantumOpticsBase: QuantumOpticsBase, dm
 end
 
 function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
-    networkobs = rn[1]
+    networkobs = Makie.ComputePipeline.get_observable!(rn[1]; use_deepcopy=false)
     registers = networkobs[].registers
 
     register_rectangles = Observable(Rect2f[])     # Makie rectangles that will be plotted for each register
@@ -224,7 +224,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
     # set up event modification notifications
     Makie.Observables.onany(update_plot, networkobs)
     Makie.Observables.onany([rn[:registercoords], rn[:observables]]) do _
-        update_plot(networkobs)
+        update_plot(networkobs[])
     end
 
     # generate the actual graphics
@@ -366,14 +366,14 @@ function registernetplot_axis(ax::Makie.AbstractAxis, registersobservable; infoc
 end
 
 # subfig::Union{GridPosition, GridSubposition} but maybe other as well, so leave it unspecified
-function registernetplot_axis(subfig, registersobservable; infocli=true, datainspector=true, kwargs...)
-    registernetplot_axis(Makie.Axis(subfig[1,1]), registersobservable; infocli, datainspector, kwargs...)
+function registernetplot_axis(subfig, registersobservable; infocli=true, datainspector=true, autolimits=true, kwargs...)
+    registernetplot_axis(Makie.Axis(subfig[1,1]), registersobservable; infocli, datainspector, autolimits, kwargs...)
 end
 
-function registernetplot_axis(registersobservable; infocli=true, datainspector=true, kwargs...)
+function registernetplot_axis(registersobservable; infocli=true, datainspector=true, autolimits=true, kwargs...)
     fig = Figure()
     ax = Axis(fig[1, 1])
-    registernetplot_axis(ax, registersobservable; infocli, datainspector, kwargs...)
+    registernetplot_axis(ax, registersobservable; infocli, datainspector, autolimits, kwargs...)
 end
 
 ##

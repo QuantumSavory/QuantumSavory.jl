@@ -6,9 +6,12 @@ using QuantumSavory.StatesZoo.Genqo: GenqoUnheraldedSPDCBellPairW, GenqoMultiple
 using QuantumOpticsBase
 using QuantumSymbolics
 
-@oxidise
+const SERVER_PREFIX = Base.get(ENV, "QS_STATES_REST_SERVER_PREFIX", "")
+public_path(path) = string(SERVER_PREFIX, path)
+
+@oxidize
 @get "/api/health" function()
-    return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running -- see implementation details at https://github.com/QuantumSavory/QuantumSavory.jl/tree/main/examples/states_rest_api")
+    return Dict("status" => "healthy", "message" => "QuantumSavory StatesZoo API is running -- see implementation details at https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/states_rest_server")
 end
 
 # Barrett-Kok Bell Pair endpoints
@@ -195,26 +198,26 @@ end
             Dict(
                 "name" => "BarrettKokBellPair",
                 "description" => "Normalized Barrett-Kok Bell pair state",
-                "endpoint" => "/api/barrett-kok/density-matrix",
-                "parameters_endpoint" => "/api/barrett-kok/parameters"
+                "endpoint" => public_path("/api/barrett-kok/density-matrix"),
+                "parameters_endpoint" => public_path("/api/barrett-kok/parameters")
             ),
             Dict(
                 "name" => "BarrettKokBellPairW",
                 "description" => "Weighted Barrett-Kok Bell pair state (trace = success probability)",
-                "endpoint" => "/api/barrett-kok/density-matrix?weighted=true",
-                "parameters_endpoint" => "/api/barrett-kok/parameters"
+                "endpoint" => public_path("/api/barrett-kok/density-matrix?weighted=true"),
+                "parameters_endpoint" => public_path("/api/barrett-kok/parameters")
             ),
             Dict(
                 "name" => "GenqoMultiplexedCascadedBellPairW",
                 "description" => "Heralded multiplexed cascaded source (ZALM)",
-                "endpoint" => "/api/genqo/zalm/density-matrix",
-                "parameters_endpoint" => "/api/genqo/zalm/parameters"
+                "endpoint" => public_path("/api/genqo/zalm/density-matrix"),
+                "parameters_endpoint" => public_path("/api/genqo/zalm/parameters")
             ),
             Dict(
                 "name" => "GenqoUnheraldedSPDCBellPairW",
                 "description" => "Unheralded SPDC Bell pair source",
-                "endpoint" => "/api/genqo/spdc/density-matrix",
-                "parameters_endpoint" => "/api/genqo/spdc/parameters"
+                "endpoint" => public_path("/api/genqo/spdc/density-matrix"),
+                "parameters_endpoint" => public_path("/api/genqo/spdc/parameters")
             )
         ]
     )
@@ -222,20 +225,22 @@ end
 
 # Start the server
 if abspath(PROGRAM_FILE) == @__FILE__
-    println("Starting QuantumSavory StatesZoo API server...")
-    println("Available endpoints:")
-    println("  GET /api/health - Health check")
-    println("  GET /api/states - List available quantum states")
-    println("  GET /api/barrett-kok/density-matrix - Barrett-Kok Bell pair density matrix")
-    println("  GET /api/barrett-kok/parameters - Barrett-Kok parameters info")
-    println("  GET /api/genqo/zalm/density-matrix - Genqo ZALM density matrix")
-    println("  GET /api/genqo/zalm/parameters - Genqo ZALM parameters info")
-    println("  GET /api/genqo/spdc/density-matrix - Genqo SPDC density matrix")
-    println("  GET /api/genqo/spdc/parameters - Genqo SPDC parameters info")
-
     port = parse(Int, Base.get(ENV, "QS_STATES_REST_SERVER_PORT", "8080"))
     host = Base.get(ENV, "QS_STATES_REST_SERVER_IP", "127.0.0.1")
     external_url = Base.get(ENV, "QS_STATES_REST_SERVER_PROXY", nothing)
+    prefix = isempty(SERVER_PREFIX) ? nothing : SERVER_PREFIX
     docs_path = Base.get(ENV, "QS_STATES_REST_SERVER_DOCPATH", "/docs")
-    serve(;port, host, external_url, docs_path)
+
+    println("Starting QuantumSavory StatesZoo API server...")
+    println("Available endpoints:")
+    println("  GET $(public_path("/api/health")) - Health check")
+    println("  GET $(public_path("/api/states")) - List available quantum states")
+    println("  GET $(public_path("/api/barrett-kok/density-matrix")) - Barrett-Kok Bell pair density matrix")
+    println("  GET $(public_path("/api/barrett-kok/parameters")) - Barrett-Kok parameters info")
+    println("  GET $(public_path("/api/genqo/zalm/density-matrix")) - Genqo ZALM density matrix")
+    println("  GET $(public_path("/api/genqo/zalm/parameters")) - Genqo ZALM parameters info")
+    println("  GET $(public_path("/api/genqo/spdc/density-matrix")) - Genqo SPDC density matrix")
+    println("  GET $(public_path("/api/genqo/spdc/parameters")) - Genqo SPDC parameters info")
+
+    serve(;port, host, external_url, prefix, docs_path)
 end

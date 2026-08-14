@@ -1,5 +1,8 @@
 # A Much Simpler Simulation of First Generation Quantum Repeater Chain
 
+The interactive swapping example is hosted at
+[areweentangledyet.com/firstgenrepeater/](https://areweentangledyet.com/firstgenrepeater/).
+
 This `firstgenrepeater` is a much simpler implementation compared to the `firstgenrepeater_lowlevel`. Behind the scenes the simulation is basically the same, but this version uses much more convenient higher-level abstractions using ProtocolZoo, so the user needs to write much less code.
 
 The `setup.jl` file implements all the shared base functionality (network setup, the custom purifier process).
