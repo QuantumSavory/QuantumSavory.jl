@@ -9,3 +9,7 @@ with `setup`, normally using `deepcopy`, and `evals=1`.
 
 Preserve historical benchmark keys unless a migration is intentional. Treat
 AirspeedVelocity comparisons as performance evidence, not behavioral tests.
+
+## Cold-start measurements
+
+Use `precompile/run.sh` for package-cache build, import, and first-use latency.
