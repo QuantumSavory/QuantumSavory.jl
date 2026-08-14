@@ -4,6 +4,12 @@ function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.A
     show(io, m, f)
 end
 
+function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.QTCP.LinkController)
+    f = Figure(size=(800, 1000))
+    protshowimage(f, prot)
+    show(io, m, f)
+end
+
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy. Instead of an IO instance, it takes a Makie axis."""
 function protshowimage(subfig, prot)
     a = Axis(subfig[1,1])
@@ -23,6 +29,75 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglerProt)
     Makie.stairs!(adist, attempts, (1-p).^(attempts.-1).*p; step=:center)
     Makie.vlines!(adist, [1/p], color=:gray)
     Makie.text!(adist, 1/p, 0.0, text=" Mean time:\n$(@sprintf " %.4g" (1/p))", color=:black)
+end
+
+function _link_timing_histogram(subfig, samples; title)
+    summary = QuantumSavory.ProtocolZoo.QTCP._sample_summary(samples)
+    subtitle = if isempty(samples)
+        "No samples"
+    else
+        "n = $(length(samples)) | mean = $(@sprintf "%.4g" summary.mean) | median = $(@sprintf "%.4g" summary.median)"
+    end
+    axis = Axis(
+        subfig;
+        title,
+        subtitle,
+        xlabel="Time",
+        ylabel="Probability density",
+    )
+    if isempty(samples)
+        Makie.text!(
+            axis,
+            0.5,
+            0.5;
+            text="No samples",
+            space=:relative,
+            align=(:center, :center),
+        )
+    else
+        Makie.hist!(axis, samples; normalization=:pdf)
+    end
+    return axis
+end
+
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkController)
+    qtcp = QuantumSavory.ProtocolZoo.QTCP
+    label_a = compactstr(prot.net[prot.nodeA])
+    label_b = compactstr(prot.net[prot.nodeB])
+    samples = qtcp._linkcontroller_samples(prot)
+    layout = Makie.GridLayout(subfig[1, 1])
+
+    Label(
+        layout[1, 1:2],
+        text="LinkController between\n$(label_a) and $(label_b)",
+        tellwidth=false,
+    )
+    entangler_layout = Makie.GridLayout(layout[2, 1:2])
+    protshowimage(entangler_layout, qtcp._link_entangler(prot))
+    Makie.rowsize!(entangler_layout, 2, Makie.Auto(2))
+    Makie.rowsize!(entangler_layout, 4, Makie.Auto(1))
+    Label(
+        layout[3, 1:2],
+        text="Link-level request interarrival times",
+        tellwidth=false,
+    )
+    _link_timing_histogram(
+        layout[4, 1], samples.interarrival_times_a; title="From $(label_a)"
+    )
+    _link_timing_histogram(
+        layout[4, 2], samples.interarrival_times_b; title="From $(label_b)"
+    )
+    Label(
+        layout[5, 1:2],
+        text="Link-level request sojourn times",
+        tellwidth=false,
+    )
+    _link_timing_histogram(
+        layout[6, 1:2], samples.sojourn_times; title="Completed requests"
+    )
+    Makie.rowsize!(layout, 2, Makie.Auto(2))
+    Makie.rowsize!(layout, 4, Makie.Auto(1))
+    Makie.rowsize!(layout, 6, Makie.Auto(1))
 end
 
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsumer)
