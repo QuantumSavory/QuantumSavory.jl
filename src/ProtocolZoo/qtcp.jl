@@ -256,6 +256,12 @@ protocol_catalog_metadata(::Type{NetworkNodeController}) = (
 
 NetworkNodeController(net::RegisterNet, node::Int) = NetworkNodeController(get_time_tracker(net), net, node)
 
+const _LinkControllerLogEntry = @NamedTuple{
+    originator_node::Int,
+    arrival_time::Float64,
+    sojourn_time::Union{Nothing,Float64},
+}
+
 """
 $TYPEDEF
 
@@ -275,6 +281,8 @@ Managing the following transformations of classical control signals:
     nodeA::Int
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
+    """request arrival and sojourn records; the storage type is not part of the public API and may change in future versions"""
+    _log::Vector{_LinkControllerLogEntry} = _LinkControllerLogEntry[]
 end
 
 protocol_catalog_metadata(::Type{LinkController}) = (
@@ -283,7 +291,15 @@ protocol_catalog_metadata(::Type{LinkController}) = (
     required_fields = (),
 )
 
-LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_time_tracker(net), net, nodeA, nodeB)
+function LinkController(
+    sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...
+)
+    return LinkController(; sim, net, nodeA, nodeB, kwargs...)
+end
+
+function LinkController(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return LinkController(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+end
 
 
 ###
@@ -491,14 +507,32 @@ end
 end
 
 
-@resumable function _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
-    @yield lock(link_resource)
-    entangler = EntanglerProt(;
+function _link_entangler(prot::LinkController)
+    (; sim, net, nodeA, nodeB) = prot
+    return EntanglerProt(;
         sim, net,
         nodeA, nodeB,
         tag=nothing,
-        rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
+        rounds=1,
+        attempts=-1,
+        success_prob=1.0,
+        attempt_time=1.0, # TODO parameterize the link time and quality
     )
+end
+
+@resumable function _link_handle_request(
+    sim::Simulation,
+    prot::LinkController,
+    originator_node::Int,
+    destination_node::Int,
+    flow_uuid::Int,
+    seq_num::Int,
+    link_resource,
+    log_index::Int,
+)
+    (; net, nodeA, nodeB) = prot
+    @yield lock(link_resource)
+    entangler = _link_entangler(prot)
     # TODO have a timeout on how long to wait for an entangler to complete
     proc = @process entangler()
     _, slotA, _, slotB = @yield proc
@@ -512,6 +546,12 @@ end
     end
     put!(net[originator_node], LinkLevelReply(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=originator_slot))
     put!(net[destination_node], LinkLevelReplyAtHop(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=destination_slot))
+    entry = prot._log[log_index]
+    prot._log[log_index] = (
+        originator_node=entry.originator_node,
+        arrival_time=entry.arrival_time,
+        sojourn_time=Float64(now(sim)) - entry.arrival_time,
+    )
 end
 
 @resumable function (prot::LinkController)()
@@ -535,7 +575,22 @@ end
                 workwasdone = true
                 @assert originator_node != destination_node "LinkController $(nodeA) $(nodeB) has a link request with originator node $(originator_node) equal to the destination node $(destination_node)"
                 _, flow_uuid, seq_num, remote_node = llrequest.tag
-                @process _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
+                push!(prot._log, (
+                    originator_node=originator_node::Int,
+                    arrival_time=Float64(now(sim)),
+                    sojourn_time=nothing,
+                ))
+                log_index = lastindex(prot._log)
+                @process _link_handle_request(
+                    sim,
+                    prot,
+                    originator_node,
+                    destination_node,
+                    flow_uuid,
+                    seq_num,
+                    link_resource,
+                    log_index,
+                )
             end
         end
         # wait until we have received a message

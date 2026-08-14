@@ -327,4 +327,30 @@ end
 
 ##
 
+@testset "LinkController records request arrivals and sojourns" begin
+    net = RegisterNet([Register(2), Register(2)])
+    sim = get_time_tracker(net)
+    link_controller = LinkController(sim, net, 1, 2)
+    @process link_controller()
+
+    put!(net[1], LinkLevelRequest(flow_uuid=11, seq_num=1, remote_node=2))
+    put!(net[2], LinkLevelRequest(flow_uuid=22, seq_num=1, remote_node=1))
+
+    run(sim, 0.5)
+
+    @test [entry.originator_node for entry in link_controller._log] == [1, 2]
+    @test [entry.arrival_time for entry in link_controller._log] == [0.0, 0.0]
+    @test all(isnothing(entry.sojourn_time) for entry in link_controller._log)
+
+    run(sim, 3.0)
+
+    @test [entry.sojourn_time for entry in link_controller._log] == [1.0, 2.0]
+
+    other_controller = LinkController(sim, net, 1, 2)
+    @test isempty(other_controller._log)
+    @test other_controller._log !== link_controller._log
+end
+
+##
+
 end
