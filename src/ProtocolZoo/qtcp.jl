@@ -598,4 +598,6 @@ end
     end
 end
 
+include("qtcp/show.jl")
+
 end # module
