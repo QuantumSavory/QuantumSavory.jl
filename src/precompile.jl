@@ -59,3 +59,164 @@ using PrecompileTools
         express(state2, CliffordRepr())
     end
 end
+
+@setup_workload let
+    # Default Bell-pair construction and observable
+    @compile_workload begin
+        bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
+        bellreg = Register(2)
+        initialize!(bellreg[1:2], bell)
+        @assert observable(bellreg[1:2], SProjector(bell)) ≈ 1
+    end
+end
+
+@setup_workload let
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        measurement_reg = Register(2)
+        measurement_basis = (Z1, Z2)
+        measurement_bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
+        initialize!(measurement_reg[1:2], measurement_bell)
+
+        Random.seed!(rng, 0x5153)
+        @compile_workload begin
+            measurement_outcome = project_traceout!(measurement_reg[1], Z)
+            @assert observable(
+                measurement_reg[2], SProjector(measurement_basis[measurement_outcome])
+            ) ≈ 1
+            partner_outcome = project_traceout!(measurement_reg[2], Z)
+            @assert measurement_outcome == partner_outcome
+            @assert !isassigned(measurement_reg, 1) && !isassigned(measurement_reg, 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
+
+@setup_workload let
+    # ProtocolZoo entanglement generation
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5156)
+        saved_glcnt = glcnt[]
+        try
+            @compile_workload begin
+                network = RegisterNet([Register(1), Register(1)])
+                simulation = get_time_tracker(network)
+                protocol = ProtocolZoo.EntanglerProt(
+                    simulation,
+                    network,
+                    1,
+                    2;
+                    chooseslotA=1,
+                    chooseslotB=1,
+                    success_prob=1.0,
+                    rounds=1,
+                )
+                ConcurrentSim.@process protocol()
+                ConcurrentSim.run(simulation, 1.0)
+                fidelity = real(observable(
+                    (network[1][1], network[2][1]),
+                    SProjector((Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)),
+                ))
+                @assert isapprox(fidelity, 1; atol=1e-12)
+            end
+        finally
+            glcnt[] = saved_glcnt
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
+
+@setup_workload let
+    # Quantum transport
+    @compile_workload begin
+        network = RegisterNet([Register(1), Register(1)]; quantum_delay=0.25)
+        simulation = get_time_tracker(network)
+        initialize!(network[1][1], X1)
+        quantum_channel = qchannel(network, 1 => 2)
+        put!(quantum_channel, network[1][1])
+        take!(quantum_channel, network[2][1])
+        ConcurrentSim.run(simulation, 1.0)
+        @assert !isassigned(network[1], 1)
+        @assert isassigned(network[2], 1)
+        expectation = real(observable(network[2][1], X))
+        @assert isapprox(expectation, 1; atol=1e-12)
+    end
+end
+
+@setup_workload let
+    # Clifford register operations
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5154)
+        @compile_workload begin
+            register = Register(2, CliffordRepr())
+            initialize!(register[1:2], StabilizerState("XX ZZ"))
+            apply!(register[1], H)
+            apply!(register[1], H)
+            @assert isapprox(real(observable(register[1:2], Z ⊗ Z)), 1; atol=1e-12)
+            first_outcome = project_traceout!(register[1], Z)
+            partner_fidelity = real(observable(
+                register[2],
+                SProjector((Z1, Z2)[first_outcome]),
+            ))
+            second_outcome = project_traceout!(register[2], Z)
+            @assert first_outcome == second_outcome
+            @assert isapprox(partner_fidelity, 1; atol=1e-12)
+            @assert !isassigned(register, 1) && !isassigned(register, 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
+
+@setup_workload let
+    # CircuitZoo entanglement swapping
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5155)
+        @compile_workload begin
+            swap_network = RegisterNet([Register(1), Register(2), Register(1)])
+            bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
+            initialize!((swap_network[1][1], swap_network[2][1]), bell)
+            initialize!((swap_network[2][2], swap_network[3][1]), bell)
+            CircuitZoo.EntanglementSwap()(
+                swap_network[2][1], swap_network[1][1], swap_network[2][2], swap_network[3][1]
+            )
+            zz = real(observable((swap_network[1][1], swap_network[3][1]), Z ⊗ Z))
+            xx = real(observable((swap_network[1][1], swap_network[3][1]), X ⊗ X))
+            @assert isapprox(zz, 1; atol=1e-12)
+            @assert isapprox(xx, 1; atol=1e-12)
+            @assert !isassigned(swap_network[2], 1) && !isassigned(swap_network[2], 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
+
+@setup_workload let
+    # Gabs homodyne measurement
+    rng = Random.default_rng()
+    saved_rng = copy(rng)
+    try
+        Random.seed!(rng, 0x5158)
+        @compile_workload begin
+            gabs_repr = GabsRepr(Gabs.QuadBlockBasis)
+            gabs_reg = Register(fill(Qumode(), 2), fill(gabs_repr, 2))
+            initialize!(gabs_reg[1:2], TwoSqueezedState(0.45))
+            gabs_result = project_traceout!(
+                gabs_reg[1], HomodyneMeasurement([0.0]; squeeze=1e-12)
+            )
+            @assert length(gabs_result) == 2 && all(isfinite, gabs_result)
+            @assert !isassigned(gabs_reg, 1) && isassigned(gabs_reg, 2)
+        end
+    finally
+        copy!(rng, saved_rng)
+    end
+end
