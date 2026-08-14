@@ -7,6 +7,8 @@ import QuantumSymbolics: @withmetadata, symbollabel, QuantumOpticsRepr, express_
 import QuantumOpticsBase
 using DocStringExtensions
 
+public GenqoMultiplexedCascadedBellPairW, GenqoUnheraldedSPDCBellPairW
+
 """
 $TYPEDEF
 

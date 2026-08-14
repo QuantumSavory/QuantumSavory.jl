@@ -20,12 +20,8 @@ and formulas.
 - `StatesZoo.Genqo.GenqoUnheraldedSPDCBellPairW` wraps the unheralded SPDC model.
 
 Genqo.jl is a direct package dependency, not an optional Python integration. The two
-wrappers are nested under `StatesZoo.Genqo`. They have docstrings and a dedicated
-generated-docs section, but are neither exported nor declared `public`; that marking gap
-keeps source and the public catalog out of alignment. In both lowering paths
-the constructor parameter `Pᵈ` is retained for compatibility but ignored because the
-called Genqo density-matrix routines do not accept dark counts. Do not interpret a
-changed `Pᵈ` value as simulated noise until that boundary changes.
+wrappers are nested under `StatesZoo.Genqo`, are public but not exported, and have a
+dedicated generated-docs section.
 
 `stateparameters` and `stateparametersrange` drive exploration and communicate useful
 ranges. Those ranges are descriptive metadata; constructors do not consistently enforce
@@ -49,8 +45,6 @@ trace methods are not a general StatesZoo requirement.
 
 ## Known gaps
 
-- The two Genqo model types lack `export` or `public` marking.
-- Both Genqo lowerings ignore their accepted `Pᵈ` constructor parameter.
 - `BarrettKokBellPair` accepts and documents `m`, but its parameter/range
   introspection omits it; the weighted model's convenience constructors also lack
   constructor-parameter prose.
