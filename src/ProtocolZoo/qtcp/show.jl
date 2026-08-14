@@ -93,3 +93,42 @@ function Base.show(io::IO, m::MIME"text/html", prot::LinkController)
     </div>
     """)
 end
+
+function _network_node_controller_statistics(prot::NetworkNodeController)
+    flow_ids = sort!(unique(event.flow_id for event in prot._log))
+    return map(flow_ids) do flow_id
+        events = filter(event -> event.flow_id == flow_id, prot._log)
+        processed = filter(event -> event.processed, events)
+        average_sojourn = isempty(processed) ? "—" : sum(event.sojourn for event in processed) / length(processed)
+        return (
+            flow_id=flow_id,
+            backlog=sum(event.processed ? -1 : 1 for event in events),
+            average_sojourn=average_sojourn,
+            processed=length(processed),
+        )
+    end
+end
+
+function Base.show(io::IO, ::MIME"text/html", prot::NetworkNodeController)
+    node_label = QuantumSavory._html_escape_text(QuantumSavory.compactstr(prot.net[prot.node]))
+    statistics = _network_node_controller_statistics(prot)
+    content = if isempty(statistics)
+        "<p>No QDatagrams observed.</p>"
+    else
+        pretty_table(
+            String,
+            statistics;
+            column_labels=["Flow ID", "Current backlog", "Average sojourn time", "Processed QDatagrams"],
+            backend=:html,
+        )
+    end
+    print(io,
+    """
+    <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_network_node_controller">
+      <h1><code class="quantumsavory_typename quantumsavory_protocol_typename">NetworkNodeController</code> protocol</h1>
+      <address>on <b>$(node_label)</b></address>
+      <h2>Per-flow QDatagram statistics</h2>
+      $(content)
+    </div>
+    """)
+end
