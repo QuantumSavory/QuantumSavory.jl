@@ -1,13 +1,5 @@
 # News
 
-## Unreleased
-
-- Precompile representative Bell-pair, entanglement-generation, quantum-transport,
-  Clifford, entanglement-swapping, and Gabs homodyne workflows to reduce first-use
-  compilation latency.
-- Add an isolated cold-start benchmark and a descriptive pull-request
-  comparison for package-cache build, import, and first-use latency.
-
 ## v0.7.1 - 2026-08-07
 
 - **(fix)** Fixes for edge cases and support for more observables and projectors thanks to updates to QuantumSymbolics and QuantumClifford.
