@@ -92,10 +92,9 @@ participants for one event in fields such as `src_node`, `dst_node`, or
 
 ## Visualization Hooks
 
-Some protocols also expose richer visualization through `show` methods.
+Many protocols also expose richer visualization through `show` methods.
 `EntanglerProt`, for example, can render protocol-specific summaries in HTML or
-PNG form. `EndNodeController` renders its managed routes and the delivered pair
-count, average latency, and average delivery rate for each flow.
+PNG form.
 
 Those displays are not part of the protocol logic itself, but they are useful
 for debugging configuration and inspecting the expected behavior of a protocol
