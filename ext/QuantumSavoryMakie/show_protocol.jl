@@ -139,3 +139,78 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     Makie.vlines!(ah, avg, color=:gray)
     Makie.text!(ah, avg, 0.0, text=" Mean time:\n$(@sprintf " %.4g" avg)", color=:black)
 end
+
+"""Return the plot-row count for a `NetworkNodeController`."""
+protshowrows(::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController) = 3
+
+"""Render `prot`'s QDatagram statistics in `subfig`."""
+function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController)
+    statistics = QuantumSavory.ProtocolZoo.QTCP._network_node_controller_statistics(prot)
+    positions = eachindex(statistics)
+    current_time = max(
+        ConcurrentSim.now(prot.sim),
+        maximum((event.t for event in prot._log); init=0.0),
+    )
+
+    sojourn_axis = Axis(
+        subfig[1, 1],
+        title="Average QDatagram sojourn time",
+        xlabel="Flow ID",
+        ylabel="Time",
+        xticks=(positions, string.(getproperty.(statistics, :flow_id))),
+        xticklabelrotation=π / 4,
+    )
+    backlog_axis = Axis(
+        subfig[2, 1],
+        title="QDatagram backlog",
+        xlabel="Simulation time",
+        ylabel="Queued QDatagrams",
+    )
+    processed_axis = Axis(
+        subfig[3, 1],
+        title="Processed QDatagrams",
+        xlabel="Simulation time",
+        ylabel="Processed QDatagrams",
+    )
+    Makie.linkxaxes!(backlog_axis, processed_axis)
+
+    if isempty(statistics)
+        Makie.text!(sojourn_axis, 0, 0, text="No QDatagrams observed", align=(:center, :center))
+        return
+    end
+
+    for (row, statistic) in enumerate(statistics)
+        color = Makie.Cycled(row)
+        average = statistic.average_sojourn
+        barplot!(
+            sojourn_axis,
+            [row],
+            [average isa Real ? average : NaN];
+            color,
+            cycle=[:color],
+        )
+
+        events = filter(event -> event.flow_id == statistic.flow_id, prot._log)
+        backlog = cumsum(event.processed ? -1 : 1 for event in events)
+        backlog_times = [0.0; getproperty.(events, :t); current_time]
+        backlog_values = [0; backlog; last(backlog)]
+        Makie.stairs!(
+            backlog_axis,
+            backlog_times,
+            backlog_values;
+            step=:post,
+            color,
+        )
+
+        processed_events = filter(event -> event.processed, events)
+        processed_times = [0.0; getproperty.(processed_events, :t); current_time]
+        processed_values = [0; eachindex(processed_events); length(processed_events)]
+        Makie.stairs!(
+            processed_axis,
+            processed_times,
+            processed_values;
+            step=:post,
+            color,
+        )
+    end
+end

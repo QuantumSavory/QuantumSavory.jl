@@ -91,4 +91,46 @@ struct DummyProtocol <: QuantumSavory.ProtocolZoo.AbstractProtocol end
         @test occursin("Arrival time", populated_html)
         @test occursin("Sojourn time", populated_html)
     end
+
+    @testset "NetworkNodeController HTML summarizes each flow" begin
+        named_net = RegisterNet([Register(2)]; names=["<node & one>"])
+        named_sim = get_time_tracker(named_net)
+        empty_controller = NetworkNodeController(named_sim, named_net, 1)
+        empty_html = repr(MIME"text/html"(), empty_controller)
+
+        @test occursin(
+            "class=\"quantumsavory_show quantumsavory_protocol quantumsavory_protocol_network_node_controller\"",
+            empty_html,
+        )
+        @test occursin(
+            "class=\"quantumsavory_typename quantumsavory_protocol_typename\">NetworkNodeController</code>",
+            empty_html,
+        )
+        @test occursin("&lt;node &amp; one&gt;", empty_html)
+        @test !occursin("<node & one>", empty_html)
+        @test occursin("No QDatagrams observed.", empty_html)
+        @test !occursin("quantumsavory_protocol_unknown", empty_html)
+
+        logged_controller = NetworkNodeController(
+            sim=named_sim,
+            net=named_net,
+            node=1,
+            _log=[
+                (t=0.0, flow_id=101, processed=false, sojourn=0.0),
+                (t=1.0, flow_id=101, processed=true, sojourn=1.0),
+                (t=2.0, flow_id=101, processed=false, sojourn=0.0),
+                (t=5.0, flow_id=101, processed=true, sojourn=3.0),
+                (t=0.5, flow_id=202, processed=false, sojourn=0.0),
+            ],
+        )
+        logged_html = repr(MIME"text/html"(), logged_controller)
+        compact_html = replace(logged_html, r"\s+" => " ")
+
+        for heading in ("Flow ID", "Current backlog", "Average sojourn time", "Processed QDatagrams")
+            @test occursin(heading, logged_html)
+        end
+        @test occursin(r">101</td>.*?>0</td>.*?>2(?:\.0)?</td>.*?>2</td>", compact_html)
+        @test occursin(r">202</td>.*?>1</td>.*?>—</td>.*?>0</td>", compact_html)
+        @test findfirst("101", logged_html) < findfirst("202", logged_html)
+    end
 end

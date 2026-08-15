@@ -80,4 +80,31 @@ reg2 = Register([Qumode(), Qumode()], [GabsRepr(QuadBlockBasis), GabsRepr(QuadBl
 initialize!(reg2[1:2], TwoSqueezedState(0.45))
 show(out, MIME"image/png"(), QuantumSavory.stateof(reg2[1]))
 
+@testset "NetworkNodeController" begin
+    net = RegisterNet([Register(2), Register(2)]; names=["Amherst", "Boston"])
+    sim = get_time_tracker(net)
+    @test makie_extension.protshowrows(NetworkNodeController(sim, net, 1)) == 3
+    populated = NetworkNodeController(
+        sim=sim,
+        net=net,
+        node=1,
+        _log=[
+            (t=0.0, flow_id=101, processed=false, sojourn=0.0),
+            (t=1.0, flow_id=101, processed=true, sojourn=1.0),
+            (t=0.5, flow_id=202, processed=false, sojourn=0.0),
+        ],
+    )
+
+    renderings = map((NetworkNodeController(sim, net, 1), populated)) do controller
+        png = IOBuffer()
+        show(png, MIME"image/png"(), controller)
+        bytes = take!(png)
+
+        @test bytes[1:8] == UInt8[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+        @test length(bytes) > 8
+        return bytes
+    end
+    @test first(renderings) != last(renderings)
+end
+
 end
