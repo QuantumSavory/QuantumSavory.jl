@@ -507,6 +507,7 @@ end
 end
 
 
+"""Create the `EntanglerProt` used by a `LinkController`."""
 function _link_entangler(prot::LinkController)
     (; sim, net, nodeA, nodeB) = prot
     return EntanglerProt(;

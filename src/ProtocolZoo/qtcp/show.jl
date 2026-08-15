@@ -2,6 +2,7 @@ using PrettyTables: pretty_table
 using Statistics: mean, median
 import QuantumSavory: compactstr
 
+"""Extract timing samples from a `LinkController` log."""
 function _linkcontroller_samples(prot::LinkController)
     arrival_times_a = sort!(
         [entry.arrival_time for entry in prot._log if entry.originator_node == prot.nodeA]
@@ -22,11 +23,13 @@ function _linkcontroller_samples(prot::LinkController)
     )
 end
 
+"""Summarize timing samples with their mean and median."""
 function _sample_summary(samples)
     isempty(samples) && return (mean=nothing, median=nothing)
     return (mean=mean(samples), median=median(samples))
 end
 
+"""Format an optional timing statistic for display."""
 _show_sample(value) =
     isnothing(value) ? "No samples" : string(round(value; sigdigits=5))
 
