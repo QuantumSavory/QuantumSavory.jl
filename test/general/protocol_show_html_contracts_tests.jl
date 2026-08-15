@@ -58,4 +58,37 @@ struct DummyProtocol <: QuantumSavory.ProtocolZoo.AbstractProtocol end
         @test occursin("Observable 1", logged_html)
         @test occursin("Observable 2", logged_html)
     end
+
+    @testset "LinkController HTML summarizes request timing" begin
+        link_controller = LinkController(sim, net, 1, 2)
+        empty_html = repr(MIME"text/html"(), link_controller)
+
+        @test occursin("quantumsavory_protocol_link_controller", empty_html)
+        @test occursin("quantumsavory_protocol_typename\">LinkController", empty_html)
+        @test occursin("quantumsavory_protocol_entangler", empty_html)
+        @test occursin("left", empty_html)
+        @test occursin("right", empty_html)
+        @test occursin("No samples", empty_html)
+        @test !occursin("NaN", empty_html)
+
+        append!(link_controller._log, [
+            (originator_node=1, arrival_time=1.0, sojourn_time=2.0),
+            (originator_node=2, arrival_time=2.0, sojourn_time=4.0),
+            (originator_node=1, arrival_time=5.0, sojourn_time=nothing),
+            (originator_node=2, arrival_time=8.0, sojourn_time=6.0),
+            (originator_node=1, arrival_time=9.0, sojourn_time=8.0),
+            (originator_node=2, arrival_time=14.0, sojourn_time=10.0),
+        ])
+        populated_html = repr(MIME"text/html"(), link_controller)
+
+        @test occursin("Mean interarrival time", populated_html)
+        @test occursin("Median interarrival time", populated_html)
+        @test occursin(">4.0<", populated_html)
+        @test occursin(">6.0<", populated_html)
+        @test occursin("Completed requests", populated_html)
+        @test occursin("Pending requests", populated_html)
+        @test occursin("Originator node", populated_html)
+        @test occursin("Arrival time", populated_html)
+        @test occursin("Sojourn time", populated_html)
+    end
 end
