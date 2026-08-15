@@ -251,8 +251,18 @@ function protshowimage(subfig, prot::EndNodeController)
         Float64[something(row.average_latency, NaN) for row in rows],
         Float64[something(row.average_rate, NaN) for row in rows],
     )
+    bar_label_rotation = length(rows) > 10 ? π / 2 : 0
     for (axis, metric) in zip(axes, values)
-        barplot!(axis, positions, metric; color=bar_colors)
+        barplot!(
+            axis,
+            positions,
+            metric;
+            color=bar_colors,
+            bar_labels=:y,
+            label_formatter=value -> isfinite(value) ? @sprintf("%#.3g", value) : "",
+            label_position=:center,
+            label_rotation=bar_label_rotation,
+        )
     end
     Makie.linkxaxes!(axes)
     Makie.hidexdecorations!.(axes[1:2]; grid=false)
