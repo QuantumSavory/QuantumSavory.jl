@@ -15,7 +15,8 @@ function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.A
         " on\n$(join(node_labels, ", ", " and "))"
     end
     Label(f[1, 1], text="$(nameof(typeof(prot)))$(location)", tellwidth=false)
-    protshowimage(f[2, 1], prot)
+    subfig = Makie.GridLayout(f[2, 1])
+    protshowimage(subfig, prot)
     show(io, m, f)
 end
 
@@ -26,6 +27,7 @@ function protshowimage(subfig, prot)
     hidespines!(a)
     text = "protocol of type\n$(typeof(prot))\ndoes not support rich visualization"
     text!(a,0,0;text,align=(:center,:center))
+    Makie.rowsize!(subfig, 1, Makie.Auto(1))
 end
 
 """Find the first attempt with less than 0.1% tail probability."""
@@ -51,6 +53,8 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglerProt)
     end
     Makie.vlines!(adist, [1/p], color=:gray)
     Makie.text!(adist, 1/p, 0.0, text=" Mean time:\n$(@sprintf " %.4g" (1/p))", color=:black)
+    Makie.rowsize!(subfig, 1, Makie.Auto(1))
+    Makie.rowsize!(subfig, 3, Makie.Auto(1))
 end
 
 """Draw one `LinkController` timing histogram."""
@@ -94,7 +98,7 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkControll
 
     entangler_layout = Makie.GridLayout(layout[1, 1:2])
     protshowimage(entangler_layout, qtcp._link_entangler(prot))
-    Makie.rowsize!(entangler_layout, 1, Makie.Auto(2))
+    Makie.rowsize!(entangler_layout, 1, Makie.Auto(1))
     Makie.rowsize!(entangler_layout, 3, Makie.Auto(1))
     Label(
         layout[2, 1:2],
@@ -138,6 +142,8 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     avg = sum(diff([0; t]))/length(t)
     Makie.vlines!(ah, avg, color=:gray)
     Makie.text!(ah, avg, 0.0, text=" Mean time:\n$(@sprintf " %.4g" avg)", color=:black)
+    Makie.rowsize!(subfig, 1, Makie.Auto(1))
+    Makie.rowsize!(subfig, 3, Makie.Auto(1))
 end
 
 """Return the plot-row count for a `NetworkNodeController`."""
@@ -173,6 +179,9 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
         ylabel="Processed QDatagrams",
     )
     Makie.linkxaxes!(backlog_axis, processed_axis)
+    Makie.rowsize!(subfig, 1, Makie.Auto(1))
+    Makie.rowsize!(subfig, 2, Makie.Auto(1))
+    Makie.rowsize!(subfig, 3, Makie.Auto(1))
 
     if isempty(statistics)
         Makie.text!(sojourn_axis, 0, 0, text="No QDatagrams observed", align=(:center, :center))
@@ -246,6 +255,9 @@ function protshowimage(subfig, prot::EndNodeController)
             xticklabelrotation=π / 4,
         ),
     ]
+    Makie.rowsize!(subfig, 2, Makie.Auto(1))
+    Makie.rowsize!(subfig, 3, Makie.Auto(1))
+    Makie.rowsize!(subfig, 4, Makie.Auto(1))
 
     values = (
         Int[row.delivered for row in rows],
