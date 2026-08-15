@@ -19,14 +19,29 @@ function protshowimage(subfig, prot)
     text!(a,0,0;text,align=(:center,:center))
 end
 
+"""
+Return the first attempt after which the probability of needing another attempt is
+less than 0.001.
+"""
+function _geometric_tail_cutoff(p)
+    return floor(Int, log(0.001) / log1p(-p)) + 1
+end
+
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglerProt)
     l = Label(subfig[1,1], text="State generated between\n$(compactstr(prot.net[prot.nodeA])) and $(compactstr(prot.net[prot.nodeB]))", tellwidth=false)
     se = stateexplorer!(subfig[2,1], dm(express(prot.pairstate)))
     ldist = Label(subfig[3,1], text="Time to generate a state\n(Geometric distribution)", tellwidth=false)
     adist = Axis(subfig[4,1], xlabel="Attempt", ylabel="Success probability")
     p = prot.success_prob
-    attempts = 1:Int(floor(3/p))
-    Makie.stairs!(adist, attempts, (1-p).^(attempts.-1).*p; step=:center)
+    n = _geometric_tail_cutoff(p)
+    # Include two attempts after the remaining tail falls below 0.001.
+    attempts = 1:(n+2)
+    probabilities = (1-p).^(attempts.-1).*p
+    if n < 10
+        Makie.barplot!(adist, attempts, probabilities)
+    else
+        Makie.stairs!(adist, attempts, probabilities; step=:center)
+    end
     Makie.vlines!(adist, [1/p], color=:gray)
     Makie.text!(adist, 1/p, 0.0, text=" Mean time:\n$(@sprintf " %.4g" (1/p))", color=:black)
 end
