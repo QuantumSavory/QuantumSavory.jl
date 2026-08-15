@@ -215,14 +215,15 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
     end
 end
 
+protshowrows(::EndNodeController) = 3
+
 function protshowimage(subfig, prot::EndNodeController)
     rows = ProtocolZoo.QTCP._endnode_flow_summary(prot)
     colors = Makie.wong_colors()[1:2]
     Legend(
         subfig[1,1],
         [PolyElement(color=color) for color in colors],
-        ["Incoming", "Outgoing"],
-        "EndNodeController on $(compactstr(prot.net[prot.node]))";
+        ["Incoming", "Outgoing"];
         orientation=:horizontal,
         nbanks=1,
     )

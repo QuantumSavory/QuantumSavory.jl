@@ -9,7 +9,6 @@ import InteractiveUtils, REPL
 
 #out = stdout
 out = IOBuffer()
-png_signature = UInt8[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 
 reg = Register([Qubit(), Qumode()], [CliffordRepr(), QuantumOpticsRepr()], [PauliNoise(0.1,0.1,0.1),AmplitudeDamping(0.2)])
 
@@ -71,6 +70,7 @@ png_signature = UInt8[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
 @test empty_link_png != populated_link_png
 
 controller = EndNodeController(get_time_tracker(net), net, 1)
+@test makie_extension.protshowrows(controller) == 3
 empty_controller_image = IOBuffer()
 show(empty_controller_image, MIME"image/png"(), controller)
 empty_controller_png = take!(empty_controller_image)
