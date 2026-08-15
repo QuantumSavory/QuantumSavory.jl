@@ -88,7 +88,10 @@ landing = Bonito.App() do
             @async continue_singlerun!(sim, network, (obs, ts), (ax, ax_fidXX, ax_fidZZ), running)
         end
     end
-    warmup = Bonito.DOM.a("Warm up"; href="#", class="warmup", style="display: none", onclick=Bonito.js"event => { event.preventDefault(); $(running).notify(true); }")
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        running[] === false && (running[] = true)
+    end
 
     content = md"""
     Pick simulation settings and hit run (see below for technical details).

@@ -14,8 +14,12 @@ const PUBLIC_URL = process.env.PUBLIC_URL ?? "http://localhost:8000";
 const WAIT_MS = 10_000;
 
 const WARMUPS = [
+    ["first-generation repeater", "/firstgenrepeater/"],
     ["color-center trajectory", "/colorcentermodularcluster/single-trajectory"],
     ["repeater-chain congestion", "/congestionchain/"],
+    ["simple entanglement switch", "/simpleswitch/"],
+    ["asynchronous repeater grid", "/repeatergrid_async/"],
+    ["synchronous repeater grid", "/repeatergrid_sync/"],
 ];
 
 function caddyfile(origin, catalog) {
@@ -36,7 +40,7 @@ async function runAndObserve(page, socket, application) {
     socket.once("framereceived", () => {
         activity = true;
     });
-    await page.locator("a.warmup").evaluate((link) => link.click());
+    await page.locator("button.warmup").dispatchEvent("click");
     await page.waitForTimeout(WAIT_MS);
     if (!activity) throw new Error(`${application}: no WebSocket activity after run`);
     console.log(`[warmup] ${application}: run`);

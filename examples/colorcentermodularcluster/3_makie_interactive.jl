@@ -292,7 +292,10 @@ singletraj = App() do
             running[] = true
         end
     end
-    warmup = DOM.a("Warm up"; href="#", class="warmup", style="display: none", onclick=js"event => { event.preventDefault(); $(running).notify(true); }")
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        !running[] && (running[] = true)
+    end
     on(running) do r
         if r
             @async continue_singlerun!(sim, net,
