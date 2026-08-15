@@ -253,13 +253,16 @@ function protshowimage(subfig, prot::EndNodeController)
     )
     bar_label_rotation = length(rows) > 10 ? π / 2 : 0
     for (axis, metric) in zip(axes, values)
+        integer_labels = eltype(metric) <: Integer
         barplot!(
             axis,
             positions,
             metric;
             color=bar_colors,
             bar_labels=:y,
-            label_formatter=value -> isfinite(value) ? @sprintf("%#.3g", value) : "",
+            label_formatter=value -> integer_labels ?
+                @sprintf("%.0f", value) :
+                isfinite(value) ? @sprintf("%#.3g", value) : "",
             label_position=:center,
             label_rotation=bar_label_rotation,
         )
