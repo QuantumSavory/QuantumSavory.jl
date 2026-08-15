@@ -13,54 +13,9 @@ const PRIVATE_PORT = 7999;
 const PUBLIC_URL = process.env.PUBLIC_URL ?? "http://localhost:8000";
 const WAIT_MS = 10_000;
 
-// Click coordinates are fractions of the Bonito canvas width and height.
 const WARMUPS = [
-    [
-        "first-generation repeater",
-        "/firstgenrepeater/",
-        [
-            ["shorten simulation horizon", 0.132, 0.655],
-            ["run simulation", 0.500, 0.500],
-        ],
-    ],
-    [
-        "color-center ensemble",
-        "/colorcentermodularcluster/ensemble",
-        [
-            ["start ensemble", 0.527, 0.960],
-            ["stop ensemble", 0.527, 0.960],
-        ],
-    ],
-    ["color-center trajectory", "/colorcentermodularcluster/single-trajectory", [["run trajectory", 0.550, 0.960]]],
-    ["repeater-chain congestion", "/congestionchain/", [["run simulation", 0.114, 0.501]]],
-    [
-        "simple entanglement switch",
-        "/simpleswitch/",
-        [
-            ["lower global request rate", 0.110, 0.909],
-            ["run simulation", 0.500, 0.961],
-        ],
-    ],
-    [
-        "asynchronous repeater grid",
-        "/repeatergrid_async/",
-        [
-            ["change success probability", 0.690, 0.760],
-            ["run simulation", 0.518, 0.964],
-        ],
-    ],
-    [
-        "synchronous repeater grid",
-        "/repeatergrid_sync/",
-        [
-            ["change success probability", 0.690, 0.760],
-            ["run simulation", 0.518, 0.964],
-        ],
-    ],
-    ["Barrett-Kok state", "/state_explorer/vis/BarrettKokBellPairW", [["change state parameter", 0.170, 0.958]]],
-    ["Genqo unheralded state", "/state_explorer/vis/GenqoUnheraldedSPDCBellPairW", [["change state parameter", 0.220, 0.958]]],
-    ["Genqo cascaded state", "/state_explorer/vis/GenqoMultiplexedCascadedBellPairW", [["change state parameter", 0.180, 0.958]]],
-    ["depolarized state", "/state_explorer/vis/DepolarizedBellPair", [["change state parameter", 0.500, 0.958]]],
+    ["color-center trajectory", "/colorcentermodularcluster/single-trajectory"],
+    ["repeater-chain congestion", "/congestionchain/"],
 ];
 
 function caddyfile(origin, catalog) {
@@ -76,24 +31,18 @@ function caddyfile(origin, catalog) {
     return `{\n\tauto_https ${autoHttps}\n\tadmin off\n}\n\n${origin.protocol}//${origin.hostname}:${PRIVATE_PORT} {\n\tbind 127.0.0.1${tls}\n${routes}\n}\n`;
 }
 
-async function clickAndObserve(page, socket, application, click) {
-    const [name, x, y] = click;
-    const canvas = page.locator("canvas").last();
-    await canvas.waitFor({ state: "visible" });
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error(`${application} has no visible canvas`);
-
+async function runAndObserve(page, socket, application) {
     let activity = false;
     socket.once("framereceived", () => {
         activity = true;
     });
-    await page.mouse.click(box.x + box.width * x, box.y + box.height * y);
+    await page.locator("a.warmup").evaluate((link) => link.click());
     await page.waitForTimeout(WAIT_MS);
-    if (!activity) throw new Error(`${application}: no WebSocket activity after ${name}`);
-    console.log(`[warmup] ${application}: ${name}`);
+    if (!activity) throw new Error(`${application}: no WebSocket activity after run`);
+    console.log(`[warmup] ${application}: run`);
 }
 
-async function warmPage(browser, origin, [application, route, clicks]) {
+async function warmPage(browser, origin, [application, route]) {
     const context = await browser.newContext({
         ignoreHTTPSErrors: true,
         viewport: { width: 1600, height: 1200 },
@@ -108,9 +57,7 @@ async function warmPage(browser, origin, [application, route, clicks]) {
         if (!response?.ok()) throw new Error(`${application}: HTTP ${response?.status()}`);
         await page.waitForTimeout(WAIT_MS);
 
-        for (const click of clicks) {
-            await clickAndObserve(page, socket, application, click);
-        }
+        await runAndObserve(page, socket, application);
     } finally {
         await context.close();
     }
@@ -137,7 +84,7 @@ async function run(origin, caddyPath, caddyEnvironment) {
         for (const warmup of WARMUPS) {
             await warmPage(browser, origin, warmup);
         }
-        console.log("[warmup] all configured clicks produced WebSocket activity");
+        console.log("[warmup] all configured runs produced WebSocket activity");
     } finally {
         await browser?.close().catch(() => {});
         if (caddy.exitCode === null) {

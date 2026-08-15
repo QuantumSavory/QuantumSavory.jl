@@ -292,6 +292,7 @@ singletraj = App() do
             running[] = true
         end
     end
+    warmup = DOM.a("Warm up"; href="#", class="warmup", style="display: none", onclick=js"event => { event.preventDefault(); $(running).notify(true); }")
     on(running) do r
         if r
             @async continue_singlerun!(sim, net,
@@ -329,7 +330,7 @@ singletraj = App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    return DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end;
 
 ##

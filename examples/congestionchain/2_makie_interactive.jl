@@ -88,6 +88,7 @@ landing = Bonito.App() do
             @async continue_singlerun!(sim, network, (obs, ts), (ax, ax_fidXX, ax_fidZZ), running)
         end
     end
+    warmup = Bonito.DOM.a("Warm up"; href="#", class="warmup", style="display: none", onclick=Bonito.js"event => { event.preventDefault(); $(running).notify(true); }")
 
     content = md"""
     Pick simulation settings and hit run (see below for technical details).
@@ -121,7 +122,7 @@ landing = Bonito.App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/congestionchain)
     """
-    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end;
 
 
