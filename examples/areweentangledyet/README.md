@@ -7,9 +7,9 @@ API. The Julia services listen only on the container loopback interface.
 
 The launcher waits for every service,
 warms the Bonito applications with a private Playwright browser, and only then
-starts public Caddy. If startup, warmup, Caddy, Xvfb, or any Julia process fails,
+starts public Caddy. If startup, Caddy, Xvfb, or any Julia process fails,
 the launcher stops and reaps the remaining processes and returns a nonzero
-status. Compose then restarts the complete unit.
+status. A warmup failure is reported as a warning and startup continues.
 
 ## Requirements
 
@@ -127,18 +127,15 @@ exercises prefixed Bonito assets and WebSockets with production-like absolute
 URLs. For an HTTPS origin, temporary Caddy uses a short-lived internal
 certificate accepted only by the warmup browser.
 
-[`warmup.mjs`](warmup.mjs) contains the complete deployment-specific action
-table. Each action is a click expressed as fractions of the current canvas width
-and height. The driver waits ten seconds after each page load and click, and
-only checks that the click produces some server-to-browser WebSocket activity.
-It does not inspect pixels or try to infer application state.
+[`warmup.mjs`](warmup.mjs) contains the applications with simple warmups. Each
+application exposes a hidden Bonito button that starts its run. The driver waits
+ten seconds after each page load and run, and only checks that the run produces
+some server-to-browser WebSocket activity. Applications that require parameter
+changes or more sophisticated interactions are not warmed.
 
-When a canvas layout changes, update the relative coordinates in `warmup.mjs`,
-then rebuild the image. Keep this deployment automation out of the example
-scripts so those files remain short pedagogical examples.
-
-The public port remains closed until the warmup exits. A browser or backend
-failure makes the container exit, so Compose restarts the full unit.
+The public port remains closed until the warmup exits. A warmup failure emits a
+warning. A backend failure makes the container exit, so Compose restarts the
+full unit.
 
 ## Public routing
 
@@ -165,8 +162,8 @@ example:
 
 Use `docker compose logs --follow` to inspect backend startup and each named
 warmup action. The Compose health check reports healthy only after the landing
-page is available, which means every backend and browser warmup passed. A
-backend exit makes the whole container exit nonzero and restart.
+page is available. A backend exit makes the whole container exit nonzero and
+restart.
 
 After a production cutover, retire the old external deployment directory only
 after the TLS proxy has been verified against this single port. TLS configuration

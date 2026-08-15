@@ -111,6 +111,10 @@ landing = Bonito.App() do
             running[] = true
         end
     end
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        running[] === false && (running[] = true)
+    end
     on(running) do r
         if r === true
             Threads.@spawn begin
@@ -141,7 +145,7 @@ landing = Bonito.App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/simpleswitch)
     """
-    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end;
 
 @info "app definition is complete"

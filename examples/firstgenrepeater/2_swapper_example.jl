@@ -210,6 +210,10 @@ landing = Bonito.App() do
             running[] = true
         end
     end
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        !running[] && !done[] && (running[] = true)
+    end
 
     on(running) do active
         if active
@@ -254,7 +258,7 @@ landing = Bonito.App() do
 
     [View source for this example.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/firstgenrepeater)
     """
-    Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end
 
 @info "app definition is complete"

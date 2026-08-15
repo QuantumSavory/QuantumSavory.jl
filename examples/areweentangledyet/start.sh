@@ -295,8 +295,11 @@ run_warmup() {
     status=$?
     set -e
     TRANSIENT_PID=""
-    ((status == 0)) || die "$TRANSIENT_NAME exited with status $status"
-    printf 'Completed %s\n' "$TRANSIENT_NAME"
+    if ((status != 0)); then
+        printf 'WARNING: %s exited with status %s\n' "$TRANSIENT_NAME" "$status" >&2
+    else
+        printf 'Completed %s\n' "$TRANSIENT_NAME"
+    fi
     TRANSIENT_NAME=""
 }
 
