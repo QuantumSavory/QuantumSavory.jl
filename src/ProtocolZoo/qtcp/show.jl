@@ -94,6 +94,7 @@ function Base.show(io::IO, m::MIME"text/html", prot::LinkController)
     """)
 end
 
+"""Return per-flow QDatagram statistics for `prot`."""
 function _network_node_controller_statistics(prot::NetworkNodeController)
     flow_ids = sort!(unique(event.flow_id for event in prot._log))
     return map(flow_ids) do flow_id

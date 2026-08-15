@@ -140,6 +140,7 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     Makie.text!(ah, avg, 0.0, text=" Mean time:\n$(@sprintf " %.4g" avg)", color=:black)
 end
 
+"""Render `prot`'s QDatagram statistics in `subfig`."""
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController)
     statistics = QuantumSavory.ProtocolZoo.QTCP._network_node_controller_statistics(prot)
     positions = eachindex(statistics)
