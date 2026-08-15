@@ -178,5 +178,6 @@ include("ProtocolZoo/ProtocolZoo.jl")
 
 include("should_upstream.jl")
 include("precompile.jl")
+include("precompile_statements.jl")
 
 end # module
