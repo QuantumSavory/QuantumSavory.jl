@@ -214,3 +214,60 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
         )
     end
 end
+
+protshowrows(::EndNodeController) = 3
+
+function protshowimage(subfig, prot::EndNodeController)
+    rows = ProtocolZoo.QTCP._endnode_flow_summary(prot)
+    colors = Makie.wong_colors()[1:2]
+    Legend(
+        subfig[1,1],
+        [PolyElement(color=color) for color in colors],
+        ["Incoming", "Outgoing"];
+        orientation=:horizontal,
+        nbanks=1,
+    )
+
+    positions = eachindex(rows)
+    labels = map(rows) do row
+        remote = row.flow_src == prot.node ? row.flow_dst : row.flow_src
+        remote_name = QuantumSavory.name(prot.net[remote])
+        "($(row.flow_id)) $(isnothing(remote_name) ? remote : remote_name)"
+    end
+    bar_colors = [row.flow_src == prot.node ? colors[2] : colors[1] for row in rows]
+    xticks = (positions, labels)
+    axes = [
+        Axis(subfig[2,1], ylabel="Delivered", xticks=xticks),
+        Axis(subfig[3,1], ylabel="Avg latency", xticks=xticks),
+        Axis(
+            subfig[4,1],
+            ylabel="Avg delivery rate",
+            xticks=xticks,
+            xticklabelrotation=π / 4,
+        ),
+    ]
+
+    values = (
+        Int[row.delivered for row in rows],
+        Float64[something(row.average_latency, NaN) for row in rows],
+        Float64[something(row.average_rate, NaN) for row in rows],
+    )
+    bar_label_rotation = length(rows) > 10 ? π / 2 : 0
+    for (axis, metric) in zip(axes, values)
+        integer_labels = eltype(metric) <: Integer
+        barplot!(
+            axis,
+            positions,
+            metric;
+            color=bar_colors,
+            bar_labels=:y,
+            label_formatter=value -> integer_labels ?
+                @sprintf("%.0f", value) :
+                isfinite(value) ? @sprintf("%#.3g", value) : "",
+            label_position=:center,
+            label_rotation=bar_label_rotation,
+        )
+    end
+    Makie.linkxaxes!(axes)
+    Makie.hidexdecorations!.(axes[1:2]; grid=false)
+end

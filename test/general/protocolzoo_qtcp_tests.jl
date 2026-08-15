@@ -72,6 +72,13 @@ end
     mb1 = messagebuffer(net, 1)
     qdatagram = query(mb1, QDatagram, ❓, ❓, ❓, ❓, ❓, ❓)
     @test collect(qdatagram.tag)[2:7] == [42, 1, 2, 0, 1, 0.0]
+
+    stats = end_controller._log[42]
+    @test stats.flow_src == 1
+    @test stats.flow_dst == 2
+    @test stats.delivered == 0
+    @test stats.latency_sum == 0.0
+    @test EndNodeController(sim, net, 2)._log !== end_controller._log
 end
 
 ##
@@ -305,6 +312,17 @@ end
     end
     @test isempty(mb1.buffer)
     @test isempty(mb5.buffer)
+
+    source_stats = source_controller._log[99]
+    destination_stats = dest_controller._log[99]
+    @test length(source_controller._log) == 1
+    @test length(dest_controller._log) == 1
+    @test source_stats.flow_src == destination_stats.flow_src == 1
+    @test source_stats.flow_dst == destination_stats.flow_dst == 5
+    @test source_stats.delivered == destination_stats.delivered == test_flow.npairs
+    @test source_stats.flow_start_time == destination_stats.flow_start_time
+    @test source_stats.latency_sum > destination_stats.latency_sum > 0
+    @test source_stats.last_delivery_time > destination_stats.last_delivery_time
 end
 
 ##

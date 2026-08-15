@@ -194,6 +194,15 @@ Tag(tag::LinkLevelReplyAtHop) = Tag(LinkLevelReplyAtHop, tag.flow_uuid, tag.seq_
 # Protocol declaration
 ###
 
+const _EndNodeFlowStats = @NamedTuple{
+    flow_src::Int,
+    flow_dst::Int,
+    delivered::Int,
+    latency_sum::Float64,
+    flow_start_time::Float64,
+    last_delivery_time::Float64,
+}
+
 """
 $TYPEDEF
 
@@ -214,6 +223,8 @@ Managing the following transformations of classical control signals:
     net::RegisterNet
     """the vertex index of where the protocol is located"""
     node::Int
+    """internal per-flow delivery statistics retained for visualization"""
+    _log::Dict{Int,_EndNodeFlowStats} = Dict{Int,_EndNodeFlowStats}()
 end
 
 protocol_catalog_metadata(::Type{EndNodeController}) = (
@@ -222,7 +233,43 @@ protocol_catalog_metadata(::Type{EndNodeController}) = (
     required_fields = (),
 )
 
+EndNodeController(sim::Simulation, net::RegisterNet, node::Int) =
+    EndNodeController(; sim, net, node)
 EndNodeController(net::RegisterNet, node::Int) = EndNodeController(get_time_tracker(net), net, node)
+
+"Create empty delivery statistics for one flow."
+function _empty_endnode_flow_stats(flow_src::Int, flow_dst::Int, flow_start_time::Float64)
+    return (;
+        flow_src,
+        flow_dst,
+        delivered=0,
+        latency_sum=0.0,
+        flow_start_time,
+        last_delivery_time=flow_start_time,
+    )
+end
+
+"Record one delivered pair for a flow."
+function _record_endnode_delivery!(
+    prot::EndNodeController,
+    flow_uuid::Int,
+    flow_src::Int,
+    flow_dst::Int,
+    start_time::Float64,
+)
+    delivery_time = now(prot.sim)::Float64
+    stats = get(prot._log, flow_uuid, _empty_endnode_flow_stats(
+        flow_src, flow_dst, start_time
+    ))
+    prot._log[flow_uuid] = (;
+        stats...,
+        delivered=stats.delivered + 1,
+        latency_sum=stats.latency_sum + delivery_time - start_time,
+        flow_start_time=min(stats.flow_start_time, start_time),
+        last_delivery_time=max(stats.last_delivery_time, delivery_time),
+    )
+    return nothing
+end
 
 """
 $TYPEDEF
@@ -341,6 +388,9 @@ end
                 qdatagrams_sent[uuid]        = 0
                 pairs_left_to_fulfill[uuid] = npairs
                 destination[uuid]            = dst
+                get!(prot._log, uuid) do
+                    _empty_endnode_flow_stats(node, dst, now(sim)::Float64)
+                end
                 @debug(
                     "Started a flow",
                     _group=LOG_GROUPS.protocol,
@@ -375,6 +425,9 @@ end
                     start_time
                 )
                 put!(net[node], pair_begin)
+                _record_endnode_delivery!(
+                    prot, flow_uuid, node, success.src, start_time
+                )
                 @debug(
                     "Acknowledged a datagram",
                     _group=LOG_GROUPS.protocol,
@@ -427,6 +480,9 @@ end
                     start_time
                 )
                 put!(net[node], pair_end)
+                _record_endnode_delivery!(
+                    prot, flow_uuid, flow_src, flow_dst, start_time
+                )
                 @debug(
                     "Delivered a datagram",
                     _group=LOG_GROUPS.protocol,
