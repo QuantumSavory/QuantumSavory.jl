@@ -140,6 +140,9 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     Makie.text!(ah, avg, 0.0, text=" Mean time:\n$(@sprintf " %.4g" avg)", color=:black)
 end
 
+"""Return the plot-row count for a `NetworkNodeController`."""
+protshowrows(::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController) = 3
+
 """Render `prot`'s QDatagram statistics in `subfig`."""
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController)
     statistics = QuantumSavory.ProtocolZoo.QTCP._network_node_controller_statistics(prot)
@@ -149,13 +152,8 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
         maximum((event.t for event in prot._log); init=0.0),
     )
 
-    Label(
-        subfig[1, 1],
-        text="NetworkNodeController on\n$(compactstr(prot.net[prot.node]))",
-        tellwidth=false,
-    )
     sojourn_axis = Axis(
-        subfig[2, 1],
+        subfig[1, 1],
         title="Average QDatagram sojourn time",
         xlabel="Flow ID",
         ylabel="Time",
@@ -163,13 +161,13 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
         xticklabelrotation=π / 4,
     )
     backlog_axis = Axis(
-        subfig[3, 1],
+        subfig[2, 1],
         title="QDatagram backlog",
         xlabel="Simulation time",
         ylabel="Queued QDatagrams",
     )
     processed_axis = Axis(
-        subfig[4, 1],
+        subfig[3, 1],
         title="Processed QDatagrams",
         xlabel="Simulation time",
         ylabel="Processed QDatagrams",

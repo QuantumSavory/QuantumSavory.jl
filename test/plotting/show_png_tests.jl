@@ -83,6 +83,7 @@ show(out, MIME"image/png"(), QuantumSavory.stateof(reg2[1]))
 @testset "NetworkNodeController" begin
     net = RegisterNet([Register(2), Register(2)]; names=["Amherst", "Boston"])
     sim = get_time_tracker(net)
+    @test makie_extension.protshowrows(NetworkNodeController(sim, net, 1)) == 3
     populated = NetworkNodeController(
         sim=sim,
         net=net,
