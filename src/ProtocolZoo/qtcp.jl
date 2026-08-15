@@ -618,7 +618,7 @@ end
     prot._log[log_index] = (
         originator_node=entry.originator_node,
         arrival_time=entry.arrival_time,
-        sojourn_time=Float64(now(sim)) - entry.arrival_time,
+        sojourn_time=(now(sim)::Float64) - entry.arrival_time,
     )
 end
 
@@ -645,7 +645,7 @@ end
                 _, flow_uuid, seq_num, remote_node = llrequest.tag
                 push!(prot._log, (
                     originator_node=originator_node::Int,
-                    arrival_time=Float64(now(sim)),
+                    arrival_time=now(sim)::Float64,
                     sojourn_time=nothing,
                 ))
                 log_index = lastindex(prot._log)
