@@ -237,6 +237,7 @@ EndNodeController(sim::Simulation, net::RegisterNet, node::Int) =
     EndNodeController(; sim, net, node)
 EndNodeController(net::RegisterNet, node::Int) = EndNodeController(get_time_tracker(net), net, node)
 
+"Create empty delivery statistics for one flow."
 function _empty_endnode_flow_stats(flow_src::Int, flow_dst::Int, flow_start_time::Float64)
     return (;
         flow_src,
@@ -248,6 +249,7 @@ function _empty_endnode_flow_stats(flow_src::Int, flow_dst::Int, flow_start_time
     )
 end
 
+"Record one delivered pair for a flow."
 function _record_endnode_delivery!(
     prot::EndNodeController,
     flow_uuid::Int,

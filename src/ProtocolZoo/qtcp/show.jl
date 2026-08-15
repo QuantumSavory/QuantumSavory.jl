@@ -110,6 +110,7 @@ function _network_node_controller_statistics(prot::NetworkNodeController)
     end
 end
 
+"Summarize per-flow delivery statistics for display."
 function _endnode_flow_summary(prot::EndNodeController)
     return map(sort!(collect(prot._log); by=first)) do (flow_id, stats)
         duration = stats.last_delivery_time - stats.flow_start_time
@@ -152,6 +153,7 @@ function Base.show(io::IO, ::MIME"text/html", prot::NetworkNodeController)
     """)
 end
 
+"Render one flow endpoint as semantic HTML."
 function _endnode_node_html(prot::EndNodeController, node::Int, role::Symbol)
     label = QuantumSavory._html_escape_text(QuantumSavory.compactstr(prot.net[node]))
     role_class = role === :source ?
@@ -164,6 +166,7 @@ function _endnode_node_html(prot::EndNodeController, node::Int, role::Symbol)
     return "<span class=\"quantumsavory_protocol_node $(role_class) $(locality_class)\">$(contents)</span>"
 end
 
+"Format one optional metric for HTML."
 _endnode_metric_html(::Nothing) = "&mdash;"
 _endnode_metric_html(value::Float64) = string(round(value; sigdigits=4))
 
