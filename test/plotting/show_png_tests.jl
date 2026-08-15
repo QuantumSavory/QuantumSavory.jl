@@ -52,6 +52,7 @@ makie_extension = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
 @test makie_extension._geometric_tail_cutoff(0.001) == 6905
 
 link_controller = LinkController(get_time_tracker(net), net, 1, 2)
+@test makie_extension.protshowrows(link_controller) == 4
 empty_link_png = repr(MIME"image/png"(), link_controller)
 append!(link_controller._log, [
     (originator_node=1, arrival_time=1.0, sojourn_time=2.0),

@@ -83,6 +83,8 @@ function _link_timing_histogram(subfig, samples; title)
     return axis
 end
 
+protshowrows(::QuantumSavory.ProtocolZoo.QTCP.LinkController) = 4
+
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkController)
     qtcp = QuantumSavory.ProtocolZoo.QTCP
     label_a = compactstr(prot.net[prot.nodeA])
@@ -90,37 +92,32 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkControll
     samples = qtcp._linkcontroller_samples(prot)
     layout = Makie.GridLayout(subfig[1, 1])
 
-    Label(
-        layout[1, 1:2],
-        text="LinkController between\n$(label_a) and $(label_b)",
-        tellwidth=false,
-    )
-    entangler_layout = Makie.GridLayout(layout[2, 1:2])
+    entangler_layout = Makie.GridLayout(layout[1, 1:2])
     protshowimage(entangler_layout, qtcp._link_entangler(prot))
     Makie.rowsize!(entangler_layout, 1, Makie.Auto(2))
     Makie.rowsize!(entangler_layout, 3, Makie.Auto(1))
     Label(
-        layout[3, 1:2],
+        layout[2, 1:2],
         text="Link-level request interarrival times",
         tellwidth=false,
     )
     _link_timing_histogram(
-        layout[4, 1], samples.interarrival_times_a; title="From $(label_a)"
+        layout[3, 1], samples.interarrival_times_a; title="From $(label_a)"
     )
     _link_timing_histogram(
-        layout[4, 2], samples.interarrival_times_b; title="From $(label_b)"
+        layout[3, 2], samples.interarrival_times_b; title="From $(label_b)"
     )
     Label(
-        layout[5, 1:2],
+        layout[4, 1:2],
         text="Link-level request sojourn times",
         tellwidth=false,
     )
     _link_timing_histogram(
-        layout[6, 1:2], samples.sojourn_times; title="Completed requests"
+        layout[5, 1:2], samples.sojourn_times; title="Completed requests"
     )
-    Makie.rowsize!(layout, 2, Makie.Auto(2))
-    Makie.rowsize!(layout, 4, Makie.Auto(1))
-    Makie.rowsize!(layout, 6, Makie.Auto(1))
+    Makie.rowsize!(layout, 1, Makie.Auto(2))
+    Makie.rowsize!(layout, 3, Makie.Auto(1))
+    Makie.rowsize!(layout, 5, Makie.Auto(1))
 end
 
 protshowrows(::QuantumSavory.ProtocolZoo.EntanglementConsumer) = 2
