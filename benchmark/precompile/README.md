@@ -14,7 +14,8 @@ benchmark/precompile/run.sh /tmp/quantumsavory-precompile-results \
 ```
 
 The first variant is the default baseline. Each variant must be a clean,
-committed checkout, and all variants must have identical `Project.toml` files.
+committed checkout, and all variants must have identical `Project.toml` files
+apart from the top-level package version.
 The output directory must be outside every measured checkout. The harness
 refuses to overwrite existing result files. By default, it resolves one
 consumer Manifest and points it at each checkout in turn. It creates one seed
