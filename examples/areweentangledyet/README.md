@@ -128,9 +128,9 @@ URLs. For an HTTPS origin, temporary Caddy uses a short-lived internal
 certificate accepted only by the warmup browser.
 
 [`warmup.mjs`](warmup.mjs) contains the applications with simple warmups. Each
-application exposes a hidden HTML link that starts its run. The driver waits ten
-seconds after each page load and run, and only checks that the run produces some
-server-to-browser WebSocket activity. Applications that require parameter
+application exposes a hidden Bonito button that starts its run. The driver waits
+ten seconds after each page load and run, and only checks that the run produces
+some server-to-browser WebSocket activity. Applications that require parameter
 changes or more sophisticated interactions are not warmed.
 
 The public port remains closed until the warmup exits. A warmup failure emits a
