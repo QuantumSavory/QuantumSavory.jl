@@ -1,5 +1,10 @@
 # News
 
+## v0.7.3 - unreleased
+
+- Package precompilation now includes expensive method specializations observed
+  across the examples to reduce first-use compilation.
+
 ## v0.7.2 - 2026-08-15
 
 - QTCP link, network-node, and end-node controllers now provide HTML and PNG
