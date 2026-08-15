@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - src/precompile.jl
+      - src/precompile_statements.jl
       - benchmark/precompile/**
       - .github/workflows/precompile.yml
       - Project.toml
