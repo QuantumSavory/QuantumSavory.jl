@@ -1,5 +1,10 @@
 # News
 
+## v0.7.2 - 2026-08-15
+
+- QTCP link, network-node, and end-node controllers now provide HTML and PNG
+  protocol visualizations.
+
 ## v0.7.1 - 2026-08-07
 
 - **(fix)** Fixes for edge cases and support for more observables and projectors thanks to updates to QuantumSymbolics and QuantumClifford.

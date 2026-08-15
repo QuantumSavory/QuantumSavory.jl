@@ -361,7 +361,9 @@ verify_checkout() {
 }
 
 for checkout in "${checkouts[@]:1}"; do
-    cmp -s -- "${checkouts[0]}/Project.toml" "$checkout/Project.toml" || {
+    cmp -s -- \
+        <(sed '1,/^\[/ { /^version = /d; }' "${checkouts[0]}/Project.toml") \
+        <(sed '1,/^\[/ { /^version = /d; }' "$checkout/Project.toml") || {
         echo "all variants must use identical Project.toml dependency metadata" >&2
         exit 1
     }
