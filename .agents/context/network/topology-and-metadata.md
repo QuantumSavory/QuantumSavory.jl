@@ -53,7 +53,7 @@ instead of using either path.
 ## Anchors
 
 - **Source:** [`src/states_registers_networks_getset.jl`](../../../src/states_registers_networks_getset.jl) and [`src/networks.jl`](../../../src/networks.jl) — graph delegation, indexing, metadata stores, and construction.
-- **Docs:** [`docs/src/architecture.md`](../../../docs/src/architecture.md), [`docs/src/API.md`](../../../docs/src/API.md), and [`docs/src/visualizations.md`](../../../docs/src/visualizations.md) — public network model, generated API, and metadata consumers.
+- **Docs:** [`docs/src/architecture.md`](../../../docs/src/architecture.md), [`docs/src/API.md`](../../../docs/src/API.md), and [`docs/src/register_visualizations.md`](../../../docs/src/register_visualizations.md) — public network model, generated API, and metadata consumers.
 - **Test:** [`test/general/registernet_metadata_access_tests.jl`](../../../test/general/registernet_metadata_access_tests.jl) — register, graph, scalar, bulk, undirected, directed, and function-setter behavior.
 
 ## Unresolved questions
