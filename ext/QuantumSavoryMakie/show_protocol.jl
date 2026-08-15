@@ -19,6 +19,12 @@ function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.A
     show(io, m, f)
 end
 
+function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController)
+    f = Figure(size=(600, 900))
+    protshowimage(f, prot)
+    show(io, m, f)
+end
+
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy. Instead of an IO instance, it takes a Makie axis."""
 function protshowimage(subfig, prot)
     a = Axis(subfig[1,1])
@@ -142,40 +148,55 @@ end
 
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeController)
     statistics = QuantumSavory.ProtocolZoo.QTCP._network_node_controller_statistics(prot)
+    positions = eachindex(statistics)
     current_time = max(
         ConcurrentSim.now(prot.sim),
         maximum((event.t for event in prot._log); init=0.0),
     )
 
     Label(
-        subfig[1, 1:2],
+        subfig[1, 1],
         text="NetworkNodeController on\n$(compactstr(prot.net[prot.node]))",
         tellwidth=false,
     )
-    backlog_axis = Axis(
+    sojourn_axis = Axis(
         subfig[2, 1],
+        title="Average QDatagram sojourn time",
+        xlabel="Flow ID",
+        ylabel="Time",
+        xticks=(positions, string.(getproperty.(statistics, :flow_id))),
+        xticklabelrotation=π / 4,
+    )
+    backlog_axis = Axis(
+        subfig[3, 1],
         title="QDatagram backlog",
         xlabel="Simulation time",
         ylabel="Queued QDatagrams",
     )
     processed_axis = Axis(
-        subfig[3, 1:2],
+        subfig[4, 1],
         title="Processed QDatagrams",
         xlabel="Simulation time",
         ylabel="Processed QDatagrams",
     )
-
-    table = subfig[2, 2]
-    Label(table[1, 1:2], text="Avg. sojourn time")
-    Label(table[2, 1], text="Flow ID")
-    Label(table[2, 2], text="Time")
+    Makie.linkxaxes!(backlog_axis, processed_axis)
 
     if isempty(statistics)
-        Label(table[3, 1:2], text="No QDatagrams observed")
+        Makie.text!(sojourn_axis, 0, 0, text="No QDatagrams observed", align=(:center, :center))
         return
     end
 
     for (row, statistic) in enumerate(statistics)
+        color = Makie.Cycled(row)
+        average = statistic.average_sojourn
+        barplot!(
+            sojourn_axis,
+            [row],
+            [average isa Real ? average : NaN];
+            color,
+            cycle=[:color],
+        )
+
         events = filter(event -> event.flow_id == statistic.flow_id, prot._log)
         backlog = cumsum(event.processed ? -1 : 1 for event in events)
         backlog_times = [0.0; getproperty.(events, :t); current_time]
@@ -185,7 +206,7 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
             backlog_times,
             backlog_values;
             step=:post,
-            label="Flow $(statistic.flow_id)",
+            color,
         )
 
         processed_events = filter(event -> event.processed, events)
@@ -196,14 +217,7 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.NetworkNodeC
             processed_times,
             processed_values;
             step=:post,
-            label="Flow $(statistic.flow_id)",
+            color,
         )
-
-        Label(table[row + 2, 1], text=string(statistic.flow_id))
-        average = statistic.average_sojourn
-        Label(table[row + 2, 2], text=average isa AbstractString ? average : @sprintf("%.4g", average))
     end
-
-    axislegend(backlog_axis)
-    axislegend(processed_axis)
 end
