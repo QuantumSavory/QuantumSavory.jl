@@ -44,6 +44,9 @@ prot = EntanglerProt(get_time_tracker(net), net, 1, 2)
 show(out, MIME"image/png"(), prot)
 
 makie_extension = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
+@test makie_extension.protshowrows(EntanglementTracker(net, 1)) == 1
+@test makie_extension.protshowrows(prot) == 2
+@test makie_extension.protshowrows(EntanglementConsumer(net, 1, 2)) == 2
 @test makie_extension._geometric_tail_cutoff(1.0) == 1
 @test makie_extension._geometric_tail_cutoff(0.5) == 10
 @test makie_extension._geometric_tail_cutoff(0.001) == 6905

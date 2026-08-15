@@ -1,6 +1,21 @@
+"""Return the number of plot rows needed to render `prot`."""
+protshowrows(prot) = 1
+
 function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.AbstractProtocol)
-    f = Figure()
-    protshowimage(f, prot)
+    width, row_height = Makie.theme(:size)[]
+    f = Figure(size=(width, row_height * protshowrows(prot) + 50))
+    nodes = ProtocolZoo._protocol_nodes(prot)
+    net = hasproperty(prot, :net) ? getproperty(prot, :net) : nothing
+    node_labels = isnothing(net) ? string.(nodes) : [compactstr(net[node]) for node in nodes]
+    location = if isempty(node_labels)
+        ""
+    elseif length(node_labels) == 2
+        " between\n$(join(node_labels, " and "))"
+    else
+        " on\n$(join(node_labels, ", ", " and "))"
+    end
+    Label(f[1, 1], text="$(nameof(typeof(prot)))$(location)", tellwidth=false)
+    protshowimage(f[2, 1], prot)
     show(io, m, f)
 end
 
@@ -18,11 +33,12 @@ function _geometric_tail_cutoff(p)
     return floor(Int, log(0.001) / log1p(-p)) + 1
 end
 
+protshowrows(::QuantumSavory.ProtocolZoo.EntanglerProt) = 2
+
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglerProt)
-    l = Label(subfig[1,1], text="State generated between\n$(compactstr(prot.net[prot.nodeA])) and $(compactstr(prot.net[prot.nodeB]))", tellwidth=false)
-    se = stateexplorer!(subfig[2,1], dm(express(prot.pairstate)))
-    ldist = Label(subfig[3,1], text="Time to generate a state\n(Geometric distribution)", tellwidth=false)
-    adist = Axis(subfig[4,1], xlabel="Attempt", ylabel="Success probability")
+    se = stateexplorer!(subfig[1,1], dm(express(prot.pairstate)))
+    ldist = Label(subfig[2,1], text="Time to generate a state\n(Geometric distribution)", tellwidth=false)
+    adist = Axis(subfig[3,1], xlabel="Attempt", ylabel="Success probability")
     p = prot.success_prob
     n = _geometric_tail_cutoff(p)
     # Include two attempts after the remaining tail falls below 0.001.
@@ -81,8 +97,8 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkControll
     )
     entangler_layout = Makie.GridLayout(layout[2, 1:2])
     protshowimage(entangler_layout, qtcp._link_entangler(prot))
-    Makie.rowsize!(entangler_layout, 2, Makie.Auto(2))
-    Makie.rowsize!(entangler_layout, 4, Makie.Auto(1))
+    Makie.rowsize!(entangler_layout, 1, Makie.Auto(2))
+    Makie.rowsize!(entangler_layout, 3, Makie.Auto(1))
     Label(
         layout[3, 1:2],
         text="Link-level request interarrival times",
@@ -107,9 +123,10 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkControll
     Makie.rowsize!(layout, 6, Makie.Auto(1))
 end
 
+protshowrows(::QuantumSavory.ProtocolZoo.EntanglementConsumer) = 2
+
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsumer)
-    l = Label(subfig[1,1], text="Fidelity of consumed pairs between\n$(compactstr(prot.net[prot.nodeA])) and $(compactstr(prot.net[prot.nodeB]))", tellwidth=false)
-    a = Axis(subfig[2,1], xlabel="Time", ylabel="Observable")
+    a = Axis(subfig[1,1], xlabel="Time", ylabel="Observable")
     t = [t for (t, _, _) in prot._log]
     zz = [z for (_, z, _) in prot._log]
     xx = [x for (_, _, x) in prot._log]
@@ -118,8 +135,8 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglementConsu
     hlines!(a, 0.0, color=:gray)
     hlines!(a, 1.0, color=:gray)
     axislegend(a, position=:lb)
-    lh = Label(subfig[3,1], text="Histogram of time to consume a pair", tellwidth=false)
-    ah = Axis(subfig[4,1], xlabel="ΔTime", ylabel="Fraction")
+    lh = Label(subfig[2,1], text="Histogram of time to consume a pair", tellwidth=false)
+    ah = Axis(subfig[3,1], xlabel="ΔTime", ylabel="Fraction")
     Makie.hist!(ah, diff([0; t]), normalization=:probability)
     avg = sum(diff([0; t]))/length(t)
     Makie.vlines!(ah, avg, color=:gray)
