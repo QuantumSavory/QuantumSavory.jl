@@ -13,10 +13,7 @@ function protshowimage(subfig, prot)
     text!(a,0,0;text,align=(:center,:center))
 end
 
-"""
-Return the first attempt after which the probability of needing another attempt is
-less than 0.001.
-"""
+"""Find the first attempt with less than 0.1% tail probability."""
 function _geometric_tail_cutoff(p)
     return floor(Int, log(0.001) / log1p(-p)) + 1
 end
@@ -40,6 +37,7 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.EntanglerProt)
     Makie.text!(adist, 1/p, 0.0, text=" Mean time:\n$(@sprintf " %.4g" (1/p))", color=:black)
 end
 
+"""Draw one `LinkController` timing histogram."""
 function _link_timing_histogram(subfig, samples; title)
     summary = QuantumSavory.ProtocolZoo.QTCP._sample_summary(samples)
     subtitle = if isempty(samples)
