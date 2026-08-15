@@ -4,12 +4,6 @@ function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.A
     show(io, m, f)
 end
 
-function Base.show(io::IO, m::MIME"image/png", prot::QuantumSavory.ProtocolZoo.QTCP.LinkController)
-    f = Figure(size=(800, 1000))
-    protshowimage(f, prot)
-    show(io, m, f)
-end
-
 """Similar to `show(io, ::MIME"", ...)`, but private to avoid piracy. Instead of an IO instance, it takes a Makie axis."""
 function protshowimage(subfig, prot)
     a = Axis(subfig[1,1])
