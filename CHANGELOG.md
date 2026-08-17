@@ -1,5 +1,10 @@
 # News
 
+## Unreleased
+
+- `generate_map` now accepts a custom Tyler tile provider, and CI map renders use the
+  QuantumSavory-hosted raster tile service.
+
 ## v0.7.2 - 2026-08-15
 
 - QTCP link, network-node, and end-node controllers now provide HTML and PNG

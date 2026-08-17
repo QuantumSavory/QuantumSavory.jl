@@ -62,10 +62,24 @@ initialize!((net[3,1],net[4,2]), X₁⊗Z₂) # hide
 apply!((net[2,3],net[3,1]), CNOT) # hide
 using Tyler
 coords = [Point2f(-118, 34), Point2f(-71, 42), Point2f(-111, 34), Point2f(-96, 32)]
-subfig, ax, map = generate_map()
+tile_url = "https://tiles.quantumsavory.org/styles/ci/{z}/{x}/{y}.png"
+ci_key = get(ENV, "TILE_CI_KEY", "") # hide
+isempty(ci_key) || occursin(r"\A[0-9a-f]{64}\z", ci_key) || # hide
+    error("TILE_CI_KEY must contain 64 lowercase hexadecimal characters") # hide
+tile_url *= isempty(ci_key) ? "" : "?ci_key=$(ci_key)" # hide
+provider = Tyler.TileProviders.Provider(
+    tile_url;
+    max_zoom=13,
+    attribution="Protomaps © OpenStreetMap contributors; hosted by QuantumSavory",
+)
+subfig, ax, map = generate_map(; provider)
 fig, ax, plt, obs = registernetplot_axis(ax, net, registercoords=coords, state_linecolor = :black)
 fig
 ```
+The basemap uses [Protomaps](https://protomaps.com/) data derived from
+[OpenStreetMap](https://www.openstreetmap.org/copyright), with tile hosting provided by
+[QuantumSavory](https://quantumsavory.org/).
+
 In general, if you have a custom background axis, you can use it as the axis parameter in `registernetplot_axis`.
 ## State and tag metadata in interactive visualizations
 
