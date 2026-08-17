@@ -79,10 +79,6 @@ subfig, ax, map = generate_map(; provider) # hide
 fig, ax, plt, obs = registernetplot_axis(ax, net, registercoords=coords, state_linecolor = :black)
 fig
 ```
-The basemap uses [Protomaps](https://protomaps.com/) data derived from
-[OpenStreetMap](https://www.openstreetmap.org/copyright), with tile hosting provided by
-[QuantumSavory](https://quantumsavory.org/).
-
 In general, if you have a custom background axis, you can use it as the axis parameter in `registernetplot_axis`.
 ## State and tag metadata in interactive visualizations
 

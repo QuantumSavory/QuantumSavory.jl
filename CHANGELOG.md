@@ -2,8 +2,7 @@
 
 ## Unreleased
 
-- `generate_map` now accepts a custom Tyler tile provider, and CI map renders use the
-  QuantumSavory-hosted raster tile service.
+- `generate_map` now accepts a custom Tyler tile provider.
 
 ## v0.7.2 - 2026-08-15
 
