@@ -54,7 +54,7 @@ If your registers have latitude and longitude coordinates (ranging from -180 to 
 
 ```@example vis
 using CairoMakie # hide
-CairoMakie.activate!() # hide
+CairoMakie.activate!(; visible=false) # hide
 net = RegisterNet([Register(2),Register(3),Register(2),Register(5)]) # hide
 initialize!(net[1,1]) # hide
 initialize!(net[2,3], X₁) # hide
@@ -62,7 +62,20 @@ initialize!((net[3,1],net[4,2]), X₁⊗Z₂) # hide
 apply!((net[2,3],net[3,1]), CNOT) # hide
 using Tyler
 coords = [Point2f(-118, 34), Point2f(-71, 42), Point2f(-111, 34), Point2f(-96, 32)]
+tile_url = "https://tiles.quantumsavory.org/styles/ci/{z}/{x}/{y}.png" # hide
+ci_key = get(ENV, "TILE_CI_KEY", "") # hide
+isempty(ci_key) || occursin(r"\A[0-9a-f]{64}\z", ci_key) || # hide
+    error("TILE_CI_KEY must contain 64 lowercase hexadecimal characters") # hide
+tile_url *= isempty(ci_key) ? "" : "?ci_key=$(ci_key)" # hide
+provider = Tyler.TileProviders.Provider( # hide
+    tile_url; # hide
+    max_zoom=13, # hide
+    attribution="Protomaps © OpenStreetMap contributors; hosted by QuantumSavory", # hide
+) # hide
+if false # hide
 subfig, ax, map = generate_map()
+end # hide
+subfig, ax, map = generate_map(; provider) # hide
 fig, ax, plt, obs = registernetplot_axis(ax, net, registercoords=coords, state_linecolor = :black)
 fig
 ```

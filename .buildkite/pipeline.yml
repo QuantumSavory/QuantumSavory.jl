@@ -45,6 +45,8 @@ steps:
       - JuliaCI/julia-test#v1:
           test_args: "plotting"
       - JuliaCI/julia-coverage#v1: ~
+    secrets:
+      - TILE_CI_KEY
   - label: "Docs"
     branches: "!dependabot/*"
     plugins:
@@ -54,6 +56,7 @@ steps:
     secrets:
       - DOCUMENTER_KEY
       - ANYTHINGLLM_API_KEY
+      - TILE_CI_KEY
     command: |
       julia --project=docs -e 'using Pkg; Pkg.instantiate()'
       julia -tauto --project=docs docs/make.jl

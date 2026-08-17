@@ -1,5 +1,9 @@
 # News
 
+## Unreleased
+
+- `generate_map` now accepts a custom Tyler tile provider.
+
 ## v0.7.2 - 2026-08-15
 
 - QTCP link, network-node, and end-node controllers now provide HTML and PNG
