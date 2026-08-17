@@ -54,7 +54,7 @@ If your registers have latitude and longitude coordinates (ranging from -180 to 
 
 ```@example vis
 using CairoMakie # hide
-CairoMakie.activate!() # hide
+CairoMakie.activate!(; visible=false) # hide
 net = RegisterNet([Register(2),Register(3),Register(2),Register(5)]) # hide
 initialize!(net[1,1]) # hide
 initialize!(net[2,3], X₁) # hide
