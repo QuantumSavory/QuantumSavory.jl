@@ -63,16 +63,6 @@ function project_traceout!(state::Union{Ket,Operator},stateindex::Int,psis::Base
     end
 end
 
-function project_traceout!(state::Union{Ket,Operator}, subsystem::Int, meas::HomodyneMeasurement)
-    θ = first(meas.angles)
-    b = nsubsystems(state) == 1 ? basis(state) : basis(state).bases[subsystem]
-    a = destroy(b)
-    xop = (cis(-θ)*a + cis(θ)*a') / sqrt(2) # a' is the creation operator on this truncated basis
-    values, kets = QuantumOptics.eigenstates(QuantumOpticsBase.dense(xop))
-    result_index, remaining = project_traceout!(state, subsystem, kets)
-    values[result_index], remaining
-end
-
 const _l = copy(express(Z1, QuantumOpticsRepr()))
 function newstate(::Qubit,::QuantumOpticsRepr)
     copy(_l)

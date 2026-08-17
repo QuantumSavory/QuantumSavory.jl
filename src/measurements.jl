@@ -8,7 +8,7 @@ Describe a homodyne measurement on one or more continuous-variable modes.
 `angles` gives the quadrature angle, in radians, for each measured mode.
 For example, `0.0` corresponds to an `x`-quadrature measurement and `pi/2`
 to a `p`-quadrature measurement. `squeeze` sets the finite-squeezing parameter
-used by Gaussian backends and QuantumOptics backend when approximating the ideal measurement.
+used by Gaussian backends when approximating the ideal measurement.
 
 This is typically used together with [`project_traceout!`](@ref) on a
 continuous-variable register slot.
