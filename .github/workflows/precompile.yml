@@ -20,6 +20,6 @@ jobs:
   compare:
     name: Compare base and head
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: QuantumSavory/julia-precompile-benchmark@v2
