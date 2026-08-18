@@ -32,13 +32,14 @@ investigation rather than being dismissed for lack of a formal budget.
 
 ## Measure cold-start performance
 
-Use `benchmark/precompile/run.sh` when the question concerns package-cache
-creation, import, or the first execution of a user workflow. The harness uses a
-standalone consumer environment, one consumer Manifest, a dependency-only seed
-depot, fresh writable depots for QuantumSavory cache builds, and fresh Julia
-processes for recorded samples. It fixes compilation and numerical-library
-thread counts to one and disables startup files, history files, package
-auto-precompilation, and inherited Julia CPU-target, project, and depot
+Use the `julia-precompile-benchmark` v3 runner when the question concerns
+package-cache creation, import, or the first execution of a user workflow.
+`benchmark/precompile/README.md` gives the versioned local download command. The
+harness uses a standalone consumer environment, one consumer Manifest, a
+dependency-only seed depot, fresh writable depots for QuantumSavory cache
+builds, and fresh Julia processes for recorded samples. It fixes compilation
+and numerical-library thread counts to one. It disables startup files, history
+files, package auto-precompilation, and inherited Julia CPU-target, project, and depot
 overrides. Dependency setup loads QuantumSavory through a detached
 source snapshot, not a measured checkout. After deleting that package cache, the
 harness gives each measured variant one discarded cache build in a fresh
@@ -54,8 +55,8 @@ include self-consistency assertions. Select repetitions with
 experiment spans separate harness invocations, use
 `PRECOMPILE_BENCHMARK_CONSUMER_PROJECT` and
 `PRECOMPILE_BENCHMARK_CONSUMER_MANIFEST` to reuse the first invocation's exact
-normalized consumer environment. See
-`benchmark/precompile/README.md` for the command and output files.
+normalized consumer environment. The central action documentation describes
+the controls and output files.
 
 Use clean committed variants, a new output directory outside every measured
 checkout, five independent cache builds, and four recorded fresh processes per
@@ -90,7 +91,7 @@ steady-state operations.
 
 ## Anchors
 
-- **Source:** [`benchmark/benchmarks.jl`](../../../benchmark/benchmarks.jl), [`benchmark/Project.toml`](../../../benchmark/Project.toml), [`benchmark/precompile/run.sh`](../../../benchmark/precompile/run.sh), and [`benchmark/AGENTS.md`](../../../benchmark/AGENTS.md) — steady-state and cold-start entry points, environments, and conventions.
+- **Source:** [`benchmark/benchmarks.jl`](../../../benchmark/benchmarks.jl), [`benchmark/Project.toml`](../../../benchmark/Project.toml), [`benchmark/precompile/scenarios.jl`](../../../benchmark/precompile/scenarios.jl), and [`benchmark/AGENTS.md`](../../../benchmark/AGENTS.md) — steady-state entry points, cold-start workloads, environments, and conventions.
 - **Docs:** [`README.md`](../../../README.md) — repository-level project context; no formal performance budget is declared.
 - **Test:** [`benchmark/benchmark_tagquery.jl`](../../../benchmark/benchmark_tagquery.jl) and [`benchmark/benchmark_quantumstates.jl`](../../../benchmark/benchmark_quantumstates.jl) — representative scalar and state benchmarks.
 - **CI:** [`.github/workflows/benchmark.yml`](../../../.github/workflows/benchmark.yml) and [`.github/workflows/precompile.yml`](../../../.github/workflows/precompile.yml) — steady-state and cold-start automation.

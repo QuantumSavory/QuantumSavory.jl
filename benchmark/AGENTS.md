@@ -12,4 +12,5 @@ AirspeedVelocity comparisons as performance evidence, not behavioral tests.
 
 ## Cold-start measurements
 
-Use `precompile/run.sh` for package-cache build, import, and first-use latency.
+Use the `julia-precompile-benchmark` v3 runner for package-cache build, import,
+and first-use latency. `precompile/README.md` gives the local download command.

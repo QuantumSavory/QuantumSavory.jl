@@ -22,4 +22,4 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
-      - uses: QuantumSavory/julia-precompile-benchmark@v2
+      - uses: QuantumSavory/julia-precompile-benchmark@v3
