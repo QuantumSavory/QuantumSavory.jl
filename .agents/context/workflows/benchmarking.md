@@ -46,15 +46,15 @@ overlay depot. It verifies that every discarded build emits cache bytes and
 uses a role-neutral hash order. Dependency setup may use the network; discarded
 and recorded cache builds and samples use package offline mode after setup.
 
-The default scenarios are the documented Bell measurement and a deterministic
-one-round `EntanglerProt` simulation. Scenario functions include
-self-consistency assertions. Select repetitions and scenarios with
-`QS_PRECOMPILE_BUILDS`, `QS_PRECOMPILE_SAMPLES`, and
-`QS_PRECOMPILE_SCENARIOS`. Use `QS_PRECOMPILE_EXTRA_SCENARIOS` for
-candidate-specific tasks and `QS_PRECOMPILE_BASELINES` for stage-specific
-baselines. When an experiment spans separate harness invocations, use
-`QS_PRECOMPILE_CONSUMER_PROJECT` and `QS_PRECOMPILE_CONSUMER_MANIFEST` to reuse
-the first invocation's exact normalized consumer environment. See
+`PRECOMPILE_BENCHMARKS` in `scenarios.jl` is the ordered registry of scenarios,
+and every entry runs for every variant in a fresh process. Scenario functions
+include self-consistency assertions. Select repetitions with
+`PRECOMPILE_BENCHMARK_BUILDS` and `PRECOMPILE_BENCHMARK_SAMPLES`. Use
+`PRECOMPILE_BENCHMARK_BASELINES` for stage-specific baselines. When an
+experiment spans separate harness invocations, use
+`PRECOMPILE_BENCHMARK_CONSUMER_PROJECT` and
+`PRECOMPILE_BENCHMARK_CONSUMER_MANIFEST` to reuse the first invocation's exact
+normalized consumer environment. See
 `benchmark/precompile/README.md` for the command and output files.
 
 Use clean committed variants, a new output directory outside every measured
@@ -66,7 +66,7 @@ drift by reversing comparison order on even builds and alternating whether the
 mapped baseline or candidate runs first; keep this schedule and its metadata
 when extending the harness. Retain a candidate only if its
 motivating total latency improves by at least `max(50 ms, 5%)` in at least four
-builds, both headline scenarios have zero material-regression builds, and all
+builds, every registered scenario has zero material-regression builds, and all
 scenario assertions pass. Require zero first-task recompilation samples, zero
 warm-call compilation or recompilation samples, and zero material warm-runtime
 regression builds. First-task compilation is expected and is not a rejection
@@ -74,8 +74,8 @@ gate. Run trace instrumentation only in separate diagnostic processes. Report
 the metadata, raw TSV, per-build results, aggregate medians and interquartile
 ranges, and all accepted and rejected candidates. Treat a run as reportable
 only when its metadata says `reportable=true`. The dirty-checkout and
-Julia-version overrides, insufficient repetitions, or omission of either
-headline scenario always make a run non-reportable. Checkout state hashes must
+Julia-version overrides or insufficient repetitions always make a run
+non-reportable. Checkout state hashes must
 remain unchanged throughout a run, including when the initial dirty state is
 allowed.
 
