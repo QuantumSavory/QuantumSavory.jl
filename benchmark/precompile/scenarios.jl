@@ -1,16 +1,10 @@
-const total_started_ns = time_ns()
-const import_started_ns = total_started_ns
-using QuantumSavory
-const import_seconds = (time_ns() - import_started_ns) / 1.0e9
-
 using Random
-using ConcurrentSim
-using Gabs: QuadBlockBasis
+const ConcurrentSim = QuantumSavory.ConcurrentSim
+const QuadBlockBasis = QuantumSavory.Gabs.QuadBlockBasis
 using QuantumSavory.CircuitZoo: EntanglementSwap
 using QuantumSavory.ProtocolZoo: EntanglerProt
 using QuantumSavory.StatesZoo: DepolarizedBellPair
 
-check(condition, message) = condition || error(message)
 bell_state() = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
 
 function bell_core()
@@ -139,7 +133,7 @@ function entangler()
         success_prob=1.0,
         rounds=1,
     )
-    ConcurrentSim.@process protocol()
+    ConcurrentSim.Process(protocol)
     ConcurrentSim.run(simulation, 1.0)
 
     fidelity = real(observable((network[1][1], network[2][1]), SProjector(bell_state())))
@@ -169,48 +163,17 @@ function gabs()
     return sum(result)
 end
 
-const SCENARIOS = Dict(
-    "bell" => bell,
-    "bell_core" => bell_core,
-    "measurement" => measurement,
-    "clifford" => clifford,
-    "metadata" => metadata,
-    "classical_transport" => classical_transport,
-    "quantum_transport" => quantum_transport,
-    "circuitzoo" => circuitzoo,
-    "stateszoo" => stateszoo,
-    "entangler" => entangler,
-    "quantummc" => quantummc,
-    "gabs" => gabs,
+const PRECOMPILE_BENCHMARKS = (
+    bell=bell,
+    bell_core=bell_core,
+    measurement=measurement,
+    clifford=clifford,
+    metadata=metadata,
+    classical_transport=classical_transport,
+    quantum_transport=quantum_transport,
+    circuitzoo=circuitzoo,
+    stateszoo=stateszoo,
+    entangler=entangler,
+    quantummc=quantummc,
+    gabs=gabs,
 )
-
-length(ARGS) == 1 || error("usage: scenarios.jl SCENARIO")
-scenario_name = only(ARGS)
-scenario = get(SCENARIOS, scenario_name, nothing)
-isnothing(scenario) && error("unknown precompile scenario: $(scenario_name)")
-
-trace_mode = get(ENV, "QS_PRECOMPILE_TRACE", "")
-first_result = if trace_mode == "compile"
-    @timed Base.@trace_compile scenario()
-elseif trace_mode == "dispatch"
-    @timed Base.@trace_dispatch scenario()
-elseif isempty(trace_mode)
-    @timed scenario()
-else
-    error("QS_PRECOMPILE_TRACE must be empty, compile, or dispatch")
-end
-total_seconds = (time_ns() - total_started_ns) / 1.0e9
-warm_result = @timed scenario()
-
-println(join((
-    "RESULT",
-    scenario_name,
-    import_seconds,
-    first_result.time,
-    first_result.compile_time,
-    first_result.recompile_time,
-    total_seconds,
-    warm_result.time,
-    warm_result.compile_time,
-    warm_result.recompile_time,
-), '\t'))

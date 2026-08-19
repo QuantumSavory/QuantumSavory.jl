@@ -32,13 +32,14 @@ investigation rather than being dismissed for lack of a formal budget.
 
 ## Measure cold-start performance
 
-Use `benchmark/precompile/run.sh` when the question concerns package-cache
-creation, import, or the first execution of a user workflow. The harness uses a
-standalone consumer environment, one consumer Manifest, a dependency-only seed
-depot, fresh writable depots for QuantumSavory cache builds, and fresh Julia
-processes for recorded samples. It fixes compilation and numerical-library
-thread counts to one and disables startup files, history files, package
-auto-precompilation, and inherited Julia CPU-target, project, and depot
+Use the `julia-precompile-benchmark` v3 runner when the question concerns
+package-cache creation, import, or the first execution of a user workflow.
+`benchmark/precompile/README.md` gives the versioned local download command. The
+harness uses a standalone consumer environment, one consumer Manifest, a
+dependency-only seed depot, fresh writable depots for QuantumSavory cache
+builds, and fresh Julia processes for recorded samples. It fixes compilation
+and numerical-library thread counts to one. It disables startup files, history
+files, package auto-precompilation, and inherited Julia CPU-target, project, and depot
 overrides. Dependency setup loads QuantumSavory through a detached
 source snapshot, not a measured checkout. After deleting that package cache, the
 harness gives each measured variant one discarded cache build in a fresh
@@ -46,16 +47,16 @@ overlay depot. It verifies that every discarded build emits cache bytes and
 uses a role-neutral hash order. Dependency setup may use the network; discarded
 and recorded cache builds and samples use package offline mode after setup.
 
-The default scenarios are the documented Bell measurement and a deterministic
-one-round `EntanglerProt` simulation. Scenario functions include
-self-consistency assertions. Select repetitions and scenarios with
-`QS_PRECOMPILE_BUILDS`, `QS_PRECOMPILE_SAMPLES`, and
-`QS_PRECOMPILE_SCENARIOS`. Use `QS_PRECOMPILE_EXTRA_SCENARIOS` for
-candidate-specific tasks and `QS_PRECOMPILE_BASELINES` for stage-specific
-baselines. When an experiment spans separate harness invocations, use
-`QS_PRECOMPILE_CONSUMER_PROJECT` and `QS_PRECOMPILE_CONSUMER_MANIFEST` to reuse
-the first invocation's exact normalized consumer environment. See
-`benchmark/precompile/README.md` for the command and output files.
+`PRECOMPILE_BENCHMARKS` in `scenarios.jl` is the ordered registry of scenarios,
+and every entry runs for every variant in a fresh process. Scenario functions
+include self-consistency assertions. Select repetitions with
+`PRECOMPILE_BENCHMARK_BUILDS` and `PRECOMPILE_BENCHMARK_SAMPLES`. Use
+`PRECOMPILE_BENCHMARK_BASELINES` for stage-specific baselines. When an
+experiment spans separate harness invocations, use
+`PRECOMPILE_BENCHMARK_CONSUMER_PROJECT` and
+`PRECOMPILE_BENCHMARK_CONSUMER_MANIFEST` to reuse the first invocation's exact
+normalized consumer environment. The central action documentation describes
+the controls and output files.
 
 Use clean committed variants, a new output directory outside every measured
 checkout, five independent cache builds, and four recorded fresh processes per
@@ -66,7 +67,7 @@ drift by reversing comparison order on even builds and alternating whether the
 mapped baseline or candidate runs first; keep this schedule and its metadata
 when extending the harness. Retain a candidate only if its
 motivating total latency improves by at least `max(50 ms, 5%)` in at least four
-builds, both headline scenarios have zero material-regression builds, and all
+builds, every registered scenario has zero material-regression builds, and all
 scenario assertions pass. Require zero first-task recompilation samples, zero
 warm-call compilation or recompilation samples, and zero material warm-runtime
 regression builds. First-task compilation is expected and is not a rejection
@@ -74,8 +75,8 @@ gate. Run trace instrumentation only in separate diagnostic processes. Report
 the metadata, raw TSV, per-build results, aggregate medians and interquartile
 ranges, and all accepted and rejected candidates. Treat a run as reportable
 only when its metadata says `reportable=true`. The dirty-checkout and
-Julia-version overrides, insufficient repetitions, or omission of either
-headline scenario always make a run non-reportable. Checkout state hashes must
+Julia-version overrides or insufficient repetitions always make a run
+non-reportable. Checkout state hashes must
 remain unchanged throughout a run, including when the initial dirty state is
 allowed.
 
@@ -90,7 +91,7 @@ steady-state operations.
 
 ## Anchors
 
-- **Source:** [`benchmark/benchmarks.jl`](../../../benchmark/benchmarks.jl), [`benchmark/Project.toml`](../../../benchmark/Project.toml), [`benchmark/precompile/run.sh`](../../../benchmark/precompile/run.sh), and [`benchmark/AGENTS.md`](../../../benchmark/AGENTS.md) — steady-state and cold-start entry points, environments, and conventions.
+- **Source:** [`benchmark/benchmarks.jl`](../../../benchmark/benchmarks.jl), [`benchmark/Project.toml`](../../../benchmark/Project.toml), [`benchmark/precompile/scenarios.jl`](../../../benchmark/precompile/scenarios.jl), and [`benchmark/AGENTS.md`](../../../benchmark/AGENTS.md) — steady-state entry points, cold-start workloads, environments, and conventions.
 - **Docs:** [`README.md`](../../../README.md) — repository-level project context; no formal performance budget is declared.
 - **Test:** [`benchmark/benchmark_tagquery.jl`](../../../benchmark/benchmark_tagquery.jl) and [`benchmark/benchmark_quantumstates.jl`](../../../benchmark/benchmark_quantumstates.jl) — representative scalar and state benchmarks.
 - **CI:** [`.github/workflows/benchmark.yml`](../../../.github/workflows/benchmark.yml) and [`.github/workflows/precompile.yml`](../../../.github/workflows/precompile.yml) — steady-state and cold-start automation.
