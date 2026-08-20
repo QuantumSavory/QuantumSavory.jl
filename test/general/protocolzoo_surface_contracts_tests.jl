@@ -105,6 +105,7 @@ end
         consumer = EntanglementConsumer(sim, net, 1, 2)
         push!(consumer._log, (1.0, 1.0, -1.0))
         push!(consumer._log, (3.0, -1.0, 1.0))
+
         consumer_html = sprint(show, MIME"text/html"(), consumer)
         @test occursin("Consumed pairs", consumer_html)
         @test occursin(">2<", consumer_html)
