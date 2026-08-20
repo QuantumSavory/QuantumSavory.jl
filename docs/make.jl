@@ -100,8 +100,12 @@ function main()
         "API Autodiscovery" => "api_autodiscovery.md",
         "QuantumInterface API" => "API_Interface.md",
         "QuantumSymbolics API" => "API_Symbolics.md",
-        "Visualizations" => "visualizations.md",
-        "Quantum State Visualization" => "state_visualization.md",
+        "Visualizations" => [
+            "visualizations.md",
+            "Register Visualizations" => "register_visualizations.md",
+            "Protocol Visualizations" => "protocol_visualizations.md",
+            "Quantum State Visualization" => "state_visualization.md",
+        ],
         "Bibliography" => "bibliography.md",
     ],
     ]

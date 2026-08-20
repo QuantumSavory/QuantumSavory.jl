@@ -72,6 +72,13 @@ end
     mb1 = messagebuffer(net, 1)
     qdatagram = query(mb1, QDatagram, ❓, ❓, ❓, ❓, ❓, ❓)
     @test collect(qdatagram.tag)[2:7] == [42, 1, 2, 0, 1, 0.0]
+
+    stats = end_controller._log[42]
+    @test stats.flow_src == 1
+    @test stats.flow_dst == 2
+    @test stats.delivered == 0
+    @test stats.latency_sum == 0.0
+    @test EndNodeController(sim, net, 2)._log !== end_controller._log
 end
 
 ##
@@ -216,6 +223,32 @@ end
 
 ##
 
+@testset "NetworkNodeController records queue history" begin
+    net = RegisterNet([Register(2), Register(2)])
+    sim = get_time_tracker(net)
+    controller = NetworkNodeController(sim, net, 1)
+
+    @test isempty(controller._log)
+    @test NetworkNodeController(sim, net, Int32(1)).node === 1
+
+    @process controller()
+    @process LinkController(net, 1, 2)()
+    for seq_num in 1:2
+        put!(net[1], QDatagram(42, 1, 2, 0, seq_num, 0.0))
+    end
+
+    run(sim, 3.0)
+
+    @test [event.processed for event in controller._log] == [false, false, true, true]
+    @test all(event.flow_id == 42 for event in controller._log)
+    @test all(iszero(event.sojourn) for event in controller._log if !event.processed)
+    @test sort([event.sojourn for event in controller._log if event.processed]) ≈ [1.0, 2.0]
+    @test sum(event.processed ? -1 : 1 for event in controller._log) == 0
+    @test count_matching_tags!(messagebuffer(net, 2), QDatagram, 42, 1, 2, ❓, ❓, ❓) == 2
+end
+
+##
+
 @testset "Complete QTCP protocol flow" begin
     # Create registers with a few qubits each
     registers = [Register(5) for _ in 1:5]
@@ -279,6 +312,17 @@ end
     end
     @test isempty(mb1.buffer)
     @test isempty(mb5.buffer)
+
+    source_stats = source_controller._log[99]
+    destination_stats = dest_controller._log[99]
+    @test length(source_controller._log) == 1
+    @test length(dest_controller._log) == 1
+    @test source_stats.flow_src == destination_stats.flow_src == 1
+    @test source_stats.flow_dst == destination_stats.flow_dst == 5
+    @test source_stats.delivered == destination_stats.delivered == test_flow.npairs
+    @test source_stats.flow_start_time == destination_stats.flow_start_time
+    @test source_stats.latency_sum > destination_stats.latency_sum > 0
+    @test source_stats.last_delivery_time > destination_stats.last_delivery_time
 end
 
 ##
@@ -323,6 +367,32 @@ end
     @test count_matching_tags!(mb5, QTCPPairEnd, 301, ❓, ❓, ❓, ❓, ❓) == 2
     @test count_matching_tags!(mb2, QTCPPairBegin, 302, ❓, ❓, ❓, ❓, ❓) == 2
     @test count_matching_tags!(mb4, QTCPPairEnd, 302, ❓, ❓, ❓, ❓, ❓) == 2
+end
+
+##
+
+@testset "LinkController records request arrivals and sojourns" begin
+    net = RegisterNet([Register(2), Register(2)])
+    sim = get_time_tracker(net)
+    link_controller = LinkController(sim, net, 1, 2)
+    @process link_controller()
+
+    put!(net[1], LinkLevelRequest(flow_uuid=11, seq_num=1, remote_node=2))
+    put!(net[2], LinkLevelRequest(flow_uuid=22, seq_num=1, remote_node=1))
+
+    run(sim, 0.5)
+
+    @test [entry.originator_node for entry in link_controller._log] == [1, 2]
+    @test [entry.arrival_time for entry in link_controller._log] == [0.0, 0.0]
+    @test all(isnothing(entry.sojourn_time) for entry in link_controller._log)
+
+    run(sim, 3.0)
+
+    @test [entry.sojourn_time for entry in link_controller._log] == [1.0, 2.0]
+
+    other_controller = LinkController(sim, net, 1, 2)
+    @test isempty(other_controller._log)
+    @test other_controller._log !== link_controller._log
 end
 
 ##

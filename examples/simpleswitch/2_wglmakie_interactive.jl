@@ -102,17 +102,21 @@ landing = Bonito.App() do
 
     n, sim, net, switch_protocol, client_pairs, client_unordered_pairs, consumers, rates, rate_scale, sim_time, fig, observables, axes = prepare_singlerun()
 
-    running = Observable{Any}(false)
+    running = Observable{Union{Bool, Nothing}}(false)
     fig[3,1] = buttongrid = GridLayout(tellwidth = false)
     buttongrid[1,1] = b = Makie.Button(fig, label = @lift(isnothing($running) ? "Done" : $running ? "Running..." : "Run once"), height=30, tellwidth=false)
 
     on(b.clicks) do _
-        if !running[]
+        if running[] === false
             running[] = true
         end
     end
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        running[] === false && (running[] = true)
+    end
     on(running) do r
-        if r
+        if r === true
             Threads.@spawn begin
                 continue_singlerun!(
                     n, fig, sim, sim_time, switch_protocol, client_unordered_pairs, consumers,
@@ -141,7 +145,7 @@ landing = Bonito.App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/simpleswitch)
     """
-    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end;
 
 @info "app definition is complete"

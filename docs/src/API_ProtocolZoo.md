@@ -92,7 +92,7 @@ participants for one event in fields such as `src_node`, `dst_node`, or
 
 ## Visualization Hooks
 
-Some protocols also expose richer visualization through `show` methods.
+Many protocols also expose richer visualization through `show` methods.
 `EntanglerProt`, for example, can render protocol-specific summaries in HTML or
 PNG form.
 

@@ -13,11 +13,16 @@ end
 network = RegisterNet(registers)
 
 fig = Figure(size=(400,400))
-_, _, plt, netobs = registernetplot_axis(fig[1,1],network)
+coords = [Point2f(20i, -20i) for i in eachindex(registers)]
+_, ax, plt, netobs = registernetplot_axis(fig[1,1],network; registercoords=coords)
+lo, hi = extrema(ax.finallimits[])
+@test lo[2] < -140 < hi[2]
+@test lo[1] < 140 < hi[1]
 save(File{format"PNG"}(mktemp()[1]), fig)
 
 initialize!(network[1,1])
 initialize!(network[2,1])
+network[1, :module] = Main # Live simulations can contain values that cannot be deep-copied.
 notify(netobs)
 save(File{format"PNG"}(mktemp()[1]), fig)
 

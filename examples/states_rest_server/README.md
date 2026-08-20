@@ -2,11 +2,15 @@
 
 This REST API provides access to density matrices from quantum states in the QuantumSavory StatesZoo, including Barrett-Kok Bell pairs and states from the Genqo package.
 
+Hosted Swagger documentation is available at
+[areweentangledyet.com/states_rest_server/docs](https://areweentangledyet.com/states_rest_server/docs).
+Hosted API endpoints remain below `/states_rest_server/api/`.
+
 ## Quick Start
 
 ### Prerequisites
 
-1. Julia 1.11+ with QuantumSavory.jl installed
+1. Julia 1.12 or later with QuantumSavory.jl installed
 2. Oxygen.jl for the REST API framework
 3. JSON3.jl for JSON handling
 
@@ -18,7 +22,31 @@ From the folder containing the server and the Project.toml file with the depende
 julia --project=. server.jl
 ```
 
-The server will start on `http://localhost:8080`
+The server will start on `http://localhost:8080`.
+
+### Server configuration
+
+The server accepts these environment variables:
+
+- `QS_STATES_REST_SERVER_IP` (default `127.0.0.1`)
+- `QS_STATES_REST_SERVER_PORT` (default `8080`)
+- `QS_STATES_REST_SERVER_PROXY` (the external origin, such as
+  `https://areweentangledyet.com`)
+- `QS_STATES_REST_SERVER_PREFIX` (an optional path prefix)
+- `QS_STATES_REST_SERVER_DOCPATH` (default `/docs`)
+
+Oxygen applies `QS_STATES_REST_SERVER_PREFIX` to the API, Swagger UI, and
+OpenAPI schema. A reverse proxy must preserve this prefix. For example:
+
+```bash
+QS_STATES_REST_SERVER_PROXY=https://areweentangledyet.com \
+QS_STATES_REST_SERVER_PREFIX=/states_rest_server \
+    julia --project=. server.jl
+```
+
+With this configuration, use
+`/states_rest_server/api/health`, `/states_rest_server/docs`, and
+`/states_rest_server/docs/schema`.
 
 ## API Endpoints
 

@@ -201,7 +201,7 @@ function continue_singlerun!(sim, net,
     fids, fidsMax, fidsMin, ts,
     linkcolors,
     obs_rg,obs_1,obs_2,ax2,
-    current_time)
+    current_time, running)
     for _ in 1:1000
         current_time[] += conf[:T₂ⁿ]/600
         fetch(@spawn run(sim, current_time[])) # do not run heavy calculations on the main thread, even if async
@@ -227,6 +227,7 @@ function continue_singlerun!(sim, net,
         notify(obs_2)
         xlims!(ax2,max(0,ts[][end]-2*conf[:T₂ⁿ]), nothing)
     end
+    running[] = false
 end
 
 singletraj = App() do
@@ -291,6 +292,10 @@ singletraj = App() do
             running[] = true
         end
     end
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        !running[] && (running[] = true)
+    end
     on(running) do r
         if r
             @async continue_singlerun!(sim, net,
@@ -298,7 +303,8 @@ singletraj = App() do
             fids, fidsMax, fidsMin, ts,
             linkcolors,
             obs_rg,obs_1,obs_2,ax2,
-            current_time)
+            current_time,
+            running)
         end
     end
 
@@ -327,7 +333,7 @@ singletraj = App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/colorcentermodularcluster)
     """
-    return DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    return DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end;
 
 ##
