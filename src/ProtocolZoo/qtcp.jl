@@ -335,8 +335,28 @@ Managing the following transformations of classical control signals:
     nodeA::Int
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
+    """`nothing` to generate entanglement for each request, or a concrete `AbstractTag` subtype identifying externally generated link inventory"""
+    tag::Union{Nothing,Type{<:AbstractTag}} = nothing
+    """inventory selection order: `true` takes the newest pair and `false` the oldest; must be `nothing` when `tag` is `nothing`"""
+    filo::Union{Nothing,Bool} = isnothing(tag) ? nothing : true
     """request arrival and sojourn records; the storage type is not part of the public API and may change in future versions"""
     _log::Vector{_LinkControllerLogEntry} = _LinkControllerLogEntry[]
+
+    function LinkController(sim, net, nodeA, nodeB, tag, filo, _log)
+        if isnothing(tag)
+            isnothing(filo) || throw(ArgumentError(
+                "`filo` must be `nothing` when `LinkController` generates entanglement"
+            ))
+        else
+            isconcretetype(tag) || throw(ArgumentError(
+                "`tag` must be a concrete subtype of `AbstractTag`"
+            ))
+            filo isa Bool || throw(ArgumentError(
+                "`filo` must be a `Bool` when `LinkController` uses external inventory"
+            ))
+        end
+        return new(sim, net, nodeA, nodeB, tag, filo, _log)
+    end
 end
 
 protocol_catalog_metadata(::Type{LinkController}) = (
@@ -588,6 +608,132 @@ function _link_entangler(prot::LinkController)
     )
 end
 
+"""Return external-inventory candidates in the configured selection order."""
+function _link_inventory_candidates(
+    prot::LinkController
+)
+    tag = prot.tag::DataType
+    filo = prot.filo::Bool
+    if tag === EntanglementCounterpart
+        return queryall(
+            prot.net[prot.nodeA], tag, prot.nodeB, ❓, ❓; filo, assigned=true
+        )
+    end
+    return queryall(
+        prot.net[prot.nodeA], tag, prot.nodeB, ❓; filo, assigned=true
+    )
+end
+
+"""Find the exact reciprocal tag for an external-inventory candidate."""
+function _link_inventory_reciprocal(
+    prot::LinkController,
+    candidate,
+)
+    remote_slot = candidate.tag[3]::Int
+    destination_register = prot.net[prot.nodeB]
+    1 <= remote_slot <= length(destination_register) || return nothing
+
+    tag = prot.tag::DataType
+    filo = prot.filo::Bool
+    remote = destination_register[remote_slot]
+    if tag === EntanglementCounterpart
+        pair_id = candidate.tag[4]::Int
+        return query(
+            remote, tag, prot.nodeA, candidate.slot.idx, pair_id;
+            filo, assigned=true
+        )
+    end
+    return query(
+        remote, tag, prot.nodeA, candidate.slot.idx; filo, assigned=true
+    )
+end
+
+"""Return configured inventory tags on one slot."""
+function _link_inventory_slot_tags(
+    prot::LinkController,
+    slot;
+    locked::Union{Nothing,Bool}=nothing,
+    assigned::Union{Nothing,Bool}=nothing,
+)
+    tag = prot.tag::DataType
+    if tag === EntanglementCounterpart
+        return queryall(slot, tag, ❓, ❓, ❓; locked, assigned)
+    end
+    return queryall(slot, tag, ❓, ❓; locked, assigned)
+end
+
+"""Check that a result is the unique configured inventory tag on its slot."""
+function _link_inventory_tag_is_unique(
+    prot::LinkController,
+    result;
+    locked::Union{Nothing,Bool}=nothing,
+    assigned::Union{Nothing,Bool}=nothing,
+)
+    current = _link_inventory_slot_tags(prot, result.slot; locked, assigned)
+    return length(current) == 1 &&
+        only(current).id == result.id &&
+        only(current).tag == result.tag
+end
+
+"""Wait for and atomically claim one reciprocal pair from external inventory."""
+@resumable function _link_claim_inventory_pair(
+    sim::Simulation,
+    prot::LinkController,
+)
+    register_a = prot.net[prot.nodeA]
+    register_b = prot.net[prot.nodeB]
+
+    while true
+        retry = false
+        candidates = _link_inventory_candidates(prot)
+        for candidate in candidates
+            reciprocal = _link_inventory_reciprocal(prot, candidate)
+            isnothing(reciprocal) && continue
+            _link_inventory_tag_is_unique(
+                prot, candidate; assigned=true
+            ) || continue
+            _link_inventory_tag_is_unique(
+                prot, reciprocal; assigned=true
+            ) || continue
+
+            slot_a = candidate.slot
+            slot_b = reciprocal.slot
+            state_a = QuantumSavory.stateof(slot_a)
+            state_b = QuantumSavory.stateof(slot_b)
+            state_a === state_b || continue
+            @yield @process nongreedymultilock(
+                sim, (slot_a, slot_b)
+            )
+
+            valid = isassigned(slot_a) &&
+                isassigned(slot_b) &&
+                QuantumSavory.stateof(slot_a) === state_a &&
+                QuantumSavory.stateof(slot_b) === state_b &&
+                _link_inventory_tag_is_unique(
+                    prot, candidate; locked=true, assigned=true
+                ) &&
+                _link_inventory_tag_is_unique(
+                    prot, reciprocal; locked=true, assigned=true
+                )
+            if valid
+                untag!(slot_a, candidate.id)
+                untag!(slot_b, reciprocal.id)
+                unlock(slot_a)
+                unlock(slot_b)
+                return slot_a.idx, slot_b.idx
+            end
+
+            unlock(slot_a)
+            unlock(slot_b)
+            retry = true
+            break
+        end
+        retry && continue
+
+        @yield onchange(register_a, Tag) | onchange(register_b, Tag)
+    end
+end
+
 @resumable function _link_handle_request(
     sim::Simulation,
     prot::LinkController,
@@ -600,18 +746,21 @@ end
 )
     (; net, nodeA, nodeB) = prot
     @yield lock(link_resource)
-    entangler = _link_entangler(prot)
-    # TODO have a timeout on how long to wait for an entangler to complete
-    proc = @process entangler()
-    _, slotA, _, slotB = @yield proc
-    unlock(link_resource)
-    # slotA is at nodeA, slotB is at nodeB.
-    # Map to originator/destination so each node gets its own local slot.
-    originator_slot, destination_slot = if originator_node == nodeA
-        slotA, slotB
+    slotA = 0
+    slotB = 0
+    if isnothing(prot.tag)
+        entangler = _link_entangler(prot)
+        # TODO have a timeout on how long to wait for an entangler to complete
+        proc = @process entangler()
+        _, slotA, _, slotB = @yield proc
     else
-        slotB, slotA
+        claim = @process _link_claim_inventory_pair(sim, prot)
+        slotA, slotB = @yield claim
     end
+    unlock(link_resource)
+    # Map the canonical endpoint slots to the request direction.
+    originator_slot, destination_slot = originator_node == nodeA ?
+        (slotA, slotB) : (slotB, slotA)
     put!(net[originator_node], LinkLevelReply(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=originator_slot))
     put!(net[destination_node], LinkLevelReplyAtHop(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=destination_slot))
     entry = prot._log[log_index]
