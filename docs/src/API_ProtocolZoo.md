@@ -39,11 +39,18 @@ When user-written protocols need to cooperate with these implementations, the
 main interface is the standard set of typed tags documented in
 [Standard Protocol Tags](@ref standard-protocol-tags).
 
-`EntanglerProt` and `EntanglementConsumer` accept a named tag-head type through
-their `tag` fields. Custom types supplied there must be concrete subtypes of
-`QuantumSavory.AbstractTag`; the entangler additionally accepts `nothing` to
-disable tagging. This marker describes the head stored inside a `Tag` and does
-not replace the `Tag` value itself.
+`EntanglerProt`, `EntanglementConsumer`, and QTCP `LinkController` accept a named
+tag-head type through their `tag` fields. Custom types supplied there must be
+concrete subtypes of `QuantumSavory.AbstractTag`. The entangler accepts
+`nothing` to disable tagging. This marker describes the head stored inside a
+`Tag` and does not replace the `Tag` value itself.
+
+`LinkController` supports two configurations. Its default
+`tag=nothing, filo=nothing` generates one pair for each request. A concrete
+`tag` selects external inventory produced by another protocol; `filo=true`
+(the external-mode default) takes the newest suitable pair, while `filo=false`
+takes the oldest. A successful external claim removes the two reciprocal tags
+but retains the quantum state for QTCP.
 
 ## How Protocols Compose
 
@@ -94,7 +101,8 @@ participants for one event in fields such as `src_node`, `dst_node`, or
 
 Many protocols also expose richer visualization through `show` methods.
 `EntanglerProt`, for example, can render protocol-specific summaries in HTML or
-PNG form.
+PNG form. QTCP `LinkController` displays its generated entangler in integrated
+mode and its configured tag and selection order in external mode.
 
 Those displays are not part of the protocol logic itself, but they are useful
 for debugging configuration and inspecting the expected behavior of a protocol

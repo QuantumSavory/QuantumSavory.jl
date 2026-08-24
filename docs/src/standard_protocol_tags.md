@@ -27,17 +27,18 @@ is what lets a custom component fit into an existing stack without directly
 calling the internals of another protocol.
 
 Named tag heads used through the `tag` configuration field of
-`EntanglerProt` or `EntanglementConsumer` must be concrete subtypes of
-`AbstractTag`:
+`EntanglerProt`, `EntanglementConsumer`, or QTCP `LinkController` must be
+concrete subtypes of `AbstractTag`:
 
 ```julia
 struct MyEntanglementTag <: AbstractTag end
 ```
 
 The entangler writes custom configured tags with the legacy
-`(remote_node, remote_slot)` payload, and the consumer queries that same shape.
-This requirement applies to those protocol configuration fields, not to
-general `Tag(DataType, ...)` construction and querying.
+`(remote_node, remote_slot)` payload. The consumer and an external-inventory
+link controller query that same shape. This requirement applies to those
+protocol configuration fields, not to general `Tag(DataType, ...)`
+construction and querying.
 
 For example, `EntanglerProt` marks generated links with
 `EntanglementCounterpart`. `SwapperProt` can then find such links by querying
@@ -76,6 +77,8 @@ Protocol interface:
   notices.
 - `EntanglementConsumer` queries reciprocal counterparts when it consumes an
   end-to-end pair.
+- An external-inventory QTCP `LinkController` claims an exact reciprocal pair,
+  removes both counterpart tags, and retains the quantum state for QTCP.
 - `SimpleSwitchDiscreteProt` queries it to find switch-client links that can be
   matched or deleted.
 
@@ -257,7 +260,7 @@ Tag(QTCPPairBegin, flow_uuid, flow_src, flow_dst, seq_num, memory_slot, start_ti
 Tag(QTCPPairEnd, flow_uuid, flow_src, flow_dst, seq_num, memory_slot, start_time)
 ```
 
-Storage location: message buffers for `Flow`, node registers for pair-completed
+Storage location: message buffers for `Flow` and the pair-completed
 notifications.
 
 Protocol interface:
@@ -273,8 +276,8 @@ Typical queries:
 
 ```julia
 querydelete!(messagebuffer(net, src), Flow, src, W, W, W)
-query(net[src], QTCPPairBegin, flow_uuid, src, dst, W, W, W)
-query(net[dst], QTCPPairEnd, flow_uuid, src, dst, W, W, W)
+query(messagebuffer(net, src), QTCPPairBegin, flow_uuid, W, W, W, W, W)
+query(messagebuffer(net, dst), QTCPPairEnd, flow_uuid, W, W, W, W, W)
 ```
 
 ### Datagram And Acknowledgement Messages
@@ -309,8 +312,7 @@ Tag(LinkLevelReplyAtSource, flow_uuid, seq_num, memory_slot)
 Tag(LinkLevelReplyAtHop, flow_uuid, seq_num, memory_slot)
 ```
 
-Storage location: message buffers or node-local metadata used by QTCP
-controllers.
+Storage location: message buffers.
 
 Protocol interface:
 
@@ -318,6 +320,13 @@ Protocol interface:
   entanglement to the next hop.
 - `LinkController` consumes requests and returns `LinkLevelReply` to the
   requester and `LinkLevelReplyAtHop` to the remote hop.
+- By default, `LinkController(tag=nothing, filo=nothing)` generates one pair for
+  each request. With a concrete `tag`, it instead claims externally generated
+  reciprocal inventory. `filo=true` selects the newest suitable pair and
+  `filo=false` selects the oldest; omitting `filo` in external mode defaults to
+  `true`.
+- An external claim consumes only the two inventory tags. It retains the
+  assigned shared quantum state for the QTCP data path.
 - `NetworkNodeController` converts replies into forwarded datagrams or
   source-side bookkeeping through `LinkLevelReplyAtSource`.
 - `EndNodeController` consumes the source/hop replies when turning a completed

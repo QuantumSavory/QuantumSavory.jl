@@ -30,9 +30,8 @@ raises an `ArgumentError`.
 `query_wait` always performs the query first, then waits for a change only if no match
 exists. It is always non-consuming and does not lock or reserve a matching tag;
 `querydelete_wait!` is the consuming wait variant. The claim in
-`docs/src/tag_query.md` that `query_wait` locks or reserves is stale and must not guide
-implementations. Callers that require exclusivity must revalidate and consume under
-their own protocol discipline.
+`docs/src/tag_query.md` states the same non-reservation rule. Callers that require
+exclusivity must revalidate and consume under their own protocol discipline.
 
 The notification primitive is `ChangeNotifier`, not `AsymmetricSemaphore`. Register
 waiters observe a register-wide future change edge. Message buffers also broadcast
@@ -52,7 +51,7 @@ aligned with the repository's public-API convention.
 ## Anchors
 
 - **Source:** [`src/tags.jl`](../../../src/tags.jl), [`src/queries.jl`](../../../src/queries.jl), [`src/querywait.jl`](../../../src/querywait.jl), and [`src/messagebuffer.jl`](../../../src/messagebuffer.jl) — payload, indexing, query, and buffer behavior.
-- **Docs:** [`docs/src/metadata_plane.md`](../../../docs/src/metadata_plane.md) and [`docs/src/tag_query.md`](../../../docs/src/tag_query.md) — human metadata model, including the identified stale locking claim.
+- **Docs:** [`docs/src/metadata_plane.md`](../../../docs/src/metadata_plane.md) and [`docs/src/tag_query.md`](../../../docs/src/tag_query.md) — human metadata and query model.
 - **Test:** [`test/general/tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`test/general/querywait_tests.jl`](../../../test/general/querywait_tests.jl), and [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl) — ordering, waits, and buffer behavior.
 
 ## Unresolved questions
