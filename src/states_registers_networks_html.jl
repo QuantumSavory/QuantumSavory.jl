@@ -4,7 +4,6 @@ styles = """<style>
         min-width: 300px;
         max-width: 450px;
         line-height: 1.35;
-        color: #222;
     }
     .quantumsavory_stateref {
         font-family: "STIX Two Text", "Cambria Math", serif;
@@ -27,8 +26,12 @@ styles = """<style>
         padding: 0.15em 0.4em;
     }
     .quantumsavory_register_table td:first-child {
+        width: 30%;
         font-weight: 600;
-        white-space: nowrap;
+        text-align: right;
+    }
+    .quantumsavory_register_table td:nth-child(2) {
+        text-align: left;
     }
     .quantumsavory_register_name {
         font-family: "JuliaMono", monospace;
@@ -189,7 +192,7 @@ styles = """<style>
 </style>"""
 
 function Base.show(io::IO, ::MIME"text/html", r::Register)
-    regname = namestr(r; useobjectid=false)
+    regname = namestr(r)
     print(io, """$styles
         <div class="quantumsavory_show quantumsavory_register">
             <div class="quantumsavory_register_heading">
@@ -222,12 +225,12 @@ function Base.show(io::IO, ::MIME"text/html", r::Register)
         return
     end;
     print(io, """
-            <tr>
+            <!--<tr>
                 <td>Traits</td>
                 <td class="quantumsavory_register_traits">
                     $(join(string.(typeof.(r.traits)), " | "))
                 </td>
-            </tr>
+            </tr>-->
         </table>
         <div class="quantumsavory_register_heading" style="margin-top:1em">
             Slots

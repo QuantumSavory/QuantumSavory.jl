@@ -6,7 +6,7 @@ function draw_histogram!(fig, state::StateVector)
     amps = collect(enumerate(state.data))
     if nsubsystems(state) > 5
         sort!(amps; by = x -> abs(x[2]), rev = true)
-        amps = amps[1:min(8, length(amps))]
+        amps = amps[1:min(32, length(amps))]
         title = "Top $(length(amps)) Amplitudes"
     else
         title = "State Amplitudes"
@@ -18,8 +18,7 @@ function draw_histogram!(fig, state::StateVector)
         ylabel = "|Amplitude|",
         xticks = _histogram_xticks(state, first.(amps)),
         xticklabelrotation = π/2,
-        xlabelpadding = 10,
-        ylabelpadding = 10,
+        yticks = 0:0.25:1,
     )
     ylims!(ax, 0, 1)
 
@@ -36,7 +35,7 @@ function draw_histogram!(fig, state::AbstractOperator)
     probs = collect(enumerate(real.(diag(state.data))))
     if nsubsystems(state) > 5
         sort!(probs; by = x -> x[2], rev = true)
-        probs = probs[1:min(8, length(probs))]
+        probs = probs[1:min(32, length(probs))]
         title = "Top $(length(probs)) Probabilities"
     else
         title = "State Probabilities"
@@ -48,8 +47,7 @@ function draw_histogram!(fig, state::AbstractOperator)
         ylabel = "Probability",
         xticks = _histogram_xticks(state, first.(probs)),
         xticklabelrotation = π/2,
-        xlabelpadding = 10,
-        ylabelpadding = 10,
+        yticks = 0:0.25:1,
     )
     ylims!(ax, 0, 1)
 
