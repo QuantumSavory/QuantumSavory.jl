@@ -87,7 +87,8 @@ function _link_timing_histogram(subfig, samples; title)
     return axis
 end
 
-protshowrows(::QuantumSavory.ProtocolZoo.QTCP.LinkController) = 4
+protshowrows(prot::QuantumSavory.ProtocolZoo.QTCP.LinkController) =
+    isnothing(prot.tag) ? 4 : 2
 
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkController)
     qtcp = QuantumSavory.ProtocolZoo.QTCP

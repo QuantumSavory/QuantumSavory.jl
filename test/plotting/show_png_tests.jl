@@ -78,6 +78,7 @@ external_link_controller = LinkController(
     tag=EntanglementCounterpart,
     filo=false,
 )
+@test makie_extension.protshowrows(external_link_controller) == 2
 external_link_png = repr(MIME"image/png"(), external_link_controller)
 
 @test first(empty_link_png, 8) == png_signature
