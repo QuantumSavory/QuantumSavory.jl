@@ -27,7 +27,7 @@ is what lets a custom component fit into an existing stack without directly
 calling the internals of another protocol.
 
 Named tag heads used through the `tag` configuration field of
-`EntanglerProt`, `EntanglementConsumer`, or QTCP `LinkController` must be
+`EntanglerProt`, `EntanglementConsumer`, QTCP `LinkController`, and others must be
 concrete subtypes of `AbstractTag`:
 
 ```julia
@@ -36,9 +36,7 @@ struct MyEntanglementTag <: AbstractTag end
 
 The entangler writes custom configured tags with the legacy
 `(remote_node, remote_slot)` payload. The consumer and an external-inventory
-link controller query that same shape. This requirement applies to those
-protocol configuration fields, not to general `Tag(DataType, ...)`
-construction and querying.
+link controller query that same shape.
 
 For example, `EntanglerProt` marks generated links with
 `EntanglementCounterpart`. `SwapperProt` can then find such links by querying
@@ -77,8 +75,7 @@ Protocol interface:
   notices.
 - `EntanglementConsumer` queries reciprocal counterparts when it consumes an
   end-to-end pair.
-- An external-inventory QTCP `LinkController` claims an exact reciprocal pair,
-  removes both counterpart tags, and retains the quantum state for QTCP.
+- Independently developped protocols like QTCP `LinkController` consumes such pairs.
 - `SimpleSwitchDiscreteProt` queries it to find switch-client links that can be
   matched or deleted.
 

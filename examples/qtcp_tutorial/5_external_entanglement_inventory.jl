@@ -8,8 +8,6 @@
 include("setup.jl")
 using Random
 
-Random.seed!(20260824)
-
 # --- Network parameters ---
 graph = grid([4, 4])
 regsize = 20

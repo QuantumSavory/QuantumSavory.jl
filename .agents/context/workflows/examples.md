@@ -17,7 +17,7 @@
    interactive-only behavior in the tested path; plotting or server startup should have
    a bounded test mode.
 3. Add or update the corresponding `_tests.jl` wrapper under `test/examples/`.
-   There are currently 36 discoverable wrappers. Buildkite passes the `example`
+   Buildkite passes the `example`
    selector, which selects the `examples/*_tests.jl` names. Match the runner’s suffix
    and naming convention so both focused and CI runs find it.
 4. Decide whether the wrapper is a smoke check or a behavioral check. Most current
@@ -44,7 +44,7 @@ and every checked-in example must remain executable across compatible versions.
 
 - **Source:** [`examples/`](../../../examples/) and [`examples/Project.toml`](../../../examples/Project.toml) — runnable scripts and their environment.
 - **Docs:** [`docs/src/howto.md`](../../../docs/src/howto.md) and [`docs/src/tutorial.md`](../../../docs/src/tutorial.md) — human entry points.
-- **Test:** [`test/examples/`](../../../test/examples/) and [`test/runtests.jl`](../../../test/runtests.jl) — 36 wrappers and project routing. QTCP tutorial step 5 is the external-inventory integration check.
+- **Test:** [`test/examples/`](../../../test/examples/) and [`test/runtests.jl`](../../../test/runtests.jl)
 - **CI:** [`.buildkite/pipeline.yml`](../../../.buildkite/pipeline.yml) — separate example and plotting shards.
 
 ## Known coverage gaps

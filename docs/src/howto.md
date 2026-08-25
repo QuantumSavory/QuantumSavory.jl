@@ -11,7 +11,7 @@
 - [Cluster States in Atomic Memories](howto/colorcentermodularcluster/colorcentermodularcluster.md)
 - [Entanglement Switch](howto/simpleswitch/simpleswitch.md)
 - [Cluster-State Walkthrough](howto/cluster_state_walkthrough.md)
-- [QTCP with External Link Inventory](howto/qtcp_external_inventory.md)
+- [Quantum TCP](howto/qtcp.md)
 
 
 #### A simulation of a quantum repeater:

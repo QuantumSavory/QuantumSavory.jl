@@ -21,13 +21,6 @@ datagrams, link requests/replies, and end/network/link controllers. `mbqc.jl` ad
 state construction, graph-to-resource mapping, purification measurements, and tracking.
 All three are part of ProtocolZoo, not separate external zoos.
 
-QTCP `LinkController` has two supported link-resource modes. The default mode runs its
-one-shot entangler for each request. External mode takes reciprocal pairs identified by
-a configured concrete tag type, newest first by default or oldest first with
-`filo=false`. It keeps the per-link request resource while waiting, locks and revalidates
-both slots, removes only the two inventory tags, and retains the quantum state for QTCP.
-Stale, asymmetric, mismatched, or duplicated metadata is not partly consumed.
-
 Every documented and public family is intended for long-term support; implementation
 completeness still varies. QTCP contains unresolved drop detection, correction, and
 timeout work. MBQC currently uses contiguous node-number arithmetic in routing/mapping
@@ -50,7 +43,7 @@ storage types may change.
 
 - **Source:** [`src/ProtocolZoo/ProtocolZoo.jl`](../../../src/ProtocolZoo/ProtocolZoo.jl), [`src/ProtocolZoo/switches.jl`](../../../src/ProtocolZoo/switches.jl), [`src/ProtocolZoo/qtcp.jl`](../../../src/ProtocolZoo/qtcp.jl), and [`src/ProtocolZoo/mbqc.jl`](../../../src/ProtocolZoo/mbqc.jl) — core and specialist families.
 - **Docs:** [`docs/src/API_ProtocolZoo.md`](../../../docs/src/API_ProtocolZoo.md) and [`docs/src/zoos_as_building_blocks.md`](../../../docs/src/zoos_as_building_blocks.md) — public catalog and reuse guidance.
-- **Test:** [`test/general/protocolzoo_surface_contracts_tests.jl`](../../../test/general/protocolzoo_surface_contracts_tests.jl), [`test/general/protocolzoo_switch_tests.jl`](../../../test/general/protocolzoo_switch_tests.jl), [`test/general/protocolzoo_qtcp_tests.jl`](../../../test/general/protocolzoo_qtcp_tests.jl), [`test/general/protocolzoo_qtcp_external_inventory_tests.jl`](../../../test/general/protocolzoo_qtcp_external_inventory_tests.jl), and [`test/general/protocolzoo_mbqc_tests.jl`](../../../test/general/protocolzoo_mbqc_tests.jl) — family surfaces and QTCP inventory races.
+- **Test:** [`test/general/protocolzoo_surface_contracts_tests.jl`](../../../test/general/protocolzoo_surface_contracts_tests.jl), [`test/general/protocolzoo_switch_tests.jl`](../../../test/general/protocolzoo_switch_tests.jl), [`test/general/protocolzoo_qtcp_tests.jl`](../../../test/general/protocolzoo_qtcp_tests.jl), and [`test/general/protocolzoo_mbqc_tests.jl`](../../../test/general/protocolzoo_mbqc_tests.jl) — family surfaces.
 
 ## Known gaps
 

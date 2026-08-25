@@ -3,9 +3,7 @@
 ## Unreleased
 
 - `generate_map` now accepts a custom Tyler tile provider.
-- QTCP `LinkController` can now claim reciprocal pairs from independently
-  generated link inventory, with configurable newest-first or oldest-first
-  selection. The QTCP tutorial includes a runnable external-inventory example.
+- QTCP `LinkController` can now consume pairs from an independent EntanglerProt based on appropriate tags being present.
 
 ## v0.7.2 - 2026-08-15
 
