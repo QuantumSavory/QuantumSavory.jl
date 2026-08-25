@@ -1,4 +1,18 @@
-# QTCP with External Link Inventory
+# QTCP
+
+QTCP is a connectionless entanglement-distribution architecture that turns
+application-level `Flow` requests into end-to-end Bell pairs: end-node
+controllers create QDatagrams, network-node controllers route them and perform
+hop-by-hop swaps, and link controllers supply the physical entanglement for
+each hop. The runnable tutorial develops this stack through a
+[basic repeater chain](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/1_chain_basic.jl),
+[live chain visualization](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/2_chain_visualization.jl),
+[concurrent flows on a grid](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/3_grid_multiflow.jl),
+[custom end-node controller](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/4_custom_endnode.jl),
+and [independent link-entanglement producers](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/5_external_entanglement_inventory.jl).
+Those examples show how to assemble and vary the complete QTCP stack; the rest
+of this how-to focuses only on the `LinkController`, specifically when physical
+link pairs are produced independently.
 
 A QTCP [`LinkController`](@ref) can generate one physical pair for each link
 request, or it can claim pairs made by independent producers. External inventory
