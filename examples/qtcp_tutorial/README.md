@@ -166,7 +166,8 @@ Scenario:
   `tag=EntanglementCounterpart, filo=true`
 
 What the script demonstrates:
-- Pre-generating reciprocal link inventory before traffic starts
+- Letting link controllers wait when their independent producers have not made
+  a pair yet
 - Letting QTCP claim the newest suitable pair from each link
 - Running persistent entanglers independently from link controllers
 - Checking completed-pair notifications by flow without depending on routes,
@@ -177,7 +178,6 @@ Narrative role:
 - It shows that QTCP can consume link resources produced by another protocol.
 
 Expected outcome:
-- Reciprocal inventory is available on each physical edge before traffic starts
 - Each flow produces five `QTCPPairBegin` and five `QTCPPairEnd` notifications
 
 ## Recommended Reading Order

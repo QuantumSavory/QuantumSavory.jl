@@ -66,17 +66,12 @@ The two supported controller configurations are:
 External mode defaults to `filo=true`, which selects the newest suitable pair.
 Use `filo=false` to select the oldest. Mixed configurations are rejected.
 
-## Fill Inventory Before Submitting Flows
+## Submit Flows Independently
 
-The tutorial uses a fixed random seed and lets the producers run before it
-submits traffic:
+The producers and link controllers run independently. Submit traffic without
+waiting for every edge to have inventory:
 
 ```julia
-using Random
-
-Random.seed!(20260824)
-run(sim, 2.0)
-
 flow1 = Flow(src=1, dst=4, npairs=5, uuid=1)
 flow2 = Flow(src=13, dst=16, npairs=5, uuid=2)
 put!(net[flow1.src], flow1)
@@ -84,10 +79,8 @@ put!(net[flow2.src], flow2)
 run(sim, 300.0)
 ```
 
-Before traffic starts, the runnable example checks that every physical edge has
-at least one assigned pair with exact reciprocal metadata. It does not depend on
-an exact inventory count because the entangler margins apply to the shared node
-registers.
+If a request reaches an edge before its producer makes a pair, the link
+controller waits until suitable reciprocal inventory appears.
 
 ## What A Claim Does
 

@@ -6,7 +6,6 @@
 # claims a reciprocal pair from that inventory when QTCP requests one.
 
 include("setup.jl")
-using Random
 
 # --- Network parameters ---
 graph = grid([4, 4])
@@ -43,37 +42,8 @@ for edge in edges(net)
     @process entangler()
 end
 
-# Let the producers establish inventory before QTCP traffic starts.
-run(sim, 2.0)
-
-function edge_has_reciprocal_inventory(net, edge)
-    candidates = queryall(
-        net[edge.src],
-        EntanglementCounterpart,
-        edge.dst,
-        ❓,
-        ❓;
-        assigned=true,
-    )
-    return any(candidates) do candidate
-        remote_slot = candidate.tag[3]
-        pair_id = candidate.tag[4]
-        1 <= remote_slot <= length(net[edge.dst]) || return false
-        !isnothing(query(
-            net[edge.dst][remote_slot],
-            EntanglementCounterpart,
-            edge.src,
-            candidate.slot.idx,
-            pair_id;
-            assigned=true,
-        ))
-    end
-end
-
-inventory_ready = all(edge -> edge_has_reciprocal_inventory(net, edge), edges(net))
-@assert inventory_ready "Expected reciprocal entanglement inventory on every physical edge"
-
-# Run the same two concurrent five-pair flows as tutorial step 3.
+# Submit the same two concurrent five-pair flows as tutorial step 3. A link
+# controller waits if its independent producer has not made a pair yet.
 flow1 = Flow(src=1, dst=4, npairs=5, uuid=1)
 flow2 = Flow(src=13, dst=16, npairs=5, uuid=2)
 put!(net[flow1.src], flow1)
