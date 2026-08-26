@@ -68,7 +68,7 @@ export
     AbstractBackground,
     onchange_tag, onchange,
     # networks.jl
-    RegisterNet, channel, qchannel, messagebuffer,
+    RegisterNet, channel, qchannel, messagebuffer, dist_to_delay, network_builder,
     # logging.jl
     LOG_GROUPS, simulation_log_context,
     # initialize.jl
@@ -175,6 +175,8 @@ include("CircuitZoo/CircuitZoo.jl")
 include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
+
+include("network_builder.jl")
 
 include("should_upstream.jl")
 include("precompile.jl")

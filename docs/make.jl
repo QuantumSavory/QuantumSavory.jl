@@ -80,6 +80,7 @@ function main()
     ],
     "Tutorials" => [
         "tutorial.md",
+        "Build a Network from a Dataset" => "tutorial/dataset_network.md",
         "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",

@@ -3,7 +3,7 @@
 - **Context need:** Reference
 - **Open when:** Checking network construction, directional delays, classical forwarding, or quantum handoff behavior.
 - **Do not open when:** Developing protocol race logic, changing backend evolution, or browsing zoo catalogs.
-- **Review when:** `RegisterNet`, classical channels, message buffers, quantum channels, or delay configuration changes.
+- **Review when:** `RegisterNet`, `network_builder`, classical channels, message buffers, quantum channels, or delay configuration changes.
 
 ## Current transport boundaries
 
@@ -16,6 +16,14 @@ same simulation, or every register simulation must be unused at time zero (zero 
 empty event heap, and no active process). In the latter case, construction rehomes each
 register's slot locks and tag notifier to the first simulation. A nonzero or scheduled
 independent register is rejected.
+
+`network_builder` is the uniform construction path for an undirected `SimpleGraph`.
+It requires one finite, nonnegative delay for each graph edge, uses that delay for
+both channel types and directions, and creates the same nonempty `Register` at each
+vertex. Node and link protocol specifications must be cataloged by
+`ProtocolZoo.protocol_catalog_metadata`; the builder validates their public fields,
+constructs every protocol, and then schedules them. It returns the simulation without
+advancing it.
 
 Classical messages have two modes. Direct delivery sends to an adjacent destination
 buffer. Forwarded delivery follows the graph toward a non-adjacent node and incurs the
@@ -61,9 +69,9 @@ state handoff.
 
 ## Anchors
 
-- **Source:** [`src/networks.jl`](../../../src/networks.jl), [`src/messagebuffer.jl`](../../../src/messagebuffer.jl), and [`src/quantumchannel.jl`](../../../src/quantumchannel.jl) — network, classical, and quantum transport.
-- **Docs:** [`docs/src/classical_messaging.md`](../../../docs/src/classical_messaging.md) and [`docs/src/architecture.md`](../../../docs/src/architecture.md) — human messaging and architecture model.
-- **Test:** [`test/general/registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), and [`test/general/quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl) — exercised construction and delivery behavior.
+- **Source:** [`src/networks.jl`](../../../src/networks.jl), [`src/network_builder.jl`](../../../src/network_builder.jl), [`src/messagebuffer.jl`](../../../src/messagebuffer.jl), and [`src/quantumchannel.jl`](../../../src/quantumchannel.jl) — network construction and transport.
+- **Docs:** [`docs/src/tutorial/dataset_network.md`](../../../docs/src/tutorial/dataset_network.md), [`docs/src/classical_messaging.md`](../../../docs/src/classical_messaging.md), and [`docs/src/architecture.md`](../../../docs/src/architecture.md) — dataset construction, messaging, and architecture.
+- **Test:** [`test/general/network_builder_tests.jl`](../../../test/general/network_builder_tests.jl), [`test/general/registernet_interface_tests.jl`](../../../test/general/registernet_interface_tests.jl), [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), and [`test/general/quantumchannel_tests.jl`](../../../test/general/quantumchannel_tests.jl) — exercised construction and delivery behavior.
 
 ## Known gaps
 

@@ -1,6 +1,7 @@
 [deps]
 AnythingLLMDocs = "333fe5f5-19c9-4863-8caf-c9193e7dba62"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+CommunicationNetworkDatasets = "85c54e6a-00c4-4051-8730-b30cc4c3bfa0"
 ConcurrentSim = "6ed1e86c-fcaf-46a9-97e0-2b26a2cdb499"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
@@ -32,4 +33,5 @@ Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 QuantumSavory = {path = ".."}
 
 [compat]
+CommunicationNetworkDatasets = "0.1"
 PrettyPrint = "0.2.0"
