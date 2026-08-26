@@ -8,7 +8,7 @@ The tutorial is organized as a five-step progression:
 2. Add visualization to build intuition
 3. Change topology and run multiple flows
 4. Replace one protocol component to demonstrate modularity
-5. Supply link entanglement from independent inventory producers
+5. Consume link entanglement from independent producers
 
 The tutorial scripts live in `examples/qtcp_tutorial/`.
 
@@ -32,8 +32,6 @@ Why it exists:
 - Keeps the tutorial scripts consistent with one another
 - Avoids repeating the same setup boilerplate in every step
 - Exposes the extension point needed by the custom-controller example
-- Accepts `link_controller_kwargs` so all links can use integrated generation
-  or the same external-inventory configuration
 
 ## Step 1: Basic Repeater Chain
 
@@ -161,24 +159,22 @@ Goal:
 
 Scenario:
 - The same 4x4 grid, corner nodes, and two five-pair flows as step 3
-- One persistent `EntanglerProt` per physical edge
+- One persistent `EntanglerProt` per physical edge that produces raw link-level Bell pairs
 - Every `LinkController` configured with
   `tag=EntanglementCounterpart, filo=true`
 
 What the script demonstrates:
-- Letting link controllers wait when their independent producers have not made
+- Running persistent entanglers independently from link controllers
+- Letting link controllers wait when the independent producers have not made
   a pair yet
 - Letting QTCP claim the newest suitable pair from each link
-- Running persistent entanglers independently from link controllers
-- Checking completed-pair notifications by flow without depending on routes,
-  memory slots, inventory counts, or event times
 
 Narrative role:
 - This is the composition step.
 - It shows that QTCP can consume link resources produced by another protocol.
 
 Expected outcome:
-- Each flow produces five `QTCPPairBegin` and five `QTCPPairEnd` notifications
+- The `LinkController` consumes independently generated pairs instead of generating them itself.
 
 ## Recommended Reading Order
 

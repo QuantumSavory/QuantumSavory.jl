@@ -122,13 +122,13 @@ protocolvis_html(link_controller) # hide
 ProtocolVisualizationPNG(link_controller) # hide
 ```
 
-### External-Inventory `text/html`
+### External `text/html`
 
 ```@example protocol_visualizations
 protocolvis_html(external_link_controller) # hide
 ```
 
-### External-Inventory `image/png`
+### External `image/png`
 
 ```@example protocol_visualizations
 ProtocolVisualizationPNG(external_link_controller) # hide

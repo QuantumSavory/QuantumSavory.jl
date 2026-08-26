@@ -335,7 +335,7 @@ Managing the following transformations of classical control signals:
     nodeA::Int
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
-    """`nothing` to generate entanglement for each request, or a concrete `AbstractTag` subtype identifying externally generated link inventory"""
+    """`nothing` to generate entanglement for each request, or a concrete `AbstractTag` subtype identifying externally generated entanglement to consume"""
     tag::Union{Nothing,Type{<:AbstractTag}} = nothing
     """inventory selection order: `true` takes the newest pair and `false` the oldest; must be `nothing` when `tag` is `nothing`"""
     filo::Union{Nothing,Bool} = isnothing(tag) ? nothing : true

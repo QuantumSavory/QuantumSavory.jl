@@ -41,7 +41,7 @@ main interface is the standard set of typed tags documented in
 
 `EntanglerProt` and `EntanglementConsumer` accept a named tag-head type through
 their `tag` fields. Custom types supplied there must be concrete subtypes of
-`QuantumSavory.AbstractTag`
+`QuantumSavory.AbstractTag`. This tag is used to mark that the given slot contains entanglement that was just generated and now potentially available for consumption.
 
 ## How Protocols Compose
 
