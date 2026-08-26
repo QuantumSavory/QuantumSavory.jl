@@ -23,6 +23,7 @@ Set up a QTCP simulation on the given network topology.
 - `representation=QuantumOpticsRepr`: quantum state representation
 - `end_nodes=nothing`: which nodes run EndNodeController (default: all nodes)
 - `EndNodeControllerType=EndNodeController`: allows replacing with a custom controller
+- `link_controller_kwargs=(;)`: keywords passed to every `LinkController`
 
 # Returns
 `(sim, net)` — the simulation scheduler and the register network.
@@ -34,7 +35,8 @@ function simulation_setup(
     representation = QuantumOpticsRepr,
     end_nodes = nothing,
     EndNodeControllerType = EndNodeController,
-    classical_delay = 1e-3
+    classical_delay = 1e-3,
+    link_controller_kwargs = (;),
 )
     # Create registers for each node
     registers = Register[]
@@ -70,7 +72,9 @@ function simulation_setup(
 
     # 3. LinkControllers on every edge
     for edge in edges(net)
-        ctrl = LinkController(net, edge.src, edge.dst)
+        ctrl = LinkController(
+            net, edge.src, edge.dst; link_controller_kwargs...
+        )
         @process ctrl()
     end
 

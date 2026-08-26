@@ -70,10 +70,22 @@ append!(link_controller._log, [
     (originator_node=2, arrival_time=14.0, sojourn_time=10.0),
 ])
 populated_link_png = repr(MIME"image/png"(), link_controller)
+external_link_controller = LinkController(
+    get_time_tracker(net),
+    net,
+    1,
+    2;
+    tag=EntanglementCounterpart,
+    filo=false,
+)
+@test makie_extension.protshowrows(external_link_controller) == 2
+external_link_png = repr(MIME"image/png"(), external_link_controller)
 
 @test first(empty_link_png, 8) == png_signature
 @test first(populated_link_png, 8) == png_signature
+@test first(external_link_png, 8) == png_signature
 @test empty_link_png != populated_link_png
+@test empty_link_png != external_link_png
 
 controller = EndNodeController(get_time_tracker(net), net, 1)
 @test makie_extension.protshowrows(controller) == 3

@@ -87,7 +87,8 @@ function _link_timing_histogram(subfig, samples; title)
     return axis
 end
 
-protshowrows(::QuantumSavory.ProtocolZoo.QTCP.LinkController) = 4
+protshowrows(prot::QuantumSavory.ProtocolZoo.QTCP.LinkController) =
+    isnothing(prot.tag) ? 4 : 2
 
 function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkController)
     qtcp = QuantumSavory.ProtocolZoo.QTCP
@@ -96,10 +97,19 @@ function protshowimage(subfig, prot::QuantumSavory.ProtocolZoo.QTCP.LinkControll
     samples = qtcp._linkcontroller_samples(prot)
     layout = Makie.GridLayout(subfig[1, 1])
 
-    entangler_layout = Makie.GridLayout(layout[1, 1:2])
-    protshowimage(entangler_layout, qtcp._link_entangler(prot))
-    Makie.rowsize!(entangler_layout, 1, Makie.Auto(1))
-    Makie.rowsize!(entangler_layout, 3, Makie.Auto(1))
+    if isnothing(prot.tag)
+        entangler_layout = Makie.GridLayout(layout[1, 1:2])
+        protshowimage(entangler_layout, qtcp._link_entangler(prot))
+        Makie.rowsize!(entangler_layout, 1, Makie.Auto(1))
+        Makie.rowsize!(entangler_layout, 3, Makie.Auto(1))
+    else
+        order = prot.filo::Bool ? "newest first (FILO)" : "oldest first (FIFO)"
+        Label(
+            layout[1, 1:2],
+            text="External entanglement inventory\nTag: $(prot.tag)\nSelection: $(order)",
+            tellwidth=false,
+        )
+    end
     Label(
         layout[2, 1:2],
         text="Link-level request interarrival times",
