@@ -65,13 +65,10 @@ for edge in edges(net)
 end
 ```
 
-The configured tag type is the inventory interface between the two protocols.
-Every external-inventory tag must contain
-`(remote_node, remote_slot, pair_id)`, including custom tag types. Reciprocal
-tags must use the same pair ID, and that ID must be unique to the pair. Custom
-tag heads must be concrete subtypes of `AbstractTag`. `EntanglerProt` writes
-this schema only for `EntanglementCounterpart`; a producer using a custom tag
-head must write the three fields itself.
+The configured tag (here `EntanglementCounterpart`) is the interface between the two protocols.
+Every generated tag pair must contain
+`(remote_node, remote_slot, pair_id)` - the reciprocal
+tags in the pair must use the same pair ID.
 
 The two supported controller configurations are:
 
@@ -80,12 +77,9 @@ The two supported controller configurations are:
 | Integrated generation | `nothing` | `nothing` |
 | External generation | Concrete `AbstractTag` subtype | `true` or `false` |
 
-External mode defaults to `filo=true`, which selects the newest suitable pair.
-Use `filo=false` to select the oldest.
-
 ## Submit Flows Independently
 
-The low-level entanglement producers and link controllers run independently. Submit QTCP traffic:
+The low-level entanglement producers and link controllers run independently. Once they are running, you can submit QTCP traffic:
 
 ```julia
 flow1 = Flow(src=1, dst=4, npairs=5, uuid=1)

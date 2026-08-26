@@ -43,13 +43,6 @@ main interface is the standard set of typed tags documented in
 their `tag` fields. Custom types supplied there must be concrete subtypes of
 `QuantumSavory.AbstractTag`. This tag is used to mark that the given slot contains entanglement that was just generated and now potentially available for consumption.
 
-QTCP `LinkController` also accepts a concrete tag-head type when it consumes
-external inventory. In that mode, every tag must contain
-`(remote_node, remote_slot, pair_id)`, with the same unique pair ID at both
-ends. `EntanglerProt` writes this schema only when configured with
-`EntanglementCounterpart`; custom producers must write the three fields
-themselves.
-
 ## How Protocols Compose
 
 Protocols in `ProtocolZoo` are designed to compose through the same metadata and

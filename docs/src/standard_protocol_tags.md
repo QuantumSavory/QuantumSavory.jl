@@ -34,12 +34,6 @@ concrete subtypes of `AbstractTag`:
 struct MyEntanglementTag <: AbstractTag end
 ```
 
-`EntanglerProt` and `EntanglementConsumer` use the legacy
-`(remote_node, remote_slot)` payload for custom configured tags. External-mode
-QTCP `LinkController` has a stricter interface: every configured tag type must
-use `(remote_node, remote_slot, pair_id)`, with the same unique pair ID on both
-ends and one inventory tag per endpoint. Use `EntanglementCounterpart` with
-`EntanglerProt`, or make a custom producer write that three-field schema.
 
 For example, `EntanglerProt` marks generated links with
 `EntanglementCounterpart`. `SwapperProt` can then find such links by querying
@@ -321,10 +315,7 @@ Protocol interface:
 - `LinkController` consumes requests and returns `LinkLevelReply` to the
   requester and `LinkLevelReplyAtHop` to the remote hop.
 - By default, `LinkController(tag=nothing, filo=nothing)` generates one pair for
-  each request. With a concrete `tag`, it instead claims externally generated entanglement. `filo=true` selects the newest suitable pair and
-  `filo=false` selects the oldest; omitting `filo` in external mode defaults to
-  `true`. External inventory always uses the
-  `(remote_node, remote_slot, pair_id)` payload, regardless of tag type.
+  each request. With a concrete `tag`, it instead claims externally generated entanglement marked with the given tag.
 - `NetworkNodeController` converts replies into forwarded datagrams or
   source-side bookkeeping through `LinkLevelReplyAtSource`.
 - `EndNodeController` consumes the source/hop replies when turning a completed
