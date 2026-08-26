@@ -3,7 +3,7 @@
 # The earlier steps let each LinkController generate a pair for each request.
 # This step separates pair production from pair consumption. One persistent
 # EntanglerProt fills inventory on every physical edge, and each LinkController
-# claims a reciprocal pair from that inventory when QTCP requests one.
+# claims a pair from that inventory when QTCP requests one.
 
 include("setup.jl")
 

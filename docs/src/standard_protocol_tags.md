@@ -36,7 +36,7 @@ struct MyEntanglementTag <: AbstractTag end
 
 The entangler writes custom configured tags with
 `(remote_node, remote_slot)` payload. The consumer, the QTCP
-link controller and others query that same shape.
+link controller and others query that same format.
 
 For example, `EntanglerProt` marks generated links with
 `EntanglementCounterpart`. `SwapperProt` can then find such links by querying
