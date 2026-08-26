@@ -10,13 +10,13 @@ each hop. The runnable tutorial develops this stack through a
 [concurrent flows on a grid](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/3_grid_multiflow.jl),
 [custom end-node controller](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/4_custom_endnode.jl),
 and [independent link-entanglement producers](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/5_external_entanglement_inventory.jl).
-Those examples show how to assemble and vary the complete QTCP stack; the rest
-of this how-to focuses only on the `LinkController`, specifically when physical
-link pairs are produced independently.
+Those examples show how to assemble and vary the complete QTCP stack.
+In this doc page will will discuss only the last step as a prototypical example of
+how different families of protocols can be used together as long as they
+agree on the meaning of the tags they use to record and signal classical metadata.
 
 A QTCP [`LinkController`](@ref) can generate one physical pair for each link
-request, or it can claim pairs made by independent producers. External inventory
-is useful when pair generation must run continuously or use a separate policy.
+request, or it can rely on independent producers like `EntanglerProt`.
 
 The complete runnable version is
 [`examples/qtcp_tutorial/5_external_entanglement_inventory.jl`](https://github.com/QuantumSavory/QuantumSavory.jl/blob/master/examples/qtcp_tutorial/5_external_entanglement_inventory.jl).
@@ -28,7 +28,7 @@ julia --project=examples examples/qtcp_tutorial/5_external_entanglement_inventor
 
 ## Configure The Producers And Consumers
 
-Start one external-mode link controller and one persistent entangler on every
+Start one link controller and one persistent entangler (which will provide the entanglement needed by the link controller but also potentially by other independent protocols) on every
 physical edge of an existing `RegisterNet`:
 
 ```julia
@@ -75,15 +75,14 @@ The two supported controller configurations are:
 | Mode | `tag` | `filo` |
 | --- | --- | --- |
 | Integrated generation | `nothing` | `nothing` |
-| External inventory | Concrete `AbstractTag` subtype | `true` or `false` |
+| External generation | Concrete `AbstractTag` subtype | `true` or `false` |
 
 External mode defaults to `filo=true`, which selects the newest suitable pair.
-Use `filo=false` to select the oldest. Mixed configurations are rejected.
+Use `filo=false` to select the oldest.
 
 ## Submit Flows Independently
 
-The producers and link controllers run independently. Submit traffic without
-waiting for every edge to have inventory:
+The low-level entanglement producers and link controllers run independently. Submit QTCP traffic:
 
 ```julia
 flow1 = Flow(src=1, dst=4, npairs=5, uuid=1)
@@ -93,16 +92,5 @@ put!(net[flow2.src], flow2)
 run(sim, 300.0)
 ```
 
-If a request reaches an edge before its producer makes a pair, the link
-controller waits until suitable reciprocal inventory appears.
-
-## What A Claim Does
-
-For each request, the link controller waits for a valid reciprocal pair, locks
-both slots, and revalidates their assignments and tags. A successful claim
-removes the two inventory tags but retains the shared quantum state for QTCP.
-Malformed, stale, duplicated, or concurrently changed metadata is not partly
-consumed.
-
-`SwapperProt` and `CutoffProt` remain separate protocol components. They are not
-started or reconfigured by external-inventory mode.
+If a request reaches an edge that does not yet posses link-level pairs, the link
+controller waits until the entangler generates such a pair.
