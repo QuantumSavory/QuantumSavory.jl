@@ -608,66 +608,60 @@ function _link_entangler(prot::LinkController)
     )
 end
 
+"""Return the optional pair-ID query arguments for an inventory tag."""
+_link_inventory_pair_id_args(tag) =
+    tag === EntanglementCounterpart ? (❓,) : ()
+_link_inventory_pair_id_args(tag, candidate) =
+    tag === EntanglementCounterpart ? (candidate.tag[4],) : ()
+
 """Return external-inventory candidates in the configured selection order."""
-function _link_inventory_candidates(
-    prot::LinkController
-)
-    tag = prot.tag::DataType
-    filo = prot.filo::Bool
-    if tag === EntanglementCounterpart
-        return queryall(
-            prot.net[prot.nodeA], tag, prot.nodeB, ❓, ❓; filo, assigned=true
-        )
-    end
+function _link_inventory_candidates(prot)
+    tag = prot.tag
     return queryall(
-        prot.net[prot.nodeA], tag, prot.nodeB, ❓; filo, assigned=true
+        prot.net[prot.nodeA], tag, prot.nodeB, ❓,
+        _link_inventory_pair_id_args(tag)...;
+        filo=prot.filo,
+        assigned=true,
     )
 end
 
 """Find the exact reciprocal tag for an external-inventory candidate."""
-function _link_inventory_reciprocal(
-    prot::LinkController,
-    candidate,
-)
-    remote_slot = candidate.tag[3]::Int
+function _link_inventory_reciprocal(prot, candidate)
+    remote_slot = candidate.tag[3]
     destination_register = prot.net[prot.nodeB]
     1 <= remote_slot <= length(destination_register) || return nothing
 
-    tag = prot.tag::DataType
-    filo = prot.filo::Bool
+    tag = prot.tag
     remote = destination_register[remote_slot]
-    if tag === EntanglementCounterpart
-        pair_id = candidate.tag[4]::Int
-        return query(
-            remote, tag, prot.nodeA, candidate.slot.idx, pair_id;
-            filo, assigned=true
-        )
-    end
     return query(
-        remote, tag, prot.nodeA, candidate.slot.idx; filo, assigned=true
+        remote, tag, prot.nodeA, candidate.slot.idx,
+        _link_inventory_pair_id_args(tag, candidate)...;
+        filo=prot.filo,
+        assigned=true,
     )
 end
 
 """Return configured inventory tags on one slot."""
 function _link_inventory_slot_tags(
-    prot::LinkController,
+    prot,
     slot;
-    locked::Union{Nothing,Bool}=nothing,
-    assigned::Union{Nothing,Bool}=nothing,
+    locked=nothing,
+    assigned=nothing,
 )
-    tag = prot.tag::DataType
-    if tag === EntanglementCounterpart
-        return queryall(slot, tag, ❓, ❓, ❓; locked, assigned)
-    end
-    return queryall(slot, tag, ❓, ❓; locked, assigned)
+    tag = prot.tag
+    return queryall(
+        slot, tag, ❓, ❓, _link_inventory_pair_id_args(tag)...;
+        locked,
+        assigned,
+    )
 end
 
 """Check that a result is the unique configured inventory tag on its slot."""
 function _link_inventory_tag_is_unique(
-    prot::LinkController,
+    prot,
     result;
-    locked::Union{Nothing,Bool}=nothing,
-    assigned::Union{Nothing,Bool}=nothing,
+    locked=nothing,
+    assigned=nothing,
 )
     current = _link_inventory_slot_tags(prot, result.slot; locked, assigned)
     return length(current) == 1 &&
@@ -676,10 +670,7 @@ function _link_inventory_tag_is_unique(
 end
 
 """Wait for and atomically claim one reciprocal pair from external inventory."""
-@resumable function _link_claim_inventory_pair(
-    sim::Simulation,
-    prot::LinkController,
-)
+@resumable function _link_claim_inventory_pair(sim, prot)
     register_a = prot.net[prot.nodeA]
     register_b = prot.net[prot.nodeB]
 
