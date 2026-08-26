@@ -3,7 +3,7 @@
 ## Unreleased
 
 - `generate_map` now accepts a custom Tyler tile provider.
-- QTCP `LinkController` can now consume pairs from an independent EntanglerProt based on appropriate tags being present.
+- QTCP `LinkController` can now consume pairs from an independent `EntanglerProt` based on reciprocal `(remote_node, remote_slot, pair_id)` tags being present.
 
 ## v0.7.2 - 2026-08-15
 

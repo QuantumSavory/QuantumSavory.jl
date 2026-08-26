@@ -335,7 +335,7 @@ Managing the following transformations of classical control signals:
     nodeA::Int
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
-    """`nothing` to generate entanglement for each request, or a concrete `AbstractTag` subtype identifying externally generated entanglement to consume"""
+    """`nothing` to generate entanglement for each request, or a concrete `AbstractTag` subtype identifying external inventory with one reciprocal `(remote_node, remote_slot, pair_id)` tag at each endpoint"""
     tag::Union{Nothing,Type{<:AbstractTag}} = nothing
     """inventory selection order: `true` takes the newest pair and `false` the oldest; must be `nothing` when `tag` is `nothing`"""
     filo::Union{Nothing,Bool} = isnothing(tag) ? nothing : true
@@ -595,7 +595,7 @@ end
 
 
 """Create the `EntanglerProt` used by a `LinkController`."""
-function _link_entangler(prot::LinkController)
+function _link_entangler(prot)
     (; sim, net, nodeA, nodeB) = prot
     return EntanglerProt(;
         sim, net,
@@ -608,18 +608,10 @@ function _link_entangler(prot::LinkController)
     )
 end
 
-"""Return the optional pair-ID query arguments for an inventory tag."""
-_link_inventory_pair_id_args(tag) =
-    tag === EntanglementCounterpart ? (❓,) : ()
-_link_inventory_pair_id_args(tag, candidate) =
-    tag === EntanglementCounterpart ? (candidate.tag[4],) : ()
-
 """Return external-inventory candidates in the configured selection order."""
 function _link_inventory_candidates(prot)
-    tag = prot.tag
     return queryall(
-        prot.net[prot.nodeA], tag, prot.nodeB, ❓,
-        _link_inventory_pair_id_args(tag)...;
+        prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓, ❓;
         filo=prot.filo,
         assigned=true,
     )
@@ -631,42 +623,21 @@ function _link_inventory_reciprocal(prot, candidate)
     destination_register = prot.net[prot.nodeB]
     1 <= remote_slot <= length(destination_register) || return nothing
 
-    tag = prot.tag
-    remote = destination_register[remote_slot]
     return query(
-        remote, tag, prot.nodeA, candidate.slot.idx,
-        _link_inventory_pair_id_args(tag, candidate)...;
+        destination_register[remote_slot],
+        prot.tag,
+        prot.nodeA,
+        candidate.slot.idx,
+        candidate.tag[4];
         filo=prot.filo,
         assigned=true,
     )
 end
 
-"""Return configured inventory tags on one slot."""
-function _link_inventory_slot_tags(
-    prot,
-    slot;
-    locked=nothing,
-    assigned=nothing,
-)
-    tag = prot.tag
-    return queryall(
-        slot, tag, ❓, ❓, _link_inventory_pair_id_args(tag)...;
-        locked,
-        assigned,
-    )
-end
-
-"""Check that a result is the unique configured inventory tag on its slot."""
-function _link_inventory_tag_is_unique(
-    prot,
-    result;
-    locked=nothing,
-    assigned=nothing,
-)
-    current = _link_inventory_slot_tags(prot, result.slot; locked, assigned)
-    return length(current) == 1 &&
-        only(current).id == result.id &&
-        only(current).tag == result.tag
+"""Check that a saved inventory result is still current under its slot lock."""
+function _link_inventory_tag_is_current(result)
+    current = query(result.slot, result.tag; locked=true, assigned=true)
+    return !isnothing(current) && current.id == result.id
 end
 
 """Wait for and atomically claim one reciprocal pair from external inventory."""
@@ -680,12 +651,6 @@ end
         for candidate in candidates
             reciprocal = _link_inventory_reciprocal(prot, candidate)
             isnothing(reciprocal) && continue
-            _link_inventory_tag_is_unique(
-                prot, candidate; assigned=true
-            ) || continue
-            _link_inventory_tag_is_unique(
-                prot, reciprocal; assigned=true
-            ) || continue
 
             slot_a = candidate.slot
             slot_b = reciprocal.slot
@@ -700,12 +665,8 @@ end
                 isassigned(slot_b) &&
                 QuantumSavory.stateof(slot_a) === state_a &&
                 QuantumSavory.stateof(slot_b) === state_b &&
-                _link_inventory_tag_is_unique(
-                    prot, candidate; locked=true, assigned=true
-                ) &&
-                _link_inventory_tag_is_unique(
-                    prot, reciprocal; locked=true, assigned=true
-                )
+                _link_inventory_tag_is_current(candidate) &&
+                _link_inventory_tag_is_current(reciprocal)
             if valid
                 untag!(slot_a, candidate.id)
                 untag!(slot_b, reciprocal.id)
@@ -726,14 +687,14 @@ end
 end
 
 @resumable function _link_handle_request(
-    sim::Simulation,
-    prot::LinkController,
-    originator_node::Int,
-    destination_node::Int,
-    flow_uuid::Int,
-    seq_num::Int,
+    sim,
+    prot,
+    originator_node,
+    destination_node,
+    flow_uuid,
+    seq_num,
     link_resource,
-    log_index::Int,
+    log_index,
 )
     (; net, nodeA, nodeB) = prot
     @yield lock(link_resource)

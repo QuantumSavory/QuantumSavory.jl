@@ -3,23 +3,17 @@ using QuantumSavory
 using QuantumSavory.ProtocolZoo
 using Test
 
-struct QTCPExternalInventoryTag <: AbstractTag
-    remote_node::Int
-    remote_slot::Int
-end
-
-QuantumSavory.Tag(tag::QTCPExternalInventoryTag) =
-    QuantumSavory.Tag(QTCPExternalInventoryTag, tag.remote_node, tag.remote_slot)
+struct QTCPExternalInventoryTag <: AbstractTag end
 
 function generate_inventory_pair!(
-    net, slot_a::Int, slot_b::Int=slot_a; tag=EntanglementCounterpart
+    net, slot_a, slot_b=slot_a; tag=EntanglementCounterpart
 )
     sim = get_time_tracker(net)
     entangler = EntanglerProt(
         net,
         1,
         2;
-        tag,
+        tag=nothing,
         rounds=1,
         attempts=-1,
         success_prob=1.0,
@@ -29,16 +23,17 @@ function generate_inventory_pair!(
     )
     @process entangler()
     run(sim, now(sim) + 0.2)
+
+    pair_id = fresh_entanglement_id()
+    tag!(net[1][slot_a], tag, 2, slot_b, pair_id)
+    tag!(net[2][slot_b], tag, 1, slot_a, pair_id)
     return nothing
 end
 
 function inventory_tag(net, node, slot, remote_node, remote_slot, tag)
-    if tag === EntanglementCounterpart
-        return query(
-            net[node][slot], tag, remote_node, remote_slot, ❓; assigned=true
-        )
-    end
-    return query(net[node][slot], tag, remote_node, remote_slot; assigned=true)
+    return query(
+        net[node][slot], tag, remote_node, remote_slot, ❓; assigned=true
+    )
 end
 
 function submit_link_request!(
@@ -268,45 +263,54 @@ end
         @test all(!islocked(net[node][slot]) for node in 1:2 for slot in 1:4)
     end
 
-    @testset "duplicate inventory tags are never claimed" begin
-        net = RegisterNet([Register(3), Register(3)])
+    @testset "two-argument tags are not inventory" begin
+        net = RegisterNet([Register(2), Register(2)])
         sim = get_time_tracker(net)
-        generate_inventory_pair!(net, 1)
-        generate_inventory_pair!(net, 2)
+        entangler = EntanglerProt(
+            net,
+            1,
+            2;
+            tag=nothing,
+            rounds=1,
+            attempts=-1,
+            success_prob=1.0,
+            attempt_time=0.1,
+            chooseslotA=1,
+            chooseslotB=1,
+        )
+        @process entangler()
+        run(sim, 0.2)
 
-        newer_a = inventory_tag(
-            net, 1, 2, 2, 2, EntanglementCounterpart
-        )
-        newer_b = inventory_tag(
-            net, 2, 2, 1, 2, EntanglementCounterpart
-        )
-        duplicate_a_id = tag!(net[1][2], newer_a.tag)
-        duplicate_b_id = tag!(net[2][2], newer_b.tag)
+        legacy_a_id = tag!(net[1][1], QTCPExternalInventoryTag, 2, 1)
+        legacy_b_id = tag!(net[2][1], QTCPExternalInventoryTag, 1, 1)
 
         controller = LinkController(
-            net, 1, 2; tag=EntanglementCounterpart
+            net, 1, 2; tag=QTCPExternalInventoryTag
         )
         @process controller()
-        submit_link_request!(net, 1, 2; flow_uuid=45)
-        @test query(messagebuffer(net, 1), LinkLevelReply, 45, 1, 1) !==
-            nothing
-
-        put!(net[1], LinkLevelRequest(46, 1, 2))
+        put!(net[1], LinkLevelRequest(45, 1, 2))
         run(sim, now(sim) + 0.1)
         @test isnothing(query(
-            messagebuffer(net, 1), LinkLevelReply, 46, 1, ❓
+            messagebuffer(net, 1), LinkLevelReply, 45, 1, ❓
         ))
-        @test isnothing(last(controller._log).sojourn_time)
+        @test isnothing(only(controller._log).sojourn_time)
 
-        remaining_a = queryall(net[1][2], newer_a.tag; assigned=true)
-        remaining_b = queryall(net[2][2], newer_b.tag; assigned=true)
-        @test Set(result.id for result in remaining_a) ==
-            Set((newer_a.id, duplicate_a_id))
-        @test Set(result.id for result in remaining_b) ==
-            Set((newer_b.id, duplicate_b_id))
-        @test isassigned(net[1][2])
-        @test isassigned(net[2][2])
-        @test all(!islocked(net[node][slot]) for node in 1:2 for slot in 1:3)
+        pair_id = fresh_entanglement_id()
+        tag!(net[1][1], QTCPExternalInventoryTag, 2, 1, pair_id)
+        tag!(net[2][1], QTCPExternalInventoryTag, 1, 1, pair_id)
+        run(sim, now(sim) + 0.1)
+
+        @test query(messagebuffer(net, 1), LinkLevelReply, 45, 1, 1) !==
+            nothing
+        @test query(
+            net[1][1], QTCPExternalInventoryTag, 2, 1
+        ).id == legacy_a_id
+        @test query(
+            net[2][1], QTCPExternalInventoryTag, 1, 1
+        ).id == legacy_b_id
+        @test isassigned(net[1][1])
+        @test isassigned(net[2][1])
+        @test all(!islocked(net[node][slot]) for node in 1:2 for slot in 1:2)
     end
 
     @testset "assignment invalidation retries without leaking locks" begin

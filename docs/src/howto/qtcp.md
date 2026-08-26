@@ -66,9 +66,12 @@ end
 ```
 
 The configured tag type is the inventory interface between the two protocols.
-`EntanglementCounterpart` includes `(remote_node, remote_slot, pair_id)`.
-Custom tag types use `(remote_node, remote_slot)` and must be concrete subtypes
-of `AbstractTag`.
+Every external-inventory tag must contain
+`(remote_node, remote_slot, pair_id)`, including custom tag types. Reciprocal
+tags must use the same pair ID, and that ID must be unique to the pair. Custom
+tag heads must be concrete subtypes of `AbstractTag`. `EntanglerProt` writes
+this schema only for `EntanglementCounterpart`; a producer using a custom tag
+head must write the three fields itself.
 
 The two supported controller configurations are:
 
