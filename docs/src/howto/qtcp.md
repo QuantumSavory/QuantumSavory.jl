@@ -69,6 +69,9 @@ The configured tag (here `EntanglementCounterpart`) is the interface between the
 Every generated tag pair must contain
 `(remote_node, remote_slot, pair_id)` - the reciprocal
 tags in the pair must use the same pair ID.
+The link controller treats these exact reciprocal tags as authoritative inventory
+metadata. It does not inspect the simulator's quantum-state internals. The producer
+and any metadata-tracking protocols are responsible for keeping the tags accurate.
 
 The two supported controller configurations are:
 

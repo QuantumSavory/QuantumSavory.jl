@@ -73,6 +73,8 @@ Protocol interface:
 - `EntanglementConsumer` queries reciprocal counterparts when it consumes an
   end-to-end pair.
 - Independently developed protocols like QTCP `LinkController` consume such pairs.
+  The link controller treats exact reciprocal tags and their pair ID as authoritative;
+  it does not inspect the simulator's quantum-state internals.
 - `SimpleSwitchDiscreteProt` queries it to find switch-client links that can be
   matched or deleted.
 

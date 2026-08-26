@@ -32,7 +32,7 @@ end
 
 function inventory_tag(net, node, slot, remote_node, remote_slot, tag)
     return query(
-        net[node][slot], tag, remote_node, remote_slot, ❓; assigned=true
+        net[node][slot], tag, remote_node, remote_slot, ❓
     )
 end
 
@@ -248,17 +248,16 @@ end
         ))
 
         @test query(
-            net[1][3], asymmetric_a.tag; assigned=true
+            net[1][3], asymmetric_a.tag
         ).id == asymmetric_a.id
         @test isempty(queryall(
             net[2][3], EntanglementCounterpart, 1, 3, ❓
         ))
         @test query(
-            net[1][2], mismatched_a.tag; assigned=true
+            net[1][2], mismatched_a.tag
         ).id == mismatched_a.id
         @test query(
-            net[2][2], EntanglementCounterpart, 1, 2, wrong_pair_id;
-            assigned=true
+            net[2][2], EntanglementCounterpart, 1, 2, wrong_pair_id
         ).id == wrong_b_id
         @test all(!islocked(net[node][slot]) for node in 1:2 for slot in 1:4)
     end
@@ -313,7 +312,34 @@ end
         @test all(!islocked(net[node][slot]) for node in 1:2 for slot in 1:2)
     end
 
-    @testset "assignment invalidation retries without leaking locks" begin
+    @testset "reciprocal tags are authoritative inventory" begin
+        net = RegisterNet([Register(2), Register(2)])
+        pair_id = fresh_entanglement_id()
+        tag!(net[1][2], EntanglementCounterpart, 2, 1, pair_id)
+        tag!(net[2][1], EntanglementCounterpart, 1, 2, pair_id)
+
+        @test !isassigned(net[1][2])
+        @test !isassigned(net[2][1])
+
+        @process LinkController(net, 1, 2; tag=EntanglementCounterpart)()
+        submit_link_request!(net, 1, 2; flow_uuid=49)
+
+        @test query(messagebuffer(net, 1), LinkLevelReply, 49, 1, 2) !==
+            nothing
+        @test query(messagebuffer(net, 2), LinkLevelReplyAtHop, 49, 1, 1) !==
+            nothing
+        @test isnothing(inventory_tag(
+            net, 1, 2, 2, 1, EntanglementCounterpart
+        ))
+        @test isnothing(inventory_tag(
+            net, 2, 1, 1, 2, EntanglementCounterpart
+        ))
+        @test !isassigned(net[1][2])
+        @test !isassigned(net[2][1])
+        @test all(!islocked(net[node][slot]) for node in 1:2 for slot in 1:2)
+    end
+
+    @testset "tag invalidation retries without leaking locks" begin
         net = RegisterNet([Register(3), Register(3)])
         sim = get_time_tracker(net)
         generate_inventory_pair!(net, 1)
@@ -330,7 +356,7 @@ end
         put!(net[1], LinkLevelRequest(50, 1, 2))
         run(sim, now(sim) + 0.1)
 
-        traceout!(net[1][2], net[2][2])
+        untag!(net[2][2], invalidated_b.id)
         unlock(net[1][2])
         run(sim, now(sim) + 0.1)
 
@@ -338,9 +364,7 @@ end
         @test !isnothing(reply)
         isnothing(reply) || @test reply.tag[4] == 1
         @test query(net[1][2], invalidated_a.tag).id == invalidated_a.id
-        @test query(net[2][2], invalidated_b.tag).id == invalidated_b.id
-        @test !isassigned(net[1][2])
-        @test !isassigned(net[2][2])
+        @test isnothing(query(net[2][2], invalidated_b.tag))
         @test all(!islocked(net[node][slot]) for node in 1:2 for slot in 1:3)
     end
 

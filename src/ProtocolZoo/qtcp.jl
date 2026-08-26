@@ -613,7 +613,6 @@ function _link_inventory_candidates(prot)
     return queryall(
         prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓, ❓;
         filo=prot.filo,
-        assigned=true,
     )
 end
 
@@ -630,14 +629,15 @@ function _link_inventory_reciprocal(prot, candidate)
         candidate.slot.idx,
         candidate.tag[4];
         filo=prot.filo,
-        assigned=true,
     )
 end
 
-"""Check that a saved inventory result is still current under its slot lock."""
+"""Check that a saved inventory tag is still present."""
 function _link_inventory_tag_is_current(result)
-    current = query(result.slot, result.tag; locked=true, assigned=true)
-    return !isnothing(current) && current.id == result.id
+    return any(
+        current -> current.id == result.id,
+        queryall(result.slot, result.tag),
+    )
 end
 
 """Wait for and atomically claim one reciprocal pair from external inventory."""
@@ -654,18 +654,11 @@ end
 
             slot_a = candidate.slot
             slot_b = reciprocal.slot
-            state_a = QuantumSavory.stateof(slot_a)
-            state_b = QuantumSavory.stateof(slot_b)
-            state_a === state_b || continue
             @yield @process nongreedymultilock(
                 sim, (slot_a, slot_b)
             )
 
-            valid = isassigned(slot_a) &&
-                isassigned(slot_b) &&
-                QuantumSavory.stateof(slot_a) === state_a &&
-                QuantumSavory.stateof(slot_b) === state_b &&
-                _link_inventory_tag_is_current(candidate) &&
+            valid = _link_inventory_tag_is_current(candidate) &&
                 _link_inventory_tag_is_current(reciprocal)
             if valid
                 untag!(slot_a, candidate.id)
