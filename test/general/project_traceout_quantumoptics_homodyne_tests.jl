@@ -19,6 +19,12 @@ using QuantumSavory
     @test !isassigned(register, 2)
     @test real(observable(register[1], SProjector(Z1))) ≈ 1 atol = 1e-7
 
+    density_register = Register([Qumode()])
+    initialize!(density_register[1], SProjector(F0))
+    rotated_x = project_traceout!(density_register[1], HomodyneMeasurement([π / 3]))
+    @test any(isapprox(rotated_x, value; atol = 1e-12) for value in expected_outcomes)
+    @test !isassigned(density_register, 1)
+
     invalid_angles = Register([Qumode()])
     initialize!(invalid_angles[1], F0)
     @test_throws ArgumentError project_traceout!(
