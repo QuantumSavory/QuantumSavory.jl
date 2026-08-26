@@ -9,11 +9,11 @@ onto a measurement outcome. This projection changes any system that is
 entangled with it. Then, it removes the measured system from the register slot.
 
 For a discrete measurement, the function returns a one-based index into the
-measurement basis. The index is not an eigenvalue. For a homodyne measurement,
-the function returns continuous quadrature data.
+measurement basis. The index is not an eigenvalue. A homodyne measurement
+returns quadrature data whose form depends on the backend.
 
-The first few examples use the default `QuantumOpticsRepr()`. The homodyne
-example selects `GabsRepr` explicitly.
+The first few examples use the default `QuantumOpticsRepr()`. The final
+homodyne example selects `GabsRepr` explicitly.
 
 ## Measure a qubit with a Pauli operator
 
@@ -122,9 +122,12 @@ observable, but it is not currently available as the basis argument of
 
 ## Measure a continuous quadrature
 
-A homodyne measurement returns a continuous value. Use `0.0` as the angle for
-the ``x`` quadrature. Use `pi / 2` for the ``p`` quadrature. This operation is
-available for qumodes that use `GabsRepr`.
+A homodyne measurement returns quadrature data. Use `0.0` as the angle for the
+``x`` quadrature and `pi / 2` for the ``p`` quadrature. This example uses
+`GabsRepr`, which samples a continuous Gaussian phase-space result. With
+`QuantumOpticsRepr`, homodyne measurement instead samples the finite spectrum
+of the quadrature in the truncated Fock basis; see
+[Qubit steering through a homodyne measurement](homodyne_steering.md).
 
 The measured coherent state and the remaining vacuum state are independent in
 this small example. The homodyne result is random, but the remaining mode must
@@ -176,7 +179,9 @@ not change the register.
   for an explicit discrete basis.
 - Use an explicit Fock basis for a discrete qumode measurement with these
   representations.
-- Pass `HomodyneMeasurement` to `GabsRepr` for a continuous qumode measurement.
+- Pass `HomodyneMeasurement` for a qumode quadrature measurement. `GabsRepr`
+  samples continuous Gaussian data, while `QuantumOpticsRepr` samples its
+  finite Fock-basis approximation.
 - Use the returned discrete index to select the matching basis state.
 - Remember that the measured slot is empty after every successful call.
 

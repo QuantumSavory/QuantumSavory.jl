@@ -67,7 +67,8 @@ Use this family when:
 - you are validating a cheaper approximation on smaller systems.
 
 This is the most flexible built-in path, but it also has the least structural
-compression.
+compression. A homodyne measurement samples an eigenvalue of the requested
+quadrature in the representation's truncated Fock basis.
 
 ### `Gabs`
 

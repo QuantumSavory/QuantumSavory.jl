@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add finite-Fock homodyne measurement for `QuantumOpticsRepr` and a tutorial
+  on homodyne-conditioned qubit steering during partial transduction.
 - Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.
 - QTCP `LinkController` can now consume pairs from an independent `EntanglerProt` based on reciprocal `(remote_node, remote_slot, pair_id)` tags being present.
