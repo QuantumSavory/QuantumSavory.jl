@@ -7,7 +7,7 @@ dictionary method returns a new `Dict` with the same edge keys and converted
 values.
 
 Distances must be finite and nonnegative. The propagation speed must be finite
-and positive.
+and positive. The computed delay must also be finite.
 
 ```jldoctest
 julia> dist_to_delay(200_000_000)
@@ -28,7 +28,12 @@ function dist_to_delay(distance_m::Real, speed_m_per_s::Real=2.0e8)
         speed_m_per_s,
         "speed_m_per_s must be finite and positive",
     ))
-    return distance_m / speed_m_per_s
+    delay = distance_m / speed_m_per_s
+    isfinite(delay) || throw(DomainError(
+        (distance_m, speed_m_per_s),
+        "distance_m / speed_m_per_s must be finite",
+    ))
+    return delay
 end
 
 function dist_to_delay(distances::AbstractDict, speed_m_per_s::Real=2.0e8)

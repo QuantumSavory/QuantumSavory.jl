@@ -41,6 +41,11 @@ ProtocolZoo.protocol_catalog_metadata(::Type{InvalidRequiredFieldProtocol}) = (
         @test_throws DomainError dist_to_delay(1, speed)
         @test_throws DomainError dist_to_delay(Dict{Edge{Int},Float64}(), speed)
     end
+    @test_throws DomainError dist_to_delay(1.0e308, 1.0e-308)
+    @test_throws DomainError dist_to_delay(
+        Dict(Edge(1, 2) => 1.0e308),
+        1.0e-308,
+    )
 end
 
 @testset "Network builder validates topology and constructs channels" begin
