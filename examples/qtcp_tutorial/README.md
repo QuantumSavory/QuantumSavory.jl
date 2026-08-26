@@ -126,9 +126,8 @@ Goal:
 
 Scenario:
 - A 5-node chain
-- A side-by-side comparison between:
-  - the default `EndNodeController`
-  - a custom `CustomEndNodeController`
+- The default `EndNodeController` replaced by a custom
+  `CustomEndNodeController`
 
 What the custom controller does:
 - Starts with `initial_window = 1`
@@ -146,8 +145,7 @@ Narrative role:
 - It shows how to change endpoint behavior without rewriting the rest of the protocol stack used by the tutorial.
 
 Expected outcome:
-- The default controller completes the requested flow
-- The custom controller also completes the requested flow
+- The custom controller completes the requested flow
 
 ## Step 5: External Entanglement Inventory
 
