@@ -20,14 +20,8 @@ julia> dist_to_delay(Dict(Edge(1, 2) => 100_000_000))[Edge(1, 2)]
 ```
 """
 function dist_to_delay(distance_m::Real, speed_m_per_s::Real=2.0e8)
-    isfinite(distance_m) && distance_m >= 0 || throw(DomainError(
-        distance_m,
-        "distance_m must be finite and nonnegative",
-    ))
-    isfinite(speed_m_per_s) && speed_m_per_s > 0 || throw(DomainError(
-        speed_m_per_s,
-        "speed_m_per_s must be finite and positive",
-    ))
+    @domain isfinite(distance_m) && distance_m ≥ 0
+    @domain isfinite(speed_m_per_s) && speed_m_per_s > 0
     delay = distance_m / speed_m_per_s
     isfinite(delay) || throw(DomainError(
         (distance_m, speed_m_per_s),
@@ -37,10 +31,7 @@ function dist_to_delay(distance_m::Real, speed_m_per_s::Real=2.0e8)
 end
 
 function dist_to_delay(distances::AbstractDict, speed_m_per_s::Real=2.0e8)
-    isfinite(speed_m_per_s) && speed_m_per_s > 0 || throw(DomainError(
-        speed_m_per_s,
-        "speed_m_per_s must be finite and positive",
-    ))
+    @domain isfinite(speed_m_per_s) && speed_m_per_s > 0
     return Dict(edge => dist_to_delay(distance_m, speed_m_per_s) for
                 (edge, distance_m) in distances)
 end
