@@ -16,6 +16,7 @@ using QuantumSavory.ProtocolZoo: AbstractProtocol,
     LinkLevelReplyAtSource, LinkLevelReplyAtHop, Flow
 import QuantumSavory.ProtocolZoo: protocol_log_context
 using QuantumSavory.ProtocolZoo.QTCP: QDatagramSuccess
+import ConcurrentSim: Process
 using ConcurrentSim: @yield, now, @process, timeout
 using ResumableFunctions: @resumable
 
@@ -234,20 +235,9 @@ end
 end
 
 
-# --- Run the custom controller on a 5-node chain ---
-
-graph = grid([5])
-regsize = 20
-sim, net = simulation_setup(
-    graph,
-    regsize;
-    T2=100.0,
-    EndNodeControllerType=CustomEndNodeController,
-)
-
-flow = Flow(src=1, dst=5, npairs=15, uuid=1)
-put!(net[flow.src], flow)
-run(sim, 500.0)
+# ====================================================================
+# Run a comparison: default vs. custom controller on a 5-node chain
+# ====================================================================
 
 function count_tags!(mb, tag_type)
     n = 0
@@ -257,14 +247,54 @@ function count_tags!(mb, tag_type)
     return n
 end
 
-mb_src = messagebuffer(net, flow.src)
-mb_dst = messagebuffer(net, flow.dst)
-n_delivered_src = count_tags!(mb_src, QTCPPairBegin)
-n_delivered_dst = count_tags!(mb_dst, QTCPPairEnd)
+function run_and_measure_nth_delivery(sim, net, src, dst; npairs, milestone_pair, deadline=500.0, step=0.5)
+    mb_src = messagebuffer(net, src)
+    mb_dst = messagebuffer(net, dst)
+    delivered_src = 0
+    delivered_dst = 0
+    milestone_time = nothing
 
-@info "=== Custom EndNodeController Results ==="
-@info "Delivered at source: $n_delivered_src / $(flow.npairs)"
-@info "Delivered at destination: $n_delivered_dst / $(flow.npairs)"
+    for t in step:step:deadline
+        run(sim, t)
+        delivered_src += count_tags!(mb_src, QTCPPairBegin)
+        delivered_dst += count_tags!(mb_dst, QTCPPairEnd)
 
-@assert n_delivered_src == flow.npairs
-@assert n_delivered_dst == flow.npairs
+        if isnothing(milestone_time) && delivered_src >= milestone_pair && delivered_dst >= milestone_pair
+            milestone_time = now(sim)
+        end
+
+        if delivered_src >= npairs && delivered_dst >= npairs
+            break
+        end
+    end
+
+    return delivered_src, delivered_dst, milestone_time
+end
+
+function main()
+    @info "=== Default EndNodeController (fixed window = 3) ==="
+    begin
+        graph = grid([5]); regsize = 20
+        sim, net = simulation_setup(graph, regsize; T2=100.0)
+        flow = Flow(src=1, dst=5, npairs=15, uuid=1)
+        put!(net[1], flow)
+        n_src, n_dst, milestone_time = run_and_measure_nth_delivery(sim, net, 1, 5; npairs=flow.npairs, milestone_pair=15)
+        @assert !isnothing(milestone_time) "The 15th pair was never delivered for the default controller"
+        @info "  Delivered: src=$n_src, dst=$n_dst / 15"
+        @info "  15th pair delivered at t ≈ $(round(milestone_time, digits=1))"
+    end
+
+    @info "=== Custom EndNodeController (window 1 → 5, growth every 2 pairs) ==="
+    begin
+        graph = grid([5]); regsize = 20
+        sim, net = simulation_setup(graph, regsize; T2=100.0, EndNodeControllerType=CustomEndNodeController)
+        flow = Flow(src=1, dst=5, npairs=15, uuid=1)
+        put!(net[1], flow)
+        n_src, n_dst, milestone_time = run_and_measure_nth_delivery(sim, net, 1, 5; npairs=flow.npairs, milestone_pair=15)
+        @assert !isnothing(milestone_time) "The 15th pair was never delivered for the custom controller"
+        @info "  Delivered: src=$n_src, dst=$n_dst / 15"
+        @info "  15th pair delivered at t ≈ $(round(milestone_time, digits=1))"
+    end
+end
+
+main()
