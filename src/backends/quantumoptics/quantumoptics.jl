@@ -63,6 +63,28 @@ function project_traceout!(state::Union{Ket,Operator},stateindex::Int,psis::Base
     end
 end
 
+function project_traceout!(
+    state::Union{Ket,Operator}, subsystem::Int, measurement::HomodyneMeasurement
+)
+    length(measurement.angles) == 1 || throw(ArgumentError(
+        "QuantumOptics homodyne measurement of one subsystem requires one angle."
+    ))
+    subsystem_basis = nsubsystems(state) == 1 ?
+        basis(state) : basis(state).bases[subsystem]
+    subsystem_basis isa QuantumOpticsBase.FockBasis || throw(ArgumentError(
+        "QuantumOptics homodyne measurement requires a Fock-basis subsystem."
+    ))
+
+    angle = only(measurement.angles)
+    annihilation = destroy(subsystem_basis)
+    quadrature = QuantumOpticsBase.dense(
+        (cis(-angle) * annihilation + cis(angle) * annihilation') / sqrt(2)
+    )
+    values, states = QuantumOptics.eigenstates(quadrature)
+    outcome, remaining = project_traceout!(state, subsystem, states)
+    real(values[outcome]), remaining
+end
+
 const _l = copy(express(Z1, QuantumOpticsRepr()))
 function newstate(::Qubit,::QuantumOpticsRepr)
     copy(_l)
