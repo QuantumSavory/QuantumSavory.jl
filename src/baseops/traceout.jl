@@ -129,9 +129,10 @@ for the Hilbert space. The Hilbert space of the register is automatically shrunk
 A basis object can be specified on its own as well, e.g.
 `project_traceout!(reg, slot, basis)`.
 
-Discrete qubit backends return a one-based `Int` outcome. Gabs homodyne
-measurements return continuous quadrature data. Clifford qubit measurements
-currently support the symbolic `X`, `Y`, and `Z` bases.
+Discrete qubit backends return a one-based `Int` outcome. Homodyne measurements
+return quadrature data.
+Clifford qubit measurements currently support the symbolic `X`, `Y`, and `Z`
+bases.
 """
 function project_traceout! end
 
