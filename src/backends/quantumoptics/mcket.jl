@@ -32,6 +32,9 @@ function project_traceout!(state::MCKet, stateindex::Int, measurement_basis)
     result, newstate isa Ket ? MCKet(newstate) : newstate
 end
 
+_preflight_project_traceout(state::MCKet, stateindex::Int, measurement_basis) =
+    _preflight_project_traceout(state.ket, stateindex, measurement_basis)
+
 function subsystemcompose(states::MCKet...)
     MCKet(tensor((state.ket for state in states)...))
 end

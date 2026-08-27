@@ -6,14 +6,20 @@ subsystemcompose(states::Gabs.GaussianState...) = tensor(states...)
 subsystemcompose(ops::Gabs.GaussianUnitary...) = tensor(ops...)
 subsystemcompose(channels::Gabs.GaussianChannel...) = tensor(channels...)
 
-function project_traceout!(
+function _preflight_project_traceout(
     state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
 )
     length(meas.angles) == 1 || throw(ArgumentError(
         "Gabs homodyne measurement of one subsystem requires one angle."
     ))
     1 <= subsys <= nsubsystems(state) || throw(BoundsError(state, subsys))
+    nothing
+end
 
+function project_traceout!(
+    state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
+)
+    _preflight_project_traceout(state, subsys, meas)
     coordinates, state = Gabs.homodyne(
         state, subsys, meas.angles; squeeze = meas.squeeze
     )

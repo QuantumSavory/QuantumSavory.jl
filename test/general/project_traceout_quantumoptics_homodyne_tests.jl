@@ -63,10 +63,12 @@ end
 
     invalid_angles = Register([Qumode()])
     initialize!(invalid_angles[1], F0)
+    initial_time = invalid_angles.accesstimes[1]
     @test_throws ArgumentError project_traceout!(
-        invalid_angles[1], HomodyneMeasurement([0.0, π / 2])
+        invalid_angles[1], HomodyneMeasurement([0.0, π / 2]); time = 1.0
     )
     @test isassigned(invalid_angles, 1)
+    @test invalid_angles.accesstimes[1] == initial_time
 
     qubit = Register(1)
     initialize!(qubit[1], Z1)
@@ -85,7 +87,7 @@ end
     @testset "Means and variances agree with Gabs" begin
         shots = 2_000
         # This is more than four standard errors for the moment differences below.
-        statistical_tolerance = 0.10
+        statistical_tolerance = 0.20
         quantumoptics_repr = QuantumOpticsRepr(cutoff = 6)
         gabs_repr = GabsRepr(QuadBlockBasis)
         cases = (

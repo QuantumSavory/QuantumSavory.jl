@@ -147,6 +147,8 @@ explicit basis vectors are supported by QuantumOptics and QuantumMC.
 """
 function project_traceout! end
 
+_preflight_project_traceout(state, i::Int, basis) = nothing
+
 function _validate_project_traceout_values(basis, values)
     length(basis) == length(values) || throw(DimensionMismatch(
         "Measurement basis and outcome values must have the same length."
@@ -193,8 +195,9 @@ function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
     isnothing(stateref) && throw(ArgumentError(
         "Cannot project and trace out an unassigned register slot."
     ))
-    !isnothing(time) && uptotime!([reg], [i], time)
     stateindex = reg.stateindices[i]
+    _preflight_project_traceout(stateref.state[], stateindex, basis)
+    !isnothing(time) && uptotime!([reg], [i], time)
     j, stateref.state[] = project_traceout!(stateref.state[],stateindex,basis)
     removebackref!(stateref, stateindex)
     f(j)

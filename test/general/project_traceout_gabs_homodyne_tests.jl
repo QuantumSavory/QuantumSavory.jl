@@ -132,12 +132,14 @@ for (basis_type, basis_name) in (
             reg = Register(fill(Qumode(), 2), fill(representation, 2))
             initialize!(reg[1:2], TwoSqueezedState(0.45))
             stored_state = QuantumSavory.stateof(reg[1]).state[]
+            access_times = copy(reg.accesstimes)
 
             @test_throws ArgumentError project_traceout!(
-                reg[1], HomodyneMeasurement([0.0, pi / 2])
+                reg[1], HomodyneMeasurement([0.0, pi / 2]); time = 1.0
             )
             @test QuantumSavory.stateof(reg[1]).state[] === stored_state
             @test isassigned(reg, 1) && isassigned(reg, 2)
+            @test reg.accesstimes == access_times
 
             @test_throws BoundsError project_traceout!(
                 stored_state, 3, HomodyneMeasurement([0.0])
