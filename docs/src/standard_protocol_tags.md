@@ -144,6 +144,9 @@ Meaning: a remote node performed a swap. The receiver should update the
 counterpart metadata for the target pair, combine in the other pair-id chunk,
 and apply the indicated Pauli-frame correction if needed.
 
+`correction` is the raw Pauli measurement eigenvalue, `1` or `-1`. The receiver
+applies the correction gate when the value is `-1`.
+
 Protocol interface:
 
 - `SwapperProt` sends these messages to the former endpoints of the two swapped

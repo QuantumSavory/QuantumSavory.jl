@@ -190,30 +190,47 @@ project_traceout!
 
 #### `project_traceout!(r::RegRef, basis; time)`
 
-Project the state in `RegRef` on `basis` at a specified `time`. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+Project the state in `RegRef` on `basis` at a specified `time`. An explicit
+`Vector` or `Tuple` of basis states returns a one-based index. Symbolic `X`,
+`Y`, or `Z` returns the measured eigenvalue, `1` or `-1`.
 
-#### `project_traceout(reg::Register, i::Int, basis; time)`
+#### `project_traceout!(reg::Register, i::Int, basis; time)`
 
-Project the state in the slot in index `i` of `Register` on `basis` at a specified `time`.  `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+The equivalent operation for slot `i` of a `Register`.
+
+#### `project_traceout!(r::RegRef, basis, values; time)` and `project_traceout!(reg::Register, i::Int, basis, values; time)`
+
+For an explicit tuple or vector basis, return `values[index]`. `values` may
+contain any element type and repeated values. Both collections must have the
+same length. A mismatch throws `DimensionMismatch` before time checks,
+evolution, sampling, subsystem removal, or back-reference changes.
 
 #### `project_traceout!(f, r::RegRef, basis; time)`
 
-Project the state in `RegRef` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
+Project the state in `RegRef` on `basis` at a specified `time` and apply `f` to
+the normal result. The callback receives an index for an explicit basis and an
+eigenvalue for a supported symbolic operator.
 
 #### `project_traceout!(f, reg::Register, i::Int, basis; time)`
 
-Project the state in the slot in index `i` of `Register` on `basis` at a specified `time` and apply function `f` on the projected basis state. `basis` can be a `Vector` or `Tuple` of basis states, or it can be a `Matrix` like `Z` or `X`.
-Lowers the representation from registers to states.
+The equivalent callback operation for slot `i` of a `Register`. It lowers the
+representation from registers to states.
 
 #### `project_traceout!(state, stateindex, basis::Symbolic{AbstractOperator})` and `basis::AbstractVecOrTuple{<:Symbolic{AbstractKet}}`
 
 Backend implementations.
-If `basis` is an operator, call `eigvecs` to convert it into a matrix whose columns are the eigenvectors of the operator.
+If `basis` is a supported operator, use paired `eigvecs` and `eigvals` methods
+to keep its basis states and returned values aligned.
 If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` to convert it to the necessary representation.
 
 `CliffordRepr` currently accepts only the symbolic `X`, `Y`, and `Z` qubit
 measurement bases. Explicit basis vectors are supported by `QuantumOpticsRepr`
 and `QuantumMCRepr`, not by the Clifford backend.
+
+`HomodyneMeasurement([θ])` returns the phase-space label `z = x + im*p` of the
+sampled projector. The measured quadrature is
+`real(exp(-im*θ) * z)`. Register-level homodyne measurement accepts one slot
+and one angle.
 
 #### Interface Overview
 
@@ -227,13 +244,15 @@ flowchart TB
     D2["<code>reg.stateindices[i]</code>"]
   end
   E1["<code>basis::Symbolic{AbstractOperator}</code>"]
-  F1["<code>eigvecs(basis)</code>"]
+  F1["<code>eigvecs(basis), eigvals(basis)</code>"]
   E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
   F2["<code>express.(basis)</code>"]
+  E3["<code>HomodyneMeasurement([θ])</code>"]
   G([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> TOP
   TOP --> E1 --> F1 --> G
   TOP --> E2 --> F2 --> G
+  TOP --> E3 --> G
 ```
 
 ## `traceout!`

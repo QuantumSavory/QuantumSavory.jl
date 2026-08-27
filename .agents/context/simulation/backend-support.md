@@ -11,10 +11,10 @@ Backend support is a dispatch matrix, not a single “supported” flag:
 
 | Representation | Stored state and implemented surface | Current limits |
 |---|---|---|
-| `QuantumOpticsRepr` | `Ket` and `Operator` paths for symbolic lowering, application, observables, project/traceout, backgrounds, and non-instant evolution | Cost grows densely; individual state/background combinations still depend on lowering helpers |
+| `QuantumOpticsRepr` | `Ket` and `Operator` paths for symbolic lowering, application, observables, project/traceout, finite-Fock homodyne, backgrounds, and non-instant evolution | Cost grows densely; homodyne samples the truncated quadrature spectrum and labels only the measured phase-space axis |
 | `QuantumMCRepr` | General QuantumOptics-family simulation with a distinct internal `MCKet` pure-trajectory wrapper; sampled background branches, projective measurement, and canonical-basis sampled traceout | All-`MCKet` composition preserves the wrapper; mixing with a plain `Ket` exits to `Ket`, and composition with an `Operator` promotes through a density operator |
 | `CliffordRepr` | `MixedDestabilizer` stabilizer application, Pauli observables/projective measurement, symbolic stabilizer-projector observables on indexed and mixed tableaux, traceout, and T2/depolarization trajectories | Dense observables convert only pure tableaux to exponentially sized kets; mixed dense observables error |
-| `GabsRepr` | Gaussian-state composition and Gaussian unitary/channel application; homodyne `project_traceout!` performs measurement and partial trace | No general `observable`, native background `uptotime!`, or `apply_noninstant!` for `ConstantHamiltonianEvolution` |
+| `GabsRepr` | Gaussian-state composition and Gaussian unitary/channel application; homodyne `project_traceout!` returns native coordinates as `x + im*p` and performs partial trace | No general `observable`, native background `uptotime!`, or `apply_noninstant!` for `ConstantHamiltonianEvolution` |
 
 `PauliNoise` is not currently usable through normal evolution dispatch. QuantumOptics
 defines `krausops(::PauliNoise)` and Clifford defines
@@ -61,7 +61,7 @@ plotting and discovery calls, not representation capability or promotion failure
 
 - **Source:** [`src/traits_and_defaults.jl`](../../../src/traits_and_defaults.jl), [`src/baseops/initialize.jl`](../../../src/baseops/initialize.jl), [`src/backends/quantumoptics/`](../../../src/backends/quantumoptics/), [`src/backends/clifford/`](../../../src/backends/clifford/), and [`src/backends/gabs/`](../../../src/backends/gabs/) — defaults, current consistency selection, and backend implementations.
 - **Docs:** [`docs/src/backendsimulator.md`](../../../docs/src/backendsimulator.md) and [`docs/src/restricted_formalisms.md`](../../../docs/src/restricted_formalisms.md) — current representation guidance and default policy.
-- **Test:** [`test/general/representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`test/general/quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), and [`test/general/project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl) — exercised capabilities.
+- **Test:** [`test/general/representations_dispatch_tests.jl`](../../../test/general/representations_dispatch_tests.jl), [`test/general/quantummc_repr_tests.jl`](../../../test/general/quantummc_repr_tests.jl), [`test/general/project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), and [`test/general/project_traceout_quantumoptics_homodyne_tests.jl`](../../../test/general/project_traceout_quantumoptics_homodyne_tests.jl) — exercised capabilities.
 
 ## Unresolved questions
 

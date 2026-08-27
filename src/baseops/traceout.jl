@@ -119,20 +119,31 @@ function traceout!(refs::RegRef...)
 end
 
 """
+    project_traceout!(ref::RegRef, basis; time = nothing)
+    project_traceout!(reg::Register, i::Int, basis; time = nothing)
+    project_traceout!(ref::RegRef, basis, values; time = nothing)
+    project_traceout!(reg::Register, i::Int, basis, values; time = nothing)
+
 Perform a projective measurement on the given slot of the given register.
 
-`project_traceout!(reg, slot, [stateA, stateB])` performs a projective measurement,
-projecting on either `stateA` or `stateB`, returning the index of the subspace
-on which the projection happened. It assumes the list of possible states forms a basis
-for the Hilbert space. The Hilbert space of the register is automatically shrunk.
+An explicit tuple or vector of orthonormal basis states returns its one-based
+basis index. Passing a second tuple or vector, `values`, returns `values[index]`
+instead. `basis` and `values` must have the same length; a mismatch throws
+`DimensionMismatch` before time advancement, sampling, or register mutation.
 
-A basis object can be specified on its own as well, e.g.
-`project_traceout!(reg, slot, basis)`.
+The symbolic Pauli operators `X`, `Y`, and `Z` return their eigenvalues `1` or
+`-1`, aligned respectively with `(X1, X2)`, `(Y1, Y2)`, and `(Z1, Z2)`.
+Callback overloads receive this normal result: an index for an explicit basis
+and an eigenvalue for a supported symbolic operator.
 
-Discrete qubit backends return a one-based `Int` outcome. Homodyne measurements
-return quadrature data.
-Clifford qubit measurements currently support the symbolic `X`, `Y`, and `Z`
-bases.
+`HomodyneMeasurement([θ])` returns the complex phase-space label `z = x + im*p`
+of the sampled projector. The measured quadrature is
+`real(exp(-im*θ) * z)`. Register-level homodyne measurement accepts one slot and
+one angle.
+
+Every successful call removes the measured subsystem and its back-reference.
+Clifford qubit measurements support the symbolic `X`, `Y`, and `Z` bases;
+explicit basis vectors are supported by QuantumOptics and QuantumMC.
 """
 function project_traceout! end
 

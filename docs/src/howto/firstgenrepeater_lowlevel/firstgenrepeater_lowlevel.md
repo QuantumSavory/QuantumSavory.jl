@@ -258,10 +258,10 @@ The example uses the ready-made `EntanglementSwap` circuit from [`CircuitZoo`](@
 apply!((localslot1, localslot2), CNOT; time=time)
 xmeas = project_traceout!(localslot1, X)
 zmeas = project_traceout!(localslot2, Z)
-if xmeas==2
+if xmeas == -1
     apply!(remslot1, Z)
 end
-if zmeas==2
+if zmeas == -1
     apply!(remslot2, X)
 end
 ```

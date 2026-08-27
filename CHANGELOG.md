@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **(breaking)** Normalize `project_traceout!` outcomes (#517): explicit
+  orthonormal bases still return one-based indices; an explicit basis plus
+  `values` returns `values[index]`; symbolic `X`, `Y`, and `Z` return eigenvalues
+  `1` or `-1`; and `HomodyneMeasurement([θ])` returns `z = x + im*p`. To recover
+  an old basis index from a Pauli eigenvalue, use `1 + Int(value == -1)`. To
+  recover an old classical bit, use `Int(value == -1)`. Replace old Gabs
+  `value[1]` and `value[2]` access with `real(value)` and `imag(value)`. Issue
+  #517 remains open for the broader measurement-wrapper and heterodyne work.
 - Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
 - Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.

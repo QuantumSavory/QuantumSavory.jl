@@ -41,7 +41,9 @@ interfaces:
 3. How to initialize states and apply Gaussian symbolic operations with
    `initialize!` and `apply!`.
 4. How to perform projective continuous-variable measurements through
-   `project_traceout!(..., HomodyneMeasurement(...))`.
+   `project_traceout!(..., HomodyneMeasurement(...))`. The returned complex
+   value is `x + im*p`, so the protocol reads its quadratures with `real` and
+   `imag`.
 5. How to express classical communication inside a network simulation through
    `channel`, `Tag`, `messagebuffer`, and `query_wait`.
 6. How to package a protocol as a callable struct together with a `@resumable`

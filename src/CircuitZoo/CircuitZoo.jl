@@ -176,7 +176,7 @@ This is only "half" of the full purification circuit - the local gates to be app
 a network node. For a complete purification circuit, you need to apply this circuit to
 the remote node as well. Alternatively, you can use the complete `Purifiy2to1`](@ref) circuit.
 
-This circuit returns the measurements result (as an integer index among the possible basis states).
+This circuit returns the Pauli measurement eigenvalue, `1` or `-1`.
 
 ```jldoctest
 julia> a = Register(2)
