@@ -21,6 +21,19 @@ function homodyne_samples(symbolic_state, representation, angle, shots)
 end
 
 @testset "QuantumOptics homodyne measurement" begin
+    @testset "Caches the quadrature eigensystem" begin
+        measurement = HomodyneMeasurement([0.0])
+        mode_basis = basis(express(F0, QuantumOpticsRepr(cutoff = 6)))
+        first = QuantumSavory._homodyne_operator_eigendecomposition(
+            measurement, mode_basis
+        )
+        second = QuantumSavory._homodyne_operator_eigendecomposition(
+            measurement, mode_basis
+        )
+
+        @test second === first
+    end
+
     register = Register([Qubit(), Qumode()])
     initialize!(register[1:2], Z1 ⊗ F0)
 

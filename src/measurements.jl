@@ -30,5 +30,11 @@ true
 struct HomodyneMeasurement <: AbstractMeasurement
     angles::Vector{Real}
     squeeze::Real
+    cache::Dict{Any,Any}
 end
+HomodyneMeasurement(angles::Vector{<:Real}, squeeze::Real) =
+    HomodyneMeasurement(angles, squeeze, Dict{Any,Any}())
 HomodyneMeasurement(angles::Vector{<:Real}; squeeze = eps()) = HomodyneMeasurement(angles, squeeze)
+Base.show(io::IO, measurement::HomodyneMeasurement) = print(
+    io, "HomodyneMeasurement(", measurement.angles, ", ", measurement.squeeze, ")"
+)
