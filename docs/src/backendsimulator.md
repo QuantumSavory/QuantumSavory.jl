@@ -66,7 +66,7 @@ Use this family when:
 - you want one backend that can handle both qubits and bosonic modes, or
 - you are validating a cheaper approximation on smaller systems.
 
-This is the most flexible built-in path, but it is also the most expensive computationally.
+This is the most flexible simulator backend, but it is also the most expensive computationally.
 
 ### `Gabs`
 
