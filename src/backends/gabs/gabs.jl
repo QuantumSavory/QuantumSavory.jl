@@ -9,12 +9,20 @@ subsystemcompose(channels::Gabs.GaussianChannel...) = tensor(channels...)
 function project_traceout!(
     state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
 )
-    res, state = Gabs.homodyne(state, subsys, meas.angles; squeeze = meas.squeeze)
+    length(meas.angles) == 1 || throw(ArgumentError(
+        "Gabs homodyne measurement of one subsystem requires one angle."
+    ))
+    1 <= subsys <= nsubsystems(state) || throw(BoundsError(state, subsys))
+
+    coordinates, state = Gabs.homodyne(
+        state, subsys, meas.angles; squeeze = meas.squeeze
+    )
+    result = complex(coordinates[1], coordinates[2])
     if nsubsystems(state) == 1
-        return res, nothing
+        return result, nothing
     end
     state = Gabs.ptrace(state, subsys)
-    return res, state
+    return result, state
 end
 
 # feels like a hacky workaround because `apply!(state, indices::Base.AbstractVecOrTuple{Int}, operation::Symbolic{AbstractOperator})`

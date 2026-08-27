@@ -12,11 +12,7 @@ function homodyne_samples(symbolic_state, representation, angle, shots)
         register = Register([Qumode()], [representation])
         initialize!(register[1], state)
         result = project_traceout!(register[1], measurement)
-
-        # Gabs uses ħ=2 phase-space coordinates. Normalize its measured
-        # quadrature to match the QuantumOptics convention [x,p]=i.
-        result isa Real ? result :
-            (cos(angle) * result[1] + sin(angle) * result[2]) / sqrt(2)
+        real(cis(-angle) * result)
     end
 end
 
@@ -40,21 +36,29 @@ end
     interaction = σ₋ ⊗ Create + σ₊ ⊗ Destroy
     apply!(register[1:2], exp(-im * (π / 4) * interaction))
 
-    x = project_traceout!(register[2], HomodyneMeasurement([0.0]))
+    z = project_traceout!(register[2], HomodyneMeasurement([0.0]))
+    x = real(z)
     if !isapprox(x, 0; atol = 1e-12)
-        apply!(register[1], exp(im * atan(sqrt(2) * x) * X))
+        apply!(register[1], exp(im * atan(x) * X))
     end
 
-    @test x isa Real
-    expected_outcomes = (-sqrt(3 / 2), 0, sqrt(3 / 2))
+    @test z isa Complex
+    expected_outcomes = (-sqrt(3), 0, sqrt(3))
     @test any(isapprox(x, value; atol = 1e-12) for value in expected_outcomes)
     @test !isassigned(register, 2)
     @test real(observable(register[1], SProjector(Z1))) ≈ 1 atol = 1e-7
 
     density_register = Register([Qumode()])
     initialize!(density_register[1], SProjector(F0))
-    rotated_x = project_traceout!(density_register[1], HomodyneMeasurement([π / 3]))
-    @test any(isapprox(rotated_x, value; atol = 1e-12) for value in expected_outcomes)
+    angle = π / 3
+    rotated_z = project_traceout!(density_register[1], HomodyneMeasurement([angle]))
+    rotated_quadrature = cis(-angle) * rotated_z
+    @test rotated_z isa Complex
+    @test isapprox(imag(rotated_quadrature), 0; atol = 1e-12)
+    @test any(
+        isapprox(real(rotated_quadrature), value; atol = 1e-12)
+        for value in expected_outcomes
+    )
     @test !isassigned(density_register, 1)
 
     invalid_angles = Register([Qumode()])
@@ -69,6 +73,15 @@ end
     @test_throws ArgumentError project_traceout!(qubit[1], HomodyneMeasurement([0.0]))
     @test isassigned(qubit, 1)
 
+    invalid_subsystem = Register([Qumode()])
+    initialize!(invalid_subsystem[1], F0)
+    stored_state = QuantumSavory.stateof(invalid_subsystem[1]).state[]
+    @test_throws BoundsError project_traceout!(
+        stored_state, 2, HomodyneMeasurement([0.0])
+    )
+    @test QuantumSavory.stateof(invalid_subsystem[1]).state[] === stored_state
+    @test isassigned(invalid_subsystem, 1)
+
     @testset "Means and variances agree with Gabs" begin
         shots = 2_000
         # This is more than four standard errors for the moment differences below.
@@ -76,17 +89,17 @@ end
         quantumoptics_repr = QuantumOpticsRepr(cutoff = 6)
         gabs_repr = GabsRepr(QuadBlockBasis)
         cases = (
-            ("vacuum x", F0, 0.0),
-            ("vacuum p", F0, pi / 2),
-            ("coherent x", CoherentState(0.3 + 0.2im), 0.0),
-            ("coherent p", CoherentState(0.3 + 0.2im), pi / 2),
+            ("vacuum x", F0, 0.0, 0.0),
+            ("vacuum p", F0, pi / 2, 0.0),
+            ("coherent x", CoherentState(0.3 + 0.2im), 0.0, 0.6),
+            ("coherent p", CoherentState(0.3 + 0.2im), pi / 2, 0.4),
         )
 
         rng = Random.default_rng()
         saved_rng = copy(rng)
         try
             Random.seed!(rng, 0x5158)
-            for (name, state, angle) in cases
+            for (name, state, angle, expected_mean) in cases
                 @testset "$name" begin
                     quantumoptics = homodyne_samples(
                         state, quantumoptics_repr, angle, shots
@@ -95,6 +108,8 @@ end
 
                     @test mean(quantumoptics) ≈ mean(gabs) atol = statistical_tolerance
                     @test var(quantumoptics) ≈ var(gabs) atol = statistical_tolerance
+                    @test mean(quantumoptics) ≈ expected_mean atol = statistical_tolerance
+                    @test var(quantumoptics) ≈ 1 atol = statistical_tolerance
                 end
             end
         finally

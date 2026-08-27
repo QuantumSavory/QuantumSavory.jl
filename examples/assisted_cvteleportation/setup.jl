@@ -118,7 +118,7 @@ function homodyne_alice!(net, nodeA, nodeB)
     quads₊ = project_traceout!(regA[1], HomodyneMeasurement([pi/2]))
     # put quadrature measurements in channel
     chAB = channel(net, nodeA=>nodeB)
-    put!(chAB, Tag(:quadsA, -quads₋[1], quads₊[2]))
+    put!(chAB, Tag(:quadsA, -real(quads₋), imag(quads₊)))
 end
 
 """
@@ -132,7 +132,7 @@ function homodyne_charlie!(net, nodeB, nodeC)
     quads = project_traceout!(regC[1], HomodyneMeasurement([pi/2]))
     # put quadrature measurement in channel
     chBC = channel(net, nodeC=>nodeB)
-    put!(chBC, Tag(:quadsC, quads[2]))
+    put!(chBC, Tag(:quadsC, imag(quads)))
 end
 
 """

@@ -67,11 +67,11 @@ function _homodyne_operator_eigendecomposition(
     measurement::HomodyneMeasurement, subsystem_basis::QuantumOpticsBase.FockBasis
 )
     angle = only(measurement.angles)
-    key = (typeof(subsystem_basis), subsystem_basis.N, subsystem_basis.offset, angle)
+    key = (:hbar2, typeof(subsystem_basis), subsystem_basis.N, subsystem_basis.offset, angle)
     get!(measurement.cache, key) do
         annihilation = destroy(subsystem_basis)
         quadrature = QuantumOpticsBase.dense(
-            (cis(-angle) * annihilation + cis(angle) * annihilation') / sqrt(2)
+            cis(-angle) * annihilation + cis(angle) * annihilation'
         )
         (;
             operator = quadrature,
@@ -86,6 +86,7 @@ function project_traceout!(
     length(measurement.angles) == 1 || throw(ArgumentError(
         "QuantumOptics homodyne measurement of one subsystem requires one angle."
     ))
+    1 <= subsystem <= nsubsystems(state) || throw(BoundsError(state, subsystem))
     subsystem_basis = nsubsystems(state) == 1 ?
         basis(state) : basis(state).bases[subsystem]
     subsystem_basis isa QuantumOpticsBase.FockBasis || throw(ArgumentError(
@@ -95,7 +96,7 @@ function project_traceout!(
     cached = _homodyne_operator_eigendecomposition(measurement, subsystem_basis)
     values, states = cached.eigendecomposition
     outcome, remaining = project_traceout!(state, subsystem, states)
-    real(values[outcome]), remaining
+    real(values[outcome]) * cis(only(measurement.angles)), remaining
 end
 
 const _l = copy(express(Z1, QuantumOpticsRepr()))
