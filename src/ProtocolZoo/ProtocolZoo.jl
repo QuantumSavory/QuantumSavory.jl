@@ -568,7 +568,7 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                         end
                         if !isnothing(updategate) # EntanglementUpdate
                             # Pauli frame correction gate
-                            if correction==2
+                            if correction == -1
                                 apply!(localslot, updategate)
                             end
                             if newremotenode != -1 #TODO: this is a bit hacky

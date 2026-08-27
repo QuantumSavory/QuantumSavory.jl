@@ -23,10 +23,10 @@ function (::EntanglementSwap)(localL, remoteL, localR, remoteR)
     apply!((localL, localR), CNOT)
     xmeas = project_traceout!(localL, σˣ)
     zmeas = project_traceout!(localR, σᶻ)
-    if xmeas==2
+    if xmeas == -1
         apply!(remoteL, Z)
     end
-    if zmeas==2
+    if zmeas == -1
         apply!(remoteR, X)
     end
     xmeas, zmeas
@@ -377,7 +377,7 @@ end
 function coin(basis, pair::Array, parity=0) # TODO rename to coincidence and remove the parity argument (it does not seem to be used)
     measa = project_traceout!(pair[1], basis)
     measb = project_traceout!(pair[2], basis)
-    success = (measa ⊻ measb == parity)
+    success = measa * measb == (-1)^parity
     success
 end
 
@@ -930,7 +930,7 @@ function (circuit::SDDecode)(rrefA, rrefB)
     apply!(rrefA, H)
     b1 = project_traceout!(rrefA, Z)
     b2 = project_traceout!(rrefB, Z)
-    return b1-1, b2-1
+    return Int(b1 == -1), Int(b2 == -1)
 end
 
 """
@@ -961,10 +961,10 @@ function (circuit::Fusion)(regA, regB, communication_slot, storage_slot)
     mA = project_traceout!(regA[communication_slot], X)
     mB = project_traceout!(regB[communication_slot], X)
 
-    if mA == 2
+    if mA == -1
         apply!(regB[storage_slot], Z)
     end
-    if mB == 2
+    if mB == -1
         apply!(regA[storage_slot], Z)
     end
 end

@@ -14,7 +14,7 @@ using DocStringExtensions
 using PrettyTables: PrettyTables, pretty_table
 using IterTools
 import LinearAlgebra
-using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, det
+using LinearAlgebra: tr, mul!, eigvals, eigvecs, norm, normalize, det
 import Random
 using Random: randperm
 using Graphs

@@ -34,6 +34,14 @@ const bell = StabilizerState("XX ZZ")
     end
     @test result === :callback_complete
     @test callback_outcome[] == 1
+
+    initialize!(callback_register[1], Y2)
+    result = project_traceout!(callback_register[1], Y) do value
+        callback_outcome[] = value
+        :operator_callback_complete
+    end
+    @test result === :operator_callback_complete
+    @test callback_outcome[] == -1
 end
 
 @testset "Labeled basis validation precedes mutation" begin
@@ -73,17 +81,26 @@ end
 end
 
 for rep in [QuantumOpticsRepr(), QuantumMCRepr(), CliffordRepr()]
+    for (operator, eigenstates) in ((X, (X1, X2)), (Y, (Y1, Y2)), (Z, (Z1, Z2)))
+        for (eigenstate, eigenvalue) in zip(eigenstates, (1, -1))
+            eigenstate_register = Register(1, rep)
+            initialize!(eigenstate_register[1], eigenstate)
+            @test project_traceout!(eigenstate_register[1], operator) == eigenvalue
+            @test !isassigned(eigenstate_register, 1)
+        end
+    end
+
     a = Register(2,rep)
     initialize!(a[1:2], bell)
     m1 = project_traceout!(a[1], Y)
     @test m1 isa Int
-    @test m1 in 1:2
+    @test m1 in (-1, 1)
     @test !isassigned(a, 1)
     @test isassigned(a, 2)
     m2 = project_traceout!(a[2], Y)
     @test m2 isa Int
-    @test m2 in 1:2
-    @test m1 != m2
+    @test m2 in (-1, 1)
+    @test m1 * m2 == -1
     @test !isassigned(a, 2)
 
     a = Register(4,rep)
@@ -93,13 +110,18 @@ for rep in [QuantumOpticsRepr(), QuantumMCRepr(), CliffordRepr()]
     m2 = project_traceout!(a[2], Y)
     m3 = project_traceout!(a[3], Y)
     m4 = project_traceout!(a[4], Y)
-    @test m1!=m2
-    @test m3!=m4
+    @test m1 * m2 == -1
+    @test m3 * m4 == -1
 
     a = Register(2,rep)
     initialize!(a[1], X1)
     @test project_traceout!(a[1], σˣ) == 1
 end
+
+mc_register = Register(2, QuantumMCRepr())
+initialize!(mc_register[1:2], Z1 ⊗ Z2)
+@test project_traceout!(mc_register[1], Z) == 1
+@test mc_register.staterefs[2].state[] isa QuantumSavory.MCKet
 
 empty = Register(1)
 initial_time = empty.accesstimes[1]
