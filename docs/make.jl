@@ -82,7 +82,7 @@ function main()
         "tutorial.md",
         "Build a Network from a Dataset" => "tutorial/dataset_network.md",
         "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
-        "Qubit Steering through a Homodyne Measurement" => "tutorial/homodyne_steering.md",
+        "Qumode-Qubit teleportation (homodyne)" => "tutorial/homodyne_teleport.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",
         "Gate Duration" => "tutorial/noninstantgate.md",

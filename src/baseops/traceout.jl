@@ -130,8 +130,7 @@ A basis object can be specified on its own as well, e.g.
 `project_traceout!(reg, slot, basis)`.
 
 Discrete qubit backends return a one-based `Int` outcome. Homodyne measurements
-return quadrature data: `QuantumOpticsRepr` returns a sampled eigenvalue in its
-truncated Fock basis, while `GabsRepr` returns continuous phase-space data.
+return quadrature data.
 Clifford qubit measurements currently support the symbolic `X`, `Y`, and `Z`
 bases.
 """
