@@ -136,10 +136,46 @@ bases.
 """
 function project_traceout! end
 
+function _validate_project_traceout_values(basis, values)
+    length(basis) == length(values) || throw(DimensionMismatch(
+        "Measurement basis and outcome values must have the same length."
+    ))
+end
+
+function project_traceout!(
+    state,
+    i::Int,
+    basis::Union{Tuple,AbstractVector},
+    values::Union{Tuple,AbstractVector},
+)
+    _validate_project_traceout_values(basis, values)
+    outcome, state = project_traceout!(state, i, basis)
+    values[outcome], state
+end
+
 function project_traceout!(reg::Register, i::Int, basis; time=nothing)
     project_traceout!(identity, reg, i, basis; time=time)
 end
 project_traceout!(r::RegRef, basis; time=nothing) = project_traceout!(r.reg, r.idx, basis; time)
+
+function project_traceout!(
+    reg::Register,
+    i::Int,
+    basis::Union{Tuple,AbstractVector},
+    values::Union{Tuple,AbstractVector};
+    time=nothing,
+)
+    _validate_project_traceout_values(basis, values)
+    project_traceout!(outcome -> values[outcome], reg, i, basis; time)
+end
+function project_traceout!(
+    r::RegRef,
+    basis::Union{Tuple,AbstractVector},
+    values::Union{Tuple,AbstractVector};
+    time=nothing,
+)
+    project_traceout!(r.reg, r.idx, basis, values; time)
+end
 
 function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
     stateref = reg.staterefs[i]

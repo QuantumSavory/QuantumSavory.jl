@@ -8,6 +8,70 @@ const bell = StabilizerState("XX ZZ")
 
 @testset "Project Traceout" begin
 
+@testset "Explicit basis outcomes" begin
+    register = Register(2)
+    initialize!(register[1:2], Z1 ⊗ Z2)
+
+    @test project_traceout!(register[1], (Z1, Z2)) == 1
+    @test !isassigned(register, 1)
+    @test isassigned(register, 2)
+
+    @test project_traceout!(register[2], (Z1, Z2), ("up", 2//3)) == 2//3
+    @test !isassigned(register, 2)
+
+    outcome, remaining = project_traceout!(
+        express(Z2), 1, (Z1, Z2), (:same, :same)
+    )
+    @test outcome === :same
+    @test remaining === nothing
+
+    callback_outcome = Ref{Any}()
+    callback_register = Register(1)
+    initialize!(callback_register[1], Z1)
+    result = project_traceout!(callback_register[1], (Z1, Z2)) do value
+        callback_outcome[] = value
+        :callback_complete
+    end
+    @test result === :callback_complete
+    @test callback_outcome[] == 1
+end
+
+@testset "Labeled basis validation precedes mutation" begin
+    register = Register(2)
+    initialize!(register[1:2], bell)
+    stateref = QuantumSavory.stateof(register[1])
+    stored_state = stateref.state[]
+    staterefs = copy(register.staterefs)
+    stateindices = copy(register.stateindices)
+    accesstimes = copy(register.accesstimes)
+    backref_registers = copy(stateref.registers)
+    backref_indices = copy(stateref.registerindices)
+
+    @test_throws DimensionMismatch project_traceout!(
+        register[1], (Z1, Z2), (:only,); time=1.0
+    )
+    @test stateref.state[] === stored_state
+    @test all(current === saved for (current, saved) in zip(register.staterefs, staterefs))
+    @test register.stateindices == stateindices
+    @test register.accesstimes == accesstimes
+    @test all(current === saved for (current, saved) in zip(stateref.registers, backref_registers))
+    @test stateref.registerindices == backref_indices
+    @test isassigned(register, 1)
+    @test isassigned(register, 2)
+
+    @test_throws DimensionMismatch project_traceout!(
+        stored_state, 1, (Z1, Z2), (:only,)
+    )
+
+    empty = Register(1)
+    initial_time = empty.accesstimes[1]
+    @test_throws DimensionMismatch project_traceout!(
+        empty[1], (Z1, Z2), (:only,); time=1.0
+    )
+    @test empty.accesstimes[1] == initial_time
+    @test !isassigned(empty, 1)
+end
+
 for rep in [QuantumOpticsRepr(), QuantumMCRepr(), CliffordRepr()]
     a = Register(2,rep)
     initialize!(a[1:2], bell)
