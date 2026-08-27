@@ -1,5 +1,24 @@
 using Test
+using Random
+using Statistics: mean, var
 using QuantumSavory
+using Gabs: QuadBlockBasis
+
+function homodyne_samples(symbolic_state, representation, angle, shots)
+    state = express(symbolic_state, representation)
+    measurement = HomodyneMeasurement([angle]; squeeze = 1e-12)
+
+    map(1:shots) do _
+        register = Register([Qumode()], [representation])
+        initialize!(register[1], state)
+        result = project_traceout!(register[1], measurement)
+
+        # Gabs uses ħ=2 phase-space coordinates. Normalize its measured
+        # quadrature to match the QuantumOptics convention [x,p]=i.
+        result isa Real ? result :
+            (cos(angle) * result[1] + sin(angle) * result[2]) / sqrt(2)
+    end
+end
 
 @testset "QuantumOptics homodyne measurement" begin
     register = Register([Qubit(), Qumode()])
@@ -36,4 +55,37 @@ using QuantumSavory
     initialize!(qubit[1], Z1)
     @test_throws ArgumentError project_traceout!(qubit[1], HomodyneMeasurement([0.0]))
     @test isassigned(qubit, 1)
+
+    @testset "Means and variances agree with Gabs" begin
+        shots = 2_000
+        # This is more than four standard errors for the moment differences below.
+        statistical_tolerance = 0.10
+        quantumoptics_repr = QuantumOpticsRepr(cutoff = 6)
+        gabs_repr = GabsRepr(QuadBlockBasis)
+        cases = (
+            ("vacuum x", F0, 0.0),
+            ("vacuum p", F0, pi / 2),
+            ("coherent x", CoherentState(0.3 + 0.2im), 0.0),
+            ("coherent p", CoherentState(0.3 + 0.2im), pi / 2),
+        )
+
+        rng = Random.default_rng()
+        saved_rng = copy(rng)
+        try
+            Random.seed!(rng, 0x5158)
+            for (name, state, angle) in cases
+                @testset "$name" begin
+                    quantumoptics = homodyne_samples(
+                        state, quantumoptics_repr, angle, shots
+                    )
+                    gabs = homodyne_samples(state, gabs_repr, angle, shots)
+
+                    @test mean(quantumoptics) ≈ mean(gabs) atol = statistical_tolerance
+                    @test var(quantumoptics) ≈ var(gabs) atol = statistical_tolerance
+                end
+            end
+        finally
+            copy!(rng, saved_rng)
+        end
+    end
 end
