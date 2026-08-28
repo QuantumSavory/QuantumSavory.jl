@@ -9,7 +9,7 @@ onto a measurement outcome. This projection changes any system that is
 entangled with it. Then, it removes the measured system from the register slot.
 
 For an explicit discrete basis, the function returns a one-based basis index.
-For symbolic `X`, `Y`, or `Z`, it returns the eigenvalue `1` or `-1`. A
+For symbolic operators like `X`, `Y`, or `Z`, it returns the eigenvalue, e.g. `1` or `-1`. A
 homodyne measurement returns a complex phase-space label.
 
 The first few examples use the default `QuantumOpticsRepr()`. The final
@@ -28,7 +28,7 @@ bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
 initialize!(qubits[1:2], bell)
 
 first_outcome = project_traceout!(qubits[1], Z)
-partner_state = (Z1, Z2)[1 + Int(first_outcome == -1)]
+partner_state = first_outcome==1 ? Z1 : Z2
 partner_fidelity = observable(qubits[2], SProjector(partner_state))
 second_outcome = project_traceout!(qubits[2], Z)
 
@@ -89,9 +89,7 @@ initialize!(labeled_qubit[1], Z2)
 project_traceout!(labeled_qubit[1], (Z1, Z2), (:bright, 2//3))
 ```
 
-This call returns `2//3`, which is the value aligned with basis index `2`. A
-length mismatch throws `DimensionMismatch` before the state or register is
-changed.
+This call returns `2//3`, which is the value aligned with basis index `2`.
 
 ## Measure photon number in a qumode
 
@@ -162,7 +160,6 @@ remaining_state = copy(QuantumSavory.stateof(modes[2]).state[])
 check_state = express(remaining_state, QuantumOpticsRepr())
 
 (
-    result_is_complex = result isa Complex,
     measured_x_is_finite = isfinite(real(result)),
     sampled_p_is_finite = isfinite(imag(result)),
     measured_slot_is_empty = !isassigned(modes, 1),
@@ -198,8 +195,7 @@ not change the register.
 - Use an explicit Fock basis for a discrete qumode measurement with these
   representations.
 - Pass `HomodyneMeasurement` for a qumode quadrature measurement.
-- Use the returned index to select an explicit basis state. Convert a Pauli
-  eigenvalue with `1 + Int(value == -1)` only when an index is required.
+- Use the returned index to select an explicit basis state.
 - Remember that the measured slot is empty after every successful call.
 
 For exact signatures, see the [Register Interface](../register_interface.md).
