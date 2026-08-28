@@ -200,7 +200,7 @@ The equivalent operation for slot `i` of a `Register`.
 #### `project_traceout!(f, r::RegRef, basis; time)`
 
 Project the state in `RegRef` on `basis` at a specified `time` and apply `f` to
-the normal result. The callback receives an index for an explicit basis and an
+the result. The callback receives an index for an explicit basis and an
 eigenvalue for a supported symbolic operator.
 
 #### `project_traceout!(f, reg::Register, i::Int, basis; time)`
