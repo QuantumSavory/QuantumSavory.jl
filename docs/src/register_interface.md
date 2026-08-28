@@ -191,19 +191,11 @@ project_traceout!
 #### `project_traceout!(r::RegRef, basis; time)`
 
 Project the state in `RegRef` on `basis` at a specified `time`. An explicit
-`Vector` or `Tuple` of basis states returns a one-based index. Symbolic `X`,
-`Y`, or `Z` returns the measured eigenvalue, `1` or `-1`.
+`Vector` or `Tuple` of basis states returns a one-based index. Symbolic operator returns the measured eigenvalue.
 
 #### `project_traceout!(reg::Register, i::Int, basis; time)`
 
 The equivalent operation for slot `i` of a `Register`.
-
-#### `project_traceout!(r::RegRef, basis, values; time)` and `project_traceout!(reg::Register, i::Int, basis, values; time)`
-
-For an explicit tuple or vector basis, return `values[index]`. `values` may
-contain any element type and repeated values. Both collections must have the
-same length. A mismatch throws `DimensionMismatch` before time checks,
-evolution, sampling, subsystem removal, or back-reference changes.
 
 #### `project_traceout!(f, r::RegRef, basis; time)`
 
@@ -219,8 +211,8 @@ representation from registers to states.
 #### `project_traceout!(state, stateindex, basis::Symbolic{AbstractOperator})` and `basis::AbstractVecOrTuple{<:Symbolic{AbstractKet}}`
 
 Backend implementations.
-If `basis` is a supported operator, use paired `eigvecs` and `eigvals` methods
-to keep its basis states and returned values aligned.
+If `basis` is an operator, call `eigvecs` and `eigvals` methods
+to get the measurement basis.
 If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` to convert it to the necessary representation.
 
 `CliffordRepr` currently accepts only the symbolic `X`, `Y`, and `Z` qubit

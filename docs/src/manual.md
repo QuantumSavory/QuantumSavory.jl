@@ -75,8 +75,8 @@ end
     apply!((regB[2], regB[1]), CNOT)
     apply!(regB[2], H)
 
-    bit1 = Int(project_traceout!(regB, 2, Z) == -1)
-    bit2 = Int(project_traceout!(regB, 1, Z) == -1)
+    bit1 = project_traceout!(regB, 2, Z) == 1 ? 0 : 1
+    bit2 = project_traceout!(regB, 1, Z) == 1 ? 0 : 1
     println("Bob decoded the bits at $(now(env)): ", bit1, bit2)
 end
 

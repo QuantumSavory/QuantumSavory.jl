@@ -21,7 +21,7 @@ advancement is operation-specific, not automatic:
 
 `project_traceout!` returns a one-based index for an explicit tuple or vector of
 basis states. An explicit basis plus an equally long `values` tuple or vector returns
-`values[index]`; length validation precedes time advancement and all mutation.
+`values[index]`.
 Symbolic `X`, `Y`, and `Z` return eigenvalues `1` or `-1`. QuantumOptics accepts
 `Ket`/`Operator` states and symbolic or native basis vectors; `MCKet` preserves its
 wrapper when a ket remains. Clifford accepts a `MixedDestabilizer` with supported

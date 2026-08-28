@@ -68,13 +68,6 @@ Use this family when:
 
 This is the most flexible simulator backend, but it is also the most expensive computationally.
 
-Finite-Fock homodyne in `QuantumOpticsRepr` uses
-``q_\theta=e^{-i\theta}a+e^{i\theta}a^\dagger`` in the ``\hbar=2`` convention.
-It returns `z = qθ * exp(im*θ)`, which places the sampled point on the measured
-phase-space axis. Recover the sampled quadrature with
-`real(exp(-im*θ) * z)`; the orthogonal coordinate is unavailable and set to
-zero.
-
 ### `Gabs`
 
 `GabsRepr(...)` selects the Gaussian backend from `Gabs`.
@@ -88,13 +81,6 @@ Use it when:
 
 This is the right backend for continuous-variable models that would be awkward
 or expensive to force into a generic wavefunction description.
-
-Gabs homodyne returns its two native coordinates as `z = x + im*p`, without
-rescaling. In Gabs' default ``\hbar=2`` units, the measured quadrature is
-`real(exp(-im*θ) * z)` and agrees with the QuantumOptics convention above.
-States configured with another Gabs ``\hbar`` retain their own native units.
-In both backends, `z` is the phase-space label of the sampled projector, not
-generally an annihilation-operator eigenvalue.
 
 ## Choosing Precisely
 
