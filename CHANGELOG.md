@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- **(breaking)** Normalize `project_traceout!` outcomes (#517): explicit
+- **(breaking)** Standardize `project_traceout!` outcomes: explicit
   orthonormal bases still return one-based indices; an explicit basis plus
   `values` returns `values[index]`; symbolic operators return eigenvalues; and `HomodyneMeasurement([θ])` returns `z = x + im*p`.
 - Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
