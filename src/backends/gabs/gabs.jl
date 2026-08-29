@@ -6,6 +6,8 @@ subsystemcompose(states::Gabs.GaussianState...) = tensor(states...)
 subsystemcompose(ops::Gabs.GaussianUnitary...) = tensor(ops...)
 subsystemcompose(channels::Gabs.GaussianChannel...) = tensor(channels...)
 
+const variance_factor = 1e-12
+
 function _preflight_project_traceout(
     state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
 )
@@ -21,7 +23,7 @@ function project_traceout!(
 )
     _preflight_project_traceout(state, subsys, meas)
     coordinates, state = Gabs.homodyne(
-        state, subsys, meas.angles; squeeze = meas.squeeze
+        state, subsys, meas.angles; squeeze = variance_factor
     )
     result = complex(coordinates[1], coordinates[2])
     if nsubsystems(state) == 1

@@ -22,7 +22,7 @@ function direct_homodyne_traceout(
         state,
         [measured_mode],
         measurement.angles;
-        squeeze = measurement.squeeze,
+        squeeze = QuantumSavory.variance_factor,
     )
     return coordinates, Gabs.ptrace(collapsed, measured_mode)
 end
@@ -40,7 +40,7 @@ for (basis_type, basis_name) in (
             β = -0.7 + 0.25im
             symbolic_state = CoherentState(α) ⊗ CoherentState(β)
             expected_state = express(CoherentState(β), representation)
-            measurement = HomodyneMeasurement([0.0]; squeeze = 1e-12)
+            measurement = HomodyneMeasurement([0.0])
             seed = 11
             expected_coordinates, _ = direct_homodyne_traceout(
                 symbolic_state, representation, 1, measurement, seed
@@ -63,7 +63,7 @@ for (basis_type, basis_name) in (
         @testset "Balanced beamsplitter case matches direct Gaussian reference" begin
             α = 0.4 - 0.2im
             symbolic_state = CoherentState(α) ⊗ CoherentState(α)
-            measurement = HomodyneMeasurement([0.0]; squeeze = 1e-12)
+            measurement = HomodyneMeasurement([0.0])
             seed = 23
 
             expected_coordinates, expected_state = direct_homodyne_traceout(
@@ -90,7 +90,7 @@ for (basis_type, basis_name) in (
 
         @testset "Two-mode squeezing x-homodyne agrees with direct Gabs reference" begin
             symbolic_state = TwoSqueezedState(0.45)
-            measurement = HomodyneMeasurement([0.0]; squeeze = 1e-12)
+            measurement = HomodyneMeasurement([0.0])
             seed = 31
 
             expected_coordinates, expected_state = direct_homodyne_traceout(
@@ -110,7 +110,7 @@ for (basis_type, basis_name) in (
 
         @testset "Two-mode squeezing p-homodyne stays indexed correctly" begin
             symbolic_state = TwoSqueezedState(0.45)
-            measurement = HomodyneMeasurement([pi / 2]; squeeze = 1e-12)
+            measurement = HomodyneMeasurement([pi / 2])
             seed = 47
 
             expected_coordinates, expected_state = direct_homodyne_traceout(

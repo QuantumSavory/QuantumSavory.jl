@@ -152,7 +152,7 @@ initialize!(modes[1:2], CoherentState(0.3 + 0.2im) ⊗ F0)
 
 result = project_traceout!(
     modes[1],
-    HomodyneMeasurement([0.0]; squeeze = 1e-12),
+    HomodyneMeasurement([0.0]),
 )
 
 # GabsRepr does not yet support `observable`. Convert a copy for this check.

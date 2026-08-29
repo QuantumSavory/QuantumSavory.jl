@@ -6,7 +6,7 @@ using Gabs: QuadBlockBasis
 
 function homodyne_samples(symbolic_state, representation, angle, shots)
     state = express(symbolic_state, representation)
-    measurement = HomodyneMeasurement([angle]; squeeze = 1e-12)
+    measurement = HomodyneMeasurement([angle])
 
     map(1:shots) do _
         register = Register([Qumode()], [representation])

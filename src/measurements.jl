@@ -1,14 +1,13 @@
 abstract type AbstractMeasurement end
 
 """
-    HomodyneMeasurement(angles; squeeze = eps())
+    HomodyneMeasurement(angles)
 
 Describe a homodyne measurement on a continuous-variable mode.
 
 `angles` gives the quadrature angle, in radians, for each measured mode.
 For example, `0.0` corresponds to an `x`-quadrature measurement and `pi/2`
-to a `p`-quadrature measurement. `squeeze` sets the finite-squeezing parameter
-used by Gaussian backends when approximating the ideal measurement.
+to a `p`-quadrature measurement.
 
 Register-level [`project_traceout!`](@ref) accepts one qmode slot and one angle.
 It returns the complex phase-space label `z = x + im*p` of the sampled
@@ -21,7 +20,7 @@ julia> reg = Register([Qumode()], [GabsRepr(QuadBlockBasis)]);
 
 julia> initialize!(reg[1], CoherentState(0.3 + 0.2im));
 
-julia> result = project_traceout!(reg[1], HomodyneMeasurement([0.0]; squeeze = 1e-12));
+julia> result = project_traceout!(reg[1], HomodyneMeasurement([0.0]));
 
 julia> result isa Complex
 true
@@ -35,12 +34,10 @@ true
 """
 struct HomodyneMeasurement <: AbstractMeasurement
     angles::Vector{Real}
-    squeeze::Real
     cache::Dict{Any,Any}
 end
-HomodyneMeasurement(angles::Vector{<:Real}, squeeze::Real) =
-    HomodyneMeasurement(angles, squeeze, Dict{Any,Any}())
-HomodyneMeasurement(angles::Vector{<:Real}; squeeze = eps()) = HomodyneMeasurement(angles, squeeze)
+HomodyneMeasurement(angles::Vector{<:Real}) =
+    HomodyneMeasurement(angles, Dict{Any,Any}())
 Base.show(io::IO, measurement::HomodyneMeasurement) = print(
-    io, "HomodyneMeasurement(", measurement.angles, ", ", measurement.squeeze, ")"
+    io, "HomodyneMeasurement(", measurement.angles, ")"
 )
