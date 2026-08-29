@@ -21,8 +21,7 @@ interaction = Pm ⊗ Create + Pp ⊗ Destroy
 quarter_period = exp(-im * (π / 4) * interaction)
 apply!(register[1:2], quarter_period)
 
-z = project_traceout!(register[2], HomodyneMeasurement([0.0]))
-q = real(z)
+q = project_traceout!(register[2], HomodyneMeasurement([0.0]))
 if !isapprox(q, 0; atol = 1e-12)
     correction = exp(im * atan(q) * X)
     apply!(register[1], correction)

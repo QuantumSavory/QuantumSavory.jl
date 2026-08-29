@@ -11,10 +11,10 @@ Backend support is a dispatch matrix, not a single “supported” flag:
 
 | Representation | Stored state and implemented surface | Current limits |
 |---|---|---|
-| `QuantumOpticsRepr` | `Ket` and `Operator` paths for symbolic lowering, application, observables, project/traceout, finite-Fock homodyne, backgrounds, and non-instant evolution | Cost grows densely; homodyne samples the truncated quadrature spectrum and labels only the measured phase-space axis |
+| `QuantumOpticsRepr` | `Ket` and `Operator` paths for symbolic lowering, application, observables, project/traceout, finite-Fock homodyne, backgrounds, and non-instant evolution | Cost grows densely; homodyne samples the truncated quadrature spectrum |
 | `QuantumMCRepr` | General QuantumOptics-family simulation with a distinct internal `MCKet` pure-trajectory wrapper; sampled background branches, projective measurement, and canonical-basis sampled traceout | All-`MCKet` composition preserves the wrapper; mixing with a plain `Ket` exits to `Ket`, and composition with an `Operator` promotes through a density operator |
 | `CliffordRepr` | `MixedDestabilizer` stabilizer application, Pauli observables/projective measurement, symbolic stabilizer-projector observables on indexed and mixed tableaux, traceout, and T2/depolarization trajectories | Dense observables convert only pure tableaux to exponentially sized kets; mixed dense observables error |
-| `GabsRepr` | Gaussian-state composition and Gaussian unitary/channel application; homodyne `project_traceout!` returns native coordinates as `x + im*p` and performs partial trace | No general `observable`, native background `uptotime!`, or `apply_noninstant!` for `ConstantHamiltonianEvolution` |
+| `GabsRepr` | Gaussian-state composition and Gaussian unitary/channel application; homodyne `project_traceout!` returns `qθ = x*cos(θ) + p*sin(θ)` and performs partial trace | Uses a fixed internal `1e-12` projector variance factor; no general `observable`, native background `uptotime!`, or `apply_noninstant!` for `ConstantHamiltonianEvolution` |
 
 `PauliNoise` is not currently usable through normal evolution dispatch. QuantumOptics
 defines `krausops(::PauliNoise)` and Clifford defines

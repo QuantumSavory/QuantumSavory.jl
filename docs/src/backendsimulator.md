@@ -79,6 +79,22 @@ Use it when:
 - the operations are Gaussian, and
 - homodyne-style continuous-variable measurements are central to the model.
 
+For `HomodyneMeasurement([θ])`, QuantumSavory asks Gabs to use a projector on
+the following state: a Gaussian state squeezed along the selected quadrature
+``q_\theta=x\cos\theta+p\sin\theta``. In the rotated quadrature frame, the
+projector covariance is
+
+```math
+V_{\mathrm{projector}} =
+\operatorname{diag}(v, 1/v), \qquad v=10^{-12}.
+```
+
+The fixed internal `v` is a variance factor, so `v → 0` is the
+infinite-squeezing limit. Gabs samples the conjugate coordinate as part of this
+finite approximation, but QuantumSavory returns only the physical homodyne
+outcome ``q_\theta``. `HomodyneMeasurement` does not expose `v` as a constructor
+parameter.
+
 This is the right backend for continuous-variable models that would be awkward
 or expensive to force into a generic wavefunction description.
 

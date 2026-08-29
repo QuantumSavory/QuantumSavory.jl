@@ -9,8 +9,8 @@ onto a measurement outcome. This projection changes any system that is
 entangled with it. Then, it removes the measured system from the register slot.
 
 For an explicit discrete basis, the function returns a one-based basis index.
-For symbolic operators like `X`, `Y`, or `Z`, it returns the eigenvalue, e.g. `1` or `-1`. A
-homodyne measurement returns a complex phase-space label.
+For symbolic operators like `X`, `Y`, or `Z`, it returns the eigenvalue, such
+as `1` or `-1`. A homodyne measurement returns a real quadrature value.
 
 The first few examples use the default `QuantumOpticsRepr()`. The final
 homodyne example selects `GabsRepr` explicitly.
@@ -133,11 +133,11 @@ observable, but it is not currently available as the basis argument of
 
 ## Measure a continuous quadrature
 
-A homodyne measurement returns `z = x + im*p`. Use `0.0` as the angle for the
-``x`` quadrature and `pi / 2` for the ``p`` quadrature. This example uses
-`GabsRepr`, which samples a continuous Gaussian phase-space result. With
-`QuantumOpticsRepr`, due to numerical limitations, homodyne measurement instead samples the finite spectrum
-of the quadrature in the truncated Fock basis.
+`HomodyneMeasurement([θ])` returns the real quadrature
+``q_\theta=x\cos\theta+p\sin\theta``, where ``\theta`` is in radians. Use
+`0.0` for the ``x`` quadrature and `pi / 2` for the ``p`` quadrature. An ideal
+outcome ``q_\theta`` applies the projector
+``|q_\theta;\theta\rangle\langle q_\theta;\theta|`` on the measured mode.
 
 The measured coherent state and the remaining vacuum state are independent in
 this small example. The homodyne result is random, but the remaining mode must
@@ -160,8 +160,8 @@ remaining_state = copy(QuantumSavory.stateof(modes[2]).state[])
 check_state = express(remaining_state, QuantumOpticsRepr())
 
 (
-    measured_x_is_finite = isfinite(real(result)),
-    sampled_p_is_finite = isfinite(imag(result)),
+    result_is_real = result isa Real,
+    measured_x_is_finite = isfinite(result),
     measured_slot_is_empty = !isassigned(modes, 1),
     remaining_mode_is_vacuum = isapprox(
         real(observable(check_state, [1], N)),
@@ -171,21 +171,18 @@ check_state = express(remaining_state, QuantumOpticsRepr())
 )
 ```
 
-For one mode, `real(result)` is ``x`` and `imag(result)` is ``p``. At an
-arbitrary angle ``\theta``, recover the measured quadrature with
-`real(exp(-im*θ) * result)`. Gabs returns its native phase-space coordinates;
-in its default ``\hbar=2`` units these agree with QuantumOptics. QuantumOptics
-places its finite-Fock sample on the measured axis, so the unavailable
-orthogonal coordinate is zero.
-
-The returned value labels the sampled phase-space projector. It is not
-generally an annihilation-operator eigenvalue.
+Gabs implements the ideal projector with a fixed, finitely squeezed Gaussian
+approximation. It samples native ``x`` and ``p`` coordinates internally to
+update the remaining state, then returns only
+``x\cos\theta+p\sin\theta``. The conjugate coordinate is not a homodyne
+outcome. In Gabs' default ``\hbar=2`` units, the result has the same scale as
+QuantumOptics. QuantumOptics samples the finite spectrum of the quadrature
+matrix in its truncated Fock basis.
 
 The sampled ``x`` value can change between runs. The example checks only that
-the result has the expected form and contains a finite measured value. The
-final observable confirms that the independent second mode remains in the
-vacuum state. The conversion is only a check on a copy of the state. It does
-not change the register.
+the result is a finite real value. The final observable confirms that the
+independent second mode remains in the vacuum state. The conversion is only a
+check on a copy of the state. It does not change the register.
 
 ## What to carry forward
 

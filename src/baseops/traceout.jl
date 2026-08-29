@@ -136,10 +136,9 @@ The symbolic Pauli operators `X`, `Y`, and `Z` return their eigenvalues `1` or
 Callback overloads receive this normal result: an index for an explicit basis
 and an eigenvalue for a supported symbolic operator.
 
-`HomodyneMeasurement([θ])` returns the complex phase-space label `z = x + im*p`
-of the sampled projector. The measured quadrature is
-`real(exp(-im*θ) * z)`. Register-level homodyne measurement accepts one slot and
-one angle.
+`HomodyneMeasurement([θ])`, where `θ` is in radians, returns the real measured
+quadrature `qθ = x*cos(θ) + p*sin(θ)`. Register-level homodyne measurement
+accepts one slot and one angle.
 
 Every successful call removes the measured subsystem and its back-reference.
 Clifford qubit measurements support the symbolic `X`, `Y`, and `Z` bases;

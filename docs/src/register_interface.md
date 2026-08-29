@@ -219,10 +219,10 @@ If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` t
 measurement bases. Explicit basis vectors are supported by `QuantumOpticsRepr`
 and `QuantumMCRepr`, not by the Clifford backend.
 
-`HomodyneMeasurement([θ])` returns the phase-space label `z = x + im*p` of the
-sampled projector. The measured quadrature is
-`real(exp(-im*θ) * z)`. Register-level homodyne measurement accepts one slot
-and one angle.
+`HomodyneMeasurement([θ])`, where `θ` is in radians, returns the real measured
+quadrature `qθ = x*cos(θ) + p*sin(θ)`. An ideal outcome applies the projector
+``|q_\theta;\theta\rangle\langle q_\theta;\theta|``. Register-level homodyne
+measurement accepts one slot and one angle.
 
 #### Interface Overview
 

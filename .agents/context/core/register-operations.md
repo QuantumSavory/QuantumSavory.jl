@@ -26,8 +26,9 @@ Symbolic `X`, `Y`, and `Z` return eigenvalues `1` or `-1`. QuantumOptics accepts
 `Ket`/`Operator` states and symbolic or native basis vectors; `MCKet` preserves its
 wrapper when a ket remains. Clifford accepts a `MixedDestabilizer` with supported
 symbolic Pauli measurement bases. Gabs instead accepts `GaussianState` plus
-`HomodyneMeasurement([θ])` and returns `z = x + im*p`, with measured quadrature
-`real(exp(-im*θ) * z)`. Other combinations stop at dispatch. An unassigned slot throws
+`HomodyneMeasurement([θ])` and returns the real quadrature
+`qθ = x*cos(θ) + p*sin(θ)`, where `θ` is in radians. Other combinations stop at
+dispatch. An unassigned slot throws
 `ArgumentError("Cannot project and trace out an unassigned register slot.")`
 before time advancement. Clifford's supported symbolic Pauli bases are specifically
 `X`, `Y`, and `Z`; explicit basis vectors remain a QuantumOptics/QuantumMC feature.
