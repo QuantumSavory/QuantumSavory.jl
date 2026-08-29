@@ -25,7 +25,8 @@ function project_traceout!(
     coordinates, state = Gabs.homodyne(
         state, subsys, meas.angles; squeeze = variance_factor
     )
-    result = complex(coordinates[1], coordinates[2])
+    angle = only(meas.angles)
+    result = coordinates[1] * cos(angle) + coordinates[2] * sin(angle)
     if nsubsystems(state) == 1
         return result, nothing
     end

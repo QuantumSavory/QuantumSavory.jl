@@ -213,7 +213,7 @@ end
             gabs_result = project_traceout!(
                 gabs_reg[1], HomodyneMeasurement([0.0])
             )
-            @assert gabs_result isa Complex && isfinite(gabs_result)
+            @assert gabs_result isa Real && isfinite(gabs_result)
             @assert !isassigned(gabs_reg, 1) && isassigned(gabs_reg, 2)
         end
     finally

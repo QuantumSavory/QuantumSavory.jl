@@ -32,7 +32,7 @@ for (basis_type, basis_name) in (
     (QuadPairBasis, "QuadPairBasis"),
     (QuadBlockBasis, "QuadBlockBasis"),
 )
-    @testset "$basis_name coordinates" begin
+    @testset "$basis_name quadrature outcomes" begin
         representation = GabsRepr(basis_type)
 
         @testset "Product coherent state leaves the other mode untouched" begin
@@ -53,8 +53,9 @@ for (basis_type, basis_name) in (
             result = project_traceout!(reg[1], measurement)
             actual_state = backend_state(reg[2])
 
-            @test result isa Complex
-            @test result ≈ complex(expected_coordinates[1], expected_coordinates[2]) atol = 1e-12
+            expected_quadrature = expected_coordinates[1]
+            @test result isa Real
+            @test result ≈ expected_quadrature atol = 1e-12
             @test reg.staterefs[1] === nothing
             @test Gabs.nmodes(actual_state.basis) == 1
             @test isapprox(actual_state, expected_state; atol = 1e-12)
@@ -63,7 +64,8 @@ for (basis_type, basis_name) in (
         @testset "Balanced beamsplitter case matches direct Gaussian reference" begin
             α = 0.4 - 0.2im
             symbolic_state = CoherentState(α) ⊗ CoherentState(α)
-            measurement = HomodyneMeasurement([0.0])
+            angle = pi / 5
+            measurement = HomodyneMeasurement([angle])
             seed = 23
 
             expected_coordinates, expected_state = direct_homodyne_traceout(
@@ -83,7 +85,10 @@ for (basis_type, basis_name) in (
             result = project_traceout!(reg[2], measurement)
             actual_state = backend_state(reg[1])
 
-            @test result ≈ complex(expected_coordinates[1], expected_coordinates[2]) atol = 1e-12
+            expected_quadrature = expected_coordinates[1] * cos(angle) +
+                expected_coordinates[2] * sin(angle)
+            @test result isa Real
+            @test result ≈ expected_quadrature atol = 1e-12
             @test reg.staterefs[2] === nothing
             @test isapprox(actual_state, expected_state; atol = 1e-12)
         end
@@ -104,7 +109,8 @@ for (basis_type, basis_name) in (
             result = project_traceout!(reg[1], measurement)
             actual_state = backend_state(reg[2])
 
-            @test result ≈ complex(expected_coordinates[1], expected_coordinates[2]) atol = 1e-12
+            @test result isa Real
+            @test result ≈ expected_coordinates[1] atol = 1e-12
             @test isapprox(actual_state, expected_state; atol = 1e-12)
         end
 
@@ -124,7 +130,10 @@ for (basis_type, basis_name) in (
             result = project_traceout!(reg[2], measurement)
             actual_state = backend_state(reg[1])
 
-            @test result ≈ complex(expected_coordinates[1], expected_coordinates[2]) atol = 1e-12
+            expected_quadrature = expected_coordinates[1] * cos(pi / 2) +
+                expected_coordinates[2] * sin(pi / 2)
+            @test result isa Real
+            @test result ≈ expected_quadrature atol = 1e-12
             @test isapprox(actual_state, expected_state; atol = 1e-12)
         end
 

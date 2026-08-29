@@ -104,7 +104,7 @@ function project_traceout!(
     cached = _homodyne_operator_eigendecomposition(measurement, subsystem_basis)
     values, states = cached.eigendecomposition
     outcome, remaining = project_traceout!(state, subsystem, states)
-    real(values[outcome]) * cis(only(measurement.angles)), remaining
+    real(values[outcome]), remaining
 end
 
 const _l = copy(express(Z1, QuantumOpticsRepr()))

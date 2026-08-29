@@ -11,8 +11,7 @@ function homodyne_samples(symbolic_state, representation, angle, shots)
     map(1:shots) do _
         register = Register([Qumode()], [representation])
         initialize!(register[1], state)
-        result = project_traceout!(register[1], measurement)
-        real(cis(-angle) * result)
+        project_traceout!(register[1], measurement)
     end
 end
 
@@ -36,27 +35,26 @@ end
     interaction = σ₋ ⊗ Create + σ₊ ⊗ Destroy
     apply!(register[1:2], exp(-im * (π / 4) * interaction))
 
-    z = project_traceout!(register[2], HomodyneMeasurement([0.0]))
-    x = real(z)
-    if !isapprox(x, 0; atol = 1e-12)
-        apply!(register[1], exp(im * atan(x) * X))
+    q = project_traceout!(register[2], HomodyneMeasurement([0.0]))
+    if !isapprox(q, 0; atol = 1e-12)
+        apply!(register[1], exp(im * atan(q) * X))
     end
 
-    @test z isa Complex
+    @test q isa Real
     expected_outcomes = (-sqrt(3), 0, sqrt(3))
-    @test any(isapprox(x, value; atol = 1e-12) for value in expected_outcomes)
+    @test any(isapprox(q, value; atol = 1e-12) for value in expected_outcomes)
     @test !isassigned(register, 2)
     @test real(observable(register[1], SProjector(Z1))) ≈ 1 atol = 1e-7
 
     density_register = Register([Qumode()])
     initialize!(density_register[1], SProjector(F0))
     angle = π / 3
-    rotated_z = project_traceout!(density_register[1], HomodyneMeasurement([angle]))
-    rotated_quadrature = cis(-angle) * rotated_z
-    @test rotated_z isa Complex
-    @test isapprox(imag(rotated_quadrature), 0; atol = 1e-12)
+    rotated_quadrature = project_traceout!(
+        density_register[1], HomodyneMeasurement([angle])
+    )
+    @test rotated_quadrature isa Real
     @test any(
-        isapprox(real(rotated_quadrature), value; atol = 1e-12)
+        isapprox(rotated_quadrature, value; atol = 1e-12)
         for value in expected_outcomes
     )
     @test !isassigned(density_register, 1)

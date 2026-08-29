@@ -162,9 +162,9 @@ function gabs()
     register = Register(fill(Qumode(), 2), fill(representation, 2))
     initialize!(register[1:2], TwoSqueezedState(0.45))
     result = project_traceout!(register[1], HomodyneMeasurement([0.0]))
-    check(result isa Complex && isfinite(result), "Gabs homodyne returned invalid phase-space data")
+    check(result isa Real && isfinite(result), "Gabs homodyne returned an invalid quadrature")
     check(!isassigned(register, 1) && isassigned(register, 2), "Gabs homodyne did not trace out one mode")
-    return real(result)
+    return result
 end
 
 const PRECOMPILE_BENCHMARKS = (
