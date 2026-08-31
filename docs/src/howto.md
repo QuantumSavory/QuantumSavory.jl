@@ -7,6 +7,7 @@
 - [1st-gen Repeater](howto/firstgenrepeater/firstgenrepeater.md)
 - [1st-gen Repeater - low level implementation](howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md)
 - [1st-gen Repeater - Clifford formalism](howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md)
+- [MBQC-Based Entanglement Purification](howto/purificationmbqc.md)
 - [Congestion on a Repeater Chain](howto/congestionchain/congestionchain.md)
 - [Cluster States in Atomic Memories](howto/colorcentermodularcluster/colorcentermodularcluster.md)
 - [Entanglement Switch](howto/simpleswitch/simpleswitch.md)
