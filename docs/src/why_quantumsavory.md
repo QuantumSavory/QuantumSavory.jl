@@ -60,3 +60,5 @@ noise, and classical control consistent as the study evolves.
   are reflected in the package structure.
 - Read [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs) for
   the simulation-side consequences.
+- Read [Comparison to Other Tools](@ref comparison) for how this split of
+  concerns differs from NetSquid, QuISP, QuNetSim, SimulaQron, and ReQuSim.
