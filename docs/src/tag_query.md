@@ -87,6 +87,11 @@ query(reg, EntanglementCounterpart, 7, ❓, ❓)
 query(reg, :score, x -> x > 90)
 ```
 
+A shorter query also matches a longer tag: unspecified trailing fields act as
+implicit wildcards. `query(reg, :ready, 7)` matches both `Tag(:ready, 7)` and
+`Tag(:ready, 7, 99)`. A query that names more fields than the tag does not
+match.
+
 This is the part that makes the metadata plane flexible. Protocols can agree on
 the meaning of a tag without agreeing on one exact hard-coded lookup path.
 
