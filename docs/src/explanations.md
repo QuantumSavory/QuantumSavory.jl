@@ -13,6 +13,7 @@ Explanation pages answer questions such as:
 - What is a `Register`, and how does a `RegisterNet` fit into a simulation?
 - Why does QuantumSavory separate symbolic descriptions from numerical
   backends?
+- When is NetSquid, QuISP, or another network simulator a better fit?
 - How are background noise processes and time handled?
 - How does the symbolic frontend stay backend-agnostic without hiding modeling
   limits?
@@ -23,19 +24,20 @@ Explanation pages answer questions such as:
 
 1. [Architecture and Mental Model](@ref architecture)
 2. [Why QuantumSavory Exists](@ref why-quantumsavory)
-3. [Restricted Formalisms and Efficient Simulation](@ref
+3. [Comparison to Other Tools](@ref comparison-to-other-tools)
+4. [Restricted Formalisms and Efficient Simulation](@ref
    restricted-formalisms)
-4. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
-5. [Modeling Registers, Factorization, and Time](@ref
+5. [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs)
+6. [Modeling Registers, Factorization, and Time](@ref
    modeling-registers-time)
-6. [Register Networks](@ref register-networks)
-7. [Symbolic Frontend](@ref symbolic-frontend)
-8. [Metadata and Protocol Composition](@ref metadata-plane)
-9. [Classical Messaging and Buffers](@ref classical-messaging)
-10. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
-11. [Properties](@ref)
-12. [Background Noise Processes](@ref)
-13. [Discrete Event Simulator](@ref sim)
+7. [Register Networks](@ref register-networks)
+8. [Symbolic Frontend](@ref symbolic-frontend)
+9. [Metadata and Protocol Composition](@ref metadata-plane)
+10. [Classical Messaging and Buffers](@ref classical-messaging)
+11. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
+12. [Properties](@ref)
+13. [Background Noise Processes](@ref)
+14. [Discrete Event Simulator](@ref sim)
 
 ## Relationship To Other Sections
 

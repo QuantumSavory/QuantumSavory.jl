@@ -52,6 +52,7 @@ function main()
         "explanations.md",
         "Architecture and Mental Model" => "architecture.md",
         "Why QuantumSavory Exists" => "why_quantumsavory.md",
+        "Comparison to Other Tools" => "comparison.md",
         "Restricted Formalisms and Efficient Simulation" =>
             "restricted_formalisms.md",
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",

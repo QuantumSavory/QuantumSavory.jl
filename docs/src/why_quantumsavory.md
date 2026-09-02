@@ -58,5 +58,7 @@ noise, and classical control consistent as the study evolves.
 
 - Read [Architecture and Mental Model](@ref architecture) for how these ideas
   are reflected in the package structure.
+- Read [Comparison to Other Tools](@ref comparison-to-other-tools) for NetSquid,
+  QuISP, QuNetSim, SimulaQron, and ReQuSim.
 - Read [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs) for
   the simulation-side consequences.
