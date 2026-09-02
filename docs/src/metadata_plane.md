@@ -53,8 +53,15 @@ cooperate with existing `ProtocolZoo` components, use the standard schemas in
 [Standard Protocol Tags](@ref standard-protocol-tags); those schemas are the
 interface that custom protocols share with the zoo.
 
+Locality of those interactions is also conventional. Tags and buffers make
+node-local protocols easy to write, but a process with a `RegisterNet`
+handle can still touch a remote register without sending a message. See
+[Locality by Convention](@ref locality-convention).
+
 ## Where To Go Next
 
+- Read [Locality by Convention](@ref locality-convention) for local vs
+  centralized access.
 - Read [Discrete Event Simulator](@ref sim) for the execution model around
   waiting and scheduling.
 - Read [Tagging and Querying](tag_query.md) for the detailed API reference.

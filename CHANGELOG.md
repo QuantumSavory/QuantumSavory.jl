@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Document that network locality is a convention, not a Julia-level check, and point to `channel`, `messagebuffer`, `put!`, `query_wait`, and `querydelete_wait!` as the locality-respecting tools.
 - Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
 - Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.

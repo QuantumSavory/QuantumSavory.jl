@@ -60,6 +60,7 @@ function main()
         "Register Networks" => "register_networks.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Classical Messaging and Buffers" => "classical_messaging.md",
+        "Locality by Convention" => "locality.md",
         "Zoos as Composable Building Blocks" => "zoos_as_building_blocks.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
@@ -84,6 +85,7 @@ function main()
         "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
         "Qumode-Qubit teleportation (homodyne)" => "tutorial/homodyne_teleport.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
+        "Locality-Respecting Protocols" => "tutorial/locality.md",
         "State Explorer" => "tutorial/state_explorer.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
