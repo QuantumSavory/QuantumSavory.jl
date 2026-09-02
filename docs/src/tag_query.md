@@ -181,6 +181,17 @@ removes it at the same time.
 querydelete!
 ```
 
+## `queryupdate!`
+
+`queryupdate!` is the atomic replace form of `query`: it deletes the first
+match and writes a new tag on the same slot without returning to the
+scheduler. Use it instead of `query` / `untag!` / `tag!` when another
+process could run between those calls.
+
+```@docs; canonical=false
+queryupdate!
+```
+
 ## `queryall`
 
 `queryall` returns every matching register tag.

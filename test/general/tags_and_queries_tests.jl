@@ -197,6 +197,26 @@ id3 = tag!(reg[2], :other, 3)
 @test !haskey(reg.tag_ids_by_head, :indexed)
 
 ##
+# queryupdate! tests
+reg = Register(3)
+id1 = tag!(reg[1], :ready, 7)
+id2 = tag!(reg[2], :ready, 9)
+updated = queryupdate!(reg, :ready, 7; newtag=Tag(:ready, 8))
+@test updated.slot == reg[1]
+@test updated.oldid == id1
+@test updated.oldtag == Tag(:ready, 7)
+@test updated.tag == Tag(:ready, 8)
+@test updated.id != id1
+@test query(reg, :ready, 7) === nothing
+@test strip_id(query(reg, :ready, 8)) == (slot=reg[1], tag=Tag(:ready, 8))
+@test queryupdate!(reg, :missing, 1; newtag=Tag(:x, 1)) === nothing
+@test query(reg[2], :ready, 9).id == id2
+updated2 = queryupdate!(reg[2], :ready, 9; newtag=Tag(:ready, 10), filo=true)
+@test updated2.slot == reg[2]
+@test updated2.oldtag == Tag(:ready, 9)
+@test strip_id(query(reg[2], :ready, 10)) == (slot=reg[2], tag=Tag(:ready, 10))
+
+##
 # findfreeslot tests
 reg = Register(5)
 initialize!(reg[1], X)
