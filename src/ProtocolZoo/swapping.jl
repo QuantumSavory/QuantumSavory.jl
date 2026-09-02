@@ -96,6 +96,23 @@ function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Union{Int,Not
     return nothing
 end
 
+"""
+    (prot::SwapperProt)()
+
+Run this [`SwapperProt`](@ref) as a discrete-event process.
+
+The swapper is callable: it finds two swappable entangled slots at `node`,
+performs a local swap, and sends [`EntanglementUpdateX`](@ref) /
+[`EntanglementUpdateZ`](@ref) messages so [`EntanglementTracker`](@ref)
+instances can update the former endpoints.
+
+```julia
+net = RegisterNet([Register(2), Register(3), Register(2)])
+sim = get_time_tracker(net)
+swapper = SwapperProt(sim, net, 2; nodeL=<(2), nodeH=>(2), chooseL=argmin, chooseH=argmax, rounds=1)
+@process swapper()
+```
+"""
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
     round = 1

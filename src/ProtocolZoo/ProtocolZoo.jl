@@ -358,6 +358,22 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
 
 #TODO """Convenience constructor for specifying `fidelity` of generation instead of success probability and time"""
 
+"""
+    (prot::EntanglerProt)()
+
+Run this [`EntanglerProt`](@ref) as a discrete-event process.
+
+Protocol structs are callable. After constructing one, schedule the call with
+`@process` so ConcurrentSim can suspend on locks, timeouts, and tag changes.
+
+```julia
+net = RegisterNet([Register(3), Register(3)])
+sim = get_time_tracker(net)
+prot = EntanglerProt(sim, net, 1, 2; rounds=1, success_prob=1.0)
+@process prot()
+run(sim)
+```
+"""
 @resumable function (prot::EntanglerProt)()
     rounds = prot.rounds
     round = 1
@@ -495,6 +511,23 @@ protocol_catalog_metadata(::Type{EntanglementTracker}) = (
 
 EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
+"""
+    (prot::EntanglementTracker)()
+
+Run this [`EntanglementTracker`](@ref) as a discrete-event process.
+
+The tracker is callable: it listens on the node's message buffer for
+[`EntanglementUpdateX`](@ref) and [`EntanglementUpdateZ`](@ref) messages
+(and deletion notices), then updates local tags and Pauli frames, or
+forwards the message after a swap.
+
+```julia
+net = RegisterNet([Register(2), Register(2), Register(2)])
+sim = get_time_tracker(net)
+tracker = EntanglementTracker(sim, net, 2)
+@process tracker()
+```
+"""
 @resumable function (prot::EntanglementTracker)()
     nodereg = prot.net[prot.node]
     mb = messagebuffer(prot.net, prot.node)
@@ -754,6 +787,23 @@ end
 
 permits_virtual_edge(::Type{EntanglementConsumer}) = true
 
+"""
+    (prot::EntanglementConsumer)()
+
+Run this [`EntanglementConsumer`](@ref) as a discrete-event process.
+
+The consumer is callable: it queries the two nodes for a reciprocal entangled
+pair, records `Z⊗Z` and `X⊗X` observables, and empties the slots.
+
+```julia
+net = RegisterNet([Register(2), Register(2)])
+sim = get_time_tracker(net)
+@process EntanglerProt(sim, net, 1, 2; rounds=1, success_prob=1.0)()
+consumer = EntanglementConsumer(sim, net, 1, 2)
+@process consumer()
+run(sim)
+```
+"""
 @resumable function (prot::EntanglementConsumer)()
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
