@@ -84,6 +84,7 @@ function main()
         "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
         "Qumode-Qubit teleportation (homodyne)" => "tutorial/homodyne_teleport.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
+        "Choose EntanglerProt.margin" => "tutorial/entangler_margin.md",
         "State Explorer" => "tutorial/state_explorer.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
