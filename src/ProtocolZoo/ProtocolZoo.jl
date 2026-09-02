@@ -208,9 +208,9 @@ $TYPEDFIELDS
     past_local_slot::Int
     "the slot of your node that we were entangled to"
     past_remote_slot::Int
-    "the id of the node to which you are now entangled after the swap"
+    "the id of the node to which you are now entangled after the swap. For Pauli-only updates that do not retarget the pair (e.g. GHZ fusion), repeat the current remote instead of using a sentinel such as `-1`."
     new_remote_node::Int
-    "the slot of the node to which you are now entangled after the swap"
+    "the slot of the node to which you are now entangled after the swap. For Pauli-only updates, repeat the current remote slot."
     new_remote_slot::Int
     "what Pauli correction you need to perform"
     correction::Int
@@ -238,9 +238,9 @@ $TYPEDFIELDS
     past_local_slot::Int
     "the slot of your node that we were entangled to"
     past_remote_slot::Int
-    "the id of the node to which you are now entangled after the swap"
+    "the id of the node to which you are now entangled after the swap. For Pauli-only updates that do not retarget the pair (e.g. GHZ fusion), repeat the current remote instead of using a sentinel such as `-1`."
     new_remote_node::Int
-    "the slot of the node to which you are now entangled after the swap"
+    "the slot of the node to which you are now entangled after the swap. For Pauli-only updates, repeat the current remote slot."
     new_remote_slot::Int
     "what Pauli correction you need to perform"
     correction::Int
@@ -571,18 +571,13 @@ EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_
                             if correction==2
                                 apply!(localslot, updategate)
                             end
-                            if newremotenode != -1 #TODO: this is a bit hacky
-                                # tag local with updated EntanglementCounterpart new_remote_node new_remote_slot_idx
-                                _tag_entanglement_counterpart!(
-                                    localslot, newremotenode, newremoteslotid,
-                                    new_pair_id, prot
-                                )
-                            else
-                                _tag_entanglement_counterpart!(
-                                    localslot, pastremotenode, pastremoteslotid,
-                                    target_pair_id, prot
-                                )
-                            end
+                            # Pauli-only / GHZ-style fusion repeats the current remote
+                            # (and uses `NO_ENTANGLEMENT_ID` as the other pair-id chunk)
+                            # instead of a `newremotenode == -1` sentinel.
+                            _tag_entanglement_counterpart!(
+                                localslot, newremotenode, newremoteslotid,
+                                new_pair_id, prot
+                            )
                         else # EntanglementDelete
                             traceout!(localslot)
                         end

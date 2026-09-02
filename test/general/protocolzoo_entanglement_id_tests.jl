@@ -109,7 +109,7 @@ struct CustomEntanglerTag <: AbstractTag end
 
         initialize!(slot)
         tag!(slot, EntanglementCounterpart, 2, 1, pair_id)
-        put!(messagebuffer(net, 1), Tag(EntanglementUpdateX, pair_id, NO_ENTANGLEMENT_ID, 2, 1, 1, -1, -1, 1))
+        put!(messagebuffer(net, 1), Tag(EntanglementUpdateX, pair_id, NO_ENTANGLEMENT_ID, 2, 1, 1, 2, 1, 1))
 
         @process EntanglementTracker(sim, net, 1)()
         run(sim, 1.0)

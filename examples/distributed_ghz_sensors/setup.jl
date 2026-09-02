@@ -52,13 +52,13 @@ function ghz_project(net, S, ent)
     m1 = project_traceout!(net[hub_idx, ent[1]], Z)
     if m1 == 2
         # If the result is '1' (m1 == 2), the global GHZ state is flipped (X gate needed)
-        msg = Tag(EntanglementUpdateX, pair_id(ent[1]), NO_ENTANGLEMENT_ID, hub_idx, ent[1], 1, -1, -1, m1)
+        msg = Tag(EntanglementUpdateX, pair_id(ent[1]), NO_ENTANGLEMENT_ID, hub_idx, ent[1], 1, hub_idx, ent[1], m1)
         put!(channel(net, hub_idx => ent[1]; permit_forward=true), msg)
     end
     for i in ent[2:end]
         # If m == 2 ('1'), this indicates a relative phase flip (Z gate needed)
         m = project_traceout!(net[hub_idx, i], Z)
-        msg = Tag(EntanglementUpdateZ, pair_id(i), NO_ENTANGLEMENT_ID, hub_idx, i, 1, -1, -1, m)
+        msg = Tag(EntanglementUpdateZ, pair_id(i), NO_ENTANGLEMENT_ID, hub_idx, i, 1, hub_idx, i, m)
         put!(channel(net, hub_idx => i; permit_forward=true), msg)
     end
 end

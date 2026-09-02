@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **(fix)** Remove the `new_remote_node == -1` sentinel in `EntanglementTracker` (#195). Pauli-only updates (e.g. GHZ fusion) should repeat the unchanged remote node/slot and use `NO_ENTANGLEMENT_ID` as the other pair-id chunk.
+
 - Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
 - Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.

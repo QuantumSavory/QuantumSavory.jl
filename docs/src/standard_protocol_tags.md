@@ -142,7 +142,10 @@ Storage location: message buffers.
 
 Meaning: a remote node performed a swap. The receiver should update the
 counterpart metadata for the target pair, combine in the other pair-id chunk,
-and apply the indicated Pauli-frame correction if needed.
+and apply the indicated Pauli-frame correction if needed. Pauli-only updates
+that do not retarget the pair (for example GHZ fusion at a hub) should repeat
+the current remote node and slot and set `other_pair_id` to
+`NO_ENTANGLEMENT_ID`; do not use a `-1` sentinel.
 
 Protocol interface:
 
