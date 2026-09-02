@@ -54,9 +54,46 @@ In short, QuantumSavory is meant to save time when the hard part of the work is
 not one gate or one formula, but keeping hardware assumptions, protocol logic,
 noise, and classical control consistent as the study evolves.
 
+
+## Comparison To Other Tools
+
+Issue [#21](https://github.com/QuantumSavory/QuantumSavory.jl/issues/21)
+asked for a short orientation against other quantum-network simulators.
+The tools below are not ranked. They optimize for different questions,
+and several of them can be the better choice for a given study.
+
+- **NetSquid** is a discrete-event Python simulator for quantum networks
+  and devices, with interchangeable state representations and detailed
+  timing. It is widely used for hardware-faithful network studies. Access
+  is through a registration/license rather than a fully open-source
+  tree ([paper](https://www.nature.com/articles/s42005-021-00647-8)).
+- **QuISP** is an open-source C++ / OMNeT++ discrete-event simulator
+  aimed at *large* networks. It tracks a compact error model of each
+  qubit rather than a full quantum state, which is what makes city-scale
+  topologies tractable.
+- **QuNetSim** (the name "QuEntSim" in older notes refers to this
+  project) is a Python library for writing network-layer protocols
+  quickly. It favors a small API over a high-fidelity physical layer.
+- **SimulaQron** is a distributed *emulator* for application development.
+  It is meant to run on several classical machines as if they were
+  quantum nodes, not to provide a physically timed hardware model.
+- **ReQuSim** focuses on faithfully simulating first-generation quantum
+  repeaters, including the noise and timing that dominate that regime.
+
+QuantumSavory sits in a different place on that map: one register
+interface, a symbolic frontend, several numerical backends (including
+Clifford and wavefunction-style representations), and a metadata plane
+for LOCC-style protocols. The usual reason to pick it is codesign work
+that has to move between a fast restricted model and a more general one
+without rewriting the protocol layer. If you need OMNeT++-scale classical
+networking, a license-gated NetSquid stack, or a multi-machine
+application emulator, the tools above are built for those jobs.
+
 ## Where To Go Next
 
 - Read [Architecture and Mental Model](@ref architecture) for how these ideas
   are reflected in the package structure.
 - Read [Choosing a Backend and Modeling Tradeoffs](@ref modeling-tradeoffs) for
   the simulation-side consequences.
+- The comparison section above is the short answer to "how does this
+  relate to NetSquid, QuISP, QuNetSim, SimulaQron, and ReQuSim?"
