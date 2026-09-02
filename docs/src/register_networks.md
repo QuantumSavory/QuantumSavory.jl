@@ -31,6 +31,8 @@ net = RegisterNet([Register(2), Register(2), Register(2)])
 | `nv(net)` | Number of vertices |
 | `ne(net)` | Number of edges |
 | `adjacency_matrix(net)` | Graph adjacency matrix |
+| `add_vertex!(net, register)` | Append a register vertex |
+| `add_edge!(net, src => dst; classical_delay, quantum_delay)` | Append a link and its channels |
 
 For example:
 
@@ -42,7 +44,11 @@ neighbors(net, 2)
 
 A `RegisterNet` is not a subtype of `Graphs.AbstractGraph`. Do not assume that
 other Graphs.jl functions accept it. Keep the graph used for construction when
-you need the full Graphs.jl API. Treat the topology as fixed after construction.
+you need the full Graphs.jl API. After construction, add vertices and edges with [`add_vertex!`](@ref) and
+[`add_edge!`](@ref). Those calls also create the classical delay channels,
+quantum channels, and message-buffer listeners that the constructor would
+have created for the same topology. The zero-argument Graphs.jl
+`add_vertex!(net)` that only touched the graph is not part of this interface.
 
 ## Index Registers and Slots
 
@@ -64,6 +70,29 @@ Colon indexing selects the same layer from all nodes:
 
 Every register must have slot `j` for `net[:, j]` to succeed. After you have a
 `RegRef`, use the operations in the [Register Interface API](register_interface.md).
+
+## Grow a Network After Construction
+
+Equal-sized registers can skip the `Vector{Register}` boilerplate:
+
+```julia
+net = RegisterNet(path_graph(3), 2; classical_delay=0.1)  # 3 nodes, 2 slots each
+net = RegisterNet(4, 3)  # a 4-node chain, 3 slots each
+```
+
+To extend an existing network, add a register vertex and then a link. The
+link call is what creates both directions of `channel` / `qchannel` and
+hooks them into the endpoint message buffers:
+
+```julia
+net = RegisterNet([Register(1), Register(1)])  # already a 1—2 chain
+add_vertex!(net, Register(1); name="right")
+add_edge!(net, 2 => 3; classical_delay=1.5, quantum_delay=0.25)
+channel(net, 2 => 3)  # DelayQueue with delay 1.5
+```
+
+`add_register!` is an alias of `add_vertex!`. Delays accept the same
+scalar-or-callable convention as the constructor.
 
 ## Configure Names and Labels
 
