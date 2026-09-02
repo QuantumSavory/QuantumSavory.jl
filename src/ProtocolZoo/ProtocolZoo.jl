@@ -294,35 +294,35 @@ $TYPEDFIELDS
     nodeA::Int
     """the vertex index of node B"""
     nodeB::Int
-    """the state being generated (supports symbolic, numeric, noisy, and pure)"""
+    """the state being generated (supports symbolic, numeric, noisy, and pure); default `StabilizerState("ZZ XX")` (a perfect Bell pair), which is reasonable for tests and noiseless models — use a `StatesZoo` noisy pair when modeling a physical link"""
     pairstate::SymQObj = StabilizerState("ZZ XX")
-    """success probability of one attempt of entanglement generation"""
+    """success probability of one attempt of entanglement generation (default `0.001`; use `1.0` in tests, and typically `10⁻³`--`10⁻¹` for a physical optical link)"""
     success_prob::Float64 = 0.001
-    """duration of single entanglement attempt"""
+    """duration of a single entanglement attempt, in simulation time units (default `0.001`; keep it on the same scale as other protocol times, or set via the `rate` constructor which uses `attempt_time = 0.001/rate`)"""
     attempt_time::Float64 = 0.001
-    """fixed "busy time" duration immediately before starting entanglement generation attempts"""
+    """fixed "busy time" duration immediately before starting entanglement generation attempts (default `0.0`; increase only when modeling local prep overhead)"""
     local_busy_time_pre::Float64 = 0.0
-    """fixed "busy time" duration immediately after the a successful entanglement generation attempt"""
+    """fixed "busy time" duration immediately after a successful entanglement generation attempt (default `0.0`; increase only when modeling local post-processing overhead)"""
     local_busy_time_post::Float64 = 0.0
-    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up)"""
+    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up); default `0.1` (a small polling interval in simulation time units — use `nothing` to wait on tag changes instead)"""
     retry_lock_time::Union{Float64,Nothing} = 0.1
-    """how many rounds of this protocol to run (`-1` for infinite)"""
+    """how many rounds of this protocol to run (`-1` for infinite); default `-1`"""
     rounds::Int = -1
-    """maximum number of attempts to make per round (`-1` for infinite)"""
+    """maximum number of attempts to make per round (`-1` for infinite); default `-1` (let the geometric success model run until it succeeds); a small positive cap is useful only when modeling a hard abort"""
     attempts::Int = -1
-    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node A"""
+    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node A (default `alwaystrue`, i.e. the first free slot)"""
     chooseslotA::Union{Int,Function} = alwaystrue
-    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node B"""
+    """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node B (default `alwaystrue`, i.e. the first free slot)"""
     chooseslotB::Union{Int,Function} = alwaystrue
-    """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots"""
+    """whether the protocol should find the first available free slots in the nodes to be entangled or check for free slots randomly from the available slots (default `false`; `true` is useful when several protocols share a register)"""
     randomize::Bool = false
-    """whether the protocol should look for unlocked slots to entangle and lock them during the protocol"""
+    """whether the protocol should look for unlocked slots to entangle and lock them during the protocol (default `true`)"""
     uselock::Bool = true
-    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
+    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. Default `0`, which fills every slot and can deadlock a swapper or a competing link. `findfreeslot` proceeds only when the register currently has at least `margin` unassigned slots, so use `margin ≥ 2` to keep at least one slot free once this pair already has entanglement. See also `hardmargin`."""
     margin::Int = 0
-    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
+    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`. Default `0`, so the first pair on a link can still be generated when the register is almost full; a typical pattern is `hardmargin=0` with `margin ≥ 2`."""
     hardmargin::Int = 0
-    """concrete `AbstractTag` subtype to add to the entangled qubits, or `nothing` to add no tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
+    """concrete `AbstractTag` subtype to add to the entangled qubits, or `nothing` to add no tag. Default `EntanglementCounterpart`, whose tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
     tag::Union{Type{<:AbstractTag},Nothing} = EntanglementCounterpart
 
     function EntanglerProt(sim, net, nodeA, nodeB, pairstate, success_prob, attempt_time, local_busy_time_pre, local_busy_time_post, retry_lock_time, rounds, attempts, chooseslotA, chooseslotB, randomize, uselock, margin, hardmargin, tag)
@@ -726,11 +726,11 @@ $FIELDS
     nodeA::Int
     """the vertex index of node B"""
     nodeB::Int
-    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs); default `0.1` in simulation time units — use `nothing` when a consumer should wake immediately on new tags"""
     period::Union{Float64,Nothing} = 0.1
     """concrete `AbstractTag` subtype which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
     tag::Type{<:AbstractTag} = EntanglementCounterpart
-    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`; the storage type is not part of the public API and may change in future versions"""
+    """stores the time and resulting observable from querying nodeA and nodeB for `EntanglementCounterpart`; the storage type is not part of the public API and may change in future versions (default empty)"""
     _log::Vector{@NamedTuple{t::Float64, obs1::Float64, obs2::Float64}} = @NamedTuple{t::Float64, obs1::Float64, obs2::Float64}[]
 
     function EntanglementConsumer(sim, net, nodeA, nodeB, period, tag, _log)

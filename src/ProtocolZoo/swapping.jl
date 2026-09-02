@@ -43,25 +43,25 @@ $TYPEDFIELDS
     net::RegisterNet
     """the vertex of the node where swapping is happening"""
     node::Int
-    """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among swappable slots in the node"""
+    """function `Int->Bool` or a vector of allowed slot indices, specifying the slots to take among swappable slots in the node (default `alwaystrue`, i.e. every slot)"""
     chooseslots::Union{Vector{Int},Function} = alwaystrue
-    """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
+    """the vertex of one of the remote nodes for the swap, arbitrarily referred to as the "low" node (or a predicate function or a wildcard); default `❓` (any remote); if you are working on a repeater chain, a good choice is `<(current_node)`, i.e. any node to the "left" of the current node"""
     nodeL::QueryArgs = ❓
-    """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
+    """the vertex of the other remote node for the swap, the "high" counterpart of `nodeL`; default `❓` (any remote); if you are working on a repeater chain, a good choice is `>(current_node)`, i.e. any node to the "right" of the current node"""
     nodeH::QueryArgs = ❓
     """the `nodeL` predicate can return many positive candidates; `chooseL` picks one of them (by index into the array of filtered `nodeL` results), defaults to a random pick `arr->rand(keys(arr))`; if you are working on a repeater chain a good choice is `argmin`, i.e. the node furthest to the "left" """
     chooseL::Function = random_index
-    """the `nodeH` counterpart for `chooseH`; if you are working on a repeater chain a good choice is `argmax`, i.e. the node furthest to the "right" """
+    """the `nodeH` counterpart for `chooseL`; defaults to a random pick; if you are working on a repeater chain a good choice is `argmax`, i.e. the node furthest to the "right" """
     chooseH::Function = random_index
-    """fixed "busy time" duration immediately before starting entanglement generation attempts"""
+    """fixed "busy time" duration immediately before starting the swap, in simulation time units (default `0.0`; increase only when modeling local gate overhead)"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
-    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
+    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting); default `0.1` (a small polling interval in simulation time units)"""
     retry_lock_time::Union{Float64,Nothing} = 0.1
-    """how many rounds of this protocol to run (`-1` for infinite))"""
+    """how many rounds of this protocol to run (`-1` for infinite); default `-1`"""
     rounds::Int = -1
-    """what is the oldest a qubit should be to be picked for a swap (to avoid swapping with qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
+    """what is the oldest a qubit should be to be picked for a swap (to avoid swapping with qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit, the default) — you probably want to use [`CutoffProt`](@ref) if you have an agelimit; a typical finite value is a fraction of `CutoffProt.retention_time` (whose default is `5.0`)"""
     agelimit::Union{Float64,Nothing} = nothing
-    """maximum number of history tags to retain per slot in FIFO order (`nothing` for unbounded retention)"""
+    """maximum number of history tags to retain per slot in FIFO order (`nothing` for unbounded retention); default `3`, which is enough for in-flight swap updates on a typical repeater; raise it (or use `nothing`) if many swaps can complete before the corresponding `EntanglementTracker` messages arrive"""
     max_history_per_slot::Union{Int,Nothing} = 3
 
     function SwapperProt(sim, net, node, chooseslots, nodeL, nodeH, chooseL, chooseH, local_busy_time, retry_lock_time, rounds, agelimit, max_history_per_slot)
