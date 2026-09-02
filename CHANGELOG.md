@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Document default values and reasonable ranges for numeric fields of `EntanglerProt`, `SwapperProt`, and `EntanglementConsumer` (#350).
 - Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
 - Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.
