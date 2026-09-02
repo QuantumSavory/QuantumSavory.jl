@@ -20,13 +20,13 @@ $FIELDS
     net::RegisterNet
     """the vertex index of the node on which the protocol is running"""
     node::Int
-    """time period between successive queries on the node (`nothing` for queuing up)"""
+    """time period between successive queries on the node (default `0.1`; `nothing` queues on tag changes)"""
     period::Union{Float64,Nothing} = 0.1
-    """time after which a slot is emptied"""
+    """time after which a slot is emptied (default `5.0` simulation time units; should exceed any [`SwapperProt`](@ref) `agelimit` used with this cutoff)"""
     retention_time::Float64 = 5.0
     """if `true`, synchronization messages are sent after a deletion to the node containing the other entangled qubit"""
     announce::Bool = true
-    """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
+    """maximum number of delete tags to retain per local slot in FIFO order (default `3`; `nothing` for unbounded retention)"""
     max_delete_per_slot::Union{Int,Nothing} = 3
 
     function CutoffProt(sim, net, node, period, retention_time, announce, max_delete_per_slot)

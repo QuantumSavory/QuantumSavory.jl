@@ -53,15 +53,15 @@ $TYPEDFIELDS
     chooseL::Function = random_index
     """the `nodeH` counterpart for `chooseH`; if you are working on a repeater chain a good choice is `argmax`, i.e. the node furthest to the "right" """
     chooseH::Function = random_index
-    """fixed "busy time" duration immediately before starting entanglement generation attempts"""
+    """fixed "busy time" duration immediately before starting entanglement generation attempts (default `0.0`)"""
     local_busy_time::Float64 = 0.0 # TODO the gates should have that busy time built in
-    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up and waiting)"""
+    """how long to wait before retrying to lock qubits if no qubits are available (default `0.1`; `nothing` queues until a pair is free)"""
     retry_lock_time::Union{Float64,Nothing} = 0.1
-    """how many rounds of this protocol to run (`-1` for infinite))"""
+    """how many rounds of this protocol to run (default `-1` for infinite; non-negative integers run a finite number of rounds)"""
     rounds::Int = -1
-    """what is the oldest a qubit should be to be picked for a swap (to avoid swapping with qubits that are about to be deleted, the agelimit should be shorter than the retention time of the cutoff protocol) (`nothing` for no limit) -- you probably want to use [`CutoffProt`](@ref) if you have an agelimit"""
+    """what is the oldest a qubit should be to be picked for a swap (default `nothing` for no limit; if set, keep it shorter than [`CutoffProt`](@ref) `retention_time` so you do not swap qubits about to be deleted)"""
     agelimit::Union{Float64,Nothing} = nothing
-    """maximum number of history tags to retain per slot in FIFO order (`nothing` for unbounded retention)"""
+    """maximum number of history tags to retain per slot in FIFO order (default `3`; `nothing` for unbounded retention)"""
     max_history_per_slot::Union{Int,Nothing} = 3
 
     function SwapperProt(sim, net, node, chooseslots, nodeL, nodeH, chooseL, chooseH, local_busy_time, retry_lock_time, rounds, agelimit, max_history_per_slot)

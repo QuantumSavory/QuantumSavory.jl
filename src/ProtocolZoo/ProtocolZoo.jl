@@ -296,19 +296,19 @@ $TYPEDFIELDS
     nodeB::Int
     """the state being generated (supports symbolic, numeric, noisy, and pure)"""
     pairstate::SymQObj = StabilizerState("ZZ XX")
-    """success probability of one attempt of entanglement generation"""
+    """success probability of one attempt of entanglement generation (default `0.001`; keep in `(0, 1]`; small values such as `1e-3` model rare heralded success on a physical link)"""
     success_prob::Float64 = 0.001
-    """duration of single entanglement attempt"""
+    """duration of single entanglement attempt (default `0.001` simulation time units)"""
     attempt_time::Float64 = 0.001
-    """fixed "busy time" duration immediately before starting entanglement generation attempts"""
+    """fixed "busy time" duration immediately before starting entanglement generation attempts (default `0.0`)"""
     local_busy_time_pre::Float64 = 0.0
-    """fixed "busy time" duration immediately after the a successful entanglement generation attempt"""
+    """fixed "busy time" duration immediately after a successful entanglement generation attempt (default `0.0`)"""
     local_busy_time_post::Float64 = 0.0
-    """how long to wait before retrying to lock qubits if no qubits are available (`nothing` for queuing up)"""
+    """how long to wait before retrying to lock qubits if no qubits are available (default `0.1`; `nothing` queues until a slot is free)"""
     retry_lock_time::Union{Float64,Nothing} = 0.1
-    """how many rounds of this protocol to run (`-1` for infinite)"""
+    """how many rounds of this protocol to run (default `-1` for infinite; non-negative integers run a finite number of rounds)"""
     rounds::Int = -1
-    """maximum number of attempts to make per round (`-1` for infinite)"""
+    """maximum number of attempts to make per round (default `-1` for infinite)"""
     attempts::Int = -1
     """function `Int->Bool` or an integer slot number, specifying the slot to take among available free slots in node A"""
     chooseslotA::Union{Int,Function} = alwaystrue
@@ -318,9 +318,9 @@ $TYPEDFIELDS
     randomize::Bool = false
     """whether the protocol should look for unlocked slots to entangle and lock them during the protocol"""
     uselock::Bool = true
-    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. This field can be used to always leave a minimum number of slots free if there already exists entanglement between the current pair of nodes."""
+    """Repeated rounds of this protocol may lead to monopolizing all slots of a pair of registers, starving or deadlocking other protocols. Default `0`. Use a small positive integer (typically 1–2) to always leave that many slots free if entanglement already exists between this pair of nodes."""
     margin::Int = 0
-    """Like `margin`, but it is enforced even when no entanglement has been established yet. Usually smaller than `margin`."""
+    """Like `margin`, but enforced even when no entanglement has been established yet (default `0`; usually smaller than `margin`)."""
     hardmargin::Int = 0
     """concrete `AbstractTag` subtype to add to the entangled qubits, or `nothing` to add no tag. `EntanglementCounterpart` tags include a pair ID; custom tags keep the legacy `tag(remote_node, remote_slot)` shape."""
     tag::Union{Type{<:AbstractTag},Nothing} = EntanglementCounterpart
@@ -726,7 +726,7 @@ $FIELDS
     nodeA::Int
     """the vertex index of node B"""
     nodeB::Int
-    """time period between successive queries on the nodes (`nothing` for queuing up and waiting for available pairs)"""
+    """time period between successive queries on the nodes (default `0.1`; `nothing` queues until a pair is available)"""
     period::Union{Float64,Nothing} = 0.1
     """concrete `AbstractTag` subtype which the consumer is looking for; defaults to `EntanglementCounterpart`, where reciprocal tags must also agree on pair ID"""
     tag::Type{<:AbstractTag} = EntanglementCounterpart
