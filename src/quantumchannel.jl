@@ -6,6 +6,9 @@ Delay and background noise processes are supported.
 The function `put!` is used to take the contents of a `RegRef` and put it in the channel.
 That state can can then be received by a register (after a delay) using the `take!` method.
 
+See [Quantum Channels](@ref quantum-channels) for the network-attached `qchannel`
+handle, delay versus in-transit noise, and why this is not a multihop repeater.
+
 ```jldoctest
 julia> using QuantumSavory, ResumableFunctions, ConcurrentSim
 

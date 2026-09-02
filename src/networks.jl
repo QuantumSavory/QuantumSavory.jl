@@ -219,6 +219,10 @@ end
 
 """Get a handle to a quantum channel between two registers.
 
+This is a direct graph edge, not a path. Unlike [`channel`](@ref), there is no
+`permit_forward` keyword: non-adjacent nodes error. See [Quantum Channels](@ref
+quantum-channels) for `put!`/`take!`, delay, and in-transit noise.
+
 ```jldoctest
 julia> net = RegisterNet([Register(2), Register(2), Register(2)]) # defaults to a chain topology
 A network of 3 registers in a graph of 2 edges
@@ -274,7 +278,12 @@ function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{:C}; permit_forwar
 end
 
 function achannel(net::RegisterNet, src::Int, dst::Int, ::Val{:Q})
-    return net.qchannels[src=>dst]
+    pair = src=>dst
+    if haskey(net.qchannels, pair)
+        return net.qchannels[pair]
+    else
+        error(lazy"There is no direct quantum channel between the nodes in the request $(src)=>$(dst). Quantum channels are direct-edge links; unlike `channel(...; permit_forward=true)`, they are not forwarded hop-by-hop. End-to-end quantum connectivity across several hops is built at the protocol layer (e.g. `EntanglerProt` and `SwapperProt`).")
+    end
 end
 
 function achannel(net::RegisterNet, fromreg::Register, to::Int, v::Val{Q}; kw...) where {Q}

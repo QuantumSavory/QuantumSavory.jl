@@ -63,3 +63,10 @@ end
     run(get_time_tracker(net))
     @test arrival_times == [21.0]
 end
+
+@testset "qchannel is a direct edge" begin
+    net = RegisterNet([Register(1), Register(1), Register(1)])
+    @test qchannel(net, 1 => 2) isa QuantumChannel
+    @test_throws "no direct quantum channel" qchannel(net, 1 => 3)
+    @test_throws "permit_forward" qchannel(net, 1 => 3)
+end

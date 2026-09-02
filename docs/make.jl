@@ -60,6 +60,7 @@ function main()
         "Register Networks" => "register_networks.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Classical Messaging and Buffers" => "classical_messaging.md",
+        "Quantum Channels" => "quantum_channels.md",
         "Zoos as Composable Building Blocks" => "zoos_as_building_blocks.md",
         "Properties" => "properties.md",
         "Background Noise" => "backgrounds.md",
@@ -81,6 +82,7 @@ function main()
     "Tutorials" => [
         "tutorial.md",
         "Build a Network from a Dataset" => "tutorial/dataset_network.md",
+        "Send a Qubit Through a Quantum Channel" => "tutorial/quantum_channel.md",
         "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
         "Qumode-Qubit teleportation (homodyne)" => "tutorial/homodyne_teleport.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",

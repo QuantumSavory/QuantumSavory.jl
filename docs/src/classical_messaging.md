@@ -109,6 +109,9 @@ graph of callbacks and explicit peer handles.
 
 ## Where To Go Next
 
+- Read [Quantum Channels](@ref quantum-channels) for the qubit-transport
+  counterpart: `qchannel`, `put!`/`take!`, delay, and why there is no
+  quantum `permit_forward`.
 - Read [Register Networks](@ref register-networks) for network construction,
   topology, metadata, and direct-link delay configuration.
 - Read [Metadata and Protocol Composition](@ref metadata-plane) for the higher

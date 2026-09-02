@@ -117,14 +117,17 @@ clock time.
 
 Classical channels can forward a message across more than one edge. Each hop
 uses its configured delay. Quantum channels are direct-edge channels. Read
-[Classical Messaging and Buffers](@ref classical-messaging) for channel and
-message-buffer use.
+[Classical Messaging and Buffers](@ref classical-messaging) for classical
+channels and message buffers, and [Quantum Channels](@ref quantum-channels)
+for `qchannel` / `QuantumChannel`.
 
 ## Where to Go Next
 
 - Read [Architecture and Mental Model](@ref architecture) for the role of a
   register network in the package.
 - Read [Register Interface API](register_interface.md) for operations on slots.
-- Read [Classical Messaging and Buffers](@ref classical-messaging) for network
+- Read [Classical Messaging and Buffers](@ref classical-messaging) for
+  classical network transport.
+- Read [Quantum Channels](@ref quantum-channels) for direct-edge qubit
   transport.
 - Read [Visualizations](@ref Visualizations) to inspect a register network.
