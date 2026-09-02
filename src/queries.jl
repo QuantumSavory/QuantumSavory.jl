@@ -161,6 +161,10 @@ A query function searching for the first slot in a register that has a given tag
 
 Wildcards are supported (instances of `Wildcard` also available as the constants [`W`](@ref) or the emoji [`❓`](@ref) which can be entered as `\\:question:` in the REPL).
 Predicate functions are also supported (they have to be `Int`↦`Bool` functions).
+A query with fewer arguments than a stored tag treats extra tag fields as
+implicit wildcards, so `query(r, :symbol, 2)` matches both `Tag(:symbol, 2)`
+and `Tag(:symbol, 2, 3)`. A query that specifies more fields than the tag
+does not match.
 The order of query lookup can be specified in terms of FIFO or FILO and defaults to FILO if not specified.
 The keyword arguments `locked` and `assigned` can be used to check, respectively,
 whether the given slot is locked or whether it contains a quantum state.
@@ -304,10 +308,15 @@ for i in 1:10
     for (symbol, variant) in pairs(Tag')
         signature = methods(variant)[1].sig.parameters[2:end]
         l = length(signature)
-        sigargs = VARS[1:l]
-        if l==i
+        # Extra tag fields beyond the query arity are implicit wildcards
+        # (QuantumSavory/QuantumSavory.jl#194). Bind unused payload slots as
+        # `_C`, `_D`, ... so the generated `@cases` arms stay warning-free.
+        sigargs = Any[VARS[j] for j in 1:min(i, l)]
+        for j in (i + 1):l
+            push!(sigargs, Symbol("_", VARS[j]))
+        end
+        if l >= i
             push!(cases, :($symbol($(sigargs...)) => $composite_check))
-        else
         end
     end
     body_expr = isempty(cases) ? :(false) : quote

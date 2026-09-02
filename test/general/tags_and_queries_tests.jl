@@ -158,6 +158,33 @@ id3 = tag!(reg[4], :symB, 4, 5)
 @test untag!(reg, id2).tag == Tag(:symB, 2, 3)
 @test_throws "Attempted to delete a nonexistent" untag!(reg, -1)
 
+##
+# implicit trailing wildcards (#194)
+# A shorter query matches a longer tag; extra payload fields act as wildcards.
+
+r = Register(4)
+tag!(r[1], :symbol, 2, 3, 4)
+tag!(r[2], :symbol, 2, 3)
+tag!(r[3], :symbol, 2, 9, 1)
+tag!(r[4], Int, 1, 2, 3)
+
+@test strip_id(query(r[1], :symbol, 2, 3, 4)) == (slot=r[1], tag=Tag(:symbol, 2, 3, 4))
+@test strip_id(query(r[1], :symbol, 2, 3)) == (slot=r[1], tag=Tag(:symbol, 2, 3, 4))
+@test strip_id(query(r[1], :symbol, 2)) == (slot=r[1], tag=Tag(:symbol, 2, 3, 4))
+@test query(r[1], :symbol, 2, 3, 5) === nothing
+@test query(r[1], :symbol, 2, 4) === nothing
+@test query(r[2], :symbol, 2, 3, 4) === nothing # longer query, shorter tag
+@test strip_id(query(r[2], :symbol, 2, 3)) == (slot=r[2], tag=Tag(:symbol, 2, 3))
+@test strip_id(query(r, :symbol, 2, 3)) == (slot=r[2], tag=Tag(:symbol, 2, 3)) # filo
+@test strip_id.(queryall(r, :symbol, 2)) == [
+    (slot=r[3], tag=Tag(:symbol, 2, 9, 1)),
+    (slot=r[2], tag=Tag(:symbol, 2, 3)),
+    (slot=r[1], tag=Tag(:symbol, 2, 3, 4)),
+]
+@test strip_id(query(r, Int, 1)) == (slot=r[4], tag=Tag(Int, 1, 2, 3))
+@test strip_id(query(r, Int, 1, 2)) == (slot=r[4], tag=Tag(Int, 1, 2, 3))
+@test query(r, Int, 1, 2, 4) === nothing
+
 if Base.Threads.nthreads() > 1
     regs = [Register(1) for _ in 1:min(Base.Threads.nthreads(), 4)]
     Base.Threads.@threads for i in eachindex(regs)
