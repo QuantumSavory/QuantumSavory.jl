@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `RegisterNet` convenience constructors and `add_vertex!` / `add_edge!` that also create classical delay channels, quantum channels, and message-buffer listeners.
 - Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
 - Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.

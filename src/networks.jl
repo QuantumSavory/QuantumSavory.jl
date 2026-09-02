@@ -10,7 +10,9 @@ If `graph` is omitted, use a chain with one vertex per register.
 `RegisterNet` directly supports these read operations from Graphs.jl:
 `vertices`, `edges`, `neighbors`, `nv`, `ne`, and `adjacency_matrix`. It is not
 a subtype of `Graphs.AbstractGraph`, so other Graphs.jl functions are not part
-of this interface. Treat the topology as fixed after construction.
+of this interface. After construction, grow the network with [`add_vertex!`](@ref) and
+[`add_edge!`](@ref); those also create the matching classical delay
+channels, quantum channels, and message-buffer listeners.
 
 Index a network to move from the network to a register or a register slot:
 
@@ -173,11 +175,122 @@ function RegisterNet(registers::Vector{Register}; classical_delay=0, quantum_del
     RegisterNet(graph, registers; classical_delay, quantum_delay, name, names)
 end
 
-function add_register!(net::RegisterNet, r::Register)
+"""Construct a [`RegisterNet`](@ref) with one `Register(nslots)` per graph vertex."""
+function RegisterNet(graph::SimpleGraph, nslots::Integer; classical_delay=0, quantum_delay=0, name=nothing, names=String[])
+    nslots > 0 || throw(ArgumentError("nslots must be a positive integer"))
+    RegisterNet(graph, [Register(Int(nslots)) for _ in 1:nv(graph)]; classical_delay, quantum_delay, name, names)
+end
+
+"""Construct a chain [`RegisterNet`](@ref) of `nnodes` registers, each with `nslots` slots."""
+function RegisterNet(nnodes::Integer, nslots::Integer; classical_delay=0, quantum_delay=0, name=nothing, names=String[])
+    nnodes > 0 || throw(ArgumentError("nnodes must be a positive integer"))
+    RegisterNet(grid([Int(nnodes)]), Int(nslots); classical_delay, quantum_delay, name, names)
+end
+
+
+
+"""
+    add_vertex!(net::RegisterNet, r::Register; name=nothing) -> Int
+
+Add `r` as a new vertex of `net`. The new vertex starts with no edges. A
+[`MessageBuffer`](@ref) is created for it so later [`add_edge!`](@ref) calls
+can attach classical listeners.
+
+The register must either share `net`'s simulation time tracker or not have
+been used yet. Returns the new 1-based vertex index.
+
+See also: [`add_edge!`](@ref), [`add_register!`](@ref)
+"""
+function add_vertex!(net::RegisterNet, r::Register; name::Union{Nothing,String}=nothing)
+    parent = r.netparent[]
+    if parent !== nothing && parent !== net
+        throw(ArgumentError("this Register already belongs to another RegisterNet"))
+    end
+    if parent === net
+        throw(ArgumentError("this Register is already a vertex of this RegisterNet"))
+    end
+
+    env = get_time_tracker(net)
+    r_env = get_time_tracker(r)
+    if r_env !== env
+        unused = iszero(ConcurrentSim.now(r_env)) && isempty(r_env.heap) && isnothing(r_env.active_proc)
+        if unused
+            r.tag_waiter[] = ChangeNotifier(env)
+            for i in eachindex(r.locks)
+                r.locks[i] = ConcurrentSim.Resource(env, 1)
+            end
+        else
+            throw(ArgumentError("the Register must share the network simulation time tracker, or must not have been used yet"))
+        end
+    end
+
     add_vertex!(net.graph)
     push!(net.registers, r)
-    return length(Graph())
+    push!(net.vertex_metadata, Dict{Symbol,Any}())
+    idx = length(net.registers)
+    r.netparent[] = net
+    r.netindex[] = idx
+    net.reverse_lookup[r] = idx
+    net.cbuffers[idx] = MessageBuffer(net, idx, NamedTuple{(:src, :channel), Tuple{Int, DelayQueue{Tag}}}[])
+    if !isnothing(name)
+        while length(net.names) < idx - 1
+            push!(net.names, "")
+        end
+        push!(net.names, name)
+    elseif !isempty(net.names)
+        push!(net.names, "")
+    end
+    return idx
 end
+
+"""Alias for [`add_vertex!`](@ref)."""
+add_register!(net::RegisterNet, r::Register; kwargs...) = add_vertex!(net, r; kwargs...)
+
+"""
+    add_edge!(net::RegisterNet, src, dst; classical_delay=0, quantum_delay=0)
+    add_edge!(net::RegisterNet, src => dst; classical_delay=0, quantum_delay=0)
+
+Add an undirected graph edge and the two directed classical [`DelayQueue`](@ref)
+channels plus two [`QuantumChannel`](@ref)s that `RegisterNet` construction
+would have created for that edge. Each endpoint's [`MessageBuffer`](@ref)
+starts a listener on the new incoming classical channel.
+
+`classical_delay` and `quantum_delay` accept a constant or a callable
+`(src, dst) -> delay`, matching the [`RegisterNet`](@ref) constructor.
+"""
+function add_edge!(net::RegisterNet, src::Integer, dst::Integer; classical_delay=0, quantum_delay=0)
+    src = Int(src)
+    dst = Int(dst)
+    src == dst && throw(ArgumentError("cannot add a self-loop to RegisterNet"))
+    (1 <= src <= nv(net) && 1 <= dst <= nv(net)) || throw(ArgumentError(
+        "src and dst must be existing vertices of the RegisterNet",
+    ))
+    Graphs.has_edge(net.graph, src, dst) && throw(ArgumentError(
+        "edge $(src)—$(dst) already exists",
+    ))
+
+    env = get_time_tracker(net)
+    added = add_edge!(net.graph, src, dst)
+    added || throw(ArgumentError("failed to add graph edge $(src)—$(dst)"))
+
+    forward_classical_delay = _resolve_link_delay(classical_delay, src, dst)
+    forward_quantum_delay = _resolve_link_delay(quantum_delay, src, dst)
+    reverse_classical_delay = _resolve_link_delay(classical_delay, dst, src)
+    reverse_quantum_delay = _resolve_link_delay(quantum_delay, dst, src)
+
+    net.cchannels[src => dst] = DelayQueue{Tag}(env, forward_classical_delay)
+    net.qchannels[src => dst] = QuantumChannel(env, forward_quantum_delay)
+    net.cchannels[dst => src] = DelayQueue{Tag}(env, reverse_classical_delay)
+    net.qchannels[dst => src] = QuantumChannel(env, reverse_quantum_delay)
+
+    @process take_loop_mb(env, net.cchannels[src => dst], src, net.cbuffers[dst])
+    @process take_loop_mb(env, net.cchannels[dst => src], dst, net.cbuffers[src])
+    return true
+end
+
+add_edge!(net::RegisterNet, pair::Pair; kwargs...) = add_edge!(net, pair.first, pair.second; kwargs...)
+add_edge!(net::RegisterNet, e::Graphs.SimpleEdge; kwargs...) = add_edge!(net, e.src, e.dst; kwargs...)
+
 
 """Get the parent network of a [`Register`](@ref) or parent register of a [`RegRef`](@ref)."""
 function Base.parent(r::Register)

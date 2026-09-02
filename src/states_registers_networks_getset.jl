@@ -8,7 +8,8 @@ Base.iterate(r::Register, state=1) = state > length(r) ? nothing : (r[state],sta
 ## Networks
 
 # Graph interface
-Graphs.add_vertex!(net::RegisterNet) = add_vertex!(net.graph)
+# add_vertex! / add_edge! for RegisterNet live in networks.jl so they can
+# create delay channels, quantum channels, and message-buffer listeners.
 Graphs.vertices(net::RegisterNet) = vertices(net.graph)
 Graphs.edges(net::RegisterNet) = edges(net.graph)
 Graphs.neighbors(net::RegisterNet, v) = neighbors(net.graph, v)
