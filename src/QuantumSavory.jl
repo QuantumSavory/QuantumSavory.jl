@@ -69,6 +69,7 @@ export
     onchange_tag, onchange,
     # networks.jl
     RegisterNet, channel, qchannel, messagebuffer, dist_to_delay, network_builder,
+    add_register!, add_edge!,
     # logging.jl
     LOG_GROUPS, simulation_log_context,
     # initialize.jl

@@ -120,6 +120,23 @@ uses its configured delay. Quantum channels are direct-edge channels. Read
 [Classical Messaging and Buffers](@ref classical-messaging) for channel and
 message-buffer use.
 
+## Grow a Network After Construction
+
+`RegisterNet` is usually built in one shot, but you can also add a vertex and
+then the delay/quantum channels for a new edge:
+
+```julia
+net = RegisterNet([Register(1), Register(1)])
+add_register!(net, Register(1))                 # vertex 3, no edges yet
+add_edge!(net, 2 => 3; classical_delay=0.2, quantum_delay=0.1)
+channel(net, 2 => 3)   # DelayQueue
+qchannel(net, 2 => 3)  # QuantumChannel
+```
+
+`add_vertex!` is an alias of `add_register!`. Both directions of the new edge
+get a classical delay queue and a quantum channel, using the same
+`classical_delay` / `quantum_delay` rules as the constructor.
+
 ## Where to Go Next
 
 - Read [Architecture and Mental Model](@ref architecture) for the role of a

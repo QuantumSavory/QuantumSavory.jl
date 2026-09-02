@@ -173,11 +173,79 @@ function RegisterNet(registers::Vector{Register}; classical_delay=0, quantum_del
     RegisterNet(graph, registers; classical_delay, quantum_delay, name, names)
 end
 
-function add_register!(net::RegisterNet, r::Register)
-    add_vertex!(net.graph)
+"""
+    add_register!(net, r; name=nothing) -> vertex_index
+    add_vertex!(net, r; name=nothing)
+
+Add a register as a new vertex. No edges, delay queues, or quantum channels
+are created; call [`add_edge!`](@ref) to attach them. This is the incremental
+form of the `RegisterNet` constructor, which only wires channels for edges
+already in the graph.
+
+See also [`add_edge!`](@ref).
+"""
+function add_register!(net::RegisterNet, r::Register; name::Union{Nothing,String}=nothing)
+    Graphs.add_vertex!(net.graph)
     push!(net.registers, r)
-    return length(Graph())
+    push!(net.vertex_metadata, Dict{Symbol,Any}())
+    i = length(net.registers)
+    r.netparent[] = net
+    r.netindex[] = i
+    net.reverse_lookup[r] = i
+    if !isempty(net.names) || name !== nothing
+        while length(net.names) < i - 1
+            push!(net.names, "")
+        end
+        push!(net.names, name === nothing ? "" : name)
+    end
+    empty_channels = NamedTuple{(:src, :channel), Tuple{Int, DelayQueue{Tag}}}[]
+    net.cbuffers[i] = MessageBuffer(net, i, empty_channels)
+    return i
 end
+
+"""Alias of [`add_register!`](@ref) so the Graphs.jl-style `add_vertex!` name works on a `RegisterNet`."""
+add_vertex!(net::RegisterNet, r::Register; name::Union{Nothing,String}=nothing) = add_register!(net, r; name)
+
+"""
+    add_edge!(net, src, dst; classical_delay=0, quantum_delay=0)
+    add_edge!(net, src => dst; ...)
+
+Add an undirected graph edge and the matching classical [`DelayQueue`](@ref)
+and [`QuantumChannel`](@ref) in **both** directions, using the same delay
+resolution as the `RegisterNet` constructor (`classical_delay` / `quantum_delay`
+may be a number or a `(src, dst) -> delay` callable). Starts message-buffer
+listeners so `put!` on the new classical channel is delivered.
+
+The topology is otherwise treated as fixed after construction; this exists for
+the cases where you grow a net one vertex/edge at a time.
+"""
+function add_edge!(net::RegisterNet, src::Integer, dst::Integer; classical_delay=0, quantum_delay=0)
+    src = Int(src)
+    dst = Int(dst)
+    src == dst && throw(ArgumentError("`add_edge!` does not support self-loops"))
+    n = nv(net.graph)
+    (1 <= src <= n && 1 <= dst <= n) || throw(ArgumentError("vertex index out of range for this `RegisterNet`"))
+    has_edge(net.graph, src, dst) && throw(ArgumentError("edge $src–$dst already exists"))
+
+    Graphs.add_edge!(net.graph, src, dst)
+    env = get_time_tracker(net)
+    fc = _resolve_link_delay(classical_delay, src, dst)
+    fq = _resolve_link_delay(quantum_delay, src, dst)
+    rc = _resolve_link_delay(classical_delay, dst, src)
+    rq = _resolve_link_delay(quantum_delay, dst, src)
+    net.cchannels[src => dst] = DelayQueue{Tag}(env, fc)
+    net.qchannels[src => dst] = QuantumChannel(env, fq)
+    net.cchannels[dst => src] = DelayQueue{Tag}(env, rc)
+    net.qchannels[dst => src] = QuantumChannel(env, rq)
+
+    sim = env
+    @process take_loop_mb(sim, net.cchannels[src => dst], src, net.cbuffers[dst])
+    @process take_loop_mb(sim, net.cchannels[dst => src], dst, net.cbuffers[src])
+    return true
+end
+
+add_edge!(net::RegisterNet, e::Pair; kwargs...) = add_edge!(net, first(e), last(e); kwargs...)
+add_edge!(net::RegisterNet, e::Edge; kwargs...) = add_edge!(net, src(e), dst(e); kwargs...)
 
 """Get the parent network of a [`Register`](@ref) or parent register of a [`RegRef`](@ref)."""
 function Base.parent(r::Register)

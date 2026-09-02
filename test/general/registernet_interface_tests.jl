@@ -63,3 +63,34 @@ end
     run(get_time_tracker(net))
     @test arrival_times == [21.0]
 end
+
+@testset "add_register! / add_edge! wire delay and quantum channels" begin
+    net = RegisterNet([Register(1), Register(1)]; classical_delay=0.5, quantum_delay=1.0)
+    @test nv(net) == 2
+    v = add_register!(net, Register(1); name="tail")
+    @test v == 3
+    @test nv(net) == 3
+    @test net[3] === net.registers[3]
+    @test parentindex(net[3]) == 3
+
+    @test add_edge!(net, 2 => 3; classical_delay=3.0, quantum_delay=4.0)
+    @test has_edge(net.graph, 2, 3)
+    @test channel(net, 2 => 3).delay == 3.0
+    @test channel(net, 3 => 2).delay == 3.0
+    @test qchannel(net, 2 => 3).queue.delay == 4.0
+    @test qchannel(net, 3 => 2).queue.delay == 4.0
+    # original edge still intact
+    @test channel(net, 1 => 2).delay == 0.5
+
+    arrival_times = Float64[]
+    @resumable function receive_on_three(sim, net, arrival_times)
+        @yield onchange(messagebuffer(net, 3))
+        push!(arrival_times, now(sim))
+    end
+    @process receive_on_three(get_time_tracker(net), net, arrival_times)
+    put!(channel(net, 2 => 3), Tag(:grown_edge))
+    run(get_time_tracker(net))
+    @test arrival_times == [3.0]
+
+    @test_throws ArgumentError add_edge!(net, 2, 3)
+end
