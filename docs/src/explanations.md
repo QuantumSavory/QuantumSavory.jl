@@ -18,6 +18,7 @@ Explanation pages answer questions such as:
   limits?
 - How are classical control, metadata tags, and protocols composed?
 - When should one backend or modeling approach be preferred over another?
+- How do you compute Bell-pair fidelity through `observable`?
 
 ## Suggested Reading Order
 
@@ -34,8 +35,9 @@ Explanation pages answer questions such as:
 9. [Classical Messaging and Buffers](@ref classical-messaging)
 10. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
 11. [Properties](@ref)
-12. [Background Noise Processes](@ref)
-13. [Discrete Event Simulator](@ref sim)
+12. [Fidelity and Observables](@ref fidelity-observables)
+13. [Background Noise Processes](@ref)
+14. [Discrete Event Simulator](@ref sim)
 
 ## Relationship To Other Sections
 

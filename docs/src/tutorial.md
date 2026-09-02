@@ -9,6 +9,7 @@ come back here for focused follow-up topics.
 
 - [Build a Network from a Dataset](tutorial/dataset_network.md)
 - [Measure and Remove Quantum Systems](tutorial/project_traceout.md)
+- [Fidelity through observable](tutorial/fidelity_observable.md)
 - [Qumode-Qubit teleportation through a homodyne measurement](tutorial/homodyne_teleport.md)
 - [Custom Swapper Protocol](tutorial/myswapperprot.md)
 - [State Explorer](tutorial/state_explorer.md)

@@ -64,5 +64,7 @@ pt_to_html(types; backend = :html, show_column_labels = false) # hide
 
 - Read [Modeling Registers, Factorization, and Time](@ref
   modeling-registers-time) for the larger modeling picture.
+- Read [Fidelity and Observables](@ref fidelity-observables) for overlap with
+  a target state through `observable` and `projector`.
 - Read [Background Noise Processes](@ref) for the other half of the physical
   description attached to register slots.
