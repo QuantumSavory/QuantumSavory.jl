@@ -128,6 +128,11 @@ flowchart TB
 
 Measure a quantum observable. The dispatch down the call three is very similar to the one for `apply!`.
 
+State fidelity to a pure target is this same function applied to a projector:
+`observable(slots, projector(target))`. That pattern, and why there is no
+separate `fidelity()`, is in [Fidelity and Observables](@ref
+fidelity-observables).
+
 ```@docs; canonical=false
 observable
 ```
