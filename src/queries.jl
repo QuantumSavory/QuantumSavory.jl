@@ -487,6 +487,57 @@ function querydelete!(mb::MessageBuffer, query::Tag)
     return nothing
 end
 
+
+"""
+$TYPEDSIGNATURES
+
+Atomically replace the first tag matching a [`query`](@ref) with a new tag on
+the same slot.
+
+This is the race-free form of `query` then `untag!` then `tag!`. Those three
+calls are already synchronous, but protocol code often `@yield`s between them.
+`queryupdate!` keeps the delete-and-retag together so another process cannot
+observe a slot with the old tag removed and the new tag not yet written.
+
+`newtag` must be a [`Tag`](@ref) (or a value `convert(Tag, newtag)` accepts).
+Keyword arguments other than `newtag` are forwarded to [`query`](@ref)
+(`locked`, `assigned`, `filo`).
+
+Returns `(; slot, oldid, oldtag, id, tag, time)` for the new tag, or `nothing`
+if there was no match. `time` is the simulation time of the new tag.
+
+```jldoctest; filter = [r"id = (\\d*), ", r"oldid = (\\d*), ", r"slot = (\\d*)"]
+julia> reg = Register(3)
+       tag!(reg[1], :ready, 7)
+       tag!(reg[2], :ready, 9);
+
+julia> r = queryupdate!(reg, :ready, 7; newtag=Tag(:ready, 8));
+
+julia> r.oldtag, r.tag
+(SymbolIntInt(:ready, 7)::Tag, SymbolIntInt(:ready, 8)::Tag)
+
+julia> query(reg, :ready, 7) === nothing
+true
+
+julia> query(reg, :ready, 8).tag
+SymbolIntInt(:ready, 8)::Tag
+
+julia> queryupdate!(reg, :missing, 1; newtag=Tag(:x, 1)) === nothing
+true
+```
+
+See also: [`querydelete!`](@ref), [`tag!`](@ref), [`query`](@ref)
+"""
+function queryupdate!(reg::RegOrRegRef, args...; newtag, kwa...)
+    r = query(reg, args...; kwa...)
+    isnothing(r) && return nothing
+    untag!(r.slot, r.id)
+    converted = convert(Tag, newtag)
+    newid = tag!(r.slot, converted)
+    newtime = r.slot.reg.tag_info[newid].time
+    return (; slot=r.slot, oldid=r.id, oldtag=r.tag, id=newid, tag=converted, time=newtime)
+end
+
 alwaystrue(x) = true
 
 """Find an empty unlocked slot in a given [`Register`](@ref).
