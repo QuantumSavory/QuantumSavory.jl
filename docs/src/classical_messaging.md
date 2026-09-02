@@ -97,6 +97,22 @@ global schedulers that are allowed to inspect the whole network immediately.
 The framework therefore provides the communication abstractions needed for
 localized protocol design, but it does not forbid other architectural choices.
 
+When the protocol *is* meant to be a distributed LOCC process, the
+locality-respecting tools are:
+
+- [`channel`](@ref) and [`qchannel`](@ref) for leaving a node;
+- [`messagebuffer`](@ref) for arriving at a node;
+- `put!` to send a classical tag;
+- `query_wait` and `querydelete_wait!` to wait out the simulated delay
+  before acting.
+
+Direct `net[remote_node][slot]` access from another node's process skips
+that delay. Use it only when the model is honestly a centralized
+controller. A future optional annotation that warns about nonlocal
+access is tracked with this convention; the default API stays flexible.
+The same wording is repeated next to tags/queries and discrete-event
+protocols so the three pages do not disagree.
+
 ## Why This Matters For Composability
 
 This transport layer is what makes the metadata plane practical. Protocols can

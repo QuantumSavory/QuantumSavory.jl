@@ -189,6 +189,32 @@ querydelete!
 QuantumSavory.queryall
 ```
 
+
+## Locality Is By Convention
+
+Tags, queries, and message buffers are how a *local* protocol is supposed
+to talk to the rest of the network. They are not a sandbox. A process
+that already holds the `RegisterNet` can read or mutate a remote
+register directly, skipping classical latency.
+
+That is allowed on purpose. Some studies need a centralized controller,
+a lab rack with instant access to several devices, or a global scheduler.
+The Julia API does not try to guess which of those you meant.
+
+For a protocol that is meant to represent distributed LOCC, stay on this
+path:
+
+- inspect and tag only local `RegRef` slots;
+- send classical facts with `put!` on `channel(net, src => dst)` (or
+  `permit_forward = true` when the graph requires hops);
+- receive them from the node-local `messagebuffer`;
+- wait with `query_wait` / `querydelete_wait!` so propagation delay is
+  part of the timeline.
+
+There is no locality-checking macro yet. Until one exists, the
+convention above is the whole enforcement story. See also
+[Classical Messaging and Buffers](@ref classical-messaging).
+
 ## Where To Go Next
 
 - Read [Discrete Event Simulator](@ref sim) for `query_wait` and

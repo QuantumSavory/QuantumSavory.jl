@@ -127,6 +127,21 @@ is the public extension point for selecting a small, immutable node context;
 do not place the protocol, network, registers, or messages themselves in log
 metadata.
 
+## Locality And Waiting
+
+`query_wait` and `querydelete_wait!` are the discrete-event side of the
+locality convention. They suspend the protocol until a tag or message is
+actually present, which is how classical latency shows up on the
+simulation clock.
+
+A process that instead indexes into a remote register and continues
+immediately has skipped that wait. That is valid for a centralized
+controller and misleading for a protocol that claims to be a node-local
+LOCC loop. Prefer `channel`, `messagebuffer`, `put!`, `query_wait`, and
+`querydelete_wait!` in the latter case. See
+[Classical Messaging and Buffers](@ref classical-messaging) and
+[Tagging and Querying](@ref tagging-and-querying).
+
 ## Common Wait Conditions
 
 The most important wait sources are:

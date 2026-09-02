@@ -53,6 +53,13 @@ cooperate with existing `ProtocolZoo` components, use the standard schemas in
 [Standard Protocol Tags](@ref standard-protocol-tags); those schemas are the
 interface that custom protocols share with the zoo.
 
+## Locality Is Not Checked For You
+
+Holding a `RegisterNet` is enough to touch any node. Tags and message
+buffers are the *recommended* way for node-local protocols to interact,
+not a compiler-enforced sandbox. Documented in more detail under
+[Classical Messaging and Buffers](@ref classical-messaging).
+
 ## Where To Go Next
 
 - Read [Discrete Event Simulator](@ref sim) for the execution model around
