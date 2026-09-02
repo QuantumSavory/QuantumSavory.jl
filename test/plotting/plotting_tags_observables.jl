@@ -94,3 +94,27 @@ tag!(net[3,1], Tag(:sometag, 10, 20))
 initialize!(net[2,1], X1)
 p = registernetplot_axis(fig[1,1], net, observables=[(X, ((1,2),)), (X⊗X⊗X, ((1,1),(2,2),(3,2)))], infocli=false)
 display(fig)
+
+##
+
+fig = Figure()
+net = RegisterNet([Register(2)])
+tag!(net[1,1], :slot_tag, 7)
+put!(messagebuffer(net[1]), :pending_message, 3)
+_, ax, p, obs = registernetplot_axis(fig[1,1], net, infocli=false, datainspector=false)
+qs_makie = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
+empty_net = RegisterNet([Register(1)])
+empty_slot_text = qs_makie.get_slots_vis_string([(empty_net[1], 1, 1)], 1)
+@test occursin("not tagged", empty_slot_text)
+@test occursin("message buffer empty", empty_slot_text)
+@test qs_makie.messagebuffer_vis_string(Register(1)) == "message buffer unavailable"
+slot_text = qs_makie.get_slots_vis_string([(net[1], 1, 1)], 1)
+@test occursin("slot_tag", slot_text)
+@test occursin("pending_message", slot_text)
+@test occursin("message buffer", slot_text)
+tag_text = qs_makie.get_tags_vis_string([(net[1], 1, 1, QuantumSavory.peektags(net[1,1]))], 1)
+@test occursin("slot_tag", tag_text)
+empty_tag_text = qs_makie.get_tags_vis_string([(empty_net[1], 1, 1, Any[])], 1)
+@test occursin("not tagged", empty_tag_text)
+@test length(p._extras[][:tag_coords_backref][]) == 1
+display(fig)
