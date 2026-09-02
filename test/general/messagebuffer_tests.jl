@@ -55,6 +55,17 @@ end
     )
 end
 
+@testset "put! convenience constructor is typed (issue 424)" begin
+    # Untyped `put!(::MessageBuffer, args...)` overlapped
+    # WorkerUtilities.put!(f, x::OrderedSynchronizer, i[, incr]).
+    # WorkerUtilities is not a dependency, so cover the replacement by
+    # constructing a tag from typed fields instead of wrapping Tag(...).
+    net = RegisterNet([Register(2)])
+    mb = messagebuffer(net[1])
+    put!(mb, :hello, 1, 2)
+    @test QuantumSavory.peektags(mb) == [Tag(:hello, 1, 2)]
+end
+
 @testset "future arrivals wake waiters that are already blocked" begin
     reg = Register(10)
     net = RegisterNet([reg])

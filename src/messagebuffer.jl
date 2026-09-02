@@ -70,7 +70,11 @@ function Base.put!(mb::MessageBuffer, tag)
     put_and_unlock_waiters(mb, nothing, convert(Tag,tag))
     nothing
 end
-Base.put!(mb::MessageBuffer, args...) = put!(mb, Tag(args...))
+# Convenience constructor `put!(mb, :hello, 1, 2)` must not be an untyped
+# vararg. `put!(::MessageBuffer, args...)` is ambiguous with
+# WorkerUtilities.put!(f, x::OrderedSynchronizer, i[, incr]) (issue #424).
+const _MessageBufferPutArg = Union{TagElementTypes, Float64, Tag}
+Base.put!(mb::MessageBuffer, args::_MessageBufferPutArg...) = put!(mb, Tag(args...))
 
 tag!(::MessageBuffer, args...) = throw(ArgumentError("MessageBuffer does not support `tag!`. Use `put!(::MessageBuffer, Tag(...))` instead."))
 
