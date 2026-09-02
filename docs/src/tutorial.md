@@ -8,6 +8,7 @@ come back here for focused follow-up topics.
 ## Current Tutorials
 
 - [Build a Network from a Dataset](tutorial/dataset_network.md)
+- [Send a Qubit Through a Quantum Channel](tutorial/quantum_channel.md)
 - [Measure and Remove Quantum Systems](tutorial/project_traceout.md)
 - [Qumode-Qubit teleportation through a homodyne measurement](tutorial/homodyne_teleport.md)
 - [Custom Swapper Protocol](tutorial/myswapperprot.md)

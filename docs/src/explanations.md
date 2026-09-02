@@ -17,6 +17,8 @@ Explanation pages answer questions such as:
 - How does the symbolic frontend stay backend-agnostic without hiding modeling
   limits?
 - How are classical control, metadata tags, and protocols composed?
+- How does a quantum channel move a slot, and how is that different from
+  classical forwarding?
 - When should one backend or modeling approach be preferred over another?
 
 ## Suggested Reading Order
@@ -32,10 +34,11 @@ Explanation pages answer questions such as:
 7. [Symbolic Frontend](@ref symbolic-frontend)
 8. [Metadata and Protocol Composition](@ref metadata-plane)
 9. [Classical Messaging and Buffers](@ref classical-messaging)
-10. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
-11. [Properties](@ref)
-12. [Background Noise Processes](@ref)
-13. [Discrete Event Simulator](@ref sim)
+10. [Quantum Channels](@ref quantum-channels)
+11. [Zoos as Composable Building Blocks](@ref zoos-building-blocks)
+12. [Properties](@ref)
+13. [Background Noise Processes](@ref)
+14. [Discrete Event Simulator](@ref sim)
 
 ## Relationship To Other Sections
 
