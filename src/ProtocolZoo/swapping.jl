@@ -96,6 +96,16 @@ function _enforce_history_cap!(slot::RegRef, max_history_per_slot::Union{Int,Not
     return nothing
 end
 
+"""
+    (prot::SwapperProt)()
+
+Run the swapper as a `ConcurrentSim` resumable process.
+
+```julia
+swapper = SwapperProt(net, node)
+@process swapper()
+```
+"""
 @resumable function (prot::SwapperProt)()
     rounds = prot.rounds
     round = 1

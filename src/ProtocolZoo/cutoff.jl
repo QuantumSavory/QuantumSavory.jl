@@ -58,6 +58,16 @@ function _enforce_delete_cap!(slot::RegRef, node::Int, max_delete_per_slot::Unio
     return nothing
 end
 
+"""
+    (prot::CutoffProt)()
+
+Run the cutoff protocol as a `ConcurrentSim` resumable process.
+
+```julia
+cutoff = CutoffProt(net, node)
+@process cutoff()
+```
+"""
 @resumable function (prot::CutoffProt)()
     reg = prot.net[prot.node]
     for slot in reg

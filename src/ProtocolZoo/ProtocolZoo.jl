@@ -358,6 +358,18 @@ EntanglerProt(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...) = EntanglerPr
 
 #TODO """Convenience constructor for specifying `fidelity` of generation instead of success probability and time"""
 
+"""
+    (prot::EntanglerProt)()
+
+Run the entangler as a `ConcurrentSim` resumable process.
+
+Protocol structs are callable. Construct one, then schedule it with `@process`:
+
+```julia
+eprot = EntanglerProt(net, nodeA, nodeB)
+@process eprot()
+```
+"""
 @resumable function (prot::EntanglerProt)()
     rounds = prot.rounds
     round = 1
@@ -495,6 +507,16 @@ protocol_catalog_metadata(::Type{EntanglementTracker}) = (
 
 EntanglementTracker(net::RegisterNet, node::Int) = EntanglementTracker(get_time_tracker(net), net, node)
 
+"""
+    (prot::EntanglementTracker)()
+
+Run the tracker as a `ConcurrentSim` resumable process.
+
+```julia
+tracker = EntanglementTracker(net, node)
+@process tracker()
+```
+"""
 @resumable function (prot::EntanglementTracker)()
     nodereg = prot.net[prot.node]
     mb = messagebuffer(prot.net, prot.node)
@@ -754,6 +776,16 @@ end
 
 permits_virtual_edge(::Type{EntanglementConsumer}) = true
 
+"""
+    (prot::EntanglementConsumer)()
+
+Run the consumer as a `ConcurrentSim` resumable process.
+
+```julia
+consumer = EntanglementConsumer(net, nodeA, nodeB)
+@process consumer()
+```
+"""
 @resumable function (prot::EntanglementConsumer)()
     regA = prot.net[prot.nodeA]
     regB = prot.net[prot.nodeB]
