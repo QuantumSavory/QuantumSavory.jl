@@ -97,6 +97,12 @@ global schedulers that are allowed to inspect the whole network immediately.
 The framework therefore provides the communication abstractions needed for
 localized protocol design, but it does not forbid other architectural choices.
 
+For a protocol that *is* meant to be distributed LOCC, prefer `channel`,
+`messagebuffer`, `put!`, `query_wait`, and `querydelete_wait!`, and keep
+register `query` / `apply!` / `tag!` on `net[local_node]`. The longer
+discussion, including what is intentionally not checked, is in
+[Locality by Convention](@ref locality-convention).
+
 ## Why This Matters For Composability
 
 This transport layer is what makes the metadata plane practical. Protocols can
@@ -115,5 +121,7 @@ graph of callbacks and explicit peer handles.
   level view of why this control style is useful.
 - Read [Tag and Query API](tag_query.md) for the matching and consumption
   primitives used on buffers.
+- Read [Locality by Convention](@ref locality-convention) for the local vs
+  centralized-controller distinction.
 - Read [Discrete Event Simulator](@ref sim) for the waiting side of message
   handling.

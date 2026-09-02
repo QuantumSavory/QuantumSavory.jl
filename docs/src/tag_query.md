@@ -106,6 +106,12 @@ For message buffers:
 If you want to wait until a match exists, use `query_wait` or
 `querydelete_wait!` from the discrete-event layer.
 
+These wait helpers, together with `channel`, `messagebuffer`, and `put!`,
+are the preferred tools for locality-respecting protocol interaction.
+Direct `net[remote]` access is still allowed: locality is a convention,
+not a Julia-level check. See [Locality by Convention](@ref
+locality-convention).
+
 ## Consuming Register Tags In Protocols
 
 Register query results are snapshots. They include a tag id and a slot, but
@@ -191,6 +197,8 @@ QuantumSavory.queryall
 
 ## Where To Go Next
 
+- Read [Locality by Convention](@ref locality-convention) for when to
+  stay on local registers plus classical channels.
 - Read [Discrete Event Simulator](@ref sim) for `query_wait` and
   `querydelete_wait!`.
 - Read [Standard Protocol Tags](@ref standard-protocol-tags) for the typed tag

@@ -168,6 +168,16 @@ same event system.
 That matters because concurrency control is not a separate concern in a network
 simulation. It directly changes which quantum resources are available and when.
 
+## Locality Is Still A Convention
+
+A `@resumable` protocol that holds the whole `RegisterNet` can index any
+vertex. Waiting on `querydelete_wait!` or `onchange(messagebuffer(net,
+node))` does not by itself prove the protocol is local; it only proves it
+waited on *some* event. Stay on `net[node]` for register operations and use
+`channel` / `messagebuffer` for remote coordination when the protocol is
+meant to be distributed. See [Locality by Convention](@ref
+locality-convention).
+
 ## Where The Metadata Plane Fits
 
 Discrete-event execution and the metadata plane are designed to work together.
@@ -180,6 +190,8 @@ internal state machine.
 
 ## Where To Go Next
 
+- Read [Locality by Convention](@ref locality-convention) for local vs
+  centralized protocol style.
 - Read [Metadata and Protocol Composition](@ref metadata-plane) for the control
   plane built on top of these waits.
 - Read [Tag and Query API](tag_query.md) for the concrete query and wait

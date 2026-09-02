@@ -11,6 +11,7 @@ come back here for focused follow-up topics.
 - [Measure and Remove Quantum Systems](tutorial/project_traceout.md)
 - [Qumode-Qubit teleportation through a homodyne measurement](tutorial/homodyne_teleport.md)
 - [Custom Swapper Protocol](tutorial/myswapperprot.md)
+- [Locality-Respecting Protocols](tutorial/locality.md)
 - [State Explorer](tutorial/state_explorer.md)
 - [Gate Duration](tutorial/noninstantgate.md)
 
