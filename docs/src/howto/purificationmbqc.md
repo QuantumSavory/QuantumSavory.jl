@@ -77,9 +77,7 @@ julia --project=examples examples/purificationMBQC/plots.jl
 
 It compares the simulated acceptance rate with
 ``P_\mathrm{accept}=(1+3p^4)/4``, where ``p=(4F-1)/3``, and plots the output
-fidelity. Set `QS_TESTRUN=true` for a shorter sweep. The plot is saved as
-`purificationMBQC-plots.png` in the current directory. The sweep does not set a
-random seed, so its empirical points vary between runs.
+fidelity.
 
 ## Current Assumptions
 

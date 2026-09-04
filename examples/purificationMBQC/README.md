@@ -42,8 +42,7 @@ julia --project=examples examples/purificationMBQC/plots.jl
 ```
 
 Set `QS_TESTRUN=true` before either command for a shorter sweep. The plot script
-saves `purificationMBQC-plots.png` in the current directory. The sweep does not
-set a random seed, so its empirical points vary between runs.
+saves `purificationMBQC-plots.png` in the current directory.
 
 The order of resource-state preparation and long-range pair generation is a
 choice made by this example. Different hardware may use a different order. The
