@@ -33,21 +33,21 @@ for the resource state.
 ## Protocol
 
 1. **Prepare the resource states.** QuantumClifford maps the stabilizer resource
-   state to a graph state and local Clifford corrections. [`graph_builder`](@ref)
-   groups graph edges that do not share a node. [`GraphStateConstructor`](@ref)
-   creates each group in parallel and uses `Fusion` to move it into storage.
-   Alice and Bob run this process independently. [`GraphToResource`](@ref) then
-   applies the local corrections.
+   state to a graph state and local Clifford corrections. `graph_builder`
+   groups graph edges that do not share a node. `GraphStateConstructor` creates
+   each group in parallel and uses `Fusion` to move it into storage. Alice and
+   Bob run this process independently. `GraphToResource` then applies the local
+   corrections.
 2. **Generate the noisy pairs.** [`EntanglerProt`](@ref) creates four noisy Bell
    pairs between matching Alice and Bob communication qubits.
-3. **Measure the pairs.** [`PurifierBellMeasurements`](@ref) Bell-measures each
-   noisy pair half with its resource-state qubit. It packs the `XX` and `ZZ`
-   outcomes into two integers, stores the local result as a tag, and sends the
-   same result to the other side.
-4. **Check the syndrome.** [`MBQCPurificationTracker`](@ref) waits for the local
-   tag and the remote message. It combines the outcomes and computes the CSS
-   syndrome. A zero syndrome is accepted. Bob applies the Pauli X/Z
-   corrections, and both sides mark the two outputs with
+3. **Measure the pairs.** `PurifierBellMeasurements` Bell-measures each noisy
+   pair half with its resource-state qubit. It packs the `XX` and `ZZ` outcomes
+   into two integers, stores the local result as a tag, and sends the same
+   result to the other side.
+4. **Check the syndrome.** `MBQCPurificationTracker` waits for the local tag and
+   the remote message. It combines the outcomes and computes the CSS syndrome.
+   A zero syndrome is accepted. Bob applies the Pauli X/Z corrections, and both
+   sides mark the two outputs with
    [`PurifiedEntanglementCounterpart`](@ref). On failure, both sides discard the
    qubits used by that attempt.
 
