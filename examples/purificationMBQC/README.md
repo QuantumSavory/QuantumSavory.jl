@@ -1,28 +1,55 @@
 # MBQC-Based Entanglement Purification
 
-This example demonstrates measurement-based quantum computing (MBQC) entanglement purification, implementing the protocol from ["Measurement-Based Entanglement Distillation and Constant-Rate Quantum Repeaters over Arbitrary Distances"](https://journals.aps.org/prl/abstract/10.1103/2bp8-cdxc).
+This is the runnable measurement-based quantum computing (MBQC) purification
+example from the [QuantumSavory paper](https://arxiv.org/abs/2512.16752). It
+implements the protocol in ["Measurement-Based Entanglement Distillation and
+Constant-Rate Quantum Repeaters over Arbitrary
+Distances"](https://journals.aps.org/prl/abstract/10.1103/2bp8-cdxc).
 
-The protocol uses a [n, k, d] CSS code to distill k high-fidelity Bell pairs from n noisy Bell pairs through the following steps:
+The protocol uses a `[[n,k,d]]` CSS code. Alice and Bob each prepare an
+`(n+k)`-qubit resource state. They consume `n` noisy Bell pairs and, when the
+syndrome check passes, keep `k` purified pairs. Each node has a communication
+qubit for entanglement generation and a storage qubit for the resource state.
 
-1. **Graph state construction**: Build graph states on both Alice's and Bob's sides using parallel entanglement generation and fusion (`GraphStateConstructor`);
-2. **Resource state preparation**: Convert graph states to resource states via local Clifford corrections (`GraphToResource`);
-3. **Bell pair distribution**: Distribute noisy entangled pairs between Alice and Bob (`EntanglerProt`);
-4. **Purification**: Perform Bell measurements and syndrome-based error detection to identify successfully purified pairs (`PurifierBellMeasurements`, `MBQCPurificationTracker`).
+The simulation has four main steps:
 
-The `full_purification_example.jl` file runs the complete pipeline and verifies the output fidelity of the purified pairs using a [4, 2, 2] code. It also sweeps over a range of input fidelities, and `plots.jl` graphs the success probability and output fidelity against the input fidelity.
+1. **Prepare the resource states.** `GraphStateConstructor` builds one graph
+   state on each side. It creates non-overlapping edges in parallel and fuses
+   them into the storage qubits. `GraphToResource` then applies the local
+   Clifford corrections.
+2. **Generate the noisy pairs.** `EntanglerProt` creates `n` shared pairs in
+   the communication qubits.
+3. **Measure the pairs.** `PurifierBellMeasurements` Bell-measures each noisy
+   pair half with the matching resource-state qubit. It packs the `XX` and
+   `ZZ` outcomes and sends them to the other side.
+4. **Check the syndrome.** `MBQCPurificationTracker` combines the local and
+   remote outcomes. A zero syndrome is accepted. Bob applies the Pauli X/Z
+   corrections, and both sides tag the `k` output pairs. On failure, the
+   protocol discards the involved qubits.
 
-Note that the ordering of steps shown in the example (e.g. long-range entanglement generation/graph state generation) is somewhat arbitrary and may vary depending on hardware constraints.
+The example uses the `[[4,2,2]]` code, so each side has six nodes: four input
+nodes and two output nodes. `full_purification_example.jl` first checks perfect
+input pairs. It then sweeps over noisy Werner states and records the acceptance
+rate and the output fidelity conditioned on acceptance. For input fidelity
+`F`, it compares the acceptance rate with
+`P_accept = (1 + 3p^4) / 4`, where `p = (4F - 1) / 3`.
 
-All protocols used are from `QuantumSavory.ProtocolZoo`.
+Run the example from the repository root:
 
-## Success Probability Analysis
+```sh
+julia --project=examples examples/purificationMBQC/full_purification_example.jl
+julia --project=examples examples/purificationMBQC/plots.jl
+```
 
-For the [4,2,2] code with depolarizing parameter `p`, the success probability follows from enumerating all 4-pair Pauli error configurations and keeping those with even X- and Z-parity. With `a = (1+3p)/4` and `b = (1-p)/4`, the five accepted symmetry classes are:
+Set `QS_TESTRUN=true` before either command for a shorter sweep. The plot script
+saves `purificationMBQC-plots.png` in the current directory.
 
-- **IIII**: `a⁴`
-- **Two identical non-identity errors** (e.g. XXII, ZZII, YYII): `18a²b²`
-- **Two pairs of different errors** (e.g. XXZZ, XXYY, ZZYY): `18b⁴`
-- **All four errors identical** (e.g. XXXX, ZZZZ, YYYY): `3b⁴`
-- **One each of I, X, Y, Z**: `24ab³`
+The order of resource-state preparation and long-range pair generation is a
+choice made by this example. Different hardware may use a different order. The
+current tracker expects consecutive node numbers on each side, with the chief
+node first and matching layouts. It packs at most 63 measurement results into
+an integer.
 
-Summing gives `P_succ = a⁴ + 18a²b² + 24ab³ + 21b⁴ = (1 + 3p⁴) / 4`.
+See the
+[full How-To guide](https://qs.quantumsavory.org/dev/howto/purificationmbqc/)
+for more detail.
