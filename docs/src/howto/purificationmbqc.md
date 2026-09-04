@@ -30,6 +30,26 @@ hold the code qubits and the last two hold the outputs. Every node has two
 slots: a communication qubit for entanglement generation and a storage qubit
 for the resource state.
 
+## Workflow At A Glance
+
+Alice and Bob first prepare their local resource states. They then create four
+shared noisy Bell pairs and measure each pair together with the matching
+resource-state qubit. Both sides exchange their measurement results and use
+them to compute the syndrome. A zero syndrome keeps the two output pairs, and
+Bob applies the required Pauli-frame correction. A nonzero syndrome discards
+the attempt so the protocol can start again.
+
+![Sequence of local resource preparation, shared-pair generation, Bell measurements, result exchange, syndrome checking, correction, and restart](../assets/paper_figures/mbqc_sequence.png)
+
+The diagram below shows the physical layout for the `[[4,2,2]]` example. Orange
+circles are communication slots, and blue circles are storage slots. Solid
+lines show each local resource state. Dotted lines show the four noisy Bell
+pairs shared by Alice and Bob. Each green box marks a Bell measurement between
+a communication slot and its local storage slot. Nodes 5 and 6 hold the two
+output pairs when purification succeeds.
+
+![Alice and Bob each have six two-slot nodes; local resource states connect storage slots, four noisy Bell pairs connect communication slots, and green boxes mark local Bell measurements](../assets/paper_figures/mbqc_resource_overview.png)
+
 ## Protocol
 
 1. **Prepare the resource states.** QuantumClifford maps the stabilizer resource
