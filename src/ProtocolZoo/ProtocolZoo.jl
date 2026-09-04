@@ -19,7 +19,7 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
-    protocol_log_context,
+    protocol_log_context, EntanglementConsumerLog,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
     EntanglementID, NO_ENTANGLEMENT_ID, fresh_entanglement_id, combine_entanglement_ids,
@@ -929,5 +929,6 @@ _protocol_nodes(prot::MBQCEntanglementDistillation.MBQCPurificationTracker) =
     Tuple(prot.nodes)
 
 include("show.jl")
+include("consumer_log.jl")
 
 end # module
