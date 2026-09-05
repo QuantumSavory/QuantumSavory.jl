@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Add line links, line numbers, and API reference tooltips to documentation code blocks.
+- Add line links, line numbers, and API reference tooltips to documentation code blocks,
+  with docstring quality checks during documentation builds.
 
 ## v0.8.0 - 2026-09-05
 
