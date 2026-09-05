@@ -378,8 +378,8 @@ end
         mX = project_traceout!(_x_slot, X)
         mZ = project_traceout!(_z_slot, Z)
 
-        push!(s, mX - 1)  # Convert from {1,2} to {0,1}
-        push!(t, mZ - 1)
+        push!(s, Int(mX == -1))
+        push!(t, Int(mZ == -1))
     end
 
     for slot in slots

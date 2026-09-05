@@ -8,9 +8,9 @@ check the state that remains after each measurement.
 onto a measurement outcome. This projection changes any system that is
 entangled with it. Then, it removes the measured system from the register slot.
 
-For a discrete measurement, the function returns a one-based index into the
-measurement basis. The index is not an eigenvalue. A homodyne measurement
-returns quadrature data.
+For an explicit discrete basis, the function returns a one-based basis index.
+For symbolic operators like `X`, `Y`, or `Z`, it returns the eigenvalue, such
+as `1` or `-1`. A homodyne measurement returns a real quadrature value.
 
 The first few examples use the default `QuantumOpticsRepr()`. The final
 homodyne example selects `GabsRepr` explicitly.
@@ -28,7 +28,7 @@ bell = (Z1 ⊗ Z1 + Z2 ⊗ Z2) / sqrt(2)
 initialize!(qubits[1:2], bell)
 
 first_outcome = project_traceout!(qubits[1], Z)
-partner_state = (Z1, Z2)[first_outcome]
+partner_state = first_outcome==1 ? Z1 : Z2
 partner_fidelity = observable(qubits[2], SProjector(partner_state))
 second_outcome = project_traceout!(qubits[2], Z)
 
@@ -39,13 +39,13 @@ second_outcome = project_traceout!(qubits[2], Z)
 )
 ```
 
-Each outcome is either `1` or `2`. The two values are always equal because the
+Each outcome is either `1` or `-1`. The two values are always equal because the
 Bell state has equal ``Z``-basis results. The projector observable checks that
 the second qubit is in the state selected by the first outcome. Both slots are
 empty after the second measurement.
 
-You can use `X` or `Y` in the same way. Each operator selects its own pair of
-eigenstates.
+You can use `X` or `Y` in the same way. Their eigenstate and eigenvalue order is
+`(X1, X2)` with `(1, -1)`, and `(Y1, Y2)` with `(1, -1)`.
 
 For `CliffordRepr`, symbolic `X`, `Y`, and `Z` are the currently supported
 measurement bases. The explicit basis-vector form in the next section is
@@ -79,6 +79,17 @@ correlation without requiring either value.
 
 Use this form when you need direct control of the basis order. The basis states
 must form a complete orthonormal basis for the measured system.
+
+To return application-specific labels, pass an equally long tuple or vector of
+values. Values may repeat and may have any element type.
+
+```@example project_traceout
+labeled_qubit = Register(1)
+initialize!(labeled_qubit[1], Z2)
+project_traceout!(labeled_qubit[1], (Z1, Z2), (:bright, 2//3))
+```
+
+This call returns `2//3`, which is the value aligned with basis index `2`.
 
 ## Measure photon number in a qumode
 
@@ -122,11 +133,11 @@ observable, but it is not currently available as the basis argument of
 
 ## Measure a continuous quadrature
 
-A homodyne measurement returns quadrature data. Use `0.0` as the angle for the
-``x`` quadrature and `pi / 2` for the ``p`` quadrature. This example uses
-`GabsRepr`, which samples a continuous Gaussian phase-space result. With
-`QuantumOpticsRepr`, due to numerical limitations, homodyne measurement instead samples the finite spectrum
-of the quadrature in the truncated Fock basis.
+`HomodyneMeasurement(θ)` returns the real quadrature
+``q_\theta=x\cos\theta+p\sin\theta``, where ``\theta`` is in radians. Use
+`0.0` for the ``x`` quadrature and `pi / 2` for the ``p`` quadrature. An ideal
+outcome ``q_\theta`` applies the projector
+``|q_\theta;\theta\rangle\langle q_\theta;\theta|`` on the measured mode.
 
 The measured coherent state and the remaining vacuum state are independent in
 this small example. The homodyne result is random, but the remaining mode must
@@ -141,7 +152,7 @@ initialize!(modes[1:2], CoherentState(0.3 + 0.2im) ⊗ F0)
 
 result = project_traceout!(
     modes[1],
-    HomodyneMeasurement([0.0]; squeeze = 1e-12),
+    HomodyneMeasurement(0.0),
 )
 
 # GabsRepr does not yet support `observable`. Convert a copy for this check.
@@ -149,8 +160,6 @@ remaining_state = copy(QuantumSavory.stateof(modes[2]).state[])
 check_state = express(remaining_state, QuantumOpticsRepr())
 
 (
-    result_has_x_and_p = length(result) == 2,
-    measured_x_is_finite = isfinite(result[1]),
     measured_slot_is_empty = !isassigned(modes, 1),
     remaining_mode_is_vacuum = isapprox(
         real(observable(check_state, [1], N)),
@@ -160,26 +169,24 @@ check_state = express(remaining_state, QuantumOpticsRepr())
 )
 ```
 
-For one mode, the result contains ``x`` and ``p`` phase-space values. Index `1`
-is the measured ``x`` value in this example. For a ``p`` measurement, use angle
-`pi / 2` and read index `2`. The other value is the conjugate quadrature in the
-finite-squeezing approximation.
-
-The sampled ``x`` value can change between runs. The example checks only that
-the result has the expected form and contains a finite measured value. The
-final observable confirms that the independent second mode remains in the
-vacuum state. The conversion is only a check on a copy of the state. It does
-not change the register.
+Gabs implements the ideal projector with a fixed, finitely squeezed Gaussian
+approximation. It samples native ``x`` and ``p`` coordinates internally to
+update the remaining state, then returns only
+``x\cos\theta+p\sin\theta``.
+In ``\hbar=2`` units, the result has the same scale as
+QuantumOptics.
+QuantumOptics samples the finite spectrum of the quadrature
+matrix in its truncated Fock basis.
 
 ## What to carry forward
 
-- Pass `X`, `Y`, or `Z` for a qubit Pauli measurement.
+- Pass `X`, `Y`, or `Z` for a qubit Pauli measurement and receive `1` or `-1`.
 - With `QuantumOpticsRepr` or `QuantumMCRepr`, pass an ordered tuple or vector
   for an explicit discrete basis.
 - Use an explicit Fock basis for a discrete qumode measurement with these
   representations.
 - Pass `HomodyneMeasurement` for a qumode quadrature measurement.
-- Use the returned discrete index to select the matching basis state.
+- Use the returned index to select an explicit basis state.
 - Remember that the measured slot is empty after every successful call.
 
 For exact signatures, see the [Register Interface](../register_interface.md).

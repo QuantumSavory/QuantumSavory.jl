@@ -127,7 +127,7 @@ end
         end
         for i in 1:3
             zmeas = project_traceout!(net[1][i], X)
-            if zmeas==2 apply!(net[2][i], Z) end # Bob applies correction immediately after Alice's measurement (ftl)
+            if zmeas == -1 apply!(net[2][i], Z) end # Bob applies correction immediately after Alice's measurement (ftl)
         end
 
         return net

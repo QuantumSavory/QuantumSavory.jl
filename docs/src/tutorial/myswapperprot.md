@@ -230,7 +230,7 @@ same slot as entangled with the other endpoint.
     )
     @assert !isnothing(old_tag) "Endpoint $(node) did not have the expected old entanglement tag."
 
-    if correction == 2
+    if correction == -1
         if update_tag == :swap_update_z
             apply!(old_tag.slot, Z)
         elseif update_tag == :swap_update_x

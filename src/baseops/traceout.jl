@@ -119,35 +119,79 @@ function traceout!(refs::RegRef...)
 end
 
 """
+    project_traceout!(ref::RegRef, basis; time = nothing)
+    project_traceout!(reg::Register, i::Int, basis; time = nothing)
+    project_traceout!(ref::RegRef, basis, values; time = nothing)
+    project_traceout!(reg::Register, i::Int, basis, values; time = nothing)
+
 Perform a projective measurement on the given slot of the given register.
 
-`project_traceout!(reg, slot, [stateA, stateB])` performs a projective measurement,
-projecting on either `stateA` or `stateB`, returning the index of the subspace
-on which the projection happened. It assumes the list of possible states forms a basis
-for the Hilbert space. The Hilbert space of the register is automatically shrunk.
+An explicit tuple or vector of orthonormal basis states returns its one-based
+basis index. Passing a second tuple or vector, `values`, returns `values[index]`
+instead.
 
-A basis object can be specified on its own as well, e.g.
-`project_traceout!(reg, slot, basis)`.
+A symbolic operator like Pauli operators `X`, `Y`, and `Z` return their eigenvalues, e.g. `1` or `-1`.
 
-Discrete qubit backends return a one-based `Int` outcome. Homodyne measurements
-return quadrature data.
-Clifford qubit measurements currently support the symbolic `X`, `Y`, and `Z`
-bases.
+`HomodyneMeasurement(θ)`, where `θ` is in radians, returns the real measured
+quadrature `qθ = x*cos(θ) + p*sin(θ)`.
+
+Every successful call removes the measured subsystem and its back-reference.
+Clifford qubit measurements support the symbolic `X`, `Y`, and `Z` bases;
+explicit basis vectors are supported by QuantumOptics and QuantumMC.
 """
 function project_traceout! end
+
+_validate_project_traceout(state, i::Int, basis) = nothing
+
+function _validate_project_traceout_values(basis, values)
+    length(basis) == length(values) || throw(DimensionMismatch(
+        "Measurement basis and outcome values must have the same length."
+    ))
+end
+
+function project_traceout!(
+    state,
+    i::Int,
+    basis::Union{Tuple,AbstractVector},
+    values::Union{Tuple,AbstractVector},
+)
+    _validate_project_traceout_values(basis, values)
+    outcome, state = project_traceout!(state, i, basis)
+    values[outcome], state
+end
 
 function project_traceout!(reg::Register, i::Int, basis; time=nothing)
     project_traceout!(identity, reg, i, basis; time=time)
 end
 project_traceout!(r::RegRef, basis; time=nothing) = project_traceout!(r.reg, r.idx, basis; time)
 
+function project_traceout!(
+    reg::Register,
+    i::Int,
+    basis::Union{Tuple,AbstractVector},
+    values::Union{Tuple,AbstractVector};
+    time=nothing,
+)
+    _validate_project_traceout_values(basis, values)
+    project_traceout!(outcome -> values[outcome], reg, i, basis; time)
+end
+function project_traceout!(
+    r::RegRef,
+    basis::Union{Tuple,AbstractVector},
+    values::Union{Tuple,AbstractVector};
+    time=nothing,
+)
+    project_traceout!(r.reg, r.idx, basis, values; time)
+end
+
 function project_traceout!(f, reg::Register, i::Int, basis; time=nothing)
     stateref = reg.staterefs[i]
     isnothing(stateref) && throw(ArgumentError(
         "Cannot project and trace out an unassigned register slot."
     ))
-    !isnothing(time) && uptotime!([reg], [i], time)
     stateindex = reg.stateindices[i]
+    _validate_project_traceout(stateref.state[], stateindex, basis)
+    !isnothing(time) && uptotime!([reg], [i], time)
     j, stateref.state[] = project_traceout!(stateref.state[],stateindex,basis)
     removebackref!(stateref, stateindex)
     f(j)

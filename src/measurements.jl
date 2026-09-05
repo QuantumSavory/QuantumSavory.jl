@@ -1,40 +1,51 @@
 abstract type AbstractMeasurement end
 
-"""
-    HomodyneMeasurement(angles; squeeze = eps())
+@doc raw"""
+    HomodyneMeasurement(theta)
 
-Describe a homodyne measurement on one or more continuous-variable modes.
+Describe a homodyne measurement on a continuous-variable mode.
 
-`angles` gives the quadrature angle, in radians, for each measured mode.
-For example, `0.0` corresponds to an `x`-quadrature measurement and `pi/2`
-to a `p`-quadrature measurement. `squeeze` sets the finite-squeezing parameter
-used by Gaussian backends when approximating the ideal measurement.
+`theta` gives the quadrature angle in radians. For example, `0.0` corresponds
+to an `x`-quadrature measurement and `pi/2`
+to a `p`-quadrature measurement. In the default ``\hbar=2`` units, the
+measured observable is
 
-This is typically used together with [`project_traceout!`](@ref) on a
-continuous-variable (qmode) register slot.
+```math
+\hat q_\theta = e^{-i\theta}\hat a + e^{i\theta}\hat a^\dagger.
+```
 
-```jldoctest; setup = :(using QuantumSavory, Gabs), filter = [r"-?[0-9]+[.][0-9]+(?:e[+-]?[0-9]+)?" => s"0.0", r"(?m)^ +0[.]0\$" => s" 0.0"]
+For an outcome ``q_\theta``, the ideal measurement applies a projector on the
+following state:
+
+```math
+|q_\theta;\theta\rangle, \qquad
+\hat q_\theta |q_\theta;\theta\rangle =
+q_\theta |q_\theta;\theta\rangle.
+```
+
+This quadrature eigenstate is an ideal infinitely squeezed state: its measured
+quadrature has zero variance and its conjugate quadrature has unbounded
+variance. [`project_traceout!`](@ref) returns the real outcome ``q_\theta`` and
+removes the measured mode.
+
+Register-level [`project_traceout!`](@ref) accepts one qmode slot and one angle.
+
+```jldoctest; setup = :(using QuantumSavory, Gabs)
 julia> reg = Register([Qumode()], [GabsRepr(QuadBlockBasis)]);
 
 julia> initialize!(reg[1], CoherentState(0.3 + 0.2im));
 
-julia> project_traceout!(reg[1], HomodyneMeasurement([0.0]; squeeze = 1e-12))
-2-element Vector{Float64}:
- 0.3
- 0.2
-
-julia> isnothing(QuantumSavory.stateof(reg[1]))
-true
+julia> result = project_traceout!(reg[1], HomodyneMeasurement(0.0));
 ```
 """
 struct HomodyneMeasurement <: AbstractMeasurement
     angles::Vector{Real}
-    squeeze::Real
     cache::Dict{Any,Any}
 end
-HomodyneMeasurement(angles::Vector{<:Real}, squeeze::Real) =
-    HomodyneMeasurement(angles, squeeze, Dict{Any,Any}())
-HomodyneMeasurement(angles::Vector{<:Real}; squeeze = eps()) = HomodyneMeasurement(angles, squeeze)
-Base.show(io::IO, measurement::HomodyneMeasurement) = print(
-    io, "HomodyneMeasurement(", measurement.angles, ", ", measurement.squeeze, ")"
-)
+HomodyneMeasurement(theta::Real) = HomodyneMeasurement([theta])
+HomodyneMeasurement(angles::Vector{<:Real}) =
+    HomodyneMeasurement(angles, Dict{Any,Any}())
+function Base.show(io::IO, measurement::HomodyneMeasurement)
+    angle = length(measurement.angles) == 1 ? only(measurement.angles) : measurement.angles
+    print(io, "HomodyneMeasurement(", angle, ")")
+end

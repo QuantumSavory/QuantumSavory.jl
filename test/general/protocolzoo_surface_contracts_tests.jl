@@ -28,9 +28,9 @@ end
             "Was entangled to 2.3",
         )
         assert_tag_surface_contract(
-            EntanglementUpdateX(2, 3, 4, 5, 6, 2),
-            Tag(EntanglementUpdateX, NO_ENTANGLEMENT_ID, NO_ENTANGLEMENT_ID, 2, 3, 4, 5, 6, 2),
-            "apply correction Z2",
+            EntanglementUpdateX(2, 3, 4, 5, 6, -1),
+            Tag(EntanglementUpdateX, NO_ENTANGLEMENT_ID, NO_ENTANGLEMENT_ID, 2, 3, 4, 5, 6, -1),
+            "apply correction Z-1",
         )
         assert_tag_surface_contract(
             EntanglementUpdateZ(2, 3, 4, 5, 6, 1),

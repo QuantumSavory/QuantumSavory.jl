@@ -22,7 +22,7 @@ function bell()
     initialize!(register[1:2], bell_state())
 
     first_outcome = project_traceout!(register[1], Z)
-    partner_state = (Z1, Z2)[first_outcome]
+    partner_state = (Z1, Z2)[1 + Int(first_outcome == -1)]
     partner_fidelity = real(observable(register[2], SProjector(partner_state)))
     second_outcome = project_traceout!(register[2], Z)
 
@@ -43,7 +43,9 @@ function clifford()
     check(isapprox(real(observable(register[1:2], Z ⊗ Z)), 1; atol=1e-12), "Clifford Bell observable failed")
 
     first_outcome = project_traceout!(register[1], Z)
-    partner_fidelity = real(observable(register[2], SProjector((Z1, Z2)[first_outcome])))
+    partner_fidelity = real(observable(
+        register[2], SProjector((Z1, Z2)[1 + Int(first_outcome == -1)])
+    ))
     second_outcome = project_traceout!(register[2], Z)
     check(first_outcome == second_outcome, "Clifford Bell measurements did not match")
     check(isapprox(partner_fidelity, 1; atol=1e-12), "Clifford Bell partner check failed")
@@ -147,7 +149,9 @@ function quantummc()
     initialize!(register[1:2], StabilizerState("XX ZZ"))
     first_outcome = project_traceout!(register[1], Z)
     check(!isassigned(register, 1) && isassigned(register, 2), "QuantumMC measurement did not trace out one qubit")
-    partner_fidelity = real(observable(register[2], SProjector((Z1, Z2)[first_outcome])))
+    partner_fidelity = real(observable(
+        register[2], SProjector((Z1, Z2)[1 + Int(first_outcome == -1)])
+    ))
     check(isapprox(partner_fidelity, 1; atol=1e-12), "QuantumMC measurement or traceout failed")
     return partner_fidelity
 end
@@ -157,10 +161,10 @@ function gabs()
     representation = GabsRepr(QuadBlockBasis)
     register = Register(fill(Qumode(), 2), fill(representation, 2))
     initialize!(register[1:2], TwoSqueezedState(0.45))
-    result = project_traceout!(register[1], HomodyneMeasurement([0.0]; squeeze=1e-12))
-    check(length(result) == 2 && all(isfinite, result), "Gabs homodyne returned invalid quadrature data")
+    result = project_traceout!(register[1], HomodyneMeasurement(0.0))
+    check(result isa Real && isfinite(result), "Gabs homodyne returned an invalid quadrature")
     check(!isassigned(register, 1) && isassigned(register, 2), "Gabs homodyne did not trace out one mode")
-    return sum(result)
+    return result
 end
 
 const PRECOMPILE_BENCHMARKS = (

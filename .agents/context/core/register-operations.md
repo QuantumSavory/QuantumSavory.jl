@@ -19,12 +19,16 @@ advancement is operation-specific, not automatic:
 | `traceout!` | Does not advance time | Destructively removes requested subsystems |
 | `overwritetime!` | Writes the supplied value without evolution or monotonicity validation | Access-time metadata only; valid use remains nondecreasing |
 
-`project_traceout!` returns a one-based outcome index for the discrete projective
-backends. QuantumOptics accepts `Ket`/`Operator` states and symbolic or native basis
-vectors; `MCKet` preserves its wrapper when a ket remains. Clifford accepts a
-`MixedDestabilizer` with supported symbolic Pauli measurement bases. Gabs instead
-accepts `GaussianState` plus `HomodyneMeasurement` and returns the continuous homodyne
-result. Other combinations stop at dispatch. An unassigned slot throws
+`project_traceout!` returns a one-based index for an explicit tuple or vector of
+basis states. An explicit basis plus an equally long `values` tuple or vector returns
+`values[index]`.
+Symbolic `X`, `Y`, and `Z` return eigenvalues `1` or `-1`. QuantumOptics accepts
+`Ket`/`Operator` states and symbolic or native basis vectors; `MCKet` preserves its
+wrapper when a ket remains. Clifford accepts a `MixedDestabilizer` with supported
+symbolic Pauli measurement bases. Gabs instead accepts `GaussianState` plus
+`HomodyneMeasurement(θ)` and returns the real quadrature
+`qθ = x*cos(θ) + p*sin(θ)`. Other combinations stop at
+dispatch. An unassigned slot throws
 `ArgumentError("Cannot project and trace out an unassigned register slot.")`
 before time advancement. Clifford's supported symbolic Pauli bases are specifically
 `X`, `Y`, and `Z`; explicit basis vectors remain a QuantumOptics/QuantumMC feature.
@@ -49,7 +53,7 @@ with the time/noise reference.
 
 - **Source:** [`src/baseops/initialize.jl`](../../../src/baseops/initialize.jl), [`src/baseops/apply.jl`](../../../src/baseops/apply.jl), [`src/baseops/observable.jl`](../../../src/baseops/observable.jl), [`src/baseops/traceout.jl`](../../../src/baseops/traceout.jl), and [`src/baseops/uptotime.jl`](../../../src/baseops/uptotime.jl) — operation sequencing and grouping.
 - **Docs:** [`docs/src/register_interface.md`](../../../docs/src/register_interface.md) and [`docs/src/symbolic_frontend.md`](../../../docs/src/symbolic_frontend.md) — public operations and symbolic boundary.
-- **Test:** [`test/general/apply_tests.jl`](../../../test/general/apply_tests.jl), [`test/general/observable_tests.jl`](../../../test/general/observable_tests.jl), [`test/general/project_traceout_tests.jl`](../../../test/general/project_traceout_tests.jl), [`test/general/project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), and [`test/general/traceout_tests.jl`](../../../test/general/traceout_tests.jl) — executable behavior.
+- **Test:** [`test/general/apply_tests.jl`](../../../test/general/apply_tests.jl), [`test/general/observable_tests.jl`](../../../test/general/observable_tests.jl), [`test/general/project_traceout_tests.jl`](../../../test/general/project_traceout_tests.jl), [`test/general/project_traceout_gabs_homodyne_tests.jl`](../../../test/general/project_traceout_gabs_homodyne_tests.jl), [`test/general/project_traceout_quantumoptics_homodyne_tests.jl`](../../../test/general/project_traceout_quantumoptics_homodyne_tests.jl), and [`test/general/traceout_tests.jl`](../../../test/general/traceout_tests.jl) — executable behavior.
 
 ## Failure boundary
 
