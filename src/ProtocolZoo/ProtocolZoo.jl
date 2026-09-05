@@ -85,7 +85,7 @@ end
 """
     protocol_catalog_metadata(::Type{<:AbstractProtocol})
 
-Opt a protocol type into [`available_protocol_types`](@ref), to make it available to tools like QuantumSavory Studio.
+Opt a protocol type into [`available_protocol_types`](@ref), to make it available to tools like the QuantumSavory Studio GUI.
 
 Independent packages extend this method for their own public protocol types and return
 a named tuple with exactly these fields:

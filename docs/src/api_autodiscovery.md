@@ -2,8 +2,8 @@
 
 QuantumSavory provides runtime catalogs for tools, like GUIs, that need all the models and
 protocols available in the current Julia process. A primary consumer is the
-[QuantumSavory Studio](https://gui.quantumsavory.org), developed in the
-[WebQuantumSavory repository](https://github.com/QuantumSavory/WebQuantumSavory).
+[QuantumSavory Studio GUI](https://studio.quantumsavory.org), developed in the
+[studio repository](https://github.com/QuantumSavory/QuantumSavoryStudio).
 
 Load the `InteractiveUtils` and `REPL` standard libraries to activate these APIs:
 
