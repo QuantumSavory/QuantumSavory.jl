@@ -94,7 +94,7 @@ public available_background_types
 
 """Return the available public background types along with their documentation.
 
-Used to make a background available to tools like the GUI WebQuantumSavory.
+Used to make a background available to tools like QuantumSavory Studio.
 
 Concrete direct and indirect subtypes of [`AbstractBackground`](@ref) are discovered on
 each call. The defining binding of each type must be public. The `InteractiveUtils`
