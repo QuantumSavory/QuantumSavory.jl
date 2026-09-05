@@ -1,6 +1,6 @@
 # News
 
-## Unreleased
+## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
   orthonormal bases still return one-based indices; an explicit basis plus
