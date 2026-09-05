@@ -160,8 +160,6 @@ remaining_state = copy(QuantumSavory.stateof(modes[2]).state[])
 check_state = express(remaining_state, QuantumOpticsRepr())
 
 (
-    result_is_real = result isa Real,
-    measured_x_is_finite = isfinite(result),
     measured_slot_is_empty = !isassigned(modes, 1),
     remaining_mode_is_vacuum = isapprox(
         real(observable(check_state, [1], N)),
@@ -174,15 +172,11 @@ check_state = express(remaining_state, QuantumOpticsRepr())
 Gabs implements the ideal projector with a fixed, finitely squeezed Gaussian
 approximation. It samples native ``x`` and ``p`` coordinates internally to
 update the remaining state, then returns only
-``x\cos\theta+p\sin\theta``. The conjugate coordinate is not a homodyne
-outcome. In Gabs' default ``\hbar=2`` units, the result has the same scale as
-QuantumOptics. QuantumOptics samples the finite spectrum of the quadrature
+``x\cos\theta+p\sin\theta``.
+In ``\hbar=2`` units, the result has the same scale as
+QuantumOptics.
+QuantumOptics samples the finite spectrum of the quadrature
 matrix in its truncated Fock basis.
-
-The sampled ``x`` value can change between runs. The example checks only that
-the result is a finite real value. The final observable confirms that the
-independent second mode remains in the vacuum state. The conversion is only a
-check on a copy of the state. It does not change the register.
 
 ## What to carry forward
 

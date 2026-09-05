@@ -27,7 +27,7 @@ Symbolic `X`, `Y`, and `Z` return eigenvalues `1` or `-1`. QuantumOptics accepts
 wrapper when a ket remains. Clifford accepts a `MixedDestabilizer` with supported
 symbolic Pauli measurement bases. Gabs instead accepts `GaussianState` plus
 `HomodyneMeasurement([θ])` and returns the real quadrature
-`qθ = x*cos(θ) + p*sin(θ)`, where `θ` is in radians. Other combinations stop at
+`qθ = x*cos(θ) + p*sin(θ)`. Other combinations stop at
 dispatch. An unassigned slot throws
 `ArgumentError("Cannot project and trace out an unassigned register slot.")`
 before time advancement. Clifford's supported symbolic Pauli bases are specifically

@@ -128,17 +128,12 @@ Perform a projective measurement on the given slot of the given register.
 
 An explicit tuple or vector of orthonormal basis states returns its one-based
 basis index. Passing a second tuple or vector, `values`, returns `values[index]`
-instead. `basis` and `values` must have the same length; a mismatch throws
-`DimensionMismatch` before time advancement, sampling, or register mutation.
+instead.
 
-The symbolic Pauli operators `X`, `Y`, and `Z` return their eigenvalues `1` or
-`-1`, aligned respectively with `(X1, X2)`, `(Y1, Y2)`, and `(Z1, Z2)`.
-Callback overloads receive this normal result: an index for an explicit basis
-and an eigenvalue for a supported symbolic operator.
+A symbolic operator like Pauli operators `X`, `Y`, and `Z` return their eigenvalues, e.g. `1` or `-1`.
 
 `HomodyneMeasurement([θ])`, where `θ` is in radians, returns the real measured
-quadrature `qθ = x*cos(θ) + p*sin(θ)`. Register-level homodyne measurement
-accepts one slot and one angle.
+quadrature `qθ = x*cos(θ) + p*sin(θ)`.
 
 Every successful call removes the measured subsystem and its back-reference.
 Clifford qubit measurements support the symbolic `X`, `Y`, and `Z` bases;
