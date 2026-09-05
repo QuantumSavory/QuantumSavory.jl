@@ -69,7 +69,7 @@ end
 """
 $TYPEDEF
 
-A depolarization background.
+An amplitude-damping background.
 """
 @kwdef struct AmplitudeDamping <: AbstractBackground
     "The characteristic time of the amplitude damping process."
