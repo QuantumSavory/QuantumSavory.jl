@@ -1,5 +1,9 @@
 # News
 
+## Unreleased
+
+- Improve API docstring summaries and signatures.
+
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
