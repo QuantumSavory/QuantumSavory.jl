@@ -21,6 +21,19 @@ using REPL
         @test !isempty(QuantumSavory.constructor_metadata(entry.type))
     end
 
+    state_types = (
+        QuantumSavory.StatesZoo.BarrettKokBellPair,
+        QuantumSavory.StatesZoo.BarrettKokBellPairW,
+        QuantumSavory.StatesZoo.DepolarizedBellPair,
+        QuantumSavory.StatesZoo.Genqo.GenqoMultiplexedCascadedBellPairW,
+        QuantumSavory.StatesZoo.Genqo.GenqoUnheraldedSPDCBellPairW,
+    )
+    for state_type in state_types
+        metadata = QuantumSavory.constructor_metadata(state_type)
+        documented_fields = Set(entry.field for entry in metadata if !isempty(string(entry.doc)))
+        @test all(in(documented_fields), QuantumSavory.StatesZoo.stateparameters(state_type))
+    end
+
     for protocol in protocols
         @test all(parameter -> !isnothing(parameter.doc), protocol.parameters)
     end

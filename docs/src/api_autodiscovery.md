@@ -19,7 +19,8 @@ The public, non-exported functions
 `QuantumSavory.available_slot_types` and
 `QuantumSavory.available_background_types` return `(type, doc)` entries.
 `QuantumSavory.constructor_metadata(T)` returns `(field, type, doc)` entries and omits
-undocumented or underscore-prefixed fields.
+undocumented or underscore-prefixed fields. Types with convenience constructors that
+differ from their storage layout can specialize this metadata for those constructors.
 
 The type catalogs recursively discover concrete subtypes from every currently loaded
 package and retain usable parametric constructors. A type is included only when its
