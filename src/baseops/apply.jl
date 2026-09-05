@@ -1,4 +1,6 @@
 """
+$TYPEDSIGNATURES
+
 Apply a given operation on the given set of register slots.
 
 `apply!([regA, regB], [slot1, slot2], Gates.CNOT)` would apply a CNOT gate

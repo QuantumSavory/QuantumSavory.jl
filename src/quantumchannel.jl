@@ -1,4 +1,6 @@
 """
+$TYPEDEF
+
 Quantum channel for transmitting quantum states from one register to another.
 
 Delay and background noise processes are supported.

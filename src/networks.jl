@@ -120,6 +120,8 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
 end
 
 """
+$TYPEDSIGNATURES
+
 Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s and a graph.
 
 The `classical_delay` and `quantum_delay` keyword arguments each accept either a
@@ -156,7 +158,10 @@ empty_vmd(n) = [Dict{Symbol,Any}() for _ in 1:n]
 empty_emd()  = Dict{Tuple{Int,Int},Dict{Symbol,Any}}()
 empty_demd() = Dict{Pair{Int,Int},Dict{Symbol,Any}}()
 
-"""Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s, defaulting to a chain topology.
+"""
+$TYPEDSIGNATURES
+
+Construct a [`RegisterNet`](@ref) from a given list of [`Register`](@ref)s, defaulting to a chain topology.
 
 ```jldoctest
 julia> net = RegisterNet([Register(2), Register(4), Register(2)])
@@ -191,7 +196,10 @@ parentindex(r::Register) = r.netindex[]
 
 ## Channel accessors
 
-"""Get a handle to a classical channel between two registers.
+"""
+$TYPEDSIGNATURES
+
+Get a handle to a classical channel between two registers.
 
 Usually used for sending classical messages between registers.
 It can be used for receiving as well, but a more convenient choice is [`messagebuffer`](@ref),
@@ -217,7 +225,10 @@ function channel(net::RegisterNet, args...; permit_forward=false)
     return achannel(net, args..., Val{:C}(); permit_forward)
 end
 
-"""Get a handle to a quantum channel between two registers.
+"""
+$TYPEDSIGNATURES
+
+Get a handle to a quantum channel between two registers.
 
 ```jldoctest
 julia> net = RegisterNet([Register(2), Register(2), Register(2)]) # defaults to a chain topology

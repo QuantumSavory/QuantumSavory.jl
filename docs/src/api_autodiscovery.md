@@ -2,8 +2,8 @@
 
 QuantumSavory provides runtime catalogs for tools, like GUIs, that need all the models and
 protocols available in the current Julia process. A primary consumer is the
-[QuantumSavory Web GUI](https://gui.quantumsavory.org), developed in the
-[WebQuantumSavory repository](https://github.com/QuantumSavory/WebQuantumSavory).
+[QuantumSavory Studio GUI](https://studio.quantumsavory.org), developed in the
+[studio repository](https://github.com/QuantumSavory/QuantumSavoryStudio).
 
 Load the `InteractiveUtils` and `REPL` standard libraries to activate these APIs:
 
@@ -19,7 +19,8 @@ The public, non-exported functions
 `QuantumSavory.available_slot_types` and
 `QuantumSavory.available_background_types` return `(type, doc)` entries.
 `QuantumSavory.constructor_metadata(T)` returns `(field, type, doc)` entries and omits
-undocumented or underscore-prefixed fields.
+undocumented or underscore-prefixed fields. Types with convenience constructors that
+differ from their storage layout can specialize this metadata for those constructors.
 
 The type catalogs recursively discover concrete subtypes from every currently loaded
 package and retain usable parametric constructors. A type is included only when its

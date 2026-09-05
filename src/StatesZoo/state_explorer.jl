@@ -1,6 +1,9 @@
 # implemented in Makie extension
 
-"""An interactive explorer for two-qubit states. It returns a new figure.
+"""
+    stateexplorer(S)
+
+An interactive explorer for two-qubit states. It returns a new figure.
 
 Requires a Makie plotting backend to be imported.
 

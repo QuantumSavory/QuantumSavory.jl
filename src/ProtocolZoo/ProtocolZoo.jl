@@ -85,7 +85,7 @@ end
 """
     protocol_catalog_metadata(::Type{<:AbstractProtocol})
 
-Opt a protocol type into [`available_protocol_types`](@ref), to make it available to tools like the GUI WebQuantumSavory.
+Opt a protocol type into [`available_protocol_types`](@ref), to make it available to tools like the QuantumSavory Studio GUI.
 
 Independent packages extend this method for their own public protocol types and return
 a named tuple with exactly these fields:
@@ -105,7 +105,7 @@ function protocol_catalog_metadata end
 
 """Return metadata for available protocol types.
 
-Used to make a protocol available to tools like the GUI WebQuantumSavory.
+Used to make a protocol available to tools like QuantumSavory Studio.
 
 The result is sorted by qualified type name. Each entry contains `type`, `doc`,
 `nodeargs`, `attachment`, `attachment_fields`, `parameters`, and
@@ -192,8 +192,10 @@ Tag(tag::EntanglementHistory) = Tag(EntanglementHistory, tag.remote_node, tag.re
 """
 $TYPEDEF
 
+This tag updates entanglement information after a remote swap.
+
 This tag arrives as a message from a remote node to which the current node was entangled to update the
-entanglement information and apply an `X` correction after the remote node performs an entanglement swap.
+entanglement information and apply a `Z` correction after the remote node performs an entanglement swap.
 
 $TYPEDFIELDS
 """
@@ -222,8 +224,10 @@ Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.target_pair_id, tag
 """
 $TYPEDEF
 
+This tag updates entanglement information after a remote swap.
+
 This tag arrives as a message from a remote node to which the current node was entangled to update the
-entanglement information and apply a `Z` correction after the remote node performs an entanglement swap.
+entanglement information and apply an `X` correction after the remote node performs an entanglement swap.
 
 $TYPEDFIELDS
 """
@@ -345,7 +349,11 @@ protocol_catalog_metadata(::Type{EntanglerProt}) = (
     required_fields = (),
 )
 
-"""Convenience constructor for specifying `rate` of generation instead of success probability and time"""
+"""
+$TYPEDSIGNATURES
+
+Convenience constructor for specifying `rate` of generation instead of success probability and time
+"""
 function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
     if isnothing(rate)
         return EntanglerProt(;sim, net, nodeA, nodeB, kwargs...)
