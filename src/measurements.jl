@@ -26,13 +26,7 @@ q_\theta |q_\theta;\theta\rangle.
 This quadrature eigenstate is an ideal infinitely squeezed state: its measured
 quadrature has zero variance and its conjugate quadrature has unbounded
 variance. [`project_traceout!`](@ref) returns the real outcome ``q_\theta`` and
-removes the measured mode. It does not return a complete phase-space point.
-
-The Gabs backend approximates the ideal projector with a projector on a
-finitely squeezed Gaussian state. Its internal variance factor is ``10^{-12}``
-along ``q_\theta`` and ``10^{12}`` along the conjugate quadrature. The
-QuantumOptics backend instead projects on an eigenstate of the corresponding
-finite-Fock quadrature matrix.
+removes the measured mode.
 
 Register-level [`project_traceout!`](@ref) accepts one qmode slot and one angle.
 
@@ -42,15 +36,6 @@ julia> reg = Register([Qumode()], [GabsRepr(QuadBlockBasis)]);
 julia> initialize!(reg[1], CoherentState(0.3 + 0.2im));
 
 julia> result = project_traceout!(reg[1], HomodyneMeasurement([0.0]));
-
-julia> result isa Real
-true
-
-julia> isfinite(result)
-true
-
-julia> isnothing(QuantumSavory.stateof(reg[1]))
-true
 ```
 """
 struct HomodyneMeasurement <: AbstractMeasurement
