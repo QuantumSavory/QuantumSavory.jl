@@ -1,9 +1,5 @@
 # News
 
-## Unreleased
-
-- Improve API docstring summaries and signatures.
-
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
@@ -19,6 +15,7 @@
 - QTCP `LinkController` can now consume pairs from an independent `EntanglerProt` based on reciprocal `(remote_node, remote_slot, pair_id)` tags being present.
 - `constructor_metadata(StatesZoo.BarrettKokBellPairW)` now describes its public
   convenience-constructor parameters rather than its internal wrapper field.
+- Improve API docstring summaries and signatures.
 
 ## v0.7.2 - 2026-08-15
 
