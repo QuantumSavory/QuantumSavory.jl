@@ -219,7 +219,7 @@ If `basis` is a `Vector` or `Tuple` of `Symbolic` basis states, call `express` t
 measurement bases. Explicit basis vectors are supported by `QuantumOpticsRepr`
 and `QuantumMCRepr`, not by the Clifford backend.
 
-`HomodyneMeasurement([θ])`, where `θ` is in radians, returns the real measured
+`HomodyneMeasurement(θ)`, where `θ` is in radians, returns the real measured
 quadrature `qθ = x*cos(θ) + p*sin(θ)`. An ideal outcome applies the projector
 ``|q_\theta;\theta\rangle\langle q_\theta;\theta|``. Register-level homodyne
 measurement accepts one slot and one angle.
@@ -239,7 +239,7 @@ flowchart TB
   F1["<code>eigvecs(basis), eigvals(basis)</code>"]
   E2["<code>basis::Base.AbstractVecOrTuple{<:Symbolic{AbstractKet}}</code>"]
   F2["<code>express.(basis)</code>"]
-  E3["<code>HomodyneMeasurement([θ])</code>"]
+  E3["<code>HomodyneMeasurement(θ)</code>"]
   G([Dispatch on state to low level implementation<br>in an independent library])
   A --> B --> TOP
   TOP --> E1 --> F1 --> G

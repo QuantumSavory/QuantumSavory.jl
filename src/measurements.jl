@@ -1,12 +1,12 @@
 abstract type AbstractMeasurement end
 
 @doc raw"""
-    HomodyneMeasurement(angles)
+    HomodyneMeasurement(theta)
 
 Describe a homodyne measurement on a continuous-variable mode.
 
-`angles` gives the quadrature angle, in radians, for each measured mode.
-For example, `0.0` corresponds to an `x`-quadrature measurement and `pi/2`
+`theta` gives the quadrature angle in radians. For example, `0.0` corresponds
+to an `x`-quadrature measurement and `pi/2`
 to a `p`-quadrature measurement. In the default ``\hbar=2`` units, the
 measured observable is
 
@@ -35,15 +35,17 @@ julia> reg = Register([Qumode()], [GabsRepr(QuadBlockBasis)]);
 
 julia> initialize!(reg[1], CoherentState(0.3 + 0.2im));
 
-julia> result = project_traceout!(reg[1], HomodyneMeasurement([0.0]));
+julia> result = project_traceout!(reg[1], HomodyneMeasurement(0.0));
 ```
 """
 struct HomodyneMeasurement <: AbstractMeasurement
     angles::Vector{Real}
     cache::Dict{Any,Any}
 end
+HomodyneMeasurement(theta::Real) = HomodyneMeasurement([theta])
 HomodyneMeasurement(angles::Vector{<:Real}) =
     HomodyneMeasurement(angles, Dict{Any,Any}())
-Base.show(io::IO, measurement::HomodyneMeasurement) = print(
-    io, "HomodyneMeasurement(", measurement.angles, ")"
-)
+function Base.show(io::IO, measurement::HomodyneMeasurement)
+    angle = length(measurement.angles) == 1 ? only(measurement.angles) : measurement.angles
+    print(io, "HomodyneMeasurement(", angle, ")")
+end

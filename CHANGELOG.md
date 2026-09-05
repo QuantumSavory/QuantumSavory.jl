@@ -5,7 +5,7 @@
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
   orthonormal bases still return one-based indices; an explicit basis plus
   `values` returns `values[index]`; symbolic operators return eigenvalues; and
-  `HomodyneMeasurement([θ])` returns the real quadrature
+  `HomodyneMeasurement(θ)` returns the real quadrature
   `qθ = x*cos(θ) + p*sin(θ)`. Migrate a previous Gabs result `value` with
   `value[1]*cos(θ) + value[2]*sin(θ)`. The constructor no longer accepts the
   `squeeze` keyword because the Gabs variance factor is now fixed internally.

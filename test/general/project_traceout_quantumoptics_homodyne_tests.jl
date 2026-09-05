@@ -6,7 +6,7 @@ using Gabs: QuadBlockBasis
 
 function homodyne_samples(symbolic_state, representation, angle, shots)
     state = express(symbolic_state, representation)
-    measurement = HomodyneMeasurement([angle])
+    measurement = HomodyneMeasurement(angle)
 
     map(1:shots) do _
         register = Register([Qumode()], [representation])
@@ -18,6 +18,7 @@ end
 @testset "QuantumOptics homodyne measurement" begin
     @testset "Caches the quadrature eigensystem" begin
         measurement = HomodyneMeasurement([0.0])
+        @test sprint(show, HomodyneMeasurement(0.0)) == "HomodyneMeasurement(0.0)"
         mode_basis = basis(express(F0, QuantumOpticsRepr(cutoff = 6)))
         first = QuantumSavory._homodyne_operator_eigendecomposition(
             measurement, mode_basis
@@ -35,7 +36,7 @@ end
     interaction = σ₋ ⊗ Create + σ₊ ⊗ Destroy
     apply!(register[1:2], exp(-im * (π / 4) * interaction))
 
-    q = project_traceout!(register[2], HomodyneMeasurement([0.0]))
+    q = project_traceout!(register[2], HomodyneMeasurement(0.0))
     if !isapprox(q, 0; atol = 1e-12)
         apply!(register[1], exp(im * atan(q) * X))
     end
@@ -50,7 +51,7 @@ end
     initialize!(density_register[1], SProjector(F0))
     angle = π / 3
     rotated_quadrature = project_traceout!(
-        density_register[1], HomodyneMeasurement([angle])
+        density_register[1], HomodyneMeasurement(angle)
     )
     @test rotated_quadrature isa Real
     @test any(
@@ -70,14 +71,14 @@ end
 
     qubit = Register(1)
     initialize!(qubit[1], Z1)
-    @test_throws ArgumentError project_traceout!(qubit[1], HomodyneMeasurement([0.0]))
+    @test_throws ArgumentError project_traceout!(qubit[1], HomodyneMeasurement(0.0))
     @test isassigned(qubit, 1)
 
     invalid_subsystem = Register([Qumode()])
     initialize!(invalid_subsystem[1], F0)
     stored_state = QuantumSavory.stateof(invalid_subsystem[1]).state[]
     @test_throws BoundsError project_traceout!(
-        stored_state, 2, HomodyneMeasurement([0.0])
+        stored_state, 2, HomodyneMeasurement(0.0)
     )
     @test QuantumSavory.stateof(invalid_subsystem[1]).state[] === stored_state
     @test isassigned(invalid_subsystem, 1)

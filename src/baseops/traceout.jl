@@ -132,7 +132,7 @@ instead.
 
 A symbolic operator like Pauli operators `X`, `Y`, and `Z` return their eigenvalues, e.g. `1` or `-1`.
 
-`HomodyneMeasurement([θ])`, where `θ` is in radians, returns the real measured
+`HomodyneMeasurement(θ)`, where `θ` is in radians, returns the real measured
 quadrature `qθ = x*cos(θ) + p*sin(θ)`.
 
 Every successful call removes the measured subsystem and its back-reference.

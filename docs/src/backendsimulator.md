@@ -79,7 +79,7 @@ Use it when:
 - the operations are Gaussian, and
 - homodyne-style continuous-variable measurements are central to the model.
 
-For `HomodyneMeasurement([θ])`, QuantumSavory asks Gabs to use a projector on
+For `HomodyneMeasurement(θ)`, QuantumSavory asks Gabs to use a projector on
 the following state: a Gaussian state squeezed along the selected quadrature
 ``q_\theta=x\cos\theta+p\sin\theta``. In the rotated quadrature frame, the
 projector covariance is

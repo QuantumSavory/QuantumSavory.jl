@@ -133,7 +133,7 @@ observable, but it is not currently available as the basis argument of
 
 ## Measure a continuous quadrature
 
-`HomodyneMeasurement([θ])` returns the real quadrature
+`HomodyneMeasurement(θ)` returns the real quadrature
 ``q_\theta=x\cos\theta+p\sin\theta``, where ``\theta`` is in radians. Use
 `0.0` for the ``x`` quadrature and `pi / 2` for the ``p`` quadrature. An ideal
 outcome ``q_\theta`` applies the projector
@@ -152,7 +152,7 @@ initialize!(modes[1:2], CoherentState(0.3 + 0.2im) ⊗ F0)
 
 result = project_traceout!(
     modes[1],
-    HomodyneMeasurement([0.0]),
+    HomodyneMeasurement(0.0),
 )
 
 # GabsRepr does not yet support `observable`. Convert a copy for this check.

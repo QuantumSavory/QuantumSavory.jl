@@ -211,7 +211,7 @@ end
             gabs_reg = Register(fill(Qumode(), 2), fill(gabs_repr, 2))
             initialize!(gabs_reg[1:2], TwoSqueezedState(0.45))
             gabs_result = project_traceout!(
-                gabs_reg[1], HomodyneMeasurement([0.0])
+                gabs_reg[1], HomodyneMeasurement(0.0)
             )
             @assert gabs_result isa Real && isfinite(gabs_result)
             @assert !isassigned(gabs_reg, 1) && isassigned(gabs_reg, 2)
