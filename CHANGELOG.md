@@ -1,5 +1,9 @@
 # News
 
+## Unreleased
+
+- Add line links, line numbers, and API reference tooltips to documentation code blocks.
+
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
