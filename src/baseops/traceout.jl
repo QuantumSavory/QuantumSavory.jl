@@ -54,6 +54,8 @@ function traceout!(s::StateRef, i::Int)
 end
 
 """
+$TYPEDSIGNATURES
+
 Delete one or more register slots.
 
 `traceout!(reg, slot)` would reset (perform a partial trace) over the given subsystem.

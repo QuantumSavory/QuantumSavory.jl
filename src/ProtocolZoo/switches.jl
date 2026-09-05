@@ -129,6 +129,8 @@ end
 """
 $TYPEDEF
 
+This protocol connects pairs of clients through a discrete-time switch controller.
+
 A switch "controller", running on a given node, checking for connection requests
 from neighboring clients, and attempting to serve them by attempting direct raw entanglement
 with the clients and then mediating swaps to connect two clients together.

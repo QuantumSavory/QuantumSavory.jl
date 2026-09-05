@@ -21,6 +21,8 @@ end
 initialize!(r::RegRef; time=nothing) = initialize!(r.reg, r.idx; time)
 
 """
+$TYPEDSIGNATURES
+
 Set the state of a given set of registers.
 
 `initialize!([regA,regB], [slot1,slot2], state)` would

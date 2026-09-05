@@ -25,6 +25,8 @@ export QDatagram, Flow,
 """
 $TYPEDEF
 
+Describes a flow that requests entangled pairs between two nodes.
+
 $TYPEDFIELDS
 """
 @kwdef struct Flow <: AbstractTag
@@ -43,6 +45,8 @@ Tag(tag::Flow) = Tag(Flow, tag.src, tag.dst, tag.npairs, tag.uuid) # TODO automa
 
 """
 $TYPEDEF
+
+Marks an entangled pair at the source of a QTCP flow.
 
 $TYPEDFIELDS
 """
@@ -67,6 +71,8 @@ Tag(tag::QTCPPairBegin) = Tag(QTCPPairBegin, tag.flow_uuid, tag.flow_src, tag.fl
 """
 $TYPEDEF
 
+Marks an entangled pair at the destination of a QTCP flow.
+
 $TYPEDFIELDS
 """
 @kwdef struct QTCPPairEnd <: AbstractTag
@@ -89,6 +95,8 @@ Tag(tag::QTCPPairEnd) = Tag(QTCPPairEnd, tag.flow_uuid, tag.flow_src, tag.flow_d
 
 """
 $TYPEDEF
+
+Carries QTCP flow metadata and Pauli-frame corrections toward a destination.
 
 $TYPEDFIELDS
 """
@@ -128,6 +136,8 @@ Tag(tag::QDatagramSuccess) = Tag(QDatagramSuccess, tag.flow_uuid, tag.seq_num, t
 """
 $TYPEDEF
 
+Requests link-level entanglement with a neighboring node for a QTCP datagram.
+
 $TYPEDFIELDS
 """
 @kwdef struct LinkLevelRequest <: AbstractTag
@@ -143,6 +153,8 @@ Tag(tag::LinkLevelRequest) = Tag(LinkLevelRequest, tag.flow_uuid, tag.seq_num, t
 
 """
 $TYPEDEF
+
+Reports link-level entanglement at the requesting node.
 
 $TYPEDFIELDS
 """
@@ -160,6 +172,8 @@ Tag(tag::LinkLevelReply) = Tag(LinkLevelReply, tag.flow_uuid, tag.seq_num, tag.m
 """
 $TYPEDEF
 
+Records the source-side memory slot for an in-progress QTCP pair.
+
 $TYPEDFIELDS
 """
 @kwdef struct LinkLevelReplyAtSource <: AbstractTag
@@ -175,6 +189,8 @@ Tag(tag::LinkLevelReplyAtSource) = Tag(LinkLevelReplyAtSource, tag.flow_uuid, ta
 
 """
 $TYPEDEF
+
+Records the destination-side memory slot for a completed link-level request.
 
 $TYPEDFIELDS
 """
