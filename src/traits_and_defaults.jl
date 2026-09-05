@@ -17,7 +17,7 @@ public available_slot_types, constructor_metadata
 
 """Return the available public slot types along with their documentation.
 
-Used to make a slot type available to tools like the GUI WebQuantumSavory.
+Used to make a slot type available to tools like QuantumSavory Studio.
 
 Concrete direct and indirect subtypes of [`QuantumStateTrait`](@ref) are discovered on
 each call. The defining binding of each type must be public. The `InteractiveUtils`
@@ -26,7 +26,7 @@ function available_slot_types end
 
 """Return documented constructor fields for a type.
 
-Used to make a constructor available to tools like the GUI WebQuantumSavory.
+Used to make a constructor available to tools like QuantumSavory Studio.
 
 Each entry has the fields `field`, `type`, and `doc`. Undocumented fields and fields
 whose names begin with an underscore are omitted. The `InteractiveUtils` and `REPL`
