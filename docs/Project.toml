@@ -34,4 +34,5 @@ QuantumSavory = {path = ".."}
 
 [compat]
 CommunicationNetworkDatasets = "0.1"
+DocumenterMermaid = "0.1.1"
 PrettyPrint = "0.2.0"
