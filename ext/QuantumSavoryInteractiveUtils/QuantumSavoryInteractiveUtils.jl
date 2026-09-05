@@ -67,6 +67,10 @@ function QuantumSavory.constructor_metadata(::Type{T}) where {T}
     ]
 end
 
+QuantumSavory.constructor_metadata(
+    ::Type{QuantumSavory.StatesZoo.BarrettKokBellPairW},
+) = QuantumSavory.constructor_metadata(QuantumSavory.StatesZoo.BarrettKokBellPair)
+
 function metadata_error(T, message)
     throw(ArgumentError(
         "invalid protocol catalog metadata for $(_qualified_type_name(T)): $(message)",
