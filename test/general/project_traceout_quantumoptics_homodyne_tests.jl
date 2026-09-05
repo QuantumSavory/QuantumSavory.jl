@@ -84,9 +84,9 @@ end
     @test isassigned(invalid_subsystem, 1)
 
     @testset "Means and variances agree with Gabs" begin
-        shots = 2_000
+        shots = 20_000
         # This is more than four standard errors for the moment differences below.
-        statistical_tolerance = 0.20
+        statistical_tolerance = 0.06
         quantumoptics_repr = QuantumOpticsRepr(cutoff = 6)
         gabs_repr = GabsRepr(QuadBlockBasis)
         cases = (
