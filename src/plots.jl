@@ -17,7 +17,7 @@ Requires a Makie backend be already imported."""
 function registernetplot_axis end
 
 """
-    resourceplot_axis(subfig, network, edgeresources, vertexresources; kwargs...)
+    resourceplot_axis(subfig, network, edgeresources, vertexresources; registercoords=nothing, title="")
 
 Draw the various resources and locks stored in the given meta-graph on a given Makie axis.
 
