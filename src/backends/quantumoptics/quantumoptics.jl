@@ -80,7 +80,7 @@ function _homodyne_operator_eigendecomposition(
     end
 end
 
-function _preflight_project_traceout(
+function _validate_project_traceout(
     state::Union{Ket,Operator}, subsystem::Int, measurement::HomodyneMeasurement
 )
     length(measurement.angles) == 1 || throw(ArgumentError(
@@ -98,7 +98,7 @@ end
 function project_traceout!(
     state::Union{Ket,Operator}, subsystem::Int, measurement::HomodyneMeasurement
 )
-    _preflight_project_traceout(state, subsystem, measurement)
+    _validate_project_traceout(state, subsystem, measurement)
     subsystem_basis = nsubsystems(state) == 1 ?
         basis(state) : basis(state).bases[subsystem]
     cached = _homodyne_operator_eigendecomposition(measurement, subsystem_basis)
