@@ -2,7 +2,7 @@ using Revise # for interactive work on docs
 push!(LOAD_PATH,"../src/")
 
 using Documenter
-using DocumenterCitations, DocumenterMermaid
+using DocumenterCitations, DocumenterCodeBlocks, DocumenterMermaid
 using AnythingLLMDocs
 using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
@@ -35,7 +35,7 @@ function main()
     assets = Any["assets/custom.css"]
     append!(assets, anythingllm_assets)
     makedocs(
-    plugins = [bib],
+    plugins = [bib, CodeBlocks()],
     doctest = false,
     clean = true,
     warnonly = [:missing_docs],
