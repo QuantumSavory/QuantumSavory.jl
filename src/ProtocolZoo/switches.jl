@@ -164,7 +164,7 @@ $TYPEDFIELDS
         length(clientnodes),
         length(clientnodes),
     ))
-    function SimpleSwitchDiscreteProt(sim, net, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
+    function SimpleSwitchDiscreteProt(sim, net::RegisterNet, switchnode, clientnodes, success_probs, ticktock, rounds, assignment_algorithm, _backlog)
         length(unique(clientnodes)) == length(clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be unique!"))
         all(in(neighbors(net, switchnode)), clientnodes) || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested `clientnodes` must be directly connected to the `switchnode`!"))
         0 < ticktock || throw(ArgumentError("In the preparation of `SimpleSwitchDiscreteProt` switch protocol, the requested protocol period `ticktock` must be positive!"))
