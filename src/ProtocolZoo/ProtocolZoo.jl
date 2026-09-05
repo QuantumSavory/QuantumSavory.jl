@@ -192,6 +192,8 @@ Tag(tag::EntanglementHistory) = Tag(EntanglementHistory, tag.remote_node, tag.re
 """
 $TYPEDEF
 
+This tag updates entanglement information and applies an `X` correction after a remote swap.
+
 This tag arrives as a message from a remote node to which the current node was entangled to update the
 entanglement information and apply an `X` correction after the remote node performs an entanglement swap.
 
@@ -221,6 +223,8 @@ Tag(tag::EntanglementUpdateX) = Tag(EntanglementUpdateX, tag.target_pair_id, tag
 
 """
 $TYPEDEF
+
+This tag updates entanglement information and applies a `Z` correction after a remote swap.
 
 This tag arrives as a message from a remote node to which the current node was entangled to update the
 entanglement information and apply a `Z` correction after the remote node performs an entanglement swap.
@@ -345,7 +349,11 @@ protocol_catalog_metadata(::Type{EntanglerProt}) = (
     required_fields = (),
 )
 
-"""Convenience constructor for specifying `rate` of generation instead of success probability and time"""
+"""
+$TYPEDSIGNATURES
+
+Convenience constructor for specifying `rate` of generation instead of success probability and time
+"""
 function EntanglerProt(sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; rate::Union{Nothing,Float64}=nothing, kwargs...)
     if isnothing(rate)
         return EntanglerProt(;sim, net, nodeA, nodeB, kwargs...)
