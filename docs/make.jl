@@ -2,7 +2,7 @@ using Revise # for interactive work on docs
 push!(LOAD_PATH,"../src/")
 
 using Documenter
-using DocumenterCitations, DocumenterMermaid
+using DocumenterCitations, DocumenterCodeBlocks, DocumenterMermaid
 using AnythingLLMDocs
 using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
@@ -32,10 +32,11 @@ function main()
     )
 
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
+    codeblocks = CodeBlocks()
     assets = Any["assets/custom.css"]
     append!(assets, anythingllm_assets)
     makedocs(
-    plugins = [bib],
+    plugins = [bib, codeblocks],
     doctest = false,
     clean = true,
     warnonly = [:missing_docs],
@@ -114,6 +115,7 @@ function main()
     ],
     ]
     )
+
     deploydocs(
         repo = "github.com/QuantumSavory/QuantumSavory.jl.git",
         devbranch = "master",
