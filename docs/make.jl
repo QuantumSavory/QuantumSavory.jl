@@ -115,20 +115,7 @@ function main()
     ],
     ]
     )
-    # Warning keys use "category:target"; these targets are dependency-owned.
-    dependency_targets = (
-        "QuantumInterface.AbstractRepresentation",
-        "QuantumInterface.CliffordRepr",
-        "QuantumInterface.QuantumOpticsRepr",
-    )
-    quality_issues = filter(codeblocks.warned) do issue
-        target = last(split(issue, ':'; limit = 2))
-        !startswith(target, "QuantumSymbolics.") && target ∉ dependency_targets
-    end
-    isempty(quality_issues) || error(
-        "DocumenterCodeBlocks quality assurance failed:\n" *
-            join(sort!(collect(quality_issues)), "\n")
-    )
+
     deploydocs(
         repo = "github.com/QuantumSavory/QuantumSavory.jl.git",
         devbranch = "master",

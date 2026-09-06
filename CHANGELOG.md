@@ -1,10 +1,5 @@
 # News
 
-## Unreleased
-
-- Add line links, line numbers, and API reference tooltips to documentation code blocks,
-  with docstring quality checks during documentation builds.
-
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
@@ -21,6 +16,7 @@
 - `constructor_metadata(StatesZoo.BarrettKokBellPairW)` now describes its public
   convenience-constructor parameters rather than its internal wrapper field.
 - Improve API docstring summaries and signatures.
+- Add line links, line numbers, and API reference tooltips to documentation code blocks.
 
 ## v0.7.2 - 2026-08-15
 
