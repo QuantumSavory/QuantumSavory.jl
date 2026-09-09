@@ -1,5 +1,9 @@
 # News
 
+## Unreleased
+
+- Add `BBM92Prot`, an entanglement-based quantum key distribution protocol, with `sifted_key` and `qber` for reading its rounds. It can be run against an intercept-resend eavesdropper.
+
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit

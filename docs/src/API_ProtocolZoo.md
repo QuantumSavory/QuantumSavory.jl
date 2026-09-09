@@ -105,6 +105,7 @@ The current `ProtocolZoo` includes:
 - entanglement generation and swapping protocols,
 - metadata tracking helpers,
 - consumer and cutoff protocols,
+- entanglement-based key distribution,
 - switch-style protocols,
 - and QTCP-related controllers and message types.
 

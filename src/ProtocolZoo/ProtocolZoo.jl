@@ -19,6 +19,7 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    BBM92Prot, sifted_key, qber,
     protocol_log_context,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
@@ -910,6 +911,7 @@ using .Switches
 include("qtcp.jl")
 using .QTCP
 include("mbqc.jl")
+include("bbm92.jl")
 using .MBQCEntanglementDistillation
 
 _protocol_nodes(prot::EntanglementTracker) = (prot.node,)
@@ -917,6 +919,7 @@ _protocol_nodes(prot::SwapperProt) = (prot.node,)
 _protocol_nodes(prot::CutoffProt) = (prot.node,)
 _protocol_nodes(prot::EntanglerProt) = (prot.nodeA, prot.nodeB)
 _protocol_nodes(prot::EntanglementConsumer) = (prot.nodeA, prot.nodeB)
+_protocol_nodes(prot::BBM92Prot) = (prot.nodeA, prot.nodeB)
 
 _protocol_nodes(prot::Switches.SimpleSwitchDiscreteProt) =
     (prot.switchnode, Tuple(prot.clientnodes)...)
