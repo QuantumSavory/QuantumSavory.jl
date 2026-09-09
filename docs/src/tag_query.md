@@ -87,6 +87,13 @@ query(reg, EntanglementCounterpart, 7, ❓, ❓)
 query(reg, :score, x -> x > 90)
 ```
 
+Fields the query does not mention are wildcards too, so a query shorter than the
+tag matches on the fields it does specify.
+
+```julia
+query(reg, EntanglementCounterpart, 7)
+```
+
 This is the part that makes the metadata plane flexible. Protocols can agree on
 the meaning of a tag without agreeing on one exact hard-coded lookup path.
 
