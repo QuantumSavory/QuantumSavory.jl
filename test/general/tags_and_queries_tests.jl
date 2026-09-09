@@ -209,6 +209,22 @@ lock(reg[3])
 @test findfreeslot(reg, chooseslot=3) == nothing
 @test findfreeslot(reg, chooseslot=3, locked=true).idx == 3
 
+##
+
+reg = Register(4)
+tag!(reg[1], EntanglementCounterpart, 5, 11)
+tag!(reg[2], :symbol1, 7, 8)
+
+@test strip_id(query(reg, EntanglementCounterpart, 5)) == (slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 11))
+@test strip_id(query(reg, EntanglementCounterpart)) == (slot = reg[1], tag = Tag(EntanglementCounterpart, 5, 11))
+@test query(reg, EntanglementCounterpart, 5) == query(reg, EntanglementCounterpart, 5, ❓)
+@test query(reg, EntanglementCounterpart) == query(reg, EntanglementCounterpart, ❓, ❓)
+@test query(reg, EntanglementCounterpart, 6) === nothing
+@test strip_id(query(reg, :symbol1, 7)) == (slot = reg[2], tag = Tag(:symbol1, 7, 8))
+@test strip_id(query(reg, :symbol1)) == (slot = reg[2], tag = Tag(:symbol1, 7, 8))
+@test query(reg, :symbol2) === nothing
+@test length(queryall(reg, EntanglementCounterpart)) == 1
+
 end
 
 f()

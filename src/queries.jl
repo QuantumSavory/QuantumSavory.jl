@@ -311,9 +311,8 @@ for i in 1:10
         signature = methods(variant)[1].sig.parameters[2:end]
         l = length(signature)
         sigargs = VARS[1:l]
-        if l==i
+        if l>=i # a query shorter than the tag leaves the trailing fields as implicit wildcards
             push!(cases, :($symbol($(sigargs...)) => $composite_check))
-        else
         end
     end
     body_expr = isempty(cases) ? :(false) : quote

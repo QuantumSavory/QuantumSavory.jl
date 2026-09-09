@@ -1,5 +1,9 @@
 # News
 
+## Unreleased
+
+- `query` now treats the fields a query does not mention as trailing wildcards, so a query shorter than the tag matches on the fields it does specify.
+
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
