@@ -21,7 +21,8 @@
    current checkout passes.
 4. Run specialist shards when relevant. Buildkite defines general on stable and alpha,
    plus JET, examples, plotting, and docs. GitHub’s main CI runs only general on Linux
-   x64 with five threads, macOS arm64 with one, and Windows x64 with one. The downgrade
+   x64 with five threads on Julia 1.12 and the latest stable Julia, plus the latest stable
+   Julia on macOS arm64 with one thread and Windows x64 with one. The downgrade
    workflow runs general on Julia 1.12 and excludes Aqua through the runner’s downgrade
    condition.
 5. Check environment routing before diagnosing dependency failures. Root workspace
