@@ -25,6 +25,10 @@ steps:
           test_args: "general"
       - JuliaCI/julia-coverage#v1: ~
   - label: "JET Tests"
+    # Avoid the parallel compiler cache race until Julia includes this fix:
+    # https://github.com/JuliaLang/julia/pull/62332
+    env:
+      JULIA_NUM_THREADS: "1"
     plugins:
       - Krastanov-agent/julia#fb9fb9196677350a913f82a125113cc31238ad31:
           version: "1"

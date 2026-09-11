@@ -28,6 +28,8 @@
    The Buildkite repository `pre-command` hook gives each agent its own Julia plugin
    cache to prevent concurrent installation and depot cleanup races. An explicit nonempty
    `BUILDKITE_PLUGIN_JULIA_CACHE_DIR` is preserved.
+   The JET step uses one Julia thread to avoid the compiler specialization-cache race
+   tracked by JuliaLang/julia#62332; its analysis and assertions are unchanged.
 5. Check environment routing before diagnosing dependency failures. Root workspace
    membership names nonexistent `test/projects/examples`, while the runner correctly
    uses `examples/`. Do not “fix” resolution by creating the missing directory.
