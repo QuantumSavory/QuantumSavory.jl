@@ -31,9 +31,9 @@ parameters; concrete state-object field layout is not the public contract.
 All five model types are covered by the API test’s default-QuantumOptics trace check,
 which does not establish every representation. Support is intentionally per-model and
 per-representation rather than universal.
-The separate Clifford check for `DepolarizedBellPair` lives in
-`test/test_stateszoo_depolarized.jl`, which the current `_tests.jl` filename filter does
-not discover. Only add an explicit `LinearAlgebra.tr` method when generic symbolic
+The separate constructor and backend checks for `DepolarizedBellPair` live in
+`test/general/stateszoo_depolarized_tests.jl` and run with the general suite.
+Only add an explicit `LinearAlgebra.tr` method when generic symbolic
 lowering is insufficient; the Barrett–Kok path needs specialization, but explicit
 trace methods are not a general StatesZoo requirement.
 
@@ -41,11 +41,10 @@ trace methods are not a general StatesZoo requirement.
 
 - **Source:** [`src/StatesZoo/StatesZoo.jl`](../../../src/StatesZoo/StatesZoo.jl), [`src/StatesZoo/barrett_kok.jl`](../../../src/StatesZoo/barrett_kok.jl), [`src/StatesZoo/depolarized.jl`](../../../src/StatesZoo/depolarized.jl), and [`src/StatesZoo/genqo.jl`](../../../src/StatesZoo/genqo.jl) — model definitions and lowering.
 - **Docs:** [`docs/src/API_StatesZoo.md`](../../../docs/src/API_StatesZoo.md) and [`docs/src/state_visualization.md`](../../../docs/src/state_visualization.md) — constructors, formulas, and exploration.
-- **Test:** [`test/general/stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl) and the currently orphaned [`test/test_stateszoo_depolarized.jl`](../../../test/test_stateszoo_depolarized.jl) — catalog surface and backend-specific evidence.
+- **Test:** [`test/general/stateszoo_api_tests.jl`](../../../test/general/stateszoo_api_tests.jl) and [`test/general/stateszoo_depolarized_tests.jl`](../../../test/general/stateszoo_depolarized_tests.jl) — catalog surface and backend-specific evidence.
 
 ## Known gaps
 
 - `BarrettKokBellPair` accepts and documents `m`, but its parameter/range
   introspection omits it; the weighted model's convenience constructors also lack
   constructor-parameter prose.
-- The Clifford depolarized-state test is not discovered by the test runner.
