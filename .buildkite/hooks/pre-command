@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-# Concurrent agents must not replace each other's Julia installs or clean shared depots.
-if [[ -z "${BUILDKITE_PLUGIN_JULIA_CACHE_DIR:-}" ]]; then
-    export BUILDKITE_PLUGIN_JULIA_CACHE_DIR="${HOME}/.cache/julia-buildkite-plugin/agents/${BUILDKITE_AGENT_ID}"
-fi

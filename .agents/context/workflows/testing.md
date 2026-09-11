@@ -25,9 +25,6 @@
    Julia on macOS arm64 with one thread and Windows x64 with one. The downgrade
    workflow runs general on Julia 1.12 and excludes Aqua through the runner’s downgrade
    condition.
-   The Buildkite repository `pre-command` hook gives each agent its own Julia plugin
-   cache to prevent concurrent installation and depot cleanup races. An explicit nonempty
-   `BUILDKITE_PLUGIN_JULIA_CACHE_DIR` is preserved.
    The Xvfb plugin uses job-local launchers and per-invocation displays; it does not
    overwrite a shared launcher or terminate other jobs' Julia/Xvfb processes.
    The JET step uses one Julia thread to avoid the compiler specialization-cache race
