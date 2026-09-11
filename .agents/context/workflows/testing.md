@@ -9,8 +9,8 @@
 
 1. Add discoverable tests with a filename ending `_tests.jl`. The
    ParallelTestRunner entry point finds Julia tests, then filters out every name without
-   that suffix. `test/test_stateszoo_depolarized.jl` is currently orphaned by
-   this rule despite containing a test item.
+   that suffix. Use ordinary `@testset` blocks, as in
+   `test/general/stateszoo_depolarized_tests.jl`.
 2. Run the smallest named test or prefix first through the package test entry point,
    then its shard. With no arguments the runner explicitly defaults to `general`.
    Prefixes route `plotting` tests to `test/projects/plotting`, `examples` tests to the
@@ -63,5 +63,4 @@ that claim.
 
 ## Unresolved questions
 
-- Should the orphaned depolarized-state file be renamed or merged into the existing API tests?
 - Should the root workspace point to `examples` instead of `test/projects/examples`?
