@@ -25,8 +25,9 @@
    Julia on macOS arm64 with one thread and Windows x64 with one. The downgrade
    workflow runs general on Julia 1.12 and excludes Aqua through the runner’s downgrade
    condition.
-   The Xvfb plugin uses job-local launchers and per-invocation displays; it does not
-   overwrite a shared launcher or terminate other jobs' Julia/Xvfb processes.
+   Buildkite uses the QuantumSavory Julia setup and Xvfb plugin releases for all jobs,
+   including the alpha job. The Xvfb plugin uses job-local launchers and per-invocation
+   displays; it does not overwrite a shared launcher or terminate other jobs' Julia/Xvfb processes.
    The JET step uses one Julia thread to avoid the compiler specialization-cache race
    tracked by JuliaLang/julia#62332; its analysis and assertions are unchanged.
 5. Check environment routing before diagnosing dependency failures. Root workspace
