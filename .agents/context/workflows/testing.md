@@ -21,9 +21,17 @@
    current checkout passes.
 4. Run specialist shards when relevant. Buildkite defines general on stable and alpha,
    plus JET, examples, plotting, and docs. GitHub’s main CI runs only general on Linux
-   x64 with five threads, macOS arm64 with one, and Windows x64 with one. The downgrade
+   x64 with five threads on Julia 1.12 and the latest stable Julia, plus the latest stable
+   Julia on macOS arm64 with one thread and Windows x64 with one. The downgrade
    workflow runs general on Julia 1.12 and excludes Aqua through the runner’s downgrade
    condition.
+   The Buildkite repository `pre-command` hook gives each agent its own Julia plugin
+   cache to prevent concurrent installation and depot cleanup races. An explicit nonempty
+   `BUILDKITE_PLUGIN_JULIA_CACHE_DIR` is preserved.
+   The Xvfb plugin uses job-local launchers and per-invocation displays; it does not
+   overwrite a shared launcher or terminate other jobs' Julia/Xvfb processes.
+   The JET step uses one Julia thread to avoid the compiler specialization-cache race
+   tracked by JuliaLang/julia#62332; its analysis and assertions are unchanged.
 5. Check environment routing before diagnosing dependency failures. Root workspace
    membership names nonexistent `test/projects/examples`, while the runner correctly
    uses `examples/`. Do not “fix” resolution by creating the missing directory.

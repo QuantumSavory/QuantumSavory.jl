@@ -4,44 +4,51 @@ env:
 secrets:
   - CODECOV_TOKEN
 
+# Pin portable hooks until these fixes are released:
+# https://github.com/JuliaCI/julia-buildkite-plugin/pull/64
+# https://github.com/QuantumSavory/julia-xvfb-buildkite-plugin/pull/1
 steps:
   - label: "General Tests"
     plugins:
-      - JuliaCI/julia#v1:
+      - Krastanov-agent/julia#fb9fb9196677350a913f82a125113cc31238ad31:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1:
+      - Krastanov-agent/julia#e3d2132bfc3e67fa842bc3fed2d5e1bb59702a3e:
       - JuliaCI/julia-test#v1:
           test_args: "general"
       - JuliaCI/julia-coverage#v1: ~
   - label: "General Tests (alpha)"
     plugins:
-      - Krastanov-agent/julia#bb0dd898e0190fa025fa9eddbf5b39665edc8e6c:
+      - Krastanov-agent/julia#02e5970063da49f1c9a2d04d3250b95fa3a9fb7b:
           version: "alpha"
-      - QuantumSavory/julia-xvfb#v1:
+      - Krastanov-agent/julia#e3d2132bfc3e67fa842bc3fed2d5e1bb59702a3e:
       - JuliaCI/julia-test#v1:
           test_args: "general"
       - JuliaCI/julia-coverage#v1: ~
   - label: "JET Tests"
+    # Avoid the parallel compiler cache race until Julia includes this fix:
+    # https://github.com/JuliaLang/julia/pull/62332
+    env:
+      JULIA_NUM_THREADS: "1"
     plugins:
-      - JuliaCI/julia#v1:
+      - Krastanov-agent/julia#fb9fb9196677350a913f82a125113cc31238ad31:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1:
+      - Krastanov-agent/julia#e3d2132bfc3e67fa842bc3fed2d5e1bb59702a3e:
       - JuliaCI/julia-test#v1:
           test_args: "jet"
       - JuliaCI/julia-coverage#v1: ~
   - label: "Example Tests"
     plugins:
-      - JuliaCI/julia#v1:
+      - Krastanov-agent/julia#fb9fb9196677350a913f82a125113cc31238ad31:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1:
+      - Krastanov-agent/julia#e3d2132bfc3e67fa842bc3fed2d5e1bb59702a3e:
       - JuliaCI/julia-test#v1:
           test_args: "example"
       - JuliaCI/julia-coverage#v1: ~
   - label: "Plotting Tests"
     plugins:
-      - JuliaCI/julia#v1:
+      - Krastanov-agent/julia#fb9fb9196677350a913f82a125113cc31238ad31:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1:
+      - Krastanov-agent/julia#e3d2132bfc3e67fa842bc3fed2d5e1bb59702a3e:
       - JuliaCI/julia-test#v1:
           test_args: "plotting"
       - JuliaCI/julia-coverage#v1: ~
@@ -50,9 +57,9 @@ steps:
   - label: "Docs"
     branches: "!dependabot/*"
     plugins:
-      - JuliaCI/julia#v1:
+      - Krastanov-agent/julia#fb9fb9196677350a913f82a125113cc31238ad31:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1:
+      - Krastanov-agent/julia#e3d2132bfc3e67fa842bc3fed2d5e1bb59702a3e:
     secrets:
       - DOCUMENTER_KEY
       - ANYTHINGLLM_API_KEY
