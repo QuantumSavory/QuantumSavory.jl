@@ -25,6 +25,9 @@
    Julia on macOS arm64 with one thread and Windows x64 with one. The downgrade
    workflow runs general on Julia 1.12 and excludes Aqua through the runner’s downgrade
    condition.
+   The Buildkite repository `pre-command` hook gives each agent its own Julia plugin
+   cache to prevent concurrent installation and depot cleanup races. An explicit nonempty
+   `BUILDKITE_PLUGIN_JULIA_CACHE_DIR` is preserved.
 5. Check environment routing before diagnosing dependency failures. Root workspace
    membership names nonexistent `test/projects/examples`, while the runner correctly
    uses `examples/`. Do not “fix” resolution by creating the missing directory.
