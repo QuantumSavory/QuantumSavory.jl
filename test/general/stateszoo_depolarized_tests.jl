@@ -1,10 +1,10 @@
-@testitem "StatesZoo DepolarizedBellPair" begin
 using Test
 using QuantumSavory
 using QuantumSavory.StatesZoo
 using QuantumOpticsBase
-using QuantumClifford
 using LinearAlgebra
+
+@testset "StatesZoo DepolarizedBellPair" begin
 
 # p-constructor and fidelity-constructor consistency
 p = 0.7
@@ -31,10 +31,8 @@ initialize!(reg_c[1:2], DepolarizedBellPair(1.0))
 dm_mixed = express(DepolarizedBellPair(0.0))
 @test dm_mixed.data ≈ LinearAlgebra.I / 4
 
-# fidelity-to-p and p-to-fidelity roundtrip
+# The fidelity constructor preserves normalization.
 for F in [0.25, 0.5, 0.75, 1.0]
-    p_rt = (4F - 1) / 3
-    @test (3p_rt + 1) / 4 ≈ F
     dm = express(DepolarizedBellPair(F=F))
     @test tr(dm) ≈ 1
 end
