@@ -2,7 +2,6 @@ using Test
 using QuantumSavory
 using QuantumSavory.StatesZoo
 using QuantumOpticsBase
-using QuantumClifford
 using LinearAlgebra
 
 @testset "StatesZoo DepolarizedBellPair" begin
