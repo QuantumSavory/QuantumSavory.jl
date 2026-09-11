@@ -28,6 +28,8 @@
    The Buildkite repository `pre-command` hook gives each agent its own Julia plugin
    cache to prevent concurrent installation and depot cleanup races. An explicit nonempty
    `BUILDKITE_PLUGIN_JULIA_CACHE_DIR` is preserved.
+   The Xvfb plugin uses job-local launchers and per-invocation displays; it does not
+   overwrite a shared launcher or terminate other jobs' Julia/Xvfb processes.
    The JET step uses one Julia thread to avoid the compiler specialization-cache race
    tracked by JuliaLang/julia#62332; its analysis and assertions are unchanged.
 5. Check environment routing before diagnosing dependency failures. Root workspace
