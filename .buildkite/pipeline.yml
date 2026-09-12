@@ -7,17 +7,17 @@ secrets:
 steps:
   - label: "General Tests"
     plugins:
-      - QuantumSavory/julia#v1.14:
+      - QuantumSavory/julia#v1:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1.2:
+      - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
           test_args: "general"
       - JuliaCI/julia-coverage#v1: ~
   - label: "General Tests (alpha)"
     plugins:
-      - QuantumSavory/julia#v1.14:
+      - QuantumSavory/julia#v1:
           version: "alpha"
-      - QuantumSavory/julia-xvfb#v1.2:
+      - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
           test_args: "general"
       - JuliaCI/julia-coverage#v1: ~
@@ -27,25 +27,25 @@ steps:
     env:
       JULIA_NUM_THREADS: "1"
     plugins:
-      - QuantumSavory/julia#v1.14:
+      - QuantumSavory/julia#v1:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1.2:
+      - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
           test_args: "jet"
       - JuliaCI/julia-coverage#v1: ~
   - label: "Example Tests"
     plugins:
-      - QuantumSavory/julia#v1.14:
+      - QuantumSavory/julia#v1:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1.2:
+      - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
           test_args: "example"
       - JuliaCI/julia-coverage#v1: ~
   - label: "Plotting Tests"
     plugins:
-      - QuantumSavory/julia#v1.14:
+      - QuantumSavory/julia#v1:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1.2:
+      - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
           test_args: "plotting"
       - JuliaCI/julia-coverage#v1: ~
@@ -54,9 +54,9 @@ steps:
   - label: "Docs"
     branches: "!dependabot/*"
     plugins:
-      - QuantumSavory/julia#v1.14:
+      - QuantumSavory/julia#v1:
           version: "1"
-      - QuantumSavory/julia-xvfb#v1.2:
+      - QuantumSavory/julia-xvfb#v1:
     secrets:
       - DOCUMENTER_KEY
       - ANYTHINGLLM_API_KEY
