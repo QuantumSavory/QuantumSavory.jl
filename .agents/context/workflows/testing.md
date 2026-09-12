@@ -16,6 +16,8 @@
    Prefixes route `plotting` tests to `test/projects/plotting`, `examples` tests to the
    top-level `examples` project, and `jet` to `test/projects/jet`; JET executes directly
    while other tests use ParallelTestRunner.
+   When selected, `general/aqua_tests` runs serially before the parallel tests so its
+   precompilation processes do not overlap their workers.
 3. Finish cross-cutting changes with general tests. Record the command and actual
    outcome; repository configuration and historical CI jobs are not evidence that a
    current checkout passes.

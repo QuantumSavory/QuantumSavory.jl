@@ -60,5 +60,7 @@ else
     using Pkg
     Pkg.precompile()
     using QuantumSavory
-    runtests(QuantumSavory, args; testsuite, test_worker)
+    # Aqua starts additional precompilation processes. Run it before the parallel
+    # tests to keep their workers from competing for memory.
+    runtests(QuantumSavory, args; testsuite, test_worker, serial=["general/aqua_tests"])
 end
