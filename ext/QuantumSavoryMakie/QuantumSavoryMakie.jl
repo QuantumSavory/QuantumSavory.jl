@@ -235,7 +235,7 @@ function Makie.plot!(rn::RegisterNetPlot{<:Tuple{RegisterNet}})
         rn, register_slots_coords,
         marker=rn[:slotmarker], markersize=rn[:slotsize][]*rn[:scale][], color=slotcolor_resolved,
         markerspace=:data,
-        inspector_label = (self, i, p) -> get_slots_vis_string(register_slots_coords_backref[],i))
+        inspector_label = (self, i, p) -> get_slots_vis_string(networkobs[],register_slots_coords_backref[],i))
     observables_scatterplot = scatter!(
         rn, observables_coords,
         marker=rn[:observables_marker], markersize=rn[:observables_markersize][]*rn[:scale][], markerspace=:data,
@@ -276,15 +276,50 @@ function get_observables_vis_string(backrefs, i)
     return "Observable ⟨$(o)⟩ = $(val)"
 end
 
-function get_slots_vis_string(backrefs, i)
+"""How many pending messages a tooltip lists before eliding the rest."""
+const MESSAGEBUFFER_TOOLTIP_LIMIT = 5
+
+"""Render the pending contents of a node's message buffer for a tooltip.
+
+The buffer belongs to the node rather than to any one slot, but the register
+rectangles are not inspectable, so the slot markers are the only hover target
+that can carry this information.
+"""
+function get_messagebuffer_vis_string(net, registeridx)
+    mb = try
+        QuantumSavory.messagebuffer(net, registeridx)
+    catch
+        return nothing   # no message buffer wired up for this node
+    end
+    isnothing(mb) && return nothing
+    entries = mb.buffer
+    isempty(entries) && return "message buffer empty"
+    shown = Iterators.take(entries, MESSAGEBUFFER_TOOLTIP_LIMIT)
+    lines = [" • from $(isnothing(e.src) ? "local" : e.src): $(e.tag)" for e in shown]
+    remaining = length(entries) - MESSAGEBUFFER_TOOLTIP_LIMIT
+    if remaining > 0
+        push!(lines, " • … and $(remaining) more")
+    end
+    return "message buffer ($(length(entries)) pending):
+" * join(lines, "
+")
+end
+
+function get_slots_vis_string(net, backrefs, i)
     register, registeridx, slot = backrefs[i]
     tags = QuantumSavory.peektags(register[slot])
     tags_str = if isempty(tags)
         "not tagged"
     else
-        "tagged with:\n"*join((" • $(t)" for t in tags), "\n")
+        "tagged with:
+"*join((" • $(t)" for t in tags), "
+")
     end
-    return "Register $(registeridx) | Slot $(slot)\n $(tags_str)"
+    base = "Register $(registeridx) | Slot $(slot)
+ $(tags_str)"
+    mb_str = get_messagebuffer_vis_string(net, registeridx)
+    return isnothing(mb_str) ? base : base * "
+ " * mb_str
 end
 
 function get_state_vis_string(backrefs, i)
