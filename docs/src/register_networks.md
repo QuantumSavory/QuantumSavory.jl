@@ -1,6 +1,6 @@
 # [Register Networks](@id register-networks)
 
-A [`RegisterNet`](@ref) joins is an undirected graph with one [`Register`](@ref) per vertex.
+A [`RegisterNet`](@ref) joins an undirected graph with one [`Register`](@ref) per vertex.
 
 ## Construct a Network
 
@@ -119,6 +119,34 @@ Classical channels can forward a message across more than one edge. Each hop
 uses its configured delay. Quantum channels are direct-edge channels. Read
 [Classical Messaging and Buffers](@ref classical-messaging) for channel and
 message-buffer use.
+
+## Choose a Delivery Model
+
+The graph describes which nodes are directly connected. It does not select a
+delivery model. A protocol can use the same path topology in two different
+ways.
+
+![Two-way entanglement delivery. Neighboring nodes first establish short Bell pairs, then intermediate nodes use Bell-state measurements to create one end-to-end pair.](assets/paper_figures/two-way.png)
+
+In a two-way model, neighboring nodes first establish short Bell pairs. The
+intermediate nodes then perform entanglement swaps to create an end-to-end
+pair. [`EntanglerProt`](@ref) and [`SwapperProt`](@ref) provide reusable parts
+of this control flow; the simulation must configure and start them. The
+[first-generation repeater how-to](@ref First-Generation-Quantum-Repeater-ProtocolZoo)
+shows a complete example.
+
+![One-way state delivery. An input state moves from Alice to Bob through each intermediate node in sequence.](assets/paper_figures/one-way.png)
+
+In a one-way model, an input state moves along the path one edge at a time.
+Each [`qchannel`](@ref) is a direct-edge channel: it moves a state between two
+adjacent registers with `put!` and `take!`. It does not route the state across
+several edges. A user protocol must receive the state at each intermediate
+node and send it over the next direct channel. The [Getting Started
+Manual](@ref manual) demonstrates one direct quantum-channel handoff.
+
+Use the [ProtocolZoo API](API_ProtocolZoo.md) to look up the reusable
+entanglement protocols. Use [Classical Messaging and Buffers](@ref classical-messaging)
+for the separate rules that govern direct and forwarded classical messages.
 
 ## Where to Go Next
 

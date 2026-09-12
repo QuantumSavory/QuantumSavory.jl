@@ -2,7 +2,7 @@ using Revise # for interactive work on docs
 push!(LOAD_PATH,"../src/")
 
 using Documenter
-using DocumenterCitations, DocumenterMermaid
+using DocumenterCitations, DocumenterCodeBlocks, DocumenterMermaid
 using AnythingLLMDocs
 using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
@@ -32,10 +32,11 @@ function main()
     )
 
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
+    codeblocks = CodeBlocks()
     assets = Any["assets/custom.css"]
     append!(assets, anythingllm_assets)
     makedocs(
-    plugins = [bib],
+    plugins = [bib, codeblocks],
     doctest = false,
     clean = true,
     warnonly = [:missing_docs],
@@ -69,17 +70,21 @@ function main()
     "How-To Guides" => [
         "howto.md",
         "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md",
-        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
-        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
         "Grid of Repeaters" => "howto/repeatergrid/repeatergrid.md",
-        "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
+        "MBQC-Based Entanglement Purification" => "howto/purificationmbqc.md",
+        "QTCP" => "howto/qtcp.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
         "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
+        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
+        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
+        "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
     ],
     "Tutorials" => [
         "tutorial.md",
+        "Build a Network from a Dataset" => "tutorial/dataset_network.md",
         "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
+        "Qumode-Qubit teleportation (homodyne)" => "tutorial/homodyne_teleport.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",
         "Gate Duration" => "tutorial/noninstantgate.md",
@@ -110,6 +115,7 @@ function main()
     ],
     ]
     )
+
     deploydocs(
         repo = "github.com/QuantumSavory/QuantumSavory.jl.git",
         devbranch = "master",

@@ -114,11 +114,11 @@ stored with an explicit minus sign before transmission.
 function homodyne_alice!(net, nodeA, nodeB)
     regA = net[nodeA]
     # project Alice's register onto the eigenstates |x₋, p₊⟩
-    quads₋ = project_traceout!(regA[2], HomodyneMeasurement([0.0]))
-    quads₊ = project_traceout!(regA[1], HomodyneMeasurement([pi/2]))
+    x₋ = project_traceout!(regA[2], HomodyneMeasurement(0.0))
+    p₊ = project_traceout!(regA[1], HomodyneMeasurement(pi/2))
     # put quadrature measurements in channel
     chAB = channel(net, nodeA=>nodeB)
-    put!(chAB, Tag(:quadsA, -quads₋[1], quads₊[2]))
+    put!(chAB, Tag(:quadsA, -x₋, p₊))
 end
 
 """
@@ -129,10 +129,10 @@ Measure Charlie's mode in the `p` quadrature and send the result to Bob.
 function homodyne_charlie!(net, nodeB, nodeC)
     regC = net[nodeC]
     # project Charlie's register onto the eigenstate |p⟩
-    quads = project_traceout!(regC[1], HomodyneMeasurement([pi/2]))
+    p = project_traceout!(regC[1], HomodyneMeasurement(pi/2))
     # put quadrature measurement in channel
     chBC = channel(net, nodeC=>nodeB)
-    put!(chBC, Tag(:quadsC, quads[2]))
+    put!(chBC, Tag(:quadsC, p))
 end
 
 """

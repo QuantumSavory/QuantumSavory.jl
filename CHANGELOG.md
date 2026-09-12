@@ -1,8 +1,22 @@
 # News
 
-## Unreleased
+## v0.8.0 - 2026-09-05
 
+- **(breaking)** Standardize `project_traceout!` outcomes: explicit
+  orthonormal bases still return one-based indices; an explicit basis plus
+  `values` returns `values[index]`; symbolic operators return eigenvalues; and
+  `HomodyneMeasurement(θ)` returns the real quadrature
+  `qθ = x*cos(θ) + p*sin(θ)`. Migrate a previous Gabs result `value` with
+  `value[1]*cos(θ) + value[2]*sin(θ)`. The constructor no longer accepts the
+  `squeeze` keyword because the Gabs variance factor is now fixed internally.
+- Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
+- Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
 - `generate_map` now accepts a custom Tyler tile provider.
+- QTCP `LinkController` can now consume pairs from an independent `EntanglerProt` based on reciprocal `(remote_node, remote_slot, pair_id)` tags being present.
+- `constructor_metadata(StatesZoo.BarrettKokBellPairW)` now describes its public
+  convenience-constructor parameters rather than its internal wrapper field.
+- Improve API docstring summaries and signatures.
+- Add line links, line numbers, and API reference tooltips to documentation code blocks.
 
 ## v0.7.2 - 2026-08-15
 

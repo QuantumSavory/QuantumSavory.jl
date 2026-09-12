@@ -10,6 +10,8 @@ end
 StateRef(state, registers, registerindices) = StateRef(Ref{Any}(copy(state)), registers, registerindices) # TODO same as above, this should not be forced to Any
 
 """
+$TYPEDEF
+
 The main data structure in `QuantumSavory`, used to represent a quantum register in an arbitrary formalism.
 """
 struct Register # TODO better type description / TODO mutable struct with immutable fields to remove the refs
@@ -52,6 +54,8 @@ Register(nqubits::Int,repr::AbstractRepresentation) = Register(fill(Qubit(),nqub
 Register(nqubits::Int,bg::AbstractBackground) = Register(fill(Qubit(),nqubits),fill(bg,nqubits))
 
 """
+$TYPEDEF
+
 A reference to a [`Register`](@ref) slot, convenient for use with functions like [`apply!`](@ref), etc.
 
 ```jldoctest

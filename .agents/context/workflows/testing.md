@@ -9,21 +9,29 @@
 
 1. Add discoverable tests with a filename ending `_tests.jl`. The
    ParallelTestRunner entry point finds Julia tests, then filters out every name without
-   that suffix. `test/test_stateszoo_depolarized.jl` is currently orphaned by
-   this rule despite containing a test item.
+   that suffix. Use ordinary `@testset` blocks, as in
+   `test/general/stateszoo_depolarized_tests.jl`.
 2. Run the smallest named test or prefix first through the package test entry point,
    then its shard. With no arguments the runner explicitly defaults to `general`.
    Prefixes route `plotting` tests to `test/projects/plotting`, `examples` tests to the
    top-level `examples` project, and `jet` to `test/projects/jet`; JET executes directly
    while other tests use ParallelTestRunner.
+   When selected, `general/aqua_tests` runs serially before the parallel tests so its
+   precompilation processes do not overlap their workers.
 3. Finish cross-cutting changes with general tests. Record the command and actual
    outcome; repository configuration and historical CI jobs are not evidence that a
    current checkout passes.
 4. Run specialist shards when relevant. Buildkite defines general on stable and alpha,
    plus JET, examples, plotting, and docs. GitHub’s main CI runs only general on Linux
-   x64 with five threads, macOS arm64 with one, and Windows x64 with one. The downgrade
+   x64 with five threads on Julia 1.12 and the latest stable Julia, plus the latest stable
+   Julia on macOS arm64 with one thread and Windows x64 with one. The downgrade
    workflow runs general on Julia 1.12 and excludes Aqua through the runner’s downgrade
    condition.
+   Buildkite uses the QuantumSavory Julia setup and Xvfb plugin releases for all jobs,
+   including the alpha job. The Xvfb plugin uses job-local launchers and per-invocation
+   displays; it does not overwrite a shared launcher or terminate other jobs' Julia/Xvfb processes.
+   The JET step uses one Julia thread to avoid the compiler specialization-cache race
+   tracked by JuliaLang/julia#62332; its analysis and assertions are unchanged.
 5. Check environment routing before diagnosing dependency failures. Root workspace
    membership names nonexistent `test/projects/examples`, while the runner correctly
    uses `examples/`. Do not “fix” resolution by creating the missing directory.
@@ -63,5 +71,4 @@ that claim.
 
 ## Unresolved questions
 
-- Should the orphaned depolarized-state file be renamed or merged into the existing API tests?
 - Should the root workspace point to `examples` instead of `test/projects/examples`?

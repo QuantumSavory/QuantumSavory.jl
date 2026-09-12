@@ -1,4 +1,6 @@
 """
+$TYPEDEF
+
 A a buffer for classical messages. Usually a part of a [`Register`](@ref) structure.
 
 See also: [`channel`](@ref), [`messagebuffer`](@ref)
@@ -180,6 +182,8 @@ function Base.wait(mb::MessageBuffer)
 end
 
 """
+    onchange
+
 Wait for changes to occur on a [`MessageBuffer`](@ref) or [`Register`](@ref). By specifying a second argument, you can filter what type of events are waited on.
 E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
 """

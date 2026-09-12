@@ -7,7 +7,7 @@ secrets:
 steps:
   - label: "General Tests"
     plugins:
-      - JuliaCI/julia#v1:
+      - QuantumSavory/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
@@ -15,15 +15,19 @@ steps:
       - JuliaCI/julia-coverage#v1: ~
   - label: "General Tests (alpha)"
     plugins:
-      - Krastanov-agent/julia#bb0dd898e0190fa025fa9eddbf5b39665edc8e6c:
+      - QuantumSavory/julia#v1:
           version: "alpha"
       - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
           test_args: "general"
       - JuliaCI/julia-coverage#v1: ~
   - label: "JET Tests"
+    # Avoid the parallel compiler cache race until Julia includes this fix:
+    # https://github.com/JuliaLang/julia/pull/62332
+    env:
+      JULIA_NUM_THREADS: "1"
     plugins:
-      - JuliaCI/julia#v1:
+      - QuantumSavory/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
@@ -31,7 +35,7 @@ steps:
       - JuliaCI/julia-coverage#v1: ~
   - label: "Example Tests"
     plugins:
-      - JuliaCI/julia#v1:
+      - QuantumSavory/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
@@ -39,7 +43,7 @@ steps:
       - JuliaCI/julia-coverage#v1: ~
   - label: "Plotting Tests"
     plugins:
-      - JuliaCI/julia#v1:
+      - QuantumSavory/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
       - JuliaCI/julia-test#v1:
@@ -50,7 +54,7 @@ steps:
   - label: "Docs"
     branches: "!dependabot/*"
     plugins:
-      - JuliaCI/julia#v1:
+      - QuantumSavory/julia#v1:
           version: "1"
       - QuantumSavory/julia-xvfb#v1:
     secrets:

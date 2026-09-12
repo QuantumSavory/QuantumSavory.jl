@@ -1,4 +1,6 @@
 """
+$TYPEDSIGNATURES
+
 Calculate the expectation value of a quantum observable on the given register and slot.
 
 `observable([regA, regB], [slot1, slot2], obs)` would calculate the expectation value

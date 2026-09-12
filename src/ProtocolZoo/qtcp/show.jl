@@ -47,9 +47,26 @@ function Base.show(io::IO, m::MIME"text/html", prot::LinkController)
     <div class="quantumsavory_show quantumsavory_protocol quantumsavory_protocol_link_controller">
       <h1><code class="quantumsavory_typename quantumsavory_protocol_typename">LinkController</code> protocol</h1>
       <address>on <b>$(label_a)</b> and <b>$(label_b)</b></address>
-      <h2>Entanglement generation</h2>
     """)
-    show(io, m, _link_entangler(prot))
+    if isnothing(prot.tag)
+        print(io, "<h2>Integrated entanglement generation</h2>")
+        show(io, m, _link_entangler(prot))
+    else
+        tag = QuantumSavory._html_escape_text(string(prot.tag))
+        order = prot.filo::Bool ? "newest first (FILO)" : "oldest first (FIFO)"
+        print(io,
+        """
+          <section class="quantumsavory_protocol_external_inventory">
+            <h2>External entanglement inventory</h2>
+            <dl>
+              <dt>Tag</dt>
+              <dd><code>$(tag)</code></dd>
+              <dt>Selection order</dt>
+              <dd>$(order)</dd>
+            </dl>
+          </section>
+        """)
+    end
     print(io,
     """
       <h2>Link-level request interarrival times</h2>

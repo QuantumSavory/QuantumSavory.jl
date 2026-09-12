@@ -1,4 +1,8 @@
-"""A background describing the T₁ decay of a two-level system."""
+"""
+$TYPEDEF
+
+A background describing the T₁ decay of a two-level system.
+"""
 @kwdef struct T1Decay <: AbstractBackground
     "The T₁ time of the two-level system."
     t1::Float64 = 1e9 # TODO consider parameterizing the type
@@ -10,7 +14,11 @@
     end
 end
 
-"""A background describing the T₂ dephasing of a two-level system."""
+"""
+$TYPEDEF
+
+A background describing the T₂ dephasing of a two-level system.
+"""
 @kwdef struct T2Dephasing <: AbstractBackground
     "The T₂ time of the two-level system."
     t2::Float64 = 1e9 # TODO consider parameterizing the type
@@ -58,7 +66,11 @@ end
     end
 end
 
-"""A depolarization background."""
+"""
+$TYPEDEF
+
+An amplitude-damping background.
+"""
 @kwdef struct AmplitudeDamping <: AbstractBackground
     "The characteristic time of the amplitude damping process."
     τ::Float64 = 1e9 # TODO consider parameterizing the type
@@ -94,7 +106,7 @@ public available_background_types
 
 """Return the available public background types along with their documentation.
 
-Used to make a background available to tools like the GUI WebQuantumSavory.
+Used to make a background available to tools like QuantumSavory Studio.
 
 Concrete direct and indirect subtypes of [`AbstractBackground`](@ref) are discovered on
 each call. The defining binding of each type must be public. The `InteractiveUtils`

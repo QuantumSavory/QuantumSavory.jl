@@ -90,6 +90,28 @@ struct DummyProtocol <: QuantumSavory.ProtocolZoo.AbstractProtocol end
         @test occursin("Originator node", populated_html)
         @test occursin("Arrival time", populated_html)
         @test occursin("Sojourn time", populated_html)
+
+        external_controller = LinkController(
+            sim,
+            net,
+            1,
+            2;
+            tag=EntanglementCounterpart,
+            filo=false,
+        )
+        external_html = repr(MIME"text/html"(), external_controller)
+
+        @test occursin("quantumsavory_protocol_external_inventory", external_html)
+        @test occursin("External entanglement inventory", external_html)
+        @test occursin("EntanglementCounterpart", external_html)
+        @test occursin("oldest first (FIFO)", external_html)
+        @test !occursin("quantumsavory_protocol_entangler", external_html)
+
+        default_external_html = repr(
+            MIME"text/html"(),
+            LinkController(sim, net, 1, 2; tag=EntanglementCounterpart),
+        )
+        @test occursin("newest first (FILO)", default_external_html)
     end
 
     @testset "NetworkNodeController HTML summarizes each flow" begin

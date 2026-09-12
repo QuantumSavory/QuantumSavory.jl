@@ -66,6 +66,13 @@ put!(qtcp_net[4], Flow(src=4, dst=2, npairs=2, uuid=302))
 run(qtcp_sim, 12.0)
 
 link_controller = link_controllers[2]
+external_link_controller = LinkController(
+    qtcp_net,
+    2,
+    3;
+    tag=EntanglementCounterpart,
+    filo=false,
+)
 network_controller = network_controllers[3]
 end_controller = end_controllers[2]
 ```
@@ -100,16 +107,31 @@ ProtocolVisualizationPNG(consumer) # hide
 
 ## [`LinkController`](@ref)
 
-### `text/html`
+The integrated mode shows its one-shot built-in entangler. The external mode shows the
+configured inventory tag and selection order.
+
+### Integrated `text/html`
 
 ```@example protocol_visualizations
 protocolvis_html(link_controller) # hide
 ```
 
-### `image/png`
+### Integrated `image/png`
 
 ```@example protocol_visualizations
 ProtocolVisualizationPNG(link_controller) # hide
+```
+
+### External `text/html`
+
+```@example protocol_visualizations
+protocolvis_html(external_link_controller) # hide
+```
+
+### External `image/png`
+
+```@example protocol_visualizations
+ProtocolVisualizationPNG(external_link_controller) # hide
 ```
 
 ## [`NetworkNodeController`](@ref)

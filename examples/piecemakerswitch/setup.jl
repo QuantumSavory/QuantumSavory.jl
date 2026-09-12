@@ -23,7 +23,7 @@ as target, then measures the client qubit in the Z basis and traces it out.
 - `client_slot::Int`: Register slot index containing the client qubit to be fused
 
 # Returns
-- Measurement outcome (1 or 2) from projecting the client qubit onto the Z basis
+- Measurement eigenvalue (`1` or `-1`) from projecting the client qubit onto the Z basis
 """
 function fusion(piecemaker_slot::RegRef, client_slot::RegRef)
     apply!((piecemaker_slot, client_slot), CNOT)
@@ -38,7 +38,7 @@ Resumable function that waits for X correction messages and applies them.
 
 This protocol monitors a client node for `:updateX` tags sent by the switch
 after fusion operations. When received, it applies an X gate if needed (when
-the measurement outcome is 2) to correct the client's qubit state.
+the measurement outcome is `-1`) to correct the client's qubit state.
 
 # Arguments
 - `sim`: ConcurrentSim simulation environment
@@ -65,7 +65,7 @@ the measurement outcome is 2) to correct the client's qubit state.
                 message_type=:updateX,
                 correction=value,
             )
-            value == 2 && apply!(net[node][1], X)
+            value == -1 && apply!(net[node][1], X)
             unlock(net[node][1])
             break
         end
@@ -79,7 +79,7 @@ Resumable function that applies Z corrections and measures final GHZ fidelity.
 
 Waits for a `:updateZ` tag from the switch (sent after measuring the piecemaker
 qubit in the X basis), applies the necessary Z correction if the measurement
-outcome is 2, then measures the fidelity of the resulting n-qubit state to the
+outcome is `-1`, then measures the fidelity of the resulting n-qubit state to the
 target GHZ state and logs it.
 Saves a (time, fidelity) data point to the `logging` vector.
 
@@ -113,7 +113,7 @@ Saves a (time, fidelity) data point to the `logging` vector.
             correction=value,
         )
         @yield lock(net[node][1])
-        value == 2 && apply!(net[node][1], Z)
+        value == -1 && apply!(net[node][1], Z)
         unlock(net[node][1])
 
         # Measure the fidelity to the GHZ state

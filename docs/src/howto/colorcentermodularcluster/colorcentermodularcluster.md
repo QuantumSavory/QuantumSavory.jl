@@ -127,7 +127,7 @@ function bk_swap(env, reg, conf)
     apply!([reg[1],reg[2]], CPHASE; time=now(env))
     off = project_traceout!(reg[1], σˣ)
     if rand() > conf[:Fᵐᵉᵃˢ] # model measurement infidelity by flipping the outcome
-        off = off%2 + 1
+        off = -off
     end
     return off
 end
@@ -140,8 +140,8 @@ In a more complete implementation this would be tracked in a Pauli frame rather 
 ```julia
 r1 = bk_swap(env, rega, conf)
 r2 = bk_swap(env, regb, conf)
-r1==2 && apply!(regb[2], Z)
-r2==2 && apply!(rega[2], Z)
+r1 == -1 && apply!(regb[2], Z)
+r2 == -1 && apply!(rega[2], Z)
 net[(nodea, nodeb), :link_register] = true     # record success
 release.(nspin_slots); release.(espin_slots); release(link_resource)
 ```

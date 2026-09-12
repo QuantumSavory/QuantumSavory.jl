@@ -2,12 +2,13 @@
 
 ## Tutorial Structure
 
-The tutorial is organized as a four-step progression:
+The tutorial is organized as a five-step progression:
 
 1. Start from the smallest working QTCP example
 2. Add visualization to build intuition
 3. Change topology and run multiple flows
 4. Replace one protocol component to demonstrate modularity
+5. Consume link entanglement from independent producers
 
 The tutorial scripts live in `examples/qtcp_tutorial/`.
 
@@ -98,8 +99,8 @@ Scenario:
 - A 4x4 grid
 - End nodes at the four corners
 - Two simultaneous flows:
-  - node 1 to node 16
-  - node 13 to node 4
+  - node 1 to node 4
+  - node 13 to node 16
 - Five requested Bell pairs per flow
 
 What the script demonstrates:
@@ -148,6 +149,33 @@ Expected outcome:
 - The default controller completes the requested flow
 - The custom controller also completes the requested flow
 
+## Step 5: External Entanglement Inventory
+
+File:
+- `examples/qtcp_tutorial/5_external_entanglement_inventory.jl`
+
+Goal:
+- Separate physical-link pair production from QTCP link requests.
+
+Scenario:
+- The same 4x4 grid, corner nodes, and two five-pair flows as step 3
+- One persistent `EntanglerProt` per physical edge that produces raw link-level Bell pairs
+- Every `LinkController` configured with
+  `tag=EntanglementCounterpart, filo=true`
+
+What the script demonstrates:
+- Running persistent entanglers independently from link controllers
+- Letting link controllers wait when the independent producers have not made
+  a pair yet
+- Letting QTCP claim the newest suitable pair from each link
+
+Narrative role:
+- This is the composition step.
+- It shows that QTCP can consume link resources produced by another protocol.
+
+Expected outcome:
+- The `LinkController` consumes independently generated pairs instead of generating them itself.
+
 ## Recommended Reading Order
 
 1. Read `setup.jl` once to understand the shared scaffold.
@@ -155,3 +183,5 @@ Expected outcome:
 3. Run `2_chain_visualization.jl` to build intuition for the runtime behavior.
 4. Run `3_grid_multiflow.jl` to see concurrent flows on a larger topology.
 5. Run `4_custom_endnode.jl` to see tutorial-level customization.
+6. Run `5_external_entanglement_inventory.jl` to separate link production from
+   QTCP consumption.

@@ -83,7 +83,7 @@ end
         @compile_workload begin
             measurement_outcome = project_traceout!(measurement_reg[1], Z)
             @assert observable(
-                measurement_reg[2], SProjector(measurement_basis[measurement_outcome])
+                measurement_reg[2], SProjector(measurement_basis[1 + Int(measurement_outcome == -1)])
             ) ≈ 1
             partner_outcome = project_traceout!(measurement_reg[2], Z)
             @assert measurement_outcome == partner_outcome
@@ -163,7 +163,7 @@ end
             first_outcome = project_traceout!(register[1], Z)
             partner_fidelity = real(observable(
                 register[2],
-                SProjector((Z1, Z2)[first_outcome]),
+                SProjector((Z1, Z2)[1 + Int(first_outcome == -1)]),
             ))
             second_outcome = project_traceout!(register[2], Z)
             @assert first_outcome == second_outcome
@@ -211,9 +211,9 @@ end
             gabs_reg = Register(fill(Qumode(), 2), fill(gabs_repr, 2))
             initialize!(gabs_reg[1:2], TwoSqueezedState(0.45))
             gabs_result = project_traceout!(
-                gabs_reg[1], HomodyneMeasurement([0.0]; squeeze=1e-12)
+                gabs_reg[1], HomodyneMeasurement(0.0)
             )
-            @assert length(gabs_result) == 2 && all(isfinite, gabs_result)
+            @assert gabs_result isa Real && isfinite(gabs_result)
             @assert !isassigned(gabs_reg, 1) && isassigned(gabs_reg, 2)
         end
     finally

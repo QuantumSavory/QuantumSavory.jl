@@ -14,7 +14,7 @@ using DocStringExtensions
 using PrettyTables: PrettyTables, pretty_table
 using IterTools
 import LinearAlgebra
-using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, det
+using LinearAlgebra: tr, mul!, eigvals, eigvecs, norm, normalize, det
 import Random
 using Random: randperm
 using Graphs
@@ -68,7 +68,7 @@ export
     AbstractBackground,
     onchange_tag, onchange,
     # networks.jl
-    RegisterNet, channel, qchannel, messagebuffer,
+    RegisterNet, channel, qchannel, messagebuffer, dist_to_delay, network_builder,
     # logging.jl
     LOG_GROUPS, simulation_log_context,
     # initialize.jl
@@ -175,6 +175,8 @@ include("CircuitZoo/CircuitZoo.jl")
 include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
+
+include("network_builder.jl")
 
 include("should_upstream.jl")
 include("precompile.jl")

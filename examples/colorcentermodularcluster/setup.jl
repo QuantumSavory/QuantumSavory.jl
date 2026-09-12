@@ -35,7 +35,7 @@ function bk_swap(env::Environment, reg, conf)
     apply!([reg[1],reg[2]], CPHASE; time=now(env))
     off = project_traceout!(reg[1], σˣ)
     if rand()>conf[:Fᵐᵉᵃˢ] # TODO this should be declarative in project_traceout or something like that
-        off = off%2+1
+        off = -off
     end
     return off
 end
@@ -64,8 +64,8 @@ end
     r2 = bk_swap(env, regb, conf)
     # if necessary, correct the computational basis - currently done by affecting the state,
     # but something that might be better done with a Pauli frame
-    r1==2 && apply!(regb[2], Z)
-    r2==2 && apply!(rega[2], Z)
+    r1 == -1 && apply!(regb[2], Z)
+    r2 == -1 && apply!(rega[2], Z)
     # register that we believe an entanglement was established
     net[(nodea, nodeb), :link_register] = true
     # release locks
