@@ -38,6 +38,14 @@ waiters observe a register-wide future change edge. Message buffers also broadca
 changes, but their queued, unattended notification tokens make the exact wake behavior
 different from a simple edge-triggered condition. Tests should distinguish “eventually
 wakes and re-queries” from stronger one-notification/one-waiter assumptions.
+Both `onchange(::Register)` and `onchange(::MessageBuffer)` register the caller as a
+waiter before returning (the buffer either consumes one queued token or attaches to the
+current notifier generation), so a change later in the same simulation step is never
+lost relative to the caller's own registration; `test/general/messagebuffer_tests.jl`
+pins this with a blocked bystander and a local `put!` in the same step. Waiters
+abandoned by a composite wait (`onchange(mbA) | onchange(mbB)`, or a wait raced against
+a `timeout`) stay registered on their generation, so an arrival that finds only such
+stale waiters stores no token.
 
 Snapshot results can become stale between query and use because ConcurrentSim processes
 interleave at yields. Protocols should validate reciprocal tags, slot occupancy, and

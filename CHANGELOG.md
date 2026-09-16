@@ -1,5 +1,14 @@
 # News
 
+## Unreleased
+
+- **(fix)** `onchange(::MessageBuffer)` now registers the caller as a waiter before
+  returning. Previously the registration happened inside a separately scheduled
+  process, so a message delivered later in the same simulation step, after the
+  caller had yielded but before that process ran, while another task was already
+  blocked on the same buffer, woke only that other task and was never noticed by
+  the caller (a lost wake-up that could block a protocol forever).
+
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
