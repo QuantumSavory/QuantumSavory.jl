@@ -45,6 +45,7 @@ The current `CircuitZoo` mainly covers:
 - entanglement swapping,
 - purification routines,
 - graph-state fusion, and
+- superdense encoding and decoding, and
 - related node-local subcircuits.
 
 The autodocs below are the exact API reference.

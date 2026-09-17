@@ -1,5 +1,6 @@
 """
-$TYPEDSIGNATURES
+    query_wait(store::Register, args...; on::Type{On}=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {On}
+    query_wait(store::MessageBuffer, args...; on::Type{On}=Any) where {On}
 
 A convenience function that combines waiting (via [`onchange`](@ref)) and querying (via [`query`](@ref)) in a loop,
 returning a ConcurrentSim process that yields the first successful query result.
@@ -117,7 +118,10 @@ function query_wait(store::MessageBuffer, args...; on::Type{On}=Any) where {On}
 end
 
 """
-$TYPEDSIGNATURES
+    querydelete_wait!(store::Register, args...; on::Type{On}=Any, locked::Union{Nothing,Bool}=nothing, assigned::Union{Nothing,Bool}=nothing) where {On}
+    querydelete_wait!(store::MessageBuffer, args...; on::Type{On}=Any) where {On}
+
+Wait for and remove the first tag matching a query.
 
 A convenience function that combines waiting (via [`onchange`](@ref)) and querying-with-deletion (via [`querydelete!`](@ref)) in a loop,
 returning a ConcurrentSim process that yields the first successful query result (deleting the matched entry).

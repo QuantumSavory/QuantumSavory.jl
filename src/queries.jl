@@ -62,13 +62,19 @@ struct Wildcard end
 
 const QueryTypes = Union{Function,Wildcard,TagElementTypes}
 
-"""A wildcard instance for use with the tag querying functionality.
+"""
+    W
+
+A wildcard instance for use with the tag querying functionality.
 
 See also: [`query`](@ref), [`tag!`](@ref), [`❓`](@ref)"""
 const W = Wildcard()
 
 
-"""A wildcard instance for use with the tag querying functionality.
+"""
+    ❓
+
+A wildcard instance for use with the tag querying functionality.
 
 This emoji can be inputted with the `\\:question:` emoji shortcut,
 or you can simply use the ASCII alternative [`W`](@ref).
@@ -489,7 +495,10 @@ end
 
 alwaystrue(x) = true
 
-"""Find an empty unlocked slot in a given [`Register`](@ref).
+"""
+$TYPEDSIGNATURES
+
+Find an empty unlocked slot in a given [`Register`](@ref).
 
 ```jldoctest
 julia> reg = Register(3); initialize!(reg[1], X); lock(reg[2]);

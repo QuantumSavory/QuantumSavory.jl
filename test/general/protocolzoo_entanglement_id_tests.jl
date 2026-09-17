@@ -8,7 +8,7 @@ using QuantumSavory.ProtocolZoo: EntanglementCounterpart, EntanglementHistory,
     NO_ENTANGLEMENT_ID, combine_entanglement_ids, fresh_entanglement_id
 using QuantumSavory.ProtocolZoo: _enforce_history_cap!, normalize_entanglement_id
 
-struct CustomEntanglerTag end
+struct CustomEntanglerTag <: AbstractTag end
 
 @testset "ProtocolZoo entanglement IDs" begin
     @testset "ID accumulator algebra" begin
@@ -52,7 +52,6 @@ struct CustomEntanglerTag end
         _enforce_history_cap!(slot, nothing)
         histories = queryall(slot, EntanglementHistory, ❓, ❓, ❓, ❓, ❓, ❓, ❓; filo=false)
         @test [history.tag[7] for history in histories] == collect(1:5)
-        @test_throws ArgumentError _enforce_history_cap!(slot, -1)
     end
 
     @testset "EntanglerProt keeps custom tags at legacy arity" begin

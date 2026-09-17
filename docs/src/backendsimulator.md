@@ -27,7 +27,37 @@ network models.
 
 `QuantumOpticsRepr()` selects the general `QuantumOptics` backend, and
 `QuantumMCRepr()` uses the same symbolic lowering path with a Monte Carlo style
-state representation.
+state representation. For backgrounds with a Kraus representation,
+`QuantumMCRepr()` samples a normalized pure-state trajectory instead of
+converting the state to a density operator.
+
+Slots using `QuantumMCRepr()` store that trajectory in an internal `MCKet`
+wrapper around the underlying QuantumOptics `Ket`. The wrapper preserves Monte
+Carlo semantics through initialization, instantaneous operations, compositions
+whose factors are all `MCKet`s, and projective measurements. Composing with a
+plain `Ket` produces a plain `Ket`, while composing with an `Operator` produces
+an `Operator` after density-matrix promotion.
+
+`ConstantHamiltonianEvolution` preserves `MCKet`: it uses Schrödinger evolution
+without active backgrounds and Monte Carlo wave-function evolution when Lindblad
+jump operators are present. Standalone background evolution also preserves
+`MCKet`: it samples a Kraus branch when available and otherwise uses Monte Carlo
+wave-function evolution with a zero Hamiltonian.
+
+Partial trace also preserves `MCKet`. It samples the discarded subsystem in
+that subsystem's native canonical basis and stores the corresponding conditional
+pure-state trajectory. Individual trajectories therefore depend on this
+canonical-basis unraveling, while their ensemble is the exact partial trace.
+Use `QuantumOpticsRepr()` when an exact deterministic reduced density matrix is
+needed, or [`project_traceout!`](@ref) when the sampled outcome itself is needed.
+When one `traceout!` call includes every live slot of a shared state, the register
+layer deletes the complete group without backend reduction or trajectory
+sampling.
+
+Because `MCKet` is the stored state type, `stateref.state[]` exposes it directly
+and `StateRef` displays identify its implementation module as `QuantumSavory`.
+Combining an `MCKet` with an existing `Operator` still promotes the ket through
+`dm` and produces an `Operator`.
 
 Use this family when:
 
@@ -36,8 +66,7 @@ Use this family when:
 - you want one backend that can handle both qubits and bosonic modes, or
 - you are validating a cheaper approximation on smaller systems.
 
-This is the most flexible built-in path, but it also has the least structural
-compression.
+This is the most flexible simulator backend, but it is also the most expensive computationally.
 
 ### `Gabs`
 
@@ -49,6 +78,22 @@ Use it when:
 - the state stays in the Gaussian regime,
 - the operations are Gaussian, and
 - homodyne-style continuous-variable measurements are central to the model.
+
+For `HomodyneMeasurement(θ)`, QuantumSavory asks Gabs to use a projector on
+the following state: a Gaussian state squeezed along the selected quadrature
+``q_\theta=x\cos\theta+p\sin\theta``. In the rotated quadrature frame, the
+projector covariance is
+
+```math
+V_{\mathrm{projector}} =
+\operatorname{diag}(v, 1/v), \qquad v=10^{-12}.
+```
+
+The fixed internal `v` is a variance factor, so `v → 0` is the
+infinite-squeezing limit. Gabs samples the conjugate coordinate as part of this
+finite approximation, but QuantumSavory returns only the physical homodyne
+outcome ``q_\theta``. `HomodyneMeasurement` does not expose `v` as a constructor
+parameter.
 
 This is the right backend for continuous-variable models that would be awkward
 or expensive to force into a generic wavefunction description.
@@ -119,6 +164,25 @@ When you switch backends, the following usually stays the same:
 
 What changes is the numerical representation used once symbolic objects are
 lowered and the set of operations that can be executed efficiently.
+
+## Performance Considerations
+
+Operations that span separately factorized states compose those states into a
+larger tensor product. In particular, `apply!` and non-instant operations merge
+the touched states, while `observable` builds a temporary composition
+without changing the register. Repeated cross-state observables therefore repeat
+that tensor-product work.
+
+The cost of composition depends on the backend. `QuantumOpticsRepr()` tensors
+state vectors or density operators; composing a ket with a density operator first
+promotes the ket to a density operator. `CliffordRepr()` and `GabsRepr(...)` keep
+their compact tableau and Gaussian representations, respectively.
+
+Symbolic stabilizer projectors evaluate directly on selected, reordered subsystems
+of pure or mixed Clifford tableaux. A dense `QuantumOpticsBase.Operator` observable
+is however more problematic: for a pure Clifford state, QuantumSavory converts the
+entire stabilizer state to a dense ket. Its size grows exponentially with the number
+of qubits, even if the observable addresses only some subsystems.
 
 ## Where To Go Next
 

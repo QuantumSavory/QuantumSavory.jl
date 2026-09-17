@@ -7,6 +7,9 @@ using LinearAlgebra
 
 @testset "StatesZoo API" begin
 
+@test Base.ispublic(QuantumSavory.StatesZoo.Genqo, :GenqoMultiplexedCascadedBellPairW)
+@test Base.ispublic(QuantumSavory.StatesZoo.Genqo, :GenqoUnheraldedSPDCBellPairW)
+
 _evalf(x::Number) = x
 _evalf(x) = express(x)
 

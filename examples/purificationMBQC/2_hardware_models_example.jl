@@ -40,7 +40,7 @@ end
 @info "Checking near-ideal hardware: purification must succeed with output fidelity ≈ 1"
 t_ideal_start = time()
 bk_ideal = BarrettKokBellPair(1.0, 1.0, 0.0, 1.0, 1.0)
-zalm_ideal_w = GenqoMultiplexedCascadedBellPairW(1.0, 1.0, 1.0, 0.1, 0.0)
+zalm_ideal_w = GenqoMultiplexedCascadedBellPairW(1.0, 1.0, 1.0, 0.1)
 zalm_ideal = zalm_ideal_w / real(tr(express(zalm_ideal_w)))
 acceptance_ideal, out_f_ideal = run_hardware_trials(2, zalm_ideal, bk_ideal)
 @info "Near-ideal hardware: acceptance=$(acceptance_ideal), output fidelity=$(round(out_f_ideal, digits=4))"

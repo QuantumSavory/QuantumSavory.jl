@@ -3,7 +3,9 @@
 The quantum states objects in QuantumSavory have a variety of `show` methods
 implemented for them. Depending on the IDE you are working in,
 you will be able to see rich information about the quantum state you are working with,
-e.g. when accessing it with `stateof(network[register_index][slot_index])` or `stateof(register[slot_index])`.
+e.g. when accessing it with
+`QuantumSavory.stateof(network[register_index][slot_index])` or
+`QuantumSavory.stateof(register[slot_index])`.
 
 In particular:
 - in Pluto or Jupyter or VS Code you will see the `text/html` or `image/png` rendering.
@@ -17,6 +19,7 @@ ENV["COLUMNS"] = "100"
 ENV["LINES"] = "24"
 
 using CairoMakie
+using Gabs: QuadBlockBasis
 using QuantumSavory
 
 CairoMakie.activate!()
@@ -37,7 +40,7 @@ function statevis_qubit_register(repr)
 end
 
 function statevis_gabs_register()
-    reg = Register(fill(Qumode(), 5), fill(GabsRepr(QuantumSavory.Gabs.QuadBlockBasis), 5))
+    reg = Register(fill(Qumode(), 5), fill(GabsRepr(QuadBlockBasis), 5))
     for i in 1:5
         initialize!(reg[i], SqueezedState(0.15 * i))
         apply!(reg[i], DisplaceOp(0.1 * i - 0.05im * i))

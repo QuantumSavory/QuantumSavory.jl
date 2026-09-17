@@ -1,0 +1,49 @@
+FROM caddy:2.10.2 AS caddy
+
+FROM node:24.18.0-bookworm-slim AS warmup
+
+RUN npm install --prefix /opt/warmup --omit=dev --ignore-scripts --no-audit --no-fund \
+        playwright-core@1.62.1
+
+FROM julia:1.12.6-bookworm AS build
+
+ENV JULIA_DEPOT_PATH=/opt/julia-depot \
+    JULIA_PKG_PRECOMPILE_AUTO=0
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git xauth xvfb && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG QUANTUMSAVORY_REVISION=master
+
+RUN git clone --no-checkout https://github.com/QuantumSavory/QuantumSavory.jl.git /app && \
+    git -C /app checkout --detach "$QUANTUMSAVORY_REVISION" && \
+    rm -rf /app/.git
+
+WORKDIR /app
+
+RUN xvfb-run -a julia --startup-file=no --threads=auto --project=examples -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()' && \
+    julia --startup-file=no --threads=auto --project=examples/states_rest_server -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+
+FROM julia:1.12.6-bookworm
+
+ENV JULIA_DEPOT_PATH=/opt/julia-depot \
+    JULIA_PKG_OFFLINE=true \
+    JULIA_PKG_PRECOMPILE_AUTO=0
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates chromium curl jq xvfb && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=caddy /usr/bin/caddy /usr/bin/caddy
+COPY --from=warmup /usr/local/bin/node /usr/local/bin/node
+COPY --from=build /opt/julia-depot /opt/julia-depot
+COPY --from=build /app /app
+COPY --from=warmup /opt/warmup/node_modules /app/node_modules
+
+WORKDIR /app
+RUN /app/examples/areweentangledyet/start.sh --validate-only
+
+EXPOSE 8000
+STOPSIGNAL SIGTERM
+ENTRYPOINT ["/app/examples/areweentangledyet/start.sh"]

@@ -23,8 +23,8 @@ for pair in (perfect_pair, perfect_pair_stab), rep in 1:10
     initialize!((net[1][1], net[2][1]), pair)
     initialize!((net[3][1], net[2][2]), pair)
     mx, mz = LocalEntanglementSwap()(net[2][1], net[2][2])
-    mx == 2 && apply!(net[1][1], Z)
-    mz == 2 && apply!(net[3][1], X)
+    mx == -1 && apply!(net[1][1], Z)
+    mz == -1 && apply!(net[3][1], X)
     @test !isassigned(net[2][1]) && !isassigned(net[2][2])
     @test observable((net[1][1], net[3][1]), Z⊗Z) ≈ 1
     @test observable((net[1][1], net[3][1]), X⊗X) ≈ 1
@@ -50,8 +50,8 @@ for pair in (perfect_pair, perfect_pair_stab), n in 3:10, rep in 1:10
     end
     for i in 2:n-1
         mx, mz = LocalEntanglementSwap()(net[i][2], net[i][1])
-        mx == 2 && apply!(net[1][1], Z)
-        mz == 2 && apply!(net[i+1][2], X)
+        mx == -1 && apply!(net[1][1], Z)
+        mz == -1 && apply!(net[i+1][2], X)
     end
     @test all(!isassigned(net[i][1]) & !isassigned(net[i][2]) for i in 2:n-1)
     @test observable((net[1][1], net[n][2]), Z⊗Z) ≈ 1

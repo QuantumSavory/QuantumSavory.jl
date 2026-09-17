@@ -1,5 +1,11 @@
 # Message passing and queues
 
+!!! warning "Archived low-level tutorial"
+
+    This page predates the maintained `Tag`, query, `MessageBuffer`, `channel`, and
+    `qchannel` interfaces. Its direct ConcurrentSim queue construction is retained as
+    historical implementation context, not as a supported QuantumSavory API.
+
 !!! warning
 
     This section is rather low-level, created before a lot of user-friendly tools were added.

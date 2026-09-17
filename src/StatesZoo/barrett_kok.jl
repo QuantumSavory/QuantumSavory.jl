@@ -28,7 +28,11 @@ See also [`BarrettKokBellPairW`](@ref) for the weighted density matrix.
     m
 end
 
-"""The weighted version of [`BarrettKokBellPair`](@ref), i.e. its trace is the probability of successfully heralding a Barrett-Kok Bell pair."""
+"""
+$TYPEDEF
+
+The weighted version of [`BarrettKokBellPair`](@ref), i.e. its trace is the probability of successfully heralding a Barrett-Kok Bell pair.
+"""
 @withmetadata struct BarrettKokBellPairW <: AbstractTwoQubitState
     bkbp::BarrettKokBellPair
 end

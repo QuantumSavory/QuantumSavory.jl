@@ -67,13 +67,13 @@ function prepare_singlerun()
         end
     end
 
-    return sim, net, obs, entlog, entlogaxis, histaxis, fig, params
+    return sim, net, obs, entlog, entlogaxis, histaxis, fid_axis, num_epr_axis, fig, params
 end
 
 # All the calls that happen in the main event loop of the simulation,
 # encapsulated here so that we can conveniently pause the simulation from the WGLMakie app.
-function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, running)
-    step_ts = range(0, 1000, step=0.1)
+function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, fid_axis, num_epr_axis, running;
+    step_ts = range(0, 50, step=5.0))
     for t in step_ts
         run(sim, t)
         notify.((obs,entlog))
@@ -85,6 +85,7 @@ function continue_singlerun!(sim, obs, entlog, params, entlogaxis, histaxis, run
         autolimits!(histaxis)
         ylims!(num_epr_axis, (0, 4))
         xlims!(num_epr_axis, max(0, t-50), 1+t)
+        yield()
     end
     running[] = nothing
 end
@@ -92,22 +93,26 @@ end
 #
 landing = Bonito.App() do
 
-    sim, net, obs, entlog, entlogaxis, histaxis, fig, params = prepare_singlerun()
+    sim, net, obs, entlog, entlogaxis, histaxis, fid_axis, num_epr_axis, fig, params = prepare_singlerun()
 
-    running = Observable{Any}(false)
-    fig[4,1] = buttongrid = GridLayout(tellwidth = false)
+    running = Observable{Union{Bool, Nothing}}(false)
+    fig[5,:] = buttongrid = GridLayout(tellwidth = false)
     buttongrid[1,1] = b = Makie.Button(fig, label = @lift(isnothing($running) ? "Done" : $running ? "Running..." : "Run once"), height=30, tellwidth=false)
 
     on(b.clicks) do _
-        if !running[]
+        if running[] === false
             running[] = true
         end
     end
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        running[] === false && (running[] = true)
+    end
     on(running) do r
-        if r
-            Threads.@spawn begin
+        if r === true
+            @async begin
                 continue_singlerun!(
-                    sim, obs, entlog, params, entlogaxis, histaxis, running)
+                    sim, obs, entlog, params, entlogaxis, histaxis, fid_axis, num_epr_axis, running)
             end
         end
     end
@@ -136,7 +141,7 @@ landing = Bonito.App() do
 
    [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/repeatergrid/1b_async_wglmakie_interactive.jl)
     """
-    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end;
 
 #

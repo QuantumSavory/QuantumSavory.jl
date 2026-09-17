@@ -1,6 +1,10 @@
 abstract type AbstractNoninstantOperation end
 
-"""Represents an gate applied instantaneously followed by a waiting period. See also [`ConstantHamiltonianEvolution`](@ref)."""
+"""
+$TYPEDEF
+
+Represents an gate applied instantaneously followed by a waiting period. See also [`ConstantHamiltonianEvolution`](@ref).
+"""
 struct NonInstantGate <: AbstractNoninstantOperation
     gate
     duration # TODO assert larger than zero
@@ -12,7 +16,11 @@ function apply!(regs::Vector{Register}, indices::Base.AbstractVecOrTuple{Int}, o
     regs, new_time+operation.duration
 end
 
-"""Represents a Hamiltonian being applied for the given duration. See also [`NonInstantGate`](@ref)."""
+"""
+$TYPEDEF
+
+Represents a Hamiltonian being applied for the given duration. See also [`NonInstantGate`](@ref).
+"""
 struct ConstantHamiltonianEvolution <: AbstractNoninstantOperation
     hamiltonian
     duration # TODO assert larger than zero

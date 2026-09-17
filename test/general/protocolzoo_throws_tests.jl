@@ -15,4 +15,7 @@ net = RegisterNet([Register(2), Register(3), Register(4)])
 @test_throws "`success_probs` must have the same length as `clientnodes`" SimpleSwitchDiscreteProt(net, 1, [2], fill(0.5, 3))
 @test_throws "`success_probs` must be in the range [0,1]" SimpleSwitchDiscreteProt(net, 1, [2], fill(-0.5, 1))
 @test_throws "`success_probs` must be in the range [0,1]" SimpleSwitchDiscreteProt(net, 1, [2], fill(1.5, 1))
+@test_throws "`ticktock` must be positive" SimpleSwitchDiscreteProt(net, 1, [2], fill(0.5, 1); ticktock=NaN)
+@test_throws "`rounds` must be positive or" SimpleSwitchDiscreteProt(net, 1, [2], fill(0.5, 1); rounds=NaN)
+@test_throws "`success_probs` must be in the range [0,1]" SimpleSwitchDiscreteProt(net, 1, [2], fill(NaN, 1))
 end

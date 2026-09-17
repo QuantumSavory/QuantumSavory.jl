@@ -88,5 +88,5 @@ stairs!(axz, sampled_times, qcz)
 stairs!(axz, sampled_times, qoz)
 Legend(fig[3,1][1,1],[qcplot,qoplot],["Wave function sims","Clifford circuit sims"],
             orientation = :horizontal, tellwidth = false, tellheight = true)
-display(fig)
+isinteractive() && display(fig)
 save("firstgenrepeater-09.formalisms.png", fig)

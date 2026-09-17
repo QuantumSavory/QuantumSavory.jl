@@ -2,7 +2,7 @@ using Revise # for interactive work on docs
 push!(LOAD_PATH,"../src/")
 
 using Documenter
-using DocumenterCitations, DocumenterMermaid
+using DocumenterCitations, DocumenterCodeBlocks, DocumenterMermaid
 using AnythingLLMDocs
 using QuantumSavory
 using QuantumSavory.StatesZoo, QuantumSavory.ProtocolZoo, QuantumSavory.CircuitZoo
@@ -32,10 +32,11 @@ function main()
     )
 
     bib = CitationBibliography(joinpath(@__DIR__,"src/references.bib"), style=:authoryear)
+    codeblocks = CodeBlocks()
     assets = Any["assets/custom.css"]
     append!(assets, anythingllm_assets)
     makedocs(
-    plugins = [bib],
+    plugins = [bib, codeblocks],
     doctest = false,
     clean = true,
     warnonly = [:missing_docs],
@@ -57,6 +58,7 @@ function main()
         "Choosing a Backend and Modeling Tradeoffs" => "modeling_tradeoffs.md",
         "Modeling Registers, Factorization, and Time" =>
             "modeling_registers_and_time.md",
+        "Register Networks" => "register_networks.md",
         "Metadata and Protocol Composition" => "metadata_plane.md",
         "Classical Messaging and Buffers" => "classical_messaging.md",
         "Zoos as Composable Building Blocks" => "zoos_as_building_blocks.md",
@@ -68,18 +70,24 @@ function main()
     "How-To Guides" => [
         "howto.md",
         "1st-gen Repeater" => "howto/firstgenrepeater/firstgenrepeater.md",
-        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
-        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
         "Congestion on a Repeater Chain" => "howto/congestionchain/congestionchain.md",
-        "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
+        "Grid of Repeaters" => "howto/repeatergrid/repeatergrid.md",
+        "MBQC-Based Entanglement Purification" => "howto/purificationmbqc.md",
+        "QTCP" => "howto/qtcp.md",
         "Entanglement Switch" => "howto/simpleswitch/simpleswitch.md",
         "Cluster-State Walkthrough" => "howto/cluster_state_walkthrough.md",
+        "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
+        "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
+        "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
     ],
     "Tutorials" => [
         "tutorial.md",
-        "Gate Duration" => "tutorial/noninstantgate.md",
+        "Build a Network from a Dataset" => "tutorial/dataset_network.md",
+        "Measure and Remove Quantum Systems" => "tutorial/project_traceout.md",
+        "Qumode-Qubit teleportation (homodyne)" => "tutorial/homodyne_teleport.md",
         "Custom Swapper Protocol" => "tutorial/myswapperprot.md",
         "State Explorer" => "tutorial/state_explorer.md",
+        "Gate Duration" => "tutorial/noninstantgate.md",
         #"Message queues" => "tutorial/message_queues.md", TODO
         #"Depolarization and Pauli Noise" => "tutorial/depolarization_and_pauli.md", TODO
     ],
@@ -94,14 +102,20 @@ function main()
         "CircuitZoo API" => "API_CircuitZoo.md",
         "StatesZoo API" => "API_StatesZoo.md",
         "ProtocolZoo API" => "API_ProtocolZoo.md",
+        "API Autodiscovery" => "api_autodiscovery.md",
         "QuantumInterface API" => "API_Interface.md",
         "QuantumSymbolics API" => "API_Symbolics.md",
-        "Visualizations" => "visualizations.md",
-        "Quantum State Visualization" => "state_visualization.md",
+        "Visualizations" => [
+            "visualizations.md",
+            "Register Visualizations" => "register_visualizations.md",
+            "Protocol Visualizations" => "protocol_visualizations.md",
+            "Quantum State Visualization" => "state_visualization.md",
+        ],
         "Bibliography" => "bibliography.md",
     ],
     ]
     )
+
     deploydocs(
         repo = "github.com/QuantumSavory/QuantumSavory.jl.git",
         devbranch = "master",

@@ -113,7 +113,7 @@ consumer = EntanglementConsumer(sim, net, 1, n^2)
 
 # decoherence protocol runs at each node to free up slots that haven't been used past the retention time
 for v in vertices(net)
-    decprot = DecoherenceProt(sim, net, v)
+    decprot = CutoffProt(sim, net, v; retention_time=5.0)
     @process decprot()
 end
 ```
@@ -158,10 +158,12 @@ end
 
 # Result
 
-```@repl
+```@setup repeatergrid
 include("../../../../examples/repeatergrid/1a_async_interactive_visualization.jl") # hide
 ```
 
 ```@raw html
 <video src="../grid_sim6x6hv.mp4" autoplay loop muted></video>
 ```
+
+The source code is in the [`examples/repeatergrid`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/repeatergrid) folder.

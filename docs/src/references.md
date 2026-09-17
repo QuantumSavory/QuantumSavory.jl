@@ -11,8 +11,10 @@ want exact signatures, exported names, or generated API listings.
 - [Backend Simulators](backendsimulator.md)
 - [Tag and Query API](tag_query.md)
 - [Symbolic Expressions Reference](symbolics.md)
-- [Quantum State Visualization](state_visualization.md)
 - [Visualizations](visualizations.md)
+- [Register Visualizations](register_visualizations.md)
+- [Protocol Visualizations](protocol_visualizations.md)
+- [Quantum State Visualization](state_visualization.md)
 
 ## Module Reference Pages
 
@@ -20,6 +22,7 @@ want exact signatures, exported names, or generated API listings.
 - [CircuitZoo API](API_CircuitZoo.md)
 - [StatesZoo API](@ref Predefined-Models-of-Quantum-States)
 - [ProtocolZoo API](API_ProtocolZoo.md)
+- [API Autodiscovery](@ref api-autodiscovery)
 - [QuantumInterface API](API_Interface.md)
 - [QuantumSymbolics API](API_Symbolics.md)
 

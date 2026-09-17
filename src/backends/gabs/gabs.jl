@@ -6,15 +6,32 @@ subsystemcompose(states::Gabs.GaussianState...) = tensor(states...)
 subsystemcompose(ops::Gabs.GaussianUnitary...) = tensor(ops...)
 subsystemcompose(channels::Gabs.GaussianChannel...) = tensor(channels...)
 
+const variance_factor = 1e-12
+
+function _validate_project_traceout(
+    state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
+)
+    length(meas.angles) == 1 || throw(ArgumentError(
+        "Gabs homodyne measurement of one subsystem requires one angle."
+    ))
+    1 <= subsys <= nsubsystems(state) || throw(BoundsError(state, subsys))
+    nothing
+end
+
 function project_traceout!(
     state::Gabs.GaussianState, subsys::Int, meas::HomodyneMeasurement
 )
-    res, state = Gabs.homodyne(state, subsys, meas.angles; squeeze = meas.squeeze)
+    _validate_project_traceout(state, subsys, meas)
+    coordinates, state = Gabs.homodyne(
+        state, subsys, meas.angles; squeeze = variance_factor
+    )
+    angle = only(meas.angles)
+    result = coordinates[1] * cos(angle) + coordinates[2] * sin(angle)
     if nsubsystems(state) == 1
-        return res, nothing
+        return result, nothing
     end
     state = Gabs.ptrace(state, subsys)
-    return res, state
+    return result, state
 end
 
 # feels like a hacky workaround because `apply!(state, indices::Base.AbstractVecOrTuple{Int}, operation::Symbolic{AbstractOperator})`

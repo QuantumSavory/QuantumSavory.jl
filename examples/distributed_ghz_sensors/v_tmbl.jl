@@ -19,7 +19,16 @@ then the hub immediately performs the GHZ projection."""
         ent = entangled_sensors(net, S)
     end
 
-    @info "  V-TMBL: reached μ=$μ with $(length(ent)) sensors at t=$(now(sim)): $ent"
+    @debug(
+        "Reached the entanglement target",
+        _group=LOG_GROUPS.protocol,
+        event=:entanglement_target_reached,
+        simulation_log_context(sim)...,
+        protocol=:v_tmbl,
+        nodes=(Tuple(1:S)..., hub_idx),
+        client_nodes=Tuple(ent),
+        target=μ,
+    )
     ghz_project(net, S, ent)
     result[] = ent
 end

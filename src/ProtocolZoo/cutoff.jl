@@ -28,7 +28,20 @@ $FIELDS
     announce::Bool = true
     """maximum number of delete tags to retain per local slot in FIFO order (`nothing` for unbounded retention)"""
     max_delete_per_slot::Union{Int,Nothing} = 3
+
+    function CutoffProt(sim, net, node, period, retention_time, announce, max_delete_per_slot)
+        @domain isnothing(period) || period > 0
+        @domain retention_time ≥ 0
+        @domain isnothing(max_delete_per_slot) || max_delete_per_slot ≥ 0
+        return new(sim, net, node, period, retention_time, announce, max_delete_per_slot)
+    end
 end
+
+protocol_catalog_metadata(::Type{CutoffProt}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
 
 function CutoffProt(sim::Simulation, net::RegisterNet, node::Int; kwargs...)
     return CutoffProt(;sim, net, node, kwargs...)
@@ -38,7 +51,6 @@ CutoffProt(net::RegisterNet, node::Int; kwargs...) = CutoffProt(get_time_tracker
 
 function _enforce_delete_cap!(slot::RegRef, node::Int, max_delete_per_slot::Union{Int,Nothing})
     isnothing(max_delete_per_slot) && return nothing
-    max_delete_per_slot < 0 && throw(ArgumentError("max_delete_per_slot must be nonnegative"))
     delete_tags = queryall(slot, EntanglementDelete, ❓, node, slot.idx, ❓, ❓; filo=false)
     for delete_tag in Iterators.take(delete_tags, max(0, length(delete_tags) - max_delete_per_slot))
         untag!(slot, delete_tag.id)
@@ -79,7 +91,17 @@ end
         # TODO Why do we have separate entanglementhistory and entanglementupdate but we have only a single entanglementdelete that serves both roles? We should probably have both be pairs of tags, for consistency and ease of reasoning
         _enforce_delete_cap!(slot, prot.node, prot.max_delete_per_slot)
         (prot.announce) && put!(channel(prot.net, prot.node=>msg[5]; permit_forward=true), msg)
-        @debug "CutoffProt @$(prot.node): Send message to $(msg[5]) | message=`$msg` | time=$(now(prot.sim))"
+        @debug(
+            "Sent an entanglement deletion",
+            _group=LOG_GROUPS.protocol,
+            event=:deletion_message_sent,
+            protocol_log_context(prot)...,
+            src_slot=slot.idx,
+            dst_node=msg[5],
+            dst_slot=msg[6],
+            message_type=:EntanglementDelete,
+            pair_id=msg[2],
+        )
 
         unlock(slot)
     end

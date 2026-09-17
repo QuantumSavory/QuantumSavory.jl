@@ -7,6 +7,8 @@ import QuantumSymbolics: @withmetadata, symbollabel, QuantumOpticsRepr, express_
 import QuantumOpticsBase
 using DocStringExtensions
 
+public GenqoMultiplexedCascadedBellPairW, GenqoUnheraldedSPDCBellPairW
+
 """
 $TYPEDEF
 
@@ -33,23 +35,18 @@ Implemented as a wrapper around the `Genqo.jl` package.
     ηᵗ
     """Mean photon number per mode of the state. This is a tradeoff parameter for fidelity vs rate. It has to be >0 (but the model becomes imprecise at N>0.2 due to the 2-photon cutoff of the Fock space used in derivation)"""
     N
-    """Excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1"""
-    Pᵈ
 end
 
-stateparameters(::Type{GenqoMultiplexedCascadedBellPairW}) = (:ηᵇ, :ηᵈ, :ηᵗ, :N, :Pᵈ)
+stateparameters(::Type{GenqoMultiplexedCascadedBellPairW}) = (:ηᵇ, :ηᵈ, :ηᵗ, :N)
 stateparametersrange(::Type{GenqoMultiplexedCascadedBellPairW}) = (
     ηᵇ =(;min=0,max=1,good=1),
     ηᵈ =(;min=0,max=1,good=1),
     ηᵗ =(;min=0,max=1,good=1),
     N  =(;min=0,max=10,good=0.1),
-    Pᵈ =(;min=0,max=0.1,good=1e-8)
 )
 
 function _express_spin_spin_matrix(x::GenqoMultiplexedCascadedBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
-    # `Pᵈ` remains part of the wrapper API for compatibility, but Genqo.jl's
-    # spin-density-matrix backend does not currently take dark counts.
     (;ηᵇ, ηᵈ, ηᵗ, N) = x
     return zalm.spin_density_matrix(N, ηᵗ, ηᵈ, ηᵇ, [1,0,1,1,0,0,1,0])
 end
@@ -81,22 +78,17 @@ Implemented as a wrapper around the `Genqo.jl` package.
     ηᵗ
     """Mean photon number per mode of the state. This is a tradeoff parameter for fidelity vs rate. It has to be >0 (but the model becomes imprecise at N>0.2 due to the 2-photon cutoff of the Fock space used in derivation)"""
     N
-    """Excess noise (photons per qubit slot) in photon detectors, ≥0, usually ≪1"""
-    Pᵈ
 end
 
-stateparameters(::Type{GenqoUnheraldedSPDCBellPairW}) = (:ηᵈ, :ηᵗ, :N, :Pᵈ)
+stateparameters(::Type{GenqoUnheraldedSPDCBellPairW}) = (:ηᵈ, :ηᵗ, :N)
 stateparametersrange(::Type{GenqoUnheraldedSPDCBellPairW}) = (
     ηᵈ =(;min=0,max=1,good=1),
     ηᵗ =(;min=0,max=1,good=1),
     N   =(;min=0,max=10,good=0.1),
-    Pᵈ  =(;min=0,max=0.1,good=10^(-6))
 )
 
 function _express_spin_spin_matrix(x::GenqoUnheraldedSPDCBellPairW)
     # This function calculates the unnormalized spin-spin density matrix
-    # `Pᵈ` remains part of the wrapper API for compatibility, but Genqo.jl's
-    # spin-density-matrix backend does not currently take dark counts.
     (;ηᵈ, ηᵗ, N) = x
     return spdc.spin_density_matrix(N, ηᵗ, ηᵈ, [0,1,0,1])
 end

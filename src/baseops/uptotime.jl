@@ -1,4 +1,6 @@
 """
+    uptotime!
+
 Evolve all the states in a register to a given time, according to the various backgrounds that they might have.
 
 ```jldoctest
@@ -31,7 +33,8 @@ function uptotime!(state, indices::Base.AbstractVecOrTuple{Int}, backgrounds, Δ
 end
 
 function uptotime!(registers, indices::Base.AbstractVecOrTuple{Int}, now)
-    staterecords = [(state=r.staterefs[i], idx=r.stateindices[i], bg=r.backgrounds[i], t=r.accesstimes[i])
+    staterecords = [(state=r.staterefs[i], idx=r.stateindices[i], bg=r.backgrounds[i],
+                     t=r.accesstimes[i])
                     for (r,i) in zip(registers, indices)
                     if isassigned(r,i)]
     for stategroup in groupby(x->x.state, staterecords) # TODO check this is grouping by ===... Actually, make sure that == for StateRef is the same as ===

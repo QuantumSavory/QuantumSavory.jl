@@ -35,10 +35,29 @@ swap!(r1::RegRef, r2::RegRef; time=nothing) = swap!(r1.reg, r2.reg, r1.idx, r2.i
 # - do they need to be collapsed
 # - do they have unused slots that can be refilled
 # - are they just naively composed together
+"""Deduplicate state references by identity and compute the subsystem-index offset
+each reference would have inside a composition of all of them."""
+function unique_staterefs_with_offsets(staterefs)
+    unique_refs = StateRef[]
+    for ref in unique(objectid, staterefs)
+        isnothing(ref) && throw(ArgumentError("Cannot compose unassigned register slots."))
+        push!(unique_refs, ref)
+    end
+    offsets = IdDict{StateRef,Int}()
+    offset = 0
+    for ref in unique_refs
+        offsets[ref] = offset
+        offset += nsubsystems_padded(ref)
+    end
+    return unique_refs, offsets
+end
+
 """Ensure that the all slots of the given registers are represented by one single state object, i.e. that all the register slots are tracked in the same Hilbert space."""
 function subsystemcompose(regs::Base.AbstractVecOrTuple{Register}, indices) # TODO add a type constraint on regs
     # Get all references to states that matter, removing duplicates
-    staterefs = unique(objectid, [r.staterefs[i] for (r,i) in zip(regs,indices)]) # TODO do not use == checks like in `unique`, use ===
+    staterefs, offsets = unique_staterefs_with_offsets(
+        [r.staterefs[i] for (r,i) in zip(regs,indices)]
+    )
     # Prepare the larger state object
     newstate = subsystemcompose([s.state[] for s in staterefs]...)
     # Prepare the new state reference
@@ -46,12 +65,11 @@ function subsystemcompose(regs::Base.AbstractVecOrTuple{Register}, indices) # TO
     newregisterindices = vcat([s.registerindices for s in staterefs]...)
     newref = StateRef(newstate, newregisters, newregisterindices)
     # Update all registers to point to the new state reference
-    offsets = [0,cumsum(nsubsystems_padded.(staterefs))...]
     for (r,i) in zip(newregisters,newregisterindices)
         isnothing(r) && continue
         oldref = r.staterefs[i]
         r.staterefs[i] = newref
-        offset = offsets[findfirst(ref->ref===oldref, staterefs)]
+        offset = offsets[oldref]
         r.stateindices[i] += offset
     end
     newref

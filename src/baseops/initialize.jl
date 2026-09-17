@@ -1,5 +1,19 @@
 function newstate end
 
+"""
+    _wrap_state_for_slots(state, reprs)
+
+Promote `state`, when necessary, to the most appropriate common stored
+representation for all destination-slot representations in `reprs`.
+
+Backends extend this initialization hook when multiple representation choices
+need a common representation or a structural wrapper. The fallback leaves
+`state` unchanged.
+"""
+function _wrap_state_for_slots end
+
+_wrap_state_for_slots(state, reprs) = state
+
 function initialize!(reg::Register,i::Int; time=nothing)
     s = newstate(reg.traits[i], reg.reprs[i])
     initialize!(reg,i,s; time=time)
@@ -7,6 +21,8 @@ end
 initialize!(r::RegRef; time=nothing) = initialize!(r.reg, r.idx; time)
 
 """
+$TYPEDSIGNATURES
+
 Set the state of a given set of registers.
 
 `initialize!([regA,regB], [slot1,slot2], state)` would
@@ -17,6 +33,7 @@ or tableaux from `QuantumClifford.jl`.
 """
 function initialize!(regs::Base.AbstractVecOrTuple{Register},indices::Base.AbstractVecOrTuple{Int},state; time=nothing)
     length(regs)==length(indices)==nsubsystems(state) || throw(DimensionMismatch(lazy"Attempting to initialize a set of registers with a state that does not have the correct number of subsystems."))
+    state = _wrap_state_for_slots(state, [reg.reprs[i] for (reg, i) in zip(regs, indices)])
     stateref = StateRef(state, collect(regs), collect(indices))
     for (si,(reg,ri)) in enumerate(zip(regs,indices))
         if isassigned(reg,ri) # TODO decide if this is an error or a warning or nothing

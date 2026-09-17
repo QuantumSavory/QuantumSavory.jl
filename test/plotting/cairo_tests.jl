@@ -1,7 +1,7 @@
 using QuantumSavory
 using Test
 using CairoMakie
-CairoMakie.activate!()
+CairoMakie.activate!(; visible=false)
 
 @testset "Plotting Cairo" begin
 @testset "register coordinates" begin

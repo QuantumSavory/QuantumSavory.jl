@@ -14,7 +14,7 @@ using DocStringExtensions
 using PrettyTables: PrettyTables, pretty_table
 using IterTools
 import LinearAlgebra
-using LinearAlgebra: tr, mul!, eigvecs, norm, normalize, dot, det
+using LinearAlgebra: tr, mul!, eigvals, eigvecs, norm, normalize, det
 import Random
 using Random: randperm
 using Graphs
@@ -23,7 +23,6 @@ using ConcurrentSim: Environment, Simulation, Store, DelayQueue, Resource,
       Process, @process,
       request, release, now, active_process, timeout, put, get
 using ResumableFunctions
-using Printf
 import SumTypes
 using SumTypes: @sum_type, isvariant, @cases
 import Combinatorics
@@ -49,6 +48,8 @@ import QuantumInterface: basis, tensor, ⊗, apply!, traceout!, nsubsystems, per
 export apply!, traceout!, removebackref!, nsubsystems
 export project_traceout! #TODO should move to QuantumInterface
 
+include("logging.jl")
+
 using QuantumSymbolics:
     AbstractRepresentation, AbstractUse,
     CliffordRepr, consistent_representation, QuantumOpticsRepr, QuantumMCRepr,
@@ -67,7 +68,9 @@ export
     AbstractBackground,
     onchange_tag, onchange,
     # networks.jl
-    RegisterNet, channel, qchannel, messagebuffer,
+    RegisterNet, channel, qchannel, messagebuffer, dist_to_delay, network_builder,
+    # logging.jl
+    LOG_GROUPS, simulation_log_context,
     # initialize.jl
     initialize!, newstate,
     # subsystemcompose.jl
@@ -77,7 +80,7 @@ export
     # uptotime.jl
     uptotime!, overwritetime!,
     # tags.jl and queries.jl and querywait.jl
-    Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
+    AbstractTag, Tag, tag!, untag!, W, ❓, query, queryall, querydelete!, query_wait, querydelete_wait!,
     findfreeslot,
     #messagebuffer.jl
     MessageBuffer,
@@ -151,6 +154,7 @@ include("queries.jl")
 include("querywait.jl")
 
 include("representations.jl")
+include("domain_validation.jl")
 include("backgrounds.jl")
 include("noninstant.jl")
 include("measurements.jl")
@@ -159,7 +163,6 @@ include("backends/quantumoptics/quantumoptics.jl")
 include("backends/clifford/clifford.jl")
 include("backends/gabs/gabs.jl")
 include("backends/gabs/show.jl")
-include("backends/gabs/should_upstream.jl")
 
 include("ambiguity_fix.jl")
 
@@ -173,7 +176,10 @@ include("StatesZoo/StatesZoo.jl")
 
 include("ProtocolZoo/ProtocolZoo.jl")
 
+include("network_builder.jl")
+
 include("should_upstream.jl")
 include("precompile.jl")
+include("precompile_statements.jl")
 
 end # module

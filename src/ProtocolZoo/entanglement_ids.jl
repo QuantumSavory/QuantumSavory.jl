@@ -12,6 +12,8 @@ const NO_ENTANGLEMENT_ID = zero(EntanglementID)
     EntanglementID(reinterpret(UInt, id) & _ENTANGLEMENT_ID_MASK)
 
 """
+$TYPEDSIGNATURES
+
 Generate a random nonzero entanglement ID.
 """
 function fresh_entanglement_id()
@@ -23,6 +25,8 @@ function fresh_entanglement_id()
 end
 
 """
+$TYPEDSIGNATURES
+
 Combine two entanglement IDs into a new one.
 
 The combiner is modular addition over the nonnegative `Int` range. It is

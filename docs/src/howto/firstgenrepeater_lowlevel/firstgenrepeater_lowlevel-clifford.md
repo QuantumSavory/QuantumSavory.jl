@@ -9,13 +9,16 @@ Be sure to check out the more detailed tutorial on [wavefunction simulations of 
 
 The changes we need to perform to the code are incredibly small. We only change the way the initial states of the entangled pairs are set, without changing any of the code implementing the swapping and purification steps.
 
-For the wavefunction simulator we had used:
+For the wavefunction simulator we had set up a few symbolic building blocks and drawn the raw pair from `StatesZoo`:
 
 ```julia
 const perfect_pair = (Z1⊗Z1 + Z2⊗Z2) / sqrt(2)
 const perfect_pair_dm = SProjector(perfect_pair)
 const mixed_dm = MixedState(perfect_pair_dm)
-noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
+noisy_pair_func(F) = DepolarizedBellPair(;F)
+# Here is how you can do it manually if you want to have a more general state provided by QuantumSymbolics.
+# Check out also the StatesZoo as a source of other predefined types of noisy Bell pairs:
+# noisy_pair_func(F) = F*perfect_pair_dm + (1-F)*mixed_dm
 ```
 
 Here we switch to tableau representation for our initial states.
@@ -25,9 +28,7 @@ You can actually use the tableau definition below for all types of simulations (
 
 ```julia
 # a tableau corresponding to a Bell pair
-const tableau = S"XX
-                  ZZ"
-const stab_perfect_pair = StabilizerState(tableau)
+const stab_perfect_pair = StabilizerState("XX ZZ")
 const stab_perfect_pair_dm = SProjector(stab_perfect_pair)
 stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*mixed_dm
 ```
@@ -35,7 +36,7 @@ stab_noisy_pair_func(F) = F*stab_perfect_pair_dm + (1-F)*mixed_dm
 We then use that in the entangler setup (the same way we used a similar function when we were doing wavefunction simulations), simply by selecting the appropriate default representation type ([`CliffordRepr`](@ref) instead of [`QuantumOpticsRepr`](@ref)):
 
 ```julia
-# excerpt from `firstgenrepeater-firstgenrepeater-clifford.jl`
+# excerpt from `5_clifford_full_example.jl`
 sim, network = simulation_setup(sizes, T2; representation = CliffordRepr)
 noisy_pair = stab_noisy_pair_func(F)
 ```

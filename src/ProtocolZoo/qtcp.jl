@@ -4,6 +4,7 @@ using QuantumSavory
 import QuantumSavory: Tag, get_time_tracker
 using QuantumSavory.ProtocolZoo
 using QuantumSavory.ProtocolZoo: AbstractProtocol
+import QuantumSavory.ProtocolZoo: protocol_catalog_metadata
 using QuantumSavory.CircuitZoo: LocalEntanglementSwap
 import ConcurrentSim
 using ConcurrentSim: Simulation, @yield, timeout, @process, now, Process, Resource
@@ -24,9 +25,11 @@ export QDatagram, Flow,
 """
 $TYPEDEF
 
+Describes a flow that requests entangled pairs between two nodes.
+
 $TYPEDFIELDS
 """
-@kwdef struct Flow
+@kwdef struct Flow <: AbstractTag
     "who initiates the request and also initiates the qdatagrams"
     src::Int
     "the destination node"
@@ -43,9 +46,11 @@ Tag(tag::Flow) = Tag(Flow, tag.src, tag.dst, tag.npairs, tag.uuid) # TODO automa
 """
 $TYPEDEF
 
+Marks an entangled pair at the source of a QTCP flow.
+
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairBegin
+@kwdef struct QTCPPairBegin <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -66,9 +71,11 @@ Tag(tag::QTCPPairBegin) = Tag(QTCPPairBegin, tag.flow_uuid, tag.flow_src, tag.fl
 """
 $TYPEDEF
 
+Marks an entangled pair at the destination of a QTCP flow.
+
 $TYPEDFIELDS
 """
-@kwdef struct QTCPPairEnd
+@kwdef struct QTCPPairEnd <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -89,9 +96,11 @@ Tag(tag::QTCPPairEnd) = Tag(QTCPPairEnd, tag.flow_uuid, tag.flow_src, tag.flow_d
 """
 $TYPEDEF
 
+Carries QTCP flow metadata and Pauli-frame corrections toward a destination.
+
 $TYPEDFIELDS
 """
-@kwdef struct QDatagram
+@kwdef struct QDatagram <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "who initiates the flow request and also initiates the qdatagrams"
@@ -113,7 +122,7 @@ $TYPEDEF
 
 $TYPEDFIELDS
 """
-@kwdef struct QDatagramSuccess
+@kwdef struct QDatagramSuccess <: AbstractTag
     "the uuid of the flow we are generated for"
     flow_uuid::Int
     "sequence number of the qdataframe in the given flow"
@@ -127,9 +136,11 @@ Tag(tag::QDatagramSuccess) = Tag(QDatagramSuccess, tag.flow_uuid, tag.seq_num, t
 """
 $TYPEDEF
 
+Requests link-level entanglement with a neighboring node for a QTCP datagram.
+
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelRequest
+@kwdef struct LinkLevelRequest <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -143,9 +154,11 @@ Tag(tag::LinkLevelRequest) = Tag(LinkLevelRequest, tag.flow_uuid, tag.seq_num, t
 """
 $TYPEDEF
 
+Reports link-level entanglement at the requesting node.
+
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReply
+@kwdef struct LinkLevelReply <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -159,9 +172,11 @@ Tag(tag::LinkLevelReply) = Tag(LinkLevelReply, tag.flow_uuid, tag.seq_num, tag.m
 """
 $TYPEDEF
 
+Records the source-side memory slot for an in-progress QTCP pair.
+
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtSource
+@kwdef struct LinkLevelReplyAtSource <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -175,9 +190,11 @@ Tag(tag::LinkLevelReplyAtSource) = Tag(LinkLevelReplyAtSource, tag.flow_uuid, ta
 """
 $TYPEDEF
 
+Records the destination-side memory slot for a completed link-level request.
+
 $TYPEDFIELDS
 """
-@kwdef struct LinkLevelReplyAtHop
+@kwdef struct LinkLevelReplyAtHop <: AbstractTag
     "the uuid of the flow we are providing entanglement for"
     flow_uuid::Int
     "sequence number of the qdataframe we are providing entanglement for"
@@ -192,6 +209,15 @@ Tag(tag::LinkLevelReplyAtHop) = Tag(LinkLevelReplyAtHop, tag.flow_uuid, tag.seq_
 ###
 # Protocol declaration
 ###
+
+const _EndNodeFlowStats = @NamedTuple{
+    flow_src::Int,
+    flow_dst::Int,
+    delivered::Int,
+    latency_sum::Float64,
+    flow_start_time::Float64,
+    last_delivery_time::Float64,
+}
 
 """
 $TYPEDEF
@@ -213,9 +239,53 @@ Managing the following transformations of classical control signals:
     net::RegisterNet
     """the vertex index of where the protocol is located"""
     node::Int
+    """internal per-flow delivery statistics retained for visualization"""
+    _log::Dict{Int,_EndNodeFlowStats} = Dict{Int,_EndNodeFlowStats}()
 end
 
+protocol_catalog_metadata(::Type{EndNodeController}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
+
+EndNodeController(sim::Simulation, net::RegisterNet, node::Int) =
+    EndNodeController(; sim, net, node)
 EndNodeController(net::RegisterNet, node::Int) = EndNodeController(get_time_tracker(net), net, node)
+
+"Create empty delivery statistics for one flow."
+function _empty_endnode_flow_stats(flow_src::Int, flow_dst::Int, flow_start_time::Float64)
+    return (;
+        flow_src,
+        flow_dst,
+        delivered=0,
+        latency_sum=0.0,
+        flow_start_time,
+        last_delivery_time=flow_start_time,
+    )
+end
+
+"Record one delivered pair for a flow."
+function _record_endnode_delivery!(
+    prot::EndNodeController,
+    flow_uuid::Int,
+    flow_src::Int,
+    flow_dst::Int,
+    start_time::Float64,
+)
+    delivery_time = now(prot.sim)::Float64
+    stats = get(prot._log, flow_uuid, _empty_endnode_flow_stats(
+        flow_src, flow_dst, start_time
+    ))
+    prot._log[flow_uuid] = (;
+        stats...,
+        delivered=stats.delivered + 1,
+        latency_sum=stats.latency_sum + delivery_time - start_time,
+        flow_start_time=min(stats.flow_start_time, start_time),
+        last_delivery_time=max(stats.last_delivery_time, delivery_time),
+    )
+    return nothing
+end
 
 """
 $TYPEDEF
@@ -239,9 +309,28 @@ Managing the following transformations of classical control signals:
     net::RegisterNet
     """the vertex index of where the protocol is located"""
     node::Int
+    """stores queue events used by protocol visualizations; the storage type is not part of the public API and may change in future versions"""
+    _log::Vector{@NamedTuple{t::Float64, flow_id::Int, processed::Bool, sojourn::Float64}} = @NamedTuple{t::Float64, flow_id::Int, processed::Bool, sojourn::Float64}[]
 end
 
-NetworkNodeController(net::RegisterNet, node::Int) = NetworkNodeController(get_time_tracker(net), net, node)
+protocol_catalog_metadata(::Type{NetworkNodeController}) = (
+    attachment = :node,
+    attachment_fields = (node=:node,),
+    required_fields = (),
+)
+
+function NetworkNodeController(sim, net, node; kwargs...)
+    return NetworkNodeController(;sim, net, node, kwargs...)
+end
+function NetworkNodeController(net::RegisterNet, node::Int; kwargs...)
+    return NetworkNodeController(get_time_tracker(net), net, node; kwargs...)
+end
+
+const _LinkControllerLogEntry = @NamedTuple{
+    originator_node::Int,
+    arrival_time::Float64,
+    sojourn_time::Union{Nothing,Float64},
+}
 
 """
 $TYPEDEF
@@ -262,9 +351,45 @@ Managing the following transformations of classical control signals:
     nodeA::Int
     """the vertex index of one of the nodes in the link (Bob)"""
     nodeB::Int
+    """`nothing` to generate entanglement for each request, or a concrete `AbstractTag` subtype identifying external inventory with one reciprocal `(remote_node, remote_slot, pair_id)` tag at each endpoint"""
+    tag::Union{Nothing,Type{<:AbstractTag}} = nothing
+    """inventory selection order: `true` takes the newest pair and `false` the oldest; must be `nothing` when `tag` is `nothing`"""
+    filo::Union{Nothing,Bool} = isnothing(tag) ? nothing : true
+    """request arrival and sojourn records; the storage type is not part of the public API and may change in future versions"""
+    _log::Vector{_LinkControllerLogEntry} = _LinkControllerLogEntry[]
+
+    function LinkController(sim, net, nodeA, nodeB, tag, filo, _log)
+        if isnothing(tag)
+            isnothing(filo) || throw(ArgumentError(
+                "`filo` must be `nothing` when `LinkController` generates entanglement"
+            ))
+        else
+            isconcretetype(tag) || throw(ArgumentError(
+                "`tag` must be a concrete subtype of `AbstractTag`"
+            ))
+            filo isa Bool || throw(ArgumentError(
+                "`filo` must be a `Bool` when `LinkController` uses external inventory"
+            ))
+        end
+        return new(sim, net, nodeA, nodeB, tag, filo, _log)
+    end
 end
 
-LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_time_tracker(net), net, nodeA, nodeB)
+protocol_catalog_metadata(::Type{LinkController}) = (
+    attachment = :edge,
+    attachment_fields = (node_a=:nodeA, node_b=:nodeB),
+    required_fields = (),
+)
+
+function LinkController(
+    sim::Simulation, net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...
+)
+    return LinkController(; sim, net, nodeA, nodeB, kwargs...)
+end
+
+function LinkController(net::RegisterNet, nodeA::Int, nodeB::Int; kwargs...)
+    return LinkController(get_time_tracker(net), net, nodeA, nodeB; kwargs...)
+end
 
 
 ###
@@ -299,7 +424,18 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                 qdatagrams_sent[uuid]        = 0
                 pairs_left_to_fulfill[uuid] = npairs
                 destination[uuid]            = dst
-                @debug "[$(now(sim))]: flow $(uuid) started"
+                get!(prot._log, uuid) do
+                    _empty_endnode_flow_stats(node, dst, now(sim)::Float64)
+                end
+                @debug(
+                    "Started a flow",
+                    _group=LOG_GROUPS.protocol,
+                    event=:flow_started,
+                    protocol_log_context(prot)...,
+                    flow_id=uuid,
+                    src_node=node,
+                    dst_node=dst,
+                )
             end
 
             # check if there are datagram acknowledgements
@@ -325,7 +461,19 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_begin)
-                @debug "[$(now(sim))]: datagram success notification from flow $(flow_uuid) pair $(seq_num) returned to start node"
+                _record_endnode_delivery!(
+                    prot, flow_uuid, node, success.src, start_time
+                )
+                @debug(
+                    "Acknowledged a datagram",
+                    _group=LOG_GROUPS.protocol,
+                    event=:datagram_acknowledged,
+                    protocol_log_context(prot)...,
+                    flow_id=flow_uuid,
+                    sequence_number=seq_num,
+                    src_node=success.src,
+                    dst_node=node,
+                )
 
                 # if we have fulfilled all pairs, remove the flow in every data structure
                 if pairs_left_to_fulfill[flow_uuid] == 0
@@ -334,8 +482,13 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     delete!(qdatagrams_sent, flow_uuid)
                     delete!(pairs_left_to_fulfill, flow_uuid)
                     delete!(destination, flow_uuid)
-                    current_time = now(sim)
-                    @debug "[$(current_time)]: flow $(flow_uuid) completed and deallocated"
+                    @debug(
+                        "Completed a flow",
+                        _group=LOG_GROUPS.protocol,
+                        event=:flow_completed,
+                        protocol_log_context(prot)...,
+                        flow_id=flow_uuid,
+                    )
                 end
             end
 
@@ -363,7 +516,19 @@ LinkController(net::RegisterNet, nodeA::Int, nodeB::Int) = LinkController(get_ti
                     start_time
                 )
                 put!(net[node], pair_end)
-                @debug "[$(now(sim))]: datagram from flow $(flow_uuid) pair $(seq_num) reached final destination"
+                _record_endnode_delivery!(
+                    prot, flow_uuid, flow_src, flow_dst, start_time
+                )
+                @debug(
+                    "Delivered a datagram",
+                    _group=LOG_GROUPS.protocol,
+                    event=:datagram_delivered,
+                    protocol_log_context(prot)...,
+                    flow_id=flow_uuid,
+                    sequence_number=seq_num,
+                    src_node=flow_src,
+                    dst_node=node,
+                )
             end
         end
 
@@ -389,7 +554,7 @@ end
 @resumable function (prot::NetworkNodeController)()
     (;sim, net, node) = prot
     mb = messagebuffer(net, node)
-    datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int}}() # keyed by flow_uuid, seq_num; storing datagram tag and next hop
+    datagrams_in_waiting = Dict{Tuple{Int,Int},Tuple{Tag,Int,Float64}}() # keyed by flow_uuid, seq_num; storing datagram tag, next hop, and enqueue time
     while true
         workwasdone = true
         while workwasdone
@@ -401,7 +566,9 @@ end
                 _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = incoming_qdatagram.tag
                 nexthop = first(Graphs.a_star(net.graph, node, flow_dst::Int)).dst
                 request = LinkLevelRequest(flow_uuid, seq_num, nexthop)
-                datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop)
+                enqueued_at = now(sim)::Float64
+                datagrams_in_waiting[(flow_uuid, seq_num)] = (incoming_qdatagram.tag, nexthop, enqueued_at)
+                push!(prot._log, (t=enqueued_at, flow_id=flow_uuid, processed=false, sojourn=0.0))
                 put!(mb, request)
             end
 
@@ -412,7 +579,7 @@ end
                 workwasdone = true
                 _, flow_uuid, seq_num, memory_slot = llreply.tag
                 # Find the corresponding QDatagram that matches this reply
-                queued_tag, nexthop = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
+                queued_tag, nexthop, enqueued_at = pop!(datagrams_in_waiting, (flow_uuid, seq_num))
                 # Process the entanglement and forward the datagram
                 _, flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time = queued_tag
 
@@ -432,6 +599,8 @@ end
                 # Forward the datagram to the next node in the path
                 new_qdatagram = QDatagram(flow_uuid, flow_src, flow_dst, corrections, seq_num, start_time)
                 put!(channel(net, node=>nexthop; permit_forward=false), new_qdatagram)
+                processed_at = now(sim)::Float64
+                push!(prot._log, (t=processed_at, flow_id=flow_uuid, processed=true, sojourn=processed_at-enqueued_at))
             end
         end
 
@@ -441,27 +610,126 @@ end
 end
 
 
-@resumable function _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
-    @yield lock(link_resource)
-    entangler = EntanglerProt(;
+"""Create the `EntanglerProt` used by a `LinkController`."""
+function _link_entangler(prot)
+    (; sim, net, nodeA, nodeB) = prot
+    return EntanglerProt(;
         sim, net,
         nodeA, nodeB,
         tag=nothing,
-        rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
+        rounds=1,
+        attempts=-1,
+        success_prob=1.0,
+        attempt_time=1.0, # TODO parameterize the link time and quality
     )
-    # TODO have a timeout on how long to wait for an entangler to complete
-    proc = @process entangler()
-    _, slotA, _, slotB = @yield proc
-    unlock(link_resource)
-    # slotA is at nodeA, slotB is at nodeB.
-    # Map to originator/destination so each node gets its own local slot.
-    originator_slot, destination_slot = if originator_node == nodeA
-        slotA, slotB
-    else
-        slotB, slotA
+end
+
+"""Return external-inventory candidates in the configured selection order."""
+function _link_inventory_candidates(prot)
+    return queryall(
+        prot.net[prot.nodeA], prot.tag, prot.nodeB, ❓, ❓;
+        filo=prot.filo,
+    )
+end
+
+"""Find the exact reciprocal tag for an external-inventory candidate."""
+function _link_inventory_reciprocal(prot, candidate)
+    remote_slot = candidate.tag[3]
+    destination_register = prot.net[prot.nodeB]
+    1 <= remote_slot <= length(destination_register) || return nothing
+
+    return query(
+        destination_register[remote_slot],
+        prot.tag,
+        prot.nodeA,
+        candidate.slot.idx,
+        candidate.tag[4];
+        filo=prot.filo,
+    )
+end
+
+"""Check that a saved inventory tag is still present."""
+function _link_inventory_tag_is_current(result)
+    return any(
+        current -> current.id == result.id,
+        queryall(result.slot, result.tag),
+    )
+end
+
+"""Wait for and atomically claim one reciprocal pair from external inventory."""
+@resumable function _link_claim_inventory_pair(sim, prot)
+    register_a = prot.net[prot.nodeA]
+    register_b = prot.net[prot.nodeB]
+
+    while true
+        retry = false
+        candidates = _link_inventory_candidates(prot)
+        for candidate in candidates
+            reciprocal = _link_inventory_reciprocal(prot, candidate)
+            isnothing(reciprocal) && continue
+
+            slot_a = candidate.slot
+            slot_b = reciprocal.slot
+            @yield @process nongreedymultilock(
+                sim, (slot_a, slot_b)
+            )
+
+            valid = _link_inventory_tag_is_current(candidate) &&
+                _link_inventory_tag_is_current(reciprocal)
+            if valid
+                untag!(slot_a, candidate.id)
+                untag!(slot_b, reciprocal.id)
+                unlock(slot_a)
+                unlock(slot_b)
+                return slot_a.idx, slot_b.idx
+            end
+
+            unlock(slot_a)
+            unlock(slot_b)
+            retry = true
+            break
+        end
+        retry && continue
+
+        @yield onchange(register_a, Tag) | onchange(register_b, Tag)
     end
+end
+
+@resumable function _link_handle_request(
+    sim,
+    prot,
+    originator_node,
+    destination_node,
+    flow_uuid,
+    seq_num,
+    link_resource,
+    log_index,
+)
+    (; net, nodeA, nodeB) = prot
+    @yield lock(link_resource)
+    slotA = 0
+    slotB = 0
+    if isnothing(prot.tag)
+        entangler = _link_entangler(prot)
+        # TODO have a timeout on how long to wait for an entangler to complete
+        proc = @process entangler()
+        _, slotA, _, slotB = @yield proc
+    else
+        claim = @process _link_claim_inventory_pair(sim, prot)
+        slotA, slotB = @yield claim
+    end
+    unlock(link_resource)
+    # Map the canonical endpoint slots to the request direction.
+    originator_slot, destination_slot = originator_node == nodeA ?
+        (slotA, slotB) : (slotB, slotA)
     put!(net[originator_node], LinkLevelReply(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=originator_slot))
     put!(net[destination_node], LinkLevelReplyAtHop(flow_uuid=flow_uuid, seq_num=seq_num, memory_slot=destination_slot))
+    entry = prot._log[log_index]
+    prot._log[log_index] = (
+        originator_node=entry.originator_node,
+        arrival_time=entry.arrival_time,
+        sojourn_time=(now(sim)::Float64) - entry.arrival_time,
+    )
 end
 
 @resumable function (prot::LinkController)()
@@ -485,12 +753,29 @@ end
                 workwasdone = true
                 @assert originator_node != destination_node "LinkController $(nodeA) $(nodeB) has a link request with originator node $(originator_node) equal to the destination node $(destination_node)"
                 _, flow_uuid, seq_num, remote_node = llrequest.tag
-                @process _link_handle_request(sim, net, nodeA, nodeB, originator_node, destination_node, flow_uuid, seq_num, link_resource)
+                push!(prot._log, (
+                    originator_node=originator_node::Int,
+                    arrival_time=now(sim)::Float64,
+                    sojourn_time=nothing,
+                ))
+                log_index = lastindex(prot._log)
+                @process _link_handle_request(
+                    sim,
+                    prot,
+                    originator_node,
+                    destination_node,
+                    flow_uuid,
+                    seq_num,
+                    link_resource,
+                    log_index,
+                )
             end
         end
         # wait until we have received a message
         @yield (onchange(mbA) | onchange(mbB))
     end
 end
+
+include("qtcp/show.jl")
 
 end # module

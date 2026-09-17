@@ -1,8 +1,53 @@
 # News
 
-## v0.7.1 - unreleased
+## v0.8.0 - 2026-09-05
 
+- **(breaking)** Standardize `project_traceout!` outcomes: explicit
+  orthonormal bases still return one-based indices; an explicit basis plus
+  `values` returns `values[index]`; symbolic operators return eigenvalues; and
+  `HomodyneMeasurement(θ)` returns the real quadrature
+  `qθ = x*cos(θ) + p*sin(θ)`. Migrate a previous Gabs result `value` with
+  `value[1]*cos(θ) + value[2]*sin(θ)`. The constructor no longer accepts the
+  `squeeze` keyword because the Gabs variance factor is now fixed internally.
+- Add finite-Fock homodyne measurement for `QuantumOpticsRepr`.
+- Add `dist_to_delay` and `network_builder` for easily constructing large register networks based on a template.
+- `generate_map` now accepts a custom Tyler tile provider.
+- QTCP `LinkController` can now consume pairs from an independent `EntanglerProt` based on reciprocal `(remote_node, remote_slot, pair_id)` tags being present.
+- `constructor_metadata(StatesZoo.BarrettKokBellPairW)` now describes its public
+  convenience-constructor parameters rather than its internal wrapper field.
+- Improve API docstring summaries and signatures.
+- Add line links, line numbers, and API reference tooltips to documentation code blocks.
+
+## v0.7.2 - 2026-08-15
+
+- QTCP link, network-node, and end-node controllers now provide HTML and PNG
+  protocol visualizations.
+
+## v0.7.1 - 2026-08-07
+
+- **(fix)** Fixes for edge cases and support for more observables and projectors thanks to updates to QuantumSymbolics and QuantumClifford.
+- `project_traceout!` validates its arguments in more detail.
+- `observable` now rejects mismatched register/index collections and repeated
+  physical register slots before backend processing.
+- Simulation, network, protocol, and visualization traces now use
+  Julia's standard logging macros with stable `event` symbols and structured
+  metadata. Logs expose stable, filterable domain groups through `LOG_GROUPS`.
 - Additional visualization methods for states of registers.
+- Dense observables on pure Clifford states now warn before converting the entire
+  stabilizer state to an exponentially sized ket.
+- `QuantumMCRepr` is supported much more thoroughly, providing a faster alternative to `QuantumOpticsRepr` that is just as general.
+- Named tag heads now subtype the exported `AbstractTag` marker.
+  Custom types passed to `EntanglerProt(...; tag=MyTag)` or
+  `EntanglementConsumer(...; tag=MyTag)` must be concrete and migrate to
+  `struct MyTag <: AbstractTag end`. The entangler accepts `nothing`, while the
+  consumer requires a named tag type. Generic `Tag(DataType, ...)` construction
+  and querying remain unrestricted.
+- `RegisterNet` now accepts `(src, dst) -> delay` callables for
+  `classical_delay` and `quantum_delay`, enabling per-link and asymmetric
+  transport delays while retaining scalar delay support.
+- `permits_virtual_edge` now accepts protocol types as well as instances, so introspection code can query the capability without constructing protocols.
+- Introspection tools for generating catalogs of available slot, background, and protocol types are now public.
+- **(fix)** Make the `graph_builder` examples independent of the arbitrary order of equal-cardinality matchings.
 
 ## v0.7.0 - 2026-06-12
 

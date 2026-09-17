@@ -17,12 +17,14 @@ const permitted_queries = Dict(
     "BarrettKokBellPairW" => BarrettKokBellPairW,
     "GenqoUnheraldedSPDCBellPairW" => GenqoUnheraldedSPDCBellPairW,
     "GenqoMultiplexedCascadedBellPairW" => GenqoMultiplexedCascadedBellPairW,
+    "DepolarizedBellPair" => DepolarizedBellPair,
 )
 
 const link_dict = Dict(
     "BarrettKokBellPairW" => "BarrettKokBellPair",
     "GenqoUnheraldedSPDCBellPairW" => "Genqo.GenqoUnheraldedSPDCBellPairW",
     "GenqoMultiplexedCascadedBellPairW" => "Genqo.GenqoMultiplexedCascadedBellPairW",
+    "DepolarizedBellPair" => "DepolarizedBellPair",
 )
 
 landing = Bonito.App(; title="State Explorer") do
@@ -34,6 +36,7 @@ landing = Bonito.App(; title="State Explorer") do
     - [Barrett-Kok Bell Pair](./vis/BarrettKokBellPairW)
     - [Genqo Unheralded SPDC Bell Pair](./vis/GenqoUnheraldedSPDCBellPairW)
     - [Genqo Multiplexed Cascaded Bell Pair](./vis/GenqoMultiplexedCascadedBellPairW)
+    - [Depolarized Bell Pair](./vis/DepolarizedBellPair)
 
     This is simply a web view of the built-in state explorer app, which is implemented in through the [QuantumSavory.StatesZoo.stateexplorer](https://qs.quantumsavory.org/dev/API_StatesZoo/#QuantumSavory.StatesZoo.stateexplorer) function and can be called as:
 
@@ -92,9 +95,9 @@ end
 # Serve the Makie app
 
 isdefined(Main, :server) && close(server);
-port = parse(Int, get(ENV, "QS_SIMPLESWITCH_PORT", "8896"))
-interface = get(ENV, "QS_SIMPLESWITCH_IP", "127.0.0.1")
-proxy_url = get(ENV, "QS_SIMPLESWITCH_PROXY", "")
+port = parse(Int, get(ENV, "QS_STATE_EXPLORER_PORT", "8896"))
+interface = get(ENV, "QS_STATE_EXPLORER_IP", "127.0.0.1")
+proxy_url = get(ENV, "QS_STATE_EXPLORER_PROXY", "")
 server = Bonito.Server(interface, port; proxy_url);
 Bonito.HTTPServer.start(server)
 Bonito.route!(server, "/" => landing);

@@ -54,13 +54,14 @@ function prepare_singlerun(
     sim, network, obs, ts, ax, ax_fidXX, ax_fidZZ
 end
 
-function continue_singlerun!(sim, network, observables, axes, running)
-    step_ts = range(0, 1000, step=0.1)
+function continue_singlerun!(sim, network, observables, axes, running;
+    step_ts = range(0, 100, step=5.0))
     for t in step_ts
         run(sim, t)
         # axes[1].title = "t=$(t)" # TODO does not update consistently
         notify.(observables)
         autolimits!.(axes)
+        yield()
     end
     running[] = nothing
 end
@@ -72,20 +73,24 @@ landing = Bonito.App() do
 
     fig[1, 1] = buttongrid = GridLayout(tellwidth = false)
 
-    running = Observable{Any}(false)
+    running = Observable{Union{Bool, Nothing}}(false)
     buttongrid[1,1] = b = Makie.Button(fig, label = @lift(isnothing($running) ? "Done" : $running ? "Running..." : "Run once"))
     conf_obs = add_conf_sliders(fig[1,2])
 
     on(b.clicks) do _
-        if !running[]
+        if running[] === false
             running[] = true
         end
     end
     on(running) do r
-        if r
+        if r === true
             sim, network, obs, ts, ax, ax_fidXX, ax_fidZZ = prepare_singlerun(fig[2,1:2]; conf_obs[]...)
-            Threads.@spawn continue_singlerun!(sim, network, (obs, ts), (ax, ax_fidXX, ax_fidZZ), running)
+            @async continue_singlerun!(sim, network, (obs, ts), (ax, ax_fidXX, ax_fidZZ), running)
         end
+    end
+    warmup = Bonito.Button("Warm up"; class="warmup", hidden=true)
+    Bonito.on(warmup.value) do _
+        running[] === false && (running[] = true)
     end
 
     content = md"""
@@ -120,7 +125,7 @@ landing = Bonito.App() do
 
     [See and modify the code for this simulation on github.](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/congestionchain)
     """
-    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, content)
+    return Bonito.DOM.div(Bonito.MarkdownCSS, Bonito.Styling, custom_css, warmup, content)
 end;
 
 

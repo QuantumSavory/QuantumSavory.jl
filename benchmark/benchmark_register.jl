@@ -33,7 +33,7 @@ function register_creation_and_initialization()
     initialize!(net[i,3],X1)
     @assert nsubsystems(net[i].staterefs[2]) == 1
     apply!([net[i,2], net[i,3]], CNOT)
-    @assert net[i].staterefs[2].state[] isa Ket
+    @assert express(net[i].staterefs[2].state[], QuantumOpticsRepr()) isa Ket
     @assert nsubsystems(net[i].staterefs[2]) == 2
 
     ##
@@ -71,6 +71,7 @@ function register_creation_and_initialization()
     initialize!(net[i,3],X1, time=2.0)
     @assert nsubsystems(net[i].staterefs[2]) == 1
     apply!([net[i,2], net[i,3]], CNOT, time=3.0)
+    @assert express(net[i].staterefs[2].state[], QuantumOpticsRepr()) isa Ket
     @assert nsubsystems(net[i].staterefs[2]) == 2
 end
 SUITE["register"]["creation_and_initialization"]["from_tests"] = @benchmarkable register_creation_and_initialization()
