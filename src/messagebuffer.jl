@@ -178,15 +178,30 @@ function Base.wait(mb::MessageBuffer)
 end
 
 """
-    onchange
+    onchange(store)
+    onchange(store, Tag)
 
-Wait for changes to occur on a [`MessageBuffer`](@ref) or [`Register`](@ref). By specifying a second argument, you can filter what type of events are waited on.
-E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
+Return a `ConcurrentSim.Process` to `@yield` on for tag changes in a
+[`Register`](@ref) or arrivals in a [`MessageBuffer`](@ref). A slot reference
+watches its whole register. Passing `Tag`, `Any`, or no type currently has the
+same behavior.
 
-The caller is registered as a waiter before `onchange` returns, so a change that
-happens later in the same simulation step is not lost relative to the caller's own
-registration. Calling `onchange` immediately affects the buffer's or register's
-notification state: call it only to `@yield` on its result.
+The call takes effect before returning: it registers a wait for the next change
+or consumes one queued buffer notification. Call it only to wait on its result.
+
+Registers report future changes only. Buffers also save one notification per
+arrival when no wait is registered. Each saved notification completes one later
+wait. Deleting messages does not remove saved notifications. A nonempty buffer
+alone does not make a wait complete.
+
+A change wakes all registered waiters. Waking does not consume or reserve a tag,
+and several changes can occur before a waiter resumes. Query before waiting and
+again after waking, or use [`query_wait`](@ref) or [`querydelete_wait!`](@ref).
+
+`|` does not cancel an `onchange` wait when another branch or a timeout wins.
+A later buffer arrival can therefore wake only abandoned waits and leave no queued
+notification for a new wait. Do not rely on which event wins when changes and
+timeouts have the same simulation time.
 """
 function onchange end
 
