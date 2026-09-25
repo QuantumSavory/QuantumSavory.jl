@@ -42,7 +42,8 @@ Both `onchange(::Register)` and `onchange(::MessageBuffer)` register the caller 
 waiter before returning (the buffer either consumes one queued token or attaches to the
 current notifier generation), so a change later in the same simulation step is never
 lost relative to the caller's own registration; `test/general/messagebuffer_tests.jl`
-pins this with a blocked bystander and a local `put!` in the same step. Waiters
+pins this with a blocked bystander and a local `put!` immediately after `onchange`
+returns, without relying on scheduler order. Waiters
 abandoned by a composite wait (`onchange(mbA) | onchange(mbB)`, or a wait raced against
 a `timeout`) stay registered on their generation, so an arrival that finds only such
 stale waiters stores no token.

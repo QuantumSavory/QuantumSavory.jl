@@ -172,32 +172,9 @@ end
     return nothing
 end
 
-"""
-Return a process that completes at the next change of `mb`, or immediately when an
-arrival is already queued in `no_wait`.
-
-The buffer's notification state is updated *before* this function returns: either
-one queued arrival is consumed, or the caller is attached to the current generation
-of `tag_waiter`. An arrival delivered later in the same simulation step therefore
-either finds the caller registered and wakes it, or, when nobody is registered, is
-recorded in `no_wait`. Registering the caller from a separately scheduled process
-instead left a window, after the caller had yielded but before that process ran, in
-which such an arrival woke only the tasks that were already blocked, stored no
-token, and was never noticed by the caller (a lost wake-up).
-"""
-function _wait_for_change(mb::MessageBuffer)
-    if mb.no_wait[] != 0
-        # Consume a queued arrival immediately instead of waiting for a future
-        # edge on `tag_waiter`.
-        mb.no_wait[] -= 1
-        return @process _resume_immediately(mb.sim)
-    end
-    return lock(mb.tag_waiter)
-end
-
 function Base.wait(mb::MessageBuffer)
     Base.depwarn("wait(::MessageBuffer) is deprecated, use onchange(::MessageBuffer) instead", :wait)
-    return _wait_for_change(mb)
+    return onchange(mb)
 end
 
 """
@@ -214,7 +191,11 @@ notification state: call it only to `@yield` on its result.
 function onchange end
 
 function onchange(mb::MessageBuffer)
-    return _wait_for_change(mb)
+    if mb.no_wait[] != 0
+        mb.no_wait[] -= 1
+        return @process _resume_immediately(mb.sim)
+    end
+    return lock(mb.tag_waiter)
 end
 
 function onchange(mb::MessageBuffer, ::Type{Any})

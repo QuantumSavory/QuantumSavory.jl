@@ -159,58 +159,30 @@ end
     @test QuantumSavory.peektags(mb) == [Tag(:first), Tag(:second), Tag(:third)]
 end
 
-@testset "an arrival right after onchange is not lost while another task is blocked" begin
-    # Regression test for a lost wake-up. The bystander is already blocked on the
-    # buffer when, at t = 1, the victim queries the buffer, finds nothing, and yields
-    # on `onchange(mb)`. Later in the same simulation step the victim's message is
-    # delivered locally. The delivery must either find the victim registered as a
-    # waiter, or be recorded as a queued arrival for it: the victim must wake at
-    # t = 1. It must not depend on the bystander's message at t = 5 to be woken.
-    net = RegisterNet([Register(1), Register(1)])
+@testset "onchange registers before returning while another task is blocked" begin
+    net = RegisterNet([Register(1)])
     sim = get_time_tracker(net)
-    mb = messagebuffer(net, 2)
+    mb = messagebuffer(net, 1)
     wake_log = []
 
-    @resumable function bystander(sim, mb, wake_log)
-        while true
-            querydelete!(mb, :for_bystander) === nothing || break
-            @yield onchange(mb)
-        end
-        push!(wake_log, ("bystander", now(sim)))
+    @resumable function receiver(sim, pending, name)
+        @yield pending
+        push!(wake_log, (name, now(sim)))
     end
 
-    @resumable function victim(sim, mb, wake_log)
-        @yield timeout(sim, 1.0)
-        while true
-            querydelete!(mb, :for_victim) === nothing || break
-            @yield onchange(mb)
-        end
-        push!(wake_log, ("victim", now(sim)))
-    end
+    # Establish a waiter so the next arrival broadcasts instead of queuing a wake.
+    @process receiver(sim, onchange(mb), :bystander)
+    run(sim, 1)
 
-    # Scheduled at t = 1 after the victim (spawned later, so its timeout event has a
-    # higher id): runs after the victim has yielded on `onchange(mb)`, before any
-    # process that `onchange` might have scheduled to register the victim.
-    @resumable function local_sender(sim, mb)
-        @yield timeout(sim, 1.0)
-        put!(mb, Tag(:for_victim))
-    end
+    # The call must register the new waiter before put!, without a scheduler turn.
+    pending = onchange(mb)
+    put!(mb, Tag(:hello))
+    @process receiver(sim, pending, :new_waiter)
+    run(sim, 2)
 
-    @resumable function late_sender(sim, mb)
-        @yield timeout(sim, 5.0)
-        put!(mb, Tag(:for_bystander))
-    end
-
-    @process bystander(sim, mb, wake_log)
-    @process victim(sim, mb, wake_log)
-    @process local_sender(sim, mb)
-    @process late_sender(sim, mb)
-    run(sim, 20.0)
-
-    @test ("victim", 1.0) in wake_log
-    @test ("bystander", 5.0) in wake_log
+    @test Set(wake_log) == Set([(:bystander, 1.0), (:new_waiter, 1.0)])
     @test length(wake_log) == 2
-    @test isempty(mb.buffer)
+    @test query(mb, :hello).tag == Tag(:hello)
 end
 
 @testset "deprecated wait(mb) keeps the same queued-wakeup behavior" begin
