@@ -38,6 +38,17 @@ waiters observe a register-wide future change edge. Message buffers also broadca
 changes, but their queued, unattended notification tokens make the exact wake behavior
 different from a simple edge-triggered condition. Tests should distinguish “eventually
 wakes and re-queries” from stronger one-notification/one-waiter assumptions.
+Both `onchange(::Register)` and `onchange(::MessageBuffer)` take effect before
+returning: they attach to the current notifier generation, or the buffer consumes one
+queued token. A later change is not lost while the returned process starts;
+`test/general/messagebuffer_tests.jl`
+pins this with a blocked bystander and a local `put!` immediately after `onchange`
+returns, without relying on scheduler order. Waiters
+abandoned by a composite wait (`onchange(mbA) | onchange(mbB)`, or a wait raced against
+a `timeout`) stay registered on their generation, so an arrival that finds only such
+stale waiters stores no token.
+The public `onchange` docstring describes these cases, including queued notifications
+that survive message deletion and the lack of guaranteed ordering at equal times.
 
 Snapshot results can become stale between query and use because ConcurrentSim processes
 interleave at yields. Protocols should validate reciprocal tags, slot occupancy, and
@@ -53,7 +64,3 @@ aligned with the repository's public-API convention.
 - **Source:** [`src/tags.jl`](../../../src/tags.jl), [`src/queries.jl`](../../../src/queries.jl), [`src/querywait.jl`](../../../src/querywait.jl), and [`src/messagebuffer.jl`](../../../src/messagebuffer.jl) — payload, indexing, query, and buffer behavior.
 - **Docs:** [`docs/src/metadata_plane.md`](../../../docs/src/metadata_plane.md) and [`docs/src/tag_query.md`](../../../docs/src/tag_query.md) — metadata and query model.
 - **Test:** [`test/general/tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`test/general/querywait_tests.jl`](../../../test/general/querywait_tests.jl), and [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl) — ordering, waits, and buffer behavior.
-
-## Unresolved questions
-
-- Should the message-buffer notification queue be replaced or documented as part of the contract?

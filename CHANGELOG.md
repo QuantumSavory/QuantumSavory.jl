@@ -1,5 +1,9 @@
 # News
 
+## v0.8.1 - 2026-09-25
+
+- **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 
+
 ## v0.8.0 - 2026-09-05
 
 - **(breaking)** Standardize `project_traceout!` outcomes: explicit
