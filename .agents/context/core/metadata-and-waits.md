@@ -64,7 +64,3 @@ aligned with the repository's public-API convention.
 - **Source:** [`src/tags.jl`](../../../src/tags.jl), [`src/queries.jl`](../../../src/queries.jl), [`src/querywait.jl`](../../../src/querywait.jl), and [`src/messagebuffer.jl`](../../../src/messagebuffer.jl) — payload, indexing, query, and buffer behavior.
 - **Docs:** [`docs/src/metadata_plane.md`](../../../docs/src/metadata_plane.md) and [`docs/src/tag_query.md`](../../../docs/src/tag_query.md) — metadata and query model.
 - **Test:** [`test/general/tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`test/general/querywait_tests.jl`](../../../test/general/querywait_tests.jl), and [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl) — ordering, waits, and buffer behavior.
-
-## Unresolved questions
-
-- Should the message-buffer notification queue be replaced in a future API change?
