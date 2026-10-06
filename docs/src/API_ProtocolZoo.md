@@ -43,6 +43,13 @@ main interface is the standard set of typed tags documented in
 their `tag` fields. Custom types supplied there must be concrete subtypes of
 `QuantumSavory.AbstractTag`. This tag is used to mark that the given slot contains entanglement that was just generated and now potentially available for consumption.
 
+[`AspenEntanglerProt`](@ref) models two buffered single-photon sources and a
+central heralding station on a shared clock. It selects the buffering length
+from source and coincidence probabilities, sends [`AspenHerald`](@ref) messages,
+and tags confirmed pairs with `EntanglementCounterpart`. See the short
+[ASPEN-Net example](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/aspen_net)
+for setup and model assumptions.
+
 ## How Protocols Compose
 
 Protocols in `ProtocolZoo` are designed to compose through the same metadata and

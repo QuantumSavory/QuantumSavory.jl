@@ -75,6 +75,11 @@ external_link_controller = LinkController(
 )
 network_controller = network_controllers[3]
 end_controller = end_controllers[2]
+
+aspen_net = RegisterNet(path_graph(3), [Register(1) for _ in 1:3])
+aspen = AspenEntanglerProt(aspen_net, 1, 3, 2; rounds=4)
+@process aspen()
+run(get_time_tracker(aspen_net))
 ```
 
 ## [`EntanglerProt`](@ref)
@@ -89,6 +94,15 @@ protocolvis_html(entangler) # hide
 
 ```@example protocol_visualizations
 ProtocolVisualizationPNG(entangler) # hide
+```
+
+## [`AspenEntanglerProt`](@ref)
+
+The HTML history shows scheduled releases, herald timing, successes, failures,
+and skipped slots. A plain-text display is also available.
+
+```@example protocol_visualizations
+protocolvis_html(aspen) # hide
 ```
 
 ## [`EntanglementConsumer`](@ref)
