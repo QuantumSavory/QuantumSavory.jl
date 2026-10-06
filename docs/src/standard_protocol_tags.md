@@ -214,6 +214,20 @@ fresh_entanglement_id
 combine_entanglement_ids
 ```
 
+## ASPEN-Net Interface
+
+### `AspenHerald`
+
+```julia
+Tag(AspenHerald, attempt_id, success)
+```
+
+The central station sends this message to both source nodes after a scheduled
+attempt. `success` is `1` for a detection herald and `0` for failure.
+`AspenEntanglerProt` uses the attempt identifier to match confirmations, then
+tags successful memories with reciprocal `EntanglementCounterpart` tags or
+erases failed memories after both confirmations arrive.
+
 ## Switch Interface
 
 ### `SwitchRequest`
@@ -410,6 +424,7 @@ EntanglementHistory
 EntanglementUpdateX
 EntanglementUpdateZ
 QuantumSavory.ProtocolZoo.EntanglementDelete
+AspenHerald
 SwitchRequest
 Flow
 QTCPPairBegin
