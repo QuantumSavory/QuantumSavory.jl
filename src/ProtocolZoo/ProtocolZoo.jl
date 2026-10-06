@@ -19,6 +19,7 @@ using PrettyTables: PrettyTables, pretty_table
 export
     # protocols
     EntanglerProt, SwapperProt, EntanglementTracker, EntanglementConsumer, CutoffProt,
+    AspenSchedule, AspenSourceProt, AspenCentralProt, AspenHerald,
     protocol_log_context,
     # tags
     EntanglementCounterpart, EntanglementHistory, EntanglementUpdateX, EntanglementUpdateZ,
@@ -905,6 +906,7 @@ end
 
 include("cutoff.jl")
 include("swapping.jl")
+include("aspen.jl")
 include("switches.jl")
 using .Switches
 include("qtcp.jl")
