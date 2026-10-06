@@ -402,10 +402,24 @@ Typical query:
 query(reg, PurifiedEntanglementCounterpart, remote_node, W; assigned=true)
 ```
 
+## ASPEN-Net Acknowledgements
+
+```julia
+Tag(AspenHerald, central_node, round, remote_node, success, correction, pair_id)
+```
+
+`AspenCentralProt` sends this message to each source through its classical channel.
+The round identifies the scheduled attempt; `success` is 1 for a detector click and
+0 for failure, and `correction` is 1 when a local Z correction is needed. At the acknowledgement
+deadline, `AspenSourceProt` creates an `EntanglementCounterpart` tag referring to
+slot 1 at `remote_node`, with the shared `pair_id`. Failure or a missing message
+causes the source to discard its memory.
+
 ## Exact Type Reference
 
 ```@docs; canonical=false
 EntanglementCounterpart
+AspenHerald
 EntanglementHistory
 EntanglementUpdateX
 EntanglementUpdateZ

@@ -75,6 +75,10 @@ external_link_controller = LinkController(
 )
 network_controller = network_controllers[3]
 end_controller = end_controllers[2]
+
+module AspenExample
+    include("../../examples/aspen_net/1_simple_run.jl")
+end
 ```
 
 ## [`EntanglerProt`](@ref)
@@ -103,6 +107,31 @@ protocolvis_html(consumer) # hide
 
 ```@example protocol_visualizations
 ProtocolVisualizationPNG(consumer) # hide
+```
+
+## ASPEN-Net
+
+The source and central-node displays show the shared schedule and completed rounds,
+including failures. The setup runs the [small ASPEN-Net example](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/aspen_net).
+
+### [`AspenSourceProt`](@ref)
+
+```@example protocol_visualizations
+protocolvis_html(AspenExample.sources[1]) # hide
+```
+
+```@example protocol_visualizations
+ProtocolVisualizationPNG(AspenExample.sources[1]) # hide
+```
+
+### [`AspenCentralProt`](@ref)
+
+```@example protocol_visualizations
+protocolvis_html(AspenExample.central) # hide
+```
+
+```@example protocol_visualizations
+ProtocolVisualizationPNG(AspenExample.central) # hide
 ```
 
 ## [`LinkController`](@ref)
