@@ -55,3 +55,30 @@ function Base.show(io::IO, m::MIME"text/html", p::EntanglementConsumer)
     </div>
     """)
 end
+
+function Base.show(io::IO, prot::Union{AspenSourceProt,AspenCentralProt})
+    print(io, nameof(typeof(prot)), " on nodes ", join(_protocol_nodes(prot), ", "))
+end
+
+function _show_aspen(io, mime, prot)
+    schedule = prot.schedule
+    successes = count(entry -> entry.outcome == :success, prot._log)
+    summary = "$(sprint(show, prot))\n" *
+        "Buffered attempts: $(schedule.repetitions); period: $(schedule.period)\n" *
+        "Arrival timeout: $(schedule.arrival_timeout); coincidence window: $(schedule.coincidence_window); acknowledgement timeout: $(schedule.acknowledgement_timeout)\n" *
+        "Completed rounds: $(length(prot._log)); successes: $(successes)"
+    html = mime isa MIME"text/html"
+    if html
+        print(io, "<div class=\"quantumsavory_show quantumsavory_protocol quantumsavory_protocol_aspen\"><pre>",
+            QuantumSavory._html_escape_text(summary), "</pre>")
+    else
+        println(io, summary)
+    end
+    pretty_table(io, prot._log;
+        column_labels=["Round", "Start", "Release", "Complete", "First pulse", "Outcome", "Pair ID"],
+        backend=html ? :html : :text, maximum_number_of_rows=25)
+    html && print(io, "</div>")
+end
+
+Base.show(io::IO, mime::MIME"text/plain", prot::Union{AspenSourceProt,AspenCentralProt}) = _show_aspen(io, mime, prot)
+Base.show(io::IO, mime::MIME"text/html", prot::Union{AspenSourceProt,AspenCentralProt}) = _show_aspen(io, mime, prot)

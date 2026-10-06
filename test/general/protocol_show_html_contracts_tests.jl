@@ -206,3 +206,19 @@ struct DummyProtocol <: QuantumSavory.ProtocolZoo.AbstractProtocol end
         @test !occursin("Inf", html)
     end
 end
+
+@testset "ASPEN displays timing and completed round history" begin
+    net = RegisterNet([Register(2) for _ in 1:3])
+    schedule = AspenSchedule()
+    for prot in (AspenSourceProt(net, 1, 2; schedule), AspenCentralProt(net, 2, 1, 3; schedule))
+        @test occursin("Completed rounds: 0", repr(MIME"text/plain"(), prot))
+        push!(prot._log, (round=1, start=0.0, release=0.006, complete=0.206,
+            first=1, outcome=:success, pair_id=42))
+        for mime in (MIME"text/plain"(), MIME"text/html"())
+            rendered = repr(mime, prot)
+            @test occursin("success", rendered)
+            @test occursin("Arrival timeout", rendered)
+            @test occursin("First pulse", rendered)
+        end
+    end
+end
