@@ -14,4 +14,4 @@ Both memories remain locked until both confirmations arrive.
 This minimal model assumes ideal lossless optics and threshold detection.
 False heralds leave vacuum instead of the target Ψ⁺ Bell pair; lowering
 `central_fraction` suppresses two-photon events at the cost of fewer heralds.
-Plain-text and HTML displays show recent outcomes and timing.
+Plain-text and HTML displays show slot outcomes and timing.

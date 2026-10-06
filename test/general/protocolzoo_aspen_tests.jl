@@ -16,6 +16,11 @@ end
     @test (1-0.5^repetitions)^2 ≥ 0.95 > (1-0.5^(repetitions-1))^2
     @test _aspen_repetitions(0.5, 0.9) == 5
     @test _aspen_repetitions(1.0, 1.0) == 1
+    @test _aspen_repetitions(0.25, 0.0625) == 1
+    @test _aspen_repetitions(0.5, 0.765625) == 3
+    @test _aspen_repetitions(0.25, nextfloat(0.0625)) == 2
+    @test _aspen_repetitions(0.5, nextfloat(0.765625)) == 4
+    @test _aspen_repetitions(0.1, 0.01) == 1
     Random.seed!(401)
     net, p = aspen_fixture(; heralding_prob=0.5, coincidence_prob=0.95,
         central_fraction=0.0, rounds=32)

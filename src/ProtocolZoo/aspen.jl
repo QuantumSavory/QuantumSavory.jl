@@ -18,10 +18,22 @@ Base.show(io::IO, h::AspenHerald) = print(io, "ASPEN attempt $(h.pair_id): $(h.s
 const _AspenRecord = @NamedTuple{round::Int, start::Float64, release::Float64,
     herald::Float64, complete::Float64, firstA::Int, firstB::Int, outcome::Symbol, pair_id::EntanglementID}
 
-# (1-(1-p)^N)^2 ≥ coincidence; the rewritten numerator avoids cancellation near 1.
+# Choose the smallest N with (1-(1-p)^N)^2 ≥ coincidence.
 function _aspen_repetitions(p, coincidence)
     p == 1 && return 1
-    return ceil(Int, (log1p(-coincidence) - log1p(sqrt(coincidence))) / log1p(-p))
+    # Extra precision preserves integer boundaries and very small source probabilities.
+    return setprecision(BigFloat, max(256, 128-exponent(p))) do
+        source, target = BigFloat(p), BigFloat(coincidence)
+        repetitions = ceil(Int, log1p(-sqrt(target)) / log1p(-source))
+        achieved(n) = (1-(1-source)^n)^2
+        while repetitions > 1 && achieved(repetitions-1) ≥ target
+            repetitions -= 1
+        end
+        while achieved(repetitions) < target
+            repetitions += 1
+        end
+        repetitions
+    end
 end
 
 """
