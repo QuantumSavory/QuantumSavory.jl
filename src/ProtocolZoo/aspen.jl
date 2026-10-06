@@ -172,8 +172,8 @@ _aspen_late(time, start) = time-start > 8eps(max(time, start))
             _aspen_record!(p, round, start, _aspen_late(now(p.sim), start) ? :late : :busy)
             continue
         end
-        firstA = rand(Geometric(p.heralding_prob)) + 1
-        firstB = rand(Geometric(p.heralding_prob)) + 1
+        firstA = isone(p.heralding_prob) ? 1 : rand(Geometric(p.heralding_prob)) + 1
+        firstB = isone(p.heralding_prob) ? 1 : rand(Geometric(p.heralding_prob)) + 1
         firstA = firstA ≤ repetitions ? firstA : 0
         firstB = firstB ≤ repetitions ? firstB : 0
         release = start + repetitions*p.attempt_time
