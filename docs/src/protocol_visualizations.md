@@ -77,7 +77,8 @@ network_controller = network_controllers[3]
 end_controller = end_controllers[2]
 
 module AspenExample
-    include("../../examples/aspen_net/1_simple_run.jl")
+    using QuantumSavory
+    include(joinpath(pkgdir(QuantumSavory), "examples", "aspen_net", "1_simple_run.jl"))
 end
 ```
 
