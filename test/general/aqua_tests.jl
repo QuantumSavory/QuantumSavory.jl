@@ -6,7 +6,7 @@ using Gabs
 
 @testset "Aqua" begin
 
-@test Test.detect_ambiguities(QuantumSavory) == Tuple{Method, Method}[]
+Aqua.test_ambiguities(QuantumSavory)
 
 Aqua.test_all(QuantumSavory,
     ambiguities=(QuantumSavory; recursive=false),

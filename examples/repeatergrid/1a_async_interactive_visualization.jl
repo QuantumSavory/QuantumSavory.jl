@@ -13,9 +13,9 @@ _, ax, _, obs = registernetplot_axis(fig[1:2,1], net;registercoords=layout)
 
 # the performance log part of the visualization
 entlog = Observable(consumer._log) # Observables are used by Makie to update the visualization in real-time in an automated reactive way
-ts = @lift [e[1] for e in $entlog]  # TODO this needs a better interface, something less cluncky, maybe also a whole Makie recipe
-tzzs = @lift [Point2f(e[1],e[2]) for e in $entlog]
-txxs = @lift [Point2f(e[1],e[3]) for e in $entlog]
+ts = @lift [e.t for e in $entlog]  # TODO this needs a better interface, something less cluncky, maybe also a whole Makie recipe
+tzzs = @lift [Point2f(e.t,e.obs1) for e in $entlog]
+txxs = @lift [Point2f(e.t,e.obs2) for e in $entlog]
 Δts = @lift length($ts)>1 ? $ts[2:end] .- $ts[1:end-1] : [0.0]
 entlogaxis = Axis(fig[1,2], xlabel="Time", ylabel="Entanglement", title="Entanglement Successes")
 ylims!(entlogaxis, (-1.04,1.04))
@@ -23,7 +23,7 @@ stem!(entlogaxis, txxs)
 histaxis = Axis(fig[2,2], xlabel="ΔTime", title="Histogram of Time to Successes")
 hist!(histaxis, Δts)
 
-avg_fids = @lift cumsum([e[3] for e in $entlog])./cumsum(ones(length($entlog))) #avg fidelity per unit time
+avg_fids = @lift cumsum([e.obs2 for e in $entlog])./cumsum(ones(length($entlog))) #avg fidelity per unit time
 fid_info = @lift [Point2f(t,f) for (t,f) in zip($ts, $avg_fids)]
 fid_axis = Axis(fig[3,1], xlabel="Time", ylabel="Avg. Fidelity", title="Time evolution of Average Fidelity")
 lines!(fid_axis, fid_info)
