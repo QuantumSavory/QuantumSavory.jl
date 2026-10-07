@@ -159,6 +159,32 @@ end
     @test QuantumSavory.peektags(mb) == [Tag(:first), Tag(:second), Tag(:third)]
 end
 
+@testset "onchange registers before returning while another task is blocked" begin
+    net = RegisterNet([Register(1)])
+    sim = get_time_tracker(net)
+    mb = messagebuffer(net, 1)
+    wake_log = []
+
+    @resumable function receiver(sim, pending, name)
+        @yield pending
+        push!(wake_log, (name, now(sim)))
+    end
+
+    # Establish a waiter so the next arrival broadcasts instead of queuing a wake.
+    @process receiver(sim, onchange(mb), :bystander)
+    run(sim, 1)
+
+    # The call must register the new waiter before put!, without a scheduler turn.
+    pending = onchange(mb)
+    put!(mb, Tag(:hello))
+    @process receiver(sim, pending, :new_waiter)
+    run(sim, 2)
+
+    @test Set(wake_log) == Set([(:bystander, 1.0), (:new_waiter, 1.0)])
+    @test length(wake_log) == 2
+    @test query(mb, :hello).tag == Tag(:hello)
+end
+
 @testset "deprecated wait(mb) keeps the same queued-wakeup behavior" begin
     reg = Register(10)
     net = RegisterNet([reg])

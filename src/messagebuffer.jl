@@ -166,31 +166,44 @@ function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tu
     mb
 end
 
-@resumable function wait_process(sim, mb)
-    if mb.no_wait[] != 0
-        # Consume a queued arrival immediately instead of waiting for a future
-        # edge on `tag_waiter`.
-        mb.no_wait[] -= 1
-        return
-    end
-    @yield lock(mb.tag_waiter)
+# A process that finishes as soon as it is scheduled, used to resume a waiter
+# without blocking when a queued arrival is already available.
+@resumable function _resume_immediately(sim)
+    return nothing
 end
 
 function Base.wait(mb::MessageBuffer)
     Base.depwarn("wait(::MessageBuffer) is deprecated, use onchange(::MessageBuffer) instead", :wait)
-    return @process wait_process(mb.sim, mb)
+    return onchange(mb)
 end
 
 """
     onchange
 
-Wait for changes to occur on a [`MessageBuffer`](@ref) or [`Register`](@ref). By specifying a second argument, you can filter what type of events are waited on.
-E.g. `onchange(r, Tag)` will wait only on changes to tags and metadata.
+Return a `@yield`-able object for waiting for tag changes in a
+[`Register`](@ref) or arrivals in a [`MessageBuffer`](@ref).
+
+The call takes effect before returning: it registers a wait for the next change
+or consumes one queued buffer notification.
+
+Registers report future changes only.
+
+Message buffers also save one notification per
+arrival when no wait is registered. Each saved notification completes one later
+wait.
+
+A change wakes all registered waiters. Waking does not consume or reserve a tag,
+and several changes can occur before a waiter resumes. Query before waiting and
+again after waking, or use [`query_wait`](@ref) or [`querydelete_wait!`](@ref).
 """
 function onchange end
 
 function onchange(mb::MessageBuffer)
-    return @process wait_process(mb.sim, mb)
+    if mb.no_wait[] != 0
+        mb.no_wait[] -= 1
+        return @process _resume_immediately(mb.sim)
+    end
+    return lock(mb.tag_waiter)
 end
 
 function onchange(mb::MessageBuffer, ::Type{Any})
