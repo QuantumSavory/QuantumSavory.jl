@@ -79,6 +79,7 @@ function main()
         "1st-gen Repeater - low level implementation" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel.md",
         "1st-gen Repeater - Clifford formalism" => "howto/firstgenrepeater_lowlevel/firstgenrepeater_lowlevel-clifford.md",
         "Cluster States in Atomic Memories" => "howto/colorcentermodularcluster/colorcentermodularcluster.md",
+        "BB84 Key Distribution" => "howto/bb84qkd.md",
     ],
     "Tutorials" => [
         "tutorial.md",
