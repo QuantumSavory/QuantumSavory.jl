@@ -1,5 +1,9 @@
 # News
 
+## [Unreleased]
+
+- Add a documented, tested BB84 quantum key distribution example with static and interactive Makie visualizations.
+
 ## v0.8.1 - 2026-09-25
 
 - **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 
