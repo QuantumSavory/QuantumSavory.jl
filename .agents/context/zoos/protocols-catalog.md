@@ -21,6 +21,10 @@ datagrams, link requests/replies, and end/network/link controllers. `mbqc.jl` ad
 state construction, graph-to-resource mapping, purification measurements, and tracking.
 All three are part of ProtocolZoo, not separate external zoos.
 
+`aspen.jl` adds clocked, buffered two-source distribution with a central
+heralding station; see the [ASPEN-Net example](../../../examples/aspen_net/README.md)
+for the minimal optical model and its limits.
+
 Every documented and public family is intended for long-term support; implementation
 completeness still varies. QTCP contains unresolved drop detection, correction, and
 timeout work. MBQC currently uses contiguous node-number arithmetic in routing/mapping

@@ -1,5 +1,10 @@
 # News
 
+## Unreleased
+
+- Add `AspenEntanglerProt` for clocked ASPEN-Net distribution with buffered
+  single-photon sources, delayed heralds, and protocol history displays.
+
 ## v0.8.1 - 2026-09-25
 
 - **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 

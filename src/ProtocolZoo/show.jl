@@ -55,3 +55,20 @@ function Base.show(io::IO, m::MIME"text/html", p::EntanglementConsumer)
     </div>
     """)
 end
+
+function Base.show(io::IO, p::AspenEntanglerProt)
+    successes = count(row -> row.outcome == :success, p._log)
+    print(io, "AspenEntanglerProt($(p.nodeA) ↔ $(p.nodeB) via $(p.centralnode)), ",
+        "$(successes) heralded successes / $(length(p._log)) completed slots")
+end
+
+Base.show(io::IO, ::MIME"text/plain", p::AspenEntanglerProt) = _aspen_show(io, p, :text)
+Base.show(io::IO, ::MIME"text/html", p::AspenEntanglerProt) = _aspen_show(io, p, :html)
+
+function _aspen_show(io, p, backend)
+    repetitions = _aspen_repetitions(p.heralding_prob, p.coincidence_prob)
+    title = sprint(show, p) * "; $repetitions buffered repetitions, period $(p.period)"
+    pretty_table(io, p._log; title,
+        column_labels=["Slot", "Start", "Release", "Herald", "Complete", "First A", "First B", "Outcome", "Pair ID"],
+        backend, maximum_number_of_rows=25)
+end
