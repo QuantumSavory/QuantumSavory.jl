@@ -16,6 +16,12 @@ The core family covers link entanglement generation (`EntanglerProt`), swapping
 (`EntanglementConsumer`), and age-based cleanup (`CutoffProt`). These protocols
 coordinate register resources and fixed metadata tags across yields.
 
+`aspen.jl` adds synchronized `AspenSourceProt` and `AspenCentralProt` components.
+They share an `AspenSchedule`, send optical modes over quantum channels, and return
+`AspenHerald` confirmations over classical channels. The initial model reserves two
+slots per participant and uses lossless buffering and ideal threshold detection.
+See the [example](../../../examples/aspen_net/README.md) for timing and model limits.
+
 `switches.jl` adds discrete switch scheduling and request tags. `qtcp.jl` adds flows,
 datagrams, link requests/replies, and end/network/link controllers. `mbqc.jl` adds graph
 state construction, graph-to-resource mapping, purification measurements, and tracking.

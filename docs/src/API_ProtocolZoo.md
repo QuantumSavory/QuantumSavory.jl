@@ -57,6 +57,16 @@ In practice, that means one protocol can:
 This is the practical point of the protocol layer: reusable control logic that
 does not depend on bespoke peer-to-peer wiring.
 
+## ASPEN-Net
+
+[`AspenSourceProt`](@ref) buffers heralded photons and sends an optical mode to
+[`AspenCentralProt`](@ref) over a quantum channel. Both sources and the central
+node use one [`AspenSchedule`](@ref). The central node sends [`AspenHerald`](@ref)
+over classical channels; each source retains and tags its memory only after a
+successful acknowledgement. See the short
+[runnable example and protocol diagram](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/aspen_net)
+for setup, timing constraints, and the initial model's limits.
+
 ## Protocol Logging Context
 
 ProtocolZoo records use Julia's standard logging macros and the public

@@ -293,3 +293,29 @@ function protshowimage(subfig, prot::EndNodeController)
     Makie.linkxaxes!(axes)
     Makie.hidexdecorations!.(axes[1:2]; grid=false)
 end
+
+function protshowimage(subfig, prot::Union{QuantumSavory.ProtocolZoo.AspenSourceProt,QuantumSavory.ProtocolZoo.AspenCentralProt})
+    schedule = prot.schedule
+    history = last(prot._log, 20)
+    successes = count(entry -> entry.outcome == :success, prot._log)
+    Label(subfig[1, 1]; tellwidth=false,
+        text="$(schedule.repetitions) buffered attempts | period $(schedule.period)\n" *
+             "Arrival timeout $(schedule.arrival_timeout) | coincidence window $(schedule.coincidence_window)\n" *
+             "Acknowledgement timeout $(schedule.acknowledgement_timeout)\n" *
+             "$(length(prot._log)) completed rounds | $(successes) successes | showing last $(length(history))")
+    axis = Axis(subfig[2, 1]; xlabel="Simulation time", ylabel="Round and outcome",
+        yticks=([entry.round for entry in history], ["$(entry.round): $(entry.outcome)" for entry in history]))
+    if isempty(history)
+        Makie.text!(axis, 0.5, 0.5; text="No completed rounds", space=:relative, align=(:center, :center))
+    end
+    for entry in history
+        Makie.lines!(axis, [entry.start, entry.release], [entry.round, entry.round]; color=:gray)
+        Makie.lines!(axis, [entry.release, entry.complete], [entry.round, entry.round]; color=:steelblue)
+        Makie.scatter!(axis, [entry.release], [entry.round]; marker=:utriangle, color=:steelblue)
+        Makie.scatter!(axis, [entry.complete], [entry.round];
+            color=entry.outcome == :success ? :seagreen : :firebrick)
+    end
+    Label(subfig[3, 1]; tellwidth=false,
+        text="Gray: scheduled buffering; blue triangle: release; circle: completion\nGreen: success; red: other outcomes")
+    Makie.rowsize!(subfig, 2, Makie.Auto(1))
+end
