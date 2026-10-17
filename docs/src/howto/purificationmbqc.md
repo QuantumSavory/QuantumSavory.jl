@@ -81,7 +81,7 @@ control.
 From the repository root, run:
 
 ```sh
-julia --project=examples examples/purificationMBQC/full_purification_example.jl
+julia --project=examples examples/purificationMBQC/1_purification_example.jl
 ```
 
 The script first uses perfect input pairs and checks that both output pairs have

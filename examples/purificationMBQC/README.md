@@ -28,7 +28,7 @@ The simulation has four main steps:
    protocol discards the involved qubits.
 
 The example uses the `[[4,2,2]]` code, so each side has six nodes: four input
-nodes and two output nodes. `full_purification_example.jl` first checks perfect
+nodes and two output nodes. `1_purification_example.jl` first checks perfect
 input pairs. It then sweeps over noisy Werner states and records the acceptance
 rate and the output fidelity conditioned on acceptance. For input fidelity
 `F`, it compares the acceptance rate with
@@ -37,12 +37,25 @@ rate and the output fidelity conditioned on acceptance. For input fidelity
 Run the example from the repository root:
 
 ```sh
-julia --project=examples examples/purificationMBQC/full_purification_example.jl
+julia --project=examples examples/purificationMBQC/1_purification_example.jl
 julia --project=examples examples/purificationMBQC/plots.jl
 ```
 
 Set `QS_TESTRUN=true` before either command for a shorter sweep. The plot script
 saves `purificationMBQC-plots.png` in the current directory.
+
+`setup.jl` holds the shared code: the `[[4,2,2]]` code, the node layout, and the
+`run_purification` pipeline. Both numbered examples include it.
+`2_hardware_models_example.jl` runs the same pipeline on hardware state models
+instead of Werner states, using a ZALM source
+(`GenqoMultiplexedCascadedBellPairW`) for the long-range pairs and Barrett-Kok
+links (`BarrettKokBellPair`) for the local pairs that build the graph states.
+Neither model is in graph form, so each is paired with the local `correction`
+gates that rotate it there:
+
+```sh
+julia --project=examples examples/purificationMBQC/2_hardware_models_example.jl
+```
 
 The order of resource-state preparation and long-range pair generation is a
 choice made by this example. Different hardware may use a different order. The
