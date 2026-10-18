@@ -192,6 +192,31 @@ end
         @test mb.no_wait[] == 0
     end
 
+    @testset "abandonment during notification dispatch preserves the next waiter" begin
+        net = RegisterNet([Register(1)])
+        sim = get_time_tracker(net)
+        mb = messagebuffer(net, 1)
+        generation = mb.tag_waiter.current
+        log = []
+        # This callback runs before the notifier callbacks below. Removing a
+        # subscriber must not invalidate their current dispatch or restart a wait.
+        ConcurrentSim.append_callback(generation.event) do event
+            ConcurrentSim.remove_callback(subscriber, pending)
+        end
+        pending = onchange(mb)
+        subscriber = ConcurrentSim.append_callback(pending) do event
+            push!(log, (:abandoned, now(sim)))
+        end
+        @process record_wait(sim, onchange(mb), log, :live)
+        put!(mb, Tag(:broadcast))
+        run(sim, 1)
+
+        @test log == [(:live, 0.0)]
+        @test generation.waiters == 0
+        @test_throws ConcurrentSim.EventAbandoned pending | timeout(sim, 1)
+        @test mb.no_wait[] == 0
+    end
+
     @testset "query process wrappers continue after losing a race" begin
         net = RegisterNet([Register(1)])
         sim = get_time_tracker(net)
