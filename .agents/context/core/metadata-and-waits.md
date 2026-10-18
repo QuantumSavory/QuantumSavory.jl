@@ -40,15 +40,25 @@ different from a simple edge-triggered condition. Tests should distinguish “ev
 wakes and re-queries” from stronger one-notification/one-waiter assumptions.
 Both `onchange(::Register)` and `onchange(::MessageBuffer)` take effect before
 returning: they attach to the current notifier generation, or the buffer consumes one
-queued token. A later change is not lost while the returned process starts;
+queued token. A later change is not lost while the caller starts waiting;
 `test/general/messagebuffer_tests.jl`
 pins this with a blocked bystander and a local `put!` immediately after `onchange`
-returns, without relying on scheduler order. Waiters
-abandoned by a composite wait (`onchange(mbA) | onchange(mbB)`, or a wait raced against
-a `timeout`) stay registered on their generation, so an arrival that finds only such
-stale waiters stores no token.
-The public `onchange` docstring describes these cases, including queued notifications
-that survive message deletion and the lack of guaranteed ordering at equal times.
+returns, without relying on scheduler order.
+
+`onchange` returns a private `ChangeWait` event. ConcurrentSim releases a completed
+condition's input subscriptions before its consumer callbacks run. A change wait that
+loses its last subscriber is abandoned and removes its exact notifier callback and
+generation count. Another subscriber keeps a shared wait alive. Nested conditions
+propagate cleanup, while `query_wait`, `querydelete_wait!`, ordinary processes, and
+resource requests remain ordinary processes or events without general cancellation.
+An abandoned wait cannot be reused, including after scheduled events drain; create
+a fresh `onchange` wait. A normally completed wait remains yieldable.
+
+Cleanup takes effect when the race is processed, before its caller resumes. An
+arrival before that boundary can already have notified the wait. Subsequent unattended
+buffer arrivals save a notification for later callers. Queued notifications consumed
+when `onchange` is called are never refunded, including when that wait loses a race;
+message deletion also does not remove queued notifications.
 
 Snapshot results can become stale between query and use because ConcurrentSim processes
 interleave at yields. Protocols should validate reciprocal tags, slot occupancy, and
@@ -63,4 +73,4 @@ aligned with the repository's public-API convention.
 
 - **Source:** [`src/tags.jl`](../../../src/tags.jl), [`src/queries.jl`](../../../src/queries.jl), [`src/querywait.jl`](../../../src/querywait.jl), and [`src/messagebuffer.jl`](../../../src/messagebuffer.jl) — payload, indexing, query, and buffer behavior.
 - **Docs:** [`docs/src/metadata_plane.md`](../../../docs/src/metadata_plane.md) and [`docs/src/tag_query.md`](../../../docs/src/tag_query.md) — metadata and query model.
-- **Test:** [`test/general/tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`test/general/querywait_tests.jl`](../../../test/general/querywait_tests.jl), and [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl) — ordering, waits, and buffer behavior.
+- **Test:** [`test/general/tags_and_queries_tests.jl`](../../../test/general/tags_and_queries_tests.jl), [`test/general/querywait_tests.jl`](../../../test/general/querywait_tests.jl), [`test/general/messagebuffer_tests.jl`](../../../test/general/messagebuffer_tests.jl), and [`test/general/onchange_races_tests.jl`](../../../test/general/onchange_races_tests.jl) — ordering, waits, buffer behavior, and abandoned subscriptions.
