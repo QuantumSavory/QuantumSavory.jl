@@ -1,5 +1,12 @@
 # News
 
+## Unreleased
+
+- **(fix)** Release unfinished `onchange` waits when a race completes and no other
+  subscriber remains. Later unattended buffer arrivals retain their notifications.
+  Abandoned waits cannot be reused; call `onchange` again. Notifications already
+  consumed from a buffer remain consumed.
+
 ## v0.8.1 - 2026-09-25
 
 - **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 

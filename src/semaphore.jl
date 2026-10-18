@@ -16,14 +16,39 @@ mutable struct ChangeNotifier
 end
 ChangeNotifier(sim::ConcurrentSim.Environment) = ChangeNotifier(ChangeGeneration(sim))
 
-function Base.lock(n::ChangeNotifier)
-    generation = n.current
-    generation.waiters += 1
-    return @process _wait_change(ConcurrentSim.environment(generation.event), generation)
+mutable struct ChangeWait <: ConcurrentSim.AbstractEvent
+    const bev::ConcurrentSim.BaseEvent
+    const generation::Union{Nothing,ChangeGeneration}
+    callback::Union{Nothing,Function}
+end
+ChangeWait(sim, generation=nothing) = ChangeWait(ConcurrentSim.BaseEvent(sim), generation, nothing)
+
+ConcurrentSim.abandon_on_unobserved(::ChangeWait) = true
+ConcurrentSim.on_abandon(wait::ChangeWait) = _release_change!(wait)
+
+function _release_change!(wait::ChangeWait)
+    callback = wait.callback
+    isnothing(callback) && return nothing
+    wait.callback = nothing
+    generation = wait.generation::ChangeGeneration
+    generation.waiters -= 1
+    ConcurrentSim.remove_callback(callback, generation.event)
+    return nothing
 end
 
-@resumable function _wait_change(sim, generation::ChangeGeneration)
-    @yield generation.event
+function _notify_change(event, wait::ChangeWait)
+    wait.bev.abandoned && return nothing
+    _release_change!(wait)
+    ConcurrentSim.schedule(wait)
+    return nothing
+end
+
+function Base.lock(n::ChangeNotifier)
+    generation = n.current
+    wait = ChangeWait(ConcurrentSim.environment(generation.event), generation)
+    wait.callback = ConcurrentSim.append_callback(_notify_change, generation.event, wait)
+    generation.waiters += 1
+    return wait
 end
 
 function unlock(n::ChangeNotifier)

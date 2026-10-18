@@ -159,6 +159,17 @@ This is what makes concurrent control logic concise. A protocol can express
 "wait until both resources are free" or "wait for a message, but only up to a
 deadline" without manually writing an event loop.
 
+When the race is processed, it releases its subscriptions before the waiting process
+resumes. An unfinished `onchange` wait with no other subscriber stops listening for
+changes. Reusing that abandoned wait raises `ConcurrentSim.EventAbandoned`; call
+`onchange` again. A wait shared with another active subscriber remains registered.
+
+An arrival before that cleanup can already have notified the wait. Later unattended
+buffer arrivals queue notifications for future waits. A queued notification consumed
+when `onchange` is called remains consumed even if that wait loses the race.
+This cleanup does not cancel ordinary processes, including `query_wait` and
+`querydelete_wait!`, or resource operations.
+
 ## Locks Are Part Of Protocol Logic
 
 Protocols often compete for the same memory slot or communication qubit.

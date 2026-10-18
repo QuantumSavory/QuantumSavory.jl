@@ -166,12 +166,6 @@ function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tu
     mb
 end
 
-# A process that finishes as soon as it is scheduled, used to resume a waiter
-# without blocking when a queued arrival is already available.
-@resumable function _resume_immediately(sim)
-    return nothing
-end
-
 function Base.wait(mb::MessageBuffer)
     Base.depwarn("wait(::MessageBuffer) is deprecated, use onchange(::MessageBuffer) instead", :wait)
     return onchange(mb)
@@ -195,13 +189,18 @@ wait.
 A change wakes all registered waiters. Waking does not consume or reserve a tag,
 and several changes can occur before a waiter resumes. Query before waiting and
 again after waking, or use [`query_wait`](@ref) or [`querydelete_wait!`](@ref).
+
+When a race finishes, an unfinished change wait with no other subscriber is
+abandoned before the caller resumes. It no longer absorbs notifications and
+cannot be reused; call `onchange` again. Changes delivered before that cleanup
+can still notify the wait. Queued notifications consumed by the call stay consumed.
 """
 function onchange end
 
 function onchange(mb::MessageBuffer)
     if mb.no_wait[] != 0
         mb.no_wait[] -= 1
-        return @process _resume_immediately(mb.sim)
+        return ConcurrentSim.schedule(ChangeWait(mb.sim))
     end
     return lock(mb.tag_waiter)
 end

@@ -51,11 +51,11 @@ end
     reg = Register(1)
     waiter = reg.tag_waiter[]
 
-    proc = @inferred onchange(reg)
-    @test proc isa ConcurrentSim.Process
+    event = @inferred onchange(reg)
+    @test event isa ConcurrentSim.AbstractEvent
 
-    proc = @inferred onchange(reg[1], Tag)
-    @test proc isa ConcurrentSim.Process
+    event = @inferred onchange(reg[1], Tag)
+    @test event isa ConcurrentSim.AbstractEvent
 
     @test @inferred(unlock(waiter)) === nothing
 
