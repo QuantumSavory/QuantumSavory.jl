@@ -10,6 +10,7 @@ import QuantumClifford
 import QuantumOpticsBase
 using QuantumClifford: stab_to_gf2, graphstate, Stabilizer, MixedDestabilizer, single_x, single_z, logicalxview, logicalzview
 using QuantumClifford.ECC: CSS, parity_checks
+using QuantumSavory.StatesZoo: BarrettKokBellPair
 
 @testset "GraphStateConstructor" begin
     communication_slot = 1
@@ -35,6 +36,30 @@ using QuantumClifford.ECC: CSS, parity_checks
             o = observable([reg[storage_slot] for reg in registers], QuantumOpticsBase.Operator(QuantumClifford.Stabilizer(g)[i]))
             @test o ≈ 1.0
         end
+    end
+end
+
+@testset "GraphStateConstructor edge source" begin
+    Random.seed!(20261021)
+    graph = path_graph(2)
+    graph_pair = StabilizerState("ZX XZ")
+    # Barrett–Kok produces Ψ+; X then H on one half puts it in graph-state frame.
+    frame = I⊗(H*X)
+    for (visibility, probability) in ((1.0, 1.0), (0.6, 0.01))
+        net = RegisterNet([Register(2), Register(2)])
+        sim = get_time_tracker(net)
+        pair = frame * BarrettKokBellPair(0.8, 0.8, 0.0, 1.0, visibility) * dagger(frame)
+        constructor = GraphStateConstructor(sim, net, graph, [1, 2], 1, 2;
+            pairstate=pair, success_prob=probability, attempt_time=2.5)
+        @process constructor()
+        run(sim)
+
+        # Fusion transfers the edge noise to storage, and retries cost whole attempts.
+        @test observable((net[1, 2], net[2, 2]), SProjector(graph_pair)) ≈ (1 + visibility^2)/2
+        @test isinteger(now(sim)/2.5)
+        @test probability == 1 ? now(sim) == 2.5 : now(sim) > 2.5
+        @test all(!isassigned(net[i, 1]) && !islocked(net[i, 2]) for i in 1:2)
+        @test all(!isnothing(query(net[i, 2], GraphStateStorage, ❓, i)) for i in 1:2)
     end
 end
 

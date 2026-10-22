@@ -39,6 +39,11 @@ field tables. Configuration fields are supported constructor inputs; runtime
 bookkeeping fields such as `_log` and `_backlog` are explicitly internal and their
 storage types may change.
 
+`GraphStateConstructor` accepts an edge state, heralding probability, and attempt
+duration while preserving its original positional constructor. Edge states must
+be normalized and use the two-qubit graph-state frame (`ZX`, `XZ`), as documented
+in the protocol API. Its defaults retain perfect, deterministic graph edges.
+
 ## Anchors
 
 - **Source:** [`src/ProtocolZoo/ProtocolZoo.jl`](../../../src/ProtocolZoo/ProtocolZoo.jl), [`src/ProtocolZoo/switches.jl`](../../../src/ProtocolZoo/switches.jl), [`src/ProtocolZoo/qtcp.jl`](../../../src/ProtocolZoo/qtcp.jl), and [`src/ProtocolZoo/mbqc.jl`](../../../src/ProtocolZoo/mbqc.jl) — core and specialist families.

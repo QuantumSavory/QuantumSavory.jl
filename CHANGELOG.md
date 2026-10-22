@@ -1,5 +1,10 @@
 # News
 
+## Unreleased
+
+- `GraphStateConstructor` accepts configurable edge states, heralding
+  probabilities, and attempt durations.
+
 ## v0.8.1 - 2026-09-25
 
 - **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 

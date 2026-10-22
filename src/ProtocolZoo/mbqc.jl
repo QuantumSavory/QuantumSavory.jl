@@ -129,6 +129,11 @@ followed by fusion.
 
 Currently the process is not dynamically adjusted (e.g. due to failure to establish a Bell pair)
 and each Bell pair generation is repeatedly attempted until it succeeds.
+The `pairstate`, `success_prob`, and `attempt_time` keywords configure each edge's
+entangler. The default state is the two-qubit graph state, with stabilizers `ZX`
+and `XZ`; noisy inputs must use this same local Clifford frame. A weighted state
+must be normalized before passing it as `pairstate`, with its heralding
+probability supplied separately as `success_prob`.
 
 For example, constructing this graph will require the following steps:
 
@@ -167,7 +172,16 @@ $TYPEDFIELDS
     communication_slot::Int
     """slot for storage (e.g. nuclear spin)"""
     storage_slot::Int
+    """normalized edge state in the `ZX`, `XZ` graph-state frame"""
+    pairstate::SymQObj = StabilizerState("ZX XZ")
+    """success probability of one edge-generation attempt, in `(0, 1]`"""
+    success_prob::Float64 = 1.0
+    """duration of one edge-generation attempt, in simulation time units"""
+    attempt_time::Float64 = 1.0
 end
+
+GraphStateConstructor(sim, net, graph, nodes, communication_slot, storage_slot; kwargs...) =
+    GraphStateConstructor(; sim, net, graph, nodes, communication_slot, storage_slot, kwargs...)
 
 """
 $TYPEDEF
@@ -184,7 +198,7 @@ end
 QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag.vertex) # TODO these should really be automated
 
 @resumable function (prot::GraphStateConstructor)()
-    (;sim, net, graph, nodes, communication_slot, storage_slot) = prot
+    (;sim, net, graph, nodes, communication_slot, storage_slot, pairstate, success_prob, attempt_time) = prot
 
     entangling_steps_generator = graph_builder(graph)
 
@@ -225,8 +239,8 @@ QuantumSavory.Tag(tag::GraphStateStorage) = Tag(GraphStateStorage, tag.uuid, tag
                 nodeA, nodeB,
                 chooseslotA=communication_slot, chooseslotB=communication_slot,
                 tag=nothing,
-                pairstate = StabilizerState("ZX XZ"),
-                uselock=false, rounds=1, attempts=-1, success_prob=1.0, attempt_time=1.0 # TODO parameterize the link time and quality
+                pairstate, success_prob, attempt_time,
+                uselock=false, rounds=1, attempts=-1
             )
             process = @process entangler()
             push!(processes, process)
