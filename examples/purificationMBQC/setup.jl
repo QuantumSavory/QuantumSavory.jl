@@ -124,4 +124,3 @@ communication_slot = 1
 storage_slot = 2
 alice_nodes = collect(1:n+k)
 bob_nodes = collect(n+k+1:2*(n+k))
-
