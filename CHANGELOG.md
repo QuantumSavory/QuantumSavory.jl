@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a local graph-edge Hadamard-placement toggle to both MBQC dashboards for
+  comparing how resource preparation routes Barrett–Kok noise.
+
 - Add a spin-capture noise slider to both MBQC dashboards, applying uniform
   Pauli noise after the Genqo source, with support for parameter sweeps.
 

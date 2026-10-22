@@ -40,6 +40,15 @@ function source_controls(controls; selected=nothing)
         (label="Dark-count probability", range=0:0.0001:0.01,
             startvalue=p.local_dark_counts, format="{:.4f}"),
         (label="Mode overlap |V| (real)", range=0:0.01:1, startvalue=p.local_visibility))
+    placement = local_grid.layout[6, 1:3] = GridLayout(tellwidth=false)
+    Label(placement[1, 1], "Graph-edge Hadamard:", fontsize=15)
+    Label(placement[1, 2], "Second", fontsize=15)
+    hadamard_toggle = Toggle(placement[1, 3], active=p.hadamard_first)
+    Label(placement[1, 4], "First", fontsize=15)
+    Label(local_grid.layout[7, 1:3], lift(hadamard_toggle.active) do first
+        first ? "First endpoint: overlap errors reach measured inputs." :
+            "Second endpoint: overlap errors can reach outputs."
+    end; fontsize=13)
     Label(controls[3, 1], "Long-range links · Genqo cascaded source", fontsize=19)
     long_grid = SliderGrid(controls[4, 1],
         (label="BSM transmission", range=0.1:0.01:1, startvalue=p.long_bsm),
@@ -50,7 +59,8 @@ function source_controls(controls; selected=nothing)
         (label="Spin-capture noise p", range=0:0.01:1, startvalue=p.spin_capture_noise))
     Label(long_grid.layout[6, 1:3], "After Genqo: ρ → (1 − p)ρ + p I₄/4", fontsize=13)
     sliders = vcat(local_grid.sliders, long_grid.sliders)
-    snapshot() = NamedTuple{keys(default_source_parameters)}(Tuple(s.value[] for s in sliders))
+    snapshot() = merge(NamedTuple{keys(default_slider_parameters)}(Tuple(s.value[] for s in sliders)),
+        (hadamard_first=hadamard_toggle.active[],))
     radios = Checkbox[]
     if !isnothing(selected)
         for (grid, offset) in ((local_grid, 0), (long_grid, length(local_grid.sliders)))
@@ -62,7 +72,7 @@ function source_controls(controls; selected=nothing)
             end
         end
     end
-    (; sliders, snapshot, radios)
+    (; sliders, snapshot, radios, hadamard_toggle)
 end
 
 function trial_description(result)

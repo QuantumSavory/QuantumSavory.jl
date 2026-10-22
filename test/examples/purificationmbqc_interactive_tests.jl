@@ -14,9 +14,18 @@ include("../../examples/purificationMBQC/interactive.jl")
     # including visibility-induced phase errors, under the local Clifford.
     raw_local = express(BarrettKokBellPairW(p.local_transmission_a,
         p.local_transmission_b, p.local_dark_counts, p.local_detection, p.local_visibility))
-    to_graph = express(I⊗(H*X))
-    @test express(sources.local_source.state).data ≈
-        (to_graph * raw_local * to_graph' / tr(raw_local)).data
+    for first in (false, true)
+        placed = purification_sources(merge(p, (hadamard_first=first,)))
+        to_graph = express(first ? H⊗X : I⊗(H*X))
+        @test express(placed.local_source.state).data ≈
+            (to_graph * raw_local * to_graph' / tr(raw_local)).data
+        @test placed.local_source.fidelity ≈ sources.local_source.fidelity
+        @test placed.local_source.probability == sources.local_source.probability
+        @test express(placed.long_source.state).data ≈ express(sources.long_source.state).data
+        @test placed.long_source.probability == sources.long_source.probability
+    end
+    alternate = purification_sources(merge(p, (hadamard_first=true,)))
+    @test !isapprox(express(alternate.local_source.state).data, express(sources.local_source.state).data)
 
     raw_long = express(GenqoMultiplexedCascadedBellPairW(p.long_bsm,
         p.long_detection, p.long_transmission, p.mean_photons))
@@ -40,12 +49,16 @@ include("../../examples/purificationMBQC/interactive.jl")
 
     ideal_parameters = merge(p, (local_dark_counts=0.0, local_visibility=1.0,
         long_bsm=1.0, long_detection=1.0, long_transmission=1.0))
-    ideal_sources = purification_sources(ideal_parameters)
-    for _ in 1:5
-        result = purification_trial(ideal_parameters, ideal_sources)
-        @test result.accepted
-        @test result.fidelity ≈ 1
-        @test isfinite(result.duration) && result.duration > 0
+    for first in (false, true)
+        placed_parameters = merge(ideal_parameters, (hadamard_first=first,))
+        ideal_sources = purification_sources(placed_parameters)
+        @test express(ideal_sources.local_source.state).data ≈ express(SProjector(graph_edge_states[1])).data
+        for _ in 1:5
+            result = purification_trial(placed_parameters, ideal_sources)
+            @test result.accepted
+            @test result.fidelity ≈ 1
+            @test isfinite(result.duration) && result.duration > 0
+        end
     end
 
     noisy_parameters = merge(p, (local_visibility=0.5, mean_photons=0.2, spin_capture_noise=0.35))
@@ -77,6 +90,7 @@ end
             if length(results) == 1
                 set_close_to!(dashboard.sliders[9], 0.08)
                 set_close_to!(dashboard.sliders[10], 0.25)
+                dashboard.hadamard_toggle.active[] = true
             elseif length(results) == 2
                 dashboard.running[] = false
             end
@@ -86,6 +100,8 @@ end
         @test length(dashboard.history[]) == 2
         sleep(0.1)
         @test length(dashboard.history[]) == 2 # paused, no second coordinator
+        @test dashboard.history[][2].parameters.hadamard_first
+        dashboard.hadamard_toggle.active[] = false
         dashboard.running[] = true
         @test timedwait(() -> istaskdone(dashboard.task), 180) == :ok
         wait(dashboard.task) # propagate any simulation or rendering failure
@@ -94,6 +110,7 @@ end
         @test all(r -> r.parameters.mean_photons ≈ 0.08, dashboard.history[][2:3])
         @test dashboard.history[][1].parameters.spin_capture_noise == 0
         @test all(r -> r.parameters.spin_capture_noise == 0.25, dashboard.history[][2:3])
+        @test [r.parameters.hadamard_first for r in dashboard.history[]] == [false, true, false]
         @test all(r -> r.input_fidelity ≈ purification_sources(r.parameters).long_source.fidelity,
             dashboard.history[])
         dashboard.clear.clicks[] += 1

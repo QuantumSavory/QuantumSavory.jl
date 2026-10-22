@@ -69,8 +69,8 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
     Label(left[3, 1], "One point = one complete protocol attempt.\nHover for the exact source settings.\nThe batch clears before each new setting.", fontsize=14, tellwidth=false)
 
     controls = figure[2, 2] = GridLayout(tellheight=false)
-    selected = Observable(findfirst(==(:mean_photons), keys(default_source_parameters)))
-    (; sliders, snapshot, radios) = source_controls(controls; selected)
+    selected = Observable(findfirst(==(:mean_photons), keys(default_slider_parameters)))
+    (; sliders, snapshot, radios, hadamard_toggle) = source_controls(controls; selected)
     Label(controls[5, 1], "Select a circle to sweep that parameter.\n$sweep_points values across its full slider range.\nOther settings stay fixed throughout the sweep.", fontsize=14)
     running = Observable(true)
     buttons = controls[6, 1] = GridLayout(tellwidth=false)
@@ -79,7 +79,7 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
     status = Observable("Preparing sources (the first run can take a minute)…")
     Label(figure[3, 1:3], status)
     Label(figure[4, 1:3],
-        "Each aggregate uses $samples_per_point trials at one setting. Changing a slider or selection restarts the sweep.\n" *
+        "Each aggregate uses $samples_per_point trials at one setting. Changing a slider, Hadamard, or selection restarts the sweep.\n" *
         "Fidelity averages accepted trials only; rates and times include rejections. No accepted trials → fidelity gap.\n" *
         "Ideal gates and memories; equal source attempt periods; single-mode Genqo heralding weight.", fontsize=14)
 
@@ -127,8 +127,8 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
         reset_sweep!()
         was_finished && (running[] = true)
     end
-    for slider in sliders
-        on(slider.value) do _
+    for value in (map(s -> s.value, sliders)..., hadamard_toggle.active)
+        on(value) do _
             moving_slider[] && return
             was_finished = finished[]
             reset_sweep!()
@@ -146,7 +146,7 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
         values = Float64[]
         fixed_parameters = snapshot()
         parameters = fixed_parameters
-        parameter = keys(fixed_parameters)[selected[]]
+        parameter = keys(default_slider_parameters)[selected[]]
         sources = nothing
         try
             while isopen(screen)
@@ -157,7 +157,7 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
                 if active_generation != generation[]
                     active_generation = generation[]
                     fixed_parameters = snapshot()
-                    parameter = keys(fixed_parameters)[selected[]]
+                    parameter = keys(default_slider_parameters)[selected[]]
                     slider_range = sliders[selected[]].range[]
                     indices = unique(round.(Int, range(1, length(slider_range); length=sweep_points)))
                     values = collect(slider_range[indices])
@@ -218,7 +218,7 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
         end
     end)
     (; figure, screen, task, history, aggregates, axes, sliders, radios, selected,
-        snapshot, running, finished, pause, restart, status)
+        snapshot, hadamard_toggle, running, finished, pause, restart, status)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

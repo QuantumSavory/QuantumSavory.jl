@@ -57,8 +57,9 @@ The window starts running immediately. Each run prepares fresh resource states
 with `BarrettKokBellPairW` local links and distributes four long-range pairs from
 `GenqoMultiplexedCascadedBellPairW`. It uses the same purification pipeline as the
 Werner-state example. Sliders control the five Barrett–Kok source parameters,
-the four Genqo parameters, and added spin-capture noise. One immutable snapshot
-is taken before each run, so a slider change affects the next run. Pause finishes
+the four Genqo parameters, and added spin-capture noise. A toggle selects the
+local graph-edge Hadamard endpoint. One immutable snapshot is taken before each
+run, so a control change affects the next run. Pause finishes
 the current run; closing the window stops further runs. Clear history also
 discards an in-flight result.
 
@@ -80,6 +81,17 @@ individual trajectory has output fidelity 0, ½, or 1, and averaging accepted
 trajectories estimates the conditional ensemble fidelity. This is not the
 mixed-state fidelity of a single experimental heralding record.
 
+The **Graph-edge Hadamard** toggle chooses which endpoint receives the Hadamard
+after correcting each local Barrett–Kok pair to Φ+. **Second** is the original
+default; **First** is the alternate preparation. First and second mean the
+lower- and higher-numbered vertices of each local edge, on both Alice's and Bob's
+sides. Both choices give the same ideal graph edge and preserve source fidelity
+and heralding probability, but place its errors differently. In this graph,
+First routes mode-overlap errors through fusion to measured inputs; Second can
+route them directly to retained outputs, where the syndrome cannot detect them.
+First can therefore improve accepted fidelity at the cost of acceptance. It does
+not remove all resource noise. Hovered trial settings record `hadamard_first`.
+
 The ad hoc **Spin-capture noise p** slider adds uniform Pauli noise to each
 long-range pair after Genqo heralding: `ρ → (1-p)ρ + p I₄/4`. With probability
 `p`, choose uniformly from all 16 two-qubit Pauli products (including identity);
@@ -93,6 +105,8 @@ Try these comparisons, allowing the window to collect many runs at each setting:
 
 - Reduce local mode overlap to see errors in resource preparation affect both
   acceptance and output fidelity.
+- Compare the two Hadamard endpoints at the same source settings. Clear history
+  between placements in the continuous dashboard.
 - With long-range losses present, increase mean photon number to study the
   generation-time versus fidelity tradeoff. The slider stays in `0.001 ≤ N ≤ 0.2`.
 - Reduce local transmission with zero dark counts. The heralding time changes,
@@ -120,7 +134,8 @@ julia --threads=2,1 --project=examples examples/purificationMBQC/sweep.jl
 ```
 
 The three columns show the current trials, source controls, and aggregate curves.
-Select the circle beside a slider to sweep that parameter. The default is mean
+Select the circle beside a slider to sweep that parameter. The Hadamard placement
+stays fixed throughout each sweep. The default swept parameter is mean
 photon number. The sweep visits 11 values across the slider's full range, including
 both endpoints, while all other parameters remain fixed. The selected slider
 moves automatically to show the value being simulated.
@@ -130,8 +145,9 @@ trial in that batch, then clears when the completed batch adds a point to the
 aggregate curves. Partial batches never enter those curves. The sweep stops after
 the final value and leaves the curves visible. Pause preserves progress; Resume
 continues it. Restart sweep clears both columns and begins again. Changing any
-slider or the selected parameter also clears and restarts the sweep, discarding
-any old trials still in flight. A paused sweep stays paused after such a change.
+slider, the Hadamard placement, or the selected parameter also clears and restarts
+the sweep, discarding any old trials still in flight. A paused sweep stays paused
+after such a change.
 
 The four aggregate plots show:
 
@@ -152,8 +168,8 @@ source and ideal-hardware assumptions of the first dashboard also apply here.
 
 For a short automated run, `QS_TESTRUN=true` uses two settings with five trials
 each and then closes the window. The wrapper additionally checks two full
-1,000-trial settings, aggregate statistics, clearing, radio selection,
-pause/resume, restarts, and logarithmic-to-linear axis changes.
+1,000-trial settings, aggregate statistics, clearing, radio selection, Hadamard
+placement, pause/resume, restarts, and logarithmic-to-linear axis changes.
 
 The order of resource-state preparation and long-range pair generation is a
 choice made by this example. Different hardware may use a different order. The

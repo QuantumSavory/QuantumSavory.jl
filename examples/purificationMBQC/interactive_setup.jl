@@ -5,12 +5,13 @@ using Statistics: mean
 using QuantumSavory.StatesZoo: BarrettKokBellPairW
 using QuantumSavory.StatesZoo.Genqo: GenqoMultiplexedCascadedBellPairW
 
-const default_source_parameters = (
+const default_slider_parameters = (
     local_transmission_a=0.9, local_transmission_b=0.9,
     local_detection=0.9, local_dark_counts=0.0001, local_visibility=0.98,
     long_bsm=0.9, long_detection=0.9, long_transmission=0.8, mean_photons=0.05,
     spin_capture_noise=0.0,
 )
+const default_source_parameters = (; default_slider_parameters..., hadamard_first=false)
 
 const bell_states = StabilizerState.(["ZZ XX", "ZZ -XX", "-ZZ XX", "-ZZ -XX"])
 const graph_edge_states = StabilizerState.(["XZ ZX", "-XZ ZX", "XZ -ZX", "-XZ -ZX"])
@@ -19,7 +20,8 @@ const graph_edge_states = StabilizerState.(["XZ ZX", "-XZ ZX", "XZ -ZX", "-XZ -Z
 # local Pauli corrections. Reconstruct the density matrix to check this instead
 # of silently twirling away coherences. CliffordRepr samples a fresh component
 # of the symbolic mixture at EVERY initialize!, including every local graph edge.
-function source_mixture(weighted_state, correction; graph_edge=false, depolarization=0.0)
+function source_mixture(weighted_state, correction;
+        graph_edge=false, hadamard_first=false, depolarization=0.0)
     0 <= depolarization <= 1 || throw(ArgumentError("depolarization must be between zero and one"))
     weighted = express(weighted_state, QuantumOpticsRepr())
     probability = real(tr(weighted))
@@ -36,6 +38,11 @@ function source_mixture(weighted_state, correction; graph_edge=false, depolariza
     # probability p: ρ → (1-p)ρ + p I₄/4. This preserves the heralding probability.
     weights = (1 - depolarization) .* weights .+ depolarization / 4
     states = graph_edge ? graph_edge_states : bell_states
+    # H on either endpoint gives the same ideal graph edge. H on the first
+    # endpoint exchanges where the phase and bit errors enter the graph.
+    if graph_edge && hadamard_first
+        states = states[[1, 3, 2, 4]]
+    end
     mixture = sum(w * SProjector(s) for (w, s) in zip(weights, states) if w > 0)
     (; state=mixture, probability, fidelity=weights[1])
 end
@@ -47,8 +54,9 @@ function purification_sources(parameters)
     long_model = GenqoMultiplexedCascadedBellPairW(p.long_bsm, p.long_detection,
         p.long_transmission, p.mean_photons)
     # BK's m=0 convention is Ψ+; Genqo's fixed click pattern gives Φ−.
-    # After conversion to Φ+, H on the second local qubit makes a graph edge.
-    local_source = source_mixture(local_model, I⊗X; graph_edge=true)
+    # After conversion to Φ+, H on the selected local qubit makes a graph edge.
+    local_source = source_mixture(local_model, I⊗X;
+        graph_edge=true, hadamard_first=p.hadamard_first)
     long_source = source_mixture(long_model, I⊗Z; depolarization=p.spin_capture_noise)
     (; local_source, long_source)
 end

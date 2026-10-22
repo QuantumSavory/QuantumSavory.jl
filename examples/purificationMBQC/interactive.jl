@@ -9,7 +9,7 @@ function purification_dashboard(; max_runs=typemax(Int))
     DataInspector(figure)
 
     controls = figure[2, 2] = GridLayout()
-    (; sliders, snapshot) = source_controls(controls)
+    (; sliders, snapshot, hadamard_toggle) = source_controls(controls)
 
     running = Observable(true)
     buttons = figure[3, 1:2] = GridLayout(tellwidth=false)
@@ -36,7 +36,7 @@ function purification_dashboard(; max_runs=typemax(Int))
     Label(figure[5, 1:2], status)
     Label(figure[6, 1:2],
         "One point = one complete stochastic protocol attempt. Hover for its source settings.\n" *
-        "Sliders take effect on the next run. Statistics mix settings until you clear history.\n" *
+        "Controls take effect on the next run. Statistics mix settings until you clear history.\n" *
         "Ideal gates and memories; equal source attempt periods; single-mode Genqo heralding weight.\n" *
         "Fidelity is sampled (0, ½ or 1): its accepted mean estimates the conditional output fidelity.",
         fontsize=14)
@@ -82,7 +82,7 @@ function purification_dashboard(; max_runs=typemax(Int))
             running[] = false
         end
     end)
-    (; figure, screen, task, history, running, sliders, snapshot, clear, status)
+    (; figure, screen, task, history, running, sliders, snapshot, hadamard_toggle, clear, status)
 end
 
 

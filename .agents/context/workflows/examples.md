@@ -55,6 +55,13 @@ sweeps. It mixes the heralded Genqo pair with the maximally mixed state before
 Clifford sampling, preserving the heralding probability and local source.
 Tests compare this channel with the full two-qubit Pauli average and exercise
 live slider snapshots and capture-noise sweeps. See the how-to for its convention.
+The shared Hadamard toggle selects the first or second endpoint of each local
+graph edge; the second endpoint preserves the original default. Numeric sliders
+remain the only sweep candidates. Snapshots include the placement, and changing
+it restarts a sweep with the same pause/in-flight-result rules as slider edits.
+Tests compare both Clifford frames with the raw source density matrix and check
+ideal trajectories, live placement changes, and sweep invalidation. The how-to
+explains why the two placements route resource noise differently.
 
 Tutorial-local setup and helper functions are not a supported library API. Public
 QuantumSavory APIs demonstrated by examples remain governed by the package contract,

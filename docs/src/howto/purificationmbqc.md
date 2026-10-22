@@ -21,8 +21,8 @@ julia --threads=2,1 --project=examples examples/purificationMBQC/interactive.jl
 This example reuses the purification pipeline below. Local graph edges come from
 `BarrettKokBellPairW`; long-range inputs come from
 `StatesZoo.Genqo.GenqoMultiplexedCascadedBellPairW`. Each run uses a fresh snapshot
-of the source sliders. The window starts automatically and keeps the latest 100
-completed runs. Pause takes effect after the current run. Clear history also
+of the source sliders and Hadamard-placement toggle. The window starts automatically
+and keeps the latest 100 completed runs. Pause takes effect after the current run. Clear history also
 discards any result that was in flight when it was clicked.
 
 The horizontal axis shows simulated completion time in source attempt periods
@@ -30,7 +30,7 @@ The horizontal axis shows simulated completion time in source attempt periods
 pairs; rejected runs appear on a separate labeled band, since they have no output
 fidelity. Hover over a point for its source parameters. The visible-window summary
 reports acceptance, mean accepted fidelity, and retained pairs per attempt period.
-Clear history after adjusting sliders to study one configuration at a time.
+Clear history after adjusting controls to study one configuration at a time.
 
 The weighted state traces determine heralding probabilities. The simulation uses
 normalized source states, corrects their Bell frames, and converts local Bell
@@ -39,6 +39,18 @@ are Bell diagonal. The example checks that their symbolic mixtures reproduce the
 source density matrices, then uses exact Clifford Monte Carlo sampling. Each
 generated pair is sampled independently. A trajectory's fidelity is 0, ½, or 1;
 the mean over accepted trajectories estimates the conditional output fidelity.
+
+Both dashboards provide a **Graph-edge Hadamard** toggle for local resource
+preparation. **Second** keeps the original placement; **First** applies the
+Hadamard to the other endpoint after correcting the local Bell pair to Φ+.
+The endpoints are the lower- and higher-numbered vertices of each local edge,
+on both Alice's and Bob's sides. Both placements yield the same ideal graph edge
+and preserve the source fidelity and heralding probability. Their noise differs:
+with this graph and fusion circuit, First routes mode-overlap errors to measured
+inputs, while Second can route them to retained outputs outside the syndrome
+checks. Compare accepted fidelity and acceptance together; changing placement
+does not eliminate all local noise. The selected placement is recorded as
+`hadamard_first` in each trial's settings and takes effect on the next run.
 
 Both dashboards also provide an ad hoc **Spin-capture noise p** slider. After
 Genqo heralding, the long-range pair undergoes `ρ → (1-p)ρ + p I₄/4`: with
@@ -72,7 +84,8 @@ julia --threads=2,1 --project=examples examples/purificationMBQC/sweep.jl
 
 The left column shows the current setting's trials. The middle column has the
 same ten sliders, plus a radio button beside each one, including spin-capture
-noise. Select one parameter to sweep; the other nine stay fixed. The sweep starts
+noise, and the Hadamard-placement toggle. Select one slider to sweep; the other
+nine sliders and the Hadamard placement stay fixed. The sweep starts
 automatically with mean photon number and visits 11 values over the selected
 slider's full range, including its endpoints. The slider moves to each value as
 the simulation advances.
@@ -91,8 +104,8 @@ a rate is zero. All four plots share an x-axis, labeled below the last plot.
 The curves are Monte Carlo estimates; repeating the sweep can change them.
 
 Pause preserves the current batch. Restart sweep clears all results and begins
-again. Editing any slider or choosing a different sweep parameter also clears
-the results and starts a sweep with the new fixed settings; an already paused
+again. Editing any slider, changing Hadamard placement, or choosing a different
+sweep parameter also clears the results and starts a sweep with the new fixed settings; an already paused
 sweep remains paused. Results in flight from the old settings are discarded.
 At the final value, the sweep stops and keeps the aggregate curves visible.
 The same source and hardware assumptions as the continuous dashboard apply.

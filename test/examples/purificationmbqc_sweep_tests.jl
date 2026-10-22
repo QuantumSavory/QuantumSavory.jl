@@ -35,6 +35,7 @@ end
         for (index, value) in ((4, 0.0), (5, 1.0), (6, 1.0), (7, 1.0), (8, 1.0))
             set_close_to!(dashboard.sliders[index], value)
         end
+        dashboard.hadamard_toggle.active[] = true
         fixed = dashboard.snapshot()
         on(dashboard.history) do results
             length(results) == 1000 && push!(batches, copy(results))
@@ -63,14 +64,16 @@ end
             @test summary.parameters == merge(fixed, (mean_photons=summary.value,))
         end
         @test count(r -> r.checked[], dashboard.radios) == 1
+        @test length(dashboard.radios) == length(dashboard.sliders) == 10
         @test dashboard.radios[9].checked[] # mean photons remains the default
         # The real source's generation rate spans orders of magnitude. Exercise
-        # the actual axes, then restart to clear them safely back to linear.
+        # the actual axes, then change placement to clear them back to linear.
         @test dashboard.axes[3].yscale[] === log10
         @test dashboard.axes[4].yscale[] === log10
-        dashboard.restart.clicks[] += 1
+        dashboard.hadamard_toggle.active[] = false
         @test isempty(dashboard.aggregates[])
         @test all(a -> a.yscale[] === identity, dashboard.axes)
+        @test dashboard.running[] && !dashboard.finished[]
     finally
         close(dashboard.screen)
         wait(dashboard.task)
@@ -93,14 +96,13 @@ end
                 # UI task then changes settings while that worker is in flight.
                 @async begin
                     @test length(dashboard.history[]) == 10 # pending results are not published
-                    set_close_to!(dashboard.sliders[8], 0.7)
-                    dashboard.radios[10].onchange[](dashboard.radios[10].checked[])
+                    dashboard.hadamard_toggle.active[] = true
                 end
             end
         end
         on(dashboard.history) do results
             isempty(results) && return
-            if changed[] && dashboard.selected[] == 10 && !paused[]
+            if changed[] && dashboard.hadamard_toggle.active[] && !paused[]
                 paused[] = true
                 dashboard.running[] = false
             end
@@ -112,6 +114,12 @@ end
         sleep(0.1)
         @test length(dashboard.history[]) == 10
         @test isempty(dashboard.aggregates[])
+        @test all(r -> r.parameters.hadamard_first, dashboard.history[])
+        dashboard.hadamard_toggle.active[] = false
+        @test isempty(dashboard.history[])
+        @test !dashboard.running[] # editing while paused must preserve the pause
+        set_close_to!(dashboard.sliders[8], 0.7)
+        dashboard.radios[10].onchange[](dashboard.radios[10].checked[])
         @test dashboard.selected[] == 10
         @test count(r -> r.checked[], dashboard.radios) == 1
         @test dashboard.radios[10].checked[]
@@ -121,6 +129,7 @@ end
         @test [r.value for r in dashboard.aggregates[]] == [0.0, 1.0]
         @test all(r -> r.samples == 30 && r.parameters.long_transmission ≈ 0.7, dashboard.aggregates[])
         @test [r.parameters.spin_capture_noise for r in dashboard.aggregates[]] == [0.0, 1.0]
+        @test all(r -> !r.parameters.hadamard_first, dashboard.aggregates[])
         @test last(dashboard.aggregates[]).input_fidelity ≈ 0.25
         @test isempty(dashboard.history[])
     finally
