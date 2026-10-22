@@ -26,7 +26,7 @@ function trajectory_axis(position, history)
         color=(:firebrick, 0.65), marker=:xcross, markersize=12, label="Rejected",
         inspector_label=(plot, i, position) -> trial_description(rejected[][i]))
     hlines!(axis, [0.5], color=(:gray, 0.5), linestyle=:dash, inspectable=false)
-    axislegend(axis, position=:lb)
+    axislegend(axis, position=:lb, backgroundcolor=:transparent)
     axis
 end
 

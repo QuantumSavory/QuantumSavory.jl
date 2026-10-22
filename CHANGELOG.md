@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make legend backgrounds transparent in both MBQC dashboards.
+
 - Add a local graph-edge Hadamard-placement toggle to both MBQC dashboards for
   comparing how resource preparation routes Barrett–Kok noise.
 

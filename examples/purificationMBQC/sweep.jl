@@ -100,7 +100,8 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
         end
     end
     update_aggregates!(aggregates, axes, NamedTuple[])
-    axislegend(axes[1], position=:lb, labelsize=11, orientation=:horizontal, nbanks=3)
+    axislegend(axes[1], position=:lb, labelsize=11, orientation=:horizontal, nbanks=3,
+        backgroundcolor=:transparent)
     DataInspector(figure)
     colsize!(figure.layout, 1, Relative(0.32))
     colsize!(figure.layout, 2, Relative(0.34))
