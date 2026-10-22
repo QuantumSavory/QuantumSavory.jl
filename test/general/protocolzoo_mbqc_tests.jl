@@ -49,8 +49,8 @@ end
         pair = fidelity*SProjector(graph_pair) + (1-fidelity)*SProjector(flipped_pair)
         constructor = GraphStateConstructor(sim, net, graph, [1, 2], 1, 2;
             pairstate=pair, success_prob=probability, attempt_time=2.5)
-        @process constructor()
-        run(sim)
+        construction = @process constructor()
+        run(sim, construction)
 
         # Fusion transfers the edge noise to storage, and retries cost whole attempts.
         @test observable((net[1, 2], net[2, 2]), SProjector(graph_pair)) ≈ fidelity
