@@ -36,6 +36,33 @@
 Do not report “example behavior verified” from inclusion-only wrappers; report the
 actual asserted properties or label the result a smoke test.
 
+The MBQC family shares `examples/purificationMBQC/setup.jl` between its Werner
+sweep and GLMakie hardware-source dashboard. Its `interactive_setup.jl` verifies
+Bell-diagonal source mixtures before Clifford sampling. The interactive wrapper
+checks source frames, ideal outputs, noisy trajectories, the 100-result window,
+and slider snapshots/pause behavior; it requires a display or Xvfb. See the
+[MBQC how-to](../../../docs/src/howto/purificationmbqc.md) for trajectory statistics
+and model assumptions. `QS_TESTRUN=true` gives the interactive script a bounded run.
+The second dashboard, `sweep.jl`, shares controls and trajectory plots through
+`interactive_controls.jl`. It runs 1,000 trials at each of 11 slider values,
+publishes only complete batches, and restarts on slider/radio changes to avoid
+mixing configurations. Its wrapper checks full batches, rates, missing fidelity,
+automatic scales, clearing, pause/resume, and selection changes. The bounded
+script path uses two settings with five trials each. Reuse the existing worktree's
+`examples/` environment when checking either dashboard; no separate project is needed.
+Both dashboards include a spin-capture depolarization slider, also available for
+sweeps. It mixes the heralded Genqo pair with the maximally mixed state before
+Clifford sampling, preserving the heralding probability and local source.
+Tests compare this channel with the full two-qubit Pauli average and exercise
+live slider snapshots and capture-noise sweeps. See the how-to for its convention.
+The shared Hadamard toggle selects the first or second endpoint of each local
+graph edge; the second endpoint preserves the original default. Numeric sliders
+remain the only sweep candidates. Snapshots include the placement, and changing
+it restarts a sweep with the same pause/in-flight-result rules as slider edits.
+Tests compare both Clifford frames with the raw source density matrix and check
+ideal trajectories, live placement changes, and sweep invalidation. The how-to
+explains why the two placements route resource noise differently.
+
 Tutorial-local setup and helper functions are not a supported library API. Public
 QuantumSavory APIs demonstrated by examples remain governed by the package contract,
 and every checked-in example must remain executable across compatible versions.

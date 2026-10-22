@@ -98,6 +98,19 @@ Those displays are not part of the protocol logic itself, but they are useful
 for debugging configuration and inspecting the expected behavior of a protocol
 before embedding it into a larger simulation.
 
+## Graph-State Edge Sources
+
+`GraphStateConstructor(sim, net, graph, nodes, communication_slot, storage_slot;
+pairstate, success_prob, attempt_time)` configures the state, heralding
+probability, and duration of each edge-generation attempt. The keyword defaults
+create perfect edges in one simulation time unit. Failed attempts are retried;
+each matching round waits for all of its edges before fusion.
+
+Supply a normalized `pairstate` in the two-qubit graph-state frame, whose ideal
+stabilizers are `ZX` and `XZ`. A source that produces the Bell state
+`(|00⟩ + |11⟩)/√2` needs a Hadamard on one half before fusion. For a weighted
+source model, use its trace as `success_prob` and normalize the state separately.
+
 ## Typical Contents
 
 The current `ProtocolZoo` includes:

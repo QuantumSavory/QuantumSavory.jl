@@ -38,6 +38,29 @@ using QuantumClifford.ECC: CSS, parity_checks
     end
 end
 
+@testset "GraphStateConstructor edge source" begin
+    Random.seed!(20261021)
+    graph = path_graph(2)
+    graph_pair = StabilizerState("ZX XZ")
+    flipped_pair = StabilizerState("-ZX XZ")
+    for (fidelity, probability) in ((1.0, 1.0), (0.7, 0.01))
+        net = RegisterNet([Register(2), Register(2)])
+        sim = get_time_tracker(net)
+        pair = fidelity*SProjector(graph_pair) + (1-fidelity)*SProjector(flipped_pair)
+        constructor = GraphStateConstructor(sim, net, graph, [1, 2], 1, 2;
+            pairstate=pair, success_prob=probability, attempt_time=2.5)
+        construction = @process constructor()
+        run(sim, construction)
+
+        # Fusion transfers the edge noise to storage, and retries cost whole attempts.
+        @test observable((net[1, 2], net[2, 2]), SProjector(graph_pair)) ≈ fidelity
+        @test isinteger(now(sim)/2.5)
+        @test probability == 1 ? now(sim) == 2.5 : now(sim) > 2.5
+        @test all(!isassigned(net[i, 1]) && !islocked(net[i, 2]) for i in 1:2)
+        @test all(!isnothing(query(net[i, 2], GraphStateStorage, ❓, i)) for i in 1:2)
+    end
+end
+
 @testset "Full Purification Pipeline" begin
     # Set up [4,2] CSS code (same as paper_implementation.jl)
     h1 = [1 1 1 1]

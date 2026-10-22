@@ -1,5 +1,24 @@
 # News
 
+## Unreleased
+
+- Make legend backgrounds transparent in both MBQC dashboards.
+
+- Add a local graph-edge Hadamard-placement toggle to both MBQC dashboards for
+  comparing how resource preparation routes Barrett–Kok noise.
+
+- Add a spin-capture noise slider to both MBQC dashboards, applying uniform
+  Pauli noise after the Genqo source, with support for parameter sweeps.
+
+- Add a second MBQC dashboard that sweeps a selected source slider, runs 1,000
+  trials per setting, and plots aggregate fidelity, acceptance, time, and pair rate.
+
+- Add a GLMakie MBQC purification example with live Barrett–Kok and Genqo source
+  parameters, completion-time and fidelity trajectories, and a 100-run history.
+
+- `GraphStateConstructor` accepts configurable edge states, heralding
+  probabilities, and attempt durations.
+
 ## v0.8.1 - 2026-09-25
 
 - **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 
