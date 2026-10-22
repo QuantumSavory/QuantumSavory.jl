@@ -53,6 +53,41 @@ or click-pattern factor is assumed. The photon-number slider is restricted to
 `0.001 ≤ N ≤ 0.2`, within the documented useful range of the source model.
 `QS_TESTRUN=true` bounds the interactive script to three runs.
 
+### Sweep One Source Parameter
+
+For aggregate figures of merit versus a source parameter, run the second dashboard:
+
+```sh
+julia --threads=2,1 --project=examples examples/purificationMBQC/sweep.jl
+```
+
+The left column shows the current setting's trials. The middle column has the
+same nine sliders, plus a radio button beside each one. Select one parameter to
+sweep; the other eight stay fixed. The sweep starts automatically with mean photon
+number and visits 11 values over the selected slider's full range, including its
+endpoints. The slider moves to each value as the simulation advances.
+
+After 1,000 trials at a setting, the right column gains one point per aggregate
+curve and the left column clears before the next setting. The plots show mean
+accepted output fidelity (with input and local-pair reference fidelities),
+acceptance probability, mean completion time, and retained pairs per attempt
+period. The last two include the time spent in rejected trials. In particular,
+the rate is two times the total accepted count divided by the total simulated
+time. Output fidelity is missing when a batch accepts no trials; it is not zero.
+
+The y-axes select log scales independently when all finite values on that axis
+are positive and span at least 100×. Otherwise they stay linear, including when
+a rate is zero. All four plots share an x-axis, labeled below the last plot.
+The curves are Monte Carlo estimates; repeating the sweep can change them.
+
+Pause preserves the current batch. Restart sweep clears all results and begins
+again. Editing any slider or choosing a different sweep parameter also clears
+the results and starts a sweep with the new fixed settings; an already paused
+sweep remains paused. Results in flight from the old settings are discarded.
+At the final value, the sweep stops and keeps the aggregate curves visible.
+The same source and hardware assumptions as the continuous dashboard apply.
+`QS_TESTRUN=true` runs two settings with five trials each and closes the window.
+
 ## Model
 
 The protocol uses a `[[n,k,d]]` CSS code. Alice and Bob each prepare the local

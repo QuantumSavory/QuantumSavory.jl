@@ -98,6 +98,51 @@ automated wrapper also checks source normalization and frame conversion, ideal
 outputs, noisy acceptance/rejection, history retention, pause/resume, and live
 slider snapshots. It needs a display (or Xvfb on Linux).
 
+## Automatic parameter sweep
+
+The second dashboard collects comparable averages while varying one source
+parameter. Run it in the same examples environment:
+
+```sh
+julia --threads=2,1 --project=examples examples/purificationMBQC/sweep.jl
+```
+
+The three columns show the current trials, source controls, and aggregate curves.
+Select the circle beside a slider to sweep that parameter. The default is mean
+photon number. The sweep visits 11 values across the slider's full range, including
+both endpoints, while all other parameters remain fixed. The selected slider
+moves automatically to show the value being simulated.
+
+Each setting runs 1,000 independent protocol trials. The first column keeps every
+trial in that batch, then clears when the completed batch adds a point to the
+aggregate curves. Partial batches never enter those curves. The sweep stops after
+the final value and leaves the curves visible. Pause preserves progress; Resume
+continues it. Restart sweep clears both columns and begins again. Changing any
+slider or the selected parameter also clears and restarts the sweep, discarding
+any old trials still in flight. A paused sweep stays paused after such a change.
+
+The four aggregate plots show:
+
+- Mean output fidelity over accepted trials, with exact long-range input and
+  local-pair fidelity references. A batch with no acceptances leaves an output
+  fidelity gap.
+- Acceptance probability: accepted trials divided by 1,000.
+- Mean completion time over all 1,000 trials, including rejections.
+- Retained pairs per attempt period: twice the accepted count divided by the
+  total simulated time of all trials. This is a rate over repeated attempts,
+  rather than a mean of individual inverse completion times.
+
+Each y-axis selects a log scale when all its finite plotted values are positive
+and span at least a factor of 100; otherwise it uses a linear scale. Zero rates
+remain visible. The four plots share an x-axis, labeled only below the last plot.
+These are finite Monte Carlo estimates, so restarting a sweep can give different averages. The
+source and ideal-hardware assumptions of the first dashboard also apply here.
+
+For a short automated run, `QS_TESTRUN=true` uses two settings with five trials
+each and then closes the window. The wrapper additionally checks two full
+1,000-trial settings, aggregate statistics, clearing, radio selection,
+pause/resume, restarts, and logarithmic-to-linear axis changes.
+
 The order of resource-state preparation and long-range pair generation is a
 choice made by this example. Different hardware may use a different order. The
 current tracker expects consecutive node numbers on each side, with the chief

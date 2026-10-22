@@ -2,6 +2,13 @@ using GLMakie
 
 include("interactive_setup.jl")
 
+const source_parameter_labels = (
+    "Local transmission A", "Local transmission B", "Local detection efficiency",
+    "Local dark-count probability", "Local mode overlap |V|",
+    "Long-range BSM transmission", "Long-range detection efficiency",
+    "Long-range outcoupling", "Mean photons per mode N",
+)
+
 function trajectory_axis(position, history)
     axis = Axis(position, xlabel="Completion time (source attempt periods; log scale)",
         ylabel="Mean output Bell fidelity in one trajectory", xscale=log10,
@@ -22,7 +29,7 @@ function trajectory_axis(position, history)
     axis
 end
 
-function source_controls(controls)
+function source_controls(controls; selected=nothing)
     Label(controls[1, 1], "Local links · Barrett–Kok", fontsize=19)
     p = default_source_parameters
     local_grid = SliderGrid(controls[2, 1],
@@ -41,8 +48,18 @@ function source_controls(controls)
             startvalue=p.mean_photons, format="{:.3f}"))
     sliders = vcat(local_grid.sliders, long_grid.sliders)
     snapshot() = NamedTuple{keys(default_source_parameters)}(Tuple(s.value[] for s in sliders))
-
-    (; sliders, snapshot)
+    radios = Checkbox[]
+    if !isnothing(selected)
+        for (grid, offset) in ((local_grid, 0), (long_grid, length(local_grid.sliders)))
+            for row in eachindex(grid.sliders)
+                index = offset + row
+                push!(radios, Checkbox(grid.layout[row, 4], roundness=1, checkmark=:circle,
+                    checked=lift(i -> i == index, selected),
+                    onchange=_ -> (selected[] = index; true)))
+            end
+        end
+    end
+    (; sliders, snapshot, radios)
 end
 
 function trial_description(result)

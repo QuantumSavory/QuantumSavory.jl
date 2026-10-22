@@ -43,6 +43,13 @@ checks source frames, ideal outputs, noisy trajectories, the 100-result window,
 and slider snapshots/pause behavior; it requires a display or Xvfb. See the
 [MBQC how-to](../../../docs/src/howto/purificationmbqc.md) for trajectory statistics
 and model assumptions. `QS_TESTRUN=true` gives the interactive script a bounded run.
+The second dashboard, `sweep.jl`, shares controls and trajectory plots through
+`interactive_controls.jl`. It runs 1,000 trials at each of 11 slider values,
+publishes only complete batches, and restarts on slider/radio changes to avoid
+mixing configurations. Its wrapper checks full batches, rates, missing fidelity,
+automatic scales, clearing, pause/resume, and selection changes. The bounded
+script path uses two settings with five trials each. Reuse the existing worktree's
+`examples/` environment when checking either dashboard; no separate project is needed.
 
 Tutorial-local setup and helper functions are not a supported library API. Public
 QuantumSavory APIs demonstrated by examples remain governed by the package contract,

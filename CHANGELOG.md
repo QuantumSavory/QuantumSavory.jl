@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a second MBQC dashboard that sweeps a selected source slider, runs 1,000
+  trials per setting, and plots aggregate fidelity, acceptance, time, and pair rate.
+
 - Add a GLMakie MBQC purification example with live Barrett–Kok and Genqo source
   parameters, completion-time and fidelity trajectories, and a 100-run history.
 
