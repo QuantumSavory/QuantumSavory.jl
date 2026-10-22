@@ -17,15 +17,20 @@ import QuantumOpticsBase
 """
 @resumable function run_purification(sim, net, n, resource_state, alice_nodes, bob_nodes,
                                      communication_slot, storage_slot, pairstate,
-                                     H1, H2, logxs, logzs; rounds=1)
+                                     H1, H2, logxs, logzs; rounds=1,
+                                     local_pairstate=StabilizerState("ZX XZ"),
+                                     local_success_prob=1.0, local_attempt_time=1.0,
+                                     success_prob=1.0, attempt_time=0.001)
     @assert n <= 63 "n=$n exceeds maximum of 63 bits for Int64 encoding"
     alice_chief_idx = alice_nodes[1]
     bob_chief_idx = bob_nodes[1]
 
     g, hadamard_idx, iphase_idx, flips_idx = graphstate(resource_state)
 
-    graphA = GraphStateConstructor(sim, net, g, alice_nodes, communication_slot, storage_slot)
-    graphB = GraphStateConstructor(sim, net, g, bob_nodes, communication_slot, storage_slot)
+    graphA = GraphStateConstructor(sim, net, g, alice_nodes, communication_slot, storage_slot;
+        pairstate=local_pairstate, success_prob=local_success_prob, attempt_time=local_attempt_time)
+    graphB = GraphStateConstructor(sim, net, g, bob_nodes, communication_slot, storage_slot;
+        pairstate=local_pairstate, success_prob=local_success_prob, attempt_time=local_attempt_time)
     resourceA = GraphToResource(sim, net, alice_nodes, storage_slot, hadamard_idx, iphase_idx, flips_idx)
     resourceB = GraphToResource(sim, net, bob_nodes, storage_slot, hadamard_idx, iphase_idx, flips_idx)
     alice_bell_meas = PurifierBellMeasurements(sim, net, collect(alice_nodes[1:n]),
@@ -58,7 +63,7 @@ import QuantumOpticsBase
             entangler = EntanglerProt(sim, net, alice_nodes[i], bob_nodes[i];
                 pairstate=pairstate,
                 chooseslotA=communication_slot, chooseslotB=communication_slot,
-                success_prob=1.0, attempts=-1, rounds=1)
+                success_prob=success_prob, attempt_time=attempt_time, attempts=-1, rounds=1)
             e = @process entangler()
             push!(entanglers, e)
         end

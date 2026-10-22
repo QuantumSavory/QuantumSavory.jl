@@ -36,6 +36,14 @@
 Do not report “example behavior verified” from inclusion-only wrappers; report the
 actual asserted properties or label the result a smoke test.
 
+The MBQC family shares `examples/purificationMBQC/setup.jl` between its Werner
+sweep and GLMakie hardware-source dashboard. Its `interactive_setup.jl` verifies
+Bell-diagonal source mixtures before Clifford sampling. The interactive wrapper
+checks source frames, ideal outputs, noisy trajectories, the 100-result window,
+and slider snapshots/pause behavior; it requires a display or Xvfb. See the
+[MBQC how-to](../../../docs/src/howto/purificationmbqc.md) for trajectory statistics
+and model assumptions. `QS_TESTRUN=true` gives the interactive script a bounded run.
+
 Tutorial-local setup and helper functions are not a supported library API. Public
 QuantumSavory APIs demonstrated by examples remain governed by the package contract,
 and every checked-in example must remain executable across compatible versions.

@@ -9,6 +9,50 @@ Distances"](https://journals.aps.org/prl/abstract/10.1103/2bp8-cdxc).
 The full source is in
 [`examples/purificationMBQC`](https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/purificationMBQC).
 
+## Interactive Hardware Sources
+
+To study hardware parameters with a live GLMakie plot, run from the repository root:
+
+```sh
+julia --project=examples -e 'using Pkg; Pkg.instantiate()'
+julia --threads=2,1 --project=examples examples/purificationMBQC/interactive.jl
+```
+
+This example reuses the purification pipeline below. Local graph edges come from
+`BarrettKokBellPairW`; long-range inputs come from
+`StatesZoo.Genqo.GenqoMultiplexedCascadedBellPairW`. Each run uses a fresh snapshot
+of the source sliders. The window starts automatically and keeps the latest 100
+completed runs. Pause takes effect after the current run. Clear history also
+discards any result that was in flight when it was clicked.
+
+The horizontal axis shows simulated completion time in source attempt periods
+(logarithmic scale). Accepted runs show the mean output Bell fidelity of their two
+pairs; rejected runs appear on a separate labeled band, since they have no output
+fidelity. Hover over a point for its source parameters. The visible-window summary
+reports acceptance, mean accepted fidelity, and retained pairs per attempt period.
+Clear history after adjusting sliders to study one configuration at a time.
+
+The weighted state traces determine heralding probabilities. The simulation uses
+normalized source states, corrects their Bell frames, and converts local Bell
+pairs to graph edges before fusion. For real Barrett–Kok visibility, both models
+are Bell diagonal. The example checks that their symbolic mixtures reproduce the
+source density matrices, then uses exact Clifford Monte Carlo sampling. Each
+generated pair is sampled independently. A trajectory's fidelity is 0, ½, or 1;
+the mean over accepted trajectories estimates the conditional output fidelity.
+
+Lower local mode overlap to investigate faulty resource preparation. Increase
+Genqo mean photon number with losses present to compare faster generation with
+lower input fidelity. Reduce local transmission at zero dark counts to change
+waiting time without changing conditional local fidelity. Collect many runs at
+each setting before comparing averages.
+
+This experiment assumes ideal gates, measurements, and memories, with one common
+source attempt period and no propagation delay. The Genqo weight is its
+single-mode, fixed-click-pattern heralding probability; no additional multiplexing
+or click-pattern factor is assumed. The photon-number slider is restricted to
+`0.001 ≤ N ≤ 0.2`, within the documented useful range of the source model.
+`QS_TESTRUN=true` bounds the interactive script to three runs.
+
 ## Model
 
 The protocol uses a `[[n,k,d]]` CSS code. Alice and Bob each prepare the local

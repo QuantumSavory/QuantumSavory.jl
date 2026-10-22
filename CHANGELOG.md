@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a GLMakie MBQC purification example with live Barrett–Kok and Genqo source
+  parameters, completion-time and fidelity trajectories, and a 100-run history.
+
 - `GraphStateConstructor` accepts configurable edge states, heralding
   probabilities, and attempt durations.
 
