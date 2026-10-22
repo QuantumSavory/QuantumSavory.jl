@@ -69,7 +69,7 @@ function purification_sweep_dashboard(; samples_per_point=1000, sweep_points=11,
     Label(left[3, 1], "One point = one complete protocol attempt.\nHover for the exact source settings.\nThe batch clears before each new setting.", fontsize=14, tellwidth=false)
 
     controls = figure[2, 2] = GridLayout(tellheight=false)
-    selected = Observable(length(default_source_parameters))
+    selected = Observable(findfirst(==(:mean_photons), keys(default_source_parameters)))
     (; sliders, snapshot, radios) = source_controls(controls; selected)
     Label(controls[5, 1], "Select a circle to sweep that parameter.\n$sweep_points values across its full slider range.\nOther settings stay fixed throughout the sweep.", fontsize=14)
     running = Observable(true)

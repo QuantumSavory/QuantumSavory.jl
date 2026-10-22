@@ -40,6 +40,15 @@ source density matrices, then uses exact Clifford Monte Carlo sampling. Each
 generated pair is sampled independently. A trajectory's fidelity is 0, ½, or 1;
 the mean over accepted trajectories estimates the conditional output fidelity.
 
+Both dashboards also provide an ad hoc **Spin-capture noise p** slider. After
+Genqo heralding, the long-range pair undergoes `ρ → (1-p)ρ + p I₄/4`: with
+probability `p`, apply a uniformly chosen two-qubit Pauli product from all 16
+possibilities, including identity. This is a noise strength for the whole pair,
+not an independent error probability for each spin. The slider runs from zero
+(default, no added noise) to one (fully mixed, Bell fidelity ¼). Input-fidelity
+references include this noise. Local pairs, heralding probabilities, and attempt
+times are unchanged; capture loss and storage decoherence are not modeled.
+
 Lower local mode overlap to investigate faulty resource preparation. Increase
 Genqo mean photon number with losses present to compare faster generation with
 lower input fidelity. Reduce local transmission at zero dark counts to change
@@ -62,10 +71,11 @@ julia --threads=2,1 --project=examples examples/purificationMBQC/sweep.jl
 ```
 
 The left column shows the current setting's trials. The middle column has the
-same nine sliders, plus a radio button beside each one. Select one parameter to
-sweep; the other eight stay fixed. The sweep starts automatically with mean photon
-number and visits 11 values over the selected slider's full range, including its
-endpoints. The slider moves to each value as the simulation advances.
+same ten sliders, plus a radio button beside each one, including spin-capture
+noise. Select one parameter to sweep; the other nine stay fixed. The sweep starts
+automatically with mean photon number and visits 11 values over the selected
+slider's full range, including its endpoints. The slider moves to each value as
+the simulation advances.
 
 After 1,000 trials at a setting, the right column gains one point per aggregate
 curve and the left column clears before the next setting. The plots show mean

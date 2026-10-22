@@ -63,7 +63,7 @@ end
             @test summary.parameters == merge(fixed, (mean_photons=summary.value,))
         end
         @test count(r -> r.checked[], dashboard.radios) == 1
-        @test dashboard.radios[end].checked[]
+        @test dashboard.radios[9].checked[] # mean photons remains the default
         # The real source's generation rate spans orders of magnitude. Exercise
         # the actual axes, then restart to clear them safely back to linear.
         @test dashboard.axes[3].yscale[] === log10
@@ -94,13 +94,13 @@ end
                 @async begin
                     @test length(dashboard.history[]) == 10 # pending results are not published
                     set_close_to!(dashboard.sliders[8], 0.7)
-                    dashboard.radios[5].onchange[](dashboard.radios[5].checked[])
+                    dashboard.radios[10].onchange[](dashboard.radios[10].checked[])
                 end
             end
         end
         on(dashboard.history) do results
             isempty(results) && return
-            if changed[] && first(results).parameters.local_visibility == 0 && !paused[]
+            if changed[] && dashboard.selected[] == 10 && !paused[]
                 paused[] = true
                 dashboard.running[] = false
             end
@@ -112,14 +112,16 @@ end
         sleep(0.1)
         @test length(dashboard.history[]) == 10
         @test isempty(dashboard.aggregates[])
-        @test dashboard.selected[] == 5
+        @test dashboard.selected[] == 10
         @test count(r -> r.checked[], dashboard.radios) == 1
-        @test dashboard.radios[5].checked[]
+        @test dashboard.radios[10].checked[]
         dashboard.pause.clicks[] += 1
         @test timedwait(() -> istaskdone(dashboard.task), 180) == :ok
         wait(dashboard.task)
         @test [r.value for r in dashboard.aggregates[]] == [0.0, 1.0]
         @test all(r -> r.samples == 30 && r.parameters.long_transmission ≈ 0.7, dashboard.aggregates[])
+        @test [r.parameters.spin_capture_noise for r in dashboard.aggregates[]] == [0.0, 1.0]
+        @test last(dashboard.aggregates[]).input_fidelity ≈ 0.25
         @test isempty(dashboard.history[])
     finally
         close(dashboard.screen)

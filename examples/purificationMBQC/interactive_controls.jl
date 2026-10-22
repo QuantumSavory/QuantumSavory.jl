@@ -7,6 +7,7 @@ const source_parameter_labels = (
     "Local dark-count probability", "Local mode overlap |V|",
     "Long-range BSM transmission", "Long-range detection efficiency",
     "Long-range outcoupling", "Mean photons per mode N",
+    "Spin-capture noise p",
 )
 
 function trajectory_axis(position, history)
@@ -45,7 +46,9 @@ function source_controls(controls; selected=nothing)
         (label="Detection efficiency", range=0.1:0.01:1, startvalue=p.long_detection),
         (label="Outcoupling transmission", range=0.1:0.01:1, startvalue=p.long_transmission),
         (label="Mean photons per mode N", range=0.001:0.001:0.2,
-            startvalue=p.mean_photons, format="{:.3f}"))
+            startvalue=p.mean_photons, format="{:.3f}"),
+        (label="Spin-capture noise p", range=0:0.01:1, startvalue=p.spin_capture_noise))
+    Label(long_grid.layout[6, 1:3], "After Genqo: ρ → (1 − p)ρ + p I₄/4", fontsize=13)
     sliders = vcat(local_grid.sliders, long_grid.sliders)
     snapshot() = NamedTuple{keys(default_source_parameters)}(Tuple(s.value[] for s in sliders))
     radios = Checkbox[]

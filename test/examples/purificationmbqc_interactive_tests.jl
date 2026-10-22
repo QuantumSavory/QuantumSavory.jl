@@ -18,6 +18,26 @@ include("../../examples/purificationMBQC/interactive.jl")
     @test express(sources.local_source.state).data ≈
         (to_graph * raw_local * to_graph' / tr(raw_local)).data
 
+    raw_long = express(GenqoMultiplexedCascadedBellPairW(p.long_bsm,
+        p.long_detection, p.long_transmission, p.mean_photons))
+    to_bell = express(I⊗Z)
+    density = to_bell * raw_long * to_bell' / tr(raw_long)
+    @test express(sources.long_source.state).data ≈ density.data # zero capture noise
+    # Check the channel against its Pauli action, independently of the symbolic
+    # Bell-mixture implementation. Both endpoints preserve the source timing.
+    paulis = [express(a⊗b) for a in (I, X, Y, Z), b in (I, X, Y, Z)]
+    randomized = sum(u * density * u' for u in paulis) / 16
+    for noise in (0.37, 1.0)
+        captured = purification_sources(merge(p, (spin_capture_noise=noise,)))
+        @test express(captured.long_source.state).data ≈
+            ((1 - noise) * density + noise * randomized).data
+        @test captured.long_source.probability == sources.long_source.probability
+        @test captured.long_source.fidelity ≈ (1 - noise) * sources.long_source.fidelity + noise / 4
+        @test express(captured.local_source.state).data ≈ express(sources.local_source.state).data
+        @test captured.local_source.probability == sources.local_source.probability
+    end
+    @test randomized.data ≈ express((I⊗I)/4).data
+
     ideal_parameters = merge(p, (local_dark_counts=0.0, local_visibility=1.0,
         long_bsm=1.0, long_detection=1.0, long_transmission=1.0))
     ideal_sources = purification_sources(ideal_parameters)
@@ -28,7 +48,7 @@ include("../../examples/purificationMBQC/interactive.jl")
         @test isfinite(result.duration) && result.duration > 0
     end
 
-    noisy_parameters = merge(p, (local_visibility=0.5, mean_photons=0.2))
+    noisy_parameters = merge(p, (local_visibility=0.5, mean_photons=0.2, spin_capture_noise=0.35))
     noisy_sources = purification_sources(noisy_parameters)
     @test noisy_sources.local_source.fidelity < sources.local_source.fidelity
     @test noisy_sources.long_source.fidelity < sources.long_source.fidelity
@@ -55,7 +75,8 @@ end
         @test isempty(dashboard.history[])
         on(dashboard.history) do results
             if length(results) == 1
-                set_close_to!(dashboard.sliders[end], 0.08)
+                set_close_to!(dashboard.sliders[9], 0.08)
+                set_close_to!(dashboard.sliders[10], 0.25)
             elseif length(results) == 2
                 dashboard.running[] = false
             end
@@ -71,6 +92,10 @@ end
         @test length(dashboard.history[]) == 3
         @test dashboard.history[][1].parameters.mean_photons == default_source_parameters.mean_photons
         @test all(r -> r.parameters.mean_photons ≈ 0.08, dashboard.history[][2:3])
+        @test dashboard.history[][1].parameters.spin_capture_noise == 0
+        @test all(r -> r.parameters.spin_capture_noise == 0.25, dashboard.history[][2:3])
+        @test all(r -> r.input_fidelity ≈ purification_sources(r.parameters).long_source.fidelity,
+            dashboard.history[])
         dashboard.clear.clicks[] += 1
         @test isempty(dashboard.history[])
     finally

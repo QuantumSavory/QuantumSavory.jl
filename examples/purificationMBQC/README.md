@@ -56,10 +56,11 @@ julia --threads=2,1 --project=examples examples/purificationMBQC/interactive.jl
 The window starts running immediately. Each run prepares fresh resource states
 with `BarrettKokBellPairW` local links and distributes four long-range pairs from
 `GenqoMultiplexedCascadedBellPairW`. It uses the same purification pipeline as the
-Werner-state example. Sliders control the five Barrett–Kok source parameters and
-the four Genqo parameters. One immutable snapshot is taken before each run, so a
-slider change affects the next run. Pause finishes the current run; closing the
-window stops further runs. Clear history also discards an in-flight result.
+Werner-state example. Sliders control the five Barrett–Kok source parameters,
+the four Genqo parameters, and added spin-capture noise. One immutable snapshot
+is taken before each run, so a slider change affects the next run. Pause finishes
+the current run; closing the window stops further runs. Clear history also
+discards an in-flight result.
 
 Each point is one complete protocol attempt. The horizontal axis is simulated
 completion time in source attempt periods, on a logarithmic scale. Blue points
@@ -79,6 +80,15 @@ individual trajectory has output fidelity 0, ½, or 1, and averaging accepted
 trajectories estimates the conditional ensemble fidelity. This is not the
 mixed-state fidelity of a single experimental heralding record.
 
+The ad hoc **Spin-capture noise p** slider adds uniform Pauli noise to each
+long-range pair after Genqo heralding: `ρ → (1-p)ρ + p I₄/4`. With probability
+`p`, choose uniformly from all 16 two-qubit Pauli products (including identity);
+otherwise leave the pair unchanged. This is one channel on the pair, not a
+separate error probability per spin. The range is `0 ≤ p ≤ 1`, defaulting to
+zero; at one the pair is fully mixed, with Bell fidelity ¼. The input-fidelity
+reference includes capture noise. Heralding probabilities, attempt times, and
+local pairs are unchanged. The model adds no capture loss or storage decoherence.
+
 Try these comparisons, allowing the window to collect many runs at each setting:
 
 - Reduce local mode overlap to see errors in resource preparation affect both
@@ -87,6 +97,8 @@ Try these comparisons, allowing the window to collect many runs at each setting:
   generation-time versus fidelity tradeoff. The slider stays in `0.001 ≤ N ≤ 0.2`.
 - Reduce local transmission with zero dark counts. The heralding time changes,
   while the conditional Barrett–Kok fidelity stays fixed.
+- Increase spin-capture noise to study uniform errors added after the optical
+  source, or select its radio button in the sweep dashboard.
 
 Gates, measurements, and memories are ideal. Local and long-range source attempts
 both take one time unit; no physical clock rate or propagation delay is assumed.

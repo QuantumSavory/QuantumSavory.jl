@@ -50,6 +50,11 @@ mixing configurations. Its wrapper checks full batches, rates, missing fidelity,
 automatic scales, clearing, pause/resume, and selection changes. The bounded
 script path uses two settings with five trials each. Reuse the existing worktree's
 `examples/` environment when checking either dashboard; no separate project is needed.
+Both dashboards include a spin-capture depolarization slider, also available for
+sweeps. It mixes the heralded Genqo pair with the maximally mixed state before
+Clifford sampling, preserving the heralding probability and local source.
+Tests compare this channel with the full two-qubit Pauli average and exercise
+live slider snapshots and capture-noise sweeps. See the how-to for its convention.
 
 Tutorial-local setup and helper functions are not a supported library API. Public
 QuantumSavory APIs demonstrated by examples remain governed by the package contract,

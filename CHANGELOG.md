@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add a spin-capture noise slider to both MBQC dashboards, applying uniform
+  Pauli noise after the Genqo source, with support for parameter sweeps.
+
 - Add a second MBQC dashboard that sweeps a selected source slider, runs 1,000
   trials per setting, and plots aggregate fidelity, acceptance, time, and pair rate.
 
