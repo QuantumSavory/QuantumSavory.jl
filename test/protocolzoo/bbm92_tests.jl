@@ -12,10 +12,13 @@ using QuantumSavory.ProtocolZoo
     @test_throws DomainError BBM92Prot(net, 1, 2; qber_threshold=-0.1)
 
     @testset "Protocol Execution" begin
-        @process prot()
+        prot_task = @process prot()
         run!(get_time_tracker(net), until=10.0)
+        terminate(prot_task)
+        wait(prot_task)
         @test length(net[1].slots) == 4
         @test length(net[2].slots) == 4
+        @test terminated(prot_task)
     end
 
     @testset "QBER Estimation" begin
