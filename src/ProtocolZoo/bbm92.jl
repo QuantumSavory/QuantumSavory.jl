@@ -83,6 +83,17 @@ function estimate_qber(reg::Register)
     total = 0
     for slot in reg
         if haskey(slot.metadata, :key_bit)
+            total += 1
+            # Check for bit errors
+            errors += slot.metadata[:key_bit] != get(slot, :partner_key_bit, slot.metadata[:key_bit]) ? 1 : 0
+        end
+    end
+    return total == 0 ? 0.0 : errors / total
+end
+    errors = 0
+    total = 0
+    for slot in reg
+        if haskey(slot.metadata, :key_bit)
             # Simulated error detection
             errors += rand(slot.sim.rng) < 0.01 ? 1 : 0
             total += 1

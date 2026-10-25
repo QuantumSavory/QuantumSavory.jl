@@ -1,6 +1,6 @@
 # News
 
-## v0.8.1 - 2026-09-25
+## v0.8.1 - $(today())
 
 - **(feat)** Implement BBM92 quantum key distribution protocol
 - **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 

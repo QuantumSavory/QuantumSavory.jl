@@ -28,5 +28,10 @@ using QuantumSavory.ProtocolZoo
         end
         qber = estimate_qber(reg)
         @test 0.0 ≤ qber ≤ 1.0
+        # Test error detection
+        store!(reg[1], :partner_key_bit, 1 - reg[1].metadata[:key_bit])
+        qber = estimate_qber(reg)
+        @test qber == 0.5
+        @test 0.0 ≤ qber ≤ 1.0
     end
 end
