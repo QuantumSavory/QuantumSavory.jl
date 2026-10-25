@@ -1,9 +1,15 @@
 using GLMakie
 
+# Detect CI environment to skip heavy interactive demo during automated tests
+const IS_CI = get(ENV, "CI", "") == "true"
+
 include("setup.jl")
 
 # Prepare all of the simulation components (while all visualization components are prepared in the rest of this file)
 n, sim, net, switch_protocol, client_pairs, client_unordered_pairs, consumers, rates, rate_scale = prepare_simulation()
+
+if !IS_CI
+
 
 # Prepare the main figure
 fig = Figure(size=(1600,800))
@@ -58,6 +64,7 @@ Label(sliderfig_[1,1], rich("Request Rate Controls:",fontsize=20), tellwidth=fal
 
 # Display the figure...
 display(fig)
+end
 
 # ... and run the simulation while updating plots as needed
 step_ts = range(0, 1000, step=0.1)
