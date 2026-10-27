@@ -90,16 +90,5 @@ function estimate_qber(reg::Register)
     end
     return total == 0 ? 0.0 : errors / total
 end
-    errors = 0
-    total = 0
-    for slot in reg
-        if haskey(slot.metadata, :key_bit)
-            # Simulated error detection
-            errors += rand(slot.sim.rng) < 0.01 ? 1 : 0
-            total += 1
-        end
-    end
-    return total == 0 ? 0.0 : errors / total
-end
-
+    
 end
