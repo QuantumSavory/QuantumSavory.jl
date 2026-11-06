@@ -21,6 +21,12 @@ datagrams, link requests/replies, and end/network/link controllers. `mbqc.jl` ad
 state construction, graph-to-resource mapping, purification measurements, and tracking.
 All three are part of ProtocolZoo, not separate external zoos.
 
+`AspenNet` is an internal experimental submodule for two synchronized photon sources
+and one heralding hub. It provides buffered generation, immediate local number
+measurements, and hub threshold detection with timed result messages. The example in
+[`examples/aspen_net/`](../../../examples/aspen_net/) records local and hub histories;
+the module is not public and has no documentation website entry.
+
 Every documented and public family is intended for long-term support; implementation
 completeness still varies. QTCP contains unresolved drop detection, correction, and
 timeout work. MBQC currently uses contiguous node-number arithmetic in routing/mapping
