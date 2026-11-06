@@ -266,4 +266,6 @@ end
     end
 end
 
+include("aspennet_show.jl")
+
 end # module AspenNet
