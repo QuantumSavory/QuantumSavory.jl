@@ -23,9 +23,28 @@ All three are part of ProtocolZoo, not separate external zoos.
 
 `AspenNet` is an internal experimental submodule for two synchronized photon sources
 and one heralding hub. It provides buffered generation, immediate local number
-measurements, and hub threshold detection with timed result messages. The example in
+measurements, and hub threshold detection with timed result messages. The hub records
+and confirms only periods with an arriving mode, including an arriving vacuum mode;
+periods with no arrivals are skipped. The example in
 [`examples/aspen_net/`](../../../examples/aspen_net/) records local and hub histories;
 the module is not public and has no documentation website entry.
+Its second example runs one shared simulation behind a Bonito/WGLMakie dashboard
+and an Oxygen API, with explicit startup and shutdown for its tasks and servers.
+`/api/status` exposes the modeled hardware's shared-clock time and settings;
+clients choose their own future work intervals. `/api/simulation/status` exposes
+wall-clock pacing. The dashboard labels these snapshots Hardware and Simulation.
+`/api/simulation/config` returns the twin's startup configuration, including
+overrides, reused on reset. Its initial pacing setting is separate from current
+pacing.
+Dashboard photon-number count heatmaps join the three measurement histories by
+buffer period and omit periods missing any of those records. Analysis titles count
+each completed buffer period with at least one scheduled source, including periods
+producing no photon. The both-source/no-hub count overlaps the per-source pending counts.
+At the configured reset time (100000 by default), the example replaces its
+simulation, clears histories, counts, and pending work, and returns sources to idle
+while keeping servers and browser sessions connected.
+The pacing API sets the wall-clock delay after each simulation step; this setting
+persists across resets.
 
 Every documented and public family is intended for long-term support; implementation
 completeness still varies. QTCP contains unresolved drop detection, correction, and
