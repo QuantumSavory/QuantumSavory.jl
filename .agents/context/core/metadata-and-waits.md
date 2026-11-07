@@ -38,6 +38,9 @@ waiters observe a register-wide future change edge. Message buffers also broadca
 changes, but their queued, unattended notification tokens make the exact wake behavior
 different from a simple edge-triggered condition. Tests should distinguish “eventually
 wakes and re-queries” from stronger one-notification/one-waiter assumptions.
+Direct channel `onchange` uses the same notifier for future arrivals, without
+saved tokens. Use `isready` before waiting and after waking; channel and buffer
+notifications can be composed without claiming a message or quantum state.
 Both `onchange(::Register)` and `onchange(::MessageBuffer)` take effect before
 returning: they attach to the current notifier generation, or the buffer consumes one
 queued token. A later change is not lost while the returned process starts;

@@ -34,24 +34,24 @@ end
         quantum_delay,
     )
 
-    @test channel(net, 1 => 2).delay == 12
-    @test channel(net, 2 => 1).delay == 21
-    @test channel(net, 2 => 3).delay == 23
-    @test channel(net, 3 => 2).delay == 32
-    @test qchannel(net, 1 => 2).queue.delay ≈ 0.12
-    @test qchannel(net, 2 => 1).queue.delay ≈ 0.21
-    @test qchannel(net, 2 => 3).queue.delay ≈ 0.23
-    @test qchannel(net, 3 => 2).queue.delay ≈ 0.32
+    @test channel_delay(channel(net, 1 => 2)) == 12
+    @test channel_delay(channel(net, 2 => 1)) == 21
+    @test channel_delay(channel(net, 2 => 3)) == 23
+    @test channel_delay(channel(net, 3 => 2)) == 32
+    @test channel_delay(qchannel(net, 1 => 2)) ≈ 0.12
+    @test channel_delay(qchannel(net, 2 => 1)) ≈ 0.21
+    @test channel_delay(qchannel(net, 2 => 3)) ≈ 0.23
+    @test channel_delay(qchannel(net, 3 => 2)) ≈ 0.32
 
     scalar_net = RegisterNet(
         [Register(1), Register(1)];
         classical_delay=1.5,
         quantum_delay=2.5,
     )
-    @test channel(scalar_net, 1 => 2).delay == 1.5
-    @test channel(scalar_net, 2 => 1).delay == 1.5
-    @test qchannel(scalar_net, 1 => 2).queue.delay == 2.5
-    @test qchannel(scalar_net, 2 => 1).queue.delay == 2.5
+    @test channel_delay(channel(scalar_net, 1 => 2)) == 1.5
+    @test channel_delay(channel(scalar_net, 2 => 1)) == 1.5
+    @test channel_delay(qchannel(scalar_net, 1 => 2)) == 2.5
+    @test channel_delay(qchannel(scalar_net, 2 => 1)) == 2.5
 
     arrival_times = Float64[]
     @resumable function receive_one(sim, net, arrival_times)

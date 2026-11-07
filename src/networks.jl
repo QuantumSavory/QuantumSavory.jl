@@ -57,7 +57,7 @@ struct RegisterNet
     vertex_metadata::Vector{Dict{Symbol,Any}}
     edge_metadata::Dict{Tuple{Int,Int},Dict{Symbol,Any}}
     directed_edge_metadata::Dict{Pair{Int,Int},Dict{Symbol,Any}}
-    cchannels::Dict{Pair{Int,Int},DelayQueue{Tag}} # Dict{src=>dst, DelayQueue}
+    cchannels::Dict{Pair{Int,Int},ClassicalChannel{Tag}}
     cbuffers::Dict{Int,MessageBuffer{Tag}} # Dict{dst, MessageBuffer}
     qchannels::Dict{Pair{Int,Int},Any} # Dict{src=>dst, QuantumChannel}
     reverse_lookup::IdDict{Register,Int}
@@ -85,7 +85,7 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
         end
     end
 
-    cchannels = Dict{Pair{Int,Int},DelayQueue{Tag}}()
+    cchannels = Dict{Pair{Int,Int},ClassicalChannel{Tag}}()
     qchannels = Dict{Pair{Int,Int},Any}()
     cbuffers = Dict{Int,MessageBuffer{Tag}}()
     reverse_lookup = IdDict{Register,Int}()
@@ -103,9 +103,9 @@ function RegisterNet(graph::SimpleGraph, registers, vertex_metadata, edge_metada
         reverse_classical_delay = _resolve_link_delay(classical_delay, dst, src)
         reverse_quantum_delay = _resolve_link_delay(quantum_delay, dst, src)
 
-        cchannels[src=>dst] = DelayQueue{Tag}(env, forward_classical_delay)
+        cchannels[src=>dst] = ClassicalChannel{Tag}(env, forward_classical_delay)
         qchannels[src=>dst] = QuantumChannel(env, forward_quantum_delay)
-        cchannels[dst=>src] = DelayQueue{Tag}(env, reverse_classical_delay)
+        cchannels[dst=>src] = ClassicalChannel{Tag}(env, reverse_classical_delay)
         qchannels[dst=>src] = QuantumChannel(env, reverse_quantum_delay)
     end
     for (v,r) in zip(vertices(graph), registers)
@@ -202,18 +202,22 @@ $TYPEDSIGNATURES
 Get a handle to a classical channel between two registers.
 
 Usually used for sending classical messages between registers.
-It can be used for receiving as well, but a more convenient choice is [`messagebuffer`](@ref),
-which is a message buffer listening to **all** channels sending to a given destination register.
+Use [`channel_delay`](@ref) to inspect the directed link's propagation delay.
+
+!!! warning "Prefer message buffers for classical reception"
+    The destination's [`messagebuffer`](@ref) already receives from every incoming
+    classical channel. Use [`query_wait`](@ref), [`querydelete_wait!`](@ref), or
+    `onchange(messagebuffer(net, dst))` for reception. Direct `take!` calls compete
+    with that buffer, and `isready(ch)` may be false after a message reaches it.
 
 ```jldoctest
 julia> net = RegisterNet([Register(2), Register(2), Register(2)]) # defaults to a chain topology
 A network of 3 registers in a graph of 2 edges
 
-julia> channel(net, 1=>2)
-ConcurrentSim.DelayQueue{Tag}(ConcurrentSim.QueueStore{Tag, Int64}, 0.0)
+julia> ch = channel(net, 1=>2);
 
-julia> channel(net, 1=>2)
-ConcurrentSim.DelayQueue{Tag}(ConcurrentSim.QueueStore{Tag, Int64}, 0.0)
+julia> channel_delay(ch)
+0.0
 
 julia> channel(net, 1=>2) === channel(net, net[1]=>net[2])
 true
@@ -234,8 +238,8 @@ Get a handle to a quantum channel between two registers.
 julia> net = RegisterNet([Register(2), Register(2), Register(2)]) # defaults to a chain topology
 A network of 3 registers in a graph of 2 edges
 
-julia> qchannel(net, 1=>2)
-QuantumChannel{Qubit}(Qubit(), ConcurrentSim.DelayQueue{Register}(ConcurrentSim.QueueStore{Register, Int64}, 0.0), nothing)
+julia> channel_delay(qchannel(net, 1=>2))
+0.0
 
 julia> qchannel(net, 1=>2) === qchannel(net, net[1]=>net[2])
 true
