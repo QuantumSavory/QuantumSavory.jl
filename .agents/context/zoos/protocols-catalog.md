@@ -22,8 +22,11 @@ state construction, graph-to-resource mapping, purification measurements, and tr
 All three are part of ProtocolZoo, not separate external zoos.
 
 `AspenNet` is an internal experimental submodule for two synchronized photon sources
-and one heralding hub. It provides buffered generation, immediate local number
-measurements, and hub threshold detection with timed result messages. The hub records
+and one heralding hub. It uses bosonic modes with a four-photon Fock cutoff,
+buffered generation, local Fock-basis measurements reduced to vacuum/nonvacuum,
+and balanced beamsplitter interference at the hub. A herald requires a first-output
+click and second-output vacuum, fixing the Bell phase. Omit local measurement
+processes to retain the heralded memory modes. The hub records
 and confirms only periods with an arriving mode, including an arriving vacuum mode;
 periods with no arrivals are skipped. The example in
 [`examples/aspen_net/`](../../../examples/aspen_net/) records local and hub histories;
@@ -36,7 +39,7 @@ wall-clock pacing. The dashboard labels these snapshots Hardware and Simulation.
 `/api/simulation/config` returns the twin's startup configuration, including
 overrides, reused on reset. Its initial pacing setting is separate from current
 pacing.
-Dashboard photon-number count heatmaps join the three measurement histories by
+Dashboard detector-click count heatmaps join the three measurement histories by
 buffer period and omit periods missing any of those records. Analysis titles count
 each completed buffer period with at least one scheduled source, including periods
 producing no photon. The both-source/no-hub count overlaps the per-source pending counts.

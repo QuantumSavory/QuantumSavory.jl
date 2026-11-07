@@ -181,7 +181,8 @@ end
             end
 
             # Reset replaces the whole network, including accepted future work.
-            @test request("POST", "/api/nodes/1/start?start_tick=100020&stop_tick=100060").status == 202
+            after_reset = (ceil(Int, config[:simulation][:reset_time] / period) + 1) * status.repetitions
+            @test request("POST", "/api/nodes/1/start?start_tick=$after_reset&stop_tick=$(after_reset + 2 * status.repetitions)").status == 202
             old_state = twin.state[]
             lock(twin.guard) do
                 AspenNetTwin.run(old_state.sim, 99999)
@@ -200,9 +201,11 @@ end
                 AspenNetTwin.run(twin.state[].sim, 100)
             end
             @test isempty(data("/api/hub/log"))
-            @test request("POST", "/api/nodes/1/start?start_tick=120&stop_tick=2120").status == 202
+            start = (ceil(Int, 100 / period) + 1) * status.repetitions
+            stop = start + 100 * status.repetitions
+            @test request("POST", "/api/nodes/1/start?start_tick=$start&stop_tick=$stop").status == 202
             lock(twin.guard) do
-                AspenNetTwin.run(twin.state[].sim, 2124.1)
+                AspenNetTwin.run(twin.state[].sim, stop * status.tick_duration + 4.1)
             end
             @test !isempty(data("/api/nodes/1/log"))
             @test isempty(data("/api/nodes/3/log"))

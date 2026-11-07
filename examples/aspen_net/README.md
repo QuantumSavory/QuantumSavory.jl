@@ -9,19 +9,26 @@ one `Start(start_tick, stop_tick)` message with an integer-tick working interval
 A source keeps the first heralded
 photon in each buffer period, then releases it at the agreed time. Its unbalanced
 beam splitter distributes the photon between local memory and the quantum link.
-Here, `reflectivity=0.1` sends 10% of the photon probability to the hub. Quantum
-and classical links have equal delays.
+Each slot is a bosonic `Qumode` with a Fock cutoff of four photons.
+Here, `reflectivity=0.01` sends 1% of the photon probability to the hub. Quantum
+and classical links have equal delays. With `heralding_probability=0.1` and
+`repetitions=100`, each source has a photon available in more than 99.99% of periods.
 
-Local number measurements immediately consume the memories. The hub erases path
-information and records a threshold-detector result only when at least one mode
+Local Fock-basis measurements immediately consume the memories. Measurements
+resolve photon number, but histories keep only `number=0` for vacuum and `number=1`
+for any nonvacuum outcome. The hub mixes the incoming modes on a balanced
+beamsplitter and records a result only when at least one mode
 arrives. Periods with no arrivals produce no measurement, log entry, or
 confirmation. An arriving mode can be vacuum after local measurement and still
 produces a success/failure result. A missing second input is vacuum.
-A single incoming photon can produce a success, and
-two incoming photons can produce a false herald because the detectors do not
-resolve photon number. Compare the internal `_log` histories by `period`;
+A success requires a click at the first output and vacuum at the second. Selecting
+one output fixes the heralded Bell phase. Two incoming photons can produce a false
+herald because the number-resolved outcomes are reduced to vacuum/nonvacuum.
+Compare the internal `_log` histories by `period`;
 local `t` is the release time and hub `t` includes the one-way delay. This example
-does not retain an entangled memory pair after local measurement.
+does not retain an entangled memory pair after local measurement. Omit the
+`LocalMeasurement` processes to retain the modes: the default source settings give
+approximately 99.5% fidelity with `(|10⟩ + |01⟩)/√2` after a successful herald.
 
 The text displays summarize each history. With `CairoMakie` loaded,
 `display(MIME"image/png"(), hub)` renders the hub history as a plot.
@@ -34,7 +41,7 @@ flowchart TD
     Buffer --> Photon{A first photon was heralded?}
     Photon -->|Yes| Split[Split between memory and quantum link]
     Split --> Local[Tag memory with release time]
-    Local --> Measure[LocalMeasurement: measure number, remove tag, append history]
+    Local --> Measure[LocalMeasurement: measure Fock basis, record click, free memory]
     Split --> Send[Send remote mode to the hub]
     Photon -->|No| Next{Another period in the interval?}
     Split --> Next
@@ -47,8 +54,8 @@ flowchart TD
     Tick[Wait for the period's arrival deadline] --> Arrived{At least one mode arrived?}
     Arrived -->|No| Tick
     Arrived -->|Yes| Receive[Collect modes and fill a missing input with vacuum]
-    Receive --> Erase[Erase path information in the joint measurement]
-    Erase --> Detect[Measure with threshold detectors]
+    Receive --> Erase[Mix modes on a balanced beamsplitter]
+    Erase --> Detect[Measure Fock basis, accept first-output click and second-output vacuum]
     Detect --> Log[Append success or failure to hub history]
     Log --> Announce[Send Confirmation tags to both end nodes]
     Announce --> Tick
@@ -68,10 +75,10 @@ are usually empty because local measurements consume them immediately.
 The live Hardware snapshot shows modeled shared-clock time, tick duration, and
 repetitions. The Simulation snapshot shows wall-clock pacing.
 
-An analysis row counts the measured photon-number pairs at nodes 1 and 3 in
+An analysis row counts the local detector-click pairs at nodes 1 and 3 in
 separate 2×2 heatmaps for hub successes and failures. Records are matched by
 buffer `period`; each count requires measurement records from both end nodes and
-the hub.
+the hub. Each axis uses 0 for vacuum and 1 for any nonvacuum outcome.
 The six bars count periods with all three records, only node 1 and hub, only
 node 3 and hub, node 1 without hub, node 3 without hub, and both nodes without hub,
 in that order. The last three overlap: a period present at both sources but still

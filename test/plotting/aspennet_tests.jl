@@ -3,7 +3,7 @@ using QuantumSavory, Graphs, CairoMakie
 using QuantumSavory.ProtocolZoo.AspenNet: Source, LocalMeasurement, Hub
 
 @testset "AspenNet displays" begin
-    net = RegisterNet(path_graph(3), [Register(n, QuantumOpticsRepr()) for n in (1, 2, 1)])
+    net = RegisterNet(path_graph(3), [Register(fill(Qumode(), n), fill(QuantumOpticsRepr(cutoff=4), n)) for n in (1, 2, 1)])
     source = Source(net, 1, 2)
     measurement = LocalMeasurement(net, 1)
     hub = Hub(net, 2, (1, 3))

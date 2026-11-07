@@ -12,7 +12,7 @@ default_config() = Dict(
     :network => Dict(:register_sizes => [2, 2, 2], :link_delay => 2.0),
     :protocol => Dict(:source_nodes => [1, 3], :hub_node => 2,
         :memories => [1, 2], :hub_slots => [1, 2], :tick_duration => 1.0,
-        :repetitions => 20, :heralding_probability => 0.1, :reflectivity => 0.1),
+        :repetitions => 100, :heralding_probability => 0.1, :reflectivity => 0.01),
     :simulation => Dict(:reset_time => 100000.0, :step_duration => 1.0,
         :initial_sleep_seconds => 0.1))
 
@@ -24,7 +24,7 @@ function prepare_network(config)
         throw(ArgumentError("Use two distinct source nodes and one hub covering all registers"))
     graph = SimpleGraph(length(sizes))
     foreach(node -> add_edge!(graph, node, hub_node), source_nodes)
-    net = RegisterNet(graph, [Register(size, QuantumOpticsRepr()) for size in sizes];
+    net = RegisterNet(graph, [Register(fill(Qumode(), size), fill(QuantumOpticsRepr(cutoff=4), size)) for size in sizes];
         classical_delay=network[:link_delay], quantum_delay=network[:link_delay])
     sim = get_time_tracker(net)
     sources = [Source(net, node, hub_node; memories=copy(protocol[:memories]),
@@ -176,11 +176,11 @@ function configure_api(twin)
         ("post", "/api/nodes/{node}/start", "Schedule an end node",
             "node is $node_choices. start_tick and stop_tick delimit an increasing future interval and must be multiples of repetitions. Work remaining at the configured reset time is discarded.",
             (202 => "Accepted interval", 400 => "Invalid numeric interval or node ID", 409 => "Overlap with earlier work")),
-        ("get", "/api/nodes/{node}/log", "Read local number measurements",
-            "Returns node $node_choices's current-run history: period, t (release time), slot, and number (0 or 1). Histories clear on reset.",
+        ("get", "/api/nodes/{node}/log", "Read local detector clicks",
+            "Returns node $node_choices's current-run history: period, t (release time), slot, and number (0 for vacuum, 1 for any nonvacuum Fock outcome). Histories clear on reset.",
             (200 => "Local measurement history", 400 => "Node ID must be $node_choices")),
         ("get", "/api/hub/log", "Read hub outcomes",
-            "Returns current-run entries with period, t (arrival time), and success. A period is recorded only if at least one mode arrived; an arriving vacuum can produce failure. Histories clear on reset.",
+            "Returns current-run entries with period, t (arrival time), and success (first-output click and second-output vacuum). A period is recorded only if at least one mode arrived; an arriving vacuum can produce failure. Histories clear on reset.",
             (200 => "Hub measurement history",)),
         ("post", "/api/simulation/pacing", "Set simulation pacing (not a hardware control)",
             "Set sleep_seconds to a finite nonnegative wall-clock delay after each configured simulation step. Zero removes deliberate pacing. Changes interrupt the previous delay and persist across resets. Pacing is approximate.",
@@ -233,8 +233,8 @@ function dashboard(twin, session)
                 "Hub $outcome ($(sum(counts)) events)\nout of $total total generation attempts"
             end
             panel = GridLayout(outcomes[1, column])
-            axis = Axis(panel[1, 1]; title, xlabel="Node $node1 photon number",
-                ylabel="Node $node3 photon number", xticks=0:1, yticks=0:1)
+            axis = Axis(panel[1, 1]; title, xlabel="Node $node1 detector click",
+                ylabel="Node $node3 detector click", xticks=0:1, yticks=0:1)
             heatmap = heatmap!(axis, 0:1, 0:1, counts; colorrange)
             Colorbar(panel[1, 2], heatmap; label="Events")
             limits!(axis, -0.5, 1.5, -0.5, 1.5)
