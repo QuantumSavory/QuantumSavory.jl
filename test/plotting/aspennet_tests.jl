@@ -15,8 +15,21 @@ using QuantumSavory.ProtocolZoo.AspenNet: Source, LocalMeasurement, Hub
     end
     for protocol in (measurement, hub)
         empty_png = repr(MIME"image/png"(), protocol)
+        history = Observable(copy(protocol._log))
+        extension = Base.get_extension(QuantumSavory, :QuantumSavoryMakie)
+        axis = extension.protshowimage(Figure()[1, 1], protocol; history)
+        points, empty_message = axis.scene.plots
+        @test isempty(points[1][])
+        @test empty_message.visible[]
         entry = protocol === hub ? (t=3.0, period=1, success=true) : (t=1.0, period=1, slot=1, number=1)
         push!(protocol._log, entry)
+        history[] = copy(protocol._log)
+        @test points[1][] == [Point2f(entry.t, 1)]
+        @test !empty_message.visible[]
+        empty!(history[])
+        notify(history)
+        @test isempty(points[1][])
+        @test empty_message.visible[]
         populated_png = repr(MIME"image/png"(), protocol)
         @test first(populated_png, 8) == signature
         @test populated_png != empty_png
