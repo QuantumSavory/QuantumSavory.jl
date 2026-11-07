@@ -4,6 +4,7 @@
 
 - Add `channel_delay`, `isready`, and `onchange` for direct classical and quantum
   channels. Classical reception should use the destination's message buffer.
+- Warn when a transmitted quantum state is not received at its arrival time.
 
 ## v0.8.1 - 2026-09-25
 

@@ -10,6 +10,13 @@ That state can then be received by a register (after a delay) using the `take!` 
 Use [`channel_delay`](@ref), `isready(qc)`, and [`onchange`](@ref) to inspect or
 observe the channel without receiving its state.
 
+A state must be received at its arrival simulation time. Otherwise the channel
+logs a warning. Receive into a register to model storage after arrival; a late
+state remains available for `take!`. The lowest event priority,
+`typemin(Int)`, is reserved for this diagnostic; receivers must use higher
+priorities. Receivers that wake from `onchange` or a lower-priority timeout such
+as `priority=-1` can still receive at the arrival time without a warning.
+
 ```jldoctest
 julia> using QuantumSavory, ResumableFunctions, ConcurrentSim
 
@@ -108,7 +115,17 @@ function Base.put!(qc::QuantumChannel, rref::RegRef)
     channel_reg = Register(qc)
     swap!(rref, channel_reg[1]; time)
     uptotime!(channel_reg[1], time+channel_delay(qc))
-    return _put_with_notification(qc.queue, channel_reg, qc.arrival)
+    transmission = _put_with_notification(qc.queue, channel_reg, qc.arrival)
+    @process _check_quantum_receipt(qc.queue.store.env, transmission, channel_reg)
+    return transmission
+end
+
+@resumable function _check_quantum_receipt(sim, transmission, channel_reg)
+    @yield transmission
+    @yield timeout(sim; priority=typemin(Int))
+    if isassigned(channel_reg[1])
+        @warn "A quantum state was not received at its arrival time." _group=LOG_GROUPS.network event=:quantum_arrived_without_receiver simulation_log_context(sim)... component=:QuantumChannel
+    end
 end
 
 @resumable function post_take_qc(env, take_event, rref)

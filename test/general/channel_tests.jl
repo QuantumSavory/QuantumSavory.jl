@@ -107,6 +107,44 @@ end
     @test !isready(qc) # The abandoned OR branch did not consume the state.
 end
 
+@testset "Quantum arrival receipt diagnostics" begin
+    for delay in (0.0, 1.0), reception in (:pending, :notified, :deadline, :late)
+        sim = Simulation()
+        qc = QuantumChannel(sim, delay)
+        source, destination = Register(2), Register(2)
+        initialize!(source[1], Z1)
+        initialize!(source[2], Z2)
+        @resumable function receiver(sim)
+            if reception == :notified || reception == :late
+                @yield onchange(qc)
+                if reception == :late
+                    @yield timeout(sim, 1)
+                end
+            elseif reception == :deadline
+                @yield timeout(sim, delay; priority=-100)
+            end
+            @yield take!(qc, destination[1])
+        end
+        @process receiver(sim)
+        put!(qc, source[1])
+        put!(qc, source[2]) # One state is deliberately never received.
+        logger = Test.TestLogger(min_level=Logging.Warn)
+        with_logger(logger) do
+            run(sim, delay+2)
+        end
+        @test length(logger.logs) == (reception == :late ? 2 : 1)
+        @test all(log -> log.group == LOG_GROUPS.network &&
+            log.kwargs[:event] == :quantum_arrived_without_receiver &&
+            log.kwargs[:sim_time] == delay, logger.logs)
+        @test isassigned(destination[1])
+        @test isready(qc)
+        # Late reception remains possible and does not repeat the warning.
+        @test_logs min_level=Logging.Warn run(sim, take!(qc, destination[2]))
+        @test observable(destination[2], Z) ≈ -1
+        @test !isready(qc)
+    end
+end
+
 @testset "Message buffers still accept raw delay queues" begin
     net = RegisterNet([Register(1)])
     sim = get_time_tracker(net)
