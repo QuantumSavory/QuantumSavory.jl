@@ -107,6 +107,20 @@ function event_summary(node1_log, node3_log, hub_log)
     return (; success, failure, counts)
 end
 
+"""Queue validated source work and count shared trials; caller holds the guard."""
+function schedule_sources!(twin, nodes, start_tick, stop_tick)
+    state = twin.state[]
+    source = first(state.sources)
+    for node in nodes
+        put!(messagebuffer(state.net, node), Tag(Start(start_tick, stop_tick)))
+        state.last_stop[node] = stop_tick
+    end
+    # One shared trial per active buffer period; work after reset never runs.
+    period = source.tick_duration * source.repetitions
+    last_period = min(stop_tick ÷ source.repetitions, floor(Int, twin.config[:simulation][:reset_time] / period))
+    union!(state.scheduled_periods, (start_tick ÷ source.repetitions + 1):last_period)
+end
+
 function configure_api(twin)
     source_nodes = twin.config[:protocol][:source_nodes]
     node_choices = join(source_nodes, " or ")
@@ -129,6 +143,30 @@ function configure_api(twin)
         end
         (; sleep_seconds)
     end
+    @post "/api/simulation/run_scenario" function(req, scenario::String, sleep_seconds::String="")
+        scenario == "run_samples_until_reset" ||
+            return json((; error="Unknown scenario; use run_samples_until_reset"); status=400)
+        seconds = isempty(sleep_seconds) ? nothing : tryparse(Float64, sleep_seconds)
+        isempty(sleep_seconds) || (!isnothing(seconds) && isfinite(seconds) && seconds >= 0) ||
+            return json((; error="sleep_seconds must be finite and nonnegative"); status=400)
+        lock(twin.guard) do
+            state = twin.state[]
+            source = first(state.sources)
+            period = source.tick_duration * source.repetitions
+            reset_time = twin.config[:simulation][:reset_time]
+            start_period = floor(Int, now(state.sim) / period)
+            start_period * period < now(state.sim) && (start_period += 1)
+            start_period * period < reset_time ||
+                return json((; error="No source start boundary remains before reset"); status=409)
+            start_tick = start_period * source.repetitions
+            stop_tick = ceil(Int, reset_time / period) * source.repetitions
+            any(node -> start_tick < state.last_stop[node], source_nodes) &&
+                return json((; error="Interval overlaps an earlier command"); status=409)
+            schedule_sources!(twin, source_nodes, start_tick, stop_tick)
+            isnothing(seconds) || (twin.sleep_seconds[] = seconds)
+            json((; scenario, nodes=source_nodes, start_tick, stop_tick, sleep_seconds=twin.sleep_seconds[]); status=202)
+        end
+    end
     @post "/api/nodes/{node}/start" function(req, node::Int, start_tick::Int, stop_tick::Int)
         node in source_nodes || return json((; error="End node must be $node_choices"); status=400)
         lock(twin.guard) do
@@ -142,11 +180,7 @@ function configure_api(twin)
             end
             start_tick < state.last_stop[node] &&
                 return json((; error="Interval overlaps an earlier command"); status=409)
-            put!(messagebuffer(state.net, node), Tag(Start(start_tick, stop_tick)))
-            state.last_stop[node] = stop_tick
-            # One shared trial per active buffer period; work after reset never runs.
-            last_period = min(stop_tick ÷ source.repetitions, floor(Int, twin.config[:simulation][:reset_time] / period))
-            union!(state.scheduled_periods, (start_tick ÷ source.repetitions + 1):last_period)
+            schedule_sources!(twin, (node,), start_tick, stop_tick)
             json((; node, start_tick, stop_tick); status=202)
         end
     end
@@ -173,6 +207,9 @@ function configure_api(twin)
         ("get", "/api/simulation/config", "Read the simulation configuration",
             "Returns the startup dictionary used to build and reset this twin: network register sizes and link delay; source/hub roles, memories, timing and optical settings; reset time, step duration and initial pacing. Current pacing is reported by /api/simulation/status.",
             (200 => "Simulation configuration",)),
+        ("post", "/api/simulation/run_scenario", "Run a digital-twin scenario (not a hardware control)",
+            "scenario=run_samples_until_reset schedules both configured sources at the next buffer boundary (including the current time if aligned) until reset. A partial final buffer is discarded at reset. Optional sleep_seconds sets finite nonnegative pacing in the same request; omit it to keep current pacing. Rejected requests change neither source schedules nor pacing. Reset clears the scenario's work; pacing persists.",
+            (202 => "Accepted scenario, source nodes, start/stop ticks, and sleep_seconds", 400 => "Unknown scenario or invalid sleep_seconds", 409 => "Overlap with earlier work or no start boundary before reset")),
         ("post", "/api/nodes/{node}/start", "Schedule an end node",
             "node is $node_choices. start_tick and stop_tick delimit an increasing future interval and must be multiples of repetitions. Work remaining at the configured reset time is discarded.",
             (202 => "Accepted interval", 400 => "Invalid numeric interval or node ID", 409 => "Overlap with earlier work")),

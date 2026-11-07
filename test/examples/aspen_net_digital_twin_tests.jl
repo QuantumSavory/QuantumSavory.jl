@@ -73,6 +73,87 @@ end
     @test twin.sleep_seconds[] == 0.75 && twin.config[:simulation][:initial_sleep_seconds] == 0.25
 end
 
+@testset "ASPEN-Net scenario API" begin
+    config = AspenNetTwin.default_config()
+    config[:network][:link_delay] = 0.25
+    merge!(config[:protocol], Dict(:source_nodes => [2, 3], :hub_node => 1,
+        :tick_duration => 0.5, :repetitions => 4, :heralding_probability => 1.0))
+    config[:simulation][:reset_time] = 11.0 # Reset during a buffer period.
+    twin = AspenNetTwin.prepare_twin(config)
+    AspenNetTwin.configure_api(twin)
+    request(path) = AspenNetTwin.internalrequest(HTTP.Request("POST", path))
+    scenario = "/api/simulation/run_scenario?scenario=run_samples_until_reset"
+
+    for path in ("/api/simulation/run_scenario?scenario=unknown&sleep_seconds=0",
+            (scenario * "&sleep_seconds=$seconds" for seconds in (-1, NaN, Inf, "invalid"))...)
+        @test request(path).status == 400
+    end
+    @test twin.sleep_seconds[] == 0.1
+    @test all(iszero, values(twin.state[].last_stop))
+    @test isempty(twin.state[].scheduled_periods)
+
+    # A conflict on the second source must not start the first or change pacing.
+    @test request("/api/nodes/3/start?start_tick=0&stop_tick=4").status == 202
+    @test request(scenario * "&sleep_seconds=0").status == 409
+    @test twin.sleep_seconds[] == 0.1
+    AspenNetTwin.run(twin.state[].sim, 10.5)
+    @test isempty(twin.state[].measurements[1]._log)
+    @test length(twin.state[].measurements[2]._log) == 1
+    @test AspenNetTwin.generation_attempts(twin.state[]) == 1
+    AspenNetTwin.advance!(twin)
+
+    # Exact boundaries start immediately; times between boundaries round up.
+    for (time, start_tick, sleep_seconds) in ((0.0, 0, 0.0001), (0.5, 4, nothing), (2.0, 4, 0.0))
+        state = twin.state[]
+        AspenNetTwin.run(state.sim, time)
+        previous_sleep = twin.sleep_seconds[]
+        pacing = isnothing(sleep_seconds) ? "" : "&sleep_seconds=$sleep_seconds"
+        response = request(scenario * pacing)
+        @test response.status == 202
+        accepted = JSON3.read(String(response.body))
+        @test accepted.scenario == "run_samples_until_reset"
+        @test accepted.nodes == [2, 3]
+        @test accepted.start_tick == start_tick && accepted.stop_tick == 24
+        @test accepted.sleep_seconds == twin.sleep_seconds[] ==
+            something(sleep_seconds, previous_sleep)
+        @test request(scenario * "&sleep_seconds=50").status == 409
+        @test twin.sleep_seconds[] == accepted.sleep_seconds
+        @test request("/api/nodes/2/start?start_tick=4&stop_tick=8").status == 409
+        AspenNetTwin.run(state.sim, 10.5)
+        releases = collect((start_tick * 0.5 + 2):2:10)
+        @test all([row.t for row in measurement._log] == releases for measurement in state.measurements)
+        @test [row.t for row in state.hub._log] == releases .+ 0.25
+        @test AspenNetTwin.generation_attempts(state) == length(releases)
+        AspenNetTwin.advance!(twin)
+        @test twin.state[] !== state && AspenNetTwin.now(twin.state[].sim) == 0
+        @test twin.sleep_seconds[] == accepted.sleep_seconds
+        @test isempty(twin.state[].scheduled_periods)
+        @test all(isempty(measurement._log) for measurement in twin.state[].measurements)
+        @test isempty(twin.state[].hub._log)
+    end
+    # Reset leaves sources idle; a request too late to start changes nothing.
+    AspenNetTwin.run(twin.state[].sim, 10.5)
+    @test request(scenario * "&sleep_seconds=50").status == 409
+    @test twin.sleep_seconds[] == 0
+    @test all(iszero, values(twin.state[].last_stop))
+    @test all(isempty(measurement._log) for measurement in twin.state[].measurements)
+    @test isempty(twin.state[].hub._log)
+
+    # Nonbinary periods can round time / period above an exact boundary.
+    config[:protocol][:tick_duration] = 0.1
+    config[:simulation][:reset_time] = 1.5
+    twin = AspenNetTwin.prepare_twin(config)
+    AspenNetTwin.configure_api(twin)
+    boundary = 3 * (0.1 * 4)
+    AspenNetTwin.run(twin.state[].sim, boundary)
+    response = request(scenario)
+    @test response.status == 202
+    @test JSON3.read(String(response.body)).start_tick == 12
+    AspenNetTwin.advance!(twin)
+    AspenNetTwin.run(twin.state[].sim, nextfloat(boundary))
+    @test request(scenario).status == 409 # The next boundary is after reset.
+end
+
 @testset "Examples - ASPEN-Net digital twin" begin
     Random.seed!(42)
     withenv("QS_ASPEN_NET_PORT" => "0", "QS_ASPEN_NET_PROXY" => "",
@@ -140,7 +221,8 @@ end
             @test Set(keys(schema.paths["/twin/api/nodes/{node}/start"].post.responses)) ==
                 Set([Symbol("202"), Symbol("400"), Symbol("409"), Symbol("500")])
             for (path, method) in (("/api/status", :get), ("/api/simulation/status", :get), ("/api/simulation/config", :get), ("/api/nodes/{node}/start", :post),
-                    ("/api/nodes/{node}/log", :get), ("/api/hub/log", :get), ("/api/simulation/pacing", :post))
+                    ("/api/nodes/{node}/log", :get), ("/api/hub/log", :get), ("/api/simulation/pacing", :post),
+                    ("/api/simulation/run_scenario", :post))
                 documentation = getproperty(schema.paths["/twin" * path], method)
                 @test !isempty(documentation.summary) && !isempty(documentation.description)
             end
@@ -151,6 +233,11 @@ end
             @test schema.paths["/twin/api/simulation/status"].get.tags == ["Simulation controls"]
             @test schema.paths["/twin/api/simulation/config"].get.tags == ["Simulation controls"]
             @test haskey(pacing_docs.responses, "400")
+            scenario_docs = schema.paths["/twin/api/simulation/run_scenario"].post
+            @test scenario_docs.tags == ["Simulation controls"]
+            @test Dict(p.name => p.required for p in scenario_docs.parameters) ==
+                Dict("scenario" => true, "sleep_seconds" => false)
+            @test Set(keys(scenario_docs.responses)) == Set(Symbol.(("202", "400", "409", "500")))
             # Render the real Bonito handler, then observe the simulation through the HTTP API.
             ui_port = getsockname(servers.server.server.listener.server)[2]
             @test HTTP.get("http://127.0.0.1:$ui_port/").status == 200

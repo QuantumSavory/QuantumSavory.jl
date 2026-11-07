@@ -109,6 +109,7 @@ at `/docs`, with the OpenAPI schema at `/docs/schema`.
 | `GET /api/simulation/status` | Current wall-clock pacing, `sleep_seconds` |
 | `GET /api/simulation/config` | JSON configuration used for initial setup and resets |
 | `POST /api/simulation/pacing?sleep_seconds=...` | Set pacing and return the current `sleep_seconds` |
+| `POST /api/simulation/run_scenario?scenario=run_samples_until_reset[&sleep_seconds=...]` | Schedule both sources until reset, optionally setting pacing |
 | `POST /api/nodes/{node}/start?start_tick=...&stop_tick=...` | Schedule a configured source node (`1` or `3` by default) |
 | `GET /api/nodes/{node}/log` | Copy of a configured source node's local measurement history |
 | `GET /api/hub/log` | Copy of the hub's success/failure history |
@@ -119,6 +120,22 @@ reused on reset. `simulation.initial_sleep_seconds` sets initial pacing; current
 pacing is reported by `/api/simulation/status` and persists across resets.
 For custom startup in Julia, edit the symbol-keyed dictionary returned by
 `AspenNetTwin.default_config()` and pass it to `AspenNetTwin.prepare_twin(config)`.
+
+To collect samples with one request, run the `run_samples_until_reset` scenario:
+
+```bash
+curl -fsS -X POST 'http://127.0.0.1:8081/api/simulation/run_scenario?scenario=run_samples_until_reset&sleep_seconds=0.0001'
+```
+
+This schedules both configured end nodes together at the next buffer boundary
+(immediately if the clock is already aligned) and runs until reset. The first
+release follows one full buffer period; reset discards any unfinished final buffer.
+HTTP 202 returns the scenario, source `nodes`, `start_tick`, `stop_tick`, and current
+`sleep_seconds`. Omit `sleep_seconds` to keep current pacing, or use zero to remove
+the deliberate delay. Pacing persists across resets; the scenario does not restart.
+Unknown scenarios and invalid pacing return HTTP 400. Overlapping accepted work,
+or no remaining start boundary before reset, returns HTTP 409. A rejected request
+changes neither source schedules nor pacing.
 
 The `time` field represents the modeled shared hardware clock used to schedule
 working intervals; a hardware deployment needs the same clock reading.

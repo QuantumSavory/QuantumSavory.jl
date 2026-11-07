@@ -39,6 +39,11 @@ wall-clock pacing. The dashboard labels these snapshots Hardware and Simulation.
 `/api/simulation/config` returns the twin's startup configuration, including
 overrides, reused on reset. Its initial pacing setting is separate from current
 pacing.
+`/api/simulation/run_scenario` accepts `scenario=run_samples_until_reset` and
+optional `sleep_seconds`. It schedules both configured sources at the next buffer
+boundary through reset, with schedule and pacing changes under the same guard.
+Overlapping work is rejected before either source or pacing changes; reset clears
+the scenario's work.
 Dashboard detector-click count heatmaps join the three measurement histories by
 buffer period and omit periods missing any of those records. Analysis titles count
 each completed buffer period with at least one scheduled source, including periods
