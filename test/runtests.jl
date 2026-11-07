@@ -48,7 +48,9 @@ end
 function test_worker(name)
     project = test_project(name)
     project === nothing && return nothing
-    return addworker(; init_worker_code = project_init_code(project))
+    # The digital twin needs a simulation worker pool and one UI/HTTP thread.
+    exeflags = name == "examples/aspen_net_digital_twin_tests" ? ["--threads=2,1"] : String[]
+    return addworker(; exeflags, init_worker_code = project_init_code(project))
 end
 
 if jet_only
