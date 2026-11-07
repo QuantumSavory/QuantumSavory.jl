@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Revalidate areweentangledyet landing-page assets after deployment and unify section spacing.
 - Add an ASPEN-Net Digital Twins section and two-node dashboard/API deployment
   at `/aspennet/twonodes/` on areweentangledyet.
 - Give AspenNet digital twin heatmaps independent color scales and live cell counts.

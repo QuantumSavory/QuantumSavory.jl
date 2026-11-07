@@ -104,6 +104,10 @@ the generated Caddy configurations before it starts a child process. Internal
 port 7999 is reserved for browser warmup and cannot be assigned to an
 application.
 
+Static pages, scripts, styles, and the catalog use `Cache-Control: no-cache`,
+so browsers revalidate them after deployment. Versioned script and stylesheet
+URLs also bypass copies cached before this policy was added.
+
 After a catalog or source change, push the new commit, rebuild that revision,
 and replace the running unit:
 

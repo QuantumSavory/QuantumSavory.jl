@@ -106,7 +106,7 @@ function demoCard(demo) {
 async function loadCatalog() {
   const grids = [document.querySelector("#demo-grid"), document.querySelector("#aspennet-grid")];
   try {
-    const response = await fetch("./demos.json", { headers: { Accept: "application/json" } });
+    const response = await fetch("./demos.json", { cache: "no-cache", headers: { Accept: "application/json" } });
     if (!response.ok) {
       throw new Error(`Catalog request returned HTTP ${response.status}.`);
     }

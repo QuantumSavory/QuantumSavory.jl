@@ -140,14 +140,22 @@ h1 span {
 }
 
 main {
+  display: grid;
   max-width: 74rem;
   margin: 0 auto;
   padding: 3.5rem 1.5rem 5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3.75rem;
+}
+
+main h2 {
+  margin-bottom: 0;
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  line-height: 1.15;
 }
 
 .gui-callout {
   display: grid;
-  margin-bottom: 3.75rem;
   padding: clamp(1.5rem, 4vw, 2.5rem);
   grid-template-columns: minmax(14rem, 0.8fr) minmax(0, 1.2fr);
   gap: clamp(1.5rem, 5vw, 4rem);
@@ -158,12 +166,6 @@ main {
     radial-gradient(circle at 100% 0%, rgb(148 89 164 / 10%), transparent 24rem),
     var(--paper);
   box-shadow: var(--shadow);
-}
-
-.gui-callout h2 {
-  margin-bottom: 0;
-  font-size: clamp(1.7rem, 4vw, 2.4rem);
-  line-height: 1.15;
 }
 
 .gui-callout-copy p {
@@ -181,16 +183,6 @@ main {
   align-items: end;
   justify-content: space-between;
   gap: 2rem;
-}
-
-main > section + section {
-  margin-top: 3.75rem;
-}
-
-.section-heading h2 {
-  margin-bottom: 0;
-  font-size: clamp(1.7rem, 4vw, 2.4rem);
-  line-height: 1.15;
 }
 
 .section-heading > p {

@@ -133,6 +133,6 @@
     "entry_path": "/aspennet/twonodes/",
     "health_path": "/",
     "docs_url": "https://github.com/QuantumSavory/QuantumSavory.jl/blob/b098a2a4d8e97061fd1d48b26d56c6ea76d7ff29/examples/aspen_net/README.md#digital-twin",
-    "source_url": "https://github.com/QuantumSavory/QuantumSavory.jl/blob/b098a2a4d8e97061fd1d48b26d56c6ea76d7ff29/examples/aspen_net/2_digital_twin.jl"
+    "source_url": "https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/aspen_net"
   }
 ]

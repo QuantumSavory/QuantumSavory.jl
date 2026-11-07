@@ -258,6 +258,7 @@ generate_caddyfile() {
             fi
         done < <(jq -c '.[]' "$CATALOG")
         printf '\thandle {\n'
+        printf '\t\theader Cache-Control "no-cache"\n'
         printf '\t\troot * "%s"\n' "$PUBLIC_DIR"
         printf '\t\tfile_server\n'
         printf '\t}\n'

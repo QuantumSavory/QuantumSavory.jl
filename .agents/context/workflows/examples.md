@@ -43,6 +43,7 @@ and every checked-in example must remain executable across compatible versions.
 The `areweentangledyet` site uses `public/demos.json` for display and launch.
 Its `aspennet/twonodes` entry runs the dashboard and API in one process; the
 optional `api_port` adds Oxygen routing and a second startup health check.
+Static site assets and catalog requests must revalidate to avoid mixing deployment versions.
 
 ## Anchors
 
