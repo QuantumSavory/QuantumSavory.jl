@@ -1,4 +1,14 @@
-"""Experimental clocked, lossless ASPEN-Net model. This module is not public API."""
+"""
+Experimental clocked, lossless ASPEN-Net model with Fock levels `0:4`; not public API.
+
+For stored Bell pairs, start both sources together and omit `LocalMeasurement`.
+The defaults (`heralding_probability=0.1`, `repetitions=100`, `reflectivity=0.01`)
+make each buffer almost certain to supply one photon and weakly couple it to the hub.
+Only the first hub detector heralds success, fixing the Bell phase to
+`(|10⟩ + |01⟩)/√2`. The ideal heralded Bell fidelity is about 99.5%, not unity:
+thresholded two-photon events still falsely herald vacuum. Accepting both detector
+ports would require communicating the port and correcting the relative phase.
+"""
 module AspenNet
 
 using QuantumSavory
@@ -9,6 +19,9 @@ import QuantumSavory.ProtocolZoo: _protocol_nodes, protocol_catalog_metadata
 using ConcurrentSim
 using ResumableFunctions
 using DocStringExtensions
+
+const _repr = QuantumOpticsRepr(cutoff=4)
+_fock_basis() = [express(FockState(n), _repr) for n in 0:_repr.cutoff]
 
 """Work over `(start_tick, stop_tick] * tick_duration`. Both tick indices must be
 nonnegative multiples of `repetitions`. Send to the source's message buffer before
@@ -28,7 +41,7 @@ Tag(t::TimeTag) = Tag(TimeTag, t.period)
 Base.show(io::IO, t::TimeTag) = print(io, "AspenNet period $(t.period)")
 
 """Hub threshold-detector result for one buffer period, sent to both sources.
-`success` is a click, including indistinguishable two-photon false heralds."""
+`success` is a click only at the first output, including two-photon false heralds."""
 struct Confirmation <: AbstractTag
     period::Int
     success::Bool
@@ -60,8 +73,8 @@ availability `1-(1-heralding_probability)^repetitions`; one draw per buffer is
 equivalent to keeping only the first success on the shared tick grid. Releases
 occur at global multiples of `repetitions * tick_duration`.
 
-The precomputed state is `sqrt(1-r)|10⟩ + sqrt(r)|01⟩`, local mode first, with
-vacuum/one photon encoded as `Z1`/`Z2`. Use `QuantumOpticsRepr()` registers.
+The precomputed Fock state is `sqrt(1-r)|10⟩ + sqrt(r)|01⟩`, local mode first.
+Use `Qumode()` slots with `QuantumOpticsRepr(cutoff=4)`.
 Memory slots and the outgoing quantum channel are dedicated to this source.
 If all configured memories are occupied or locked, discard that period's photon.
 Buffer loss, dark counts, and phase noise are outside this initial model.
@@ -82,11 +95,11 @@ $FIELDS
     "shared time between generation attempts"
     tick_duration::Float64 = 1.0
     "generation attempts per buffer period"
-    repetitions::Int = 1
+    repetitions::Int = 100
     "single-photon heralding probability per tick"
     heralding_probability::Float64 = 0.1
     "beamsplitter probability of sending the photon toward the hub"
-    reflectivity::Float64 = 0.1
+    reflectivity::Float64 = 0.01
 
     function Source(sim, net, node, hub, memories, tick_duration, repetitions, heralding_probability, reflectivity)
         sim === get_time_tracker(net) || throw(ArgumentError("simulation must belong to the network"))
@@ -106,7 +119,8 @@ $TYPEDEF
 
 Immediately measure each occupied slot marked with [`TimeTag`](@ref) in the number
 basis, remove the tag, and free the slot. `_log` stores measurement time, release
-period, memory slot, and photon number (0 or 1). No entangled pair is retained.
+period, memory slot, and `number` (0 for vacuum, 1 for any nonvacuum outcome).
+Photon counts are discarded after this thresholding. No entangled pair is retained.
 
 $FIELDS
 """
@@ -133,8 +147,10 @@ $TYPEDEF
 
 Measure arriving modes at each global buffer deadline plus link delay.
 All four directed quantum/classical links must have the same constant delay.
-Missing modes are vacuum. A balanced which-path eraser followed by ideal threshold
-detectors accepts one photon or two indistinguishable, bunched photons. Store
+Missing modes are vacuum. A balanced beamsplitter erases the input path. Measure
+both outputs in the Fock basis, then distinguish vacuum from any nonvacuum outcome.
+Accept a click at the first output only, fixing the retained Bell phase; bunched
+two-photon events can still give false heralds. Store
 `(t, period, success)` in `_log` and send [`Confirmation`](@ref) over both classical
 links. Periods without either input are skipped without a record or confirmation;
 an arriving vacuum mode still produces a measurement result. Confirmations remain
@@ -159,7 +175,7 @@ $FIELDS
     "shared time between generation attempts"
     tick_duration::Float64 = 1.0
     "generation attempts per buffer period"
-    repetitions::Int = 1
+    repetitions::Int = 100
     "internal threshold-detection history; storage is not a public interface"
     _log::Vector{@NamedTuple{t::Float64, period::Int, success::Bool}} = []
 
@@ -185,8 +201,9 @@ protocol_catalog_metadata(::Type{Hub}) = (attachment=:node, attachment_fields=(n
 @resumable function (p::Source)()
     period_duration = _period(p.tick_duration, p.repetitions)
     available = -expm1(p.repetitions * log1p(-p.heralding_probability))
-    state = sqrt(1-p.reflectivity)*(Z2⊗Z1) + sqrt(p.reflectivity)*(Z1⊗Z2)
-    flying = Register(1, QuantumOpticsRepr())
+    # TODO: model source brightness, including small higher-photon amplitudes.
+    state = express(sqrt(1-p.reflectivity)*(F1⊗F0) + sqrt(p.reflectivity)*(F0⊗F1), _repr)
+    flying = Register([Qumode()], [_repr])
     reg = p.net[p.node]
     while true
         msg = @yield querydelete_wait!(messagebuffer(p.net, p.node), Start, ❓, ❓)
@@ -220,6 +237,7 @@ end
 
 @resumable function (p::LocalMeasurement)()
     reg = p.net[p.node]
+    basis = _fock_basis()
     while true
         match = @yield query_wait(reg, TimeTag, ❓; assigned=true, locked=false)
         slot = match.slot
@@ -227,7 +245,7 @@ end
         match = query(slot, TimeTag, ❓; assigned=true)
         if !isnothing(match)
             period = match.tag[2]
-            number = project_traceout!(slot, (Z1, Z2), (0, 1); time=now(p.sim))
+            number = Int(project_traceout!(slot, basis; time=now(p.sim)) != 1)
             untag!(slot, match.id)
             push!(p._log, (t=now(p.sim), period=period, slot=slot.idx, number=number))
             @debug "Measured AspenNet memory" _group=LOG_GROUPS.protocol event=:number_measured protocol_log_context(p)... period slot=slot.idx number
@@ -241,6 +259,8 @@ end
     delay = _delay(p.net, p.sources[1], p.node)
     period = max(1, floor(Int, (now(p.sim)-delay)/duration)+1)
     a, b = p.net[p.node][p.slots[1]], p.net[p.node][p.slots[2]]
+    basis = _fock_basis()
+    beamsplitter = express(BeamSplitterOp(1/2), _repr)
     while true
         # Lower priority lets all same-time releases and channel arrivals finish.
         @yield timeout(p.sim, period*duration+delay-now(p.sim); priority=-1)
@@ -253,15 +273,13 @@ end
             if isready(qc.queue.store)
                 @yield take!(qc, slot)
             else
-                initialize!(slot, Z1; time=now(p.sim))
+                initialize!(slot, basis[1]; time=now(p.sim))
             end
         end
-        # Effective threshold instrument: erase path in the one-photon sector;
-        # two indistinguishable photons bunch and also produce one detector click.
-        apply!((a, b), CNOT; time=now(p.sim))
-        odd = project_traceout!(b, (Z1, Z2)) == 2
-        outcome = project_traceout!(a, odd ? (X1, X2) : (Z1, Z2))
-        success = odd || outcome == 2
+        apply!((a, b), beamsplitter; time=now(p.sim))
+        first_click = project_traceout!(a, basis) != 1
+        second_click = project_traceout!(b, basis) != 1
+        success = first_click && !second_click
         push!(p._log, (t=now(p.sim), period=period, success=success))
         for source in p.sources
             put!(channel(p.net, p.node=>source), Tag(Confirmation(period, success)))

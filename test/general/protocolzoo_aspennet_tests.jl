@@ -4,7 +4,7 @@ using QuantumSavory.ProtocolZoo: protocol_log_context, available_protocol_types
 using QuantumSavory.ProtocolZoo.AspenNet: Source, LocalMeasurement, Hub, Start, TimeTag, Confirmation
 
 function aspen_setup(; probability=1.0, reflectivity=0.1, delay=0.25, tick=0.5, repetitions=2)
-    net = RegisterNet(path_graph(3), [Register(2, QuantumOpticsRepr()) for _ in 1:3];
+    net = RegisterNet(path_graph(3), [Register(fill(Qumode(), 2), fill(QuantumOpticsRepr(cutoff=4), 2)) for _ in 1:3];
         classical_delay=delay, quantum_delay=delay)
     sources = [Source(net, node, 2; memories=[1, 2], tick_duration=tick, repetitions,
         heralding_probability=probability, reflectivity) for node in (1, 3)]
@@ -26,7 +26,7 @@ end
         run(sim, 4+2delay+0.01)
         @test all(log -> log.t == log.period+delay, hub._log)
         @test getproperty.(hub._log, :period) == (p == 0 ? Int[] : 1:4)
-        @test getproperty.(hub._log, :success) == fill(r == 1, p == 0 ? 0 : 4)
+        r == 0 && @test all(!log.success for log in hub._log)
         for measurement in measurements
             @test length(measurement._log) == (p == 0 ? 0 : 4)
             @test all(log -> log.t == log.period && log.number == 1-r, measurement._log)
@@ -54,7 +54,7 @@ end
         for log in hub._log
             local_results = [result for m in measurements for result in m._log if result.period == log.period]
             remote_photons = sum((1-result.number for result in local_results); init=0)
-            @test log.success == (remote_photons > 0)
+            @test !log.success || remote_photons > 0
         end
         @test all(m -> 120 < length(m._log) < 240, measurements)
         @test any(log -> log.success, hub._log) && any(log -> !log.success, hub._log)
@@ -71,10 +71,10 @@ end
             @test all(node -> isnothing(query(messagebuffer(net, node), Confirmation, ❓, ❓)), (1, 3))
             run(sim, 6.6)
             @test getproperty.(hub._log, :period) == [3, 5]
-            @test getproperty.(hub._log, :success) == fill(reflectivity == 1, 2)
+            reflectivity == 0 && @test all(!log.success for log in hub._log)
             for node in (1, 3)
-                for period in (3, 5)
-                    @test querydelete!(messagebuffer(net, node), Confirmation, period, Int(reflectivity)) !== nothing
+                for log in hub._log
+                    @test querydelete!(messagebuffer(net, node), Confirmation, log.period, Int(log.success)) !== nothing
                 end
                 @test isnothing(query(messagebuffer(net, node), Confirmation, ❓, ❓))
             end
@@ -83,7 +83,7 @@ end
 
     @testset "Commands, memory selection, and classical arrival" begin
         (; net, sim, sources, measurements, hub) = aspen_setup(; reflectivity=1.0)
-        initialize!(net[1][1], Z2) # Unrelated occupied memory must be left alone.
+        initialize!(net[1][1], F1) # Unrelated occupied memory must be left alone.
         foreach(Process, [sources; measurements; [hub]])
         run(sim, 1.1)
         @test all(m -> isempty(m._log), measurements)
@@ -95,13 +95,13 @@ end
         @test only(measurements[1]._log).slot == 2
         @test only(measurements[1]._log).t == 3.0
         @test isempty(measurements[2]._log) # No command was sent to this source.
-        @test last(hub._log).success # A missing source input is vacuum.
+        @test only(hub._log).period == 3 # A missing source input is vacuum.
         @test isnothing(query(messagebuffer(net, 1), Confirmation, 3, ❓))
         run(sim, 4.6)
-        @test query(messagebuffer(net, 1), Confirmation, 3, 1) !== nothing
+        @test query(messagebuffer(net, 1), Confirmation, 3, Int(first(hub._log).success)) !== nothing
         @test getproperty.(measurements[1]._log, :period) == [3, 4]
         @test isassigned(net[1][1])
-        initialize!(net[1][2], Z2) # Full memories discard the next buffered photon.
+        initialize!(net[1][2], F1) # Full memories discard the next buffered photon.
         put!(messagebuffer(net, 1), Tag(Start(10, 12)))
         run(sim, 6.6)
         @test length(measurements[1]._log) == 2
