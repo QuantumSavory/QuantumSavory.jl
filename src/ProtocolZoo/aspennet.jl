@@ -2,12 +2,34 @@
 Experimental clocked, lossless ASPEN-Net model with Fock levels `0:4`; not public API.
 
 For stored Bell pairs, start both sources together and omit `LocalMeasurement`.
-The defaults (`heralding_probability=0.1`, `repetitions=100`, `reflectivity=0.01`)
-make each buffer almost certain to supply one photon and weakly couple it to the hub.
+With `heralding_probability=0.1` and `repetitions=100`, each buffer supplies one
+photon in more than 99.99% of periods. The examples use `reflectivity=0.1` for about
+9.5% heralding success per period and 94.7% Bell fidelity. The `Source` default,
+`reflectivity=0.01`, gives about 1% success and 99.5% fidelity. Higher reflectivity
+sends more photons to the hub, increasing success but also two-photon false heralds.
+This tradeoff makes the digital twin easier to explore at the cost of fidelity.
 Only the first hub detector heralds success, fixing the Bell phase to
-`(|10⟩ + |01⟩)/√2`. The ideal heralded Bell fidelity is about 99.5%, not unity:
-thresholded two-photon events still falsely herald vacuum. Accepting both detector
-ports would require communicating the port and correcting the relative phase.
+`(|10⟩ + |01⟩)/√2`; accepting both ports would require a phase correction.
+
+With one photon supplied by each source, the local Fock-basis results are below.
+Here `0` means vacuum and `1` means a click; the hub also thresholds photon counts.
+
+| Hub result | End-node clicks | Cause |
+|:---|:---|:---|
+| Success | `(1,0)` or `(0,1)` | One photon reaches the first hub port; one stays local. The good Bell component gives anticoincidence. |
+| Success | `(0,0)` | Both photons reach the hub and bunch at the first port. This false herald leaves local vacuum. |
+| Failure | `(1,1)` | Both photons stay local (coincidence); the hub sees vacuum. |
+| Failure | `(1,0)` or `(0,1)` | The hub photon exits the rejected second port. |
+| Failure | `(0,0)` | Both photons bunch at the rejected second port. |
+
+A successful herald with `(1,1)` is impossible in this model. If a source supplies
+no photon, its local record is absent, not zero; the other source can still trigger
+a herald without a Bell pair. With neither source supplying a photon, no event is logged.
+Local measurements consume the pair; anticoincidence alone does not prove entanglement.
+
+There is no fiber loss between nodes and hub, and source emissions have no
+higher-photon amplitudes. Two-photon arrivals from the two sources are included.
+TODO: include fiber loss and source brightness with higher-photon emissions.
 """
 module AspenNet
 

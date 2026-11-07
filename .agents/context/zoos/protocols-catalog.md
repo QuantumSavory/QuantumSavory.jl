@@ -31,6 +31,8 @@ and confirms only periods with an arriving mode, including an arriving vacuum mo
 periods with no arrivals are skipped. The example in
 [`examples/aspen_net/`](../../../examples/aspen_net/) records local and hub histories;
 the module is not public and has no documentation website entry.
+Both examples use reflectivity 0.1 for more frequent heralds at lower Bell fidelity;
+the module docstring explains the tradeoff and measurement outcomes.
 Its second example runs one shared simulation behind a Bonito/WGLMakie dashboard
 and an Oxygen API, with explicit startup and shutdown for its tasks and servers.
 `/api/status` exposes the modeled hardware's shared-clock time and settings;

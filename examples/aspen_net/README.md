@@ -10,7 +10,7 @@ A source keeps the first heralded
 photon in each buffer period, then releases it at the agreed time. Its unbalanced
 beam splitter distributes the photon between local memory and the quantum link.
 Each slot is a bosonic `Qumode` with a Fock cutoff of four photons.
-Here, `reflectivity=0.01` sends 1% of the photon probability to the hub. Quantum
+Both examples use `reflectivity=0.1`, sending 10% of the photon probability to the hub. Quantum
 and classical links have equal delays. With `heralding_probability=0.1` and
 `repetitions=100`, each source has a photon available in more than 99.99% of periods.
 
@@ -27,8 +27,10 @@ herald because the number-resolved outcomes are reduced to vacuum/nonvacuum.
 Compare the internal `_log` histories by `period`;
 local `t` is the release time and hub `t` includes the one-way delay. This example
 does not retain an entangled memory pair after local measurement. Omit the
-`LocalMeasurement` processes to retain the modes: the default source settings give
-approximately 99.5% fidelity with `(|10⟩ + |01⟩)/√2` after a successful herald.
+`LocalMeasurement` processes to retain the modes: these example settings give
+approximately 94.7% fidelity with `(|10⟩ + |01⟩)/√2` and 9.5% heralding success per
+period. Higher reflectivity gives more heralds but more two-photon false heralds.
+See the `AspenNet` module docstring for the measurement table and model limitations.
 
 The text displays summarize each history. With `CairoMakie` loaded,
 `display(MIME"image/png"(), hub)` renders the hub history as a plot.

@@ -12,7 +12,7 @@ default_config() = Dict(
     :network => Dict(:register_sizes => [2, 2, 2], :link_delay => 2.0),
     :protocol => Dict(:source_nodes => [1, 3], :hub_node => 2,
         :memories => [1, 2], :hub_slots => [1, 2], :tick_duration => 1.0,
-        :repetitions => 100, :heralding_probability => 0.1, :reflectivity => 0.01),
+        :repetitions => 100, :heralding_probability => 0.1, :reflectivity => 0.1),
     :simulation => Dict(:reset_time => 100000.0, :step_duration => 1.0,
         :initial_sleep_seconds => 0.1))
 

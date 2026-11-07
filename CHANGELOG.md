@@ -1,5 +1,10 @@
 # News
 
+## Unreleased
+
+- Increase AspenNet example reflectivity for more frequent heralds and document
+  the Bell-fidelity tradeoff and measurement outcomes.
+
 ## v0.8.1 - 2026-09-25
 
 - **(fix)** edge case missed wakeup in `onchange(::MessageBuffer)` 

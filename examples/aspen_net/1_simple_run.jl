@@ -15,7 +15,7 @@ tick_duration, repetitions = 1.0, 100
 stop_tick = 1000 * repetitions
 
 sources = [Source(net, node, 2; tick_duration, repetitions,
-    heralding_probability=0.1, reflectivity=0.01, memories=[1, 2]) for node in (1, 3)]
+    heralding_probability=0.1, reflectivity=0.1, memories=[1, 2]) for node in (1, 3)]
 measurements = [LocalMeasurement(net, node) for node in (1, 3)]
 hub = Hub(net, 2, (1, 3); tick_duration, repetitions)
 for protocol in (sources..., measurements..., hub)
