@@ -68,7 +68,7 @@ export
     AbstractBackground,
     onchange_tag, onchange,
     # networks.jl
-    RegisterNet, channel, qchannel, messagebuffer, dist_to_delay, network_builder,
+    RegisterNet, channel, qchannel, messagebuffer, channel_delay, dist_to_delay, network_builder,
     # logging.jl
     LOG_GROUPS, simulation_log_context,
     # initialize.jl
@@ -135,6 +135,7 @@ include("tags.jl")
 include("semaphore.jl")
 
 include("states_registers.jl")
+include("classicalchannel.jl")
 include("quantumchannel.jl")
 include("messagebuffer.jl")
 include("networks.jl")

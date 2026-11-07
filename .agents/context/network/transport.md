@@ -31,11 +31,25 @@ configured directional delays. Message buffers maintain their own tag indexes an
 arrival notifications. Selection follows insertion-order identifiers (FIFO), unlike
 the register query default of FILO.
 
+Direct classical and quantum channel handles expose `channel_delay`, `isready`,
+and `onchange`. Readiness excludes items in transit. Arrival notifications are
+non-consuming future edges, registered before the call returns; recheck readiness
+after waking. Classical channels are thin package-owned wrappers around
+ConcurrentSim delay queues. Network message buffers already consume them, so
+protocols should observe/query the buffer rather than compete for channel receipt.
+
 Quantum transport is direct-edge only. It is keyed by source/destination channel and
 does not inherit classical multi-hop forwarding. A standalone `QuantumChannel` owns a
 temporary one-slot register with the channel's configured background: `put!` swaps
 ownership into that slot at channel time and applies in-transit background evolution to
 the modeled arrival time before queueing.
+
+A quantum state left unreceived at its arrival time emits a network warning.
+The diagnostic runs at reserved priority `typemin(Int)` so same-time receiver
+work at higher priorities can finish first. It checks the private transmission
+register, which a successful receive empties; observing an arrival is not receipt.
+Late receipt remains possible; protocols should receive into a register to model
+storage after arrival.
 
 The temporary register uses the channel trait and that trait's default representation,
 but `swap!` moves state ownership without reconciling the source, channel, or

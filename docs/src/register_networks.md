@@ -120,6 +120,73 @@ uses its configured delay. Quantum channels are direct-edge channels. Read
 [Classical Messaging and Buffers](@ref classical-messaging) for channel and
 message-buffer use.
 
+## [Inspect Channels and Wait for Arrivals](@id channel-arrivals)
+
+Direct classical and quantum channels use the same inspection and notification
+API:
+
+| Operation | Result |
+|:--|:--|
+| `channel_delay(ch)` | Configured propagation delay for this direction |
+| `isready(ch)` | Whether an arrived item is available to receive now |
+| `onchange(ch)` | A yieldable notification of a future arrival |
+
+For example, `channel_delay(qchannel(net, 1 => 2))` reads a quantum link's
+delay. Use `channel(net, 1 => 2)` for its classical counterpart. These operations
+apply to direct links; a forwarding handle does not represent one link delay or
+receive queue. Items still in transit do not make a channel ready.
+
+To receive a quantum state into an empty slot, use the existing blocking
+operation inside a resumable process:
+
+```julia
+qc = qchannel(net, 1 => 2)
+@yield take!(qc, net[2][1])
+```
+
+When a protocol must inspect readiness before choosing its next action, query
+before waiting and check again after waking:
+
+```julia
+while !isready(qc)
+    @yield onchange(qc)
+end
+@yield take!(qc, net[2][1])
+```
+
+`onchange` registers the wait before returning. An arrival wakes all current
+waiters; it does not consume or reserve an item. It observes future arrivals,
+so an already-ready channel still needs the initial `isready` check. Compose
+notifications with `onchange(qc1) | onchange(qc2)` and recheck both channels
+after waking. A notification for one channel does not establish that all other
+arrivals at the same simulation time have completed.
+
+This is the same check-before-wait pattern used by tag queries and message
+buffers. Message buffers also retain notifications from unattended arrivals;
+those notifications do not establish whether a particular message is still
+present. For classical protocol traffic, use `querydelete_wait!` on the
+destination's `messagebuffer`: the network's built-in receiver continuously
+drains each classical channel into that buffer, so channel readiness is not
+buffer readiness.
+
+A quantum state must be received at its arrival time. The channel warns if a
+state remains unreceived after the receiving processes have had a chance to
+run at that simulation time. `onchange` followed by `take!` at the same time is
+valid; a notification alone does not count as receipt. The diagnostic reserves
+event priority `typemin(Int)`. Schedule delivery and receiver work at priorities
+greater than `typemin(Int)`, including when using a lower-priority timeout to
+collect simultaneous arrivals.
+
+The low-level channel methods are documented below. Prefer message buffers for
+classical reception as described above.
+
+```@docs
+Base.isready(::QuantumSavory.QuantumChannel)
+Base.isready(::QuantumSavory.ClassicalChannel)
+Base.put!(::QuantumSavory.ClassicalChannel, ::Any)
+Base.take!(::QuantumSavory.ClassicalChannel)
+```
+
 ## Choose a Delivery Model
 
 The graph describes which nodes are directly connected. It does not select a

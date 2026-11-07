@@ -59,15 +59,15 @@ end
     @test all(register -> get_time_tracker(register) === sim, network[:])
     for edge in edges(graph)
         for (src, dst) in ((edge.src, edge.dst), (edge.dst, edge.src))
-            @test channel(network, src => dst).delay == delays[edge]
-            @test qchannel(network, src => dst).queue.delay == delays[edge]
+            @test channel_delay(channel(network, src => dst)) == delays[edge]
+            @test channel_delay(qchannel(network, src => dst)) == delays[edge]
         end
     end
     graph32 = SimpleGraph{Int32}(graph)
     delays32 = Dict(edge => big"0.5" for edge in edges(graph32))
     result32 = network_builder(graph32, delays32, (1,))
     @test result32.network.graph == graph
-    @test channel(result32.network, 1 => 2).delay == 0.5
+    @test channel_delay(channel(result32.network, 1 => 2)) == 0.5
 
     @test_throws ArgumentError network_builder(SimpleGraph(0), Dict(), (1,))
     @test_throws ArgumentError network_builder(graph, Dict(Edge(1, 2) => 0.1), (1,))

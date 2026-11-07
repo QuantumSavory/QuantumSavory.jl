@@ -149,7 +149,7 @@ function put_and_unlock_waiters(mb::MessageBuffer, src, tag)
     end
 end
 
-function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int, DelayQueue{T}}}}) where {T}
+function MessageBuffer(net, node::Int, qs::Vector{NamedTuple{(:src,:channel), Tuple{Int,C}}}) where {T,C<:Union{DelayQueue{T},ClassicalChannel{T}}}
     sim = get_time_tracker(net)
     mb = MessageBuffer{T}(
         sim, net, node,
@@ -181,12 +181,15 @@ end
     onchange
 
 Return a `@yield`-able object for waiting for tag changes in a
-[`Register`](@ref) or arrivals in a [`MessageBuffer`](@ref).
+[`Register`](@ref) or arrivals in a [`MessageBuffer`](@ref) or channel.
 
 The call takes effect before returning: it registers a wait for the next change
 or consumes one queued buffer notification.
 
-Registers report future changes only.
+Registers and channels report future changes only. Channel notifications happen
+after the propagation delay. Check `isready(ch)` before waiting and again after
+waking; a notification does not reserve an item. Prefer message buffers for
+classical reception, since they already consume the network's incoming channels.
 
 Message buffers also save one notification per
 arrival when no wait is registered. Each saved notification completes one later

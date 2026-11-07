@@ -134,6 +134,7 @@ The most important wait sources are:
 - `timeout(sim, delay)` for waiting a fixed amount of simulated time;
 - `onchange(register)` or `onchange(register, Tag)` for register changes;
 - `onchange(messagebuffer)` for incoming classical messages;
+- `onchange(channel)` for future channel arrivals;
 - `query_wait(...)` for wait-until-query-succeeds;
 - `querydelete_wait!(...)` for wait-until-query-succeeds-and-consume;
 - `lock(regref)` for resource acquisition.
@@ -142,6 +143,9 @@ The `query_wait` helpers are especially useful because they combine the common
 "wait for change, query again, repeat" pattern into one call. `query_wait` on its own does not lock
 a register or its tags -- if the protocol will consume a tag, use
 `querydelete_wait!` or re-query after acquiring locks.
+
+For channel readiness, direct receipt, and quantum arrival timing, see
+[Inspect Channels and Wait for Arrivals](@ref channel-arrivals).
 
 ## Condition Combinators
 
