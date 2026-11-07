@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add an ASPEN-Net Digital Twins section and two-node dashboard/API deployment
+  at `/aspennet/twonodes/` on areweentangledyet.
 - Give AspenNet digital twin heatmaps independent color scales and live cell counts.
 - Increase AspenNet example reflectivity for more frequent heralds and document
   the Bell-fidelity tradeoff and measurement outcomes.

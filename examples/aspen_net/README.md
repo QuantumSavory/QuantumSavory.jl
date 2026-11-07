@@ -106,6 +106,11 @@ HTTP and UI work. Stop Julia with Ctrl-C to stop the simulation and both servers
 The Oxygen API runs at `http://127.0.0.1:8081`; its interactive documentation is
 at `/docs`, with the OpenAPI schema at `/docs/schema`.
 
+In the [areweentangledyet deployment](../areweentangledyet/README.md), the
+dashboard is at `/aspennet/twonodes/`. Prefix the API paths below with
+`/aspennet/twonodes`; interactive API documentation is at
+`/aspennet/twonodes/docs`.
+
 | Request | Result |
 | --- | --- |
 | `GET /api/status` | Modeled hardware `time`, `tick_duration`, and `repetitions` |

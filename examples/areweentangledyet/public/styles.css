@@ -183,6 +183,10 @@ main {
   gap: 2rem;
 }
 
+main > section + section {
+  margin-top: 3.75rem;
+}
+
 .section-heading h2 {
   margin-bottom: 0;
   font-size: clamp(1.7rem, 4vw, 2.4rem);

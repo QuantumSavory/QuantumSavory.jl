@@ -118,5 +118,21 @@
     "health_path": "/states_rest_server/api/health",
     "docs_url": "https://qs.quantumsavory.org/stable/API_StatesZoo/",
     "source_url": "https://github.com/QuantumSavory/QuantumSavory.jl/tree/master/examples/states_rest_server"
+  },
+  {
+    "slug": "aspennet/twonodes",
+    "title": "Two-node entanglement distribution",
+    "description": "Follow two synchronized photon sources and a central heralding hub. Use the API to schedule generation and inspect detector histories alongside the live network dashboard.",
+    "runtime": "bonito",
+    "project": "examples",
+    "script": "examples/aspen_net/2_digital_twin.jl",
+    "port": 8897,
+    "api_port": 8081,
+    "threads": 2,
+    "env_prefix": "QS_ASPEN_NET",
+    "entry_path": "/aspennet/twonodes/",
+    "health_path": "/",
+    "docs_url": "https://github.com/QuantumSavory/QuantumSavory.jl/blob/b098a2a4d8e97061fd1d48b26d56c6ea76d7ff29/examples/aspen_net/README.md#digital-twin",
+    "source_url": "https://github.com/QuantumSavory/QuantumSavory.jl/blob/b098a2a4d8e97061fd1d48b26d56c6ea76d7ff29/examples/aspen_net/2_digital_twin.jl"
   }
 ]

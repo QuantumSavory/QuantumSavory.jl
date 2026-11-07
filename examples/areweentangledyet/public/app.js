@@ -93,15 +93,18 @@ function demoCard(demo) {
   links.append(
     newTabLink("Launch", checkedUrl(demo.entry_path, ["http:", "https:"], window.location.origin), demo.title, "button primary"),
     newTabLink("Documentation", checkedUrl(demo.docs_url, ["https:"]), demo.title, "button secondary"),
-    newTabLink("Source", checkedUrl(demo.source_url, ["https:"]), demo.title, "text-link"),
   );
+  if (demo.api_port) {
+    links.append(newTabLink("API", checkedUrl(`${demo.entry_path}docs`, ["http:", "https:"], window.location.origin), demo.title, "button secondary"));
+  }
+  links.append(newTabLink("Source", checkedUrl(demo.source_url, ["https:"]), demo.title, "text-link"));
   card.append(links);
 
   return card;
 }
 
 async function loadCatalog() {
-  const grid = document.querySelector("#demo-grid");
+  const grids = [document.querySelector("#demo-grid"), document.querySelector("#aspennet-grid")];
   try {
     const response = await fetch("./demos.json", { headers: { Accept: "application/json" } });
     if (!response.ok) {
@@ -112,16 +115,22 @@ async function loadCatalog() {
       throw new Error("The application catalog is empty.");
     }
     demos.forEach(validateDemo);
-    grid.replaceChildren(...demos.map(demoCard));
-    grid.setAttribute("aria-busy", "false");
+    grids.forEach((grid) => grid.replaceChildren());
+    for (const demo of demos) {
+      const grid = grids[demo.slug.startsWith("aspennet/") ? 1 : 0];
+      grid.append(demoCard(demo));
+    }
   } catch (error) {
-    const message = document.createElement("p");
-    message.className = "catalog-status error";
-    message.setAttribute("role", "alert");
-    message.textContent = "The application catalog could not be loaded. Please try again later.";
-    grid.replaceChildren(message);
-    grid.setAttribute("aria-busy", "false");
+    for (const grid of grids) {
+      const message = document.createElement("p");
+      message.className = "catalog-status error";
+      message.setAttribute("role", "alert");
+      message.textContent = "The application catalog could not be loaded. Please try again later.";
+      grid.replaceChildren(message);
+    }
     console.error(error);
+  } finally {
+    grids.forEach((grid) => grid.setAttribute("aria-busy", "false"));
   }
 }
 
