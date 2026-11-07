@@ -263,9 +263,9 @@ function dashboard(twin, session)
         summary = Observable(event_summary(state.measurements[1]._log, state.measurements[2]._log, state.hub._log))
         attempts = Observable(generation_attempts(state))
         outcomes = GridLayout(fig[3, 1:5])
-        colorrange = lift(summary -> (0, max(1, maximum(summary.success), maximum(summary.failure))), summary)
         for (column, outcome) in enumerate((:success, :failure))
             counts = lift(summary -> getproperty(summary, outcome), summary)
+            colorrange = lift(counts -> (0, max(1, maximum(counts))), counts)
             title = lift(counts, attempts) do counts, total
                 "Hub $outcome ($(sum(counts)) events)\nout of $total total generation attempts"
             end
@@ -274,6 +274,9 @@ function dashboard(twin, session)
                 ylabel="Node $node3 detector click", xticks=0:1, yticks=0:1)
             heatmap = heatmap!(axis, 0:1, 0:1, counts; colorrange)
             Colorbar(panel[1, 2], heatmap; label="Events")
+            text!(axis, Point2f[(x, y) for y in 0:1 for x in 0:1];
+                text=lift(counts -> string.(vec(counts)), counts), align=(:center, :center),
+                color=:white, strokecolor=:black, strokewidth=1)
             limits!(axis, -0.5, 1.5, -0.5, 1.5)
         end
         counts_title = lift(total -> "Coincidence counts\nout of $total total generation attempts", attempts)

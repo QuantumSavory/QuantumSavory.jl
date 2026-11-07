@@ -81,6 +81,7 @@ An analysis row counts the local detector-click pairs at nodes 1 and 3 in
 separate 2×2 heatmaps for hub successes and failures. Records are matched by
 buffer `period`; each count requires measurement records from both end nodes and
 the hub. Each axis uses 0 for vacuum and 1 for any nonvacuum outcome.
+Each heatmap has its own color scale and shows the current integer count in each cell.
 The six bars count periods with all three records, only node 1 and hub, only
 node 3 and hub, node 1 without hub, node 3 without hub, and both nodes without hub,
 in that order. The last three overlap: a period present at both sources but still

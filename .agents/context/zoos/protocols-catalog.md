@@ -47,7 +47,8 @@ boundary through reset, with schedule and pacing changes under the same guard.
 Overlapping work is rejected before either source or pacing changes; reset clears
 the scenario's work.
 Dashboard detector-click count heatmaps join the three measurement histories by
-buffer period and omit periods missing any of those records. Analysis titles count
+buffer period and omit periods missing any of those records. Each heatmap uses its
+own color scale and live integer labels centered in its cells. Analysis titles count
 each completed buffer period with at least one scheduled source, including periods
 producing no photon. The both-source/no-hub count overlaps the per-source pending counts.
 At the configured reset time (100000 by default), the example replaces its

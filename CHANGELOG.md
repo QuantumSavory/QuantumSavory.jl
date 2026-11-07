@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Give AspenNet digital twin heatmaps independent color scales and live cell counts.
 - Increase AspenNet example reflectivity for more frequent heralds and document
   the Bell-fidelity tradeoff and measurement outcomes.
 
