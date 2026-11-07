@@ -4,7 +4,7 @@ using QuantumSavory.ProtocolZoo.AspenNet: Confirmation, TimeTag
 @testset "Examples - ASPEN-Net" begin
     include("../../examples/aspen_net/1_simple_run.jl")
 
-    periods = 1:div(stop_tick, repetitions)
+    periods = sort!(unique([row.period for m in measurements for row in m._log]))
     @test getproperty.(hub._log, :period) == periods
     @test getproperty.(hub._log, :t) == periods .* (repetitions * tick_duration) .+ delay
     @test any(row.success for row in hub._log)

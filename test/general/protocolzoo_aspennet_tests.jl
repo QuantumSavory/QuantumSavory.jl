@@ -25,7 +25,8 @@ end
         end
         run(sim, 4+2delay+0.01)
         @test all(log -> log.t == log.period+delay, hub._log)
-        @test [log.success for log in hub._log if log.period <= 4] == fill(p*r == 1, 4)
+        @test getproperty.(hub._log, :period) == (p == 0 ? Int[] : 1:4)
+        @test getproperty.(hub._log, :success) == fill(r == 1, p == 0 ? 0 : 4)
         for measurement in measurements
             @test length(measurement._log) == (p == 0 ? 0 : 4)
             @test all(log -> log.t == log.period && log.number == 1-r, measurement._log)
@@ -36,6 +37,7 @@ end
                 msg = querydelete!(messagebuffer(net, measurement.node), Confirmation, log.period, ❓)
                 @test msg.tag[3] == Int(log.success)
             end
+            @test isnothing(query(messagebuffer(net, measurement.node), Confirmation, ❓, ❓))
         end
         @test all(slot -> !isassigned(slot), net[2])
     end
@@ -47,6 +49,8 @@ end
             put!(messagebuffer(net, node), Tag(Start(0, 1000)))
         end
         run(sim, 500.6)
+        @test getproperty.(hub._log, :period) ==
+            sort!(unique([row.period for m in measurements for row in m._log]))
         for log in hub._log
             local_results = [result for m in measurements for result in m._log if result.period == log.period]
             remote_photons = sum((1-result.number for result in local_results); init=0)
@@ -56,12 +60,34 @@ end
         @test any(log -> log.success, hub._log) && any(log -> !log.success, hub._log)
     end
 
+    @testset "One-sided arrivals separated by idle periods" begin
+        for reflectivity in (0.0, 1.0)
+            (; net, sim, sources, measurements, hub) = aspen_setup(; reflectivity)
+            foreach(Process, [sources; measurements; [hub]])
+            put!(messagebuffer(net, 1), Tag(Start(4, 6)))
+            put!(messagebuffer(net, 3), Tag(Start(8, 10)))
+            run(sim, 2.6)
+            @test isempty(hub._log)
+            @test all(node -> isnothing(query(messagebuffer(net, node), Confirmation, ❓, ❓)), (1, 3))
+            run(sim, 6.6)
+            @test getproperty.(hub._log, :period) == [3, 5]
+            @test getproperty.(hub._log, :success) == fill(reflectivity == 1, 2)
+            for node in (1, 3)
+                for period in (3, 5)
+                    @test querydelete!(messagebuffer(net, node), Confirmation, period, Int(reflectivity)) !== nothing
+                end
+                @test isnothing(query(messagebuffer(net, node), Confirmation, ❓, ❓))
+            end
+        end
+    end
+
     @testset "Commands, memory selection, and classical arrival" begin
         (; net, sim, sources, measurements, hub) = aspen_setup(; reflectivity=1.0)
         initialize!(net[1][1], Z2) # Unrelated occupied memory must be left alone.
         foreach(Process, [sources; measurements; [hub]])
         run(sim, 1.1)
         @test all(m -> isempty(m._log), measurements)
+        @test isempty(hub._log)
         for command in (Start(-2, 8), Start(3, 8), Start(8, 4), Start(0, 8), Start(4, 8))
             put!(messagebuffer(net, 1), Tag(command))
         end
@@ -79,7 +105,7 @@ end
         put!(messagebuffer(net, 1), Tag(Start(10, 12)))
         run(sim, 6.6)
         @test length(measurements[1]._log) == 2
-        @test !last(hub._log).success
+        @test getproperty.(hub._log, :period) == [3, 4]
     end
 
     @testset "Adjacent commands share one floating-point clock grid" begin

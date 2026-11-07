@@ -131,13 +131,14 @@ LocalMeasurement(net::RegisterNet, node::Int; kwargs...) = LocalMeasurement(; si
 """
 $TYPEDEF
 
-Measure the two incoming modes at each global buffer deadline plus link delay.
+Measure arriving modes at each global buffer deadline plus link delay.
 All four directed quantum/classical links must have the same constant delay.
 Missing modes are vacuum. A balanced which-path eraser followed by ideal threshold
 detectors accepts one photon or two indistinguishable, bunched photons. Store
 `(t, period, success)` in `_log` and send [`Confirmation`](@ref) over both classical
-links. Idle periods are failures. Confirmations remain in the sources' buffers for
-analysis; local measurements do not wait for them.
+links. Periods without either input are skipped without a record or confirmation;
+an arriving vacuum mode still produces a measurement result. Confirmations remain
+in the sources' buffers for analysis; local measurements do not wait for them.
 
 Use two dedicated hub slots and incoming channels; start this protocol before the
 first source release. It runs until the simulation stops.
@@ -243,6 +244,10 @@ end
     while true
         # Lower priority lets all same-time releases and channel arrivals finish.
         @yield timeout(p.sim, period*duration+delay-now(p.sim); priority=-1)
+        if !any(source -> isready(qchannel(p.net, source=>p.node).queue.store), p.sources)
+            period += 1
+            continue
+        end
         for (source, slot) in zip(p.sources, (a, b))
             qc = qchannel(p.net, source=>p.node)
             if isready(qc.queue.store)
