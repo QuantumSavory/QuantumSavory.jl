@@ -227,7 +227,7 @@ function configure_api(twin)
             "description" => description, "tags" => [group])))
         operation = getschema()["paths"][path][method]
         operation["responses"] = Dict(string(code) => Dict("description" => text) for (code, text) in responses)
-        operation["responses"]["500"] = Dict("description" => "Missing or unparseable parameters, or an internal server error")
+        operation["responses"]["500"] = Dict("description" => "Missing or unparsable parameters, or an internal server error")
     end
 end
 
