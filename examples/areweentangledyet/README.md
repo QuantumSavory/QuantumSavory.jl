@@ -59,7 +59,7 @@ information.
 Build a fixed pushed revision, then start that image:
 
 ```bash
-QUANTUMSAVORY_REVISION=<full-commit-sha> docker compose build --pull
+QUANTUMSAVORY_REVISION=<full-commit-sha> docker compose build --pull --no-cache
 PUBLIC_URL=https://areweentangledyet.com docker compose up --detach --no-build
 ```
 
@@ -75,6 +75,9 @@ For a slower host, override the backend startup deadline:
 STARTUP_TIMEOUT_SECONDS=900 PUBLIC_URL=https://areweentangledyet.com \
     docker compose up --detach
 ```
+
+Security rebuilds use `--pull --no-cache` to refresh base images and Debian
+package indexes, including Chromium.
 
 Use a fixed image tag or digest for a production release. A built image is
 self-contained, but this repository does not commit Julia manifests, so a later
@@ -112,7 +115,7 @@ After a catalog or source change, push the new commit, rebuild that revision,
 and replace the running unit:
 
 ```bash
-QUANTUMSAVORY_REVISION=<new-full-commit-sha> docker compose build --pull
+QUANTUMSAVORY_REVISION=<new-full-commit-sha> docker compose build --pull --no-cache
 docker compose up --detach --no-build
 ```
 
