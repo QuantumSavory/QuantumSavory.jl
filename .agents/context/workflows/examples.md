@@ -40,6 +40,11 @@ Tutorial-local setup and helper functions are not a supported library API. Publi
 QuantumSavory APIs demonstrated by examples remain governed by the package contract,
 and every checked-in example must remain executable across compatible versions.
 
+The `areweentangledyet` site uses `public/demos.json` for display and launch.
+Its `aspennet/twonodes` entry runs the dashboard and API in one process; the
+optional `api_port` adds Oxygen routing and a second startup health check.
+Static site assets and catalog requests must revalidate to avoid mixing deployment versions.
+
 ## Anchors
 
 - **Source:** [`examples/`](../../../examples/) and [`examples/Project.toml`](../../../examples/Project.toml) — runnable scripts and their environment.

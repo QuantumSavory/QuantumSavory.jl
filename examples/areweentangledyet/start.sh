@@ -168,20 +168,24 @@ validate_catalog() {
             test("^[A-Za-z0-9._/-]+$") and
             (startswith("/") | not) and
             (split("/") | all(. != "" and . != "." and . != ".."));
+        def service_port:
+            type == "number" and . == floor and . >= 1 and . <= 65535 and . != 7999 and . != 8000;
         def required_keys: [
             "description", "docs_url", "entry_path", "env_prefix", "health_path",
             "port", "project", "runtime", "script", "slug", "source_url", "threads", "title"
         ];
         type == "array" and length > 0 and
         all(.[];
-            type == "object" and keys == required_keys and
-            (.slug | nonempty_string and test("^[a-z0-9]+([_-][a-z0-9]+)*$")) and
+            type == "object" and (keys - ["api_port"]) == required_keys and
+            (.slug | nonempty_string and test("^[a-z0-9]+([_/-][a-z0-9]+)*$")) and
             (.title | nonempty_string) and
             (.description | nonempty_string) and
             (.runtime == "bonito" or .runtime == "oxygen") and
             (.project | safe_relative_path) and
             (.script | safe_relative_path and endswith(".jl")) and
-            (.port | type == "number" and . == floor and . >= 1 and . <= 65535 and . != 7999 and . != 8000) and
+            (.port | service_port) and
+            ((has("api_port") | not) or
+                (.runtime == "bonito" and .threads >= 2 and (.api_port | service_port))) and
             (.threads | type == "number" and . == floor and . >= 1 and . <= 64) and
             (.env_prefix | nonempty_string and test("^QS_[A-Z0-9]+(_[A-Z0-9]+)*$")) and
             (.entry_path | nonempty_string and test("^/[a-z0-9_/-]+$") and (contains("//") | not)) and
@@ -197,7 +201,7 @@ validate_catalog() {
             end
         ) and
         ([.[].slug] | length == (unique | length)) and
-        ([.[].port] | length == (unique | length)) and
+        ([.[] | .port, (.api_port // empty)] | length == (unique | length)) and
         ([.[].env_prefix] | length == (unique | length)) and
         ([.[].entry_path] | length == (unique | length))
     ' "$CATALOG" >/dev/null || die "catalog validation failed"
@@ -216,7 +220,7 @@ validate_catalog() {
 
 generate_caddyfile() {
     local caddyfile="$1"
-    local item slug runtime port entry_path
+    local item slug runtime port entry_path api_port path
 
     {
         printf '{\n\tauto_https off\n\tadmin off\n}\n\n'
@@ -231,9 +235,17 @@ generate_caddyfile() {
             runtime="$(jq -r '.runtime' <<<"$item")"
             port="$(jq -r '.port' <<<"$item")"
             entry_path="$(jq -r '.entry_path' <<<"$item")"
+            api_port="$(jq -r '.api_port // empty' <<<"$item")"
 
             if [[ "$runtime" == "bonito" ]]; then
                 printf '\tredir /%s /%s/ 308\n' "$slug" "$slug"
+                if [[ -n "$api_port" ]]; then
+                    for path in api/\* docs docs/\*; do
+                        printf '\thandle /%s/%s {\n' "$slug" "$path"
+                        printf '\t\treverse_proxy 127.0.0.1:%s\n' "$api_port"
+                        printf '\t}\n'
+                    done
+                fi
                 printf '\thandle_path /%s/* {\n' "$slug"
                 printf '\t\treverse_proxy 127.0.0.1:%s\n' "$port"
                 printf '\t}\n'
@@ -246,6 +258,7 @@ generate_caddyfile() {
             fi
         done < <(jq -c '.[]' "$CATALOG")
         printf '\thandle {\n'
+        printf '\t\theader Cache-Control "no-cache"\n'
         printf '\t\troot * "%s"\n' "$PUBLIC_DIR"
         printf '\t\tfile_server\n'
         printf '\t}\n'
@@ -316,7 +329,8 @@ start_xvfb() {
 }
 
 start_services() {
-    local item slug runtime project script port threads env_prefix entry_path docs_path proxy_url
+    local item slug runtime project script port threads env_prefix entry_path docs_path proxy_url api_port
+    local -a api_env
 
     while IFS= read -r item; do
         slug="$(jq -r '.slug' <<<"$item")"
@@ -327,13 +341,25 @@ start_services() {
         threads="$(jq -r '.threads' <<<"$item")"
         env_prefix="$(jq -r '.env_prefix' <<<"$item")"
         entry_path="$(jq -r '.entry_path' <<<"$item")"
+        api_port="$(jq -r '.api_port // empty' <<<"$item")"
 
         if [[ "$runtime" == "bonito" ]]; then
             proxy_url="$PUBLIC_URL$entry_path"
+            api_env=()
+            if [[ -n "$api_port" ]]; then
+                api_env=(
+                    "${env_prefix}_API_IP=127.0.0.1"
+                    "${env_prefix}_API_PORT=$api_port"
+                    "${env_prefix}_API_PROXY=$PUBLIC_URL"
+                    "${env_prefix}_API_PREFIX=/$slug"
+                    "${env_prefix}_API_DOCPATH=/docs"
+                )
+            fi
             start_child "$slug" env \
                 "${env_prefix}_IP=127.0.0.1" \
                 "${env_prefix}_PORT=$port" \
                 "${env_prefix}_PROXY=$proxy_url" \
+                "${api_env[@]}" \
                 julia --startup-file=no --history-file=no --project="$REPO_ROOT/$project" --threads="$threads" "$REPO_ROOT/$script"
         else
             docs_path="${entry_path#/$slug}"
@@ -351,7 +377,7 @@ start_services() {
 wait_for_services() {
     local deadline=$((SECONDS + STARTUP_TIMEOUT_SECONDS))
     local total ready_count=0
-    local item slug port health_path health_url
+    local item slug port health_path health_url api_port
     declare -A ready=()
 
     total="$(jq 'length' "$CATALOG")"
@@ -363,8 +389,13 @@ wait_for_services() {
             port="$(jq -r '.port' <<<"$item")"
             health_path="$(jq -r '.health_path' <<<"$item")"
             health_url="http://127.0.0.1:$port$health_path"
+            api_port="$(jq -r '.api_port // empty' <<<"$item")"
 
             if curl --fail --silent --show-error --max-time 5 --output /dev/null "$health_url" 2>/dev/null; then
+                if [[ -n "$api_port" ]] && ! curl --fail --silent --show-error --max-time 5 --output /dev/null \
+                    "http://127.0.0.1:$api_port/$slug/api/status" 2>/dev/null; then
+                    continue
+                fi
                 ready["$slug"]=true
                 ready_count=$((ready_count + 1))
                 printf 'Healthy: %s (%s/%s)\n' "$slug" "$ready_count" "$total"

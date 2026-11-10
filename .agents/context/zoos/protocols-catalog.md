@@ -21,6 +21,42 @@ datagrams, link requests/replies, and end/network/link controllers. `mbqc.jl` ad
 state construction, graph-to-resource mapping, purification measurements, and tracking.
 All three are part of ProtocolZoo, not separate external zoos.
 
+`AspenNet` is an internal experimental submodule for two synchronized photon sources
+and one heralding hub. It uses bosonic modes with a four-photon Fock cutoff,
+buffered generation, local Fock-basis measurements reduced to vacuum/nonvacuum,
+and balanced beamsplitter interference at the hub. A herald requires a first-output
+click and second-output vacuum, fixing the Bell phase. Omit local measurement
+processes to retain the heralded memory modes. The hub records
+and confirms only periods with an arriving mode, including an arriving vacuum mode;
+periods with no arrivals are skipped. The example in
+[`examples/aspen_net/`](../../../examples/aspen_net/) records local and hub histories;
+the module is not public and has no documentation website entry.
+Both examples use reflectivity 0.1 for more frequent heralds at lower Bell fidelity;
+the module docstring explains the tradeoff and measurement outcomes.
+Its second example runs one shared simulation behind a Bonito/WGLMakie dashboard
+and an Oxygen API, with explicit startup and shutdown for its tasks and servers.
+`/api/status` exposes the modeled hardware's shared-clock time and settings;
+clients choose their own future work intervals. `/api/simulation/status` exposes
+wall-clock pacing. The dashboard labels these snapshots Hardware and Simulation.
+`/api/simulation/config` returns the twin's startup configuration, including
+overrides, reused on reset. Its initial pacing setting is separate from current
+pacing.
+`/api/simulation/run_scenario` accepts `scenario=run_samples_until_reset` and
+optional `sleep_seconds`. It schedules both configured sources at the next buffer
+boundary through reset, with schedule and pacing changes under the same guard.
+Overlapping work is rejected before either source or pacing changes; reset clears
+the scenario's work.
+Dashboard detector-click count heatmaps join the three measurement histories by
+buffer period and omit periods missing any of those records. Each heatmap uses its
+own color scale and live integer labels centered in its cells. Analysis titles count
+each completed buffer period with at least one scheduled source, including periods
+producing no photon. The both-source/no-hub count overlaps the per-source pending counts.
+At the configured reset time (100000 by default), the example replaces its
+simulation, clears histories, counts, and pending work, and returns sources to idle
+while keeping servers and browser sessions connected.
+The pacing API sets the wall-clock delay after each simulation step; this setting
+persists across resets.
+
 Every documented and public family is intended for long-term support; implementation
 completeness still varies. QTCP contains unresolved drop detection, correction, and
 timeout work. MBQC currently uses contiguous node-number arithmetic in routing/mapping

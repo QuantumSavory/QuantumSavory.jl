@@ -6,8 +6,8 @@
   <meta name="description" content="Interactive quantum-network simulations powered by QuantumSavory.jl">
   <title>Are We Entangled Yet?</title>
   <link rel="icon" type="image/png" href="./quantumsavory-logo.png">
-  <link rel="stylesheet" href="./styles.css">
-  <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=2">
+  <script src="./app.js?v=2" defer></script>
 </head>
 <body>
   <button id="skip-link" class="skip-link" type="button">Skip to main content</button>
@@ -54,6 +54,21 @@
 
       <div id="demo-grid" class="demo-grid" aria-busy="true">
         <p id="catalog-status" class="catalog-status" role="status" aria-live="polite">Loading applications…</p>
+      </div>
+      <noscript><p class="catalog-status error">JavaScript is required to load the application catalog.</p></noscript>
+    </section>
+
+    <section aria-labelledby="aspennet-heading">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Explore</p>
+          <h2 id="aspennet-heading">ASPEN-Net Digital Twins</h2>
+        </div>
+        <p>These digital twins model photon generation and entanglement distribution for <a href="https://quantum-aspen.net/" target="_blank" rel="noopener noreferrer">ASPEN-Net <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>, with live dashboards and APIs for interacting with the simulated networks.</p>
+      </div>
+
+      <div id="aspennet-grid" class="demo-grid" aria-busy="true">
+        <p class="catalog-status" role="status" aria-live="polite">Loading digital twins…</p>
       </div>
       <noscript><p class="catalog-status error">JavaScript is required to load the application catalog.</p></noscript>
     </section>

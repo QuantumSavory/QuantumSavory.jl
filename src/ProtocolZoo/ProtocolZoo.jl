@@ -911,6 +911,7 @@ include("qtcp.jl")
 using .QTCP
 include("mbqc.jl")
 using .MBQCEntanglementDistillation
+include("aspennet.jl")
 
 _protocol_nodes(prot::EntanglementTracker) = (prot.node,)
 _protocol_nodes(prot::SwapperProt) = (prot.node,)

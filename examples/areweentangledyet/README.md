@@ -2,8 +2,8 @@
 
 This directory builds the complete [areweentangledyet.com](https://areweentangledyet.com/)
 deployment as one container image. Caddy serves the landing page on port 8000 and
-proxies HTTP and WebSocket traffic to seven Bonito applications and one Oxygen
-API. The Julia services listen only on the container loopback interface.
+proxies HTTP and WebSocket traffic to eight Bonito applications and two Oxygen
+APIs. The Julia services listen only on the container loopback interface.
 
 The launcher waits for every service,
 warms the Bonito applications with a private Playwright browser, and only then
@@ -59,7 +59,7 @@ information.
 Build a fixed pushed revision, then start that image:
 
 ```bash
-QUANTUMSAVORY_REVISION=<full-commit-sha> docker compose build --pull
+QUANTUMSAVORY_REVISION=<full-commit-sha> docker compose build --pull --no-cache
 PUBLIC_URL=https://areweentangledyet.com docker compose up --detach --no-build
 ```
 
@@ -76,6 +76,9 @@ STARTUP_TIMEOUT_SECONDS=900 PUBLIC_URL=https://areweentangledyet.com \
     docker compose up --detach
 ```
 
+Security rebuilds use `--pull --no-cache` to refresh base images and Debian
+package indexes, including Chromium.
+
 Use a fixed image tag or digest for a production release. A built image is
 self-contained, but this repository does not commit Julia manifests, so a later
 rebuild can select newer compatible dependency releases.
@@ -86,25 +89,33 @@ rebuild can select newer compatible dependency releases.
 the landing page and launcher. Entries remain in display and startup order. Each
 entry contains:
 
-- `slug`, `title`, and `description` for identity and display
+- `slug` (which can contain `/`), `title`, and `description` for identity and display
 - `runtime` (`bonito` or `oxygen`)
 - repository-relative `project` and `script` paths
 - a unique internal `port`, positive `threads`, and unique `env_prefix`
 - the public `entry_path` and direct-backend `health_path`
 - HTTPS `docs_url` and `source_url` links
+- optional `api_port` for a Bonito application that also runs an Oxygen API in
+  the same process, using the same environment prefix with `_API` appended
 
 For Bonito, `entry_path` must be `/<slug>/` and `health_path` is `/`. For
-Oxygen, both paths include the service prefix because Caddy preserves it. The
+Oxygen, both paths include the service prefix because Caddy preserves it. An
+`api_port` must be unique across all service ports; its API uses `/<slug>/api/`
+and `/<slug>/docs`, and startup also checks `/<slug>/api/status`. The
 launcher validates all fields, uniqueness constraints, path containment, and
 the generated Caddy configurations before it starts a child process. Internal
 port 7999 is reserved for browser warmup and cannot be assigned to an
 application.
 
+Static pages, scripts, styles, and the catalog use `Cache-Control: no-cache`,
+so browsers revalidate them after deployment. Versioned script and stylesheet
+URLs also bypass copies cached before this policy was added.
+
 After a catalog or source change, push the new commit, rebuild that revision,
 and replace the running unit:
 
 ```bash
-QUANTUMSAVORY_REVISION=<new-full-commit-sha> docker compose build --pull
+QUANTUMSAVORY_REVISION=<new-full-commit-sha> docker compose build --pull --no-cache
 docker compose up --detach --no-build
 ```
 
@@ -144,6 +155,14 @@ prefix before proxying, and supplies each application with an absolute public
 proxy URL. It preserves `/states_rest_server` for Oxygen so the API, Swagger UI,
 and OpenAPI schema remain under the same prefix. Both REST service roots redirect
 to `/states_rest_server/docs`.
+
+The ASPEN-Net Digital Twins section contains the two-node twin at
+`/aspennet/twonodes/`. Its dashboard and Oxygen API share one simulation and one
+Julia process. Caddy preserves the prefix for `/aspennet/twonodes/api/*` and
+`/aspennet/twonodes/docs` (including its subpaths), and strips it for the Bonito
+dashboard, assets, and WebSockets. The card's API link opens the interactive
+documentation. Sources start idle; use the documented API to schedule them.
+See the [digital twin example](../aspen_net/README.md#digital-twin) for details.
 
 The site does not send `X-Frame-Options` or a Content Security Policy that blocks
 embedding. If an embedding page uses a sandboxed iframe, it must permit popups so
