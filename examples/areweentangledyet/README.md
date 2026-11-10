@@ -76,6 +76,10 @@ STARTUP_TIMEOUT_SECONDS=900 PUBLIC_URL=https://areweentangledyet.com \
     docker compose up --detach
 ```
 
+The examples environment requires `LibPQ_jll` 16.14 or later within 16.x
+for the PostgreSQL binaries bundled through GDAL. A registered Quantikz release
+allowing `tectonic_jll` 0.17 is required to resolve its shared ICU dependency.
+
 Use a fixed image tag or digest for a production release. A built image is
 self-contained, but this repository does not commit Julia manifests, so a later
 rebuild can select newer compatible dependency releases.
