@@ -2,9 +2,6 @@
 
 ## Unreleased
 
-- Refresh areweentangledyet to Node 24.22.2 and Julia 1.12.7, and apply Debian
-  package updates during container builds.
-
 - Revalidate areweentangledyet landing-page assets after deployment and unify section spacing.
 - Add an ASPEN-Net Digital Twins section and two-node dashboard/API deployment
   at `/aspennet/twonodes/` on areweentangledyet.
