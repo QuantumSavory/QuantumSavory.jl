@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Require LibPQ_jll 16.14 or later within 16.x in the examples environment.
+
 - Revalidate areweentangledyet landing-page assets after deployment and unify section spacing.
 - Add an ASPEN-Net Digital Twins section and two-node dashboard/API deployment
   at `/aspennet/twonodes/` on areweentangledyet.
